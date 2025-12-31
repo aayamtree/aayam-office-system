@@ -1,0 +1,192 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Search, Plus, Phone, Mail, MapPin, Edit, Trash2, Eye, X, ArrowLeft, Building2, Loader2, Package } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+
+interface Vendor {
+  id: string;
+  name: string;
+  company: string;
+  email: string;
+  phone: string;
+  gstin: string;
+  address: string;
+  city: string;
+  state: string;
+  category: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+const categories = ['Paper', 'Ink & Toner', 'Binding', 'Lamination', 'Machinery', 'Packaging', 'Other'];
+
+export default function VendorsPage() {
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [showModal, setShowModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', category: 'Paper', is_active: true,
+  });
+
+  const fetchVendors = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.from('vendors').select('*').order('created_at', { ascending: false });
+      if (error) {
+        console.error('Supabase error:', error);
+      }
+      setVendors(data || []);
+    } catch (error) {
+      console.error('Error fetching vendors:', error);
+      setVendors([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchVendors(); }, []);
+
+  const filteredVendors = vendors.filter(vendor => {
+    const matchesSearch = vendor.name?.toLowerCase().includes(searchQuery.toLowerCase()) || vendor.company?.toLowerCase().includes(searchQuery.toLowerCase()) || vendor.phone?.includes(searchQuery);
+    const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' ? vendor.is_active : !vendor.is_active);
+    const matchesCategory = categoryFilter === 'all' || vendor.category === categoryFilter;
+    return matchesSearch && matchesStatus && matchesCategory;
+  });
+
+  const handleAddNew = () => { setFormData({ name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', category: 'Paper', is_active: true }); setIsEditing(false); setSelectedVendor(null); setShowModal(true); };
+
+  const handleEdit = (vendor: Vendor) => { setFormData({ name: vendor.name || '', company: vendor.company || '', email: vendor.email || '', phone: vendor.phone || '', gstin: vendor.gstin || '', address: vendor.address || '', city: vendor.city || '', state: vendor.state || 'Gujarat', category: vendor.category || 'Paper', is_active: vendor.is_active }); setSelectedVendor(vendor); setIsEditing(true); setShowModal(true); };
+
+  const handleView = (vendor: Vendor) => { setSelectedVendor(vendor); setShowViewModal(true); };
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Delete this vendor?')) {
+      try {
+        const { error } = await supabase.from('vendors').delete().eq('id', id);
+        if (error) throw error;
+        setVendors(vendors.filter(v => v.id !== id));
+      } catch (error) { console.error('Error:', error); alert('Error deleting'); }
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      if (isEditing && selectedVendor) {
+        const { error } = await supabase.from('vendors').update(formData).eq('id', selectedVendor.id);
+        if (error) throw error;
+        setVendors(vendors.map(v => v.id === selectedVendor.id ? { ...v, ...formData } : v));
+      } else {
+        const { data, error } = await supabase.from('vendors').insert([formData]).select().single();
+        if (error) throw error;
+        if (data) setVendors([data, ...vendors]);
+      }
+      setShowModal(false); setIsEditing(false); setSelectedVendor(null);
+    } catch (error) { console.error('Error:', error); alert('Error saving'); }
+    finally { setSaving(false); }
+  };
+
+  const getCategoryColor = (cat: string) => {
+    const colors: Record<string, string> = { 'Paper': 'bg-blue-100 text-blue-700', 'Ink & Toner': 'bg-purple-100 text-purple-700', 'Binding': 'bg-amber-100 text-amber-700', 'Lamination': 'bg-green-100 text-green-700', 'Machinery': 'bg-red-100 text-red-700', 'Packaging': 'bg-indigo-100 text-indigo-700' };
+    return colors[cat] || 'bg-gray-100 text-gray-700';
+  };
+
+  if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /><span className="ml-2">Loading...</span></div>;
+
+  return (
+    <div className="space-y-4 lg:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Link href="/admin/crm" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden"><ArrowLeft size={20} /></Link>
+          <div><h1 className="text-xl lg:text-2xl font-bold text-gray-900">Vendors</h1><p className="text-sm text-gray-500">{filteredVendors.length} vendors</p></div>
+        </div>
+        <button onClick={handleAddNew} className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800"><Plus size={18} /><span>Add Vendor</span></button>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1"><Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" /><input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl" /></div>
+        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl"><option value="all">All Categories</option>{categories.map(c => <option key={c} value={c}>{c}</option>)}</select>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl"><option value="all">All</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
+      </div>
+
+      {filteredVendors.length === 0 && <div className="text-center py-12 bg-white rounded-xl border"><Package size={48} className="mx-auto text-gray-300 mb-4" /><h3 className="text-lg font-medium mb-2">No vendors</h3><button onClick={handleAddNew} className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg"><Plus size={18} />Add Vendor</button></div>}
+
+      <div className="lg:hidden space-y-3">
+        {filteredVendors.map((vendor) => (
+          <div key={vendor.id} className="bg-white rounded-xl p-4 shadow-sm border">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center"><span className="text-orange-600 font-semibold">{vendor.name?.charAt(0)}</span></div>
+                <div><h3 className="font-semibold">{vendor.name}</h3><p className="text-sm text-gray-500">{vendor.company}</p></div>
+              </div>
+              <span className={`px-2 py-1 text-xs rounded-full ${getCategoryColor(vendor.category)}`}>{vendor.category}</span>
+            </div>
+            <div className="space-y-2 text-sm text-gray-500 mb-3"><div className="flex items-center gap-2"><Phone size={14} /><span>{vendor.phone}</span></div></div>
+            <div className="flex items-center justify-end gap-2 pt-3 border-t">
+              <button onClick={() => handleView(vendor)} className="p-2 hover:bg-gray-100 rounded-lg"><Eye size={18} className="text-gray-500" /></button>
+              <button onClick={() => handleEdit(vendor)} className="p-2 hover:bg-gray-100 rounded-lg"><Edit size={18} className="text-gray-500" /></button>
+              <button onClick={() => handleDelete(vendor.id)} className="p-2 hover:bg-red-50 rounded-lg"><Trash2 size={18} className="text-red-500" /></button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="hidden lg:block bg-white rounded-xl shadow-sm border overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b"><tr><th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Vendor</th><th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Contact</th><th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Category</th><th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Status</th><th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Actions</th></tr></thead>
+          <tbody className="divide-y">
+            {filteredVendors.map((vendor) => (
+              <tr key={vendor.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4"><div className="flex items-center gap-3"><div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center"><span className="text-orange-600 font-semibold">{vendor.name?.charAt(0)}</span></div><div><p className="font-medium">{vendor.name}</p><p className="text-sm text-gray-500">{vendor.company}</p></div></div></td>
+                <td className="px-6 py-4"><p>{vendor.phone}</p><p className="text-sm text-gray-500">{vendor.email}</p></td>
+                <td className="px-6 py-4"><span className={`px-2 py-1 text-xs rounded-full ${getCategoryColor(vendor.category)}`}>{vendor.category}</span></td>
+                <td className="px-6 py-4"><span className={`px-2 py-1 text-xs rounded-full ${vendor.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{vendor.is_active ? 'Active' : 'Inactive'}</span></td>
+                <td className="px-6 py-4"><div className="flex items-center justify-end gap-1"><button onClick={() => handleView(vendor)} className="p-2 hover:bg-gray-100 rounded-lg"><Eye size={18} className="text-gray-500" /></button><button onClick={() => handleEdit(vendor)} className="p-2 hover:bg-gray-100 rounded-lg"><Edit size={18} className="text-gray-500" /></button><button onClick={() => handleDelete(vendor.id)} className="p-2 hover:bg-red-50 rounded-lg"><Trash2 size={18} className="text-red-500" /></button></div></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b"><h2 className="text-lg font-semibold">{isEditing ? 'Edit Vendor' : 'Add Vendor'}</h2><button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button></div>
+            <form onSubmit={handleSubmit} className="p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-1">Name *</label><input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border rounded-xl" /></div><div><label className="block text-sm font-medium mb-1">Company</label><input type="text" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} className="w-full px-3 py-2 border rounded-xl" /></div></div>
+              <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-1">Phone *</label><input type="tel" required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-3 py-2 border rounded-xl" /></div><div><label className="block text-sm font-medium mb-1">Email</label><input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border rounded-xl" /></div></div>
+              <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-1">Category</label><select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full px-3 py-2 border rounded-xl">{categories.map(c => <option key={c} value={c}>{c}</option>)}</select></div><div><label className="block text-sm font-medium mb-1">GSTIN</label><input type="text" value={formData.gstin} onChange={(e) => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })} className="w-full px-3 py-2 border rounded-xl" maxLength={15} /></div></div>
+              <div><label className="block text-sm font-medium mb-1">Address</label><textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full px-3 py-2 border rounded-xl" rows={2} /></div>
+              <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-1">City</label><input type="text" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="w-full px-3 py-2 border rounded-xl" /></div><div><label className="block text-sm font-medium mb-1">Status</label><select value={formData.is_active ? 'active' : 'inactive'} onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'active' })} className="w-full px-3 py-2 border rounded-xl"><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div>
+              <div className="flex gap-3 pt-4"><button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 border rounded-xl">Cancel</button><button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl flex items-center justify-center gap-2">{saving && <Loader2 size={18} className="animate-spin" />}{isEditing ? 'Update' : 'Add'}</button></div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showViewModal && selectedVendor && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg">
+            <div className="flex items-center justify-between p-4 border-b"><h2 className="text-lg font-semibold">Vendor Details</h2><button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button></div>
+            <div className="p-4 space-y-4">
+              <div className="flex items-center gap-4"><div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center"><span className="text-orange-600 font-bold text-2xl">{selectedVendor.name?.charAt(0)}</span></div><div><h3 className="text-xl font-semibold">{selectedVendor.name}</h3><p className="text-gray-500">{selectedVendor.company}</p><span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${getCategoryColor(selectedVendor.category)}`}>{selectedVendor.category}</span></div></div>
+              <div className="space-y-3 p-4 bg-gray-50 rounded-xl"><div className="flex items-center gap-3"><Phone size={16} className="text-gray-400" /><span>{selectedVendor.phone}</span></div>{selectedVendor.email && <div className="flex items-center gap-3"><Mail size={16} className="text-gray-400" /><span>{selectedVendor.email}</span></div>}{selectedVendor.address && <div className="flex items-center gap-3"><MapPin size={16} className="text-gray-400" /><span>{selectedVendor.address}, {selectedVendor.city}</span></div>}{selectedVendor.gstin && <div className="flex items-center gap-3"><Building2 size={16} className="text-gray-400" /><span>GSTIN: {selectedVendor.gstin}</span></div>}</div>
+              <div className="flex gap-3"><button onClick={() => { setShowViewModal(false); handleEdit(selectedVendor); }} className="flex-1 px-4 py-2.5 border rounded-xl">Edit</button><button onClick={() => setShowViewModal(false)} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl">Close</button></div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
