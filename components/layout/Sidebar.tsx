@@ -28,16 +28,25 @@ const menuItems = [
     name: 'Overview',
     icon: LayoutDashboard,
     href: '/admin/dashboard',
+    allowedRoles: ['admin', 'account'],
   },
   {
     name: 'Jobs',
     icon: Briefcase,
     href: '/admin/jobs',
+    allowedRoles: ['admin', 'account'],
+  },
+  {
+    name: 'Design Tasks',
+    icon: Palette,
+    href: '/admin/design-tasks', // New route for designers
+    allowedRoles: ['designer'],
   },
   {
     name: 'Marketing',
     icon: Megaphone,
     href: '/admin/marketing',
+    allowedRoles: ['admin', 'account', 'marketing'],
     submenu: [
       { name: 'Leads', href: '/admin/marketing/leads' },
       { name: 'Follow-ups', href: '/admin/marketing/follow-ups' },
@@ -51,6 +60,7 @@ const menuItems = [
     name: 'Sales',
     icon: ShoppingCart,
     href: '/admin/sales',
+    allowedRoles: ['admin', 'account', 'marketing'],
     submenu: [
       { name: 'Leads', href: '/admin/sales/leads' },
       { name: 'Quotations', href: '/admin/sales/quotations' },
@@ -61,45 +71,53 @@ const menuItems = [
     name: 'CRM',
     icon: Users,
     href: '/admin/crm',
+    allowedRoles: ['admin', 'account', 'marketing'],
     submenu: [
       { name: 'Clients', href: '/admin/crm/clients' },
       { name: 'Vendors', href: '/admin/crm/vendors' },
     ]
   },
   {
-    name: 'Designers',
+    name: 'Designers Mgmt', // Renamed for clarity
     icon: Palette,
     href: '/admin/designers',
+    allowedRoles: ['admin', 'account'],
   },
   {
     name: 'Finance',
     icon: IndianRupee,
     href: '/admin/finance',
+    allowedRoles: ['admin', 'account'],
   },
   {
     name: 'Dispatch',
     icon: Truck,
     href: '/admin/dispatch',
+    allowedRoles: ['admin', 'account', 'dispatch'],
   },
   {
     name: 'CMYK Print',
     icon: Printer,
     href: '/admin/cmyk-print',
+    allowedRoles: ['admin', 'account', 'marketing'],
   },
   {
     name: 'Reports',
     icon: FileText,
     href: '/admin/reports',
+    allowedRoles: ['admin', 'account'],
   },
   {
     name: 'Activity',
     icon: Activity,
     href: '/admin/activity',
+    allowedRoles: ['admin'],
   },
   {
     name: 'Settings',
     icon: Settings,
     href: '/admin/settings',
+    allowedRoles: ['admin'],
   },
 ];
 
@@ -174,7 +192,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3">
         <div className="space-y-1">
-          {menuItems.map((item) => {
+          {menuItems.filter(item => {
+            // If allowedRoles is missing, default to showing (safe fallback) or admin only? 
+            // Let's mimic 'admin' logic if profile is missing, or show nothing.
+            // If profile.role is undefined (loading), maybe show nothing or loaders.
+            // But for now, if item.allowedRoles includes current role, show it.
+            const userRole = profile?.role || 'admin'; // Default to admin for dev safety if profile missing
+            return !item.allowedRoles || item.allowedRoles.includes(userRole);
+          }).map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
             const isExpanded = expandedItems.includes(item.name);
