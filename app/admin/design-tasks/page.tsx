@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useJobs, useAuth } from '@/lib/hooks';
+import { useJobs } from '@/lib/hooks';
+import { useAuth } from '@/lib/auth-context';
 import { Palette, Play, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 export default function DesignTasksPage() {

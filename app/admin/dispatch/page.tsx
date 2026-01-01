@@ -15,7 +15,8 @@ export default function DispatchPage() {
   // Filter Data
   const pendingQC = jobs.filter(j => j.current_stage === 'quality_check');
 
-  const readyToDispatch = jobs.filter(j => j.current_stage === 'ready');
+  // Dispatch Requirement: Print Complete (ready) AND Payment Cleared (paid)
+  const readyToDispatch = jobs.filter(j => j.current_stage === 'ready' && j.payment_status === 'paid');
 
   const sentDispatches = dispatches.slice(0, 3); // Get latest 3
 
