@@ -28,6 +28,7 @@ export default function OrdersPage() {
     projectName: '',
     description: '',
     quantity: 1,
+    ratePerPiece: 0,
     subtotal: 0,
     gstRate: 18,
     gstAmount: 0,
@@ -38,21 +39,39 @@ export default function OrdersPage() {
     notes: ''
   });
 
-  // Calculate totals when subtotal or gstRate changes
-  const calculateTotals = (sub: number, rate: number) => {
-    const gst = Math.round(sub * (rate / 100));
+  // Auto-open if ?new=true
+  useMemo(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('new') === 'true') {
+        // Remove param without refresh
+        window.history.replaceState({}, '', '/admin/sales/orders');
+        setTimeout(() => setShowModal(true), 500); // Slight delay for smoother UX
+      }
+    }
+  }, []);
+
+  // Calculate totals
+  const calculateTotals = (qty: number, rate: number, taxRate: number) => {
+    const sub = qty * rate;
+    const gst = Math.round(sub * (taxRate / 100));
     const total = sub + gst;
-    return { gst, total };
+    return { sub, gst, total };
   };
 
-  const handleSubtotalChange = (value: number) => {
-    const { gst, total } = calculateTotals(value, formData.gstRate);
-    setFormData(prev => ({ ...prev, subtotal: value, gstAmount: gst, totalAmount: total }));
+  const handleQuantityChange = (qty: number) => {
+    const { sub, gst, total } = calculateTotals(qty, formData.ratePerPiece, formData.gstRate);
+    setFormData(prev => ({ ...prev, quantity: qty, subtotal: sub, gstAmount: gst, totalAmount: total }));
   };
 
-  const handleGstRateChange = (value: number) => {
-    const { gst, total } = calculateTotals(formData.subtotal, value);
-    setFormData(prev => ({ ...prev, gstRate: value, gstAmount: gst, totalAmount: total }));
+  const handleRateChange = (rate: number) => {
+    const { sub, gst, total } = calculateTotals(formData.quantity, rate, formData.gstRate);
+    setFormData(prev => ({ ...prev, ratePerPiece: rate, subtotal: sub, gstAmount: gst, totalAmount: total }));
+  };
+
+  const handleGstRateChange = (rate: number) => {
+    const { sub, gst, total } = calculateTotals(formData.quantity, formData.ratePerPiece, rate);
+    setFormData(prev => ({ ...prev, gstRate: rate, gstAmount: gst, totalAmount: total }));
   };
 
   const handleAddNew = () => {
@@ -61,6 +80,7 @@ export default function OrdersPage() {
       projectName: '',
       description: '',
       quantity: 1,
+      ratePerPiece: 0,
       subtotal: 0,
       gstRate: 18,
       gstAmount: 0,
@@ -80,6 +100,7 @@ export default function OrdersPage() {
       projectName: job.project_name,
       description: job.description || '',
       quantity: job.quantity,
+      ratePerPiece: job.quote_per_piece || (job.quantity > 0 ? job.subtotal / job.quantity : 0),
       subtotal: job.subtotal,
       gstRate: job.gst_rate,
       gstAmount: job.gst_amount,
@@ -105,6 +126,7 @@ export default function OrdersPage() {
     e.preventDefault();
     setSubmitting(true);
 
+
     try {
       if (isEditing && selectedJob) {
         await updateJob(selectedJob.id, {
@@ -112,6 +134,7 @@ export default function OrdersPage() {
           project_name: formData.projectName,
           description: formData.description,
           quantity: formData.quantity,
+          quote_per_piece: formData.ratePerPiece,
           subtotal: formData.subtotal,
           gst_rate: formData.gstRate,
           gst_amount: formData.gstAmount,
@@ -127,7 +150,7 @@ export default function OrdersPage() {
           project_name: formData.projectName,
           description: formData.description,
           quantity: formData.quantity,
-          quote_per_piece: formData.quantity > 0 ? formData.subtotal / formData.quantity : 0,
+          quote_per_piece: formData.ratePerPiece,
           subtotal: formData.subtotal,
           gst_rate: formData.gstRate,
           gst_amount: formData.gstAmount,
@@ -199,13 +222,15 @@ export default function OrdersPage() {
             <p className="text-sm text-gray-500 mt-1">{filteredJobs.length} orders found</p>
           </div>
         </div>
-        <button
-          onClick={handleAddNew}
-          className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white px-5 py-3 rounded-xl shadow-lg shadow-gray-900/20 transition-all hover:scale-105 active:scale-95 font-medium"
-        >
-          <Plus size={20} />
-          <span>New Order</span>
-        </button>
+        <div className="hidden lg:block">
+          <button
+            onClick={handleAddNew}
+            className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white px-5 py-3 rounded-xl shadow-lg shadow-gray-900/20 transition-all hover:scale-105 active:scale-95 font-medium"
+          >
+            <Plus size={20} />
+            <span>New Order</span>
+          </button>
+        </div>
       </div>
 
       {/* Search & Filter */}
@@ -382,18 +407,18 @@ export default function OrdersPage() {
                       min="1"
                       required
                       value={formData.quantity}
-                      onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
+                      onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 0)}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Subtotal (₹)</label>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Rate / Pc (₹)</label>
                     <input
                       type="number"
                       min="0"
                       required
-                      value={formData.subtotal}
-                      onChange={(e) => handleSubtotalChange(parseFloat(e.target.value) || 0)}
+                      value={formData.ratePerPiece}
+                      onChange={(e) => handleRateChange(parseFloat(e.target.value) || 0)}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
@@ -412,7 +437,7 @@ export default function OrdersPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Total</label>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Total (Inc. GST)</label>
                     <div className="px-3 py-2 bg-white border border-gray-200 rounded-lg font-bold text-gray-900">
                       {formatCurrency(formData.totalAmount)}
                     </div>

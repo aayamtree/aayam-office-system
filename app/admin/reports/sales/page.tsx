@@ -15,38 +15,45 @@ interface SaleRecord {
   status: 'completed' | 'pending' | 'cancelled';
 }
 
-const demoSales: SaleRecord[] = [
-  { id: '1', date: '2024-12-25', orderNumber: 'AAY-2024-156', client: 'ABC Industries', items: 'Brochure A4', quantity: 500, amount: 15000, status: 'completed' },
-  { id: '2', date: '2024-12-24', orderNumber: 'AAY-2024-155', client: 'XYZ Corporation', items: 'Business Cards', quantity: 1000, amount: 3500, status: 'completed' },
-  { id: '3', date: '2024-12-24', orderNumber: 'AAY-2024-154', client: 'Global Traders', items: 'Packaging Box', quantity: 5000, amount: 75000, status: 'pending' },
-  { id: '4', date: '2024-12-23', orderNumber: 'AAY-2024-153', client: 'Tech Solutions', items: 'Letterhead', quantity: 500, amount: 4500, status: 'completed' },
-  { id: '5', date: '2024-12-23', orderNumber: 'AAY-2024-152', client: 'Fashion Hub', items: 'Catalogue 24pg', quantity: 1000, amount: 45000, status: 'completed' },
-  { id: '6', date: '2024-12-22', orderNumber: 'AAY-2024-151', client: 'Star Enterprises', items: 'Annual Report', quantity: 50, amount: 25000, status: 'completed' },
-  { id: '7', date: '2024-12-22', orderNumber: 'AAY-2024-150', client: 'Prime Motors', items: 'Flyers A5', quantity: 2000, amount: 8000, status: 'cancelled' },
-  { id: '8', date: '2024-12-21', orderNumber: 'AAY-2024-149', client: 'City Hospital', items: 'Envelopes', quantity: 1000, amount: 5000, status: 'completed' },
-  { id: '9', date: '2024-12-21', orderNumber: 'AAY-2024-148', client: 'Green Foods', items: 'Labels', quantity: 10000, amount: 12000, status: 'completed' },
-  { id: '10', date: '2024-12-20', orderNumber: 'AAY-2024-147', client: 'Blue Sky Travel', items: 'Brochure Tri-fold', quantity: 500, amount: 7500, status: 'completed' },
-];
+import { useJobs } from '@/lib/hooks';
 
 export default function SalesReportPage() {
-  const [dateFrom, setDateFrom] = useState('2024-12-01');
-  const [dateTo, setDateTo] = useState('2024-12-31');
+  const { jobs, loading } = useJobs();
+  const [dateFrom, setDateFrom] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
+  const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [clientFilter, setClientFilter] = useState('');
 
-  const filteredSales = demoSales.filter(sale => {
-    const matchesDate = sale.date >= dateFrom && sale.date <= dateTo;
-    const matchesStatus = statusFilter === 'all' || sale.status === statusFilter;
-    const matchesClient = !clientFilter || sale.client.toLowerCase().includes(clientFilter.toLowerCase());
+  const filteredSales = jobs.filter(job => {
+    const jobDate = job.order_date.split('T')[0];
+    const matchesDate = jobDate >= dateFrom && jobDate <= dateTo;
+
+    // Map job stages to simpler status for report
+    let reportStatus = 'pending';
+    if (job.current_stage === 'delivered' || job.current_stage === 'ready') reportStatus = 'completed';
+    else if (job.current_stage === 'cancelled') reportStatus = 'cancelled';
+
+    const matchesStatus = statusFilter === 'all' || reportStatus === statusFilter;
+    const matchesClient = !clientFilter || (job.client?.name.toLowerCase().includes(clientFilter.toLowerCase()) || job.client?.company?.toLowerCase().includes(clientFilter.toLowerCase()));
+
     return matchesDate && matchesStatus && matchesClient;
-  });
+  }).map(job => ({
+    id: job.id,
+    date: job.order_date.split('T')[0],
+    orderNumber: job.job_number,
+    client: job.client?.company || job.client?.name || 'Unknown',
+    items: job.project_name,
+    quantity: job.quantity,
+    amount: job.total_amount,
+    status: (job.current_stage === 'delivered' || job.current_stage === 'ready' ? 'completed' : (job.current_stage === 'cancelled' ? 'cancelled' : 'pending')) as 'completed' | 'pending' | 'cancelled'
+  }));
 
   const totalRevenue = filteredSales.filter(s => s.status !== 'cancelled').reduce((sum, s) => sum + s.amount, 0);
   const totalOrders = filteredSales.length;
   const completedOrders = filteredSales.filter(s => s.status === 'completed').length;
-  const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / completedOrders) : 0;
+  const avgOrderValue = completedOrders > 0 ? Math.round(totalRevenue / completedOrders) : 0;
 
-  const uniqueClients = Array.from(new Set(demoSales.map(s => s.client)));
+  const uniqueClients = Array.from(new Set(filteredSales.map(s => s.client)));
 
   // Top clients by revenue
   const clientRevenue = filteredSales
@@ -200,8 +207,8 @@ export default function SalesReportPage() {
                     <td className="px-4 py-3 text-sm font-medium text-gray-900 text-right">₹{sale.amount.toLocaleString()}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`px-2 py-1 text-xs rounded-full ${sale.status === 'completed' ? 'bg-green-100 text-green-700' :
-                          sale.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                            'bg-red-100 text-red-700'
+                        sale.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                          'bg-red-100 text-red-700'
                         }`}>
                         {sale.status}
                       </span>

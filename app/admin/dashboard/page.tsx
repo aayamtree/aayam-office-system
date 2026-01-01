@@ -12,6 +12,8 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useDashboardStats, useJobs } from '@/lib/hooks';
+import NotesWidget from '@/components/dashboard/NotesWidget';
+import RemindersWidget from '@/components/dashboard/RemindersWidget';
 
 export default function AdminDashboard() {
   const { profile } = useAuth();
@@ -46,7 +48,6 @@ export default function AdminDashboard() {
   ];
 
   // Pipeline Data - Dynamic
-  // Stages: new, designing, approval, printing, finishing, quality_check, ready, dispatched, delivered
   const pipeline = [
     { label: 'In Design', count: (dashboardStats.pipeline?.designing || 0) + (dashboardStats.pipeline?.approval || 0), color: 'bg-indigo-500' },
     { label: 'Production', count: (dashboardStats.pipeline?.printing || 0) + (dashboardStats.pipeline?.finishing || 0), color: 'bg-amber-500' },
@@ -78,37 +79,37 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in pb-10">
       {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-[#1e1b4b] via-[#312e81] to-[#4338ca] rounded-2xl p-6 lg:p-8 text-white">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div className="bg-gradient-to-r from-[#1e1b4b] via-[#312e81] to-[#4338ca] rounded-2xl p-6 lg:p-8 text-white shadow-lg">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">
+            <h1 className="text-3xl lg:text-4xl font-bold tracking-tight">
               Welcome back, {profile?.full_name?.split(' ')[0] || 'Admin'}
             </h1>
-            <p className="text-indigo-200 text-sm mt-1">{dateStr}</p>
+            <p className="text-indigo-200 text-base mt-2">{dateStr}</p>
           </div>
-          <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 w-fit">
-            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse-soft"></span>
-            <span className="text-sm font-medium">Live Dashboard</span>
+          <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-5 py-2.5 w-fit border border-white/10">
+            <span className="w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse-soft"></span>
+            <span className="text-base font-medium">Live Dashboard</span>
           </div>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/15 transition-colors">
-                <div className="flex items-start justify-between mb-2">
-                  <p className="text-indigo-200 text-xs font-medium">{stat.label}</p>
-                  <Icon size={16} className="text-indigo-300" />
+              <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 hover:bg-white/15 transition-all duration-300 border border-white/5 shadow-inner">
+                <div className="flex items-start justify-between mb-3">
+                  <p className="text-indigo-100 text-sm font-medium opacity-90">{stat.label}</p>
+                  <Icon size={20} className="text-indigo-300" />
                 </div>
-                <p className="text-2xl lg:text-3xl font-bold tracking-tight">
+                <p className="text-3xl lg:text-4xl font-bold tracking-tight text-white">
                   {statsLoading ? '...' : stat.value}
                 </p>
                 {stat.subtext && (
-                  <span className={`text-xs ${stat.urgent === false ? 'text-indigo-300' : 'text-indigo-300'}`}>
+                  <span className="text-xs text-indigo-300 mt-1 block opacity-80">
                     {stat.subtext}
                   </span>
                 )}
@@ -118,144 +119,106 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Quick Actions - Mobile */}
-      <div className="lg:hidden grid grid-cols-4 gap-2">
-        <Link href="/admin/sales/orders" className="flex flex-col items-center justify-center p-4 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors">
-          <Plus size={20} />
-          <span className="text-xs mt-1.5 font-medium">Order</span>
-        </Link>
-        <Link href="/admin/cmyk-print" className="flex flex-col items-center justify-center p-4 bg-indigo-50 text-indigo-700 rounded-xl hover:bg-indigo-100 transition-colors">
-          <Printer size={20} />
-          <span className="text-xs mt-1.5 font-medium">Print</span>
-        </Link>
-        <Link href="/admin/dispatch" className="flex flex-col items-center justify-center p-4 bg-green-50 text-green-700 rounded-xl hover:bg-green-100 transition-colors">
-          <Truck size={20} />
-          <span className="text-xs mt-1.5 font-medium">Dispatch</span>
-        </Link>
-        <Link href="/admin/crm/clients" className="flex flex-col items-center justify-center p-4 bg-purple-50 text-purple-700 rounded-xl hover:bg-purple-100 transition-colors">
-          <Package size={20} />
-          <span className="text-xs mt-1.5 font-medium">Clients</span>
-        </Link>
-      </div>
-
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
 
         {/* Left Column - 2/3 width */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6 lg:space-y-8">
 
           {/* Sales Performance */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Sales Performance</h2>
-                <p className="text-sm text-gray-500">Monthly revenue</p>
+                <h2 className="text-xl font-bold text-gray-900">Sales Performance</h2>
+                <p className="text-sm text-gray-500 mt-1">Monthly revenue overview</p>
               </div>
-              <div className="flex items-center gap-1">
-                <button className="px-3 py-1.5 text-xs bg-indigo-50 text-indigo-600 rounded-lg font-medium">Monthly</button>
-                <button className="px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-50 rounded-lg">Yearly</button>
+              <div className="flex items-center gap-2">
+                <button className="px-4 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-xl font-medium transition-colors hover:bg-indigo-100">Monthly</button>
+                <button className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-xl transition-colors">Yearly</button>
               </div>
             </div>
 
-            {/* Chart (Dynamic) */}
-            <div className="flex items-end justify-between gap-2 h-40 mb-6">
+            {/* Chart */}
+            <div className="flex items-end justify-between gap-3 h-56 mb-8">
               {dashboardStats.salesPerformance?.map((item) => (
-                <div key={item.month} className="flex flex-col items-center flex-1 group">
-                  <div className="relative w-full h-full flex items-end">
+                <div key={item.month} className="flex flex-col items-center flex-1 group h-full justify-end">
+                  <div className="relative w-full flex items-end justify-center h-full">
                     {item.active && (
-                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap font-medium transform transition-all z-10 hidden group-hover:block">
+                      <div className="absolute -top-10 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transform transition-all z-10 shadow-lg">
                         {formatCurrency(item.value)}
+                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
                       </div>
                     )}
                     <div
-                      className={`w-full rounded-t-xl transition-all duration-300 ${item.active
-                        ? 'bg-gradient-to-t from-indigo-600 to-indigo-400'
+                      className={`w-full max-w-[40px] rounded-t-lg transition-all duration-300 ${item.active
+                        ? 'bg-gradient-to-t from-indigo-600 to-indigo-400 shadow-lg shadow-indigo-200'
                         : 'bg-gray-100 group-hover:bg-gray-200'
                         }`}
                       style={{
-                        // Normalize for display, assuming max value could be around 1.5x average or just simple relative height 
-                        // A simple hack: max height 100%, value relative to max or just a fixed scale factor if we knew range.
-                        // Let's rely on relative height to previous items implicitly or just set minimal 5%
                         height: `${Math.max(5, Math.min(100, (item.value / ((dashboardStats.totalRevenue || 1) / 6)) * 60))}%`
                       }}
-                      title={formatCurrency(item.value)}
                     />
                   </div>
-                  <span className={`text-xs mt-3 font-medium ${item.active ? 'text-gray-900' : 'text-gray-400'}`}>
+                  <span className={`text-xs mt-4 font-semibold ${item.active ? 'text-gray-900' : 'text-gray-400'}`}>
                     {item.month}
                   </span>
                 </div>
               ))}
               {(!dashboardStats.salesPerformance || dashboardStats.salesPerformance.length === 0) && (
-                <div className="w-full flex items-center justify-center text-gray-400 text-sm">No sales data</div>
+                <div className="w-full flex items-center justify-center text-gray-400 text-sm">No sales data available</div>
               )}
             </div>
 
-            {/* Summary */}
-            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-gray-900">{formatCurrency(dashboardStats.totalRevenue)}</span>
-                <span className="text-sm text-gray-500 font-medium">YTD Revenue</span>
+            <div className="flex items-center justify-between pt-6 border-t border-gray-100">
+              <div className="flex items-baseline gap-3">
+                <span className="text-4xl font-bold text-gray-900">{formatCurrency(dashboardStats.totalRevenue)}</span>
+                <span className="text-base text-gray-500 font-medium">YTD Revenue</span>
               </div>
-              <Link href="/admin/sales/orders" className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700 font-medium">
-                View Details
-                <ArrowUpRight size={14} />
+              <Link href="/admin/sales/orders" className="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-700 font-bold bg-indigo-50 px-4 py-2 rounded-xl transition-colors">
+                View Report
+                <ArrowUpRight size={16} />
               </Link>
             </div>
           </div>
 
-          {/* Recent Jobs (Real Data) */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          {/* Split Row: Reminders & Notes (Moved Up to Fill Gap) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 h-[500px]">
+            <RemindersWidget />
+            <NotesWidget />
+          </div>
+
+          {/* Recent Jobs */}
+          <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">Recent Jobs</h2>
-              <Link href="/admin/sales/orders" className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+              <h2 className="text-xl font-bold text-gray-900">Recent Jobs</h2>
+              <Link href="/admin/sales/orders" className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700 font-bold">
                 View All
-                <ArrowUpRight size={14} />
+                <ArrowUpRight size={16} />
               </Link>
             </div>
 
-            {/* Mobile Cards */}
-            <div className="lg:hidden space-y-3">
-              {recentJobs.length === 0 ? <p className="text-gray-500 text-center py-4">No recent jobs</p> : recentJobs.map((job) => (
-                <div key={job.id} className="p-4 bg-gray-50 rounded-xl">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-gray-900">{job.job_number}</span>
-                    <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusColor(job.current_stage)}`}>
-                      {job.current_stage}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-2">{job.project_name}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-400">{new Date(job.created_at).toLocaleDateString()}</span>
-                    <span className="font-semibold text-gray-900">{formatCurrency(job.total_amount)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Desktop Table */}
-            <div className="hidden lg:block overflow-x-auto">
+            <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="text-left border-b border-gray-100">
-                    <th className="pb-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Order</th>
-                    <th className="pb-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Project</th>
-                    <th className="pb-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Client</th>
-                    <th className="pb-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Amount</th>
-                    <th className="pb-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Status</th>
+                    <th className="pb-4 text-xs font-bold text-gray-500 uppercase tracking-wider pl-4">Order</th>
+                    <th className="pb-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Project</th>
+                    <th className="pb-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Client</th>
+                    <th className="pb-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Amount</th>
+                    <th className="pb-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right pr-4">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {recentJobs.length === 0 ? (
-                    <tr><td colSpan={5} className="text-center py-4 text-gray-500">No recent jobs found</td></tr>
+                    <tr><td colSpan={5} className="text-center py-8 text-gray-500">No recent jobs found</td></tr>
                   ) : recentJobs.map((job) => (
-                    <tr key={job.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="py-4"><span className="font-semibold text-gray-900">{job.job_number}</span></td>
-                      <td className="py-4 text-gray-600">{job.project_name}</td>
-                      <td className="py-4 text-gray-500">{job.client?.company || '-'}</td>
-                      <td className="py-4 text-right font-semibold text-gray-900">{formatCurrency(job.total_amount)}</td>
-                      <td className="py-4 text-right">
-                        <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(job.current_stage)}`}>
+                    <tr key={job.id} className="hover:bg-gray-50/80 transition-colors group">
+                      <td className="py-5 pl-4"><span className="font-bold text-indigo-900 bg-indigo-50 px-3 py-1 rounded-lg">{job.job_number}</span></td>
+                      <td className="py-5 font-medium text-gray-700">{job.project_name}</td>
+                      <td className="py-5 text-gray-600">{job.client?.company || '-'}</td>
+                      <td className="py-5 text-right font-bold text-gray-900">{formatCurrency(job.total_amount)}</td>
+                      <td className="py-5 text-right pr-4">
+                        <span className={`px-4 py-1.5 text-xs font-bold rounded-full ${getStatusColor(job.current_stage)} shadow-sm`}>
                           {job.current_stage}
                         </span>
                       </td>
@@ -268,85 +231,80 @@ export default function AdminDashboard() {
         </div>
 
         {/* Right Column - 1/3 width */}
-        <div className="space-y-6">
+        <div className="space-y-6 lg:space-y-8">
+
+          {/* Quick Actions (Moved to Top of Right Column for Easy Access) */}
+          <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
+            <h2 className="text-lg font-bold text-gray-900 mb-5">Quick Actions</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <Link href="/admin/sales/orders" className="p-4 bg-gray-900 text-white rounded-xl text-center text-sm font-semibold hover:bg-gray-800 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5">
+                + New Order
+              </Link>
+              <Link href="/admin/cmyk-print" className="p-4 bg-indigo-50 text-indigo-700 rounded-xl text-center text-sm font-semibold hover:bg-indigo-100 transition-all">
+                Print Job
+              </Link>
+              <Link href="/admin/dispatch" className="p-4 bg-green-50 text-green-700 rounded-xl text-center text-sm font-semibold hover:bg-green-100 transition-all">
+                QC Check
+              </Link>
+              <Link href="/admin/crm/clients" className="p-4 bg-purple-50 text-purple-700 rounded-xl text-center text-sm font-semibold hover:bg-purple-100 transition-all">
+                Clients
+              </Link>
+            </div>
+          </div>
 
           {/* Work Pipeline */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Work Pipeline</h2>
+          <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
+            <h2 className="text-lg font-bold text-gray-900 mb-6">Work Pipeline</h2>
 
-            {/* Donut Chart (Simulated with SVG stroke-dasharray) */}
-            {/* Note: In a real dynamic chart, we'd calculate stroke-dasharray based on percentages. 
-                For now, we'll keep the circle visual but update the center number only, as CSS pie charts are complex without a library. 
-                Replacing the fixed colored circles with a single 'Active Jobs' ring for simplicity unless using Recharts. 
-            */}
-            <div className="relative w-40 h-40 mx-auto mb-6">
-              <svg viewBox="0 0 120 120" className="w-full h-full transform -rotate-90">
-                <circle cx="60" cy="60" r="45" fill="none" stroke="#f3f4f6" strokeWidth="12" />
-                <circle cx="60" cy="60" r="45" fill="none" stroke="#4f46e5" strokeWidth="12"
+            <div className="relative w-48 h-48 mx-auto mb-8">
+              <svg viewBox="0 0 120 120" className="w-full h-full transform -rotate-90 drop-shadow-md">
+                <circle cx="60" cy="60" r="45" fill="none" stroke="#f3f4f6" strokeWidth="10" />
+                <circle cx="60" cy="60" r="45" fill="none" stroke="#4f46e5" strokeWidth="10"
                   strokeDasharray={`${(dashboardStats.activeJobs > 0 ? 283 : 0)} 283`} strokeDashoffset="0" strokeLinecap="round" className="transition-all duration-1000 ease-out" />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
-                  <span className="text-3xl font-bold text-gray-900">{dashboardStats.activeJobs}</span>
-                  <p className="text-xs text-gray-400 font-medium">Active Jobs</p>
+                  <span className="text-4xl font-extrabold text-gray-900">{dashboardStats.activeJobs}</span>
+                  <p className="text-sm text-gray-500 font-medium mt-1">Active Jobs</p>
                 </div>
               </div>
             </div>
 
-            {/* Legend */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               {pipeline.map((item) => (
-                <div key={item.label} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <span className={`w-3 h-3 rounded-full ${item.color.split(' ')[0]}`}></span>
-                    <span className="text-sm text-gray-600">{item.label}</span>
+                <div key={item.label} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-colors cursor-default">
+                  <div className="flex items-center gap-3">
+                    <span className={`w-3.5 h-3.5 rounded-full ${item.color.split(' ')[0]} shadow-sm`}></span>
+                    <span className="text-base text-gray-600 font-medium">{item.label}</span>
                   </div>
-                  <span className="font-semibold text-gray-900">{item.count}</span>
+                  <span className="font-bold text-gray-900 bg-gray-100 px-2.5 py-0.5 rounded-md text-sm">{item.count}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Needs Attention */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-2 mb-4">
-              <AlertCircle size={18} className="text-amber-500" />
-              <h2 className="text-lg font-semibold text-gray-900">Needs Attention</h2>
+          <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
+            <div className="flex items-center gap-2.5 mb-6">
+              <AlertCircle size={20} className="text-amber-500" />
+              <h2 className="text-lg font-bold text-gray-900">Needs Attention</h2>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               {alerts.map((alert) => (
-                <div key={alert.label} className={`flex items-center justify-between p-3 rounded-xl ${alert.color}`}>
-                  <div className="flex items-center gap-3">
-                    <span className={`w-8 h-8 ${alert.iconBg} rounded-lg flex items-center justify-center text-sm font-bold`}>
+                <div key={alert.label} className={`flex items-center justify-between p-4 rounded-xl ${alert.color} border border-transparent transition-all hover:border-current`}>
+                  <div className="flex items-center gap-3.5">
+                    <span className={`w-9 h-9 ${alert.iconBg} rounded-lg flex items-center justify-center text-sm font-bold shadow-sm`}>
                       {alert.icon}
                     </span>
-                    <span className="text-sm font-medium">{alert.label}</span>
+                    <span className="text-base font-medium">{alert.label}</span>
                   </div>
-                  <span className="font-bold">{alert.count}</span>
+                  <span className="font-bold text-lg">{alert.count}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Quick Actions - Desktop */}
-          <div className="hidden lg:block bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <Link href="/admin/sales/orders" className="p-4 bg-gray-900 text-white rounded-xl text-center text-sm font-medium hover:bg-gray-800 transition-colors">
-                + New Order
-              </Link>
-              <Link href="/admin/cmyk-print" className="p-4 bg-indigo-50 text-indigo-700 rounded-xl text-center text-sm font-medium hover:bg-indigo-100 transition-colors">
-                Print Job
-              </Link>
-              <Link href="/admin/dispatch" className="p-4 bg-green-50 text-green-700 rounded-xl text-center text-sm font-medium hover:bg-green-100 transition-colors">
-                QC Check
-              </Link>
-              <Link href="/admin/crm/clients" className="p-4 bg-purple-50 text-purple-700 rounded-xl text-center text-sm font-medium hover:bg-purple-100 transition-colors">
-                Clients
-              </Link>
-            </div>
-          </div>
         </div>
       </div>
     </div>

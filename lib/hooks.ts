@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import useSWR from 'swr';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from './supabase';
 import {
   Client, Vendor, Designer, Job, Invoice, Lead,
   Quotation, Dispatch, BankAccount, DesignTask, DesignProject,
   PurchaseBill, VendorPayment, PaymentReceived, POSCategory, POSProduct,
-  PaperStock, POSSale
+  PaperStock, POSSale, Note, Reminder
 } from '@/types/database';
 
 // Generic hook for fetching data
@@ -21,63 +22,55 @@ function useSupabaseQuery<T>(
   tableName: string,
   options?: UseSupabaseQueryOptions
 ) {
-  const [data, setData] = useState<T[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const stableFilter = JSON.stringify(options?.filter);
   const stableOrderBy = JSON.stringify(options?.orderBy);
+  const stableOptions = JSON.stringify(options);
 
-  const fetchData = useCallback(async () => {
-    if (!isSupabaseConfigured()) {
-      setError('Database not configured');
-      setLoading(false);
-      return;
+  // Key for SWR cache
+  const key = isSupabaseConfigured() ? [tableName, stableFilter, stableOrderBy, options?.select, options?.limit] : null;
+
+  const fetcher = async () => {
+    let query = supabase
+      .from(tableName)
+      .select(options?.select || '*');
+
+    // Apply filters
+    if (options?.filter) {
+      options.filter.forEach(f => {
+        query = query.eq(f.column, f.value);
+      });
     }
 
-    try {
-      setLoading(true);
-      let query = supabase
-        .from(tableName)
-        .select(options?.select || '*');
-
-      // Apply filters
-      if (options?.filter) {
-        options.filter.forEach(f => {
-          query = query.eq(f.column, f.value);
-        });
-      }
-
-      // Apply ordering
-      if (options?.orderBy) {
-        query = query.order(options.orderBy.column, {
-          ascending: options.orderBy.ascending ?? false
-        });
-      }
-
-      // Apply limit
-      if (options?.limit) {
-        query = query.limit(options.limit);
-      }
-
-      const { data: result, error: queryError } = await query;
-
-      if (queryError) throw queryError;
-      setData((result as unknown as T[]) || []);
-      setError(null);
-    } catch (err: any) {
-      setError(err.message);
-      setData([]);
-    } finally {
-      setLoading(false);
+    // Apply ordering
+    if (options?.orderBy) {
+      query = query.order(options.orderBy.column, {
+        ascending: options.orderBy.ascending ?? false
+      });
     }
-  }, [tableName, options?.select, options?.limit, stableFilter, stableOrderBy]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    // Apply limit
+    if (options?.limit) {
+      query = query.limit(options.limit);
+    }
 
-  return { data, loading, error, refetch: fetchData };
+    const { data: result, error: queryError } = await query;
+
+    if (queryError) throw queryError;
+    return (result as unknown as T[]) || [];
+  };
+
+  const { data, error, isLoading, mutate } = useSWR(key, fetcher, {
+    revalidateOnFocus: false, // Don't refetch on window focus (save bandwidth)
+    dedupingInterval: 5000,   // Share requests within 5 secs
+    keepPreviousData: true,   // Show previous data while fetching new data
+  });
+
+  return {
+    data: data || [],
+    loading: isLoading,
+    error: error ? (error.message || 'An error occurred') : null,
+    refetch: mutate
+  };
 }
 
 // =============================================
@@ -91,13 +84,18 @@ export function useClients() {
   const createClient = async (client: Omit<Client, 'id' | 'created_at' | 'updated_at' | 'outstanding_balance'>) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
+    const payload = { ...client } as any;
+    delete payload.outstanding_balance;
+    delete payload.client_type;
+    delete payload.credit_limit;
+
     const { data, error } = await supabase
       .from('clients')
-      .insert([{ ...client, outstanding_balance: 0 }])
+      .insert([payload])
       .select()
       .single();
 
-    if (!error) refetch();
+    if (!error) await refetch();
     return { data, error: error?.message };
   };
 
@@ -111,7 +109,7 @@ export function useClients() {
       .select()
       .single();
 
-    if (!error) refetch();
+    if (!error) await refetch();
     return { data, error: error?.message };
   };
 
@@ -123,7 +121,7 @@ export function useClients() {
       .delete()
       .eq('id', id);
 
-    if (!error) refetch();
+    if (!error) await refetch();
     return { error: error?.message };
   };
 
@@ -149,27 +147,35 @@ export function useVendors() {
   const createVendor = async (vendor: Omit<Vendor, 'id' | 'created_at' | 'updated_at' | 'outstanding_balance'>) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
+    const payload = { ...vendor } as any;
+    delete payload.outstanding_balance;
+    delete payload.payment_terms;
+
     const { data, error } = await supabase
       .from('vendors')
-      .insert([{ ...vendor, outstanding_balance: 0 }])
+      .insert([payload])
       .select()
       .single();
 
-    if (!error) refetch();
+    if (!error) await refetch();
     return { data, error: error?.message };
   };
 
   const updateVendor = async (id: string, updates: Partial<Vendor>) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
+    const payload = { ...updates } as any;
+    delete payload.outstanding_balance;
+    delete payload.payment_terms;
+
     const { data, error } = await supabase
       .from('vendors')
-      .update(updates)
+      .update(payload)
       .eq('id', id)
       .select()
       .single();
 
-    if (!error) refetch();
+    if (!error) await refetch();
     return { data, error: error?.message };
   };
 
@@ -181,7 +187,7 @@ export function useVendors() {
       .delete()
       .eq('id', id);
 
-    if (!error) refetch();
+    if (!error) await refetch();
     return { error: error?.message };
   };
 
@@ -213,7 +219,7 @@ export function useDesigners() {
       .select()
       .single();
 
-    if (!error) refetch();
+    if (!error) await refetch();
     return { data, error: error?.message };
   };
 
@@ -227,7 +233,7 @@ export function useDesigners() {
       .select()
       .single();
 
-    if (!error) refetch();
+    if (!error) await refetch();
     return { data, error: error?.message };
   };
 
@@ -239,7 +245,7 @@ export function useDesigners() {
       .delete()
       .eq('id', id);
 
-    if (!error) refetch();
+    if (!error) await refetch();
     return { error: error?.message };
   };
 
@@ -270,9 +276,11 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
     // Get next job number
     const { data: numberData } = await supabase.rpc('get_next_number', { counter_id: 'job' });
 
+    const newJob = { ...job, job_number: numberData || `AAY-${Date.now()}` };
+
     const { data, error } = await supabase
       .from('jobs')
-      .insert([{ ...job, job_number: numberData || `AAY-${Date.now()}` }])
+      .insert([newJob])
       .select()
       .single();
 
@@ -1225,5 +1233,183 @@ export function usePOSProducts() {
     updateProduct,
     deleteProduct,
     refetch: () => { refetchCategories(); refetchProducts(); }
+  };
+}
+
+// =============================================
+// NOES HOOK (Google Keep Style)
+// =============================================
+export function useNotes() {
+  const { data, loading, error, refetch } = useSupabaseQuery<Note>('notes', {
+    orderBy: { column: 'created_at', ascending: false }
+  });
+
+  const createNote = async (note: Omit<Note, 'id' | 'created_at' | 'updated_at'>) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const { data: user } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase
+      .from('notes')
+      .insert([{ ...note, user_id: user.user?.id }])
+      .select()
+      .single();
+
+    if (!error) await refetch();
+    return { data, error: error?.message };
+  };
+
+  const updateNote = async (id: string, updates: Partial<Note>) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const { data, error } = await supabase
+      .from('notes')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (!error) await refetch();
+    return { data, error: error?.message };
+  };
+
+  const deleteNote = async (id: string) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const { error } = await supabase
+      .from('notes')
+      .delete()
+      .eq('id', id);
+
+    if (!error) await refetch();
+    return { error: error?.message };
+  };
+
+  return {
+    notes: data,
+    loading,
+    error,
+    createNote,
+    updateNote,
+    deleteNote
+  };
+}
+
+// =============================================
+// REMINDERS HOOK
+// =============================================
+export function useReminders() {
+  const { data, loading, error, refetch } = useSupabaseQuery<Reminder>('reminders', {
+    orderBy: { column: 'due_date', ascending: true }
+  });
+
+  const createReminder = async (reminder: Omit<Reminder, 'id' | 'created_at' | 'updated_at'>) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const { data: user } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase
+      .from('reminders')
+      .insert([{ ...reminder, user_id: user.user?.id }])
+      .select()
+      .single();
+
+    if (!error) await refetch();
+    return { data, error: error?.message };
+  };
+
+  const updateReminder = async (id: string, updates: Partial<Reminder>) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const { data, error } = await supabase
+      .from('reminders')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (!error) await refetch();
+    return { data, error: error?.message };
+  };
+
+  const deleteReminder = async (id: string) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const { error } = await supabase
+      .from('reminders')
+      .delete()
+      .eq('id', id);
+
+    if (!error) await refetch();
+    return { error: error?.message };
+  };
+
+  return {
+    reminders: data,
+    loading,
+    error,
+    createReminder,
+    updateReminder,
+    deleteReminder
+  };
+}
+// =============================================
+// EXPENSES HOOK
+// =============================================
+export function useExpenses() {
+  const { data, loading, error, refetch } = useSupabaseQuery<import('@/types/database').Expense>('expenses', {
+    select: '*, bank_account:bank_accounts(*)',
+    orderBy: { column: 'expense_date', ascending: false }
+  });
+
+  const createExpense = async (expense: Omit<import('@/types/database').Expense, 'id' | 'created_at' | 'updated_at' | 'expense_number' | 'bank_account'>) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const { data: numberData } = await supabase.rpc('get_next_number', { counter_id: 'expense' });
+
+    const { data, error } = await supabase
+      .from('expenses')
+      .insert([{ ...expense, expense_number: numberData || `EXP-${Date.now()}` }])
+      .select()
+      .single();
+
+    if (!error) refetch();
+    return { data, error: error?.message };
+  };
+
+  const updateExpense = async (id: string, updates: Partial<import('@/types/database').Expense>) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const { data, error } = await supabase
+      .from('expenses')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (!error) refetch();
+    return { data, error: error?.message };
+  };
+
+  const deleteExpense = async (id: string) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const { error } = await supabase
+      .from('expenses')
+      .delete()
+      .eq('id', id);
+
+    if (!error) refetch();
+    return { error: error?.message };
+  };
+
+  return {
+    expenses: data,
+    loading,
+    error,
+    refetch,
+    createExpense,
+    updateExpense,
+    deleteExpense
   };
 }

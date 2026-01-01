@@ -36,7 +36,16 @@ const DEMO_USER: Profile = {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(() => {
+    // Try to load from local storage immediately to prevent flicker
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('aayam_fallback_profile');
+      if (cached) {
+        try { return JSON.parse(cached); } catch { }
+      }
+    }
+    return null;
+  });
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isConfigured] = useState<boolean>(isSupabaseConfigured());
@@ -50,18 +59,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('id', userId)
         .single();
 
-      if (error) {
-        console.error('Error fetching profile:', error);
-        // If profile doesn't exist, create a basic one
+      if (error || !data) {
+        console.error('Error fetching profile, attempting to create default:', error);
+
         if (userEmail) {
-          setProfile({
+          // Check if we have a cached fallback in local storage
+          const cached = localStorage.getItem('aayam_fallback_profile');
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              if (parsed.id === userId) {
+                setProfile(parsed);
+                setLoading(false);
+                return;
+              }
+            } catch (e) { }
+          }
+
+          const newProfile: Profile = {
             id: userId,
             email: userEmail,
             full_name: userEmail.split('@')[0].toUpperCase(),
-            role: 'admin',
+            role: 'admin', // Default role for recovered users
             is_active: true,
             created_at: new Date().toISOString(),
-          });
+          };
+
+          // Save for resilience
+          localStorage.setItem('aayam_fallback_profile', JSON.stringify(newProfile));
+
+          // Attempt to fix DB
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .upsert([newProfile]) // Upsert is safer
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error('Failed to auto-create profile:', insertError);
+            // Fallback to local state ONLY if DB fails, so user can at least work
+            setProfile(newProfile);
+          } else {
+            // If insert worked, we are good.
+            setProfile(newProfile);
+          }
+        } else {
+          setProfile(null);
         }
       } else {
         setProfile(data);
@@ -84,17 +127,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let mounted = true;
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return;
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id, session.user.email);
-      } else {
+    // Get initial session with timeout
+    const initSession = async () => {
+      try {
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Auth Timeout')), 2000)
+        );
+        const sessionPromise = supabase.auth.getSession();
+
+        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+
+        if (!mounted) return;
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          fetchProfile(session.user.id, session.user.email);
+        } else {
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Session init error:', err);
+        if (mounted) setLoading(false);
+      }
+    };
+
+    initSession();
+    // Safety timeout (5 seconds)
+    const safetyTimeout = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn('Auth check timed out, forcing load completion');
         setLoading(false);
       }
-    });
+    }, 5000);
 
     // Listen for auth changes - but don't cause flickering
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -116,6 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false;
+      clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
   }, [isConfigured]);
@@ -182,6 +248,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     await supabase.auth.signOut();
+    localStorage.removeItem('aayam_fallback_profile');
     setUser(null);
     setProfile(null);
     setSession(null);

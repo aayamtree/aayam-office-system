@@ -5,33 +5,55 @@
  * Opens WhatsApp with pre-filled message after confirmation
  * Shows phone number to user before sending
  */
-export const shareOnWhatsApp = (phone: string, message: string, clientName?: string) => {
+export const shareOnWhatsApp = (phone: string, message: string, clientName?: string, altPhone?: string) => {
   // Remove any non-numeric characters from phone
   const cleanPhone = phone.replace(/\D/g, '');
-  
-  // Add India country code if not present
-  const fullPhone = cleanPhone.startsWith('91') ? cleanPhone : `91${cleanPhone}`;
-  
-  // Format phone for display
-  const displayPhone = cleanPhone.length === 10 
-    ? `+91 ${cleanPhone.slice(0,5)} ${cleanPhone.slice(5)}`
-    : `+${fullPhone}`;
-  
-  // Show confirmation with phone number
-  const confirmMessage = clientName 
-    ? `Send WhatsApp message to:\n\n👤 ${clientName}\n📱 ${displayPhone}\n\nClick OK to open WhatsApp`
-    : `Send WhatsApp message to:\n\n📱 ${displayPhone}\n\nClick OK to open WhatsApp`;
-  
-  if (!confirm(confirmMessage)) {
-    return; // User cancelled
+  const cleanAltPhone = altPhone ? altPhone.replace(/\D/g, '') : null;
+
+  // Choose which phone to use
+  let selectedPhone = cleanPhone;
+
+  if (cleanAltPhone) {
+    const choice = prompt(
+      `Select Phone Number for ${clientName || 'Client'}:\n` +
+      `1. Main: ${cleanPhone}\n` +
+      `2. Alt: ${cleanAltPhone}\n\n` +
+      `Type 1 or 2 and click OK`
+    );
+
+    if (choice === '2') {
+      selectedPhone = cleanAltPhone;
+    } else if (choice !== '1' && choice !== null && choice !== '') {
+      // If user typed something weird but didn't cancel, default to main but warn? 
+      // Nah, just default to main or return if cancelled
+      if (confirm("Invalid choice. Send to Main Number?")) {
+        selectedPhone = cleanPhone;
+      } else {
+        return;
+      }
+    } else if (choice === null) {
+      return; // Cancelled
+    }
+  } else {
+    // Single number confirmation
+    const displayPhone = cleanPhone.length === 10
+      ? `+91 ${cleanPhone.slice(0, 5)} ${cleanPhone.slice(5)}`
+      : `+${cleanPhone}`;
+
+    if (!confirm(`Send WhatsApp message to:\n${clientName ? `👤 ${clientName}\n` : ''}📱 ${displayPhone}`)) {
+      return;
+    }
   }
-  
+
+  // Add India country code if not present
+  const fullPhone = selectedPhone.startsWith('91') ? selectedPhone : `91${selectedPhone}`;
+
   // Encode message for URL
   const encodedMessage = encodeURIComponent(message);
-  
+
   // Create WhatsApp URL
   const whatsappUrl = `https://wa.me/${fullPhone}?text=${encodedMessage}`;
-  
+
   // Open in new tab/window
   window.open(whatsappUrl, '_blank');
 };
@@ -65,7 +87,7 @@ interface InvoiceShareData {
 export const getInvoiceMessage = (data: InvoiceShareData): string => {
   const balance = data.totalAmount - data.paidAmount;
   const status = balance === 0 ? '✅ PAID' : `⏳ Balance Due: Rs. ${balance.toLocaleString('en-IN')}`;
-  
+
   return `📄 *INVOICE*
 
 *${data.invoiceNumber}*
@@ -110,7 +132,7 @@ export const getJobStatusMessage = (data: JobShareData): string => {
     'dispatched': '🚚',
     'delivered': '📦',
   };
-  
+
   return `📋 *JOB UPDATE*
 
 *${data.jobNumber}*
@@ -151,13 +173,13 @@ export const getDispatchMessage = (data: DispatchShareData): string => {
     'in_transit': '🛣️',
     'delivered': '✅',
   };
-  
+
   let trackingInfo = '';
   if (data.transporterName) trackingInfo += `\n🚛 *Transporter:* ${data.transporterName}`;
   if (data.vehicleNumber) trackingInfo += `\n🚗 *Vehicle:* ${data.vehicleNumber}`;
   if (data.driverPhone) trackingInfo += `\n📱 *Driver:* ${data.driverPhone}`;
   if (data.trackingNumber) trackingInfo += `\n🔢 *Tracking:* ${data.trackingNumber}`;
-  
+
   return `🚚 *DISPATCH UPDATE*
 
 *${data.dispatchNumber}*
@@ -188,7 +210,7 @@ interface PaymentReminderData {
 
 export const getPaymentReminderMessage = (data: PaymentReminderData): string => {
   const balance = data.totalAmount - data.paidAmount;
-  
+
   return `🔔 *PAYMENT REMINDER*
 
 Dear ${data.clientName},

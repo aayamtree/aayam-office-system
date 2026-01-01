@@ -14,33 +14,53 @@ interface Transaction {
   paymentMode: string;
 }
 
-const demoTransactions: Transaction[] = [
-  { id: '1', date: '2024-12-25', type: 'income', category: 'Sales', description: 'Order AAY-2024-156', amount: 15000, paymentMode: 'Bank Transfer' },
-  { id: '2', date: '2024-12-25', type: 'expense', category: 'Raw Material', description: 'Paper purchase', amount: 25000, paymentMode: 'Bank Transfer' },
-  { id: '3', date: '2024-12-24', type: 'income', category: 'Sales', description: 'Order AAY-2024-155', amount: 3500, paymentMode: 'Cash' },
-  { id: '4', date: '2024-12-24', type: 'expense', category: 'Salary', description: 'Staff salary', amount: 45000, paymentMode: 'Bank Transfer' },
-  { id: '5', date: '2024-12-24', type: 'income', category: 'Sales', description: 'Order AAY-2024-154', amount: 75000, paymentMode: 'UPI' },
-  { id: '6', date: '2024-12-23', type: 'expense', category: 'Utilities', description: 'Electricity bill', amount: 8500, paymentMode: 'Bank Transfer' },
-  { id: '7', date: '2024-12-23', type: 'income', category: 'Sales', description: 'Order AAY-2024-153', amount: 4500, paymentMode: 'Cash' },
-  { id: '8', date: '2024-12-23', type: 'expense', category: 'Maintenance', description: 'Machine repair', amount: 12000, paymentMode: 'Cash' },
-  { id: '9', date: '2024-12-22', type: 'income', category: 'Sales', description: 'Order AAY-2024-152', amount: 45000, paymentMode: 'Bank Transfer' },
-  { id: '10', date: '2024-12-22', type: 'expense', category: 'Raw Material', description: 'Ink purchase', amount: 18000, paymentMode: 'Bank Transfer' },
-  { id: '11', date: '2024-12-21', type: 'income', category: 'Retail', description: 'POS Sales', amount: 8500, paymentMode: 'Cash' },
-  { id: '12', date: '2024-12-21', type: 'expense', category: 'Transport', description: 'Delivery charges', amount: 3500, paymentMode: 'Cash' },
-];
-
-const expenseCategories = ['Raw Material', 'Salary', 'Utilities', 'Maintenance', 'Transport', 'Other'];
+import { useInvoices, useExpenses, useVendorPayments } from '@/lib/hooks';
 
 export default function FinanceReportPage() {
-  const [dateFrom, setDateFrom] = useState('2024-12-01');
-  const [dateTo, setDateTo] = useState('2024-12-31');
+  const { invoices } = useInvoices();
+  const { expenses } = useExpenses();
+  const { vendorPayments } = useVendorPayments();
+
+  const [dateFrom, setDateFrom] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
+  const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
-  const filteredTransactions = demoTransactions.filter(t => {
+  // Combine logic
+  const transactions: Transaction[] = [
+    ...(invoices?.map(inv => ({
+      id: inv.id,
+      date: inv.invoice_date?.split('T')[0] || inv.created_at.split('T')[0],
+      type: 'income' as const,
+      category: 'Sales',
+      description: `Invoice ${inv.invoice_number}`,
+      amount: inv.total_amount,
+      paymentMode: 'Bank Transfer' // Placeholder as invoice doesn't store this directly usually
+    })) || []),
+    ...(expenses?.map(exp => ({
+      id: exp.id,
+      date: exp.expense_date.split('T')[0],
+      type: 'expense' as const,
+      category: exp.category,
+      description: exp.description || exp.category,
+      amount: exp.amount,
+      paymentMode: exp.payment_mode || 'Unknown'
+    })) || []),
+    ...(vendorPayments?.map(vp => ({
+      id: vp.id,
+      date: vp.payment_date.split('T')[0],
+      type: 'expense' as const,
+      category: 'Vendor Payment',
+      description: `Payment ${vp.payment_number} to ${vp.vendor?.company || vp.vendor?.name || 'Unknown'}`,
+      amount: vp.amount,
+      paymentMode: vp.payment_mode || 'Unknown'
+    })) || [])
+  ];
+
+  const filteredTransactions = transactions.filter(t => {
     const matchesDate = t.date >= dateFrom && t.date <= dateTo;
     const matchesType = typeFilter === 'all' || t.type === typeFilter;
     return matchesDate && matchesType;
-  });
+  }).sort((a, b) => b.date.localeCompare(a.date));
 
   const totalIncome = filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
   const totalExpense = filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
@@ -57,9 +77,8 @@ export default function FinanceReportPage() {
 
   const expenseData = Object.entries(expenseBreakdown).sort((a, b) => b[1] - a[1]);
 
-  // Payment mode breakdown
+  // Payment mode breakdown - mostly relevant for income/expense
   const paymentBreakdown = filteredTransactions
-    .filter(t => t.type === 'income')
     .reduce((acc, t) => {
       acc[t.paymentMode] = (acc[t.paymentMode] || 0) + t.amount;
       return acc;
@@ -146,21 +165,21 @@ export default function FinanceReportPage() {
             <TrendingUp size={18} />
             <span className="text-sm opacity-90">Total Income</span>
           </div>
-          <p className="text-2xl font-bold">₹{(totalIncome/1000).toFixed(1)}K</p>
+          <p className="text-2xl font-bold">₹{(totalIncome / 1000).toFixed(1)}K</p>
         </div>
         <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <TrendingDown size={18} />
             <span className="text-sm opacity-90">Total Expense</span>
           </div>
-          <p className="text-2xl font-bold">₹{(totalExpense/1000).toFixed(1)}K</p>
+          <p className="text-2xl font-bold">₹{(totalExpense / 1000).toFixed(1)}K</p>
         </div>
         <div className={`bg-gradient-to-br ${netProfit >= 0 ? 'from-blue-500 to-blue-600' : 'from-orange-500 to-orange-600'} rounded-2xl p-4 text-white`}>
           <div className="flex items-center gap-2 mb-2">
             <IndianRupee size={18} />
             <span className="text-sm opacity-90">Net Profit</span>
           </div>
-          <p className="text-2xl font-bold">₹{(netProfit/1000).toFixed(1)}K</p>
+          <p className="text-2xl font-bold">₹{(netProfit / 1000).toFixed(1)}K</p>
         </div>
         <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
@@ -193,17 +212,15 @@ export default function FinanceReportPage() {
                   <tr key={t.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm text-gray-600">{t.date}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        t.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                      }`}>
+                      <span className={`px-2 py-1 text-xs rounded-full ${t.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        }`}>
                         {t.type}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">{t.category}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{t.description}</td>
-                    <td className={`px-4 py-3 text-sm font-medium text-right ${
-                      t.type === 'income' ? 'text-green-600' : 'text-red-600'
-                    }`}>
+                    <td className={`px-4 py-3 text-sm font-medium text-right ${t.type === 'income' ? 'text-green-600' : 'text-red-600'
+                      }`}>
                       {t.type === 'income' ? '+' : '-'}₹{t.amount.toLocaleString()}
                     </td>
                   </tr>
@@ -225,7 +242,7 @@ export default function FinanceReportPage() {
                     <span className="font-medium text-gray-900">₹{amount.toLocaleString()}</span>
                   </div>
                   <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className={`h-full ${getExpenseColor(index)} rounded-full`}
                       style={{ width: `${(amount / totalExpense) * 100}%` }}
                     />

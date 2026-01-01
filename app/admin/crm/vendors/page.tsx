@@ -3,28 +3,14 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Search, Plus, Phone, Mail, MapPin, Edit, Trash2, Eye, X, ArrowLeft, Building2, Loader2, Package } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-
-interface Vendor {
-  id: string;
-  name: string;
-  company: string;
-  email: string;
-  phone: string;
-  gstin: string;
-  address: string;
-  city: string;
-  state: string;
-  category: string;
-  is_active: boolean;
-  created_at: string;
-}
+import { useVendors } from '@/lib/hooks';
+import { Vendor } from '@/types/database';
 
 const categories = ['Paper', 'Ink & Toner', 'Binding', 'Lamination', 'Machinery', 'Packaging', 'Other'];
 
 export default function VendorsPage() {
-  const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { vendors, loading, createVendor, updateVendor, deleteVendor } = useVendors();
+
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -35,26 +21,8 @@ export default function VendorsPage() {
   const [isEditing, setIsEditing] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', category: 'Paper', is_active: true,
+    name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', category: 'Paper', is_active: true, payment_terms: '',
   });
-
-  const fetchVendors = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase.from('vendors').select('*').order('created_at', { ascending: false });
-      if (error) {
-        console.error('Supabase error:', error);
-      }
-      setVendors(data || []);
-    } catch (error) {
-      console.error('Error fetching vendors:', error);
-      setVendors([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchVendors(); }, []);
 
   const filteredVendors = vendors.filter(vendor => {
     const matchesSearch = vendor.name?.toLowerCase().includes(searchQuery.toLowerCase()) || vendor.company?.toLowerCase().includes(searchQuery.toLowerCase()) || vendor.phone?.includes(searchQuery);
@@ -63,18 +31,38 @@ export default function VendorsPage() {
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-  const handleAddNew = () => { setFormData({ name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', category: 'Paper', is_active: true }); setIsEditing(false); setSelectedVendor(null); setShowModal(true); };
+  const handleAddNew = () => {
+    setFormData({ name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', category: 'Paper', is_active: true, payment_terms: '' });
+    setIsEditing(false);
+    setSelectedVendor(null);
+    setShowModal(true);
+  };
 
-  const handleEdit = (vendor: Vendor) => { setFormData({ name: vendor.name || '', company: vendor.company || '', email: vendor.email || '', phone: vendor.phone || '', gstin: vendor.gstin || '', address: vendor.address || '', city: vendor.city || '', state: vendor.state || 'Gujarat', category: vendor.category || 'Paper', is_active: vendor.is_active }); setSelectedVendor(vendor); setIsEditing(true); setShowModal(true); };
+  const handleEdit = (vendor: Vendor) => {
+    setFormData({
+      name: vendor.name || '',
+      company: vendor.company || '',
+      email: vendor.email || '',
+      phone: vendor.phone || '',
+      gstin: vendor.gstin || '',
+      address: vendor.address || '',
+      city: vendor.city || '',
+      state: vendor.state || 'Gujarat',
+      category: vendor.category || 'Paper',
+      is_active: vendor.is_active,
+      payment_terms: String(vendor.payment_terms || '')
+    });
+    setSelectedVendor(vendor);
+    setIsEditing(true);
+    setShowModal(true);
+  };
 
   const handleView = (vendor: Vendor) => { setSelectedVendor(vendor); setShowViewModal(true); };
 
   const handleDelete = async (id: string) => {
     if (confirm('Delete this vendor?')) {
       try {
-        const { error } = await supabase.from('vendors').delete().eq('id', id);
-        if (error) throw error;
-        setVendors(vendors.filter(v => v.id !== id));
+        await deleteVendor(id);
       } catch (error) { console.error('Error:', error); alert('Error deleting'); }
     }
   };
@@ -84,17 +72,19 @@ export default function VendorsPage() {
     setSaving(true);
     try {
       if (isEditing && selectedVendor) {
-        const { error } = await supabase.from('vendors').update(formData).eq('id', selectedVendor.id);
-        if (error) throw error;
-        setVendors(vendors.map(v => v.id === selectedVendor.id ? { ...v, ...formData } : v));
+        const { error } = await updateVendor(selectedVendor.id, formData as any);
+        if (error) throw new Error(error);
       } else {
-        const { data, error } = await supabase.from('vendors').insert([formData]).select().single();
-        if (error) throw error;
-        if (data) setVendors([data, ...vendors]);
+        const { error } = await createVendor(formData as any);
+        if (error) throw new Error(error);
       }
       setShowModal(false); setIsEditing(false); setSelectedVendor(null);
-    } catch (error) { console.error('Error:', error); alert('Error saving'); }
-    finally { setSaving(false); }
+    } catch (error: any) {
+      console.error('Error:', error);
+      alert(error.message || 'Error saving');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const getCategoryColor = (cat: string) => {
@@ -130,7 +120,7 @@ export default function VendorsPage() {
                 <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center"><span className="text-orange-600 font-semibold">{vendor.name?.charAt(0)}</span></div>
                 <div><h3 className="font-semibold">{vendor.name}</h3><p className="text-sm text-gray-500">{vendor.company}</p></div>
               </div>
-              <span className={`px-2 py-1 text-xs rounded-full ${getCategoryColor(vendor.category)}`}>{vendor.category}</span>
+              <span className={`px-2 py-1 text-xs rounded-full ${getCategoryColor(vendor.category || 'Paper')}`}>{vendor.category}</span>
             </div>
             <div className="space-y-2 text-sm text-gray-500 mb-3"><div className="flex items-center gap-2"><Phone size={14} /><span>{vendor.phone}</span></div></div>
             <div className="flex items-center justify-end gap-2 pt-3 border-t">
@@ -150,7 +140,7 @@ export default function VendorsPage() {
               <tr key={vendor.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4"><div className="flex items-center gap-3"><div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center"><span className="text-orange-600 font-semibold">{vendor.name?.charAt(0)}</span></div><div><p className="font-medium">{vendor.name}</p><p className="text-sm text-gray-500">{vendor.company}</p></div></div></td>
                 <td className="px-6 py-4"><p>{vendor.phone}</p><p className="text-sm text-gray-500">{vendor.email}</p></td>
-                <td className="px-6 py-4"><span className={`px-2 py-1 text-xs rounded-full ${getCategoryColor(vendor.category)}`}>{vendor.category}</span></td>
+                <td className="px-6 py-4"><span className={`px-2 py-1 text-xs rounded-full ${getCategoryColor(vendor.category || 'Paper')}`}>{vendor.category}</span></td>
                 <td className="px-6 py-4"><span className={`px-2 py-1 text-xs rounded-full ${vendor.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{vendor.is_active ? 'Active' : 'Inactive'}</span></td>
                 <td className="px-6 py-4"><div className="flex items-center justify-end gap-1"><button onClick={() => handleView(vendor)} className="p-2 hover:bg-gray-100 rounded-lg"><Eye size={18} className="text-gray-500" /></button><button onClick={() => handleEdit(vendor)} className="p-2 hover:bg-gray-100 rounded-lg"><Edit size={18} className="text-gray-500" /></button><button onClick={() => handleDelete(vendor.id)} className="p-2 hover:bg-red-50 rounded-lg"><Trash2 size={18} className="text-red-500" /></button></div></td>
               </tr>
@@ -180,7 +170,7 @@ export default function VendorsPage() {
           <div className="bg-white rounded-2xl w-full max-w-lg">
             <div className="flex items-center justify-between p-4 border-b"><h2 className="text-lg font-semibold">Vendor Details</h2><button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button></div>
             <div className="p-4 space-y-4">
-              <div className="flex items-center gap-4"><div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center"><span className="text-orange-600 font-bold text-2xl">{selectedVendor.name?.charAt(0)}</span></div><div><h3 className="text-xl font-semibold">{selectedVendor.name}</h3><p className="text-gray-500">{selectedVendor.company}</p><span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${getCategoryColor(selectedVendor.category)}`}>{selectedVendor.category}</span></div></div>
+              <div className="flex items-center gap-4"><div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center"><span className="text-orange-600 font-bold text-2xl">{selectedVendor.name?.charAt(0)}</span></div><div><h3 className="text-xl font-semibold">{selectedVendor.name}</h3><p className="text-gray-500">{selectedVendor.company}</p><span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${getCategoryColor(selectedVendor.category || 'Paper')}`}>{selectedVendor.category}</span></div></div>
               <div className="space-y-3 p-4 bg-gray-50 rounded-xl"><div className="flex items-center gap-3"><Phone size={16} className="text-gray-400" /><span>{selectedVendor.phone}</span></div>{selectedVendor.email && <div className="flex items-center gap-3"><Mail size={16} className="text-gray-400" /><span>{selectedVendor.email}</span></div>}{selectedVendor.address && <div className="flex items-center gap-3"><MapPin size={16} className="text-gray-400" /><span>{selectedVendor.address}, {selectedVendor.city}</span></div>}{selectedVendor.gstin && <div className="flex items-center gap-3"><Building2 size={16} className="text-gray-400" /><span>GSTIN: {selectedVendor.gstin}</span></div>}</div>
               <div className="flex gap-3"><button onClick={() => { setShowViewModal(false); handleEdit(selectedVendor); }} className="flex-1 px-4 py-2.5 border rounded-xl">Edit</button><button onClick={() => setShowViewModal(false)} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl">Close</button></div>
             </div>

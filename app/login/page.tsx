@@ -18,9 +18,9 @@ export default function LoginPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (!loading && profile) {
-      window.location.href = '/admin/dashboard';
+      router.push('/admin/dashboard');
     }
-  }, [profile, loading]);
+  }, [profile, loading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,11 +31,15 @@ export default function LoginPage() {
       const { error: signInError } = await signIn(email, password);
 
       if (signInError) {
+        console.error('Sign in error:', signInError);
         setError(signInError);
       } else {
-        router.push('/admin/dashboard');
+        console.log('Sign in successful, redirecting...');
+        // Force hard navigation if router.push fails
+        window.location.href = '/admin/dashboard';
       }
     } catch (err: any) {
+      console.error('Login exception:', err);
       setError(err.message || 'An error occurred');
     } finally {
       setIsLoading(false);
@@ -65,8 +69,18 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-purple-100">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-purple-100 gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <p className="text-gray-500 text-sm">Initializing...</p>
+        <button
+          onClick={() => {
+            localStorage.clear();
+            window.location.reload();
+          }}
+          className="text-xs text-indigo-600 hover:underline mt-4"
+        >
+          Stuck? Click to reset application
+        </button>
       </div>
     );
   }
@@ -206,9 +220,14 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-sm text-gray-500 mt-6">
-          © 2024 Aayam Creative. All rights reserved.
-        </p>
+        <div className="text-center mt-6 space-y-2">
+          <p className="text-sm text-gray-500">
+            © 2024 Aayam Creative. All rights reserved.
+          </p>
+          <a href="/emergency" className="text-xs text-red-500 hover:text-red-700 hover:underline">
+            Emergency Access (Debug)
+          </a>
+        </div>
       </div>
     </div>
   );

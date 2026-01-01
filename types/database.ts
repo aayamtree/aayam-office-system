@@ -122,33 +122,33 @@ export interface Job extends BaseEntity {
   client_id?: string;
   vendor_id?: string;
   designer_id?: string;
-  
+
   job_type?: string;
   description?: string;
   quantity: number;
-  
+
   quote_per_piece: number;
   subtotal: number;
   gst_rate: number;
   gst_amount: number;
   discount_amount: number;
   total_amount: number;
-  
+
   payment_status: PaymentStatus;
   amount_received: number;
-  
+
   order_date: string;
   client_deadline?: string;
   internal_deadline?: string;
   completed_date?: string;
-  
+
   current_stage: JobStatus;
   priority: PriorityLevel;
-  
+
   files: FileAttachment[];
   notes?: string;
   created_by?: string;
-  
+
   // Joined data
   client?: Client;
   vendor?: Vendor;
@@ -169,25 +169,25 @@ export interface DesignTask extends BaseEntity {
   task_number: string;
   title: string;
   description?: string;
-  
+
   job_id?: string;
   client_id?: string;
   assigned_to?: string;
-  
+
   status: TaskStatus;
   priority: PriorityLevel;
-  
+
   start_date?: string;
   deadline?: string;
   completed_date?: string;
   estimated_hours: number;
   actual_hours: number;
-  
+
   attachments: FileAttachment[];
   drive_link?: string;
-  
+
   created_by?: string;
-  
+
   // Joined data
   job?: Job;
   client?: Client;
@@ -210,20 +210,20 @@ export interface DesignProject extends BaseEntity {
   project_number: string;
   name: string;
   description?: string;
-  
+
   client_id?: string;
   team_members: string[];
-  
+
   status: ProjectStatus;
   progress: number;
-  
+
   start_date?: string;
   end_date?: string;
-  
+
   drive_link?: string;
-  
+
   created_by?: string;
-  
+
   // Joined data
   client?: Client;
   tasks?: DesignTask[];
@@ -232,10 +232,10 @@ export interface DesignProject extends BaseEntity {
 // Invoice
 export interface Invoice extends BaseEntity {
   invoice_number: string;
-  
+
   client_id?: string;
   job_id?: string;
-  
+
   subtotal: number;
   cgst_amount: number;
   sgst_amount: number;
@@ -243,19 +243,19 @@ export interface Invoice extends BaseEntity {
   total_tax: number;
   discount_amount: number;
   total_amount: number;
-  
+
   payment_status: PaymentStatus;
   amount_paid: number;
   balance_due: number;
-  
+
   invoice_date: string;
   due_date?: string;
-  
+
   notes?: string;
   terms?: string;
-  
+
   created_by?: string;
-  
+
   // Joined data
   client?: Client;
   job?: Job;
@@ -277,22 +277,22 @@ export interface InvoiceItem {
 // Payment Received
 export interface PaymentReceived extends BaseEntity {
   payment_number: string;
-  
+
   client_id?: string;
   invoice_id?: string;
   job_id?: string;
-  
+
   amount: number;
   payment_mode: PaymentMode;
   payment_date: string;
-  
+
   bank_account_id?: string;
   reference_number?: string;
-  
+
   notes?: string;
-  
+
   received_by?: string;
-  
+
   // Joined data
   client?: Client;
   bank_account?: BankAccount;
@@ -302,28 +302,28 @@ export interface PaymentReceived extends BaseEntity {
 export interface PurchaseBill extends BaseEntity {
   bill_number: string;
   vendor_bill_number?: string;
-  
+
   vendor_id?: string;
   job_id?: string;
-  
+
   product_type?: string;
   description?: string;
   quantity: number;
   rate: number;
-  
+
   subtotal: number;
   gst_rate: number;
   gst_amount: number;
   total_amount: number;
-  
+
   payment_status: PaymentStatus;
   amount_paid: number;
-  
+
   bill_date: string;
   due_date?: string;
-  
+
   created_by?: string;
-  
+
   // Joined data
   vendor?: Vendor;
   job?: Job;
@@ -332,21 +332,21 @@ export interface PurchaseBill extends BaseEntity {
 // Vendor Payment
 export interface VendorPayment extends BaseEntity {
   payment_number: string;
-  
+
   vendor_id?: string;
   purchase_bill_id?: string;
-  
+
   amount: number;
   payment_mode: PaymentMode;
   payment_date: string;
-  
+
   bank_account_id?: string;
   reference_number?: string;
-  
+
   notes?: string;
-  
+
   paid_by?: string;
-  
+
   // Joined data
   vendor?: Vendor;
   bank_account?: BankAccount;
@@ -359,10 +359,10 @@ export interface BankAccount extends BaseEntity {
   ifsc_code?: string;
   branch?: string;
   account_type: 'current' | 'savings' | 'od' | 'cc';
-  
+
   opening_balance: number;
   current_balance: number;
-  
+
   is_default: boolean;
   is_active: boolean;
 }
@@ -371,19 +371,19 @@ export interface BankAccount extends BaseEntity {
 export interface BankTransaction {
   id: string;
   bank_account_id: string;
-  
+
   transaction_type: 'inflow' | 'outflow';
   amount: number;
-  
+
   reference_type?: string;
   reference_id?: string;
-  
+
   description?: string;
   reference_number?: string;
   transaction_date: string;
-  
+
   balance_after: number;
-  
+
   created_by?: string;
   created_at: string;
 }
@@ -413,29 +413,29 @@ export interface Expense extends BaseEntity {
 // Lead
 export interface Lead extends BaseEntity {
   lead_number: string;
-  
+
   name: string;
   company?: string;
   email?: string;
   phone: string;
-  
+
   source: LeadSource;
   status: LeadStatus;
-  
+
   requirement?: string;
   expected_value: number;
-  
+
   assigned_to?: string;
-  
+
   next_follow_up?: string;
   last_contacted?: string;
-  
+
   notes?: string;
-  
+
   converted_to_client_id?: string;
-  
+
   created_by?: string;
-  
+
   // Joined data
   assigned_user?: Profile;
   follow_ups?: FollowUp[];
@@ -445,44 +445,44 @@ export interface Lead extends BaseEntity {
 export interface FollowUp {
   id: string;
   lead_id: string;
-  
+
   follow_up_date: string;
   follow_up_type?: string;
-  
+
   notes?: string;
   outcome?: string;
-  
+
   next_follow_up?: string;
-  
+
   done_by?: string;
   created_at: string;
-  
+
   user?: Profile;
 }
 
 // Quotation
 export interface Quotation extends BaseEntity {
   quote_number: string;
-  
+
   client_id?: string;
   lead_id?: string;
-  
+
   status: QuoteStatus;
-  
+
   subtotal: number;
   gst_amount: number;
   discount_amount: number;
   total_amount: number;
-  
+
   valid_until?: string;
-  
+
   terms?: string;
   notes?: string;
-  
+
   converted_to_job_id?: string;
-  
+
   created_by?: string;
-  
+
   // Joined data
   client?: Client;
   items?: QuotationItem[];
@@ -502,34 +502,34 @@ export interface QuotationItem {
 // Dispatch
 export interface Dispatch extends BaseEntity {
   dispatch_number: string;
-  
+
   job_id?: string;
   client_id?: string;
-  
+
   status: DispatchStatus;
-  
+
   transporter_name?: string;
   tracking_number?: string;
   vehicle_number?: string;
   driver_name?: string;
   driver_phone?: string;
-  
+
   dispatch_date?: string;
   expected_delivery?: string;
   actual_delivery?: string;
-  
+
   packages: number;
   weight?: number;
-  
+
   delivery_address?: string;
-  
+
   proof_of_delivery_url?: string;
   receiver_name?: string;
-  
+
   notes?: string;
-  
+
   dispatched_by?: string;
-  
+
   // Joined data
   job?: Job;
   client?: Client;
@@ -618,6 +618,24 @@ export interface Counter {
   current_number: number;
   financial_year?: string;
   updated_at: string;
+}
+
+// Note
+export interface Note extends BaseEntity {
+  content: string;
+  color: string;
+  is_pinned: boolean;
+  user_id?: string;
+}
+
+// Reminder
+export interface Reminder extends BaseEntity {
+  title: string;
+  description?: string;
+  due_date: string;
+  is_completed: boolean;
+  priority: PriorityLevel;
+  user_id?: string;
 }
 
 // =============================================

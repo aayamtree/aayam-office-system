@@ -16,37 +16,38 @@ interface DispatchRecord {
   deliveryDays: number;
 }
 
-const demoDispatches: DispatchRecord[] = [
-  { id: '1', date: '2024-12-25', orderNumber: 'AAY-2024-156', client: 'ABC Industries', destination: 'Ahmedabad', transporter: 'Shree Ganesh Transport', status: 'dispatched', deliveryDate: '', deliveryDays: 0 },
-  { id: '2', date: '2024-12-24', orderNumber: 'AAY-2024-155', client: 'XYZ Corporation', destination: 'Rajkot', transporter: 'Self Delivery', status: 'delivered', deliveryDate: '2024-12-24', deliveryDays: 0 },
-  { id: '3', date: '2024-12-24', orderNumber: 'AAY-2024-154', client: 'Global Traders', destination: 'Mumbai', transporter: 'Om Logistics', status: 'in_transit', deliveryDate: '', deliveryDays: 0 },
-  { id: '4', date: '2024-12-23', orderNumber: 'AAY-2024-153', client: 'Tech Solutions', destination: 'Surat', transporter: 'Shree Transport', status: 'delivered', deliveryDate: '2024-12-24', deliveryDays: 1 },
-  { id: '5', date: '2024-12-23', orderNumber: 'AAY-2024-152', client: 'Fashion Hub', destination: 'Vadodara', transporter: 'Maruti Transport', status: 'delivered', deliveryDate: '2024-12-24', deliveryDays: 1 },
-  { id: '6', date: '2024-12-22', orderNumber: 'AAY-2024-151', client: 'Star Enterprises', destination: 'Rajkot', transporter: 'Self Delivery', status: 'delivered', deliveryDate: '2024-12-22', deliveryDays: 0 },
-  { id: '7', date: '2024-12-22', orderNumber: 'AAY-2024-150', client: 'Prime Motors', destination: 'Jamnagar', transporter: 'Shree Ganesh Transport', status: 'delivered', deliveryDate: '2024-12-23', deliveryDays: 1 },
-  { id: '8', date: '2024-12-21', orderNumber: 'AAY-2024-149', client: 'City Hospital', destination: 'Rajkot', transporter: 'Customer Pickup', status: 'delivered', deliveryDate: '2024-12-21', deliveryDays: 0 },
-  { id: '9', date: '2024-12-21', orderNumber: 'AAY-2024-148', client: 'Green Foods', destination: 'Bhavnagar', transporter: 'Om Logistics', status: 'returned', deliveryDate: '', deliveryDays: 0 },
-  { id: '10', date: '2024-12-20', orderNumber: 'AAY-2024-147', client: 'Blue Sky Travel', destination: 'Ahmedabad', transporter: 'Shree Transport', status: 'delivered', deliveryDate: '2024-12-21', deliveryDays: 1 },
-];
+import { useDispatches } from '@/lib/hooks';
 
 export default function DispatchReportPage() {
-  const [dateFrom, setDateFrom] = useState('2024-12-01');
-  const [dateTo, setDateTo] = useState('2024-12-31');
+  const { dispatches, loading } = useDispatches();
+  const [dateFrom, setDateFrom] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
+  const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [transporterFilter, setTransporterFilter] = useState('');
 
-  const filteredDispatches = demoDispatches.filter(d => {
-    const matchesDate = d.date >= dateFrom && d.date <= dateTo;
+  const filteredDispatches = (dispatches || []).filter(d => {
+    const dispatchDate = (d.dispatch_date || d.created_at).split('T')[0];
+    const matchesDate = dispatchDate >= dateFrom && dispatchDate <= dateTo;
     const matchesStatus = statusFilter === 'all' || d.status === statusFilter;
-    const matchesTransporter = !transporterFilter || d.transporter.toLowerCase().includes(transporterFilter.toLowerCase());
+    const matchesTransporter = !transporterFilter || (d.transporter_name || '').toLowerCase().includes(transporterFilter.toLowerCase());
     return matchesDate && matchesStatus && matchesTransporter;
-  });
+  }).map(d => ({
+    id: d.id,
+    date: (d.dispatch_date || d.created_at).split('T')[0],
+    orderNumber: d.job?.job_number || 'Unknown',
+    client: d.client?.company || d.client?.name || 'Unknown',
+    destination: d.delivery_address || 'Unknown',
+    transporter: d.transporter_name || 'Self Pickup',
+    status: d.status as 'dispatched' | 'in_transit' | 'delivered' | 'returned',
+    deliveryDate: d.actual_delivery ? d.actual_delivery.split('T')[0] : '',
+    deliveryDays: d.actual_delivery && d.dispatch_date ? Math.ceil((new Date(d.actual_delivery).getTime() - new Date(d.dispatch_date).getTime()) / (1000 * 3600 * 24)) : 0
+  })).sort((a, b) => b.date.localeCompare(a.date));
 
   const totalDispatched = filteredDispatches.length;
   const delivered = filteredDispatches.filter(d => d.status === 'delivered').length;
   const inTransit = filteredDispatches.filter(d => d.status === 'in_transit' || d.status === 'dispatched').length;
   const returned = filteredDispatches.filter(d => d.status === 'returned').length;
-  const avgDeliveryDays = delivered > 0 
+  const avgDeliveryDays = delivered > 0
     ? (filteredDispatches.filter(d => d.status === 'delivered').reduce((sum, d) => sum + d.deliveryDays, 0) / delivered).toFixed(1)
     : '0';
 
