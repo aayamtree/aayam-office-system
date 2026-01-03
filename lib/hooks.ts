@@ -1413,3 +1413,5 @@ export function useExpenses() {
     deleteExpense
   };
 }
+
+export { useAuth } from './auth-context';
