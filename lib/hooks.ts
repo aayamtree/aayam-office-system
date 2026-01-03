@@ -18,7 +18,7 @@ export interface UseSupabaseQueryOptions {
   limit?: number;
 }
 
-function useSupabaseQuery<T>(
+export function useSupabaseQuery<T>(
   tableName: string,
   options?: UseSupabaseQueryOptions
 ) {
