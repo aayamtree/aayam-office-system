@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSupabaseQuery } from '@/lib/hooks'; // We'll use raw query or create new hook
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/lib/supabase';
 import { User, Shield, Briefcase, Mail, Phone, Trash2 } from 'lucide-react';
 
 // Define Profile interface locally if not updated globally
@@ -16,7 +16,6 @@ interface Profile {
 }
 
 export default function UserManagementPage() {
-  const supabase = createClientComponentClient();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
