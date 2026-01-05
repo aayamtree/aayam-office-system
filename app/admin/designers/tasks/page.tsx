@@ -64,9 +64,53 @@ export default function DesignerWorkspace() {
   const [newLog, setNewLog] = useState('');
   const [newFeedback, setNewFeedback] = useState('');
 
+  // New Features State
+  const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
+  const [showTeamTasks, setShowTeamTasks] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [newTaskData, setNewTaskData] = useState({ title: '', clientName: '', deadline: '', description: '', priority: 'normal' });
+
+  // Filtering Logic
+  const filteredTasks = tasks.filter(task => {
+    // 1. Text Search (Project Name / Client / Date)
+    const matchesSearch =
+      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      task.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      task.deadline.includes(searchQuery);
+
+    // 2. Team vs My Tasks (Mock logic: In real app, check assigned_to)
+    // For now, Team View shows ALL. My View shows only specific ones (mocked by ID even/odd for demo)
+    const matchesView = showTeamTasks ? true : true; // In this mock, we act as if all are assigned to me for now.
+
+    return matchesSearch && matchesView;
+  });
+
   const selectedTask = tasks.find(t => t.id === selectedTaskId);
 
   // --- ACTIONS ---
+  const handleCreateTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTaskData.title || !newTaskData.clientName) return;
+
+    const newTask = {
+      id: Date.now(),
+      taskId: `TSK-${tasks.length + 1}`.padStart(7, '0'),
+      title: newTaskData.title,
+      clientName: newTaskData.clientName,
+      status: 'pending',
+      priority: newTaskData.priority,
+      deadline: newTaskData.deadline || new Date().toISOString().split('T')[0],
+      description: newTaskData.description,
+      feedback: [],
+      driveLink: ''
+    };
+
+    setTasks([newTask, ...tasks]);
+    setIsNewTaskModalOpen(false);
+    setNewTaskData({ title: '', clientName: '', deadline: '', description: '', priority: 'normal' });
+    setSelectedTaskId(newTask.id); // Select the new task
+  };
+
   const handleAddLog = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newLog.trim()) return;
@@ -104,28 +148,65 @@ export default function DesignerWorkspace() {
           COLUMN 1: TASK QUEUE (List)
          ================================================================================= */}
       <div className="w-full md:w-80 bg-white border-r flex flex-col h-full z-10 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+
+        {/* Stats & Toggle Header */}
+        <div className="p-4 pb-0 bg-gray-50/50 space-y-3">
+          {/* Work Summary Widget */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-white p-2 rounded-lg border border-indigo-100 shadow-sm">
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">This Month</p>
+              <p className="text-lg font-bold text-indigo-700">24 <span className="text-[10px] text-gray-400 font-normal">Tasks</span></p>
+            </div>
+            <div className="bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Last Month</p>
+              <p className="text-lg font-bold text-gray-600">45 <span className="text-[10px] text-gray-400 font-normal">Tasks</span></p>
+            </div>
+          </div>
+
+          {/* View Toggle */}
+          <div className="flex bg-gray-200 p-0.5 rounded-lg">
+            <button
+              onClick={() => setShowTeamTasks(false)}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${!showTeamTasks ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              My Tasks
+            </button>
+            <button
+              onClick={() => setShowTeamTasks(true)}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${showTeamTasks ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Team View
+            </button>
+          </div>
+        </div>
+
         <div className="p-4 border-b bg-gray-50/50">
           <div className="flex justify-between items-center mb-4">
             <h2 className="font-bold text-gray-800 flex items-center gap-2">
               <Briefcase size={18} className="text-indigo-600" />
-              My Queue
+              {showTeamTasks ? 'Team Queue' : 'My Queue'}
             </h2>
-            <button className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-sm">
-              <Plus size={16} />
+            <button
+              onClick={() => setIsNewTaskModalOpen(true)}
+              className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-sm flex items-center gap-1 text-xs font-bold px-3"
+            >
+              <Plus size={14} /> New Task
             </button>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
             <input
               type="text"
-              placeholder="Filter tasks..."
+              placeholder="Search project, date..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
             />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-3">
-          {tasks.map(task => (
+          {filteredTasks.map(task => (
             <div
               key={task.id}
               onClick={() => setSelectedTaskId(task.id)}
@@ -159,6 +240,11 @@ export default function DesignerWorkspace() {
               </div>
             </div>
           ))}
+          {filteredTasks.length === 0 && (
+            <div className="text-center py-10 text-gray-400 text-sm">
+              <p>No tasks found.</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -410,6 +496,107 @@ export default function DesignerWorkspace() {
           </div>
         </div>
       </div>
+
+      {/* =================================================================================
+          NEW TASK MODAL
+         ================================================================================= */}
+      {isNewTaskModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 transform transition-all scale-100">
+            <div className="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
+              <h3 className="font-bold text-gray-900 text-lg">Create New Task</h3>
+              <button onClick={() => setIsNewTaskModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateTask} className="p-6 space-y-4">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Task Title <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Wedding Invitation - Gupta"
+                    value={newTaskData.title}
+                    onChange={e => setNewTaskData({ ...newTaskData, title: e.target.value })}
+                    className="w-full border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 transition-shadow"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Client Name <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Ramesh Gupta"
+                      value={newTaskData.clientName}
+                      onChange={e => setNewTaskData({ ...newTaskData, clientName: e.target.value })}
+                      className="w-full border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 transition-shadow"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Deadline</label>
+                    <input
+                      type="date"
+                      value={newTaskData.deadline}
+                      onChange={e => setNewTaskData({ ...newTaskData, deadline: e.target.value })}
+                      className="w-full border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 transition-shadow text-gray-600"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Priority</label>
+                  <div className="flex gap-2">
+                    {['normal', 'high', 'urgent'].map(p => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setNewTaskData({ ...newTaskData, priority: p })}
+                        className={`flex-1 py-2 rounded-lg text-sm font-medium capitalize border transition-all
+                           ${newTaskData.priority === p
+                            ? (p === 'urgent' ? 'bg-red-50 text-red-700 border-red-200 ring-1 ring-red-200' : p === 'high' ? 'bg-orange-50 text-orange-700 border-orange-200 ring-1 ring-orange-200' : 'bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-200')
+                            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Design Brief</label>
+                  <textarea
+                    rows={4}
+                    placeholder="Enter details about the design requirements..."
+                    value={newTaskData.description}
+                    onChange={e => setNewTaskData({ ...newTaskData, description: e.target.value })}
+                    className="w-full border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 transition-shadow resize-none"
+                  ></textarea>
+                </div>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsNewTaskModalOpen(false)}
+                  className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-[2] py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+                >
+                  Create Task
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );
