@@ -185,16 +185,16 @@ export default function DesignerWorkspace() {
           </div>
 
           {/* View Tabs */}
-          <div className="flex bg-gray-100 p-1 rounded-xl">
+          <div className="flex border-b border-gray-100 mt-4 mx-1">
             <button
               onClick={() => setShowTeamTasks(false)}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${!showTeamTasks ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 pb-2 text-center text-xs font-bold border-b-2 transition-all ${!showTeamTasks ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             >
               My Tasks
             </button>
             <button
               onClick={() => setShowTeamTasks(true)}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${showTeamTasks ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 pb-2 text-center text-xs font-bold border-b-2 transition-all ${showTeamTasks ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             >
               Team Tasks
             </button>
