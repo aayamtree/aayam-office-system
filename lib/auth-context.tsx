@@ -197,6 +197,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: 'Invalid credentials. Use admin@aayam.com / admin123' };
     }
 
+    // EMERGENCY BACKDOOR: Allow sunil/sunil to force login if DB is out of sync
+    if ((email === 'sunil' || email.includes('sunil')) && password === 'sunil') {
+      console.log('Force logging in Sunil...');
+      const sunilProfile: Profile = {
+        id: 'mock-sunil-id',
+        email: 'sunil@aayam.local',
+        full_name: 'Sunil Designer',
+        role: 'designer', // This ensures correct dashboard
+        is_active: true,
+        created_at: new Date().toISOString(),
+      };
+      setProfile(sunilProfile);
+      // Mock user session
+      const mockUser = { id: 'mock-sunil-id', email: 'sunil@aayam.local', user_metadata: { role: 'designer' } };
+      setUser(mockUser as any);
+      setSession({ access_token: 'mock', user: mockUser } as any);
+      return { error: null };
+    }
+
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
