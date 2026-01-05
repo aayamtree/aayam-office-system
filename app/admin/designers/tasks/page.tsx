@@ -1,15 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/lib/auth-context';
+import { useJobs } from '@/lib/hooks';
 import {
   Plus, Search, Calendar, Clock, Edit, Trash2, Eye, X, ArrowLeft, ArrowRight, CheckCircle,
   AlertCircle, User, Briefcase, MessageSquare, Paperclip, ExternalLink,
   FileText, Image, Video, Music, File, ChevronRight, Save, Send, MoreHorizontal,
-  ChevronLeft
+  ChevronLeft, Loader2
 } from 'lucide-react';
 
-// --- MOCK DATA ---
+// --- HELPERS ---
+const getDesignerStatus = (stage: string) => {
+  const map: Record<string, string> = {
+    'new': 'pending',
+    'designing': 'in_progress',
+    'approval': 'review',
+    'printing': 'completed',
+    'completed': 'completed',
+    'delivered': 'completed'
+  };
+  return map[stage] || 'pending';
+};
+
 const taskStatuses = [
   { id: 'pending', name: 'To Do', color: 'bg-gray-100 text-gray-700' },
   { id: 'in_progress', name: 'Designing', color: 'bg-blue-100 text-blue-700' },
@@ -24,53 +38,23 @@ const priorities = [
   { id: 'urgent', name: 'Urgent', color: 'text-red-600 bg-red-50' },
 ];
 
-const mockClients = ['Ramesh Gupta', 'Royal Prints', 'TechStart Inc', 'Gujarat Textiles', 'Sharma Industries'];
-
-const initialTasks = [
-  {
-    id: 1, taskId: 'TSK-001', title: 'Wedding Card - Gupta Family',
-    clientName: 'Ramesh Gupta', status: 'in_progress', priority: 'high',
-    deadline: '2025-12-28', description: 'Traditional red and gold theme. Needs 2 variations.',
-    feedback: [
-      { id: 1, text: 'Use bolder fonts for the names', date: 'Yesterday', by: 'Client' },
-      { id: 2, text: 'Add Ganesha icon on top', date: 'Today', by: 'Admin' }
-    ],
-    driveLink: 'https://drive.google.com/...',
-    orderId: ''
-  },
-  {
-    id: 2, taskId: 'TSK-002', title: 'Brochure - Royal Prints',
-    clientName: 'Royal Prints', status: 'pending', priority: 'normal',
-    deadline: '2025-12-30', description: '8 Page layout for new machinery.',
-    feedback: [],
-    driveLink: '',
-    orderId: 'ORD-1025'
-  },
-  {
-    id: 3, taskId: 'TSK-003', title: 'Logo Design - TechStart',
-    clientName: 'TechStart Inc', status: 'rework', priority: 'urgent',
-    deadline: '2025-12-26', description: 'Modern tech logo. Client rejected v1.',
-    feedback: [
-      { id: 1, text: 'Too simple. Needs more "tech" feel.', date: 'Today', by: 'Client' }
-    ],
-    driveLink: '',
-    orderId: ''
-  },
-];
-
+// Mock for Logs until real DB table exists
 const initialLogs = [
-  { id: 1, time: '10:00 AM', text: 'Started Gupta Wedding Card' },
-  { id: 2, time: '12:30 PM', text: 'Sent Brochure for approval' },
+  { id: 1, time: 'System', text: 'Welcome to your workspace.' },
 ];
 
 export default function DesignerWorkspace() {
-  const [tasks, setTasks] = useState(initialTasks);
-  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(1);
+  const { profile } = useAuth();
+  const { jobs, loading: jobsLoading, updateJobStage } = useJobs();
+
+  // Local State
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [logs, setLogs] = useState(initialLogs);
   const [newLog, setNewLog] = useState('');
   const [newFeedback, setNewFeedback] = useState('');
 
-  // New Features State
+  // UI State
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [showTeamTasks, setShowTeamTasks] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,19 +63,84 @@ export default function DesignerWorkspace() {
   // Calendar State
   const [currentDate, setCurrentDate] = useState(new Date());
 
+  // === DATA SYNC ===
+  useEffect(() => {
+    if (jobs) {
+      const mappedTasks = jobs
+        .filter(job => {
+          // 1. Include only active design jobs or jobs relevant to design flow
+          // 2. We keep Completed jobs for "Work Summary" calculations, even if hidden from active queue?
+          // For now, let's load relevant stages.
+          return ['new', 'designing', 'approval', 'printing', 'finishing', 'completed', 'delivered'].includes(job.current_stage);
+        })
+        .map(job => ({
+          id: parseInt(job.id.substring(0, 8), 16) || Math.floor(Math.random() * 1000000), // Generate integer ID from UUID safely
+          realId: job.id, // Keep real UUID
+          taskId: job.job_number || 'JOB',
+          title: job.project_name,
+          clientName: job.client?.name || 'Unknown Client',
+          status: getDesignerStatus(job.current_stage),
+          priority: job.priority || 'normal',
+          deadline: job.client_deadline || '',
+          description: `Job Type: ${job.job_type}\nDetails: ${job.description || 'No description provided.'}`,
+          feedback: [],
+          driveLink: job.files?.[0] || '',
+          orderId: job.id,
+          designerId: job.designer_id,
+          createdAt: job.created_at,
+          current_stage: job.current_stage // Keep raw stage for updates
+        }))
+        // Sort: High priority first, then by deadline
+        .sort((a, b) => {
+          if (a.priority === 'urgent' && b.priority !== 'urgent') return -1;
+          if (b.priority === 'urgent' && a.priority !== 'urgent') return 1;
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+
+      setTasks(mappedTasks);
+
+      // Auto-select first task if none selected and filtered view has tasks
+      // (Handled in render logic or user interaction safest)
+    }
+  }, [jobs]);
+
   // --- LOGIC ---
   const filteredTasks = tasks.filter(task => {
     const matchesSearch =
       task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       task.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.deadline.includes(searchQuery);
+      (task.deadline && task.deadline.includes(searchQuery));
 
-    // Mock Team Logic: In real app, we check if assigned_to != me
-    const matchesView = showTeamTasks ? true : true;
+    // Team Logic
+    const isAssignedToMe = task.designerId === profile?.id;
+    // If showTeamTasks is true -> Show All
+    // If showTeamTasks is false -> Show Mine + Unassigned (to pick up)
+    const matchesView = showTeamTasks ? true : (isAssignedToMe || !task.designerId);
+
+    // Filter out completed tasks from MAIN VIEW unless searching?
+    // Maybe keep them but at bottom. For now, show active only in default views?
+    // User wants "Work Summary", so keeping them in state is good.
+    // Let's hide 'delivered' from active queue to reduce clutter?
+    // User didn't specify, so I'll show all.
+
     return matchesSearch && matchesView;
   });
 
-  const selectedTask = tasks.find(t => t.id === selectedTaskId);
+  const selectedTask = tasks.find(t => (t.id === selectedTaskId) || (t.realId === selectedTaskId)); // Handle ID mismatch
+
+  // Work Summary Stats
+  const thisMonthCount = tasks.filter(t => {
+    const d = new Date(t.createdAt);
+    const now = new Date();
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+
+  const lastMonthCount = tasks.filter(t => {
+    const d = new Date(t.createdAt);
+    const now = new Date();
+    return d.getMonth() === now.getMonth() - 1 && d.getFullYear() === now.getFullYear();
+  }).length;
+
 
   // Calendar Helpers
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
@@ -108,28 +157,14 @@ export default function DesignerWorkspace() {
   };
 
   // --- ACTIONS ---
+  // Create Task (Now actually creates a JOB via hook if we unwired it, but for now mock action on local state is removed/replaced?)
+  // User said "admin create new project", so Designer "Create Task" might be disabled OR it creates a 'Draft' job.
+  // I will leave it as LOCAL for now, or alert "Only Admin can create projects".
+  // But to be helpful, I'll log to console.
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTaskData.title || !newTaskData.clientName) return;
-
-    const newTask = {
-      id: Date.now(),
-      taskId: `TSK-${tasks.length + 1}`.padStart(7, '0'),
-      title: newTaskData.title,
-      clientName: newTaskData.clientName,
-      status: 'pending',
-      priority: newTaskData.priority,
-      deadline: newTaskData.deadline || new Date().toISOString().split('T')[0],
-      description: newTaskData.description,
-      feedback: [],
-      driveLink: '',
-      orderId: newTaskData.orderId
-    };
-
-    setTasks([newTask, ...tasks]);
+    alert("Please ask Admin to create a new Project/Job. Designers manage active tasks.");
     setIsNewTaskModalOpen(false);
-    setNewTaskData({ title: '', clientName: '', deadline: '', description: '', priority: 'normal', orderId: '' });
-    setSelectedTaskId(newTask.id);
   };
 
   const handleAddLog = (e: React.FormEvent) => {
@@ -142,24 +177,27 @@ export default function DesignerWorkspace() {
 
   const handleAddFeedback = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newFeedback.trim() || !selectedTask) return;
-
-    const updatedTasks = tasks.map(t => {
-      if (t.id === selectedTaskId) {
-        return {
-          ...t,
-          feedback: [...t.feedback, { id: Date.now(), text: newFeedback, date: 'Just now', by: 'Me' }]
-        };
-      }
-      return t;
-    });
-
-    setTasks(updatedTasks);
+    // In real app, write to Supabase 'comments' table
+    alert("Message sent! (Simulated)");
     setNewFeedback('');
   };
 
-  const updateStatus = (taskId: number, newStatus: string) => {
-    setTasks(tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+  const updateStatus = async (realId: string, newStatusId: string) => {
+    // Map Designer UI status to Database Job Stage
+    // To Do -> new
+    // Designing -> designing
+    // Review -> approval
+    // Done -> printing (or completed)
+
+    let dbStage = 'new';
+    if (newStatusId === 'in_progress') dbStage = 'designing';
+    if (newStatusId === 'review') dbStage = 'approval';
+    if (newStatusId === 'completed') dbStage = 'printing'; // Move to print
+
+    // Call Hook
+    if (realId && updateJobStage) {
+      await updateJobStage(realId, dbStage as any);
+    }
   };
 
   return (
@@ -176,11 +214,11 @@ export default function DesignerWorkspace() {
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-white p-2 rounded-lg border border-indigo-100 shadow-sm">
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">This Month</p>
-              <p className="text-lg font-bold text-indigo-700">24 <span className="text-[10px] text-gray-400 font-normal">Tasks</span></p>
+              <p className="text-lg font-bold text-indigo-700">{thisMonthCount} <span className="text-[10px] text-gray-400 font-normal">Tasks</span></p>
             </div>
             <div className="bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Last Month</p>
-              <p className="text-lg font-bold text-gray-600">45 <span className="text-[10px] text-gray-400 font-normal">Tasks</span></p>
+              <p className="text-lg font-bold text-gray-600">{lastMonthCount} <span className="text-[10px] text-gray-400 font-normal">Tasks</span></p>
             </div>
           </div>
 
@@ -207,12 +245,15 @@ export default function DesignerWorkspace() {
               <Briefcase size={18} className="text-indigo-600" />
               {showTeamTasks ? 'Team Queue' : 'My Queue'}
             </h2>
-            <button
+            {/* 
+            <button 
               onClick={() => setIsNewTaskModalOpen(true)}
-              className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-sm flex items-center gap-1 text-xs font-bold px-3"
+              className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-sm flex items-center gap-1 text-xs font-bold px-3 opacity-50 cursor-not-allowed"
+              title="Only Admin creates new projects"
             >
               <Plus size={14} /> New Task
             </button>
+            */}
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
@@ -227,7 +268,9 @@ export default function DesignerWorkspace() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-3">
-          {filteredTasks.length === 0 ? (
+          {jobsLoading ? (
+            <div className="flex justify-center py-10"><Loader2 className="animate-spin text-indigo-600" /></div>
+          ) : filteredTasks.length === 0 ? (
             <div className="text-center py-10 text-gray-400 text-sm">
               <p>No tasks found.</p>
             </div>
@@ -242,12 +285,12 @@ export default function DesignerWorkspace() {
 
               <div className="flex justify-between items-start mb-2">
                 <span className="font-mono text-[10px] text-gray-500 font-medium tracking-wide">{task.taskId}</span>
-                {new Date(task.deadline) < new Date() ? (
+                {task.deadline && new Date(task.deadline) < new Date() ? (
                   <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <Clock size={10} /> Overdue
                   </span>
                 ) : (
-                  <span className="text-[10px] text-gray-400 font-medium">{task.deadline}</span>
+                  <span className="text-[10px] text-gray-400 font-medium">{task.deadline || 'No Deadline'}</span>
                 )}
               </div>
               <h3 className={`font-semibold text-sm mb-3 leading-snug ${selectedTaskId === task.id ? 'text-indigo-900' : 'text-gray-800'}`}>
@@ -289,17 +332,13 @@ export default function DesignerWorkspace() {
                   </div>
                   <span className="text-gray-300">|</span>
                   <div className="flex items-center gap-1.5">
-                    <Clock size={14} /> Due: {selectedTask.deadline}
+                    <Clock size={14} /> Due: {selectedTask.deadline || 'N/A'}
                   </div>
                   {/* Order ID Link if exists */}
-                  {selectedTask.orderId && (
-                    <>
-                      <span className="text-gray-300">|</span>
-                      <div className="flex items-center gap-1.5 text-indigo-600 font-medium bg-indigo-50 px-2 py-0.5 rounded-full">
-                        <FileText size={12} /> Ref Order: {selectedTask.orderId}
-                      </div>
-                    </>
-                  )}
+                  <span className="text-gray-300">|</span>
+                  <div className="flex items-center gap-1.5 text-indigo-600 font-medium bg-indigo-50 px-2 py-0.5 rounded-full">
+                    <FileText size={12} /> Ref Job: {selectedTask.taskId}
+                  </div>
                 </div>
               </div>
 
@@ -308,7 +347,7 @@ export default function DesignerWorkspace() {
                   <span className="text-xs font-bold text-gray-500 pl-2 uppercase">Status:</span>
                   <select
                     value={selectedTask.status}
-                    onChange={(e) => updateStatus(selectedTask.id, e.target.value)}
+                    onChange={(e) => updateStatus(selectedTask.realId, e.target.value)}
                     className="bg-transparent text-gray-700 text-sm rounded px-2 py-1 cursor-pointer focus:ring-0 border-none outline-none font-semibold hover:bg-white transition-colors"
                   >
                     {taskStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -338,20 +377,20 @@ export default function DesignerWorkspace() {
                   </h4>
                   <div className="space-y-3 flex-1">
                     <div className="flex items-center justify-between p-3 border rounded-xl hover:bg-gray-50 cursor-pointer group transition-colors bg-gray-50/50">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 shadow-sm">
-                          <File size={18} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-700 group-hover:text-blue-600 transition-colors">Client_Logo_Final.ai</p>
-                          <p className="text-xs text-gray-400">2.5 MB • Vector File</p>
-                        </div>
-                      </div>
-                      <DownloadButton />
+                      {selectedTask.driveLink ? (
+                        <a href={selectedTask.driveLink} target="_blank" className="flex items-center gap-3 w-full">
+                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 shadow-sm">
+                            <File size={18} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-gray-700 group-hover:text-blue-600 transition-colors">Attached File</p>
+                            <p className="text-xs text-gray-400">Click to open</p>
+                          </div>
+                        </a>
+                      ) : (
+                        <p className="text-sm text-gray-400 italic p-2">No files attached.</p>
+                      )}
                     </div>
-                    <button className="w-full py-2.5 border border-dashed border-gray-300 rounded-xl text-xs font-medium text-gray-500 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2">
-                      <Plus size={14} /> Add Reference File
-                    </button>
                   </div>
                 </div>
 
@@ -394,31 +433,12 @@ export default function DesignerWorkspace() {
 
                 <div className="flex-1 bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden shadow-sm h-[400px]">
                   <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/30">
-                    {selectedTask.feedback.length === 0 ? (
-                      <div className="h-full flex flex-col items-center justify-center text-gray-400">
-                        <MessageSquare size={48} className="mb-4 text-gray-200 opacity-50" />
-                        <p className="text-sm font-medium">No feedback yet.</p>
-                        <p className="text-xs text-gray-400 mt-1">Chat history will appear here.</p>
-                      </div>
-                    ) : (
-                      selectedTask.feedback.map(f => (
-                        <div key={f.id} className={`flex gap-4 ${f.by === 'Me' ? 'flex-row-reverse' : ''} group`}>
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 shadow-sm ring-2 ring-white
-                             ${f.by === 'Me' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-800 text-white'}`}>
-                            {f.by.charAt(0)}
-                          </div>
-                          <div className={`max-w-[70%] space-y-1`}>
-                            <div className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm
-                                ${f.by === 'Me' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white border text-gray-700 rounded-tl-none'}`}>
-                              <p>{f.text}</p>
-                            </div>
-                            <p className={`text-[10px] font-medium px-1 ${f.by === 'Me' ? 'text-right text-indigo-300' : 'text-gray-400'}`}>
-                              {f.date} • {f.by}
-                            </p>
-                          </div>
-                        </div>
-                      ))
-                    )}
+                    {/* Placeholder for real chat */}
+                    <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                      <MessageSquare size={48} className="mb-4 text-gray-200 opacity-50" />
+                      <p className="text-sm font-medium">No feedback yet.</p>
+                      <p className="text-xs text-gray-400 mt-1">Chat history will appear here.</p>
+                    </div>
                   </div>
                   <form onSubmit={handleAddFeedback} className="p-4 border-t bg-white flex gap-3 items-center">
                     <div className="flex-1 relative">
@@ -544,124 +564,6 @@ export default function DesignerWorkspace() {
           </div>
         </div>
       </div>
-
-      {/* =================================================================================
-          NEW TASK MODAL
-         ================================================================================= */}
-      {isNewTaskModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 transform transition-all scale-100">
-            <div className="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
-              <h3 className="font-bold text-gray-900 text-lg">Create New Task</h3>
-              <button onClick={() => setIsNewTaskModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateTask} className="p-6 space-y-4">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Task Title <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Wedding Invitation - Gupta"
-                    value={newTaskData.title}
-                    onChange={e => setNewTaskData({ ...newTaskData, title: e.target.value })}
-                    className="w-full border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 transition-shadow"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Client <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                      <select
-                        required
-                        value={newTaskData.clientName}
-                        onChange={e => setNewTaskData({ ...newTaskData, clientName: e.target.value })}
-                        className="w-full border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 transition-shadow appearance-none"
-                      >
-                        <option value="">Select CRM Client</option>
-                        {mockClients.map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                      <User size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Deadline</label>
-                    <input
-                      type="date"
-                      value={newTaskData.deadline}
-                      onChange={e => setNewTaskData({ ...newTaskData, deadline: e.target.value })}
-                      className="w-full border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 transition-shadow text-gray-600"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Link Marketing Order (Optional)</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. ORD-9021"
-                    value={newTaskData.orderId}
-                    onChange={e => setNewTaskData({ ...newTaskData, orderId: e.target.value })}
-                    className="w-full border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 transition-shadow"
-                  />
-                  <p className="text-[10px] text-gray-400 mt-1">This will link the design task to the sales order.</p>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Priority</label>
-                  <div className="flex gap-2">
-                    {['normal', 'high', 'urgent'].map(p => (
-                      <button
-                        key={p}
-                        type="button"
-                        onClick={() => setNewTaskData({ ...newTaskData, priority: p })}
-                        className={`flex-1 py-2 rounded-lg text-sm font-medium capitalize border transition-all
-                           ${newTaskData.priority === p
-                            ? (p === 'urgent' ? 'bg-red-50 text-red-700 border-red-200 ring-1 ring-red-200' : p === 'high' ? 'bg-orange-50 text-orange-700 border-orange-200 ring-1 ring-orange-200' : 'bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-200')
-                            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
-                      >
-                        {p}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Design Brief</label>
-                  <textarea
-                    rows={3}
-                    placeholder="Enter details about the design requirements..."
-                    value={newTaskData.description}
-                    onChange={e => setNewTaskData({ ...newTaskData, description: e.target.value })}
-                    className="w-full border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 transition-shadow resize-none"
-                  ></textarea>
-                </div>
-              </div>
-
-              <div className="pt-4 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsNewTaskModalOpen(false)}
-                  className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-[2] py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
-                >
-                  Create Task
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }
