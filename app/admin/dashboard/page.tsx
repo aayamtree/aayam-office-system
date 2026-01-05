@@ -91,9 +91,11 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in pb-10">
-      {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-[#1e1b4b] via-[#312e81] to-[#4338ca] rounded-2xl p-6 lg:p-8 text-white shadow-lg">
+    {/* Welcome Header */ }
+    < div className = "bg-gradient-to-r from-[#1e1b4b] via-[#312e81] to-[#4338ca] rounded-2xl p-6 lg:p-8 text-white shadow-lg" >
+      {/* DEBUG: Remove later */ }
+      < p className = "text-xs text-yellow-300 font-mono mb-2" > DEBUG ROLE: { profile?.role || 'loading...' }</p >
+
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl lg:text-4xl font-bold tracking-tight">
@@ -107,50 +109,50 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 hover:bg-white/15 transition-all duration-300 border border-white/5 shadow-inner">
-                <div className="flex items-start justify-between mb-3">
-                  <p className="text-indigo-100 text-sm font-medium opacity-90">{stat.label}</p>
-                  <Icon size={20} className="text-indigo-300" />
-                </div>
-                <p className="text-3xl lg:text-4xl font-bold tracking-tight text-white">
-                  {statsLoading ? '...' : stat.value}
-                </p>
-                {stat.subtext && (
-                  <span className="text-xs text-indigo-300 mt-1 block opacity-80">
-                    {stat.subtext}
-                  </span>
-                )}
-              </div>
-            );
-          })}
+  {/* Stats Grid */ }
+  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+    {stats.map((stat) => {
+      const Icon = stat.icon;
+      return (
+        <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 hover:bg-white/15 transition-all duration-300 border border-white/5 shadow-inner">
+          <div className="flex items-start justify-between mb-3">
+            <p className="text-indigo-100 text-sm font-medium opacity-90">{stat.label}</p>
+            <Icon size={20} className="text-indigo-300" />
+          </div>
+          <p className="text-3xl lg:text-4xl font-bold tracking-tight text-white">
+            {statsLoading ? '...' : stat.value}
+          </p>
+          {stat.subtext && (
+            <span className="text-xs text-indigo-300 mt-1 block opacity-80">
+              {stat.subtext}
+            </span>
+          )}
         </div>
-      </div>
+      );
+    })}
+  </div>
+      </div >
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+    {/* Main Content Grid */ }
+    < div className = "grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8" >
 
-        {/* Left Column - 2/3 width */}
-        <div className="lg:col-span-2 space-y-6 lg:space-y-8">
+      {/* Left Column - 2/3 width */ }
+      < div className = "lg:col-span-2 space-y-6 lg:space-y-8" >
 
-          {/* Sales Performance */}
-          <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Sales Performance</h2>
-                <p className="text-sm text-gray-500 mt-1">Monthly revenue overview</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button className="px-4 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-xl font-medium transition-colors hover:bg-indigo-100">Monthly</button>
-                <button className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-xl transition-colors">Yearly</button>
-              </div>
+        {/* Sales Performance */ }
+        < div className = "bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100" >
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Sales Performance</h2>
+              <p className="text-sm text-gray-500 mt-1">Monthly revenue overview</p>
             </div>
+            <div className="flex items-center gap-2">
+              <button className="px-4 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-xl font-medium transition-colors hover:bg-indigo-100">Monthly</button>
+              <button className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-xl transition-colors">Yearly</button>
+            </div>
+          </div>
 
-            {/* Chart */}
+  {/* Chart */ }
             <div className="flex items-end justify-between gap-3 h-56 mb-8">
               {dashboardStats.salesPerformance?.map((item) => (
                 <div key={item.month} className="flex flex-col items-center flex-1 group h-full justify-end">
@@ -191,16 +193,16 @@ export default function AdminDashboard() {
                 <ArrowUpRight size={16} />
               </Link>
             </div>
-          </div>
+          </div >
 
-          {/* Split Row: Reminders & Notes (Moved Up to Fill Gap) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 h-[500px]">
+    {/* Split Row: Reminders & Notes (Moved Up to Fill Gap) */ }
+    < div className = "grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 h-[500px]" >
             <RemindersWidget />
             <NotesWidget />
-          </div>
+          </div >
 
-          {/* Recent Jobs */}
-          <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
+    {/* Recent Jobs */ }
+    < div className = "bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100" >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">Recent Jobs</h2>
               <Link href="/admin/sales/orders" className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700 font-bold">
@@ -239,14 +241,14 @@ export default function AdminDashboard() {
                 </tbody>
               </table>
             </div>
-          </div>
-        </div>
+          </div >
+        </div >
 
-        {/* Right Column - 1/3 width */}
-        <div className="space-y-6 lg:space-y-8">
+    {/* Right Column - 1/3 width */ }
+    < div className = "space-y-6 lg:space-y-8" >
 
-          {/* Quick Actions (Moved to Top of Right Column for Easy Access) */}
-          <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
+      {/* Quick Actions (Moved to Top of Right Column for Easy Access) */ }
+      < div className = "bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100" >
             <h2 className="text-lg font-bold text-gray-900 mb-5">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-4">
               <Link href="/admin/sales/orders" className="p-4 bg-gray-900 text-white rounded-xl text-center text-sm font-semibold hover:bg-gray-800 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5">
@@ -262,10 +264,10 @@ export default function AdminDashboard() {
                 Clients
               </Link>
             </div>
-          </div>
+          </div >
 
-          {/* Work Pipeline */}
-          <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
+    {/* Work Pipeline */ }
+    < div className = "bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100" >
             <h2 className="text-lg font-bold text-gray-900 mb-6">Work Pipeline</h2>
 
             <div className="relative w-48 h-48 mx-auto mb-8">
@@ -293,10 +295,10 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
-          </div>
+          </div >
 
-          {/* Needs Attention */}
-          <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
+    {/* Needs Attention */ }
+    < div className = "bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100" >
             <div className="flex items-center gap-2.5 mb-6">
               <AlertCircle size={20} className="text-amber-500" />
               <h2 className="text-lg font-bold text-gray-900">Needs Attention</h2>
@@ -315,10 +317,10 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
-          </div>
+          </div >
 
-        </div>
-      </div>
-    </div>
+        </div >
+      </div >
+    </div >
   );
 }
