@@ -2,14 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/lib/auth-context';
 import {
   Users, Phone, FileText, ShoppingCart, Truck, IndianRupee,
   TrendingUp, Target, Calendar, Clock, ArrowRight, Plus,
   UserPlus, MessageSquare, CheckCircle, AlertCircle, User
 } from 'lucide-react';
-
-// Demo data for current marketing user
-const currentUser = { id: 1, name: 'Marketing User', role: 'marketing' };
 
 const stats = {
   myLeads: 24,
@@ -38,6 +36,8 @@ const pendingQuotations = [
 ];
 
 export default function MarketingPage() {
+  const { profile, loading } = useAuth();
+
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 
@@ -50,13 +50,15 @@ export default function MarketingPage() {
     }
   };
 
+  if (loading) return null;
+
   return (
     <div className="space-y-6 lg:space-y-8 animate-fade-in pb-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">Marketing Dashboard</h1>
-          <p className="text-gray-500 mt-1">Welcome back, {currentUser.name}</p>
+          <p className="text-gray-500 mt-1">Welcome back, {profile?.full_name || 'Marketing Team'}</p>
         </div>
         <div className="flex gap-2">
           <Link href="/admin/marketing/leads"

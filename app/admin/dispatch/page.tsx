@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { Package, CheckCircle, Truck, Clock, AlertTriangle, ClipboardCheck, Loader2 } from 'lucide-react';
 import { useJobs, useDispatches } from '@/lib/hooks';
+import { useAuth } from '@/lib/auth-context';
 
 export default function DispatchPage() {
+  const { profile } = useAuth();
   const { jobs, loading: jobsLoading } = useJobs({
     orderBy: { column: 'client_deadline', ascending: true }
   });
@@ -63,8 +65,8 @@ export default function DispatchPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dispatch</h1>
-          <p className="text-gray-500">Quality check and dispatch management</p>
+          <h1 className="text-2xl font-bold text-gray-900">Dispatch Command Center</h1>
+          <p className="text-gray-500">Welcome, {profile?.full_name || 'Dispatcher'} | QC & Logistics</p>
         </div>
         <Link
           href="/admin/dispatch/qc-check"

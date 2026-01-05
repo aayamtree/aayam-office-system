@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { Printer, ShoppingCart, Package, ListTodo, TrendingUp, Clock, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { useJobs, usePaperStock, usePOSSales } from '@/lib/hooks';
 import { Job, PaperStock, POSSale } from '@/types/database';
+import { useAuth } from '@/lib/auth-context';
 
 export default function CMYKPrintPage() {
+  const { profile } = useAuth();
   const { jobs, loading: jobsLoading } = useJobs({
     orderBy: { column: 'created_at', ascending: false }
   });
@@ -59,8 +61,8 @@ export default function CMYKPrintPage() {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">CMYK Print</h1>
-        <p className="text-gray-500">Retail printing & job management</p>
+        <h1 className="text-2xl font-bold text-gray-900">CMYK Print Station</h1>
+        <p className="text-gray-500">Welcome, {profile?.full_name || 'Operator'} | Ready for Production</p>
       </div>
 
       {/* Stats */}
