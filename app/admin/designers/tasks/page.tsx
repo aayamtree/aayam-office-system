@@ -60,6 +60,17 @@ export default function DesignerWorkspace() {
   const [searchQuery, setSearchQuery] = useState('');
   const [newTaskData, setNewTaskData] = useState({ title: '', clientName: '', deadline: '', description: '', priority: 'normal', orderId: '' });
 
+  // Safety: Prevent infinite loading
+  const [forceShow, setForceShow] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setForceShow(true), 3000);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    console.log('Designer Debug:', { jobsCount: jobs?.length, jobsLoading, jobsError });
+  }, [jobs, jobsLoading, jobsError]);
+
   // Calendar State
   const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -268,7 +279,7 @@ export default function DesignerWorkspace() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-3">
-          {jobsLoading ? (
+          {(!forceShow && jobsLoading) ? (
             <div className="flex justify-center py-10"><Loader2 className="animate-spin text-indigo-600" /></div>
           ) : jobsError ? (
             <div className="p-4 m-2 bg-red-50 text-red-600 text-xs rounded-xl border border-red-100 flex flex-col items-center gap-2">
