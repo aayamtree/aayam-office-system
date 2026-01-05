@@ -161,7 +161,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     `}>
       {/* Logo & Close Button */}
       <div className="p-6 flex items-center justify-between">
-        <Link href="/admin/dashboard" className="flex items-center gap-3" onClick={handleLinkClick}>
+        <Link
+          href={profile?.role === 'designer' ? '/admin/designers/tasks' : '/admin/dashboard'}
+          className="flex items-center gap-3"
+          onClick={handleLinkClick}
+        >
           <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
             <span className="text-white font-bold text-lg">A</span>
           </div>
