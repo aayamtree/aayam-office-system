@@ -254,7 +254,7 @@ export function useDesigners() {
 // =============================================
 export function useJobs(options?: UseSupabaseQueryOptions) {
   const { data, loading, error, refetch } = useSupabaseQuery<Job>('jobs', {
-    select: '*, client:clients(*), vendor:vendors(*), designer:profiles!designer_id(*)', // Link to matches table
+    select: '*, client:clients(*), vendor:vendors(*)', // Removed designer join to avoid FK errors
     orderBy: { column: 'created_at', ascending: false },
     ...options
   });
