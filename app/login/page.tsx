@@ -28,11 +28,21 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const { error: signInError } = await signIn(email, password);
+      // Auto-append domain if user enters just a username
+      const cleanInput = email.trim();
+      const loginEmail = cleanInput.includes('@')
+        ? cleanInput
+        : `${cleanInput}@aayam.local`;
+
+      const { error: signInError } = await signIn(loginEmail, password);
 
       if (signInError) {
         console.error('Sign in error:', signInError);
-        setError(signInError);
+        // Handle weird object errors from Supabase
+        const errorMessage = typeof signInError === 'string'
+          ? signInError
+          : (signInError as any).message || 'Invalid credentials';
+        setError(errorMessage);
       } else {
         console.log('Sign in successful, redirecting...');
         // Force hard navigation if router.push fails

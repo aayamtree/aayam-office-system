@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   TrendingUp,
   Package,
@@ -17,11 +19,21 @@ import RemindersWidget from '@/components/dashboard/RemindersWidget';
 
 export default function AdminDashboard() {
   const { profile } = useAuth();
+  const router = useRouter();
   const { stats: dashboardStats, loading: statsLoading } = useDashboardStats();
   const { jobs: recentJobs, loading: jobsLoading } = useJobs({
     limit: 5,
     orderBy: { column: 'created_at', ascending: false }
   });
+
+  // Redirect Designers to their specific workspace
+  useEffect(() => {
+    if (profile?.role === 'designer') {
+      router.replace('/admin/designers/tasks');
+    }
+  }, [profile, router]);
+
+  if (profile?.role === 'designer') return null; // Prevent flash of admin content
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {

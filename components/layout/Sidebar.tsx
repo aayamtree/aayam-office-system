@@ -39,7 +39,7 @@ const menuItems = [
   {
     name: 'Design Tasks',
     icon: Palette,
-    href: '/admin/design-tasks', // New route for designers
+    href: '/admin/designers/tasks', // Updated to point to new Workspace
     allowedRoles: ['designer'],
   },
   {
