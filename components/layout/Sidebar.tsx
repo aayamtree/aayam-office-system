@@ -31,7 +31,7 @@ const menuItems = [
     allowedRoles: ['admin', 'account'],
   },
   {
-    name: 'Jobs',
+    name: 'Projects & Jobs',
     icon: Briefcase,
     href: '/admin/jobs',
     allowedRoles: ['admin', 'account'],
