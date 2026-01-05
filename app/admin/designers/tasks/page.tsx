@@ -45,7 +45,7 @@ const initialLogs = [
 
 export default function DesignerWorkspace() {
   const { profile } = useAuth();
-  const { jobs, loading: jobsLoading, updateJobStage } = useJobs();
+  const { jobs, loading: jobsLoading, error: jobsError, updateJobStage } = useJobs();
 
   // Local State
   const [tasks, setTasks] = useState<any[]>([]);
@@ -270,6 +270,12 @@ export default function DesignerWorkspace() {
         <div className="flex-1 overflow-y-auto p-3 space-y-3">
           {jobsLoading ? (
             <div className="flex justify-center py-10"><Loader2 className="animate-spin text-indigo-600" /></div>
+          ) : jobsError ? (
+            <div className="p-4 m-2 bg-red-50 text-red-600 text-xs rounded-xl border border-red-100 flex flex-col items-center gap-2">
+              <AlertCircle size={20} />
+              <p className="font-bold underline">Error Loading Tasks</p>
+              <p>{String(jobsError)}</p>
+            </div>
           ) : filteredTasks.length === 0 ? (
             <div className="text-center py-10 text-gray-400 text-sm">
               <p>No tasks found.</p>
