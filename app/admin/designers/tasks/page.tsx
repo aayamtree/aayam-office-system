@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import {
-  Plus, Search, Calendar, Clock, Edit, Trash2, Eye, X, ArrowLeft, CheckCircle,
+  Plus, Search, Calendar, Clock, Edit, Trash2, Eye, X, ArrowLeft, ArrowRight, CheckCircle,
   AlertCircle, User, Briefcase, MessageSquare, Paperclip, ExternalLink,
   FileText, Image, Video, Music, File, ChevronRight, Save, Send, MoreHorizontal
 } from 'lucide-react';
