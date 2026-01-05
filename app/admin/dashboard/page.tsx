@@ -33,7 +33,10 @@ export default function AdminDashboard() {
     }
   }, [profile, router]);
 
-  if (profile?.role === 'designer') return null; // Prevent flash of admin content
+  // Prevent flash of admin content for designers
+  if (profile?.role === 'designer') {
+    return <div className="h-screen flex items-center justify-center bg-gray-50 text-gray-500">Redirecting to workspace...</div>;
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -132,16 +135,16 @@ export default function AdminDashboard() {
             );
           })}
         </div>
-      </div >
+      </div>
 
       {/* Main Content Grid */}
-      < div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8" >
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
 
         {/* Left Column - 2/3 width */}
-        < div className="lg:col-span-2 space-y-6 lg:space-y-8" >
+        <div className="lg:col-span-2 space-y-6 lg:space-y-8">
 
           {/* Sales Performance */}
-          < div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100" >
+          <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-xl font-bold text-gray-900">Sales Performance</h2>
@@ -194,16 +197,16 @@ export default function AdminDashboard() {
                 <ArrowUpRight size={16} />
               </Link>
             </div>
-          </div >
+          </div>
 
           {/* Split Row: Reminders & Notes (Moved Up to Fill Gap) */}
-          < div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 h-[500px]" >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 h-[500px]">
             <RemindersWidget />
             <NotesWidget />
-          </div >
+          </div>
 
           {/* Recent Jobs */}
-          < div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100" >
+          <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">Recent Jobs</h2>
               <Link href="/admin/sales/orders" className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700 font-bold">
@@ -242,14 +245,14 @@ export default function AdminDashboard() {
                 </tbody>
               </table>
             </div>
-          </div >
-        </div >
+          </div>
+        </div>
 
         {/* Right Column - 1/3 width */}
-        < div className="space-y-6 lg:space-y-8" >
+        <div className="space-y-6 lg:space-y-8">
 
           {/* Quick Actions (Moved to Top of Right Column for Easy Access) */}
-          < div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100" >
+          <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
             <h2 className="text-lg font-bold text-gray-900 mb-5">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-4">
               <Link href="/admin/sales/orders" className="p-4 bg-gray-900 text-white rounded-xl text-center text-sm font-semibold hover:bg-gray-800 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5">
@@ -265,10 +268,10 @@ export default function AdminDashboard() {
                 Clients
               </Link>
             </div>
-          </div >
+          </div>
 
           {/* Work Pipeline */}
-          < div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100" >
+          <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
             <h2 className="text-lg font-bold text-gray-900 mb-6">Work Pipeline</h2>
 
             <div className="relative w-48 h-48 mx-auto mb-8">
@@ -296,10 +299,10 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
-          </div >
+          </div>
 
           {/* Needs Attention */}
-          < div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100" >
+          <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
             <div className="flex items-center gap-2.5 mb-6">
               <AlertCircle size={20} className="text-amber-500" />
               <h2 className="text-lg font-bold text-gray-900">Needs Attention</h2>
@@ -318,10 +321,10 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
-          </div >
+          </div>
 
-        </div >
-      </div >
-    </div >
+        </div>
+      </div>
+    </div>
   );
 }
