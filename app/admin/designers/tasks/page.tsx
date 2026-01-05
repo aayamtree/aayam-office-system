@@ -5,7 +5,8 @@ import Link from 'next/link';
 import {
   Plus, Search, Calendar, Clock, Edit, Trash2, Eye, X, ArrowLeft, ArrowRight, CheckCircle,
   AlertCircle, User, Briefcase, MessageSquare, Paperclip, ExternalLink,
-  FileText, Image, Video, Music, File, ChevronRight, Save, Send, MoreHorizontal
+  FileText, Image, Video, Music, File, ChevronRight, Save, Send, MoreHorizontal,
+  ChevronLeft
 } from 'lucide-react';
 
 // --- MOCK DATA ---
@@ -23,6 +24,8 @@ const priorities = [
   { id: 'urgent', name: 'Urgent', color: 'text-red-600 bg-red-50' },
 ];
 
+const mockClients = ['Ramesh Gupta', 'Royal Prints', 'TechStart Inc', 'Gujarat Textiles', 'Sharma Industries'];
+
 const initialTasks = [
   {
     id: 1, taskId: 'TSK-001', title: 'Wedding Card - Gupta Family',
@@ -32,14 +35,16 @@ const initialTasks = [
       { id: 1, text: 'Use bolder fonts for the names', date: 'Yesterday', by: 'Client' },
       { id: 2, text: 'Add Ganesha icon on top', date: 'Today', by: 'Admin' }
     ],
-    driveLink: 'https://drive.google.com/...'
+    driveLink: 'https://drive.google.com/...',
+    orderId: ''
   },
   {
     id: 2, taskId: 'TSK-002', title: 'Brochure - Royal Prints',
     clientName: 'Royal Prints', status: 'pending', priority: 'normal',
     deadline: '2025-12-30', description: '8 Page layout for new machinery.',
     feedback: [],
-    driveLink: ''
+    driveLink: '',
+    orderId: 'ORD-1025'
   },
   {
     id: 3, taskId: 'TSK-003', title: 'Logo Design - TechStart',
@@ -48,7 +53,8 @@ const initialTasks = [
     feedback: [
       { id: 1, text: 'Too simple. Needs more "tech" feel.', date: 'Today', by: 'Client' }
     ],
-    driveLink: ''
+    driveLink: '',
+    orderId: ''
   },
 ];
 
@@ -68,24 +74,38 @@ export default function DesignerWorkspace() {
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [showTeamTasks, setShowTeamTasks] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [newTaskData, setNewTaskData] = useState({ title: '', clientName: '', deadline: '', description: '', priority: 'normal' });
+  const [newTaskData, setNewTaskData] = useState({ title: '', clientName: '', deadline: '', description: '', priority: 'normal', orderId: '' });
 
-  // Filtering Logic
+  // Calendar State
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  // --- LOGIC ---
   const filteredTasks = tasks.filter(task => {
-    // 1. Text Search (Project Name / Client / Date)
     const matchesSearch =
       task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       task.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       task.deadline.includes(searchQuery);
 
-    // 2. Team vs My Tasks (Mock logic: In real app, check assigned_to)
-    // For now, Team View shows ALL. My View shows only specific ones (mocked by ID even/odd for demo)
-    const matchesView = showTeamTasks ? true : true; // In this mock, we act as if all are assigned to me for now.
-
+    // Mock Team Logic: In real app, we check if assigned_to != me
+    const matchesView = showTeamTasks ? true : true;
     return matchesSearch && matchesView;
   });
 
   const selectedTask = tasks.find(t => t.id === selectedTaskId);
+
+  // Calendar Helpers
+  const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+  const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay(); // 0 = Sun
+  const monthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1; // 0 = Mon
+
+  const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+
+  const getTasksForDate = (day: number) => {
+    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return tasks.filter(t => t.deadline === dateStr);
+  };
 
   // --- ACTIONS ---
   const handleCreateTask = (e: React.FormEvent) => {
@@ -102,13 +122,14 @@ export default function DesignerWorkspace() {
       deadline: newTaskData.deadline || new Date().toISOString().split('T')[0],
       description: newTaskData.description,
       feedback: [],
-      driveLink: ''
+      driveLink: '',
+      orderId: newTaskData.orderId
     };
 
     setTasks([newTask, ...tasks]);
     setIsNewTaskModalOpen(false);
-    setNewTaskData({ title: '', clientName: '', deadline: '', description: '', priority: 'normal' });
-    setSelectedTaskId(newTask.id); // Select the new task
+    setNewTaskData({ title: '', clientName: '', deadline: '', description: '', priority: 'normal', orderId: '' });
+    setSelectedTaskId(newTask.id);
   };
 
   const handleAddLog = (e: React.FormEvent) => {
@@ -163,19 +184,19 @@ export default function DesignerWorkspace() {
             </div>
           </div>
 
-          {/* View Toggle */}
-          <div className="flex bg-gray-200 p-0.5 rounded-lg">
+          {/* View Tabs */}
+          <div className="flex bg-gray-100 p-1 rounded-xl">
             <button
               onClick={() => setShowTeamTasks(false)}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${!showTeamTasks ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${!showTeamTasks ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
               My Tasks
             </button>
             <button
               onClick={() => setShowTeamTasks(true)}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${showTeamTasks ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${showTeamTasks ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              Team View
+              Team Tasks
             </button>
           </div>
         </div>
@@ -206,7 +227,11 @@ export default function DesignerWorkspace() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-3">
-          {filteredTasks.map(task => (
+          {filteredTasks.length === 0 ? (
+            <div className="text-center py-10 text-gray-400 text-sm">
+              <p>No tasks found.</p>
+            </div>
+          ) : filteredTasks.map(task => (
             <div
               key={task.id}
               onClick={() => setSelectedTaskId(task.id)}
@@ -240,11 +265,6 @@ export default function DesignerWorkspace() {
               </div>
             </div>
           ))}
-          {filteredTasks.length === 0 && (
-            <div className="text-center py-10 text-gray-400 text-sm">
-              <p>No tasks found.</p>
-            </div>
-          )}
         </div>
       </div>
 
@@ -263,11 +283,24 @@ export default function DesignerWorkspace() {
                     {selectedTask.priority}
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 flex items-center gap-2">
-                  <User size={14} /> {selectedTask.clientName}
+                <div className="text-sm text-gray-500 flex items-center gap-4">
+                  <div className="flex items-center gap-1.5">
+                    <User size={14} /> {selectedTask.clientName}
+                  </div>
                   <span className="text-gray-300">|</span>
-                  <Clock size={14} /> Due: {selectedTask.deadline}
-                </p>
+                  <div className="flex items-center gap-1.5">
+                    <Clock size={14} /> Due: {selectedTask.deadline}
+                  </div>
+                  {/* Order ID Link if exists */}
+                  {selectedTask.orderId && (
+                    <>
+                      <span className="text-gray-300">|</span>
+                      <div className="flex items-center gap-1.5 text-indigo-600 font-medium bg-indigo-50 px-2 py-0.5 rounded-full">
+                        <FileText size={12} /> Ref Order: {selectedTask.orderId}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
 
               <div className="flex items-center gap-3">
@@ -281,9 +314,6 @@ export default function DesignerWorkspace() {
                     {taskStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
                 </div>
-                <button className="p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                  <MoreHorizontal size={20} />
-                </button>
               </div>
             </div>
 
@@ -423,35 +453,53 @@ export default function DesignerWorkspace() {
           COLUMN 3: PRODUCTIVITY BAR
          ================================================================================= */}
       <div className="w-full md:w-80 bg-white border-l h-full flex flex-col z-10 shadow-[-4px_0_24px_rgba(0,0,0,0.02)]">
-        {/* Calendar Widget */}
+
+        {/* Full Month Calendar Widget */}
         <div className="p-6 border-b bg-gradient-to-br from-white to-gray-50">
-          <div className="flex items-center gap-2 mb-4 text-gray-900 font-bold">
-            <div className="p-1.5 bg-indigo-100 text-indigo-600 rounded-lg">
-              <Calendar size={16} />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2 text-gray-900 font-bold">
+              <div className="p-1.5 bg-indigo-100 text-indigo-600 rounded-lg">
+                <Calendar size={16} />
+              </div>
+              <h2>{monthName}</h2>
             </div>
-            <h2>Schedule</h2>
+            <div className="flex bg-white rounded-lg shadow-sm border border-gray-200">
+              <button onClick={prevMonth} className="p-1 hover:bg-gray-50 text-gray-500"><ChevronLeft size={16} /></button>
+              <button onClick={nextMonth} className="p-1 hover:bg-gray-50 text-gray-500"><ChevronRight size={16} /></button>
+            </div>
           </div>
-          {/* Simple Mini Calendar Visualization */}
+
           <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-            <div className="flex justify-between mb-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-              <span>Mo</span><span>Tu</span><span>We</span><span className="text-indigo-600">Th</span><span>Fr</span><span>Sa</span><span>Su</span>
+            <div className="grid grid-cols-7 mb-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">
+              <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
             </div>
-            <div className="grid grid-cols-7 gap-y-3 gap-x-1 text-center text-xs font-medium text-gray-600">
-              <span className="opacity-30">29</span><span className="opacity-30">30</span>
-              <span>1</span><span>2</span><span>3</span><span>4</span>
-              <span className="w-6 h-6 flex items-center justify-center bg-indigo-600 text-white rounded-full mx-auto shadow-md shadow-indigo-200">5</span>
-              <span>6</span><span>7</span><span>8</span><span>9</span>
+            <div className="grid grid-cols-7 gap-1 text-center">
+              {/* Empty cells */}
+              {Array.from({ length: adjustedFirstDay }).map((_, i) => (
+                <div key={`empty-${i}`} className="h-8"></div>
+              ))}
+              {/* Days */}
+              {Array.from({ length: daysInMonth }).map((_, i) => {
+                const day = i + 1;
+                const tasksOnDay = getTasksForDate(day);
+                const isToday = new Date().getDate() === day && new Date().getMonth() === currentDate.getMonth();
+                const hasTasks = tasksOnDay.length > 0;
+
+                return (
+                  <div key={day} className={`h-8 flex flex-col items-center justify-center relative rounded-lg text-xs font-medium cursor-pointer transition-colors hover:bg-gray-50
+                    ${isToday ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'text-gray-700'}`}>
+                    {day}
+                    {hasTasks && (
+                      <div className={`absolute bottom-1 w-1 h-1 rounded-full ${isToday ? 'bg-white' : 'bg-red-500'}`}></div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            <div className="mt-4 pt-4 border-t border-gray-100 text-xs space-y-2">
-              <div className="flex items-center gap-2 text-gray-700 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors border border-transparent hover:border-gray-100">
-                <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]"></div>
-                <span className="font-medium">2 Urgent Deadlines Tonight</span>
-              </div>
-              <div className="flex items-center gap-2 text-gray-700 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors border border-transparent hover:border-gray-100">
-                <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
-                <span className="font-medium">Gupta Wedding Delivery</span>
-              </div>
-            </div>
+          </div>
+          <div className="mt-3 flex items-center justify-between text-[10px] text-gray-400">
+            <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-red-500"></div> Deadline</div>
+            <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-indigo-600"></div> Today</div>
           </div>
         </div>
 
@@ -526,15 +574,19 @@ export default function DesignerWorkspace() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Client Name <span className="text-red-500">*</span></label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Ramesh Gupta"
-                      value={newTaskData.clientName}
-                      onChange={e => setNewTaskData({ ...newTaskData, clientName: e.target.value })}
-                      className="w-full border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 transition-shadow"
-                    />
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Client <span className="text-red-500">*</span></label>
+                    <div className="relative">
+                      <select
+                        required
+                        value={newTaskData.clientName}
+                        onChange={e => setNewTaskData({ ...newTaskData, clientName: e.target.value })}
+                        className="w-full border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 transition-shadow appearance-none"
+                      >
+                        <option value="">Select CRM Client</option>
+                        {mockClients.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      <User size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Deadline</label>
@@ -545,6 +597,18 @@ export default function DesignerWorkspace() {
                       className="w-full border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 transition-shadow text-gray-600"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Link Marketing Order (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. ORD-9021"
+                    value={newTaskData.orderId}
+                    onChange={e => setNewTaskData({ ...newTaskData, orderId: e.target.value })}
+                    className="w-full border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 transition-shadow"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1">This will link the design task to the sales order.</p>
                 </div>
 
                 <div>
@@ -569,7 +633,7 @@ export default function DesignerWorkspace() {
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Design Brief</label>
                   <textarea
-                    rows={4}
+                    rows={3}
                     placeholder="Enter details about the design requirements..."
                     value={newTaskData.description}
                     onChange={e => setNewTaskData({ ...newTaskData, description: e.target.value })}
