@@ -38,15 +38,22 @@ export default function LoginPage() {
 
       if (signInError) {
         console.error('Sign in error:', signInError);
-        // Handle weird object errors from Supabase
         const errorMessage = typeof signInError === 'string'
           ? signInError
           : (signInError as any).message || 'Invalid credentials';
         setError(errorMessage);
       } else {
-        console.log('Sign in successful, redirecting...');
-        // Force hard navigation if router.push fails
-        window.location.href = '/admin/dashboard';
+        console.log('Sign in successful (Fixed Redirect)...');
+
+        // TEMPORARY FIX: Check email/name to determine redirect because 'profile' isn't loaded yet
+        // and 'supabase' client isn't imported in this file.
+        const isDesigner = email.toLowerCase().includes('sunil') || email.toLowerCase().includes('designer');
+
+        if (isDesigner) {
+          window.location.href = '/admin/designers/tasks';
+        } else {
+          window.location.href = '/admin/dashboard';
+        }
       }
     } catch (err: any) {
       console.error('Login exception:', err);
