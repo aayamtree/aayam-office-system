@@ -205,52 +205,41 @@ export function useVendors() {
 // =============================================
 // DESIGNERS HOOK
 // =============================================
+// =============================================
+// DESIGNERS HOOK (Linked to Profiles)
+// =============================================
 export function useDesigners() {
-  const { data, loading, error, refetch } = useSupabaseQuery<Designer>('designers', {
+  // Fetch users with designer role from profiles to ensure Auth ID match
+  const { data: profiles, loading, error, refetch } = useSupabaseQuery<any>('profiles', {
+    filter: [{ column: 'role', value: 'designer' }],
     orderBy: { column: 'created_at', ascending: false }
   });
 
-  const createDesigner = async (designer: Omit<Designer, 'id' | 'created_at' | 'updated_at'>) => {
-    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+  // Map Profile to Designer interface
+  const designers = (profiles || []).map(p => ({
+    id: p.id,
+    name: p.full_name || p.email?.split('@')[0] || 'Unknown',
+    email: p.email,
+    phone: '',
+    employment_type: 'full-time',
+    skills: [],
+    // Adapting profile to designer shape
+  }));
 
-    const { data, error } = await supabase
-      .from('designers')
-      .insert([designer])
-      .select()
-      .single();
-
-    if (!error) await refetch();
-    return { data, error: error?.message };
+  const createDesigner = async (designer: any) => {
+    return { error: 'Please create users via Auth / Team Settings' };
   };
 
-  const updateDesigner = async (id: string, updates: Partial<Designer>) => {
-    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
-
-    const { data, error } = await supabase
-      .from('designers')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (!error) await refetch();
-    return { data, error: error?.message };
+  const updateDesigner = async (id: string, updates: any) => {
+    return { error: 'Manage in Team Settings' };
   };
 
   const deleteDesigner = async (id: string) => {
-    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
-
-    const { error } = await supabase
-      .from('designers')
-      .delete()
-      .eq('id', id);
-
-    if (!error) await refetch();
-    return { error: error?.message };
+    return { error: 'Manage in Team Settings' };
   };
 
   return {
-    designers: data,
+    designers,
     loading,
     error,
     refetch,
@@ -265,7 +254,7 @@ export function useDesigners() {
 // =============================================
 export function useJobs(options?: UseSupabaseQueryOptions) {
   const { data, loading, error, refetch } = useSupabaseQuery<Job>('jobs', {
-    select: '*, client:clients(*), vendor:vendors(*), designer:designers(*)',
+    select: '*, client:clients(*), vendor:vendors(*), designer:profiles!designer_id(*)', // Link to matches table
     orderBy: { column: 'created_at', ascending: false },
     ...options
   });
@@ -274,9 +263,17 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
     // Get next job number
-    const { data: numberData } = await supabase.rpc('get_next_number', { counter_id: 'job' });
+    // Fallback: AAY-YY-XXXX (Random 4 digit)
+    let jobNumber = `AAY-${new Date().getFullYear().toString().slice(-2)}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    const newJob = { ...job, job_number: numberData || `AAY-${Date.now()}` };
+    try {
+      const { data: numberData } = await supabase.rpc('get_next_number', { counter_id: 'job' });
+      if (numberData) jobNumber = numberData;
+    } catch (e) {
+      console.warn('RPC get_next_number failed, using fallback');
+    }
+
+    const newJob = { ...job, job_number: jobNumber };
 
     const { data, error } = await supabase
       .from('jobs')
