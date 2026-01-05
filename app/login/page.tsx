@@ -45,15 +45,8 @@ export default function LoginPage() {
       } else {
         console.log('Sign in successful (Fixed Redirect)...');
 
-        // TEMPORARY FIX: Check email/name to determine redirect because 'profile' isn't loaded yet
-        // and 'supabase' client isn't imported in this file.
-        const isDesigner = email.toLowerCase().includes('sunil') || email.toLowerCase().includes('designer');
-
-        if (isDesigner) {
-          window.location.href = '/admin/designers/tasks';
-        } else {
-          window.location.href = '/admin/dashboard';
-        }
+        // Redirect to dashboard, which handles role-based routing
+        window.location.href = '/admin/dashboard';
       }
     } catch (err: any) {
       console.error('Login exception:', err);
