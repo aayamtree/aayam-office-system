@@ -193,10 +193,17 @@ export default function JobsPage() {
         is_active: true
       };
 
+      let result;
       if (editingJob) {
-        await updateJob(editingJob.id, jobData);
+        result = await updateJob(editingJob.id, jobData);
       } else {
-        await createJob(jobData);
+        result = await createJob(jobData);
+      }
+
+      if (result.error) {
+        alert('Failed to save job: ' + result.error);
+        setSaving(false);
+        return;
       }
 
       setShowModal(false);
