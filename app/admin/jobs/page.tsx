@@ -35,7 +35,7 @@ export default function JobsPage() {
   const { jobs, loading: jobsLoading, createJob, updateJob, deleteJob, updateJobStage } = useJobs();
   const { clients, createClient } = useClients();
   const { vendors, createVendor } = useVendors();
-  const { designers, createDesigner } = useDesigners();
+  const { designers, createDesigner, ensureDesigner } = useDesigners();
 
   const loading = jobsLoading; // Main loading state
 
@@ -192,6 +192,14 @@ export default function JobsPage() {
         discount_amount: 0, // Should be calculated if we add discount field
         is_active: true
       };
+
+      // Ensure Designer exists in DB for Foreign Key
+      if (formData.designer_id && ensureDesigner) {
+        const selectedD = designers.find(d => d.id === formData.designer_id);
+        if (selectedD) {
+          await ensureDesigner({ ...selectedD, full_name: selectedD.name });
+        }
+      }
 
       let result;
       if (editingJob) {
