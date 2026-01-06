@@ -165,7 +165,11 @@ export default function DesignerWorkspace() {
 
 
   // Calendar State
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setCurrentDate(new Date());
+  }, []);
 
   // === DATA SYNC ===
   // === DATA SYNC ===
@@ -248,15 +252,16 @@ export default function DesignerWorkspace() {
 
 
   // Calendar Helpers
-  const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
-  const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay(); // 0 = Sun
-  const monthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const daysInMonth = currentDate ? new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate() : 0;
+  const firstDay = currentDate ? new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay() : 0; // 0 = Sun
+  const monthName = currentDate ? currentDate.toLocaleString('default', { month: 'long', year: 'numeric' }) : '';
   const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1; // 0 = Mon
 
-  const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
-  const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  const prevMonth = () => currentDate && setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  const nextMonth = () => currentDate && setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
 
   const getTasksForDate = (day: number) => {
+    if (!currentDate) return [];
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     return tasks.filter(t => t.deadline === dateStr);
   };
@@ -394,30 +399,32 @@ export default function DesignerWorkspace() {
             </div>
           ) : activeTab === 'notes' ? (
             <div className="space-y-4">
-              <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Calendar size={14} /> Calendar</h3>
-                <div className="grid grid-cols-7 gap-1 text-center mb-1">
-                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <span key={d} className="text-[10px] text-gray-400 font-bold">{d}</span>)}
+              {currentDate && (
+                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Calendar size={14} /> Calendar</h3>
+                  <div className="grid grid-cols-7 gap-1 text-center mb-1">
+                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <span key={d} className="text-[10px] text-gray-400 font-bold">{d}</span>)}
+                  </div>
+                  <div className="grid grid-cols-7 gap-1">
+                    {Array.from({ length: firstDay }).map((_, i) => <div key={`empty-${i}`} />)}
+                    {Array.from({ length: daysInMonth }).map((_, i) => {
+                      const d = i + 1;
+                      const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                      const hasNote = (notes || []).some(n => n?.note_date === dateStr);
+                      return (
+                        <div key={d} className={`text-xs h-6 flex items-center justify-center rounded-full cursor-pointer hover:bg-indigo-50 ${hasNote ? 'bg-indigo-100 text-indigo-700 font-bold' : 'text-gray-600'}`}>
+                          {d}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="grid grid-cols-7 gap-1">
-                  {Array.from({ length: firstDay }).map((_, i) => <div key={`empty-${i}`} />)}
-                  {Array.from({ length: daysInMonth }).map((_, i) => {
-                    const d = i + 1;
-                    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                    const hasNote = (notes || []).some(n => n?.note_date === dateStr);
-                    return (
-                      <div key={d} className={`text-xs h-6 flex items-center justify-center rounded-full cursor-pointer hover:bg-indigo-50 ${hasNote ? 'bg-indigo-100 text-indigo-700 font-bold' : 'text-gray-600'}`}>
-                        {d}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              )}
 
               <button onClick={handleCreateNote} className="w-full py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:bg-indigo-700"><Plus size={16} /> New Note</button>
 
-              {(notes || []).length === 0 ? <p className="text-center text-gray-400 text-xs py-4">No notes created.</p> : (notes || []).map(note => (
-                <div key={note?.id || Math.random()} onClick={() => selectNoteForEdit(note)} className={`p-3 rounded-xl border cursor-pointer hover:shadow-md transition-all bg-white ${selectedNote?.id === note?.id ? 'border-indigo-500 ring-1 ring-indigo-200' : 'border-gray-100'}`}>
+              {(notes || []).length === 0 ? <p className="text-center text-gray-400 text-xs py-4">No notes created.</p> : (notes || []).map((note, i) => (
+                <div key={note?.id || `note-${i}`} onClick={() => selectNoteForEdit(note)} className={`p-3 rounded-xl border cursor-pointer hover:shadow-md transition-all bg-white ${selectedNote?.id === note?.id ? 'border-indigo-500 ring-1 ring-indigo-200' : 'border-gray-100'}`}>
                   <div className="flex justify-between items-start mb-1"><h4 className="font-bold text-sm text-gray-800 line-clamp-1">{note?.title || 'Untitled'}</h4><span className="text-[10px] text-gray-400">{note?.note_date || ''}</span></div>
                   <p className="text-xs text-gray-500 line-clamp-2">{note?.content || ''}</p>
                 </div>
