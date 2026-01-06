@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
-import { useJobs } from '@/lib/hooks';
+import { useJobs, useClients, useDesigners } from '@/lib/hooks';
 import {
   Plus, Search, Calendar, Clock, Edit, Trash2, Eye, X, ArrowLeft, ArrowRight, CheckCircle,
   AlertCircle, User, Briefcase, MessageSquare, Paperclip, ExternalLink,
@@ -46,6 +46,8 @@ const initialLogs = [
 export default function DesignerWorkspace() {
   const { profile } = useAuth();
   const { jobs, loading: jobsLoading, error: jobsError, updateJobStage } = useJobs();
+  const { clients } = useClients();
+  const { designers } = useDesigners();
 
   // Local State
   const [tasks, setTasks] = useState<any[]>([]);
@@ -75,45 +77,45 @@ export default function DesignerWorkspace() {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   // === DATA SYNC ===
+  // === DATA SYNC ===
   useEffect(() => {
     if (jobs) {
       const mappedTasks = jobs
-        .filter(job => {
-          // 1. Include only active design jobs or jobs relevant to design flow
-          // 2. We keep Completed jobs for "Work Summary" calculations, even if hidden from active queue?
-          // For now, let's load relevant stages.
-          return ['new', 'designing', 'approval', 'printing', 'finishing', 'completed', 'delivered'].includes(job.current_stage);
+        .filter(job => ['new', 'designing', 'approval', 'printing', 'finishing', 'completed', 'delivered'].includes(job.current_stage))
+        .map(job => {
+          // Resolve Relationships (Manual Join)
+          const client = clients.find(c => c.id === job.client_id);
+          const designer = designers.find(d => d.id === job.designer_id);
+
+          return {
+            id: parseInt(job.id.substring(0, 8), 16) || Math.floor(Math.random() * 1000000),
+            realId: job.id,
+            taskId: job.job_number || 'JOB',
+            title: job.project_name,
+            clientName: client?.name || 'Unknown Client', // Name resolved!
+            status: getDesignerStatus(job.current_stage),
+            priority: job.priority || 'normal',
+            // Formatting Date to 'DD MMM'
+            deadline: job.client_deadline ? new Date(job.client_deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '',
+            rawDeadline: job.client_deadline,
+            description: `Job Type: ${job.job_type || '-'}\nDetails: ${job.description || 'No description provided.'}`,
+            feedback: [],
+            driveLink: job.files?.[0] || '',
+            orderId: job.id,
+            designerId: job.designer_id,
+            designerName: designer?.name || 'Unassigned',  // Name resolved!
+            createdAt: job.created_at,
+            current_stage: job.current_stage
+          };
         })
-        .map(job => ({
-          id: parseInt(job.id.substring(0, 8), 16) || Math.floor(Math.random() * 1000000), // Generate integer ID from UUID safely
-          realId: job.id, // Keep real UUID
-          taskId: job.job_number || 'JOB',
-          title: job.project_name,
-          clientName: job.client?.name || 'Unknown Client',
-          status: getDesignerStatus(job.current_stage),
-          priority: job.priority || 'normal',
-          deadline: job.client_deadline || '',
-          description: `Job Type: ${job.job_type}\nDetails: ${job.description || 'No description provided.'}`,
-          feedback: [],
-          driveLink: job.files?.[0] || '',
-          orderId: job.id,
-          designerId: job.designer_id,
-          createdAt: job.created_at,
-          current_stage: job.current_stage // Keep raw stage for updates
-        }))
-        // Sort: High priority first, then by deadline
         .sort((a, b) => {
           if (a.priority === 'urgent' && b.priority !== 'urgent') return -1;
-          if (b.priority === 'urgent' && a.priority !== 'urgent') return 1;
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         });
 
       setTasks(mappedTasks);
-
-      // Auto-select first task if none selected and filtered view has tasks
-      // (Handled in render logic or user interaction safest)
     }
-  }, [jobs]);
+  }, [jobs, clients, designers]);
 
   // --- LOGIC ---
   const filteredTasks = tasks.filter(task => {
@@ -302,13 +304,22 @@ export default function DesignerWorkspace() {
 
               <div className="flex justify-between items-start mb-2">
                 <span className="font-mono text-[10px] text-gray-500 font-medium tracking-wide">{task.taskId}</span>
-                {task.deadline && new Date(task.deadline) < new Date() ? (
-                  <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <Clock size={10} /> Overdue
-                  </span>
-                ) : (
-                  <span className="text-[10px] text-gray-400 font-medium">{task.deadline || 'No Deadline'}</span>
-                )}
+                <div className="flex flex-col items-end gap-0.5">
+                  {task.rawDeadline && new Date(task.rawDeadline) < new Date() && task.current_stage !== 'delivered' ? (
+                    <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full flex items-center gap-1 mb-1">
+                      <Clock size={10} /> Overdue
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-gray-400 font-medium">{task.deadline || 'No Deadline'}</span>
+                  )}
+
+                  {/* Show Designer Label in Team View */}
+                  {showTeamTasks && (
+                    <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded">
+                      {task.designerName}
+                    </span>
+                  )}
+                </div>
               </div>
               <h3 className={`font-semibold text-sm mb-3 leading-snug ${selectedTaskId === task.id ? 'text-indigo-900' : 'text-gray-800'}`}>
                 {task.title}
