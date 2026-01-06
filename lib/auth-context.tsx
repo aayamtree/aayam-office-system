@@ -242,16 +242,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Sign out
   const signOut = async () => {
-    if (!isConfigured) {
-      setProfile(null);
-      return;
-    }
-
-    await supabase.auth.signOut();
+    // Optimistic Logout: Clear state immediately
     localStorage.removeItem('aayam_fallback_profile');
+    setSession(null);
     setUser(null);
     setProfile(null);
-    setSession(null);
+
+    // Force Navigation
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
+
+    if (isConfigured) {
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {
+        console.error('SignOut API error:', e);
+      }
+    }
   };
 
   // Update user profile
