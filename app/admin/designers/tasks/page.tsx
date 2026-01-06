@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { useJobs, useClients, useDesigners } from '@/lib/hooks';
+import { supabase } from '@/lib/supabase';
 import {
   Plus, Search, Calendar, Clock, Edit, Trash2, Eye, X, ArrowLeft, ArrowRight, CheckCircle,
   AlertCircle, User, Briefcase, MessageSquare, Paperclip, ExternalLink,
@@ -58,8 +59,100 @@ export default function DesignerWorkspace() {
 
   // UI State
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
-  const [showTeamTasks, setShowTeamTasks] = useState(false);
+
+  const [activeTab, setActiveTab] = useState<'my_tasks' | 'team_tasks' | 'notes'>('my_tasks');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Notes State
+  const [notes, setNotes] = useState<any[]>([]);
+  const [selectedNote, setSelectedNote] = useState<any>(null);
+  const [loadingNotes, setLoadingNotes] = useState(false);
+
+  // Note Form
+  const [noteTitle, setNoteTitle] = useState('');
+  const [noteContent, setNoteContent] = useState('');
+  const [noteDate, setNoteDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // Fetch Notes
+  const fetchNotes = async () => {
+    if (!profile?.id) return;
+    try {
+      setLoadingNotes(true);
+      const { data, error } = await supabase
+        .from('designer_notes')
+        .select('*')
+        .eq('user_id', profile.id)
+        .order('note_date', { ascending: false });
+
+      if (error) {
+        if (error.code === '42P01') { // Undefined Table
+          console.warn('Notes table missing');
+          return;
+        }
+        throw error;
+      }
+      setNotes(data || []);
+    } catch (e) {
+      console.error('Error fetching notes:', e);
+    } finally {
+      setLoadingNotes(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'notes') {
+      fetchNotes();
+    }
+  }, [activeTab, profile?.id]);
+
+  const handleSaveNote = async () => {
+    if (!profile?.id || !noteTitle) return alert('Title is required');
+    try {
+      const noteData = {
+        user_id: profile.id,
+        title: noteTitle,
+        content: noteContent,
+        note_date: noteDate
+      };
+
+      if (selectedNote) {
+        const { error } = await supabase.from('designer_notes').update(noteData).eq('id', selectedNote.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('designer_notes').insert([noteData]);
+        if (error) throw error;
+      }
+
+      await fetchNotes();
+      // Reset
+      setSelectedNote(null);
+      setNoteTitle('');
+      setNoteContent('');
+    } catch (e: any) {
+      alert('Error saving note: ' + (e.message || 'Check database schema'));
+    }
+  };
+
+  const handleCreateNote = () => {
+    setSelectedNote(null);
+    setNoteTitle('');
+    setNoteContent('');
+    setNoteDate(new Date().toISOString().split('T')[0]);
+  };
+
+  const selectNoteForEdit = (note: any) => {
+    setSelectedNote(note);
+    setNoteTitle(note.title);
+    setNoteContent(note.content || '');
+    setNoteDate(note.note_date || new Date().toISOString().split('T')[0]);
+  };
+
+  const handleDeleteNote = async (id: string) => {
+    if (!confirm('Delete this note?')) return;
+    await supabase.from('designer_notes').delete().eq('id', id);
+    await fetchNotes();
+    if (selectedNote?.id === id) setSelectedNote(null);
+  };
   const [newTaskData, setNewTaskData] = useState({ title: '', clientName: '', deadline: '', description: '', priority: 'normal', orderId: '' });
 
   // Safety: Prevent infinite loading
@@ -128,7 +221,8 @@ export default function DesignerWorkspace() {
     const isAssignedToMe = task.designerId === profile?.id;
     // If showTeamTasks is true -> Show All
     // If showTeamTasks is false -> Show Mine + Unassigned (to pick up)
-    const matchesView = showTeamTasks ? true : (isAssignedToMe || !task.designerId);
+    // If showTeamTasks is false -> Show Mine + Unassigned (to pick up)
+    const matchesView = activeTab === 'team_tasks' ? true : (isAssignedToMe || !task.designerId);
 
     // Filter out completed tasks from MAIN VIEW unless searching?
     // Maybe keep them but at bottom. For now, show active only in default views?
@@ -238,16 +332,22 @@ export default function DesignerWorkspace() {
           {/* View Tabs */}
           <div className="flex border-b border-gray-100 mt-4 mx-1">
             <button
-              onClick={() => setShowTeamTasks(false)}
-              className={`flex-1 pb-2 text-center text-xs font-bold border-b-2 transition-all ${!showTeamTasks ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              onClick={() => setActiveTab('my_tasks')}
+              className={`flex-1 pb-2 text-center text-[10px] md:text-xs font-bold border-b-2 transition-all ${activeTab === 'my_tasks' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
             >
               My Tasks
             </button>
             <button
-              onClick={() => setShowTeamTasks(true)}
-              className={`flex-1 pb-2 text-center text-xs font-bold border-b-2 transition-all ${showTeamTasks ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              onClick={() => setActiveTab('team_tasks')}
+              className={`flex-1 pb-2 text-center text-[10px] md:text-xs font-bold border-b-2 transition-all ${activeTab === 'team_tasks' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
             >
               Team Tasks
+            </button>
+            <button
+              onClick={() => setActiveTab('notes')}
+              className={`flex-1 pb-2 text-center text-[10px] md:text-xs font-bold border-b-2 transition-all ${activeTab === 'notes' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+            >
+              My Notes
             </button>
           </div>
         </div>
@@ -256,7 +356,8 @@ export default function DesignerWorkspace() {
           <div className="flex justify-between items-center mb-4">
             <h2 className="font-bold text-gray-800 flex items-center gap-2">
               <Briefcase size={18} className="text-indigo-600" />
-              {showTeamTasks ? 'Team Queue' : 'My Queue'}
+              <Briefcase size={18} className="text-indigo-600" />
+              {activeTab === 'notes' ? 'My Notes' : (activeTab === 'team_tasks' ? 'Team Queue' : 'My Queue')}
             </h2>
             {/* 
             <button 
@@ -293,6 +394,37 @@ export default function DesignerWorkspace() {
             <div className="text-center py-10 text-gray-400 text-sm">
               <p>No tasks found.</p>
             </div>
+          ) : activeTab === 'notes' ? (
+            <div className="space-y-4">
+              <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Calendar size={14} /> Calendar</h3>
+                <div className="grid grid-cols-7 gap-1 text-center mb-1">
+                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <span key={d} className="text-[10px] text-gray-400 font-bold">{d}</span>)}
+                </div>
+                <div className="grid grid-cols-7 gap-1">
+                  {Array.from({ length: firstDay }).map((_, i) => <div key={`empty-${i}`} />)}
+                  {Array.from({ length: daysInMonth }).map((_, i) => {
+                    const d = i + 1;
+                    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    const hasNote = notes.some(n => n.note_date === dateStr);
+                    return (
+                      <div key={d} className={`text-xs h-6 flex items-center justify-center rounded-full cursor-pointer hover:bg-indigo-50 ${hasNote ? 'bg-indigo-100 text-indigo-700 font-bold' : 'text-gray-600'}`}>
+                        {d}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <button onClick={handleCreateNote} className="w-full py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:bg-indigo-700"><Plus size={16} /> New Note</button>
+
+              {notes.length === 0 ? <p className="text-center text-gray-400 text-xs py-4">No notes created.</p> : notes.map(note => (
+                <div key={note.id} onClick={() => selectNoteForEdit(note)} className={`p-3 rounded-xl border cursor-pointer hover:shadow-md transition-all bg-white ${selectedNote?.id === note.id ? 'border-indigo-500 ring-1 ring-indigo-200' : 'border-gray-100'}`}>
+                  <div className="flex justify-between items-start mb-1"><h4 className="font-bold text-sm text-gray-800 line-clamp-1">{note.title}</h4><span className="text-[10px] text-gray-400">{note.note_date}</span></div>
+                  <p className="text-xs text-gray-500 line-clamp-2">{note.content}</p>
+                </div>
+              ))}
+            </div>
           ) : filteredTasks.map(task => (
             <div
               key={task.id}
@@ -314,7 +446,7 @@ export default function DesignerWorkspace() {
                   )}
 
                   {/* Show Designer Label in Team View */}
-                  {showTeamTasks && (
+                  {activeTab === 'team_tasks' && (
                     <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded">
                       {task.designerName}
                     </span>
@@ -343,7 +475,23 @@ export default function DesignerWorkspace() {
           COLUMN 2: ACTIVE WORKSPACE (Detail)
          ================================================================================= */}
       <div className="flex-1 flex flex-col h-full min-w-0 bg-white">
-        {selectedTask ? (
+        {activeTab === 'notes' ? (
+          <div className="flex flex-col h-full bg-white relative">
+            <div className="px-8 py-5 border-b flex justify-between items-center bg-white sticky top-0 z-20">
+              <input type="text" value={noteTitle} onChange={e => setNoteTitle(e.target.value)} placeholder="Note Title..." autoFocus className="text-xl font-bold text-gray-900 border-none focus:ring-0 placeholder:text-gray-300 w-full bg-transparent" />
+              <input type="date" value={noteDate} onChange={e => setNoteDate(e.target.value)} className="text-sm border-gray-200 rounded-lg ml-4" />
+            </div>
+            <div className="flex-1 p-8 bg-gray-50/30">
+              <textarea value={noteContent} onChange={e => setNoteContent(e.target.value)} placeholder="Type your note content here..." className="w-full h-full bg-transparent border-none focus:ring-0 resize-none text-gray-700 leading-relaxed font-sans placeholder:text-gray-300 p-0" />
+            </div>
+            <div className="p-4 border-t bg-white flex justify-between items-center">
+              {selectedNote && <button onClick={() => handleDeleteNote(selectedNote.id)} className="text-red-500 hover:text-red-700 text-sm font-bold flex items-center gap-2"><Trash2 size={16} /> Delete</button>}
+              <div className="flex gap-2 ml-auto">
+                <button onClick={handleSaveNote} className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 flex items-center gap-2"><Save size={18} /> Save Note</button>
+              </div>
+            </div>
+          </div>
+        ) : selectedTask ? (
           <>
             {/* Header */}
             <div className="px-8 py-5 border-b flex justify-between items-start bg-white sticky top-0 z-20">
