@@ -16,9 +16,14 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   // Redirect if already logged in
+  // Redirect if already logged in - Optimized for Role
   useEffect(() => {
     if (!loading && profile) {
-      router.push('/admin/dashboard');
+      if (profile.role === 'designer') {
+        router.push('/admin/designers/tasks');
+      } else {
+        router.push('/admin/dashboard');
+      }
     }
   }, [profile, loading, router]);
 
@@ -42,16 +47,14 @@ export default function LoginPage() {
           ? signInError
           : (signInError as any).message || 'Invalid credentials';
         setError(errorMessage);
+        setIsLoading(false);
       } else {
-        console.log('Sign in successful (Fixed Redirect)...');
-
-        // Redirect to dashboard, which handles role-based routing
-        window.location.href = '/admin/dashboard';
+        console.log('Sign in successful (Waiting for redirect)...');
+        // Do NOT set isLoading(false). wait for useEffect to redirect.
       }
     } catch (err: any) {
       console.error('Login exception:', err);
       setError(err.message || 'An error occurred');
-    } finally {
       setIsLoading(false);
     }
   };
