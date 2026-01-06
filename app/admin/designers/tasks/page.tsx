@@ -162,9 +162,7 @@ export default function DesignerWorkspace() {
     return () => clearTimeout(t);
   }, []);
 
-  useEffect(() => {
-    console.log('Designer Debug:', { jobsCount: jobs?.length, jobsLoading, jobsError });
-  }, [jobs, jobsLoading, jobsError]);
+
 
   // Calendar State
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -173,12 +171,12 @@ export default function DesignerWorkspace() {
   // === DATA SYNC ===
   useEffect(() => {
     if (jobs) {
-      const mappedTasks = jobs
-        .filter(job => ['new', 'designing', 'approval', 'printing', 'finishing', 'completed', 'delivered'].includes(job.current_stage))
+      const mappedTasks = (jobs || [])
+        .filter(job => ['new', 'designing', 'approval', 'printing', 'finishing', 'completed', 'delivered'].includes(job.current_stage || ''))
         .map(job => {
           // Resolve Relationships (Manual Join)
-          const client = clients.find(c => c.id === job.client_id);
-          const designer = designers.find(d => d.id === job.designer_id);
+          const client = (clients || []).find(c => c.id === job.client_id);
+          const designer = (designers || []).find(d => d.id === job.designer_id);
 
           return {
             id: parseInt(job.id.substring(0, 8), 16) || Math.floor(Math.random() * 1000000),
@@ -406,7 +404,7 @@ export default function DesignerWorkspace() {
                   {Array.from({ length: daysInMonth }).map((_, i) => {
                     const d = i + 1;
                     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                    const hasNote = notes.some(n => n.note_date === dateStr);
+                    const hasNote = (notes || []).some(n => n?.note_date === dateStr);
                     return (
                       <div key={d} className={`text-xs h-6 flex items-center justify-center rounded-full cursor-pointer hover:bg-indigo-50 ${hasNote ? 'bg-indigo-100 text-indigo-700 font-bold' : 'text-gray-600'}`}>
                         {d}
@@ -418,14 +416,14 @@ export default function DesignerWorkspace() {
 
               <button onClick={handleCreateNote} className="w-full py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:bg-indigo-700"><Plus size={16} /> New Note</button>
 
-              {notes.length === 0 ? <p className="text-center text-gray-400 text-xs py-4">No notes created.</p> : notes.map(note => (
-                <div key={note.id} onClick={() => selectNoteForEdit(note)} className={`p-3 rounded-xl border cursor-pointer hover:shadow-md transition-all bg-white ${selectedNote?.id === note.id ? 'border-indigo-500 ring-1 ring-indigo-200' : 'border-gray-100'}`}>
-                  <div className="flex justify-between items-start mb-1"><h4 className="font-bold text-sm text-gray-800 line-clamp-1">{note.title}</h4><span className="text-[10px] text-gray-400">{note.note_date}</span></div>
-                  <p className="text-xs text-gray-500 line-clamp-2">{note.content}</p>
+              {(notes || []).length === 0 ? <p className="text-center text-gray-400 text-xs py-4">No notes created.</p> : (notes || []).map(note => (
+                <div key={note?.id || Math.random()} onClick={() => selectNoteForEdit(note)} className={`p-3 rounded-xl border cursor-pointer hover:shadow-md transition-all bg-white ${selectedNote?.id === note?.id ? 'border-indigo-500 ring-1 ring-indigo-200' : 'border-gray-100'}`}>
+                  <div className="flex justify-between items-start mb-1"><h4 className="font-bold text-sm text-gray-800 line-clamp-1">{note?.title || 'Untitled'}</h4><span className="text-[10px] text-gray-400">{note?.note_date || ''}</span></div>
+                  <p className="text-xs text-gray-500 line-clamp-2">{note?.content || ''}</p>
                 </div>
               ))}
             </div>
-          ) : filteredTasks.map(task => (
+          ) : (filteredTasks || []).map(task => (
             <div
               key={task.id}
               onClick={() => setSelectedTaskId(task.id)}
