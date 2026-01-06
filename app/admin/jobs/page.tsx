@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Plus, Search, Briefcase, Calendar,
   IndianRupee, Edit, Trash2, X,
@@ -38,6 +38,13 @@ export default function JobsPage() {
   const { designers, createDesigner, ensureDesigner } = useDesigners();
 
   const loading = jobsLoading; // Main loading state
+
+  // Safety: Prevent infinite loading
+  const [forceShow, setForceShow] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setForceShow(true), 3000);
+    return () => clearTimeout(t);
+  }, []);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState('all');
@@ -295,7 +302,7 @@ export default function JobsPage() {
     setShowModal(true);
   };
 
-  if (loading) {
+  if (loading && !forceShow) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
