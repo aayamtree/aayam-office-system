@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { 
+import {
   Plus, Search, Palette, Phone, Mail, MapPin, Clock,
   Calendar, IndianRupee, Briefcase, Edit, Trash2, Eye, X,
-  CheckCircle, TrendingUp, Users, Loader2
+  CheckCircle, TrendingUp, Users, Loader2, Upload
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -23,10 +23,11 @@ interface Designer {
   city: string;
   state: string;
   created_at: string;
+  document_url?: string;
 }
 
 const skillOptions = [
-  'Logo Design', 'Brochure', 'Packaging', 'Social Media', 
+  'Logo Design', 'Brochure', 'Packaging', 'Social Media',
   'Wedding Cards', 'Invitations', 'Flex Design', 'Banner',
   '3D Design', 'Product Packaging', 'Label Design',
   'UI/UX', 'Web Design', 'App Design', 'Illustration'
@@ -45,7 +46,7 @@ export default function DesignersPage() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [editingDesigner, setEditingDesigner] = useState<Designer | null>(null);
   const [selectedDesigner, setSelectedDesigner] = useState<Designer | null>(null);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -57,8 +58,40 @@ export default function DesignersPage() {
     monthly_salary: 0,
     is_active: true,
     city: '',
-    state: 'Gujarat'
+    state: 'Gujarat',
+    document_url: ''
   });
+
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+
+    try {
+      setUploadingDoc(true);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+      const filePath = `identity-docs/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+
+      setFormData(prev => ({ ...prev, document_url: publicUrl }));
+    } catch (error: any) {
+      console.error('Upload failed:', error);
+      alert('Upload failed: ' + error.message);
+    } finally {
+      setUploadingDoc(false);
+    }
+  };
 
   useEffect(() => {
     fetchDesigners();
@@ -87,8 +120,8 @@ export default function DesignersPage() {
   // Filter designers
   const filteredDesigners = designers.filter(designer => {
     const matchesSearch = designer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         designer.phone?.includes(searchTerm) ||
-                         designer.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      designer.phone?.includes(searchTerm) ||
+      designer.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' ? designer.is_active : !designer.is_active);
     const matchesSkill = skillFilter === 'all' || designer.skills?.includes(skillFilter);
     return matchesSearch && matchesStatus && matchesSkill;
@@ -97,7 +130,7 @@ export default function DesignersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    
+
     try {
       const designerData = {
         name: formData.name,
@@ -110,21 +143,44 @@ export default function DesignersPage() {
         monthly_salary: formData.monthly_salary,
         is_active: formData.is_active,
         city: formData.city || null,
-        state: formData.state || null
+        state: formData.state || null,
+        document_url: formData.document_url || null
       };
 
+      let error;
       if (editingDesigner) {
-        const { error } = await supabase
+        ({ error } = await supabase
           .from('designers')
           .update(designerData)
-          .eq('id', editingDesigner.id);
-        if (error) throw error;
+          .eq('id', editingDesigner.id));
       } else {
-        const { error } = await supabase
+        ({ error } = await supabase
           .from('designers')
-          .insert([designerData]);
-        if (error) throw error;
+          .insert([designerData]));
       }
+
+      // Fallback: If document_url column is missing, retry without it
+      if (error && (error.message?.includes('column') || error.code === '42703')) {
+        console.warn('Column document_url missing, retrying without it...');
+        const { document_url, ...safeData } = designerData;
+
+        if (editingDesigner) {
+          ({ error } = await supabase
+            .from('designers')
+            .update(safeData)
+            .eq('id', editingDesigner.id));
+        } else {
+          ({ error } = await supabase
+            .from('designers')
+            .insert([safeData]));
+        }
+
+        if (!error) {
+          alert('Designer saved successfully, but Identity Document could not be saved because the "document_url" column is missing in the database. Please contact admin to add this column.');
+        }
+      }
+
+      if (error) throw error;
 
       await fetchDesigners();
       resetForm();
@@ -148,7 +204,8 @@ export default function DesignersPage() {
       monthly_salary: 0,
       is_active: true,
       city: '',
-      state: 'Gujarat'
+      state: 'Gujarat',
+      document_url: ''
     });
     setEditingDesigner(null);
     setShowModal(false);
@@ -166,7 +223,8 @@ export default function DesignersPage() {
       monthly_salary: designer.monthly_salary || 0,
       is_active: designer.is_active,
       city: designer.city || '',
-      state: designer.state || 'Gujarat'
+      state: designer.state || 'Gujarat',
+      document_url: designer.document_url || ''
     });
     setEditingDesigner(designer);
     setShowModal(true);
@@ -192,13 +250,13 @@ export default function DesignersPage() {
   const toggleSkill = (skill: string) => {
     setFormData(prev => ({
       ...prev,
-      skills: prev.skills.includes(skill) 
+      skills: prev.skills.includes(skill)
         ? prev.skills.filter(s => s !== skill)
         : [...prev.skills, skill]
     }));
   };
 
-  const formatCurrency = (amount: number) => 
+  const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount || 0);
 
   const getEmploymentBadge = (type: string) => {
@@ -227,7 +285,7 @@ export default function DesignersPage() {
           <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Designers</h1>
           <p className="text-sm text-gray-500">{activeDesigners} active of {totalDesigners} total</p>
         </div>
-        <button onClick={() => { resetForm(); setShowModal(true); }} 
+        <button onClick={() => { resetForm(); setShowModal(true); }}
           className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800">
           <Plus size={18} /><span>Add Designer</span>
         </button>
@@ -265,17 +323,17 @@ export default function DesignersPage() {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input type="text" placeholder="Search designers..." value={searchTerm} 
-            onChange={(e) => setSearchTerm(e.target.value)} 
+          <input type="text" placeholder="Search designers..." value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl" />
         </div>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} 
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
           className="px-3 py-2.5 bg-white border rounded-xl">
           <option value="all">All Status</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
-        <select value={skillFilter} onChange={(e) => setSkillFilter(e.target.value)} 
+        <select value={skillFilter} onChange={(e) => setSkillFilter(e.target.value)}
           className="px-3 py-2.5 bg-white border rounded-xl">
           <option value="all">All Skills</option>
           {skillOptions.map(skill => <option key={skill} value={skill}>{skill}</option>)}
@@ -287,7 +345,7 @@ export default function DesignersPage() {
         <div className="text-center py-12 bg-white rounded-xl border">
           <Palette size={48} className="mx-auto text-gray-300 mb-4" />
           <h3 className="text-lg font-medium mb-2">No designers found</h3>
-          <button onClick={() => setShowModal(true)} 
+          <button onClick={() => setShowModal(true)}
             className="inline-flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg">
             <Plus size={18} />Add Designer
           </button>
@@ -363,30 +421,30 @@ export default function DesignersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Name *</label>
-                  <input type="text" required value={formData.name} 
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
+                  <input type="text" required value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-3 py-2 border rounded-xl" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Phone *</label>
-                  <input type="tel" required value={formData.phone} 
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })} 
+                  <input type="tel" required value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="w-full px-3 py-2 border rounded-xl" />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-1">Email</label>
-                <input type="email" value={formData.email} 
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })} 
+                <input type="email" value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full px-3 py-2 border rounded-xl" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Employment Type</label>
-                  <select value={formData.employment_type} 
-                    onChange={(e) => setFormData({ ...formData, employment_type: e.target.value })} 
+                  <select value={formData.employment_type}
+                    onChange={(e) => setFormData({ ...formData, employment_type: e.target.value })}
                     className="w-full px-3 py-2 border rounded-xl">
                     <option value="full-time">Full-time</option>
                     <option value="part-time">Part-time</option>
@@ -395,8 +453,8 @@ export default function DesignersPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Joining Date</label>
-                  <input type="date" value={formData.joining_date} 
-                    onChange={(e) => setFormData({ ...formData, joining_date: e.target.value })} 
+                  <input type="date" value={formData.joining_date}
+                    onChange={(e) => setFormData({ ...formData, joining_date: e.target.value })}
                     className="w-full px-3 py-2 border rounded-xl" />
                 </div>
               </div>
@@ -404,14 +462,14 @@ export default function DesignersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Hourly Rate (₹)</label>
-                  <input type="number" min="0" value={formData.hourly_rate} 
-                    onChange={(e) => setFormData({ ...formData, hourly_rate: parseFloat(e.target.value) || 0 })} 
+                  <input type="number" min="0" value={formData.hourly_rate}
+                    onChange={(e) => setFormData({ ...formData, hourly_rate: parseFloat(e.target.value) || 0 })}
                     className="w-full px-3 py-2 border rounded-xl" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Monthly Salary (₹)</label>
-                  <input type="number" min="0" value={formData.monthly_salary} 
-                    onChange={(e) => setFormData({ ...formData, monthly_salary: parseFloat(e.target.value) || 0 })} 
+                  <input type="number" min="0" value={formData.monthly_salary}
+                    onChange={(e) => setFormData({ ...formData, monthly_salary: parseFloat(e.target.value) || 0 })}
                     className="w-full px-3 py-2 border rounded-xl" />
                 </div>
               </div>
@@ -419,18 +477,41 @@ export default function DesignersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">City</label>
-                  <input type="text" value={formData.city} 
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })} 
+                  <input type="text" value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     className="w-full px-3 py-2 border rounded-xl" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Status</label>
-                  <select value={formData.is_active ? 'active' : 'inactive'} 
-                    onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'active' })} 
+                  <select value={formData.is_active ? 'active' : 'inactive'}
+                    onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'active' })}
                     className="w-full px-3 py-2 border rounded-xl">
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
                   </select>
+                </div>
+              </div>
+
+
+              {/* Identity Document Upload */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Identity Document (Image/PDF)</label>
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1">
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf"
+                      onChange={handleFileUpload}
+                      className="w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                      disabled={uploadingDoc}
+                    />
+                    {uploadingDoc && <div className="absolute right-3 top-1/2 -translate-y-1/2"><Loader2 size={16} className="animate-spin text-purple-600" /></div>}
+                  </div>
+                  {formData.document_url && (
+                    <a href={formData.document_url} target="_blank" rel="noopener noreferrer" className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100" title="View Document">
+                      <Eye size={20} />
+                    </a>
+                  )}
                 </div>
               </div>
 
@@ -439,11 +520,10 @@ export default function DesignersPage() {
                 <div className="flex flex-wrap gap-2">
                   {skillOptions.map(skill => (
                     <button key={skill} type="button" onClick={() => toggleSkill(skill)}
-                      className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                        formData.skills.includes(skill) 
-                          ? 'bg-purple-600 text-white' 
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}>
+                      className={`px-3 py-1 rounded-full text-sm transition-colors ${formData.skills.includes(skill)
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}>
                       {skill}
                     </button>
                   ))}
@@ -452,7 +532,7 @@ export default function DesignersPage() {
 
               <div className="flex gap-3 pt-4">
                 <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-xl font-medium">Cancel</button>
-                <button type="submit" disabled={saving} 
+                <button type="submit" disabled={saving}
                   className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium flex items-center justify-center gap-2">
                   {saving && <Loader2 size={18} className="animate-spin" />}
                   {editingDesigner ? 'Update' : 'Add'}
@@ -460,76 +540,91 @@ export default function DesignersPage() {
               </div>
             </form>
           </div>
-        </div>
-      )}
+        </div >
+      )
+      }
 
       {/* Detail Modal */}
-      {showDetailModal && selectedDesigner && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center">
-                    <span className="text-purple-600 font-bold text-xl">{selectedDesigner.name?.charAt(0)}</span>
+      {
+        showDetailModal && selectedDesigner && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+              <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center">
+                      <span className="text-purple-600 font-bold text-xl">{selectedDesigner.name?.charAt(0)}</span>
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold">{selectedDesigner.name}</h2>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${getEmploymentBadge(selectedDesigner.employment_type)}`}>
+                        {selectedDesigner.employment_type}
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-xl font-bold">{selectedDesigner.name}</h2>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${getEmploymentBadge(selectedDesigner.employment_type)}`}>
-                      {selectedDesigner.employment_type}
-                    </span>
-                  </div>
-                </div>
-                <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
-              </div>
-            </div>
-            <div className="p-5 space-y-5">
-              {/* Contact */}
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-3">Contact Information</h3>
-                <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-                  <div className="flex items-center gap-3"><Phone size={16} className="text-gray-400" />{selectedDesigner.phone}</div>
-                  {selectedDesigner.email && <div className="flex items-center gap-3"><Mail size={16} className="text-gray-400" />{selectedDesigner.email}</div>}
-                  {selectedDesigner.city && <div className="flex items-center gap-3"><MapPin size={16} className="text-gray-400" />{selectedDesigner.city}, {selectedDesigner.state}</div>}
-                  {selectedDesigner.joining_date && <div className="flex items-center gap-3"><Calendar size={16} className="text-gray-400" />Joined: {new Date(selectedDesigner.joining_date).toLocaleDateString('en-IN')}</div>}
+                  <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
                 </div>
               </div>
-
-              {/* Rate */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-purple-50 rounded-xl p-4">
-                  <p className="text-xs text-gray-500 mb-1">Hourly Rate</p>
-                  <p className="text-xl font-bold text-purple-600">{formatCurrency(selectedDesigner.hourly_rate)}</p>
-                </div>
-                <div className="bg-green-50 rounded-xl p-4">
-                  <p className="text-xs text-gray-500 mb-1">Monthly Salary</p>
-                  <p className="text-xl font-bold text-green-600">{formatCurrency(selectedDesigner.monthly_salary)}</p>
-                </div>
-              </div>
-
-              {/* Skills */}
-              {selectedDesigner.skills && selectedDesigner.skills.length > 0 && (
+              <div className="p-5 space-y-5">
+                {/* Contact */}
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">Skills</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedDesigner.skills.map((skill, i) => (
-                      <span key={i} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">{skill}</span>
-                    ))}
+                  <h3 className="font-semibold text-gray-900 mb-3">Contact Information</h3>
+                  <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                    <div className="flex items-center gap-3"><Phone size={16} className="text-gray-400" />{selectedDesigner.phone}</div>
+                    {selectedDesigner.email && <div className="flex items-center gap-3"><Mail size={16} className="text-gray-400" />{selectedDesigner.email}</div>}
+                    {selectedDesigner.city && <div className="flex items-center gap-3"><MapPin size={16} className="text-gray-400" />{selectedDesigner.city}, {selectedDesigner.state}</div>}
+                    {selectedDesigner.joining_date && <div className="flex items-center gap-3"><Calendar size={16} className="text-gray-400" />Joined: {new Date(selectedDesigner.joining_date).toLocaleDateString('en-IN')}</div>}
                   </div>
                 </div>
-              )}
 
-              {/* Actions */}
-              <div className="flex gap-3 pt-2">
-                <button onClick={() => { setShowDetailModal(false); handleEdit(selectedDesigner); }}
-                  className="flex-1 px-4 py-2.5 border rounded-xl font-medium">Edit</button>
-                <button onClick={() => setShowDetailModal(false)}
-                  className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium">Close</button>
+                {/* Rate */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-purple-50 rounded-xl p-4">
+                    <p className="text-xs text-gray-500 mb-1">Hourly Rate</p>
+                    <p className="text-xl font-bold text-purple-600">{formatCurrency(selectedDesigner.hourly_rate)}</p>
+                  </div>
+                  <div className="bg-green-50 rounded-xl p-4">
+                    <p className="text-xs text-gray-500 mb-1">Monthly Salary</p>
+                    <p className="text-xl font-bold text-green-600">{formatCurrency(selectedDesigner.monthly_salary)}</p>
+                  </div>
+                </div>
+
+                {/* Identity Document Link (Detail View) */}
+                {selectedDesigner.document_url && (
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-3">Identity Document</h3>
+                    <a href={selectedDesigner.document_url} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-2 p-3 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 transition-colors border border-blue-100">
+                      <Eye size={18} />
+                      <span className="font-medium">View Uploaded Document</span>
+                    </a>
+                  </div>
+                )}
+
+                {/* Skills */}
+                {selectedDesigner.skills && selectedDesigner.skills.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-3">Skills</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedDesigner.skills.map((skill, i) => (
+                        <span key={i} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">{skill}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex gap-3 pt-2">
+                  <button onClick={() => { setShowDetailModal(false); handleEdit(selectedDesigner); }}
+                    className="flex-1 px-4 py-2.5 border rounded-xl font-medium">Edit</button>
+                  <button onClick={() => setShowDetailModal(false)}
+                    className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium">Close</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }

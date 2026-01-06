@@ -35,7 +35,7 @@ export default function JobsPage() {
   const { jobs, loading: jobsLoading, createJob, updateJob, deleteJob, updateJobStage } = useJobs();
   const { clients, createClient } = useClients();
   const { vendors, createVendor } = useVendors();
-  const { designers, createDesigner, ensureDesigner } = useDesigners();
+  const { designers, ensureDesigner } = useDesigners();
 
   const loading = jobsLoading; // Main loading state
 
@@ -56,7 +56,6 @@ export default function JobsPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [showAddVendorModal, setShowAddVendorModal] = useState(false);
-  const [showAddDesignerModal, setShowAddDesignerModal] = useState(false);
 
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -72,7 +71,6 @@ export default function JobsPage() {
   // Quick add forms
   const [newClient, setNewClient] = useState({ name: '', company: '', phone: '', city: '' });
   const [newVendor, setNewVendor] = useState({ name: '', company: '', phone: '', category: 'Paper' });
-  const [newDesigner, setNewDesigner] = useState({ name: '', phone: '', email: '' });
 
   // Quick Add Client
   const handleAddClient = async () => {
@@ -118,25 +116,7 @@ export default function JobsPage() {
     }
   };
 
-  // Quick Add Designer
-  const handleAddDesigner = async () => {
-    if (!newDesigner.name || !newDesigner.phone) return alert('Name and Phone are required');
 
-    const result = await createDesigner({
-      ...newDesigner,
-      is_active: true,
-      employment_type: 'full-time',
-      skills: [],
-      hourly_rate: 0,
-      monthly_salary: 0
-    });
-
-    if (result.data) {
-      setFormData({ ...formData, designer_id: result.data.id });
-      setShowAddDesignerModal(false);
-      setNewDesigner({ name: '', phone: '', email: '' });
-    }
-  };
 
   const totalJobs = jobs.length;
   const activeJobs = jobs.filter(j => !['delivered', 'cancelled'].includes(j.current_stage)).length;
@@ -659,16 +639,10 @@ export default function JobsPage() {
               {/* Designer Selection */}
               <div>
                 <label className="block text-sm font-medium mb-1">Designer</label>
-                <div className="flex gap-2">
-                  <select value={formData.designer_id} onChange={(e) => setFormData({ ...formData, designer_id: e.target.value })} className="flex-1 px-3 py-2 border rounded-xl">
-                    <option value="">Select Designer</option>
-                    {designers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                  </select>
-                  <button type="button" onClick={() => setShowAddDesignerModal(true)}
-                    className="px-3 py-2 bg-purple-100 text-purple-700 rounded-xl hover:bg-purple-200 flex items-center gap-1">
-                    <UserPlus size={16} /><span className="hidden sm:inline">Add</span>
-                  </button>
-                </div>
+                <select value={formData.designer_id} onChange={(e) => setFormData({ ...formData, designer_id: e.target.value })} className="w-full px-3 py-2 border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500">
+                  <option value="">Select Designer</option>
+                  {designers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
               </div>
 
               {/* Vendor Selection */}
@@ -790,21 +764,7 @@ export default function JobsPage() {
           </div>
         </div>
       )}
-      {showAddDesignerModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm animate-scale-in">
-            <div className="p-4 border-b flex justify-between items-center">
-              <h3 className="font-bold">Quick Add Designer</h3>
-              <button onClick={() => setShowAddDesignerModal(false)}><X size={20} /></button>
-            </div>
-            <div className="p-4 space-y-3">
-              <input type="text" placeholder="Name" className="w-full px-3 py-2 border rounded-xl" value={newDesigner.name} onChange={e => setNewDesigner({ ...newDesigner, name: e.target.value })} />
-              <input type="text" placeholder="Phone" className="w-full px-3 py-2 border rounded-xl" value={newDesigner.phone} onChange={e => setNewDesigner({ ...newDesigner, phone: e.target.value })} />
-              <button onClick={handleAddDesigner} className="w-full py-2 bg-indigo-600 text-white rounded-xl">Add Designer</button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
     </div>
   );
