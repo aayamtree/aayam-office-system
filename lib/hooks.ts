@@ -209,61 +209,15 @@ export function useVendors() {
 // DESIGNERS HOOK (Linked to Profiles)
 // =============================================
 export function useDesigners() {
-  // Fetch users with designer role from profiles to ensure Auth ID match
-  const { data: profiles, loading, error, refetch } = useSupabaseQuery<any>('profiles', {
-    filter: [{ column: 'role', value: 'designer' }],
-    orderBy: { column: 'created_at', ascending: false }
+  const { data: designers, loading, error, refetch } = useSupabaseQuery<any>('designers', {
+    orderBy: { column: 'name', ascending: true }
   });
 
-  // Map Profile to Designer interface
-  const designers = (profiles || []).map(p => ({
-    id: p.id,
-    name: p.full_name || p.email?.split('@')[0] || 'Unknown',
-    email: p.email,
-    phone: '',
-    employment_type: 'full-time',
-    skills: [],
-    // Adapting profile to designer shape
-  }));
-
-  // Sync Auth Profile to Designers Table to satisfy Foreign Key
-  const ensureDesigner = async (profile: any) => {
-    if (!profile || !profile.id) return;
-
-    // Check if designer exists with this ID
-    const { data: existing } = await supabase.from('designers').select('id').eq('id', profile.id).single();
-
-    if (!existing) {
-      // Insert new designer record mirroring the profile
-      const { error } = await supabase.from('designers').insert({
-        id: profile.id, // Force ID match
-        name: profile.full_name || 'Unknown',
-        email: profile.email,
-        phone: profile.phone || '-',
-        skills: ['General'],
-        employment_type: 'full-time',
-        hourly_rate: 0,
-        monthly_salary: 0,
-        is_active: true,
-        created_at: new Date().toISOString()
-      });
-      if (error) console.error('Auto-creating designer failed:', error);
-    }
-  };
-
-  const createDesigner = async (designer: any) => { return { error: 'Use Team Settings' }; };
-  const updateDesigner = async (id: string, updates: any) => { return { error: 'Use Team Settings' }; };
-  const deleteDesigner = async (id: string) => { return { error: 'Use Team Settings' }; };
-
   return {
-    designers,
+    designers: designers || [],
     loading,
     error,
-    refetch,
-    createDesigner,
-    updateDesigner,
-    deleteDesigner,
-    ensureDesigner
+    refetch
   };
 }
 

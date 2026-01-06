@@ -35,7 +35,7 @@ export default function JobsPage() {
   const { jobs, loading: jobsLoading, createJob, updateJob, deleteJob, updateJobStage } = useJobs();
   const { clients, createClient } = useClients();
   const { vendors, createVendor } = useVendors();
-  const { designers, ensureDesigner } = useDesigners();
+  const { designers } = useDesigners();
 
   const loading = jobsLoading; // Main loading state
 
@@ -180,13 +180,7 @@ export default function JobsPage() {
         is_active: true
       };
 
-      // Ensure Designer exists in DB for Foreign Key
-      if (formData.designer_id && ensureDesigner) {
-        const selectedD = designers.find(d => d.id === formData.designer_id);
-        if (selectedD) {
-          await ensureDesigner({ ...selectedD, full_name: selectedD.name });
-        }
-      }
+
 
       let result;
       if (editingJob) {
