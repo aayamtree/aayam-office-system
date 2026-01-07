@@ -23,8 +23,8 @@ export default function ReportsPage() {
           <button
             onClick={() => setActiveTab('client')}
             className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'client'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              ? 'border-indigo-500 text-indigo-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
           >
             Client Statement
@@ -32,8 +32,8 @@ export default function ReportsPage() {
           <button
             onClick={() => setActiveTab('vendor')}
             className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'vendor'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              ? 'border-indigo-500 text-indigo-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
           >
             Vendor Statement
@@ -41,8 +41,8 @@ export default function ReportsPage() {
           <button
             onClick={() => setActiveTab('cashflow')}
             className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'cashflow'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              ? 'border-indigo-500 text-indigo-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
           >
             Cash Flow Report
@@ -158,8 +158,8 @@ function ClientStatementGenerator() {
 
 function VendorStatementGenerator() {
   const { vendors } = useVendors();
-  const { bills } = usePurchaseBills();
-  const { payments } = useVendorPayments();
+  const { purchaseBills: bills } = usePurchaseBills();
+  const { vendorPayments: payments } = useVendorPayments();
 
   const [selectedVendorId, setSelectedVendorId] = useState('');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
@@ -241,7 +241,7 @@ function VendorStatementGenerator() {
 
 function CashFlowStatement() {
   const { payments: inflows } = usePaymentsReceived();
-  const { payments: vendorOutflows } = useVendorPayments();
+  const { vendorPayments: vendorOutflows } = useVendorPayments();
   const { expenses } = useExpenses();
 
   const [dateRange, setDateRange] = useState({
@@ -422,9 +422,9 @@ function StatementModal({ title, entity, period, ledger, onClose, columns, rever
                   <td className="py-3 text-right text-gray-600">{row.debit > 0 ? row.debit.toLocaleString() : '-'}</td>
                   <td className="py-3 text-right text-gray-600">{row.credit > 0 ? row.credit.toLocaleString() : '-'}</td>
                   <td className={`py-3 text-right font-bold pr-2 ${reverseBalanceColor
-                      ? (runningBalance < 0 ? 'text-red-600' : 'text-green-600') // Vendor: Negative is Payable (Red?) Wait. Payable = Bad (Red)? No Payable is standard. 
-                      // Let's stick to: Negative balance = Credit Balance (Payable).
-                      : (runningBalance > 0 ? 'text-indigo-700' : 'text-red-700')
+                    ? (runningBalance < 0 ? 'text-red-600' : 'text-green-600') // Vendor: Negative is Payable (Red?) Wait. Payable = Bad (Red)? No Payable is standard. 
+                    // Let's stick to: Negative balance = Credit Balance (Payable).
+                    : (runningBalance > 0 ? 'text-indigo-700' : 'text-red-700')
                     }`}>
                     {Math.abs(runningBalance).toLocaleString()} {runningBalance < 0 ? 'Cr' : 'Dr'}
                   </td>
