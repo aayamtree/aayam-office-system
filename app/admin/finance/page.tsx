@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { IndianRupee, FileText, CreditCard, AlertTriangle, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { IndianRupee, FileText, CreditCard, AlertTriangle, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, RefreshCw } from 'lucide-react';
 
 export default function FinancePage() {
   const stats = [
@@ -52,7 +52,7 @@ export default function FinancePage() {
       </div>
 
       {/* Quick Actions - Opening Balance & Banks */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link href="/admin/finance/opening-balance"
           className="flex items-center gap-4 bg-indigo-50 border border-indigo-100 rounded-2xl p-5 hover:bg-indigo-100 transition-colors group">
           <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
@@ -73,6 +73,16 @@ export default function FinancePage() {
             <p className="text-sm font-medium text-blue-600/80">Multi-bank ledger</p>
           </div>
         </Link>
+        <Link href="/admin/finance/banking"
+          className="flex items-center gap-4 bg-emerald-50 border border-emerald-100 rounded-2xl p-5 hover:bg-emerald-100 transition-colors group">
+          <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+            <RefreshCw className="text-emerald-600" size={24} />
+          </div>
+          <div>
+            <p className="font-bold text-emerald-900 text-lg">Reconciliation</p>
+            <p className="text-sm font-medium text-emerald-600/80">Match statements</p>
+          </div>
+        </Link>
       </div>
 
       {/* Stats */}
@@ -87,7 +97,7 @@ export default function FinancePage() {
             <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-1">{stat.label}</p>
             <p className={`text-xs mt-2 font-bold px-2 py-1 rounded-full w-fit ${stat.trend === 'up' ? 'text-green-700 bg-green-50' :
-                stat.trend === 'warning' ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50'
+              stat.trend === 'warning' ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50'
               }`}>{stat.change}</p>
           </div>
         ))}

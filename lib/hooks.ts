@@ -7,7 +7,7 @@ import {
   Client, Vendor, Designer, Job, Invoice, Lead,
   Quotation, Dispatch, BankAccount, DesignTask, DesignProject,
   PurchaseBill, VendorPayment, PaymentReceived, POSCategory, POSProduct,
-  PaperStock, POSSale, Note, Reminder
+  PaperStock, POSSale, Note, Reminder, BankTransaction
 } from '@/types/database';
 
 // Generic hook for fetching data
@@ -561,6 +561,47 @@ export function useBankAccounts() {
     createBankAccount,
     updateBankAccount,
     setDefaultAccount
+  };
+}
+
+// =============================================
+// BANK TRANSACTIONS HOOK
+// =============================================
+export function useBankTransactions(accountId?: string) {
+  const options = accountId
+    ? { filter: [{ column: 'bank_account_id', value: accountId }], orderBy: { column: 'transaction_date', ascending: false } }
+    : { orderBy: { column: 'transaction_date', ascending: false } };
+
+  const { data, loading, error, refetch } = useSupabaseQuery<BankTransaction>('bank_transactions', options as any);
+
+  const importTransactions = async (transactions: Omit<BankTransaction, 'id' | 'created_at'>[]) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const { data: result, error } = await supabase
+      .from('bank_transactions')
+      .insert(transactions)
+      .select();
+
+    if (!error) refetch();
+    return { data: result, error: error?.message };
+  };
+
+  const deleteTransaction = async (id: string) => {
+    const { error } = await supabase
+      .from('bank_transactions')
+      .delete()
+      .eq('id', id);
+    if (!error) refetch();
+    return { error: error?.message };
+  };
+
+  return {
+    transactions: data,
+    loading,
+    error,
+    refetch,
+    importTransactions,
+    deleteTransaction
   };
 }
 
