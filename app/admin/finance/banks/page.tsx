@@ -74,9 +74,9 @@ export default function BankAccountsPage() {
         });
       }
       resetForm();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Failed to save bank account');
+      alert(`Failed to save bank account: ${error.message || JSON.stringify(error)}`);
     } finally {
       setSubmitting(false);
     }
