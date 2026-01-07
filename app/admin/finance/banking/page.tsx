@@ -3,7 +3,8 @@
 import React, { useState, useMemo } from 'react';
 import {
     Building2, Upload, RefreshCw, CheckCircle,
-    AlertTriangle, Search, Plus, Trash2, ArrowUpRight, ArrowDownLeft
+    AlertTriangle, Search, Plus, Trash2, ArrowUpRight, ArrowDownLeft,
+    Eye, EyeOff
 } from 'lucide-react';
 import {
     useBankTransactions, usePaymentsReceived,
@@ -14,11 +15,17 @@ import { BankTransaction } from '@/types/database';
 export default function BankingPage() {
     const [selectedAccountId, setSelectedAccountId] = useState('');
     const { bankAccounts } = useBankAccounts();
-    const { transactions: bankTxns, importTransactions, deleteTransaction, loading: loadingTxns } = useBankTransactions(selectedAccountId);
+    const {
+        transactions: bankTxns,
+        importTransactions,
+        deleteTransaction,
+        updateTransaction,
+        loading: loadingTxns
+    } = useBankTransactions(selectedAccountId);
 
     // System Data
     const { payments } = usePaymentsReceived();
-    const { expenses: expenseList } = useExpenses(); // Assuming useExpenses exists (it does) or similar
+    const { expenses: expenseList } = useExpenses();
 
     // UI State
     const [importText, setImportText] = useState('');
@@ -33,28 +40,28 @@ export default function BankingPage() {
 
         return bankTxns.map(txn => {
             let match = null;
-            let status: 'matched' | 'unmatched_bank' | 'potential' = 'unmatched_bank';
+            let status: 'matched' | 'unmatched_bank' | 'ignored' | 'potential' = 'unmatched_bank';
 
-            // 1. Try to match CREDITS (Inflow) with PaymentsReceived
-            if (txn.transaction_type === 'inflow') {
-                const found = payments.find(p => {
-                    if (!p.amount) return false;
-                    // Exact amount match
-                    const amountMatch = Math.abs(p.amount - txn.amount) < 1;
-                    // Date match (+/- 3 days)
-                    const dateDiff = Math.abs(new Date(p.payment_date).getTime() - new Date(txn.transaction_date).getTime()) / (1000 * 3600 * 24);
-                    return amountMatch && dateDiff <= 3;
-                });
-                if (found) {
-                    match = { type: 'payment', ref: found };
-                    status = 'matched';
+            if (txn.reference_type === 'ignored') {
+                status = 'ignored';
+            } else {
+                // 1. Try to match CREDITS (Inflow) with PaymentsReceived
+                if (txn.transaction_type === 'inflow') {
+                    const found = payments.find(p => {
+                        if (!p.amount) return false;
+                        // Exact amount match
+                        const amountMatch = Math.abs(p.amount - txn.amount) < 1;
+                        // Date match (+/- 3 days)
+                        const dateDiff = Math.abs(new Date(p.payment_date).getTime() - new Date(txn.transaction_date).getTime()) / (1000 * 3600 * 24);
+                        return amountMatch && dateDiff <= 3;
+                    });
+                    if (found) {
+                        match = { type: 'payment', ref: found };
+                        status = 'matched';
+                    }
                 }
+                // 2. Try to match DEBITS could go here in future
             }
-
-            // 2. Try to match DEBITS (Outflow) with Expenses
-            // Note: We need useExpenses to return data, currently Assuming it does.
-            // If expenses hook is simple, we might need to fetch them.
-            // For now, let's assume we match inflow mainly as per User Request ("track payment... final invoice").
 
             return { ...txn, match, status };
         });
@@ -70,17 +77,13 @@ export default function BankingPage() {
             const newTxns: any[] = [];
 
             // Simple Heuristic Parser for Tab/Comma separated
-            // Format assumption: Date | Desc | Ref | ValueDate | Debit | Credit | Balance
-            // We will try to detect structure
-
             rows.forEach(row => {
-                // Remove multiple spaces, try split by tab or comma
                 const cols = row.includes('\t') ? row.split('\t') : row.split(',');
-                if (cols.length < 5) return; // Skip invalid
+                if (cols.length < 5) return;
 
-                // Extract Date (DD/MM/YY or DD/MM/YYYY)
+                // Extract Date
                 const dateStr = cols[0].trim(); // 17/10/25
-                if (!dateStr.match(/\d{2}\/\d{2}\/\d{2,4}/)) return; // Header or garbage
+                if (!dateStr.match(/\d{2}\/\d{2}\/\d{2,4}/)) return;
 
                 // Parse Date
                 const [d, m, y] = dateStr.split('/');
@@ -104,8 +107,7 @@ export default function BankingPage() {
                         transaction_type: 'outflow',
                         amount: debit,
                         description: desc,
-                        reference_number: ref,
-                        balance_after: 0 // Optional
+                        reference_number: ref
                     });
                 } else if (credit > 0) {
                     newTxns.push({
@@ -114,8 +116,7 @@ export default function BankingPage() {
                         transaction_type: 'inflow',
                         amount: credit,
                         description: desc,
-                        reference_number: ref,
-                        balance_after: 0
+                        reference_number: ref
                     });
                 }
             });
@@ -173,13 +174,13 @@ export default function BankingPage() {
                     <p className="text-2xl font-bold text-gray-900">₹{(bankAccounts.find(b => b.id === selectedAccountId)?.current_balance || 0).toLocaleString()}</p>
                 </div>
                 <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                    <p className="text-sm text-gray-500">Unreconciled Items</p>
+                    <p className="text-sm text-gray-500">Action Required</p>
                     <p className="text-2xl font-bold text-orange-600">
                         {reconciledData.filter(r => r.status === 'unmatched_bank').length}
                     </p>
                 </div>
                 <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                    <p className="text-sm text-gray-500">Matched</p>
+                    <p className="text-sm text-gray-500">Verified</p>
                     <p className="text-2xl font-bold text-green-600">
                         {reconciledData.filter(r => r.status === 'matched').length}
                     </p>
@@ -202,7 +203,7 @@ export default function BankingPage() {
                         </thead>
                         <tbody className="divide-y">
                             {reconciledData.map((txn) => (
-                                <tr key={txn.id} className="hover:bg-gray-50 group">
+                                <tr key={txn.id} className={`hover:bg-gray-50 group ${txn.status === 'ignored' ? 'opacity-50 bg-gray-50' : ''}`}>
                                     <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                                         {new Date(txn.transaction_date).toLocaleDateString()}
                                     </td>
@@ -218,6 +219,10 @@ export default function BankingPage() {
                                             <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
                                                 <CheckCircle size={12} /> Matched
                                             </span>
+                                        ) : txn.status === 'ignored' ? (
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-200 text-gray-600 rounded-full text-xs font-medium">
+                                                <EyeOff size={12} /> Ignored
+                                            </span>
                                         ) : (
                                             <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
                                                 <AlertTriangle size={12} /> Missing
@@ -230,18 +235,42 @@ export default function BankingPage() {
                                                 <span className="font-medium text-xs">Payment #{txn.match?.ref?.payment_number}</span>
                                                 <span className="text-xs text-gray-400">{txn.match?.ref?.payment_date && new Date(txn.match.ref.payment_date).toLocaleDateString()}</span>
                                             </div>
+                                        ) : txn.status === 'ignored' ? (
+                                            <span className="text-gray-400 italic text-xs">Marked as ignored</span>
                                         ) : (
                                             <span className="text-gray-400 italic text-xs">No matching system entry</span>
                                         )}
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        <button
-                                            onClick={() => deleteTransaction(txn.id)}
-                                            className="p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
-                                            title="Remove from Bank Records"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+                                        <div className="flex items-center justify-center gap-1">
+                                            {/* Toggle Ignore */}
+                                            {txn.status === 'ignored' ? (
+                                                <button
+                                                    onClick={() => updateTransaction(txn.id, { reference_type: null })}
+                                                    className="p-1.5 hover:bg-blue-50 text-gray-400 hover:text-blue-500 rounded-lg transition-colors"
+                                                    title="Un-ignore (Track again)"
+                                                >
+                                                    <Eye size={16} />
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => updateTransaction(txn.id, { reference_type: 'ignored' })}
+                                                    className="p-1.5 hover:bg-gray-100 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
+                                                    title="Ignore (Don't track)"
+                                                >
+                                                    <EyeOff size={16} />
+                                                </button>
+                                            )}
+
+                                            {/* Delete */}
+                                            <button
+                                                onClick={() => deleteTransaction(txn.id)}
+                                                className="p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
+                                                title="Delete Permanently"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

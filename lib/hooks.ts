@@ -595,13 +595,23 @@ export function useBankTransactions(accountId?: string) {
     return { error: error?.message };
   };
 
+  const updateTransaction = async (id: string, updates: Partial<BankTransaction>) => {
+    const { error } = await supabase
+      .from('bank_transactions')
+      .update(updates)
+      .eq('id', id);
+    if (!error) refetch();
+    return { error: error?.message };
+  };
+
   return {
     transactions: data,
     loading,
     error,
     refetch,
     importTransactions,
-    deleteTransaction
+    deleteTransaction,
+    updateTransaction
   };
 }
 
