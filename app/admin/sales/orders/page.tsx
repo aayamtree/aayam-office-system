@@ -208,17 +208,19 @@ export default function OrdersPage() {
     return colors[status] || 'bg-gray-100 text-gray-700';
   };
 
-  const filteredJobs = jobs.filter(job => {
-    const s = searchQuery.toLowerCase();
-    const matchSearch =
-      job.job_number.toLowerCase().includes(s) ||
-      job.project_name.toLowerCase().includes(s) ||
-      (job.client?.company || '').toLowerCase().includes(s) ||
-      (job.client?.name || '').toLowerCase().includes(s);
+  const filteredJobs = useMemo(() => {
+    return jobs.filter(job => {
+      const s = searchQuery.toLowerCase();
+      const matchSearch =
+        job.job_number.toLowerCase().includes(s) ||
+        job.project_name.toLowerCase().includes(s) ||
+        (job.client?.company || '').toLowerCase().includes(s) ||
+        (job.client?.name || '').toLowerCase().includes(s);
 
-    const matchStatus = statusFilter === 'all' || job.current_stage === statusFilter;
-    return matchSearch && matchStatus;
-  });
+      const matchStatus = statusFilter === 'all' || job.current_stage === statusFilter;
+      return matchSearch && matchStatus;
+    });
+  }, [jobs, searchQuery, statusFilter]);
 
   return (
     <div className="space-y-6 lg:space-y-8 pb-10">
