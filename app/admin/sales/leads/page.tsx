@@ -191,7 +191,11 @@ export default function LeadsPage() {
       if (isEditing && selectedLead) {
         await updateLead(selectedLead.id, payload);
       } else {
-        await createLead(payload);
+        await createLead({
+          ...payload,
+          created_by: profile?.id,
+          assigned_to: profile?.id
+        });
       }
       setShowModal(false);
     } catch (error) {
