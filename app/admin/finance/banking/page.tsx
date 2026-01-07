@@ -156,7 +156,12 @@ export default function BankingPage() {
                     <h1 className="text-2xl font-bold text-gray-900">Bank Reconciliation</h1>
                     <p className="text-gray-500">Sync HDFC Bank with Aayam System</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                    {bankAccounts.length === 0 && (
+                        <span className="text-xs text-red-500 font-medium mr-2">
+                            No accounts found. <a href="/admin/finance/banks" className="underline">Add one here</a>
+                        </span>
+                    )}
                     <select
                         value={selectedAccountId}
                         onChange={e => setSelectedAccountId(e.target.value)}
