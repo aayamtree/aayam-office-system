@@ -22,7 +22,7 @@ export default function SalesPage() {
     }).format(amount);
   };
 
-  const activeLeadsCount = leads.filter(l => l.status !== 'won' && l.status !== 'lost').length;
+  const activeLeadsCount = leads.filter(l => l.status !== 'converted' && l.status !== 'lost').length;
   // Approximation for "Active" vs "Pending"
   const pendingQuotesCount = quotations.filter(q => q.status === 'draft' || q.status === 'sent' || q.status === 'viewed').length;
 
