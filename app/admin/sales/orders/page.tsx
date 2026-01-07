@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
@@ -9,14 +9,13 @@ import {
 } from 'lucide-react';
 import { useJobs, useClients } from '@/lib/hooks';
 import { Job, Client } from '@/types/database';
-
 import { useAuth } from '@/lib/auth-context';
 
 export default function OrdersPage() {
   const { user, profile } = useAuth();
   const { jobs: allJobs, loading: jobsLoading, createJob, updateJob, deleteJob } = useJobs();
 
-  // Filter jobs for Marketing role
+  // Filter jobs for Marketing role (Shadowing jobs variable for cleaner access)
   const jobs = useMemo(() => {
     if (profile?.role === 'marketing') {
       return allJobs.filter(job => job.sales_person_id === profile.id || job.created_by === profile.id);
@@ -51,13 +50,12 @@ export default function OrdersPage() {
   });
 
   // Auto-open if ?new=true
-  useMemo(() => {
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (params.get('new') === 'true') {
-        // Remove param without refresh
         window.history.replaceState({}, '', '/admin/sales/orders');
-        setTimeout(() => setShowModal(true), 500); // Slight delay for smoother UX
+        setTimeout(() => setShowModal(true), 500);
       }
     }
   }, []);
