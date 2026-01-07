@@ -463,40 +463,27 @@ export default function JobsPage() {
 
       {/* Kanban View */}
       {viewMode === 'kanban' && filteredJobs.length > 0 && (
-        <div className="flex gap-6 overflow-x-auto pb-6 -mx-4 px-4 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-4 lg:gap-6 lg:overflow-visible">
+        <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-220px)] items-start">
           {stages.map(stage => {
             const stageJobs = jobsByStage[stage.id] || [];
-            const isExpanded = expandedStages.includes(stage.id);
             return (
-              <div key={stage.id} className="col-span-1 lg:col-span-4 rounded-2xl border border-gray-200 bg-gray-50/50 overflow-hidden shadow-sm transition-shadow hover:shadow-md">
-                <button
-                  onClick={() => toggleStage(stage.id)}
-                  className="w-full flex items-center justify-between p-4 bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-3.5 h-3.5 rounded-full ${stage.color} ring-4 ${stage.color}/20`}></div>
-                    <span className="font-bold text-gray-900 text-lg">{stage.name}</span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600 text-sm font-medium">
-                      {stageJobs.length}
-                    </span>
+              <div key={stage.id} className="min-w-[300px] w-80 flex-shrink-0 bg-gray-50/50 rounded-xl border border-gray-200 flex flex-col max-h-full shadow-sm">
+                {/* Column Header */}
+                <div className="p-3 border-b border-gray-100 flex items-center justify-between bg-white rounded-t-xl sticky top-0 z-10">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${stage.color}`}></div>
+                    <span className="font-bold text-gray-700 text-sm">{stage.name}</span>
+                    <span className="bg-gray-100 px-2 py-0.5 rounded-full text-xs text-gray-600 font-medium">{stageJobs.length}</span>
                   </div>
-                  <ChevronDown size={20} className={`text-gray-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
-                </button>
+                </div>
 
-                <div
-                  className={`transition-all duration-300 ease-in-out ${isExpanded ? 'opacity-100' : 'opacity-0 max-h-0'}`}
-                >
-                  {isExpanded && (
-                    <div className="p-4">
-                      {stageJobs.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                          {stageJobs.map(job => <JobCard key={job.id} job={job} />)}
-                        </div>
-                      ) : (
-                        <div className="text-center py-8 text-gray-400 text-sm italic">
-                          No jobs in this stage
-                        </div>
-                      )}
+                {/* Cards List */}
+                <div className="p-3 space-y-3 overflow-y-auto">
+                  {stageJobs.length > 0 ? (
+                    stageJobs.map(job => <JobCard key={job.id} job={job} />)
+                  ) : (
+                    <div className="text-center py-6 text-gray-300 text-xs italic">
+                      Empty
                     </div>
                   )}
                 </div>

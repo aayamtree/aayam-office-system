@@ -18,11 +18,11 @@ export default function CMYKPrintPage() {
 
   // Filter Data
   const pendingJobs = jobs.filter(j =>
-    ['new', 'designing', 'printing', 'finishing'].includes(j.current_stage)
+    ['new', 'designing', 'printing', 'finishing'].includes(j.current_stage) && !j.vendor_id
   ).slice(0, 5);
 
   const completedTodayJobs = jobs.filter(j =>
-    j.current_stage === 'delivered' || j.current_stage === 'ready' || j.current_stage === 'dispatched'
+    (j.current_stage === 'delivered' || j.current_stage === 'ready' || j.current_stage === 'dispatched') && !j.vendor_id
     // In a real app, check date
   );
 
