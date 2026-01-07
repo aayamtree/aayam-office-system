@@ -553,6 +553,18 @@ export function useBankAccounts() {
     return { error: null };
   };
 
+  const deleteBankAccount = async (id: string) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const { error } = await supabase
+      .from('bank_accounts')
+      .delete()
+      .eq('id', id);
+
+    if (!error) refetch();
+    return { error: error?.message };
+  };
+
   return {
     bankAccounts: data,
     loading,
@@ -560,7 +572,8 @@ export function useBankAccounts() {
     refetch,
     createBankAccount,
     updateBankAccount,
-    setDefaultAccount
+    setDefaultAccount,
+    deleteBankAccount
   };
 }
 
