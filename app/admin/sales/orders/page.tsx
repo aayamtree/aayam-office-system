@@ -333,277 +333,275 @@ export default function OrdersPage() {
                       <button onClick={() => { setSelectedJob(job); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-indigo-600 transition-colors">
                         <Eye size={18} />
                       </button>
-                    </button>
-                    {profile?.role !== 'marketing' && (
-                      <>
-                        <button onClick={() => handleEdit(job)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-indigo-600 transition-colors">
-                          <Edit size={18} />
-                        </button>
-                        <button onClick={(e) => handleDelete(job.id, e)} className="p-2 hover:bg-red-50 rounded-lg text-gray-500 hover:text-red-500 transition-colors">
-                          <Trash2 size={18} />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </td>
+
+                      {profile?.role !== 'marketing' && (
+                        <>
+                          <button onClick={() => handleEdit(job)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-indigo-600 transition-colors">
+                            <Edit size={18} />
+                          </button>
+                          <button onClick={(e) => handleDelete(job.id, e)} className="p-2 hover:bg-red-50 rounded-lg text-gray-500 hover:text-red-500 transition-colors">
+                            <Trash2 size={18} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
-          </tbody>
+            </tbody>
           </table>
-      )
-}
-    </div >
+    </div>
 
-  {/* Add/Edit Modal */ }
-  {
-    showModal && (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between p-5 border-b border-gray-100 sticky top-0 bg-white z-10">
-            <h2 className="text-xl font-bold text-gray-900">
-              {isEditing ? 'Edit Order' : 'New Order'}
-            </h2>
-            <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <X size={20} />
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div className="col-span-1 sm:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Project / Order Name *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Wedding Invitation Cards, Corporate Brochure"
-                  value={formData.projectName}
-                  onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
-                />
+      {/* Add/Edit Modal */}
+      {
+        showModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between p-5 border-b border-gray-100 sticky top-0 bg-white z-10">
+                <h2 className="text-xl font-bold text-gray-900">
+                  {isEditing ? 'Edit Order' : 'New Order'}
+                </h2>
+                <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                  <X size={20} />
+                </button>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Client *</label>
-                <select
-                  required
-                  value={formData.clientId}
-                  onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
-                >
-                  <option value="">Select Client</option>
-                  {clients.map(c => (
-                    <option key={c.id} value={c.id}>{c.company} ({c.name})</option>
-                  ))}
-                </select>
-              </div>
+              <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="col-span-1 sm:col-span-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Project / Order Name *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Wedding Invitation Cards, Corporate Brochure"
+                      value={formData.projectName}
+                      onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Delivery Deadline</label>
-                <input
-                  type="date"
-                  value={formData.clientDeadline}
-                  onChange={(e) => setFormData({ ...formData, clientDeadline: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Client *</label>
+                    <select
+                      required
+                      value={formData.clientId}
+                      onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
+                    >
+                      <option value="">Select Client</option>
+                      {clients.map(c => (
+                        <option key={c.id} value={c.id}>{c.company} ({c.name})</option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div className="col-span-1 sm:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description / Specifications</label>
-                <textarea
-                  rows={3}
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Paper type, size, finishing details, etc."
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm resize-none"
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Delivery Deadline</label>
+                    <input
+                      type="date"
+                      value={formData.clientDeadline}
+                      onChange={(e) => setFormData({ ...formData, clientDeadline: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                    />
+                  </div>
 
-              {/* Financials */}
-              <div className="col-span-1 sm:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Quantity</label>
-                  <input
-                    type="number"
-                    min="1"
-                    required
-                    value={formData.quantity}
-                    onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 0)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Rate / Pc (₹)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    required
-                    value={formData.ratePerPiece}
-                    onChange={(e) => handleRateChange(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">GST (%)</label>
-                  <select
-                    value={formData.gstRate}
-                    onChange={(e) => handleGstRateChange(parseInt(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
-                  >
-                    <option value="0">0%</option>
-                    <option value="5">5%</option>
-                    <option value="12">12%</option>
-                    <option value="18">18%</option>
-                    <option value="28">28%</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Total (Inc. GST)</label>
-                  <div className="px-3 py-2 bg-white border border-gray-200 rounded-lg font-bold text-gray-900">
-                    {formatCurrency(formData.totalAmount)}
+                  <div className="col-span-1 sm:col-span-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description / Specifications</label>
+                    <textarea
+                      rows={3}
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Paper type, size, finishing details, etc."
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm resize-none"
+                    />
+                  </div>
+
+                  {/* Financials */}
+                  <div className="col-span-1 sm:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Quantity</label>
+                      <input
+                        type="number"
+                        min="1"
+                        required
+                        value={formData.quantity}
+                        onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 0)}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Rate / Pc (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        required
+                        value={formData.ratePerPiece}
+                        onChange={(e) => handleRateChange(parseFloat(e.target.value) || 0)}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">GST (%)</label>
+                      <select
+                        value={formData.gstRate}
+                        onChange={(e) => handleGstRateChange(parseInt(e.target.value))}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+                      >
+                        <option value="0">0%</option>
+                        <option value="5">5%</option>
+                        <option value="12">12%</option>
+                        <option value="18">18%</option>
+                        <option value="28">28%</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Total (Inc. GST)</label>
+                      <div className="px-3 py-2 bg-white border border-gray-200 rounded-lg font-bold text-gray-900">
+                        {formatCurrency(formData.totalAmount)}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Priority</label>
+                    <select
+                      value={formData.priority}
+                      onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
+                    >
+                      <option value="normal">Normal</option>
+                      <option value="urgent">Urgent</option>
+                      <option value="high">High</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Stage</label>
+                    <select
+                      value={formData.currentStage}
+                      onChange={(e) => setFormData({ ...formData, currentStage: e.target.value as any })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
+                    >
+                      <option value="new">New</option>
+                      <option value="designing">Designing</option>
+                      <option value="printing">Printing</option>
+                      <option value="finishing">Finishing</option>
+                      <option value="ready">Ready</option>
+                      <option value="dispatched">Dispatched</option>
+                      <option value="delivered">Delivered</option>
+                    </select>
                   </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Priority</label>
-                <select
-                  value={formData.priority}
-                  onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
-                >
-                  <option value="normal">Normal</option>
-                  <option value="urgent">Urgent</option>
-                  <option value="high">High</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Stage</label>
-                <select
-                  value={formData.currentStage}
-                  onChange={(e) => setFormData({ ...formData, currentStage: e.target.value as any })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
-                >
-                  <option value="new">New</option>
-                  <option value="designing">Designing</option>
-                  <option value="printing">Printing</option>
-                  <option value="finishing">Finishing</option>
-                  <option value="ready">Ready</option>
-                  <option value="dispatched">Dispatched</option>
-                  <option value="delivered">Delivered</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex gap-4 pt-4 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                className="flex-1 px-6 py-3.5 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="flex-1 px-6 py-3.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50"
-              >
-                {submitting ? 'Saving...' : (isEditing ? 'Update Order' : 'Create Order')}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
-  }
-
-  {/* View Modal */ }
-  {
-    showViewModal && selectedJob && (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-          <div className="flex justify-between items-center p-6 border-b border-gray-100">
-            <div>
-              <div className="flex items-center gap-3">
-                <h2 className="text-xl font-bold text-gray-900">{selectedJob.project_name}</h2>
-                <span className="bg-gray-100 text-gray-600 text-xs font-mono px-2 py-0.5 rounded-md">{selectedJob.job_number}</span>
-              </div>
-              <p className="text-sm text-gray-500 mt-1">Ordered on {new Date(selectedJob.order_date).toLocaleDateString()}</p>
-            </div>
-            <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-              <X size={20} />
-            </button>
-          </div>
-
-          <div className="p-6 space-y-6">
-            {/* Client Details */}
-            <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-              <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg">
-                {selectedJob.client?.company?.charAt(0) || 'C'}
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-900">{selectedJob.client?.company}</h3>
-                <p className="text-sm text-gray-600">{selectedJob.client?.name}</p>
-              </div>
-            </div>
-
-            {/* Details */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 border rounded-xl">
-                <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Status</p>
-                <p className="font-medium text-gray-900 capitalize mt-1">{selectedJob.current_stage.replace('_', ' ')}</p>
-              </div>
-              <div className="p-3 border rounded-xl">
-                <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Priority</p>
-                <p className={`font-medium capitalize mt-1 ${selectedJob.priority === 'urgent' ? 'text-red-600' : 'text-gray-900'}`}>{selectedJob.priority}</p>
-              </div>
-              <div className="p-3 border rounded-xl">
-                <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Deadline</p>
-                <p className="font-medium text-gray-900 mt-1">{selectedJob.client_deadline ? new Date(selectedJob.client_deadline).toLocaleDateString() : '-'}</p>
-              </div>
-              <div className="p-3 border rounded-xl">
-                <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Quantity</p>
-                <p className="font-medium text-gray-900 mt-1">{selectedJob.quantity}</p>
-              </div>
-            </div>
-
-            {/* Description */}
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Description / Specifications</h4>
-              <p className="text-gray-600 text-sm leading-relaxed p-4 bg-gray-50 rounded-xl border border-gray-100 min-h-[80px]">
-                {selectedJob.description || 'No description provided.'}
-              </p>
-            </div>
-
-            {/* Financials */}
-            <div className="p-4 bg-indigo-50/50 rounded-xl border border-indigo-100">
-              <div className="flex justify-between mb-2 text-sm">
-                <span className="text-gray-600">Subtotal</span>
-                <span className="font-medium">{formatCurrency(selectedJob.subtotal)}</span>
-              </div>
-              <div className="flex justify-between mb-2 text-sm">
-                <span className="text-gray-600">GST ({selectedJob.gst_rate}%)</span>
-                <span className="font-medium">{formatCurrency(selectedJob.gst_amount)}</span>
-              </div>
-              <div className="flex justify-between pt-2 border-t border-indigo-100 mt-2">
-                <span className="font-bold text-gray-900">Total</span>
-                <span className="font-bold text-indigo-700 text-lg">{formatCurrency(selectedJob.total_amount)}</span>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button onClick={() => { setShowViewModal(false); handleEdit(selectedJob); }} className="flex-1 py-3 border border-indigo-200 text-indigo-700 font-semibold rounded-xl hover:bg-indigo-50 transition-colors">
-                Edit Order
-              </button>
-              <button onClick={() => setShowViewModal(false)} className="flex-1 py-3 bg-gray-900 text-white font-semibold rounded-xl hover:bg-black transition-colors">
-                Close
-              </button>
+                <div className="flex gap-4 pt-4 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="flex-1 px-6 py-3.5 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="flex-1 px-6 py-3.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50"
+                  >
+                    {submitting ? 'Saving...' : (isEditing ? 'Update Order' : 'Create Order')}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
-        </div>
-      </div>
-    )
-  }
+        )
+      }
+
+      {/* View Modal */}
+      {
+        showViewModal && selectedJob && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center p-6 border-b border-gray-100">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-xl font-bold text-gray-900">{selectedJob.project_name}</h2>
+                    <span className="bg-gray-100 text-gray-600 text-xs font-mono px-2 py-0.5 rounded-md">{selectedJob.job_number}</span>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">Ordered on {new Date(selectedJob.order_date).toLocaleDateString()}</p>
+                </div>
+                <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Client Details */}
+                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg">
+                    {selectedJob.client?.company?.charAt(0) || 'C'}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900">{selectedJob.client?.company}</h3>
+                    <p className="text-sm text-gray-600">{selectedJob.client?.name}</p>
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 border rounded-xl">
+                    <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Status</p>
+                    <p className="font-medium text-gray-900 capitalize mt-1">{selectedJob.current_stage.replace('_', ' ')}</p>
+                  </div>
+                  <div className="p-3 border rounded-xl">
+                    <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Priority</p>
+                    <p className={`font-medium capitalize mt-1 ${selectedJob.priority === 'urgent' ? 'text-red-600' : 'text-gray-900'}`}>{selectedJob.priority}</p>
+                  </div>
+                  <div className="p-3 border rounded-xl">
+                    <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Deadline</p>
+                    <p className="font-medium text-gray-900 mt-1">{selectedJob.client_deadline ? new Date(selectedJob.client_deadline).toLocaleDateString() : '-'}</p>
+                  </div>
+                  <div className="p-3 border rounded-xl">
+                    <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Quantity</p>
+                    <p className="font-medium text-gray-900 mt-1">{selectedJob.quantity}</p>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Description / Specifications</h4>
+                  <p className="text-gray-600 text-sm leading-relaxed p-4 bg-gray-50 rounded-xl border border-gray-100 min-h-[80px]">
+                    {selectedJob.description || 'No description provided.'}
+                  </p>
+                </div>
+
+                {/* Financials */}
+                <div className="p-4 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                  <div className="flex justify-between mb-2 text-sm">
+                    <span className="text-gray-600">Subtotal</span>
+                    <span className="font-medium">{formatCurrency(selectedJob.subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between mb-2 text-sm">
+                    <span className="text-gray-600">GST ({selectedJob.gst_rate}%)</span>
+                    <span className="font-medium">{formatCurrency(selectedJob.gst_amount)}</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-indigo-100 mt-2">
+                    <span className="font-bold text-gray-900">Total</span>
+                    <span className="font-bold text-indigo-700 text-lg">{formatCurrency(selectedJob.total_amount)}</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button onClick={() => { setShowViewModal(false); handleEdit(selectedJob); }} className="flex-1 py-3 border border-indigo-200 text-indigo-700 font-semibold rounded-xl hover:bg-indigo-50 transition-colors">
+                    Edit Order
+                  </button>
+                  <button onClick={() => setShowViewModal(false)} className="flex-1 py-3 bg-gray-900 text-white font-semibold rounded-xl hover:bg-black transition-colors">
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
     </div >
   );
 }
