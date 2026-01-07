@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import {
     Building2, Upload, RefreshCw, CheckCircle,
     AlertTriangle, Search, Plus, Trash2, ArrowUpRight, ArrowDownLeft,
-    Eye, EyeOff
+    Eye, EyeOff, ClipboardCopy
 } from 'lucide-react';
 import {
     useBankTransactions, usePaymentsReceived,
@@ -313,6 +313,22 @@ export default function BankingPage() {
                         <div className="p-5">
                             <div className="bg-blue-50 p-4 rounded-xl text-sm text-blue-700 mb-4">
                                 <strong>Instructions:</strong> Open your Bank Statement in Excel. Copy the rows (Date, Description, Ref, Value Date, Withdrawal, Deposit) and paste them below.
+                            </div>
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-xs text-gray-500">Paste your Excel data below (Date, Desc, Ref, Amount...)</span>
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            const text = await navigator.clipboard.readText();
+                                            setImportText(text);
+                                        } catch (err) {
+                                            alert('Clipboard access denied. Please use Ctrl+V / Cmd+V to paste manually.');
+                                        }
+                                    }}
+                                    className="text-xs text-indigo-600 font-medium hover:underline flex items-center gap-1"
+                                >
+                                    <ClipboardCopy size={12} /> Paste from Clipboard
+                                </button>
                             </div>
                             <textarea
                                 className="w-full h-60 p-4 border rounded-xl font-mono text-xs bg-gray-50 focus:ring-2 ring-indigo-500 outline-none"
