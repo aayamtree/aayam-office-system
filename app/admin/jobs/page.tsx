@@ -8,9 +8,9 @@ import {
   List, Building2, UserPlus, Loader2
 } from 'lucide-react';
 import {
-  useJobs, useClients, useVendors, useDesigners
+  useJobs, useClients, useVendors, useDesigners, usePaymentsReceived
 } from '@/lib/hooks';
-import { Job, Client, Vendor, Designer, JobStatus } from '@/types/database';
+import { Job, Client, Vendor, Designer, JobStatus, PaymentMode } from '@/types/database';
 
 const stages = [
   { id: 'new', name: 'New', color: 'bg-gray-500', bgLight: 'bg-gray-50', border: 'border-gray-200' },
@@ -36,6 +36,7 @@ export default function JobsPage() {
   const { clients, createClient } = useClients();
   const { vendors, createVendor } = useVendors();
   const { designers } = useDesigners();
+  const { createPayment } = usePaymentsReceived();
 
   const loading = jobsLoading; // Main loading state
 
@@ -61,6 +62,7 @@ export default function JobsPage() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [expandedStages, setExpandedStages] = useState<string[]>(stages.map(s => s.id));
   const [paymentAmount, setPaymentAmount] = useState(0);
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>('cash');
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -250,8 +252,18 @@ export default function JobsPage() {
     if (!selectedJob || paymentAmount <= 0) return;
 
     try {
+      // 1. Record detailed payment history
+      await createPayment({
+        job_id: selectedJob.id,
+        client_id: selectedJob.client_id,
+        amount: paymentAmount,
+        payment_mode: paymentMode,
+        payment_date: new Date().toISOString().split('T')[0] // today
+      });
+
+      // 2. Update job aggregate
       const newAmountReceived = (selectedJob.amount_received || 0) + paymentAmount;
-      const newPaymentStatus = newAmountReceived >= selectedJob.total_amount ? 'paid' : 'partial';
+      const newPaymentStatus = newAmountReceived >= (selectedJob.total_amount || 0) - 1 ? 'paid' : 'partial'; // Tolerance of 1 rupee
 
       await updateJob(selectedJob.id, {
         amount_received: newAmountReceived,
@@ -260,6 +272,7 @@ export default function JobsPage() {
 
       setShowPaymentModal(false);
       setSelectedJob(null);
+      setPaymentMode('cash');
     } catch (error) {
       console.error('Error:', error);
       alert('Error adding payment');
@@ -690,13 +703,26 @@ export default function JobsPage() {
             <div className="p-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Amount Received</label>
-                <input
-                  type="number"
-                  autoFocus
-                  value={paymentAmount}
-                  onChange={e => setPaymentAmount(parseFloat(e.target.value) || 0)}
-                  className="w-full px-4 py-3 text-xl font-bold border rounded-xl focus:ring-2 focus:ring-green-500"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    autoFocus
+                    value={paymentAmount}
+                    onChange={e => setPaymentAmount(parseFloat(e.target.value) || 0)}
+                    className="flex-1 px-4 py-3 text-xl font-bold border rounded-xl focus:ring-2 focus:ring-green-500"
+                  />
+                  <select
+                    value={paymentMode}
+                    onChange={(e) => setPaymentMode(e.target.value as PaymentMode)}
+                    className="w-1/3 px-3 py-3 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="cash">Cash</option>
+                    <option value="upi">UPI / GPay</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="cheque">Cheque</option>
+                    <option value="card">Card</option>
+                  </select>
+                </div>
                 <p className="text-sm text-gray-500 mt-1">
                   Total: {formatCurrency(selectedJob?.total_amount || 0)} |
                   Pending: {formatCurrency((selectedJob?.total_amount || 0) - (selectedJob?.amount_received || 0))}
