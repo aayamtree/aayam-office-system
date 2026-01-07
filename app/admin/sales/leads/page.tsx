@@ -13,12 +13,15 @@ import { Lead } from '@/types/database';
 
 export default function LeadsPage() {
   const { user, profile } = useAuth();
-  const { leads: allLeads, loading: leadsLoading, createLead, updateLead, convertToClient, deleteLead } = useLeads();
+  const { leads: allLeads, loading: leadsLoading, createLead, updateLead, convertToClient, deleteLead, refetch } = useLeads();
 
   const leads = allLeads.filter(lead => {
     // Permission Filter: Marketing users see only their own leads
-    if (profile?.role === 'marketing') {
-      return lead.created_by === profile.id || lead.assigned_to === profile.id;
+    // Use profile.id OR user.id fallback
+    const currentUserId = profile?.id || user?.id;
+
+    if (profile?.role === 'marketing' && currentUserId) {
+      return lead.created_by === currentUserId || lead.assigned_to === currentUserId;
     }
     return true;
   });
@@ -209,6 +212,7 @@ export default function LeadsPage() {
         });
       }
       setShowModal(false);
+      await refetch(); // Force refresh list
     } catch (error: any) {
       console.error('Error saving lead:', error);
       alert(`Failed to save lead: ${error.message || 'Unknown error'}`);
