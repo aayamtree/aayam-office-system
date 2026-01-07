@@ -292,7 +292,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-medium text-white text-sm truncate">{profile?.full_name}</p>
-            <p className="text-xs text-gray-500 capitalize">{profile?.role}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-gray-500 capitalize">{profile?.role}</p>
+              <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded">v1.2</span>
+            </div>
           </div>
           <button
             onClick={handleLogout}
