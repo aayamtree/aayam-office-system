@@ -56,9 +56,11 @@ const menuItems: MenuItem[] = [
     href: '/admin/marketing',
     allowedRoles: ['admin', 'account', 'marketing'],
     submenu: [
+      { name: 'Dashboard', href: '/admin/marketing' },
       { name: 'Leads', href: '/admin/marketing/leads' },
       { name: 'Follow-ups', href: '/admin/marketing/follow-ups' },
       { name: 'Quotations', href: '/admin/marketing/quotations' },
+      { name: 'My Orders', href: '/admin/marketing/orders' },
       { name: 'Commissions', href: '/admin/marketing/commissions' },
     ]
   },

@@ -10,8 +10,8 @@ export type PriorityLevel = 'low' | 'normal' | 'high' | 'urgent';
 export type TaskStatus = 'pending' | 'in_progress' | 'review' | 'rework' | 'completed';
 export type ProjectStatus = 'planning' | 'in_progress' | 'review' | 'on_hold' | 'completed';
 export type PaymentMode = 'cash' | 'bank_transfer' | 'neft' | 'rtgs' | 'upi' | 'cheque' | 'card';
-export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'proposal' | 'negotiation' | 'won' | 'lost';
-export type LeadSource = 'website' | 'referral' | 'walk_in' | 'social_media' | 'advertisement' | 'cold_call' | 'other';
+export type LeadStatus = 'new' | 'contacted' | 'quotation_shared' | 'follow_up' | 'converted' | 'lost';
+export type LeadSource = 'website' | 'referral' | 'walk_in' | 'social_media' | 'advertisement' | 'cold_call' | 'other' | 'facebook' | 'instagram' | 'indiamart';
 export type QuoteStatus = 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired';
 export type DispatchStatus = 'pending' | 'packed' | 'dispatched' | 'in_transit' | 'delivered' | 'returned';
 
@@ -49,6 +49,42 @@ export interface CompanySettings extends BaseEntity {
   invoice_prefix: string;
   invoice_start_number: number;
   current_financial_year?: string;
+}
+
+// Lead
+export interface Lead extends BaseEntity {
+  lead_number: string;
+
+  name: string;
+  company?: string;
+  email?: string;
+  phone: string;
+
+  source: LeadSource;
+  status: LeadStatus;
+
+  // New fields for Marketing Workflow
+  lead_type?: 'printing_only' | 'designing_only' | 'design_printing';
+  billing_preference?: 'gst' | 'non_gst' | 'both';
+  lost_reason?: string;
+
+  requirement?: string;
+  expected_value: number;
+
+  assigned_to?: string;
+
+  next_follow_up?: string;
+  last_contacted?: string;
+
+  notes?: string;
+
+  converted_to_client_id?: string;
+
+  created_by?: string;
+
+  // Joined data
+  assigned_user?: Profile;
+  follow_ups?: FollowUp[];
 }
 
 // Client
@@ -413,36 +449,7 @@ export interface Expense extends BaseEntity {
   created_by?: string;
 }
 
-// Lead
-export interface Lead extends BaseEntity {
-  lead_number: string;
 
-  name: string;
-  company?: string;
-  email?: string;
-  phone: string;
-
-  source: LeadSource;
-  status: LeadStatus;
-
-  requirement?: string;
-  expected_value: number;
-
-  assigned_to?: string;
-
-  next_follow_up?: string;
-  last_contacted?: string;
-
-  notes?: string;
-
-  converted_to_client_id?: string;
-
-  created_by?: string;
-
-  // Joined data
-  assigned_user?: Profile;
-  follow_ups?: FollowUp[];
-}
 
 // Follow Up
 export interface FollowUp {
