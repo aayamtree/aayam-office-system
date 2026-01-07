@@ -1,7 +1,3 @@
-# Aayam Office System - System Flow Guide
-
-This document outlines the structure, data flow, and purpose of every module in the Aayam Office System.
-
 ## 1. High-Level Data Flow Diagram
 This chart shows how different modules interact with the core database tables.
 
@@ -20,20 +16,30 @@ graph TD
     Quotation -->|Approved| Order[Sales Orders]
     Order -->|Converted| Job
     
-    %% Production Chain
+    %% Production Chain (Split Logic)
     Job -->|Assign Designer| Designer[Designer Workspace]
-    Designer -->|Compeltes Design| Print[CMYK Print Queue]
-    Print -->|Ready| Dispatch[Dispatch & Delivery]
+    Designer -->|Design Approved| Decision{Production Type?}
+
+    %% Path A: In-House (Small Work)
+    Decision -->|Small Digital/Labels (13x19)| InHouse[CMYK Print Queue]
+    InHouse -->|Printed| Dispatch
+
+    %% Path B: Outsourced (Core Revenue)
+    Decision -->|Boxes/Pouches| Vendor[Vendor / Outsourced]
+    Vendor -->|Sent to Vendor| Manufacturing[Vendor Production]
+    Manufacturing -->|Received Quality Check| Dispatch
+
+    %% Final Step
+    Dispatch[Dispatch & Delivery] -->|Bill| Invoice
     
     %% Finance Links
-    Job -->|Generates Bill| Invoice
-    Vendor[Vendors] -->|Supplies Material| Expense[Finance Expenses]
+    Vendor -->|Supplies Material| Expense[Finance Expenses]
     
     %% Styles
     style Job fill:#e1f5fe,stroke:#01579b,stroke-width:2px
     style Client fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    style Designer fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    style Finance fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style InHouse fill:#e0f7fa,stroke:#006064,stroke-width:2px
+    style Vendor fill:#fbe9e7,stroke:#bf360c,stroke-width:4px
 ```
 
 ---
@@ -70,7 +76,8 @@ Below is the breakdown of each button in your menu, what data it holds, and its 
 ### 🚚 Production & Delivery
 | Button Name | Data Source | Connects To | Purpose |
 | :--- | :--- | :--- | :--- |
-| **CMYK Print** | `jobs` (Stage: Print) | **Dispatch** | Queue for machine operators. Shows jobs that are designed and ready to print. |
+| **CMYK Print** | `jobs` (filtered) | **Dispatch** | **For Digital Operator:** Shows jobs marked for **In-House** printing (13x19 paper/labels). |
+| **Vendor Jobs** | `jobs` (Vendor Assgn) | **Dispatch** | *(Conceptual View)*: Monitor jobs sent to external factories (Boxes/Pouches). Currently tracked in Projects List. |
 | **Dispatch** | `dispatch` | **Clients** | Manage shipping, tracking numbers, and delivery confirmation. |
 
 ### ₹ Finance
