@@ -31,11 +31,11 @@ export default function LeadsPage() {
     company: '',
     email: '',
     phone: '',
-    source: 'website' as const,
-    status: 'new' as const,
+    source: 'website' as Lead['source'],
+    status: 'new' as Lead['status'],
     value: '',
-    leadType: 'printing_only' as const,
-    billingPreference: 'gst' as const,
+    leadType: 'printing_only' as Lead['lead_type'],
+    billingPreference: 'gst' as Lead['billing_preference'],
     lostReason: '',
     requirement: '',
     nextFollowUp: '',
@@ -286,7 +286,7 @@ export default function LeadsPage() {
 
                   {lead.requirement && (
                     <p className="text-sm text-gray-500 line-clamp-2 bg-gray-50 p-2 rounded-lg italic">
-                      "{lead.requirement}"
+                      &quot;{lead.requirement}&quot;
                     </p>
                   )}
                 </div>
