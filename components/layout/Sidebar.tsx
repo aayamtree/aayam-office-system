@@ -88,6 +88,13 @@ const menuItems = [
     icon: IndianRupee,
     href: '/admin/finance',
     allowedRoles: ['admin', 'account'],
+    submenu: [
+      { name: 'Overview', href: '/admin/finance' },
+      { name: 'Invoices', href: '/admin/finance/invoices' },
+      { name: 'Payments', href: '/admin/finance/payments' },
+      { name: 'Bank Accounts', href: '/admin/finance/banks' },
+      { name: 'Reconciliation', href: '/admin/finance/banking' },
+    ]
   },
   {
     name: 'Dispatch',
@@ -130,7 +137,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { profile, signOut } = useAuth();
-  const [expandedItems, setExpandedItems] = useState<string[]>(['Marketing', 'Sales', 'CRM']);
+  const [expandedItems, setExpandedItems] = useState<string[]>(['Marketing', 'Finance', 'Sales', 'CRM']);
 
   const toggleExpanded = (name: string) => {
     setExpandedItems(prev =>

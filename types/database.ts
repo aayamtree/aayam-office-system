@@ -375,7 +375,7 @@ export interface BankTransaction {
   transaction_type: 'inflow' | 'outflow';
   amount: number;
 
-  reference_type?: string;
+  reference_type?: string | null;
   reference_id?: string;
 
   description?: string;
