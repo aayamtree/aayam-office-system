@@ -211,17 +211,19 @@ export default function OrdersPage() {
   };
 
   const filteredJobs = jobs.filter(job => {
-    const matchesSearch =
-      job.job_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.project_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.client?.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.client?.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || job.current_stage === statusFilter;
-    return matchesSearch && matchesStatus;
+    const s = searchQuery.toLowerCase();
+    const matchSearch =
+      job.job_number.toLowerCase().includes(s) ||
+      job.project_name.toLowerCase().includes(s) ||
+      (job.client?.company || '').toLowerCase().includes(s) ||
+      (job.client?.name || '').toLowerCase().includes(s);
+
+    const matchStatus = statusFilter === 'all' || job.current_stage === statusFilter;
+    return matchSearch && matchStatus;
   });
 
   return (
-    <div className="space-y-6 lg:space-y-8 animate-fade-in pb-10">
+    <div className="space-y-6 lg:space-y-8 pb-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
