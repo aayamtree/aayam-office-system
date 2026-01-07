@@ -13,7 +13,15 @@ import { downloadQuotationPDF, defaultCompanyData } from '@/components/quotation
 
 export default function QuotationsPage() {
   const { user, profile } = useAuth();
-  const { quotations, loading: quotationsLoading, createQuotation, updateQuotation, saveQuotationItems, deleteQuotation } = useQuotations();
+  const { quotations: allQuotations, loading: quotationsLoading, createQuotation, updateQuotation, saveQuotationItems, deleteQuotation } = useQuotations();
+
+  const quotations = allQuotations.filter(q => {
+    // Filter for Marketing: Own quotes only
+    if (profile?.role === 'marketing') {
+      return q.created_by === profile.id;
+    }
+    return true;
+  });
   const { clients } = useClients();
   const { createJob } = useJobs();
 
@@ -281,11 +289,9 @@ export default function QuotationsPage() {
     await downloadQuotationPDF(pdfData as any);
   };
 
+
+
   const filteredQuotations = quotations.filter(q => {
-    // Filter for Marketing: Own quotes only
-    if (profile?.role === 'marketing' && q.created_by !== profile.id) {
-      return false;
-    }
     const matchesSearch =
       q.quote_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
       q.client?.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||

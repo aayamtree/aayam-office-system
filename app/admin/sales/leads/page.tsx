@@ -13,7 +13,15 @@ import { Lead } from '@/types/database';
 
 export default function LeadsPage() {
   const { user, profile } = useAuth();
-  const { leads, loading: leadsLoading, createLead, updateLead, convertToClient, deleteLead } = useLeads();
+  const { leads: allLeads, loading: leadsLoading, createLead, updateLead, convertToClient, deleteLead } = useLeads();
+
+  const leads = allLeads.filter(lead => {
+    // Permission Filter: Marketing users see only their own leads
+    if (profile?.role === 'marketing') {
+      return lead.created_by === profile.id || lead.assigned_to === profile.id;
+    }
+    return true;
+  });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -74,11 +82,6 @@ export default function LeadsPage() {
   };
 
   const filteredLeads = leads.filter(lead => {
-    // Permission Filter: Marketing users see only their own leads
-    if (profile?.role === 'marketing') {
-      const isOwner = lead.created_by === profile.id || lead.assigned_to === profile.id;
-      if (!isOwner) return false;
-    }
 
     const matchesSearch =
       lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
