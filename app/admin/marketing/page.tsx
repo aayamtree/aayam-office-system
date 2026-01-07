@@ -59,7 +59,7 @@ export default function MarketingDashboard() {
         <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg shadow-indigo-200">
           <div className="flex items-center gap-3 mb-2 opacity-90">
             <Calendar size={20} />
-            <span className="font-medium">Today's Follow-ups</span>
+            <span className="font-medium">Today&apos;s Follow-ups</span>
           </div>
           <div className="text-4xl font-bold">{todayFollowUps.length}</div>
           <div className="mt-4 text-sm bg-white/20 inline-block px-3 py-1 rounded-full backdrop-blur-sm">
@@ -108,7 +108,7 @@ export default function MarketingDashboard() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
           <div className="p-6 border-b border-gray-100 flex justify-between items-center">
             <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <Calendar size={18} className="text-indigo-600" /> Today's Calls
+              <Calendar size={18} className="text-indigo-600" /> Today&apos;s Calls
             </h2>
             <span className="text-sm text-gray-500">{today}</span>
           </div>
@@ -127,7 +127,7 @@ export default function MarketingDashboard() {
                     <div>
                       <h3 className="font-semibold text-gray-900">{lead.name}</h3>
                       <p className="text-xs text-gray-500">{lead.company}</p>
-                      {lead.notes && <p className="text-xs text-gray-600 mt-1 line-clamp-1 italic">"{lead.notes}"</p>}
+                      {lead.notes && <p className="text-xs text-gray-600 mt-1 line-clamp-1 italic">&quot;{lead.notes}&quot;</p>}
                     </div>
                     <div className="flex gap-2">
                       <a href={`tel:${lead.phone}`} className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors">
@@ -189,7 +189,7 @@ export default function MarketingDashboard() {
             </div>
             <div>
               <h3 className="font-bold text-blue-900">{newLeads.length} New Leads Waiting</h3>
-              <p className="text-sm text-blue-700">These leads haven't been contacted yet.</p>
+              <p className="text-sm text-blue-700">These leads haven&apos;t been contacted yet.</p>
             </div>
           </div>
           <Link href="/admin/marketing/leads?status=new" className="bg-blue-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
