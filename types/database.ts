@@ -30,6 +30,7 @@ export interface Profile extends BaseEntity {
   role: UserRole;
   avatar_url?: string;
   is_active: boolean;
+  commission_rate?: number;
 }
 
 // Company Settings
@@ -148,11 +149,13 @@ export interface Job extends BaseEntity {
   files: FileAttachment[];
   notes?: string;
   created_by?: string;
+  sales_person_id?: string;
 
   // Joined data
   client?: Client;
   vendor?: Vendor;
   designer?: Designer;
+  sales_person?: Profile;
 }
 
 // File Attachment

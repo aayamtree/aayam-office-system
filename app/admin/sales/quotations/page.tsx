@@ -177,6 +177,7 @@ export default function QuotationsPage() {
       const jobPayload = {
         project_name: q.items?.[0]?.description || `Order from ${q.quote_number}`,
         client_id: q.client_id,
+        sales_person_id: q.created_by, // Link to marketing person
         // No vendor or designer initially
         job_type: 'print', // Default or derived
         quantity: q.items?.[0]?.quantity || 1,

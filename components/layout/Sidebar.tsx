@@ -59,6 +59,7 @@ const menuItems: MenuItem[] = [
       { name: 'Leads', href: '/admin/marketing/leads' },
       { name: 'Follow-ups', href: '/admin/marketing/follow-ups' },
       { name: 'Quotations', href: '/admin/marketing/quotations' },
+      { name: 'Commissions', href: '/admin/marketing/commissions' },
     ]
   },
   {
