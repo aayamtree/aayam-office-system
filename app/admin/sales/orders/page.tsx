@@ -15,17 +15,18 @@ export default function OrdersPage() {
   const { user, profile } = useAuth();
   const { jobs: allJobs, loading: jobsLoading, createJob, updateJob, deleteJob } = useJobs();
 
-  // Filter jobs for Marketing role (Shadowing jobs variable for cleaner access)
+  // Filter jobs for Marketing role
   const jobs = useMemo(() => {
     if (profile?.role === 'marketing') {
       return allJobs.filter(job => job.sales_person_id === profile.id || job.created_by === profile.id);
     }
     return allJobs;
   }, [allJobs, profile]);
+
   const { clients } = useClients();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -60,7 +61,6 @@ export default function OrdersPage() {
     }
   }, []);
 
-  // Calculate totals
   const calculateTotals = (qty: number, rate: number, taxRate: number) => {
     const sub = qty * rate;
     const gst = Math.round(sub * (taxRate / 100));
@@ -134,8 +134,6 @@ export default function OrdersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-
-
     try {
       if (isEditing && selectedJob) {
         await updateJob(selectedJob.id, {
@@ -208,143 +206,149 @@ export default function OrdersPage() {
     return colors[status] || 'bg-gray-100 text-gray-700';
   };
 
-  // Temporary simplification to debug build error
-  const filteredJobs = jobs; // useMemo(() => { ... }, ...);
+  const filteredJobs = useMemo(() => {
+    return jobs.filter(job => {
+      const s = searchQuery.toLowerCase();
+      const matchSearch =
+        job.job_number.toLowerCase().includes(s) ||
+        job.project_name.toLowerCase().includes(s) ||
+        (job.client?.company || '').toLowerCase().includes(s) ||
+        (job.client?.name || '').toLowerCase().includes(s);
+      const matchStatus = statusFilter === 'all' || job.current_stage === statusFilter;
+      return matchSearch && matchStatus;
+    });
+  }, [jobs, searchQuery, statusFilter]);
 
-  console.log('Rendering Orders'); // Debug
-  return <div className="space-y-6 lg:space-y-8 pb-10">
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div className="flex items-center gap-3">
-        <Link href="/admin/sales" className="p-2 hover:bg-white rounded-xl shadow-sm border border-gray-100 lg:hidden bg-gray-50 transition-colors">
-          <ArrowLeft size={20} className="text-gray-600" />
-        </Link>
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">Orders</h1>
-          <p className="text-sm text-gray-500 mt-1">{filteredJobs.length} orders found</p>
+  return (
+    <div className="space-y-6 lg:space-y-8 pb-10">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Link href="/admin/sales" className="p-2 hover:bg-white rounded-xl shadow-sm border border-gray-100 lg:hidden bg-gray-50 transition-colors">
+            <ArrowLeft size={20} className="text-gray-600" />
+          </Link>
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">Orders</h1>
+            <p className="text-sm text-gray-500 mt-1">{filteredJobs.length} orders found</p>
+          </div>
+        </div>
+        <div className="hidden lg:block">
+          {profile?.role !== 'marketing' && (
+            <button
+              onClick={handleAddNew}
+              className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white px-5 py-3 rounded-xl shadow-lg shadow-gray-900/20 transition-all hover:scale-105 active:scale-95 font-medium"
+            >
+              <Plus size={20} />
+              <span>New Order</span>
+            </button>
+          )}
         </div>
       </div>
-      <div className="hidden lg:block">
-        {profile?.role !== 'marketing' && (
-          <button
-            onClick={handleAddNew}
-            className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white px-5 py-3 rounded-xl shadow-lg shadow-gray-900/20 transition-all hover:scale-105 active:scale-95 font-medium"
-          >
-            <Plus size={20} />
-            <span>New Order</span>
-          </button>
+
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+        <div className="relative flex-1">
+          <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search orders, clients..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-gray-900 placeholder-gray-400 transition-all font-medium"
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="px-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-indigo-500/20 font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+        >
+          <option value="all">All Status</option>
+          <option value="new">New</option>
+          <option value="designing">Designing</option>
+          <option value="printing">Printing</option>
+          <option value="ready">Ready</option>
+          <option value="delivered">Delivered</option>
+        </select>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {jobsLoading ? (
+          <div className="p-12 text-center text-gray-500">Loading orders...</div>
+        ) : filteredJobs.length === 0 ? (
+          <div className="p-12 text-center text-gray-400">
+            No orders found matching your criteria.
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead className="bg-gray-50/50 border-b border-gray-100 hidden lg:table-header-group">
+              <tr>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Order Info</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Client</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Amount</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Delivery</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="text-right px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {filteredJobs.map((job) => (
+                <tr key={job.id} className="hover:bg-gray-50/50 transition-colors group block lg:table-row">
+                  <td className="px-6 py-4 align-top block lg:table-cell">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-bold text-gray-900 font-mono text-sm bg-gray-100 px-2 py-1 rounded-md">{job.job_number}</span>
+                      {job.priority === 'urgent' && <span className="text-[10px] font-bold uppercase text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Urgent</span>}
+                    </div>
+                    <div className="font-semibold text-gray-800">{job.project_name}</div>
+                    <div className="text-xs text-gray-500 mt-1">{job.quantity} items</div>
+                  </td>
+                  <td className="px-6 py-4 align-top block lg:table-cell">
+                    <div className="font-medium text-gray-900">{job.client?.company || '-'}</div>
+                    <div className="text-sm text-gray-500 flex items-center gap-1">
+                      <User size={12} /> {job.client?.name || 'Unknown'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 align-top block lg:table-cell">
+                    <div className="font-bold text-gray-900">{formatCurrency(job.total_amount)}</div>
+                    {job.payment_status !== 'paid' && (
+                      <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full mt-1 inline-block">
+                        Due: {formatCurrency(job.total_amount - job.amount_received)}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 align-top block lg:table-cell">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg w-fit">
+                      <Calendar size={14} className="text-gray-400" />
+                      {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 align-top block lg:table-cell">
+                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(job.current_stage)}`}>
+                      {job.current_stage.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 align-middle block lg:table-cell text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button onClick={() => { setSelectedJob(job); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-indigo-600 transition-colors">
+                        <Eye size={18} />
+                      </button>
+                      {profile?.role !== 'marketing' && (
+                        <>
+                          <button onClick={() => handleEdit(job)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-indigo-600 transition-colors">
+                            <Edit size={18} />
+                          </button>
+                          <button onClick={(e) => handleDelete(job.id, e)} className="p-2 hover:bg-red-50 rounded-lg text-gray-500 hover:text-red-500 transition-colors">
+                            <Trash2 size={18} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
-    </div>
 
-    {/* Search & Filter */}
-    <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-      <div className="relative flex-1">
-        <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search orders, clients..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-gray-900 placeholder-gray-400 transition-all font-medium"
-        />
-      </div>
-      <select
-        value={statusFilter}
-        onChange={(e) => setStatusFilter(e.target.value)}
-        className="px-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-indigo-500/20 font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-      >
-        <option value="all">All Status</option>
-        <option value="new">New</option>
-        <option value="designing">Designing</option>
-        <option value="printing">Printing</option>
-        <option value="ready">Ready</option>
-        <option value="delivered">Delivered</option>
-      </select>
-    </div>
-
-    {/* Orders List */}
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      {jobsLoading ? (
-        <div className="p-12 text-center text-gray-500">Loading orders...</div>
-      ) : filteredJobs.length === 0 ? (
-        <div className="p-12 text-center text-gray-400">
-          No orders found matching your criteria.
-        </div>
-      ) : (
-        <table className="w-full">
-          <thead className="bg-gray-50/50 border-b border-gray-100 hidden lg:table-header-group">
-            <tr>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Order Info</th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Client</th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Amount</th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Delivery</th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-              <th className="text-right px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {filteredJobs.map((job) => (
-              <tr key={job.id} className="hover:bg-gray-50/50 transition-colors group block lg:table-row">
-                <td className="px-6 py-4 align-top block lg:table-cell">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-bold text-gray-900 font-mono text-sm bg-gray-100 px-2 py-1 rounded-md">{job.job_number}</span>
-                    {job.priority === 'urgent' && <span className="text-[10px] font-bold uppercase text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Urgent</span>}
-                  </div>
-                  <div className="font-semibold text-gray-800">{job.project_name}</div>
-                  <div className="text-xs text-gray-500 mt-1">{job.quantity} items</div>
-                </td>
-                <td className="px-6 py-4 align-top block lg:table-cell">
-                  <div className="font-medium text-gray-900">{job.client?.company || '-'}</div>
-                  <div className="text-sm text-gray-500 flex items-center gap-1">
-                    <User size={12} /> {job.client?.name || 'Unknown'}
-                  </div>
-                </td>
-                <td className="px-6 py-4 align-top block lg:table-cell">
-                  <div className="font-bold text-gray-900">{formatCurrency(job.total_amount)}</div>
-                  {job.payment_status !== 'paid' && (
-                    <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full mt-1 inline-block">
-                      Due: {formatCurrency(job.total_amount - job.amount_received)}
-                    </span>
-                  )}
-                </td>
-                <td className="px-6 py-4 align-top block lg:table-cell">
-                  <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg w-fit">
-                    <Calendar size={14} className="text-gray-400" />
-                    {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}
-                  </div>
-                </td>
-                <td className="px-6 py-4 align-top block lg:table-cell">
-                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(job.current_stage)}`}>
-                    {job.current_stage.replace('_', ' ')}
-                  </span>
-                </td>
-                <td className="px-6 py-4 align-middle block lg:table-cell text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <button onClick={() => { setSelectedJob(job); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-indigo-600 transition-colors">
-                      <Eye size={18} />
-                    </button>
-
-                    {profile?.role !== 'marketing' && (
-                      <>
-                        <button onClick={() => handleEdit(job)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-indigo-600 transition-colors">
-                          <Edit size={18} />
-                        </button>
-                        <button onClick={(e) => handleDelete(job.id, e)} className="p-2 hover:bg-red-50 rounded-lg text-gray-500 hover:text-red-500 transition-colors">
-                          <Trash2 size={18} />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-    </div>
-
-    {/* Add/Edit Modal */}
-    {
-      showModal && (
+      {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-5 border-b border-gray-100 sticky top-0 bg-white z-10">
@@ -406,7 +410,6 @@ export default function OrdersPage() {
                   />
                 </div>
 
-                {/* Financials */}
                 <div className="col-span-1 sm:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Quantity</label>
@@ -502,12 +505,9 @@ export default function OrdersPage() {
             </form>
           </div>
         </div>
-      )
-    }
+      )}
 
-    {/* View Modal */}
-    {
-      showViewModal && selectedJob && (
+      {showViewModal && selectedJob && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b border-gray-100">
@@ -524,7 +524,6 @@ export default function OrdersPage() {
             </div>
 
             <div className="p-6 space-y-6">
-              {/* Client Details */}
               <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
                 <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg">
                   {selectedJob.client?.company?.charAt(0) || 'C'}
@@ -535,7 +534,6 @@ export default function OrdersPage() {
                 </div>
               </div>
 
-              {/* Details */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 border rounded-xl">
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Status</p>
@@ -555,7 +553,6 @@ export default function OrdersPage() {
                 </div>
               </div>
 
-              {/* Description */}
               <div>
                 <h4 className="font-semibold text-gray-900 mb-2">Description / Specifications</h4>
                 <p className="text-gray-600 text-sm leading-relaxed p-4 bg-gray-50 rounded-xl border border-gray-100 min-h-[80px]">
@@ -563,7 +560,6 @@ export default function OrdersPage() {
                 </p>
               </div>
 
-              {/* Financials */}
               <div className="p-4 bg-indigo-50/50 rounded-xl border border-indigo-100">
                 <div className="flex justify-between mb-2 text-sm">
                   <span className="text-gray-600">Subtotal</span>
@@ -590,8 +586,7 @@ export default function OrdersPage() {
             </div>
           </div>
         </div>
-      )
-    }
-  </div>
-    ;
+      )}
+    </div>
+  );
 }
