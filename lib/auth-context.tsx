@@ -20,6 +20,7 @@ interface AuthContextType {
   isManager: boolean;
   isDesigner: boolean;
   isFinance: boolean;
+  bypassLogin: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -126,6 +127,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     let mounted = true;
+
+    // Check for Bypass Mode
+    if (localStorage.getItem('aayam_bypass_mode') === 'true') {
+      const cached = localStorage.getItem('aayam_fallback_profile');
+      if (cached) {
+        try {
+          const p = JSON.parse(cached);
+          setProfile(p);
+          setUser({ id: p.id, email: p.email, role: 'authenticated' } as User);
+          setLoading(false);
+          return;
+        } catch (e) { }
+      }
+    }
 
     // Get initial session with timeout
     const initSession = async () => {
@@ -306,6 +321,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isManager: hasRole(['admin', 'manager']),
     isDesigner: hasRole(['admin', 'manager', 'designer']),
     isFinance: hasRole(['admin', 'finance']),
+    bypassLogin: () => {
+      const bypassedProfile: Profile = {
+        id: 'bypass-admin',
+        email: 'admin@aayam.com',
+        full_name: 'Emergency Admin',
+        role: 'admin',
+        is_active: true,
+        created_at: new Date().toISOString()
+      };
+      localStorage.setItem('aayam_bypass_mode', 'true');
+      localStorage.setItem('aayam_fallback_profile', JSON.stringify(bypassedProfile));
+      setProfile(bypassedProfile);
+      setUser({ id: 'bypass-admin', email: 'admin@aayam.com', role: 'authenticated' } as User);
+      window.location.href = '/admin/dashboard';
+    }
   };
 
   return (

@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signIn, profile, loading, isConfigured } = useAuth();
+  const { signIn, profile, loading, isConfigured, bypassLogin } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -237,11 +237,14 @@ export default function LoginPage() {
           <p className="text-sm text-gray-500">
             © 2024 Aayam Creative. All rights reserved.
           </p>
-          <a href="/emergency" className="text-xs text-red-500 hover:text-red-700 hover:underline">
+          <button
+            onClick={(e) => { e.preventDefault(); bypassLogin(); }}
+            className="text-xs text-red-500 hover:text-red-700 hover:underline"
+          >
             Emergency Access (Debug)
-          </a>
+          </button>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
