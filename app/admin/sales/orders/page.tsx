@@ -208,19 +208,8 @@ export default function OrdersPage() {
     return colors[status] || 'bg-gray-100 text-gray-700';
   };
 
-  const filteredJobs = useMemo(() => {
-    return jobs.filter(job => {
-      const s = searchQuery.toLowerCase();
-      const matchSearch =
-        job.job_number.toLowerCase().includes(s) ||
-        job.project_name.toLowerCase().includes(s) ||
-        (job.client?.company || '').toLowerCase().includes(s) ||
-        (job.client?.name || '').toLowerCase().includes(s);
-
-      const matchStatus = statusFilter === 'all' || job.current_stage === statusFilter;
-      return matchSearch && matchStatus;
-    });
-  }, [jobs, searchQuery, statusFilter]);
+  // Temporary simplification to debug build error
+  const filteredJobs = jobs; // useMemo(() => { ... }, ...);
 
   console.log('Rendering Orders'); // Debug
   return <div className="space-y-6 lg:space-y-8 pb-10">
