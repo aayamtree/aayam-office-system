@@ -263,7 +263,7 @@ export default function ManualJournalPage() {
                         <p className="text-sm mt-1">{error}</p>
                         {error.includes('relation "journal_entries" does not exist') && (
                             <div className="mt-3 bg-white p-3 rounded border border-red-100 text-xs font-mono overflow-auto">
-                                <p className="text-gray-500 mb-1">// Run this SQL in Supabase SQL Editor to create tables:</p>
+                                <p className="text-gray-500 mb-1">Run this SQL in Supabase SQL Editor to create tables:</p>
                                 <code className="text-gray-700">
                                     CREATE TABLE journal_entries (<br />
                                     &nbsp;&nbsp;id uuid DEFAULT gen_random_uuid() PRIMARY KEY,<br />
