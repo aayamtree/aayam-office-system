@@ -32,6 +32,14 @@ export default function BankingPage() {
     const [showImportModal, setShowImportModal] = useState(false);
     const [parsing, setParsing] = useState(false);
 
+    // Auto-select first account
+    React.useEffect(() => {
+        if (!selectedAccountId && bankAccounts.length > 0) {
+            const defaultAcc = bankAccounts.find(b => b.is_default) || bankAccounts[0];
+            setSelectedAccountId(defaultAcc.id);
+        }
+    }, [bankAccounts, selectedAccountId]);
+
     // ------------------------------------------------------------------
     // RECONCILIATION LOGIC
     // ------------------------------------------------------------------
