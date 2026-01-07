@@ -191,16 +191,27 @@ export default function LeadsPage() {
       if (isEditing && selectedLead) {
         await updateLead(selectedLead.id, payload);
       } else {
+        // Fallback to user.id if profile.id is missing
+        const userId = profile?.id || user?.id;
+
+        if (!userId) {
+          alert('Authentication Error: You appear to be logged out. Please refresh the page or login again.');
+          setSubmitting(false);
+          return;
+        }
+
+        console.log('Creating Lead with User:', userId); // Debug
+
         await createLead({
           ...payload,
-          created_by: profile?.id,
-          assigned_to: profile?.id
+          created_by: userId,
+          assigned_to: userId
         });
       }
       setShowModal(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving lead:', error);
-      alert('Failed to save lead');
+      alert(`Failed to save lead: ${error.message || 'Unknown error'}`);
     } finally {
       setSubmitting(false);
     }
