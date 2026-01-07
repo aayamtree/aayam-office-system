@@ -59,9 +59,6 @@ const menuItems: MenuItem[] = [
       { name: 'Leads', href: '/admin/marketing/leads' },
       { name: 'Follow-ups', href: '/admin/marketing/follow-ups' },
       { name: 'Quotations', href: '/admin/marketing/quotations' },
-      { name: 'Orders', href: '/admin/marketing/orders' },
-      { name: 'Dispatch', href: '/admin/marketing/dispatch' },
-      { name: 'Payments', href: '/admin/marketing/payments' },
     ]
   },
   {
@@ -70,7 +67,6 @@ const menuItems: MenuItem[] = [
     href: '/admin/sales',
     allowedRoles: ['admin', 'account', 'marketing'],
     submenu: [
-      { name: 'Leads', href: '/admin/sales/leads' },
       { name: 'Quotations', href: '/admin/sales/quotations' },
       { name: 'Orders', href: '/admin/sales/orders' },
     ]
