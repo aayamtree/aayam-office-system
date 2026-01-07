@@ -7,10 +7,12 @@ import {
   Edit, Trash2, Eye, X, ArrowLeft, User, MessageSquare, IndianRupee,
   CheckCircle, Loader2
 } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 import { useLeads } from '@/lib/hooks';
 import { Lead } from '@/types/database';
 
 export default function LeadsPage() {
+  const { user, profile } = useAuth();
   const { leads, loading: leadsLoading, createLead, updateLead, convertToClient, deleteLead } = useLeads();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,9 +44,12 @@ export default function LeadsPage() {
 
   const sources = [
     { value: 'website', label: 'Website' },
+    { value: 'indiamart', label: 'IndiaMart' },
+    { value: 'facebook', label: 'Facebook' },
+    { value: 'instagram', label: 'Instagram' },
     { value: 'referral', label: 'Referral' },
     { value: 'walk_in', label: 'Walk-in' },
-    { value: 'social_media', label: 'Social Media' },
+    { value: 'social_media', label: 'Other Social Media' },
     { value: 'advertisement', label: 'Advertisement' },
     { value: 'cold_call', label: 'Cold Call' },
     { value: 'other', label: 'Other' }
@@ -69,6 +74,12 @@ export default function LeadsPage() {
   };
 
   const filteredLeads = leads.filter(lead => {
+    // Permission Filter: Marketing users see only their own leads
+    if (profile?.role === 'marketing') {
+      const isOwner = lead.created_by === profile.id || lead.assigned_to === profile.id;
+      if (!isOwner) return false;
+    }
+
     const matchesSearch =
       lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (lead.company || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
