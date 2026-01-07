@@ -21,7 +21,7 @@ graph TD
     Designer -->|Design Approved| Decision{Production Type?}
 
     %% Path A: In-House (Small Work)
-    Decision -->|Small Digital/Labels (13x19)| InHouse[CMYK Print Queue]
+    Decision -->|Small Digital and Labels 13x19| InHouse[CMYK Print Queue]
     InHouse -->|Printed| Dispatch
 
     %% Path B: Outsourced (Core Revenue)
