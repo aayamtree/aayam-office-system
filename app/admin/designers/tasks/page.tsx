@@ -683,7 +683,7 @@ export default function DesignerWorkspace() {
               {Array.from({ length: daysInMonth }).map((_, i) => {
                 const day = i + 1;
                 const tasksOnDay = getTasksForDate(day);
-                const isToday = new Date().getDate() === day && new Date().getMonth() === currentDate.getMonth();
+                const isToday = currentDate && new Date().getDate() === day && new Date().getMonth() === currentDate.getMonth();
                 const hasTasks = tasksOnDay.length > 0;
 
                 return (
