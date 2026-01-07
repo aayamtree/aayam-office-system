@@ -14,7 +14,7 @@ import { BankTransaction } from '@/types/database';
 
 export default function BankingPage() {
     const [selectedAccountId, setSelectedAccountId] = useState('');
-    const { bankAccounts } = useBankAccounts();
+    const { bankAccounts, loading: loadingAccounts, error: errorAccounts } = useBankAccounts();
     const {
         transactions: bankTxns,
         importTransactions,
@@ -155,6 +155,9 @@ export default function BankingPage() {
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Bank Reconciliation</h1>
                     <p className="text-gray-500">Sync HDFC Bank with Aayam System</p>
+                    {loadingTxns && <span className="text-xs text-indigo-500 ml-2">Loading Txns...</span>}
+                    {loadingAccounts && <span className="text-xs text-indigo-500 ml-2">Loading Accounts...</span>}
+                    {errorAccounts && <div className="text-red-500 text-sm mt-1">Error: {errorAccounts}</div>}
                 </div>
                 <div className="flex gap-2 items-center">
                     {bankAccounts.length === 0 && (
