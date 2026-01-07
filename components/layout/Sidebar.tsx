@@ -23,7 +23,15 @@ import {
   Megaphone,
 } from 'lucide-react';
 
-const menuItems = [
+interface MenuItem {
+  name: string;
+  icon: any;
+  href: string;
+  allowedRoles?: string[];
+  submenu?: { name: string; href: string }[];
+}
+
+const menuItems: MenuItem[] = [
   {
     name: 'Overview',
     icon: LayoutDashboard,
