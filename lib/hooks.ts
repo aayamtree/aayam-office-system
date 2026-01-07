@@ -732,7 +732,13 @@ export function usePurchaseBills() {
     error,
     refetch,
     createPurchaseBill,
-    updatePurchaseBill
+    updatePurchaseBill,
+    deletePurchaseBill: async (id: string) => {
+      if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+      const { error } = await supabase.from('purchase_bills').delete().eq('id', id);
+      if (!error) refetch();
+      return { error: error?.message };
+    }
   };
 }
 
@@ -765,7 +771,19 @@ export function useVendorPayments() {
     loading,
     error,
     refetch,
-    createVendorPayment
+    createVendorPayment,
+    updateVendorPayment: async (id: string, updates: Partial<VendorPayment>) => {
+      if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+      const { data, error } = await supabase.from('vendor_payments').update(updates).eq('id', id).select().single();
+      if (!error) refetch();
+      return { data, error: error?.message };
+    },
+    deleteVendorPayment: async (id: string) => {
+      if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+      const { error } = await supabase.from('vendor_payments').delete().eq('id', id);
+      if (!error) refetch();
+      return { error: error?.message };
+    }
   };
 }
 
@@ -1446,5 +1464,7 @@ export function useExpenses() {
     deleteExpense
   };
 }
+
+
 
 export { useAuth } from './auth-context';
