@@ -130,15 +130,18 @@ export default function LeadsPage() {
             };
 
             // 2. Perform Save
+            let result;
             if (isEditing && selectedLead) {
-                await updateLead(selectedLead.id, payload);
+                result = await updateLead(selectedLead.id, payload);
             } else {
-                await createLead({
+                result = await createLead({
                     ...payload,
                     created_by: currentUserId,
                     assigned_to: currentUserId
                 });
             }
+
+            if (result.error) throw new Error(result.error);
 
             // 3. Success & Refresh
             alert(isEditing ? 'Lead updated successfully!' : 'Lead created successfully!');
