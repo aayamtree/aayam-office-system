@@ -406,7 +406,7 @@ export function useInvoices() {
 // =============================================
 export function useLeads() {
   const { data, loading, error, refetch } = useSupabaseQuery<Lead>('leads', {
-    select: '*, assigned_user:profiles(*)',
+    select: '*',
     orderBy: { column: 'created_at', ascending: false }
   });
 
