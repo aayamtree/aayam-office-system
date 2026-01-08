@@ -2,54 +2,25 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { 
+import {
   Plus, Search, FileText, Building2, Calendar, IndianRupee, X, Eye, Edit, Trash2,
-  Package, Filter, ArrowLeft, CheckCircle, Clock, AlertCircle
+  Package, Filter, ArrowLeft, CheckCircle, Clock, AlertCircle, Loader2
 } from 'lucide-react';
+import { usePurchaseBills, useVendors, useJobs } from '@/lib/hooks';
 
 const productTypes = [
-  'Pouches', 'Labels', 'Boxes', 'Brochures', 'Visiting Cards', 'Envelopes', 
+  'Pouches', 'Labels', 'Boxes', 'Brochures', 'Visiting Cards', 'Envelopes',
   'Paper Tubes', 'Letterheads', 'Catalogs', 'Packaging', 'Flex/Banner', 'Other'
 ];
 
-const vendors = [
-  { id: 1, name: 'Raj Packaging' },
-  { id: 2, name: 'Gujarat Papers' },
-  { id: 3, name: 'Shree Inks' },
-  { id: 4, name: 'Modern Plastics' },
-];
-
-const jobs = [
-  { id: 1, jobId: 'AAY-001', name: 'Wedding Cards - Sharma' },
-  { id: 2, jobId: 'AAY-002', name: 'Brochures - Royal Prints' },
-  { id: 3, jobId: 'AAY-003', name: 'Packaging - Gujarat Textiles' },
-];
-
-const initialPurchases = [
-  { id: 1, billNo: 'PB-001', vendorId: 1, vendorName: 'Raj Packaging', productType: 'Boxes',
-    description: 'Corrugated boxes 12x10x8', quantity: 500, rate: 45, amount: 22500,
-    gstRate: 18, gstAmount: 4050, totalAmount: 26550, jobId: 3, jobName: 'AAY-003 - Packaging',
-    billDate: '2025-12-20', dueDate: '2025-12-30', paymentStatus: 'partial', paidAmount: 15000,
-    createdAt: '2025-12-20' },
-  { id: 2, billNo: 'PB-002', vendorId: 2, vendorName: 'Gujarat Papers', productType: 'Paper Tubes',
-    description: 'A4 Paper 75 GSM - 50 reams', quantity: 50, rate: 280, amount: 14000,
-    gstRate: 12, gstAmount: 1680, totalAmount: 15680, jobId: null, jobName: 'General Stock',
-    billDate: '2025-12-22', dueDate: '2026-01-05', paymentStatus: 'pending', paidAmount: 0,
-    createdAt: '2025-12-22' },
-  { id: 3, billNo: 'PB-003', vendorId: 3, vendorName: 'Shree Inks', productType: 'Other',
-    description: 'CMYK Ink Set - 4 colors', quantity: 2, rate: 8500, amount: 17000,
-    gstRate: 18, gstAmount: 3060, totalAmount: 20060, jobId: null, jobName: 'General Stock',
-    billDate: '2025-12-18', dueDate: '2025-12-25', paymentStatus: 'paid', paidAmount: 20060,
-    createdAt: '2025-12-18' },
-  { id: 4, billNo: 'PB-004', vendorId: 1, vendorName: 'Raj Packaging', productType: 'Pouches',
-    description: 'Laminated pouches 100g', quantity: 1000, rate: 8, amount: 8000,
-    gstRate: 18, gstAmount: 1440, totalAmount: 9440, jobId: 1, jobName: 'AAY-001 - Wedding Cards',
-    billDate: '2025-12-24', dueDate: '2026-01-10', paymentStatus: 'pending', paidAmount: 0,
-    createdAt: '2025-12-24' },
-];
-
 export default function VendorPurchasesPage() {
-  const [purchases, setPurchases] = useState(initialPurchases);
+  const { purchaseBills: allPurchases, loading, createPurchaseBill, updatePurchaseBill, deletePurchaseBill } = usePurchaseBills();
+  const { vendors } = useVendors();
+  const { jobs } = useJobs();
+
+  // Sort by date (descending) explicitly if not handled by hook
+  const purchases = (allPurchases || []).sort((a, b) => new Date(b.bill_date).getTime() - new Date(a.bill_date).getTime());
+
   const [searchTerm, setSearchTerm] = useState('');
   const [vendorFilter, setVendorFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -57,81 +28,118 @@ export default function VendorPurchasesPage() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [editingPurchase, setEditingPurchase] = useState<any>(null);
   const [selectedPurchase, setSelectedPurchase] = useState<any>(null);
-  const [billCounter, setBillCounter] = useState(5);
+  const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
-    vendorId: '', productType: 'Boxes', description: '', quantity: 0, rate: 0,
-    gstRate: 18, jobId: '', billDate: '', dueDate: ''
+    vendorId: '',
+    productType: 'Boxes',
+    description: '',
+    quantity: 0,
+    rate: 0,
+    gstRate: 18,
+    jobId: '',
+    billDate: new Date().toISOString().split('T')[0],
+    dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   });
 
   const filteredPurchases = purchases.filter(p => {
-    const matchesSearch = p.billNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         p.vendorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         p.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesVendor = vendorFilter === 'all' || p.vendorId.toString() === vendorFilter;
-    const matchesStatus = statusFilter === 'all' || p.paymentStatus === statusFilter;
+    // Check fields safely
+    const billNo = p.bill_number || '';
+    const vendorName = p.vendor?.name || '';
+    const desc = p.description || '';
+
+    const matchesSearch = billNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vendorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      desc.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesVendor = vendorFilter === 'all' || p.vendor_id === vendorFilter;
+    const matchesStatus = statusFilter === 'all' || p.payment_status === statusFilter;
     return matchesSearch && matchesVendor && matchesStatus;
   });
 
-  const formatCurrency = (amount: number) => 
-    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount || 0);
 
   const calculateAmounts = () => {
-    const amount = formData.quantity * formData.rate;
-    const gstAmount = amount * (formData.gstRate / 100);
+    const amount = (formData.quantity || 0) * (formData.rate || 0);
+    const gstAmount = Math.round(amount * ((formData.gstRate || 0) / 100));
     const totalAmount = amount + gstAmount;
     return { amount, gstAmount, totalAmount };
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const vendor = vendors.find(v => v.id.toString() === formData.vendorId);
-    const job = jobs.find(j => j.id.toString() === formData.jobId);
+    setSubmitting(true);
+
     const { amount, gstAmount, totalAmount } = calculateAmounts();
-    
-    if (editingPurchase) {
-      setPurchases(purchases.map(p => p.id === editingPurchase.id ? 
-        { ...p, ...formData, vendorId: parseInt(formData.vendorId), vendorName: vendor?.name || '',
-          jobId: formData.jobId ? parseInt(formData.jobId) : null, 
-          jobName: job ? `${job.jobId} - ${job.name}` : 'General Stock',
-          amount, gstAmount, totalAmount } : p));
-    } else {
-      const newPurchase = {
-        id: Date.now(), billNo: `PB-${String(billCounter).padStart(3, '0')}`,
-        ...formData, vendorId: parseInt(formData.vendorId), vendorName: vendor?.name || '',
-        jobId: formData.jobId ? parseInt(formData.jobId) : null,
-        jobName: job ? `${job.jobId} - ${job.name}` : 'General Stock',
-        amount, gstAmount, totalAmount, paymentStatus: 'pending', paidAmount: 0,
-        createdAt: new Date().toISOString().split('T')[0]
-      };
-      setPurchases([newPurchase, ...purchases]);
-      setBillCounter(billCounter + 1);
+
+    const payload = {
+      vendor_id: formData.vendorId,
+      job_id: formData.jobId || null,
+      product_type: formData.productType,
+      description: formData.description,
+      quantity: formData.quantity,
+      rate: formData.rate,
+      bill_date: formData.billDate,
+      due_date: formData.dueDate,
+
+      subtotal: amount,
+      gst_rate: formData.gstRate,
+      gst_amount: gstAmount,
+      total_amount: totalAmount,
+
+      // Default to pending if new
+      payment_status: editingPurchase ? editingPurchase.payment_status : 'pending',
+      amount_paid: editingPurchase ? editingPurchase.amount_paid : 0
+    };
+
+    try {
+      if (editingPurchase) {
+        await updatePurchaseBill(editingPurchase.id, payload);
+      } else {
+        await createPurchaseBill(payload);
+      }
+      resetForm();
+    } catch (err: any) {
+      alert('Failed to save purchase bill: ' + err.message);
+    } finally {
+      setSubmitting(false);
     }
-    resetForm();
   };
 
   const resetForm = () => {
-    setFormData({ vendorId: '', productType: 'Boxes', description: '', quantity: 0, rate: 0,
-      gstRate: 18, jobId: '', billDate: '', dueDate: '' });
+    setFormData({
+      vendorId: '', productType: 'Boxes', description: '', quantity: 0, rate: 0,
+      gstRate: 18, jobId: '', billDate: new Date().toISOString().split('T')[0],
+      dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    });
     setEditingPurchase(null);
     setShowModal(false);
   };
 
   const handleEdit = (purchase: any) => {
-    setFormData({ vendorId: purchase.vendorId.toString(), productType: purchase.productType,
-      description: purchase.description, quantity: purchase.quantity, rate: purchase.rate,
-      gstRate: purchase.gstRate, jobId: purchase.jobId?.toString() || '', 
-      billDate: purchase.billDate, dueDate: purchase.dueDate });
+    setFormData({
+      vendorId: purchase.vendor_id || '',
+      productType: purchase.product_type || 'Boxes',
+      description: purchase.description || '',
+      quantity: purchase.quantity || 0,
+      rate: purchase.rate || 0,
+      gstRate: purchase.gst_rate || 18,
+      jobId: purchase.job_id || '',
+      billDate: purchase.bill_date || '',
+      dueDate: purchase.due_date || ''
+    });
     setEditingPurchase(purchase);
     setShowModal(true);
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm('Delete this purchase bill?')) setPurchases(purchases.filter(p => p.id !== id));
+  const handleDelete = async (id: string) => {
+    if (confirm('Delete this purchase bill?')) {
+      await deletePurchaseBill(id);
+    }
   };
 
   const getStatusBadge = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'paid': return 'bg-green-100 text-green-700';
       case 'partial': return 'bg-orange-100 text-orange-700';
       case 'pending': return 'bg-red-100 text-red-700';
@@ -140,12 +148,14 @@ export default function VendorPurchasesPage() {
   };
 
   // Stats
-  const totalPurchases = purchases.reduce((sum, p) => sum + p.totalAmount, 0);
-  const totalPaid = purchases.reduce((sum, p) => sum + p.paidAmount, 0);
+  const totalPurchases = purchases.reduce((sum, p) => sum + (p.total_amount || 0), 0);
+  const totalPaid = purchases.reduce((sum, p) => sum + (p.amount_paid || 0), 0);
   const totalPending = totalPurchases - totalPaid;
-  const totalCOGS = purchases.filter(p => p.jobId).reduce((sum, p) => sum + p.amount, 0);
+  const totalCOGS = purchases.filter(p => p.job_id).reduce((sum, p) => sum + (p.subtotal || 0), 0);
 
   const totals = calculateAmounts();
+
+  if (loading) return <div className="p-12 text-center text-gray-500"><Loader2 className="animate-spin mx-auto mb-2" />Loading Purchase Bills...</div>;
 
   return (
     <div className="p-4 sm:p-6 space-y-5">
@@ -214,29 +224,28 @@ export default function VendorPurchasesPage() {
       {/* Purchase List */}
       <div className="space-y-3">
         {filteredPurchases.map(purchase => (
-          <div key={purchase.id} className={`bg-white rounded-xl shadow-sm border p-4 hover:shadow-md transition-shadow ${
-            purchase.paymentStatus === 'pending' && new Date(purchase.dueDate) < new Date() ? 'border-l-4 border-l-red-500' : ''}`}>
+          <div key={purchase.id} className={`bg-white rounded-xl shadow-sm border p-4 hover:shadow-md transition-shadow ${purchase.payment_status === 'pending' && new Date(purchase.due_date || '') < new Date() ? 'border-l-4 border-l-red-500' : ''}`}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <span className="font-mono text-sm text-indigo-600 font-medium">{purchase.billNo}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusBadge(purchase.paymentStatus)}`}>
-                    {purchase.paymentStatus}
+                  <span className="font-mono text-sm text-indigo-600 font-medium">{purchase.bill_number}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusBadge(purchase.payment_status)}`}>
+                    {purchase.payment_status}
                   </span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">{purchase.productType}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">{purchase.product_type}</span>
                 </div>
                 <h3 className="font-semibold text-gray-900">{purchase.description}</h3>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mt-1">
-                  <span className="flex items-center gap-1"><Building2 size={14} />{purchase.vendorName}</span>
-                  <span className="flex items-center gap-1"><Package size={14} />{purchase.jobName}</span>
-                  <span className="flex items-center gap-1"><Calendar size={14} />Due: {new Date(purchase.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
+                  <span className="flex items-center gap-1"><Building2 size={14} />{purchase.vendor?.name || 'Unknown Vendor'}</span>
+                  <span className="flex items-center gap-1"><Package size={14} />{purchase.job?.project_name ? `${purchase.job.job_number} - ${purchase.job.project_name}` : 'General Stock'}</span>
+                  <span className="flex items-center gap-1"><Calendar size={14} />Due: {purchase.due_date ? new Date(purchase.due_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'N/A'}</span>
                 </div>
               </div>
               <div className="flex items-center gap-4">
                 <div className="text-right">
-                  <p className="font-bold text-lg text-gray-900">{formatCurrency(purchase.totalAmount)}</p>
+                  <p className="font-bold text-lg text-gray-900">{formatCurrency(purchase.total_amount)}</p>
                   <p className="text-xs text-gray-500">
-                    Paid: <span className="text-green-600 font-medium">{formatCurrency(purchase.paidAmount)}</span>
+                    Paid: <span className="text-green-600 font-medium">{formatCurrency(purchase.amount_paid)}</span>
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
@@ -274,9 +283,9 @@ export default function VendorPurchasesPage() {
                 <div className="col-span-2">
                   <label className="block text-sm font-medium mb-1.5">Vendor *</label>
                   <select required value={formData.vendorId} onChange={(e) => setFormData({ ...formData, vendorId: e.target.value })}
-                    className="w-full px-3 py-2.5 border rounded-lg">
+                    className="w-full px-3 py-2.5 border rounded-lg bg-white">
                     <option value="">Select Vendor</option>
-                    {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                    {(vendors || []).map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
                   </select>
                 </div>
                 <div>
@@ -289,9 +298,9 @@ export default function VendorPurchasesPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Link to Job</label>
                   <select value={formData.jobId} onChange={(e) => setFormData({ ...formData, jobId: e.target.value })}
-                    className="w-full px-3 py-2.5 border rounded-lg">
+                    className="w-full px-3 py-2.5 border rounded-lg bg-white">
                     <option value="">General Stock</option>
-                    {jobs.map(j => <option key={j.id} value={j.id}>{j.jobId} - {j.name}</option>)}
+                    {(jobs || []).map(j => <option key={j.id} value={j.id}>{j.job_number} - {j.project_name}</option>)}
                   </select>
                 </div>
                 <div className="col-span-2">
@@ -355,8 +364,8 @@ export default function VendorPurchasesPage() {
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-lg font-medium">Cancel</button>
-                <button type="submit" className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700">
-                  {editingPurchase ? 'Update' : 'Add'} Purchase
+                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50">
+                  {submitting ? 'Saving...' : (editingPurchase ? 'Update' : 'Add')} Purchase
                 </button>
               </div>
             </form>
@@ -370,7 +379,7 @@ export default function VendorPurchasesPage() {
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
               <div>
-                <span className="font-mono text-indigo-600">{selectedPurchase.billNo}</span>
+                <span className="font-mono text-indigo-600">{selectedPurchase.bill_number}</span>
                 <h2 className="text-xl font-bold">{selectedPurchase.description}</h2>
               </div>
               <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
@@ -379,29 +388,29 @@ export default function VendorPurchasesPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-gray-500">Vendor</p>
-                  <p className="font-medium">{selectedPurchase.vendorName}</p>
+                  <p className="font-medium">{selectedPurchase.vendor?.name}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Product Type</p>
-                  <p className="font-medium">{selectedPurchase.productType}</p>
+                  <p className="font-medium">{selectedPurchase.product_type}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Linked Job</p>
-                  <p className="font-medium">{selectedPurchase.jobName}</p>
+                  <p className="font-medium">{selectedPurchase.job ? `${selectedPurchase.job.job_number} - ${selectedPurchase.job.project_name}` : 'General Stock'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Payment Status</p>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(selectedPurchase.paymentStatus)}`}>
-                    {selectedPurchase.paymentStatus}
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(selectedPurchase.payment_status)}`}>
+                    {selectedPurchase.payment_status}
                   </span>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Bill Date</p>
-                  <p className="font-medium">{new Date(selectedPurchase.billDate).toLocaleDateString('en-IN')}</p>
+                  <p className="font-medium">{selectedPurchase.bill_date ? new Date(selectedPurchase.bill_date).toLocaleDateString('en-IN') : '-'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Due Date</p>
-                  <p className="font-medium">{new Date(selectedPurchase.dueDate).toLocaleDateString('en-IN')}</p>
+                  <p className="font-medium">{selectedPurchase.due_date ? new Date(selectedPurchase.due_date).toLocaleDateString('en-IN') : '-'}</p>
                 </div>
               </div>
 
@@ -412,27 +421,27 @@ export default function VendorPurchasesPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Subtotal</span>
-                  <span>{formatCurrency(selectedPurchase.amount)}</span>
+                  <span>{formatCurrency(selectedPurchase.subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>GST ({selectedPurchase.gstRate}%)</span>
-                  <span>{formatCurrency(selectedPurchase.gstAmount)}</span>
+                  <span>GST ({selectedPurchase.gst_rate}%)</span>
+                  <span>{formatCurrency(selectedPurchase.gst_amount)}</span>
                 </div>
                 <div className="flex justify-between font-semibold pt-2 border-t">
                   <span>Total</span>
-                  <span>{formatCurrency(selectedPurchase.totalAmount)}</span>
+                  <span>{formatCurrency(selectedPurchase.total_amount)}</span>
                 </div>
                 <div className="flex justify-between text-sm pt-2 border-t">
                   <span>Paid</span>
-                  <span className="text-green-600 font-medium">{formatCurrency(selectedPurchase.paidAmount)}</span>
+                  <span className="text-green-600 font-medium">{formatCurrency(selectedPurchase.amount_paid)}</span>
                 </div>
                 <div className="flex justify-between font-semibold">
                   <span>Balance Due</span>
-                  <span className="text-red-600">{formatCurrency(selectedPurchase.totalAmount - selectedPurchase.paidAmount)}</span>
+                  <span className="text-red-600">{formatCurrency((selectedPurchase.total_amount || 0) - (selectedPurchase.amount_paid || 0))}</span>
                 </div>
               </div>
 
-              <Link href="/admin/crm/vendors/payments" 
+              <Link href="/admin/crm/vendors/payments"
                 className="block w-full text-center px-4 py-2.5 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700">
                 Record Payment
               </Link>
