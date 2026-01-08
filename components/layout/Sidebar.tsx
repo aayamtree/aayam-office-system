@@ -82,6 +82,7 @@ const menuItems: MenuItem[] = [
     submenu: [
       { name: 'Clients', href: '/admin/crm/clients' },
       { name: 'Vendors', href: '/admin/crm/vendors' },
+      { name: 'Purchases', href: '/admin/crm/vendors/purchases' },
     ]
   },
   {
