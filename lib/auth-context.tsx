@@ -128,8 +128,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // SPEED MODE: FORCE BYPASS
     if (true) {
+      // Use a VALID UUID for database compatibility
+      const speedAdminId = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+
       const speedProfile: Profile = {
-        id: 'speed-admin-id',
+        id: speedAdminId,
         email: 'admin@aayam.com',
         full_name: 'Speed Admin',
         role: 'admin',
@@ -137,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         created_at: new Date().toISOString()
       };
       setProfile(speedProfile);
-      setUser({ id: 'speed-admin-id', email: 'admin@aayam.com', role: 'authenticated' } as User);
+      setUser({ id: speedAdminId, email: 'admin@aayam.com', role: 'authenticated' } as User);
       setLoading(false);
       return;
     }
