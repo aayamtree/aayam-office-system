@@ -427,6 +427,7 @@ export default function OrdersPage() {
                     <input
                       type="number"
                       min="0"
+                      step="any"
                       required
                       value={formData.ratePerPiece}
                       onChange={(e) => handleRateChange(parseFloat(e.target.value) || 0)}

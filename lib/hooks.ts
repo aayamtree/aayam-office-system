@@ -472,7 +472,7 @@ export function useLeads() {
     await supabase
       .from('leads')
       .update({
-        status: 'won',
+        status: 'converted',
         converted_to_client_id: client.id
       })
       .eq('id', leadId);
