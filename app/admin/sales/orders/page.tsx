@@ -170,7 +170,8 @@ export default function OrdersPage() {
           current_stage: formData.currentStage,
           files: [],
           client_deadline: formData.clientDeadline,
-          notes: formData.notes
+          notes: formData.notes,
+          sales_person_id: profile?.id || user?.id,
         });
       }
       setShowModal(false);
