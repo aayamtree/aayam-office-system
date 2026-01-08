@@ -1467,4 +1467,63 @@ export function useExpenses() {
 
 
 
+// =============================================
+// FOLLOW UPS HOOK
+// =============================================
+export function useFollowUps() {
+  const { data, loading, error, refetch } = useSupabaseQuery<any>('follow_ups', {
+    select: '*, lead:leads(name), client:clients(name)',
+    orderBy: { column: 'follow_up_date', ascending: true }
+  });
+
+  const createFollowUp = async (followUp: any) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const payload = { ...followUp };
+    // Sanitize UUIDs
+    if (!payload.lead_id) delete payload.lead_id;
+    if (!payload.client_id) delete payload.client_id;
+    if (payload.lead_id === '') delete payload.lead_id;
+    if (payload.client_id === '') delete payload.client_id;
+
+    const { data, error } = await supabase
+      .from('follow_ups')
+      .insert([payload])
+      .select()
+      .single();
+
+    if (!error) refetch();
+    return { data, error: error?.message };
+  };
+
+  const updateFollowUp = async (id: string, updates: any) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const { data, error } = await supabase
+      .from('follow_ups')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    if (!error) refetch();
+    return { data, error: error?.message };
+  };
+
+  const deleteFollowUp = async (id: string) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const { error } = await supabase.from('follow_ups').delete().eq('id', id);
+    if (!error) refetch();
+    return { error: error?.message };
+  };
+
+  return {
+    followUps: data,
+    loading,
+    error,
+    refetch,
+    createFollowUp,
+    updateFollowUp,
+    deleteFollowUp
+  };
+}
+
 export { useAuth } from './auth-context';
