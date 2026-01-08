@@ -15,13 +15,8 @@ export default function QuotationsPage() {
   const { user, profile } = useAuth();
   const { quotations: allQuotations, loading: quotationsLoading, createQuotation, updateQuotation, saveQuotationItems, deleteQuotation } = useQuotations();
 
-  const quotations = allQuotations.filter(q => {
-    // Filter for Marketing: Own quotes only
-    if (profile?.role === 'marketing') {
-      return q.created_by === profile.id;
-    }
-    return true;
-  });
+  // Show all quotations
+  const quotations = allQuotations;
   const { clients } = useClients();
   const { createJob } = useJobs();
 
