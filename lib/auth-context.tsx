@@ -126,9 +126,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    let mounted = true;
+    // SPEED MODE: FORCE BYPASS
+    if (true) {
+      const speedProfile: Profile = {
+        id: 'speed-admin-id',
+        email: 'admin@aayam.com',
+        full_name: 'Speed Admin',
+        role: 'admin',
+        is_active: true,
+        created_at: new Date().toISOString()
+      };
+      setProfile(speedProfile);
+      setUser({ id: 'speed-admin-id', email: 'admin@aayam.com', role: 'authenticated' } as User);
+      setLoading(false);
+      return;
+    }
 
-    // Check for Bypass Mode
+    /*
+    // Check for Bypass Mode (Legacy)
     if (localStorage.getItem('aayam_bypass_mode') === 'true') {
       const cached = localStorage.getItem('aayam_fallback_profile');
       if (cached) {
@@ -141,6 +156,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (e) { }
       }
     }
+
+    let mounted = true;
 
     // Get initial session with timeout
     const initSession = async () => {
@@ -199,6 +216,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
+    */
   }, [isConfigured]);
 
   // Sign in with email and password
