@@ -181,7 +181,13 @@ export default function VendorsPage() {
             <div className="p-4 space-y-4">
               <div className="flex items-center gap-4"><div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center"><span className="text-orange-600 font-bold text-2xl">{selectedVendor.name?.charAt(0)}</span></div><div><h3 className="text-xl font-semibold">{selectedVendor.name}</h3><p className="text-gray-500">{selectedVendor.company}</p><span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${getCategoryColor(selectedVendor.category || 'Paper')}`}>{selectedVendor.category}</span></div></div>
               <div className="space-y-3 p-4 bg-gray-50 rounded-xl"><div className="flex items-center gap-3"><Phone size={16} className="text-gray-400" /><span>{selectedVendor.phone}</span></div>{selectedVendor.email && <div className="flex items-center gap-3"><Mail size={16} className="text-gray-400" /><span>{selectedVendor.email}</span></div>}{selectedVendor.address && <div className="flex items-center gap-3"><MapPin size={16} className="text-gray-400" /><span>{selectedVendor.address}, {selectedVendor.city}</span></div>}{selectedVendor.gstin && <div className="flex items-center gap-3"><Building2 size={16} className="text-gray-400" /><span>GSTIN: {selectedVendor.gstin}</span></div>}</div>
-              <div className="flex gap-3"><button onClick={() => { setShowViewModal(false); handleEdit(selectedVendor); }} className="flex-1 px-4 py-2.5 border rounded-xl">Edit</button><button onClick={() => setShowViewModal(false)} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl">Close</button></div>
+              <div className="flex gap-3">
+                <Link href="/admin/crm/vendors/purchases" className="flex-1 px-4 py-2.5 bg-indigo-50 text-indigo-700 rounded-xl font-medium text-center hover:bg-indigo-100 flex items-center justify-center gap-2">
+                  <Package size={18} /> Record Bill
+                </Link>
+                <button onClick={() => { setShowViewModal(false); handleEdit(selectedVendor); }} className="flex-1 px-4 py-2.5 border rounded-xl font-medium">Edit</button>
+                <button onClick={() => setShowViewModal(false)} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium">Close</button>
+              </div>
             </div>
           </div>
         </div>
