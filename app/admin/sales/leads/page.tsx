@@ -100,11 +100,14 @@ export default function LeadsPage() {
     setSubmitting(true);
 
     try {
-      // 1. Auth Check
-      const currentUserId = user?.id || profile?.id;
+      // 1. Auth Check - ROBUST FALLBACK
+      const currentUserId = profile?.id || user?.id;
+
       if (!currentUserId) {
         throw new Error('You appear to be logged out. Please refresh the page.');
       }
+
+      console.log('Saving Lead for User:', currentUserId);
 
       const payload = {
         name: formData.name,
@@ -142,6 +145,8 @@ export default function LeadsPage() {
       // 3. Success & Refresh
       alert(isEditing ? 'Lead updated successfully!' : 'Lead created successfully!');
       setShowModal(false);
+
+      // FORCE REFRESH THE LIST
       await refetch();
 
     } catch (error: any) {
@@ -164,8 +169,6 @@ export default function LeadsPage() {
 
   // --- FILTERING ---
 
-  // Note: We deliberately rely on RLS (Database Policies) to filter leads by user role.
-  // We do NOT filter again on the client side to avoid "empty list" issues during loading.
   const filteredLeads = leads.filter(lead => {
     const s = searchQuery.toLowerCase();
     const matchSearch =
@@ -195,7 +198,7 @@ export default function LeadsPage() {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Leads & Enquiries</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Leads & Enquiries (Sales)</h1>
           <p className="text-gray-500 text-sm">Manage potential clients and follow-ups</p>
         </div>
         <button
@@ -239,6 +242,7 @@ export default function LeadsPage() {
         {filteredLeads.length === 0 ? (
           <div className="col-span-full py-12 text-center text-gray-400 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
             No leads found matching your search.
+            <br /><span className="text-xs text-gray-300">If you just added a lead, try refreshing the page manually.</span>
           </div>
         ) : (
           filteredLeads.map((lead) => (
