@@ -224,6 +224,7 @@ export default function QuotationsPage() {
     try {
       const { items, ...quoteFields } = {
         client_id: formData.clientId,
+        created_by: profile?.id || user?.id,
         valid_until: formData.validUntil,
         subtotal: formData.subtotal,
         gst_amount: formData.totalTax,

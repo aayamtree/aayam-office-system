@@ -9,15 +9,41 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
-import { useLeads } from '@/lib/hooks';
+import { useLeads, useFollowUps } from '@/lib/hooks';
 import { Lead } from '@/types/database';
 
 export default function LeadsPage() {
     const { user, profile } = useAuth();
-    const { leads, loading: leadsLoading, createLead, updateLead, convertToClient, deleteLead, refetch } = useLeads();
+    const { leads, loading: leadsLoading, createLead, updateLead, deleteLead, refetch } = useLeads();
+    const { createFollowUp } = useFollowUps();
 
     // State Management
     const [searchQuery, setSearchQuery] = useState('');
+    // ... (rest of state)
+
+    const handleMoveToFollowUp = async (lead: Lead) => {
+        if (!confirm(`Move "${lead.name}" to Follow-ups?`)) return;
+        try {
+            // 1. Create Follow-up Entry
+            const { error } = await createFollowUp({
+                lead_id: lead.id,
+                follow_up_date: new Date().toISOString().split('T')[0],
+                notes: `Moved from Leads list. Requirement: ${lead.requirement || 'N/A'}`,
+                status: 'pending'
+            });
+
+            if (error) throw new Error(error);
+
+            // 2. Update Status
+            await updateLead(lead.id, { status: 'follow_up' });
+
+            await refetch();
+            alert('Moved to Follow-ups successfully');
+        } catch (e: any) {
+            console.error(e);
+            alert('Operation failed: ' + e.message);
+        }
+    };
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [showModal, setShowModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
@@ -157,15 +183,7 @@ export default function LeadsPage() {
         }
     };
 
-    const handleConvertToClient = async (lead: Lead) => {
-        if (!confirm(`Convert "${lead.name}" to Client?`)) return;
-        try {
-            await convertToClient(lead.id);
-            await refetch();
-        } catch (e) {
-            alert('Conversion failed');
-        }
-    };
+
 
     // --- FILTERING ---
 
@@ -305,12 +323,12 @@ export default function LeadsPage() {
                                         {lead.status.replace('_', ' ')}
                                     </span>
 
-                                    {lead.status !== 'converted' && (
+                                    {lead.status !== 'converted' && lead.status !== 'follow_up' && (
                                         <button
-                                            onClick={() => handleConvertToClient(lead)}
+                                            onClick={() => handleMoveToFollowUp(lead)}
                                             className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
                                         >
-                                            <CheckCircle size={14} /> Convert
+                                            <CheckCircle size={14} /> Move to Follow-up
                                         </button>
                                     )}
                                 </div>
