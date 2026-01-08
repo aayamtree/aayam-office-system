@@ -74,7 +74,7 @@ export default function VendorPurchasesPage() {
 
     const payload = {
       vendor_id: formData.vendorId,
-      job_id: formData.jobId || null,
+      job_id: formData.jobId || undefined,
       product_type: formData.productType,
       description: formData.description,
       quantity: formData.quantity,
