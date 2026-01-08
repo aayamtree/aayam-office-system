@@ -1526,4 +1526,88 @@ export function useFollowUps() {
   };
 }
 
+// =============================================
+// DESIGN PROJECTS HOOK
+// =============================================
+export function useDesignProjects() {
+  const { data, loading, error, refetch } = useSupabaseQuery<any>('design_projects', {
+    select: '*, client:clients(name, company), tasks:design_tasks(*)',
+    orderBy: { column: 'created_at', ascending: false }
+  });
+
+  const createProject = async (project: any) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    // Get project number
+    const { data: numberData } = await supabase.rpc('get_next_number', { counter_id: 'design_project' });
+
+    const payload = { ...project, project_number: numberData || `PRJ-${Date.now()}` };
+    // Tasks are separate
+    const tasks = payload.tasks || [];
+    delete payload.tasks;
+    // Client Name/etc are derived
+    delete payload.clientName;
+    delete payload.teamNames;
+
+    const { data: newProject, error } = await supabase
+      .from('design_projects')
+      .insert([payload])
+      .select()
+      .single();
+
+    if (error) return { error: error.message };
+
+    // Insert Tasks
+    if (tasks.length > 0) {
+      const taskPayloads = tasks.map((t: any) => ({
+        project_id: newProject.id,
+        name: t.name,
+        status: t.status || 'pending',
+        progress: t.progress || 0
+      }));
+      await supabase.from('design_tasks').insert(taskPayloads);
+    }
+
+    refetch();
+    return { data: newProject, error: null };
+  };
+
+  const updateProject = async (id: string, updates: any) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    // Tasks logic... complex for update. For now, we assume tasks are managed separately or we just update project fields.
+    const payload = { ...updates };
+    delete payload.tasks;
+    delete payload.clientName;
+    delete payload.teamNames;
+
+    const { data, error } = await supabase
+      .from('design_projects')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (!error) refetch();
+    return { data, error: error?.message };
+  };
+
+  const deleteProject = async (id: string) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const { error } = await supabase.from('design_projects').delete().eq('id', id);
+    if (!error) refetch();
+    return { error: error?.message };
+  };
+
+  return {
+    projects: data,
+    loading,
+    error,
+    refetch,
+    createProject,
+    updateProject,
+    deleteProject
+  };
+}
+
 export { useAuth } from './auth-context';
