@@ -101,7 +101,16 @@ export default function VendorsPage() {
           <Link href="/admin/crm" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden"><ArrowLeft size={20} /></Link>
           <div><h1 className="text-xl lg:text-2xl font-bold text-gray-900">Vendors</h1><p className="text-sm text-gray-500">{filteredVendors.length} vendors</p></div>
         </div>
-        <button onClick={handleAddNew} className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800"><Plus size={18} /><span>Add Vendor</span></button>
+        <div className="flex gap-2">
+          <Link href="/admin/crm/vendors/purchases" className="flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-200 px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-colors">
+            <Package size={18} />
+            <span className="hidden sm:inline">Purchases & Bills</span>
+          </Link>
+          <button onClick={handleAddNew} className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800">
+            <Plus size={18} />
+            <span>Add Vendor</span>
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
