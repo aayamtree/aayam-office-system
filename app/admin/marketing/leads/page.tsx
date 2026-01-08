@@ -1,451 +1,167 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase'; // DIRECT CLIENT
 import {
-    Search, Plus, Phone, Mail, Calendar,
-    Edit, Trash2, Eye, X, ArrowLeft, User,
-    MessageSquare, IndianRupee, CheckCircle,
-    Loader2, AlertCircle, Clock
+    Plus, Phone, Edit, Trash2, Eye, X, Loader2, RefreshCw
 } from 'lucide-react';
-import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
-import { useLeads } from '@/lib/hooks';
-import { Lead } from '@/types/database';
 
-export default function LeadsPage() {
+// Raw Types to avoid any heavy type dependencies
+type RawLead = {
+    id: string;
+    lead_number: string;
+    name: string;
+    phone: string;
+    company: string;
+    status: string;
+    requirement: string;
+    created_at: string;
+};
+
+export default function LeadsPageRaw() {
     const { user, profile } = useAuth();
-    const { leads, loading: leadsLoading, createLead, updateLead, convertToClient, deleteLead, refetch } = useLeads();
 
-    // State Management
-    const [searchQuery, setSearchQuery] = useState('');
-    const [statusFilter, setStatusFilter] = useState<string>('all');
-    const [showModal, setShowModal] = useState(false);
-    const [showViewModal, setShowViewModal] = useState(false);
-    const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-    const [isEditing, setIsEditing] = useState(false);
-    const [submitting, setSubmitting] = useState(false);
+    const [leads, setLeads] = useState<RawLead[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // Form State
-    const [formData, setFormData] = useState({
-        name: '',
-        company: '',
-        email: '',
-        phone: '',
-        source: 'website' as Lead['source'],
-        status: 'new' as Lead['status'],
-        value: '',
-        leadType: 'printing_only' as Lead['lead_type'],
-        billingPreference: 'gst' as Lead['billing_preference'],
-        lostReason: '',
-        requirement: '',
-        nextFollowUp: '',
-        notes: '',
-    });
+    // RAW FETCH FUNCTION
+    const fetchLeads = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            console.log('Fetching leads raw...');
+
+            const { data, error } = await supabase
+                .from('leads')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Fetch Error:', error);
+                throw error;
+            }
+
+            console.log('Fetched Leads:', data);
+            setLeads(data || []);
+
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Initial Fetch
+    useEffect(() => {
+        fetchLeads();
+    }, []);
 
     // --- ACTIONS ---
 
-    const handleAddNew = () => {
-        setFormData({
-            name: '',
-            company: '',
-            email: '',
-            phone: '',
-            source: 'website',
-            status: 'new',
-            value: '',
-            leadType: 'printing_only',
-            billingPreference: 'gst',
-            lostReason: '',
-            requirement: '',
-            nextFollowUp: '',
-            notes: '',
-        });
-        setIsEditing(false);
-        setShowModal(true);
-    };
+    const [showModal, setShowModal] = useState(false);
+    const [formData, setFormData] = useState({ name: '', phone: '', status: 'new' });
 
-    const handleEdit = (lead: Lead) => {
-        setFormData({
-            name: lead.name,
-            company: lead.company || '',
-            email: lead.email || '',
-            phone: lead.phone || '',
-            source: lead.source as any,
-            status: lead.status as any,
-            value: lead.expected_value?.toString() || '',
-            leadType: (lead.lead_type as any) || 'printing_only',
-            billingPreference: (lead.billing_preference as any) || 'gst',
-            lostReason: lead.lost_reason || '',
-            requirement: lead.requirement || '',
-            nextFollowUp: lead.next_follow_up || '',
-            notes: lead.notes || '',
-        });
-        setSelectedLead(lead);
-        setIsEditing(true);
-        setShowModal(true);
-    };
-
-    const handleDelete = async (id: string, name: string) => {
-        if (!confirm(`Delete lead "${name}"?`)) return;
-        try {
-            await deleteLead(id);
-            await refetch();
-        } catch (e) {
-            alert('Failed to delete lead');
-        }
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        setSubmitting(true);
-
         try {
-            // 1. Auth Check - ROBUST FALLBACK
-            // If profile is slow to load, we try user.id from supabase auth directly
             const currentUserId = profile?.id || user?.id;
+            if (!currentUserId) throw new Error('Not authenticated');
 
-            if (!currentUserId) {
-                throw new Error('You appear to be logged out. Please refresh the page.');
-            }
+            // 1. Get Number directly
+            const { data: numData } = await supabase.rpc('get_next_number', { counter_id: 'lead' });
+            const leadNum = numData || `LD-${Date.now()}`;
 
-            console.log('Saving Lead for User:', currentUserId);
-
-            const payload = {
+            // 2. Insert directly
+            const { error: insertError } = await supabase.from('leads').insert({
                 name: formData.name,
-                company: formData.company,
-                email: formData.email,
                 phone: formData.phone,
-                source: formData.source,
                 status: formData.status,
-                lead_type: formData.leadType,
-                billing_preference: formData.billingPreference,
-                lost_reason: formData.status === 'lost' ? formData.lostReason : undefined,
-                expected_value: parseFloat(formData.value) || 0,
-                requirement: formData.requirement,
-                next_follow_up:
-                    ['follow_up', 'new', 'contacted'].includes(formData.status)
-                        ? (formData.nextFollowUp || undefined)
-                        : undefined,
-                notes: formData.notes
-            };
+                lead_number: leadNum,
+                created_by: currentUserId,
+                assigned_to: currentUserId
+            });
 
-            // 2. Perform Save
-            let result;
-            if (isEditing && selectedLead) {
-                result = await updateLead(selectedLead.id, payload);
-            } else {
-                result = await createLead({
-                    ...payload,
-                    created_by: currentUserId,
-                    assigned_to: currentUserId
-                });
-            }
+            if (insertError) throw insertError;
 
-            if (result.error) throw new Error(result.error);
-
-            // 3. Success & Refresh
-            alert(isEditing ? 'Lead updated successfully!' : 'Lead created successfully!');
+            alert('Variable Saved!');
             setShowModal(false);
+            fetchLeads(); // Reload list
 
-            // FORCE REFRESH THE LIST
-            await refetch();
-            // Optional: Backup reload if list is stubborn
-            // window.location.reload(); 
-
-        } catch (error: any) {
-            console.error('Save Error:', error);
-            alert(error.message || 'Failed to save lead. Please check your connection.');
-        } finally {
-            setSubmitting(false);
+        } catch (err: any) {
+            alert('Save Failed: ' + err.message);
         }
     };
 
-    const handleConvertToClient = async (lead: Lead) => {
-        if (!confirm(`Convert "${lead.name}" to Client?`)) return;
-        try {
-            await convertToClient(lead.id);
-            await refetch();
-        } catch (e) {
-            alert('Conversion failed');
-        }
-    };
-
-    // --- FILTERING ---
-
-    // Note: We REMOVED the strict 'marketing' text filter that was hiding your leads.
-    // Now we just show whatever the Database sends us.
-
-    const filteredLeads = leads.filter(lead => {
-        const s = searchQuery.toLowerCase();
-        const matchSearch =
-            lead.name.toLowerCase().includes(s) ||
-            (lead.company || '').toLowerCase().includes(s) ||
-            lead.phone?.includes(s) ||
-            (lead.lead_number || '').toLowerCase().includes(s);
-
-        const matchStatus = statusFilter === 'all' || lead.status === statusFilter;
-        return matchSearch && matchStatus;
-    });
-
-    // --- RENDER ---
-
-    if (leadsLoading) {
-        return (
-            <div className="flex h-96 items-center justify-center">
-                <Loader2 className="animate-spin text-indigo-600" size={32} />
-                <span className="ml-3 text-gray-500 font-medium">Loading leads...</span>
-            </div>
-        );
-    }
-
+    // Clean UI
     return (
-        <div className="space-y-6 pb-20 animate-fade-in text-sm lg:text-base">
+        <div className="p-6 max-w-6xl mx-auto space-y-6">
 
-            {/* HEADER */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Leads & Enquiries (Marketing)</h1>
-                    <p className="text-gray-500 text-sm">Manage potential clients and follow-ups</p>
+                    <h1 className="text-2xl font-bold">Leads (Direct Mode)</h1>
+                    <p className="text-gray-500 text-sm">Diagnostic View</p>
                 </div>
-                <button
-                    onClick={handleAddNew}
-                    className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-indigo-200 transition-all hover:scale-105 active:scale-95"
-                >
-                    <Plus size={18} />
-                    <span>New Lead</span>
-                </button>
+                <div className="flex gap-2">
+                    <button onClick={fetchLeads} className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200"><RefreshCw size={20} /></button>
+                    <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold">
+                        <Plus size={20} /> Add Lead
+                    </button>
+                </div>
             </div>
 
-            {/* FILTERS */}
-            <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                <div className="relative flex-1">
-                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder="Search name, phone, company..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-gray-900 placeholder-gray-400"
-                    />
+            {error && (
+                <div className="bg-red-50 text-red-600 p-4 rounded-xl font-mono text-sm border border-red-200">
+                    Error: {error}
                 </div>
-                <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-indigo-500/20 font-medium text-gray-700 cursor-pointer"
-                >
-                    <option value="all">All Status</option>
-                    <option value="new">New</option>
-                    <option value="contacted">Contacted</option>
-                    <option value="quotation_shared">Quotation Sent</option>
-                    <option value="follow_up">Follow Up</option>
-                    <option value="converted">Converted</option>
-                    <option value="lost">Lost</option>
-                </select>
-            </div>
+            )}
 
-            {/* LEAD LIST */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {filteredLeads.length === 0 ? (
-                    <div className="col-span-full py-12 text-center text-gray-400 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                        No leads found matching your search.
-                        <br /><span className="text-xs text-gray-300">If you just added a lead, try refreshing the page manually.</span>
-                    </div>
-                ) : (
-                    filteredLeads.map((lead) => (
-                        <div key={lead.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all group relative overflow-hidden">
-                            {/* Status Strip */}
-                            <div className={`absolute top-0 left-0 w-1.5 h-full 
-                 ${lead.status === 'new' ? 'bg-blue-500' :
-                                    lead.status === 'converted' ? 'bg-green-500' :
-                                        lead.status === 'lost' ? 'bg-red-400' : 'bg-indigo-500'}`}
-                            />
+            {loading ? (
+                <div className="text-center py-12"><Loader2 className="animate-spin mx-auto text-indigo-600" size={32} /></div>
+            ) : (
+                <div className="grid gap-4">
+                    <div className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Total Leads: {leads.length}</div>
 
-                            <div className="pl-3">
-                                <div className="flex justify-between items-start mb-3">
-                                    <div>
-                                        <span className="inline-block px-2 py-0.5 rounded-md bg-gray-100 text-xs font-mono font-bold text-gray-600 mb-1">
-                                            {lead.lead_number}
-                                        </span>
-                                        <h3 className="font-bold text-gray-900 text-lg leading-tight">{lead.name}</h3>
-                                        {lead.company && <p className="text-gray-500 text-sm font-medium">{lead.company}</p>}
-                                    </div>
-                                    <div className="flex gap-1">
-                                        <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
-                                            <Eye size={18} />
-                                        </button>
-                                        <button onClick={() => handleEdit(lead)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                                            <Edit size={18} />
-                                        </button>
-                                        <button onClick={() => handleDelete(lead.id, lead.name)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </div>
+                    {leads.length === 0 && (
+                        <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-200 text-yellow-700 text-center">
+                            Database returned 0 leads.
+                            <br />If you just saved one, please check Supabase Dashboard manually to see if the row exists.
+                        </div>
+                    )}
+
+                    {leads.map(lead => (
+                        <div key={lead.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-xs font-bold text-gray-600">{lead.lead_number}</span>
+                                    <h3 className="font-bold text-lg">{lead.name}</h3>
                                 </div>
-
-                                <div className="space-y-2 mt-4">
-                                    <div className="flex items-center gap-2 text-gray-600">
-                                        <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-600 shrink-0">
-                                            <Phone size={14} />
-                                        </div>
-                                        <span className="font-medium">{lead.phone}</span>
-                                    </div>
-
-                                    {lead.next_follow_up && (
-                                        <div className="flex items-center gap-2 text-amber-600 bg-amber-50 p-2 rounded-lg border border-amber-100">
-                                            <Clock size={14} />
-                                            <span className="text-xs font-bold">Follow up: {new Date(lead.next_follow_up).toLocaleDateString()}</span>
-                                        </div>
-                                    )}
-
-                                    {lead.requirement && (
-                                        <p className="text-sm text-gray-500 line-clamp-2 bg-gray-50 p-2 rounded-lg italic">
-                                            &quot;{lead.requirement}&quot;
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Action Footer */}
-                                <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
-                                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${lead.status === 'converted' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                                        }`}>
-                                        {lead.status.replace('_', ' ')}
-                                    </span>
-
-                                    {lead.status !== 'converted' && (
-                                        <button
-                                            onClick={() => handleConvertToClient(lead)}
-                                            className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
-                                        >
-                                            <CheckCircle size={14} /> Convert
-                                        </button>
-                                    )}
-                                </div>
+                                <div className="text-gray-500">{lead.phone}</div>
+                            </div>
+                            <div className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full font-bold text-xs uppercase">
+                                {lead.status}
                             </div>
                         </div>
-                    ))
-                )}
-            </div>
+                    ))}
+                </div>
+            )}
 
-            {/* EDIT/CREATE MODAL */}
+            {/* Simple Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-                        <div className="sticky top-0 bg-white p-5 border-b border-gray-100 flex justify-between items-center z-10">
-                            <h2 className="text-xl font-bold text-gray-900">{isEditing ? 'Edit Lead' : 'New Lead Card'}</h2>
-                            <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                                <X size={20} />
-                            </button>
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
+                    <div className="bg-white p-6 rounded-xl w-full max-w-md space-y-4">
+                        <h2 className="font-bold text-xl">New Lead (Direct)</h2>
+                        <input className="w-full p-2 border rounded" placeholder="Name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                        <input className="w-full p-2 border rounded" placeholder="Phone" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                        <div className="flex gap-2 pt-4">
+                            <button onClick={() => setShowModal(false)} className="flex-1 p-2 bg-gray-100 rounded">Cancel</button>
+                            <button onClick={handleSave} className="flex-1 p-2 bg-indigo-600 text-white rounded font-bold">Save</button>
                         </div>
-
-                        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                            {/* Mandatory Section */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1.5">Lead Name *</label>
-                                    <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-medium" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1.5">Mobile Number *</label>
-                                    <input required type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium font-mono" />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-600 mb-1.5">Source</label>
-                                    <select value={formData.source} onChange={e => setFormData({ ...formData, source: e.target.value as any })} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500">
-                                        <option value="website">Website</option>
-                                        <option value="walk_in">Walk-in</option>
-                                        <option value="referral">Referral</option>
-                                        <option value="social_media">Social Media</option>
-                                        <option value="cold_call">Cold Call</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-600 mb-1.5">Service Req.</label>
-                                    <select value={formData.leadType} onChange={e => setFormData({ ...formData, leadType: e.target.value as any })} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500">
-                                        <option value="printing_only">Printing Only</option>
-                                        <option value="designing_only">Designing Only</option>
-                                        <option value="design_printing">Design + Printing</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Status Section */}
-                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Current Status</label>
-                                    <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value as any })} className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium">
-                                        <option value="new">New Lead</option>
-                                        <option value="contacted">Contacted</option>
-                                        <option value="quotation_shared">Quotation Sent</option>
-                                        <option value="follow_up">Needs Follow Up</option>
-                                        <option value="converted">Converted (Won)</option>
-                                        <option value="lost">Lost</option>
-                                    </select>
-                                </div>
-                                {['new', 'contacted', 'follow_up'].includes(formData.status) && (
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Next Follow-up</label>
-                                        <input type="date" value={formData.nextFollowUp} onChange={e => setFormData({ ...formData, nextFollowUp: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm" />
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Optional Details */}
-                            <div className="border-t border-gray-100 pt-4 space-y-4">
-                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Additional Details</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <input type="text" placeholder="Company Name (Optional)" value={formData.company} onChange={e => setFormData({ ...formData, company: e.target.value })} className="border-b border-gray-200 py-2 focus:border-indigo-500 focus:outline-none bg-transparent placeholder-gray-400" />
-                                    <input type="email" placeholder="Email Address (Optional)" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="border-b border-gray-200 py-2 focus:border-indigo-500 focus:outline-none bg-transparent placeholder-gray-400" />
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <select value={formData.billingPreference} onChange={e => setFormData({ ...formData, billingPreference: e.target.value as any })} className="border-b border-gray-200 py-2 focus:border-indigo-500 focus:outline-none bg-transparent text-gray-600">
-                                        <option value="gst">GST Invoice</option>
-                                        <option value="non_gst">Cash / Estimates</option>
-                                        <option value="both">Both</option>
-                                    </select>
-                                    <input type="number" placeholder="Expected Value (₹)" value={formData.value} onChange={e => setFormData({ ...formData, value: e.target.value })} className="border-b border-gray-200 py-2 focus:border-indigo-500 focus:outline-none bg-transparent placeholder-gray-400" />
-                                </div>
-                                <textarea placeholder="Requirement details / Notes..." rows={3} value={formData.requirement} onChange={e => setFormData({ ...formData, requirement: e.target.value })} className="w-full p-3 bg-gray-50 rounded-xl border-0 focus:ring-2 focus:ring-indigo-500/20 text-sm resize-none"></textarea>
-                            </div>
-
-                            <div className="sticky bottom-0 bg-white pt-4 border-t border-gray-100 flex gap-3">
-                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 border border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
-                                <button type="submit" disabled={submitting} className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50 flex items-center justify-center gap-2">
-                                    {submitting && <Loader2 className="animate-spin" size={18} />}
-                                    {submitting ? 'Saving...' : 'Save Lead'}
-                                </button>
-                            </div>
-                        </form>
                     </div>
                 </div>
             )}
 
-            {/* VIEW MODAL - Simplified for read-only view */}
-            {showViewModal && selectedLead && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl w-full max-w-lg p-6 relative shadow-2xl">
-                        <button onClick={() => setShowViewModal(false)} className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full"><X size={18} /></button>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-1">{selectedLead.name}</h2>
-                        <p className="text-gray-500 font-mono text-sm mb-6">{selectedLead.lead_number}</p>
-
-                        <div className="space-y-4">
-                            <div className="flex justify-between border-b pb-2"><span className="text-gray-500">Phone</span> <span className="font-medium font-mono">{selectedLead.phone}</span></div>
-                            <div className="flex justify-between border-b pb-2"><span className="text-gray-500">Company</span> <span className="font-medium">{selectedLead.company || '-'}</span></div>
-                            <div className="flex justify-between border-b pb-2"><span className="text-gray-500">Status</span> <span className="font-bold capitalize text-indigo-600">{selectedLead.status}</span></div>
-
-                            <div className="bg-gray-50 p-4 rounded-xl mt-4">
-                                <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">Requirement</h4>
-                                <p className="text-gray-700 italic">{selectedLead.requirement || 'No notes provided.'}</p>
-                            </div>
-                        </div>
-
-                        <button onClick={() => { setShowViewModal(false); handleEdit(selectedLead); }} className="w-full mt-6 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700">Edit Details</button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
