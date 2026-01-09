@@ -72,7 +72,7 @@ export default function ReportsPage() {
 function ClientStatementGenerator() {
   const { clients } = useClients();
   const { jobs } = useJobs();
-  const { payments } = usePaymentsReceived();
+  const { paymentsReceived: payments } = usePaymentsReceived();
 
   const [selectedClientId, setSelectedClientId] = useState('');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
@@ -240,7 +240,7 @@ function VendorStatementGenerator() {
 }
 
 function CashFlowStatement() {
-  const { payments: inflows } = usePaymentsReceived();
+  const { paymentsReceived: inflows } = usePaymentsReceived();
   const { vendorPayments: vendorOutflows } = useVendorPayments();
   const { expenses } = useExpenses();
 
