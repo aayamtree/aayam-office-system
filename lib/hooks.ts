@@ -226,7 +226,7 @@ export function useDesigners() {
 // =============================================
 export function useJobs(options?: UseSupabaseQueryOptions) {
   const { data, loading, error, refetch } = useSupabaseQuery<Job>('jobs', {
-    select: '*', // Removed all joins (client, vendor) to fix "Infinite Loading" if FKs logic is missing in DB
+    select: '*, client:clients(*), vendor:vendors(*)',
     orderBy: { column: 'created_at', ascending: false },
     ...options
   });
