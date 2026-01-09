@@ -1611,3 +1611,74 @@ export function useDesignProjects() {
 }
 
 export { useAuth } from './auth-context';
+
+// =============================================
+// PAYMENTS HOOK (Received)
+// =============================================
+export function usePaymentsReceived() {
+    const { data, loading, error, refetch } = useSupabaseQuery<PaymentReceived>('payments_received', {
+        select: '*, client:clients(*), bank_account:bank_accounts(*)', // Ensure joins work
+        orderBy: { column: 'payment_date', ascending: false }
+    });
+
+    const createPaymentReceived = async (payment: Omit<PaymentReceived, 'id' | 'created_at' | 'updated_at' | 'payment_number' | 'client' | 'bank_account'>) => {
+        if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+        // Generate number (fallback)
+        let number = `REC-${Date.now().toString().slice(-6)}`;
+
+        // Add logic to get next number if needed (via RPC)
+
+        const { data: result, error } = await supabase
+            .from('payments_received')
+            .insert([{ ...payment, payment_number: number }])
+            .select()
+            .single();
+
+        if (!error) refetch();
+        return { data: result, error: error?.message };
+    };
+
+    const deletePaymentReceived = async (id: string) => {
+        if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+        const { error } = await supabase.from('payments_received').delete().eq('id', id);
+        if (!error) refetch();
+        return { error: error?.message };
+    };
+
+    return { paymentsReceived: data, loading, error, refetch, createPaymentReceived, deletePaymentReceived };
+}
+
+// =============================================
+// VENDOR PAYMENTS HOOK (Paid)
+// =============================================
+export function useVendorPayments() {
+    const { data, loading, error, refetch } = useSupabaseQuery<VendorPayment>('vendor_payments', {
+        select: '*, vendor:vendors(*), bank_account:bank_accounts(*)',
+        orderBy: { column: 'payment_date', ascending: false }
+    });
+
+    const createVendorPayment = async (payment: Omit<VendorPayment, 'id' | 'created_at' | 'updated_at' | 'payment_number' | 'vendor' | 'bank_account'>) => {
+        if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+        let number = `PAY-${Date.now().toString().slice(-6)}`;
+
+        const { data: result, error } = await supabase
+            .from('vendor_payments')
+            .insert([{ ...payment, payment_number: number }])
+            .select()
+            .single();
+
+        if (!error) refetch();
+        return { data: result, error: error?.message };
+    };
+
+    const deleteVendorPayment = async (id: string) => {
+        if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+        const { error } = await supabase.from('vendor_payments').delete().eq('id', id);
+        if (!error) refetch();
+        return { error: error?.message };
+    };
+
+    return { vendorPayments: data, loading, error, refetch, createVendorPayment, deleteVendorPayment };
+}
