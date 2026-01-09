@@ -6,7 +6,7 @@ import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
   ArrowDownRight, ArrowUpRight, Calendar, CreditCard, Banknote, Loader2, User, Building2, Upload, FileText
 } from 'lucide-react';
-import { usePaymentsReceived, useVendorPayments, useClients, useVendors } from '@/lib/hooks';
+import { usePaymentsReceived, useVendorPayments, useClients, useVendors, useInvoices, usePurchaseBills } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
 
 export default function PaymentsPage() {
@@ -14,6 +14,8 @@ export default function PaymentsPage() {
   const { vendorPayments, loading: loadingPaid, createVendorPayment, deleteVendorPayment } = useVendorPayments();
   const { clients, error: clientsError } = useClients();
   const { vendors, error: vendorsError } = useVendors();
+  const { invoices } = useInvoices();
+  const { purchaseBills } = usePurchaseBills();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'received' | 'paid'>('all');
@@ -56,7 +58,9 @@ export default function PaymentsPage() {
     date: new Date().toISOString().split('T')[0],
     reference: '',
     notes: '',
-    attachmentUrl: ''
+    attachmentUrl: '',
+    invoiceId: '',
+    purchaseBillId: ''
   });
 
   const filteredPayments = payments.filter(p => {
@@ -79,7 +83,8 @@ export default function PaymentsPage() {
     setFormData({
       type: 'received', clientId: '', vendorId: '', amount: '',
       method: 'bank_transfer', date: new Date().toISOString().split('T')[0],
-      reference: '', notes: '', attachmentUrl: ''
+      reference: '', notes: '', attachmentUrl: '',
+      invoiceId: '', purchaseBillId: ''
     });
     setShowModal(true);
   };
@@ -138,7 +143,8 @@ export default function PaymentsPage() {
           payment_date: formData.date,
           reference_number: formData.reference,
           notes: formData.notes,
-          attachment_url: formData.attachmentUrl
+          attachment_url: formData.attachmentUrl,
+          invoice_id: formData.invoiceId || undefined
         } as any);
       } else {
         if (!formData.vendorId) throw new Error('Please select a vendor');
@@ -149,7 +155,8 @@ export default function PaymentsPage() {
           payment_date: formData.date,
           reference_number: formData.reference,
           notes: formData.notes,
-          attachment_url: formData.attachmentUrl
+          attachment_url: formData.attachmentUrl,
+          purchase_bill_id: formData.purchaseBillId || undefined
         } as any);
       }
       setShowModal(false);
@@ -290,6 +297,36 @@ export default function PaymentsPage() {
                     </select>
                   )}
                   {clientsError && <p className="text-xs text-red-500 mt-1">Error: {clientsError} (Check RLS)</p>}
+
+                  {/* PENDING INVOICES LIST (New) */}
+                  {formData.clientId && invoices && (
+                    <div className="mt-3 bg-blue-50 p-3 rounded-xl border border-blue-100 animate-fade-in">
+                      <label className="text-xs font-semibold text-blue-800 mb-1 flex items-center gap-1">
+                        <FileText size={12} /> Allocate to Pending Invoice (Optional)
+                      </label>
+                      <select
+                        value={formData.invoiceId || ''}
+                        onChange={e => {
+                          const inv = invoices.find(i => i.id === e.target.value);
+                          setFormData(prev => ({
+                            ...prev,
+                            invoiceId: e.target.value,
+                            amount: inv ? inv.balance_due : prev.amount
+                          }));
+                        }}
+                        className="w-full text-sm p-2 rounded-lg border border-blue-200 bg-white"
+                      >
+                        <option value="">-- General Payment (On Account) --</option>
+                        {invoices
+                          .filter(i => i.client_id === formData.clientId && i.payment_status !== 'paid')
+                          .map(i => (
+                            <option key={i.id} value={i.id}>
+                              #{i.invoice_number} (Total: ₹{i.total_amount}, Due: ₹{i.balance_due})
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div>
@@ -306,6 +343,36 @@ export default function PaymentsPage() {
                     </select>
                   )}
                   {vendorsError && <p className="text-xs text-red-500 mt-1">Error: {vendorsError} (Check RLS)</p>}
+
+                  {/* PENDING BILLS LIST (New) */}
+                  {formData.vendorId && purchaseBills && (
+                    <div className="mt-3 bg-blue-50 p-3 rounded-xl border border-blue-100 animate-fade-in">
+                      <label className="text-xs font-semibold text-blue-800 mb-1 flex items-center gap-1">
+                        <FileText size={12} /> Allocate to Pending Bill (Optional)
+                      </label>
+                      <select
+                        value={formData.purchaseBillId || ''}
+                        onChange={e => {
+                          const bill = purchaseBills.find(b => b.id === e.target.value);
+                          setFormData(prev => ({
+                            ...prev,
+                            purchaseBillId: e.target.value,
+                            amount: bill ? (bill.total_amount - (bill.amount_paid || 0)) : prev.amount
+                          }));
+                        }}
+                        className="w-full text-sm p-2 rounded-lg border border-blue-200 bg-white"
+                      >
+                        <option value="">-- General Payment (On Account) --</option>
+                        {purchaseBills
+                          .filter(b => b.vendor_id === formData.vendorId && b.payment_status !== 'paid')
+                          .map(b => (
+                            <option key={b.id} value={b.id}>
+                              #{b.bill_number} (Total: ₹{b.total_amount}, Paid: ₹{b.amount_paid})
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
               )}
 
