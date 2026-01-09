@@ -36,7 +36,7 @@ export default function JobsPage() {
   const { clients, createClient } = useClients();
   const { vendors, createVendor } = useVendors();
   const { designers } = useDesigners();
-  const { createPayment } = usePaymentsReceived();
+  const { createPaymentReceived } = usePaymentsReceived();
 
   const loading = jobsLoading; // Main loading state
 
@@ -253,7 +253,7 @@ export default function JobsPage() {
 
     try {
       // 1. Record detailed payment history
-      await createPayment({
+      await createPaymentReceived({
         job_id: selectedJob.id,
         client_id: selectedJob.client_id,
         amount: paymentAmount,
