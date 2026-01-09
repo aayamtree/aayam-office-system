@@ -12,8 +12,8 @@ import { supabase } from '@/lib/supabase';
 export default function PaymentsPage() {
   const { paymentsReceived, loading: loadingReceived, createPaymentReceived, deletePaymentReceived } = usePaymentsReceived();
   const { vendorPayments, loading: loadingPaid, createVendorPayment, deleteVendorPayment } = useVendorPayments();
-  const { clients } = useClients();
-  const { vendors } = useVendors();
+  const { clients, error: clientsError } = useClients();
+  const { vendors, error: vendorsError } = useVendors();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'received' | 'paid'>('all');
@@ -289,6 +289,7 @@ export default function PaymentsPage() {
                       {clients.map(c => <option key={c.id} value={c.id}>{c.name} - {c.company}</option>)}
                     </select>
                   )}
+                  {clientsError && <p className="text-xs text-red-500 mt-1">Error: {clientsError} (Check RLS)</p>}
                 </div>
               ) : (
                 <div>
@@ -304,6 +305,7 @@ export default function PaymentsPage() {
                       {vendors.map(v => <option key={v.id} value={v.id}>{v.name} - {v.company}</option>)}
                     </select>
                   )}
+                  {vendorsError && <p className="text-xs text-red-500 mt-1">Error: {vendorsError} (Check RLS)</p>}
                 </div>
               )}
 
