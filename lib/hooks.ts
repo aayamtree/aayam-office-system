@@ -226,7 +226,7 @@ export function useDesigners() {
 // =============================================
 export function useJobs(options?: UseSupabaseQueryOptions) {
   const { data, loading, error, refetch } = useSupabaseQuery<Job>('jobs', {
-    select: '*, client:clients(*), vendor:vendors(*)',
+    select: '*, client:clients(*), vendor:vendors(*), invoices(*)',
     orderBy: { column: 'created_at', ascending: false },
     ...options
   });
@@ -1541,25 +1541,29 @@ export { useAuth } from './auth-context';
 // =============================================
 // PAYMENTS HOOK (Received)
 // =============================================
+// =============================================
+// PAYMENTS RECEIVED HOOK
+// =============================================
 export function usePaymentsReceived() {
   const { data, loading, error, refetch } = useSupabaseQuery<PaymentReceived>('payments_received', {
-    select: '*, client:clients(*), bank_account:bank_accounts(*)', // Ensure joins work
+    select: '*, client:clients(*), bank_account:bank_accounts(*)',
     orderBy: { column: 'payment_date', ascending: false }
   });
 
   const createPaymentReceived = async (payment: Omit<PaymentReceived, 'id' | 'created_at' | 'updated_at' | 'payment_number' | 'client' | 'bank_account'>) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
-    // Generate number (fallback)
-    let number = `REC-${Date.now().toString().slice(-6)}`;
-
-    // Add logic to get next number if needed (via RPC)
-
-    const { data: result, error } = await supabase
-      .from('payments_received')
-      .insert([{ ...payment, payment_number: number }])
-      .select()
-      .single();
+    const { data: result, error } = await supabase.rpc('record_payment_received', {
+      p_client_id: payment.client_id,
+      p_amount: payment.amount,
+      p_payment_mode: payment.payment_mode,
+      p_payment_date: payment.payment_date,
+      p_bank_account_id: payment.bank_account_id,
+      p_reference: payment.reference_number,
+      p_notes: payment.notes,
+      p_invoice_id: payment.invoice_id,
+      p_attachment_url: payment.attachment_url
+    });
 
     if (!error) refetch();
     return { data: result, error: error?.message };
@@ -1587,13 +1591,17 @@ export function useVendorPayments() {
   const createVendorPayment = async (payment: Omit<VendorPayment, 'id' | 'created_at' | 'updated_at' | 'payment_number' | 'vendor' | 'bank_account'>) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
-    let number = `PAY-${Date.now().toString().slice(-6)}`;
-
-    const { data: result, error } = await supabase
-      .from('vendor_payments')
-      .insert([{ ...payment, payment_number: number }])
-      .select()
-      .single();
+    const { data: result, error } = await supabase.rpc('record_vendor_payment', {
+      p_vendor_id: payment.vendor_id,
+      p_amount: payment.amount,
+      p_payment_mode: payment.payment_mode,
+      p_payment_date: payment.payment_date,
+      p_bank_account_id: payment.bank_account_id,
+      p_reference: payment.reference_number,
+      p_notes: payment.notes,
+      p_purchase_bill_id: payment.purchase_bill_id,
+      p_attachment_url: payment.attachment_url
+    });
 
     if (!error) refetch();
     return { data: result, error: error?.message };

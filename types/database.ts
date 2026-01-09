@@ -192,6 +192,7 @@ export interface Job extends BaseEntity {
   vendor?: Vendor;
   designer?: Designer;
   sales_person?: Profile;
+  invoices?: Invoice[];
 }
 
 // File Attachment

@@ -204,12 +204,20 @@ export default function DispatchPage() {
                     <p className="text-xs text-gray-500">Due</p>
                     <p className="text-sm font-medium">{job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}</p>
                   </div>
-                  <button
-                    onClick={() => handleOpenDispatch(job)}
-                    className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 shadow-sm"
-                  >
-                    Dispatch Now
-                  </button>
+                  {(() => {
+                    const hasInvoice = (job as any).invoices && (job as any).invoices.length > 0;
+                    return (
+                      <button
+                        disabled={!hasInvoice}
+                        onClick={() => handleOpenDispatch(job)}
+                        className={`px-4 py-2 text-white text-sm font-medium rounded-lg shadow-sm whitespace-nowrap ${hasInvoice ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'
+                          }`}
+                        title={hasInvoice ? 'Proceed to Dispatch' : 'Strict Rule: Cannot Dispatch without Invoice'}
+                      >
+                        {hasInvoice ? 'Dispatch Now' : 'Invoice Needed'}
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
             ))}
