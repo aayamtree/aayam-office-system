@@ -24,7 +24,7 @@ export default function BankingPage() {
     } = useBankTransactions(selectedAccountId);
 
     // System Data
-    const { payments } = usePaymentsReceived();
+    const { paymentsReceived: payments } = usePaymentsReceived();
     const { expenses: expenseList } = useExpenses();
 
     // UI State
