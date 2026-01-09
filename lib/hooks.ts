@@ -742,83 +742,9 @@ export function usePurchaseBills() {
   };
 }
 
-// =============================================
-// VENDOR PAYMENTS HOOK
-// =============================================
-export function useVendorPayments() {
-  const { data, loading, error, refetch } = useSupabaseQuery<VendorPayment>('vendor_payments', {
-    select: '*, vendor:vendors(*), bank_account:bank_accounts(*)',
-    orderBy: { column: 'created_at', ascending: false }
-  });
 
-  const createVendorPayment = async (payment: Omit<VendorPayment, 'id' | 'created_at' | 'payment_number' | 'vendor' | 'bank_account'>) => {
-    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
-    const { data: numberData } = await supabase.rpc('get_next_number', { counter_id: 'vendor_payment' });
 
-    const { data, error } = await supabase
-      .from('vendor_payments')
-      .insert([{ ...payment, payment_number: numberData || `VP-${Date.now()}` }])
-      .select()
-      .single();
-
-    if (!error) refetch();
-    return { data, error: error?.message };
-  };
-
-  return {
-    vendorPayments: data,
-    loading,
-    error,
-    refetch,
-    createVendorPayment,
-    updateVendorPayment: async (id: string, updates: Partial<VendorPayment>) => {
-      if (!isSupabaseConfigured()) return { error: 'Database not configured' };
-      const { data, error } = await supabase.from('vendor_payments').update(updates).eq('id', id).select().single();
-      if (!error) refetch();
-      return { data, error: error?.message };
-    },
-    deleteVendorPayment: async (id: string) => {
-      if (!isSupabaseConfigured()) return { error: 'Database not configured' };
-      const { error } = await supabase.from('vendor_payments').delete().eq('id', id);
-      if (!error) refetch();
-      return { error: error?.message };
-    }
-  };
-}
-
-// =============================================
-// PAYMENTS RECEIVED HOOK
-// =============================================
-export function usePaymentsReceived() {
-  const { data, loading, error, refetch } = useSupabaseQuery<PaymentReceived>('payments_received', {
-    select: '*, client:clients(*), bank_account:bank_accounts(*)',
-    orderBy: { column: 'created_at', ascending: false }
-  });
-
-  const createPayment = async (payment: Omit<PaymentReceived, 'id' | 'created_at' | 'payment_number' | 'client' | 'bank_account'>) => {
-    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
-
-    const { data: numberData } = await supabase.rpc('get_next_number', { counter_id: 'payment' });
-
-    const { data, error } = await supabase
-      .from('payments_received')
-      .insert([{ ...payment, payment_number: numberData || `PAY-${Date.now()}` }])
-      .select()
-      .single();
-
-    if (!error) refetch();
-    return { data, error: error?.message };
-  };
-
-  return {
-    payments: data,
-    loading,
-    error,
-    refetch,
-    createPayment
-  };
-}
 
 // =============================================
 // DISPATCHES HOOK
@@ -1616,69 +1542,69 @@ export { useAuth } from './auth-context';
 // PAYMENTS HOOK (Received)
 // =============================================
 export function usePaymentsReceived() {
-    const { data, loading, error, refetch } = useSupabaseQuery<PaymentReceived>('payments_received', {
-        select: '*, client:clients(*), bank_account:bank_accounts(*)', // Ensure joins work
-        orderBy: { column: 'payment_date', ascending: false }
-    });
+  const { data, loading, error, refetch } = useSupabaseQuery<PaymentReceived>('payments_received', {
+    select: '*, client:clients(*), bank_account:bank_accounts(*)', // Ensure joins work
+    orderBy: { column: 'payment_date', ascending: false }
+  });
 
-    const createPaymentReceived = async (payment: Omit<PaymentReceived, 'id' | 'created_at' | 'updated_at' | 'payment_number' | 'client' | 'bank_account'>) => {
-        if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+  const createPaymentReceived = async (payment: Omit<PaymentReceived, 'id' | 'created_at' | 'updated_at' | 'payment_number' | 'client' | 'bank_account'>) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
-        // Generate number (fallback)
-        let number = `REC-${Date.now().toString().slice(-6)}`;
+    // Generate number (fallback)
+    let number = `REC-${Date.now().toString().slice(-6)}`;
 
-        // Add logic to get next number if needed (via RPC)
+    // Add logic to get next number if needed (via RPC)
 
-        const { data: result, error } = await supabase
-            .from('payments_received')
-            .insert([{ ...payment, payment_number: number }])
-            .select()
-            .single();
+    const { data: result, error } = await supabase
+      .from('payments_received')
+      .insert([{ ...payment, payment_number: number }])
+      .select()
+      .single();
 
-        if (!error) refetch();
-        return { data: result, error: error?.message };
-    };
+    if (!error) refetch();
+    return { data: result, error: error?.message };
+  };
 
-    const deletePaymentReceived = async (id: string) => {
-        if (!isSupabaseConfigured()) return { error: 'Database not configured' };
-        const { error } = await supabase.from('payments_received').delete().eq('id', id);
-        if (!error) refetch();
-        return { error: error?.message };
-    };
+  const deletePaymentReceived = async (id: string) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const { error } = await supabase.from('payments_received').delete().eq('id', id);
+    if (!error) refetch();
+    return { error: error?.message };
+  };
 
-    return { paymentsReceived: data, loading, error, refetch, createPaymentReceived, deletePaymentReceived };
+  return { paymentsReceived: data, loading, error, refetch, createPaymentReceived, deletePaymentReceived };
 }
 
 // =============================================
 // VENDOR PAYMENTS HOOK (Paid)
 // =============================================
 export function useVendorPayments() {
-    const { data, loading, error, refetch } = useSupabaseQuery<VendorPayment>('vendor_payments', {
-        select: '*, vendor:vendors(*), bank_account:bank_accounts(*)',
-        orderBy: { column: 'payment_date', ascending: false }
-    });
+  const { data, loading, error, refetch } = useSupabaseQuery<VendorPayment>('vendor_payments', {
+    select: '*, vendor:vendors(*), bank_account:bank_accounts(*)',
+    orderBy: { column: 'payment_date', ascending: false }
+  });
 
-    const createVendorPayment = async (payment: Omit<VendorPayment, 'id' | 'created_at' | 'updated_at' | 'payment_number' | 'vendor' | 'bank_account'>) => {
-        if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+  const createVendorPayment = async (payment: Omit<VendorPayment, 'id' | 'created_at' | 'updated_at' | 'payment_number' | 'vendor' | 'bank_account'>) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
-        let number = `PAY-${Date.now().toString().slice(-6)}`;
+    let number = `PAY-${Date.now().toString().slice(-6)}`;
 
-        const { data: result, error } = await supabase
-            .from('vendor_payments')
-            .insert([{ ...payment, payment_number: number }])
-            .select()
-            .single();
+    const { data: result, error } = await supabase
+      .from('vendor_payments')
+      .insert([{ ...payment, payment_number: number }])
+      .select()
+      .single();
 
-        if (!error) refetch();
-        return { data: result, error: error?.message };
-    };
+    if (!error) refetch();
+    return { data: result, error: error?.message };
+  };
 
-    const deleteVendorPayment = async (id: string) => {
-        if (!isSupabaseConfigured()) return { error: 'Database not configured' };
-        const { error } = await supabase.from('vendor_payments').delete().eq('id', id);
-        if (!error) refetch();
-        return { error: error?.message };
-    };
+  const deleteVendorPayment = async (id: string) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const { error } = await supabase.from('vendor_payments').delete().eq('id', id);
+    if (!error) refetch();
+    return { error: error?.message };
+  };
 
-    return { vendorPayments: data, loading, error, refetch, createVendorPayment, deleteVendorPayment };
+  return { vendorPayments: data, loading, error, refetch, createVendorPayment, deleteVendorPayment };
 }
