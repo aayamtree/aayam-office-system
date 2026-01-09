@@ -314,7 +314,7 @@ export default function DispatchPage() {
 
               <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-500 flex gap-2">
                 <AlertTriangle size={16} className="text-amber-500 shrink-0" />
-                This will move the order status to "Dispatched" and create a dispatch record.
+                This will move the order status to &quot;Dispatched&quot; and create a dispatch record.
               </div>
 
               <div className="flex gap-3 pt-2">
