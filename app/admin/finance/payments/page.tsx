@@ -4,9 +4,10 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
-  ArrowDownRight, ArrowUpRight, Calendar, CreditCard, Banknote, Loader2, User, Building2
+  ArrowDownRight, ArrowUpRight, Calendar, CreditCard, Banknote, Loader2, User, Building2, Upload, FileText
 } from 'lucide-react';
 import { usePaymentsReceived, useVendorPayments, useClients, useVendors } from '@/lib/hooks';
+import { supabase } from '@/lib/supabase';
 
 export default function PaymentsPage() {
   const { paymentsReceived, loading: loadingReceived, createPaymentReceived, deletePaymentReceived } = usePaymentsReceived();
@@ -20,6 +21,7 @@ export default function PaymentsPage() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   // Combine and sort payments
   const payments = useMemo(() => {
@@ -49,11 +51,12 @@ export default function PaymentsPage() {
     type: 'received' as 'received' | 'paid',
     clientId: '',
     vendorId: '',
-    amount: 0,
+    amount: '' as string | number, // Changed to string to allow better typing
     method: 'bank_transfer',
     date: new Date().toISOString().split('T')[0],
     reference: '',
-    notes: ''
+    notes: '',
+    attachmentUrl: ''
   });
 
   const filteredPayments = payments.filter(p => {
@@ -74,38 +77,80 @@ export default function PaymentsPage() {
 
   const handleAddNew = () => {
     setFormData({
-      type: 'received', clientId: '', vendorId: '', amount: 0,
+      type: 'received', clientId: '', vendorId: '', amount: '',
       method: 'bank_transfer', date: new Date().toISOString().split('T')[0],
-      reference: '', notes: ''
+      reference: '', notes: '', attachmentUrl: ''
     });
     setShowModal(true);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `proofs/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('payment-proofs')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        // If bucket doesn't exist, try creating bucket (client side not ideal, but fallback)
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('payment-proofs')
+        .getPublicUrl(filePath);
+
+      setFormData(prev => ({ ...prev, attachmentUrl: publicUrl }));
+    } catch (err: any) {
+      alert('Upload failed: ' + err.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
 
+    // Parse Amount
+    const finalAmount = parseFloat(formData.amount.toString()) || 0;
+    if (finalAmount <= 0) {
+      alert('Please enter a valid amount');
+      setSubmitting(false);
+      return;
+    }
+
     try {
       if (formData.type === 'received') {
         if (!formData.clientId) throw new Error('Please select a client');
         await createPaymentReceived({
           client_id: formData.clientId,
-          amount: formData.amount,
+          amount: finalAmount,
           payment_mode: formData.method as any,
           payment_date: formData.date,
           reference_number: formData.reference,
-          notes: formData.notes
-        });
+          notes: formData.notes,
+          attachment_url: formData.attachmentUrl
+        } as any);
       } else {
         if (!formData.vendorId) throw new Error('Please select a vendor');
         await createVendorPayment({
           vendor_id: formData.vendorId,
-          amount: formData.amount,
+          amount: finalAmount,
           payment_mode: formData.method as any,
           payment_date: formData.date,
           reference_number: formData.reference,
-          notes: formData.notes
-        });
+          notes: formData.notes,
+          attachment_url: formData.attachmentUrl
+        } as any);
       }
       setShowModal(false);
     } catch (error: any) {
@@ -192,7 +237,11 @@ export default function PaymentsPage() {
                 </td>
                 <td className="px-6 py-4">
                   <p className="font-medium text-gray-900">{p.display_name}</p>
-                  <p className="text-xs text-gray-500">{p.display_company}</p>
+                  {p.attachment_url && (
+                    <a href={p.attachment_url} target="_blank" rel="noreferrer" className="text-xs text-indigo-600 flex items-center gap-1 hover:underline mt-1">
+                      <FileText size={12} /> View Proof
+                    </a>
+                  )}
                 </td>
                 <td className="px-6 py-4 font-bold text-gray-900">{formatCurrency(p.amount)}</td>
                 <td className="px-6 py-4 capitalize text-gray-600">{p.payment_mode?.replace('_', ' ')}</td>
@@ -209,7 +258,7 @@ export default function PaymentsPage() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b">
               <h2 className="text-lg font-semibold">Record Payment</h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
@@ -229,28 +278,42 @@ export default function PaymentsPage() {
               {formData.type === 'received' ? (
                 <div>
                   <label className="block text-sm font-medium mb-1">Client *</label>
-                  <select required value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-xl bg-white">
-                    <option value="">Select Client</option>
-                    {clients.map(c => <option key={c.id} value={c.id}>{c.name} - {c.company}</option>)}
-                  </select>
+                  {clients.length === 0 ? (
+                    <div className="p-3 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-xl text-sm">
+                      No clients found. Please add a client in CRM first or check permissions.
+                    </div>
+                  ) : (
+                    <select required value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-xl bg-white">
+                      <option value="">Select Client ({clients.length})</option>
+                      {clients.map(c => <option key={c.id} value={c.id}>{c.name} - {c.company}</option>)}
+                    </select>
+                  )}
                 </div>
               ) : (
                 <div>
                   <label className="block text-sm font-medium mb-1">Vendor *</label>
-                  <select required value={formData.vendorId} onChange={(e) => setFormData({ ...formData, vendorId: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-xl bg-white">
-                    <option value="">Select Vendor</option>
-                    {vendors.map(v => <option key={v.id} value={v.id}>{v.name} - {v.company}</option>)}
-                  </select>
+                  {vendors.length === 0 ? (
+                    <div className="p-3 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-xl text-sm">
+                      No vendors found. Please add a vendor in CRM first or check permissions.
+                    </div>
+                  ) : (
+                    <select required value={formData.vendorId} onChange={(e) => setFormData({ ...formData, vendorId: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-xl bg-white">
+                      <option value="">Select Vendor ({vendors.length})</option>
+                      {vendors.map(v => <option key={v.id} value={v.id}>{v.name} - {v.company}</option>)}
+                    </select>
+                  )}
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Amount (₹) *</label>
-                  <input type="number" required min="1" value={formData.amount || ''}
-                    onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
+                  <input type="number" required min="1" step="any"
+                    value={formData.amount}
+                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    placeholder="0.00"
                     className="w-full px-3 py-2 border rounded-xl" />
                 </div>
                 <div>
@@ -265,10 +328,10 @@ export default function PaymentsPage() {
                 <label className="block text-sm font-medium mb-1">Payment Method</label>
                 <select value={formData.method} onChange={(e) => setFormData({ ...formData, method: e.target.value })}
                   className="w-full px-3 py-2 border rounded-xl bg-white">
-                  <option value="cash">Cash</option>
-                  <option value="cheque">Cheque</option>
                   <option value="bank_transfer">Bank Transfer</option>
+                  <option value="cash">Cash</option>
                   <option value="upi">UPI</option>
+                  <option value="cheque">Cheque</option>
                   <option value="card">Card</option>
                 </select>
               </div>
@@ -279,9 +342,32 @@ export default function PaymentsPage() {
                   placeholder="Cheque No / TXN ID" className="w-full px-3 py-2 border rounded-xl" />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium mb-1">Proof of Payment (Screenshot/PDF)</label>
+                <div className="relative border-2 border-dashed border-gray-200 rounded-xl p-4 text-center hover:bg-gray-50 transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={handleFileUpload}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <div className="flex flex-col items-center gap-2 text-gray-500">
+                    {uploading ? <Loader2 className="animate-spin text-indigo-600" /> : <Upload size={24} />}
+                    <span className="text-sm">
+                      {uploading ? 'Uploading...' : formData.attachmentUrl ? 'File Attached (Click to Change)' : 'Tap to Upload'}
+                    </span>
+                  </div>
+                </div>
+                {formData.attachmentUrl && (
+                  <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                    <FileText size={12} /> Uploaded Successfully
+                  </p>
+                )}
+              </div>
+
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2 border rounded-xl">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-xl">
+                <button type="submit" disabled={submitting || uploading} className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-xl">
                   {submitting ? 'Saving...' : 'Record'}
                 </button>
               </div>

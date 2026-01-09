@@ -1,31 +1,46 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { Package, CheckCircle, Truck, Clock, AlertTriangle, ClipboardCheck, Loader2 } from 'lucide-react';
+import { Package, CheckCircle, Truck, Clock, AlertTriangle, ClipboardCheck, Loader2, X } from 'lucide-react';
 import { useJobs, useDispatches } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
+import { Job, Dispatch } from '@/types/database';
 
 export default function DispatchPage() {
   const { profile } = useAuth();
-  const { jobs, loading: jobsLoading } = useJobs({
+  const { jobs, loading: jobsLoading, updateJobStage } = useJobs({
     orderBy: { column: 'client_deadline', ascending: true }
   });
-  const { dispatches, loading: dispatchesLoading } = useDispatches();
+  const { dispatches, loading: dispatchesLoading, createDispatch } = useDispatches();
+
+  const [showDispatchModal, setShowDispatchModal] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [dispatchForm, setDispatchForm] = useState({
+    transporter_name: '',
+    tracking_number: '',
+    vehicle_number: '',
+    driver_name: '',
+    driver_phone: '',
+    packages: 1,
+    notes: ''
+  });
 
   const loading = jobsLoading || dispatchesLoading;
 
   // Filter Data
   const pendingQC = jobs.filter(j => j.current_stage === 'quality_check');
 
-  // Dispatch Requirement: Print Complete (ready) AND Payment Cleared (paid)
-  const readyToDispatch = jobs.filter(j => j.current_stage === 'ready' && j.payment_status === 'paid');
+  // Ready to Dispatch (QC Passed - 'ready')
+  // Removed payment check as per user request
+  const readyToDispatch = jobs.filter(j => j.current_stage === 'ready');
 
   const sentDispatches = dispatches.slice(0, 3); // Get latest 3
 
   // Calculate Delayed Jobs
   const today = new Date();
-  today.setHours(0, 0, 0, 0); // Start of today
-
+  today.setHours(0, 0, 0, 0);
   const delayedCount = jobs.filter(j => {
     if (!j.client_deadline) return false;
     const deadline = new Date(j.client_deadline);
@@ -57,6 +72,45 @@ export default function DispatchPage() {
       case 'in_transit': return 'In Transit';
       case 'dispatched': return 'Dispatched';
       default: return status;
+    }
+  };
+
+  const handleOpenDispatch = (job: Job) => {
+    setSelectedJob(job);
+    setDispatchForm({
+      transporter_name: '', tracking_number: '', vehicle_number: '',
+      driver_name: '', driver_phone: '', packages: job.quantity || 1, notes: ''
+    });
+    setShowDispatchModal(true);
+  };
+
+  const handleDispatchSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedJob) return;
+    setSubmitting(true);
+
+    try {
+      // 1. Create Dispatch Record
+      const result = await createDispatch({
+        job_id: selectedJob.id,
+        client_id: selectedJob.client_id,
+        status: 'dispatched',
+        dispatch_date: new Date().toISOString(),
+        ...dispatchForm
+      } as any);
+
+      if (result.error) throw new Error(result.error);
+
+      // 2. Update Job Status to 'dispatched'
+      // This effectively removes it from "Ready" list and moves logic to "Dispatched"
+      await updateJobStage(selectedJob.id, 'dispatched', `Dispatched via ${dispatchForm.transporter_name || 'Self'}. Tracking: ${dispatchForm.tracking_number || 'N/A'}`);
+
+      setShowDispatchModal(false);
+      alert('Order marked as Dispatched!');
+    } catch (err: any) {
+      alert('Error dispatching: ' + err.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -95,41 +149,7 @@ export default function DispatchPage() {
         ))}
       </div>
 
-      {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Link href="/admin/dispatch/qc-check" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <ClipboardCheck size={24} className="text-amber-600" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">QC Check</h2>
-              <p className="text-sm text-gray-500">Quality control verification</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 text-sm">
-            <span className="text-amber-600">● {pendingQC.length} Pending</span>
-          </div>
-        </Link>
-
-        {/* Other links kept static for now as they point to further screens we might not have refactored yet */}
-        <Link href="/admin/dispatch/history" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Truck size={24} className="text-blue-600" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Dispatch History</h2>
-              <p className="text-sm text-gray-500">Track all dispatches</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 text-sm">
-            <span className="text-blue-600">● {dispatches.length} Total</span>
-          </div>
-        </Link>
-      </div>
-
-      {/* Main Content Grid */}
+      {/* QC & Ready Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pending QC */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -147,9 +167,7 @@ export default function DispatchPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-gray-900">{job.job_number}</p>
-                    {job.priority === 'urgent' && (
-                      <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full">Urgent</span>
-                    )}
+                    {job.priority === 'urgent' && <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full">Urgent</span>}
                   </div>
                   <p className="text-sm text-gray-600">{job.client?.company || job.client?.name}</p>
                   <p className="text-xs text-gray-400 mt-1">{job.project_name}</p>
@@ -163,7 +181,7 @@ export default function DispatchPage() {
           </div>
         </div>
 
-        {/* Ready to Dispatch */}
+        {/* Ready to Dispatch - NOW WITH ACTION */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Ready to Dispatch</h2>
@@ -171,30 +189,31 @@ export default function DispatchPage() {
               {readyToDispatch.length} ready
             </span>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
             {readyToDispatch.length === 0 ? (
               <div className="text-center text-gray-400 py-4">No jobs ready for dispatch.</div>
-            ) : readyToDispatch.slice(0, 5).map((job) => (
-              <div key={job.id} className="flex items-center justify-between p-3 bg-green-50 border border-green-100 rounded-xl">
+            ) : readyToDispatch.map((job) => (
+              <div key={job.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-green-50 border border-green-100 rounded-xl gap-3">
                 <div>
                   <p className="font-medium text-gray-900">{job.job_number}</p>
                   <p className="text-sm text-gray-600">{job.client?.company || job.client?.name}</p>
                   <p className="text-xs text-gray-400 mt-1">{job.project_name} - {job.quantity}</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-500 mt-1">Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}</p>
+                <div className="flex items-center gap-3">
+                  <div className="text-right hidden sm:block">
+                    <p className="text-xs text-gray-500">Due</p>
+                    <p className="text-sm font-medium">{job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}</p>
+                  </div>
+                  <button
+                    onClick={() => handleOpenDispatch(job)}
+                    className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 shadow-sm"
+                  >
+                    Dispatch Now
+                  </button>
                 </div>
               </div>
             ))}
           </div>
-          {readyToDispatch.length > 0 && (
-            <Link
-              href="/admin/dispatch/history?status=ready"
-              className="block w-full mt-4 text-center py-2.5 bg-green-100 text-green-700 rounded-xl text-sm font-medium hover:bg-green-200 transition-colors"
-            >
-              Process Dispatch
-            </Link>
-          )}
         </div>
       </div>
 
@@ -227,6 +246,87 @@ export default function DispatchPage() {
           ))}
         </div>
       </div>
+
+      {/* Create Dispatch Modal */}
+      {showDispatchModal && selectedJob && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
+            <div className="flex items-center justify-between p-4 border-b">
+              <div>
+                <h2 className="text-lg font-semibold">Create Dispatch</h2>
+                <p className="text-sm text-gray-500">Order #{selectedJob.job_number}</p>
+              </div>
+              <button onClick={() => setShowDispatchModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+            </div>
+
+            <form onSubmit={handleDispatchSubmit} className="p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Transporter Name</label>
+                  <input type="text" placeholder="e.g. DTDC, Self"
+                    value={dispatchForm.transporter_name} onChange={e => setDispatchForm({ ...dispatchForm, transporter_name: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Tracking / LR No</label>
+                  <input type="text" placeholder="Optional"
+                    value={dispatchForm.tracking_number} onChange={e => setDispatchForm({ ...dispatchForm, tracking_number: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Vehicle No</label>
+                  <input type="text" placeholder="e.g. OD-02-AA-1234"
+                    value={dispatchForm.vehicle_number} onChange={e => setDispatchForm({ ...dispatchForm, vehicle_number: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Packages Count</label>
+                  <input type="number" min="1"
+                    value={dispatchForm.packages} onChange={e => setDispatchForm({ ...dispatchForm, packages: parseInt(e.target.value) || 1 })}
+                    className="w-full px-3 py-2 border rounded-xl" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Driver Name</label>
+                  <input type="text" placeholder="Optional"
+                    value={dispatchForm.driver_name} onChange={e => setDispatchForm({ ...dispatchForm, driver_name: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Driver Phone</label>
+                  <input type="text" placeholder="Optional"
+                    value={dispatchForm.driver_phone} onChange={e => setDispatchForm({ ...dispatchForm, driver_phone: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Notes</label>
+                <textarea rows={3} placeholder="Any delivery instructions..."
+                  value={dispatchForm.notes} onChange={e => setDispatchForm({ ...dispatchForm, notes: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-xl" />
+              </div>
+
+              <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-500 flex gap-2">
+                <AlertTriangle size={16} className="text-amber-500 shrink-0" />
+                This will move the order status to "Dispatched" and create a dispatch record.
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowDispatchModal(false)} className="flex-1 px-4 py-2 border rounded-xl">Cancel</button>
+                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-xl">
+                  {submitting ? 'Creating...' : 'Create Dispatch'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
