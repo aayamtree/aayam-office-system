@@ -361,9 +361,15 @@ export default function PaymentsPage() {
                   </div>
                 </div>
                 {formData.attachmentUrl && (
-                  <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
-                    <FileText size={12} /> Uploaded Successfully
-                  </p>
+                  <div className="mt-3 p-3 bg-gray-50 rounded-xl border flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-gray-700 truncate max-w-[200px]">
+                      <FileText size={16} className="text-indigo-600 shrink-0" />
+                      <span className="truncate">Proof Attached</span>
+                    </div>
+                    <a href={formData.attachmentUrl} target="_blank" rel="noreferrer" className="text-xs bg-white border px-2 py-1 rounded shadow-sm hover:bg-gray-50 text-indigo-600">
+                      View
+                    </a>
+                  </div>
                 )}
               </div>
 
