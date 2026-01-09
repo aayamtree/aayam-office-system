@@ -331,6 +331,7 @@ export interface PaymentReceived extends BaseEntity {
   notes?: string;
 
   received_by?: string;
+  attachment_url?: string;
 
   // Joined data
   client?: Client;
@@ -385,6 +386,7 @@ export interface VendorPayment extends BaseEntity {
   notes?: string;
 
   paid_by?: string;
+  attachment_url?: string;
 
   // Joined data
   vendor?: Vendor;
