@@ -7,7 +7,7 @@ import {
   Client, Vendor, Designer, Job, Invoice, Lead,
   Quotation, Dispatch, BankAccount, DesignTask, DesignProject,
   PurchaseBill, VendorPayment, PaymentReceived, POSCategory, POSProduct,
-  PaperStock, POSSale, Note, Reminder, BankTransaction
+  PaperStock, POSSale, Note, Reminder, BankTransaction, SalesOrder
 } from '@/types/database';
 
 // Generic hook for fetching data
@@ -219,6 +219,47 @@ export function useDesigners() {
     error,
     refetch
   };
+}
+
+// =============================================
+// SALES ORDERS HOOK
+// =============================================
+export function useSalesOrders() {
+  const { data, loading, error, refetch } = useSupabaseQuery<SalesOrder>('sales_orders', {
+    select: '*, client:clients(*)', // Add quotation link when available
+    orderBy: { column: 'created_at', ascending: false }
+  });
+
+  const createSalesOrder = async (so: Omit<SalesOrder, 'id' | 'created_at' | 'updated_at' | 'so_number' | 'client'>) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const { data: numberData } = await supabase.rpc('get_next_number', { counter_id: 'sales_order' });
+
+    const { data, error } = await supabase
+      .from('sales_orders')
+      .insert([{ ...so, so_number: numberData || `SO-${Date.now()}` }])
+      .select()
+      .single();
+
+    if (!error) refetch();
+    return { data, error: error?.message };
+  };
+
+  const updateSalesOrder = async (id: string, updates: Partial<SalesOrder>) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const { data, error } = await supabase
+      .from('sales_orders')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (!error) refetch();
+    return { data, error: error?.message };
+  };
+
+  return { salesOrders: data, loading, error, refetch, createSalesOrder, updateSalesOrder };
 }
 
 // =============================================

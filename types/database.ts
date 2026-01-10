@@ -159,6 +159,7 @@ export interface Job extends BaseEntity {
   client_id?: string;
   vendor_id?: string;
   designer_id?: string;
+  sales_order_id?: string;
 
   job_type?: string;
   description?: string;
@@ -213,6 +214,7 @@ export interface DesignTask extends BaseEntity {
   job_id?: string;
   client_id?: string;
   assigned_to?: string;
+  sales_order_id?: string;
 
   status: TaskStatus;
   priority: PriorityLevel;
@@ -275,6 +277,7 @@ export interface Invoice extends BaseEntity {
 
   client_id?: string;
   job_id?: string;
+  sales_order_id?: string;
 
   subtotal: number;
   cgst_amount: number;
@@ -594,6 +597,42 @@ export interface POSSaleItem {
   quantity: number;
   price: number;
   total: number;
+}
+
+// Quotation Line Item
+export interface QuotationLineItem {
+  description: string;
+  quantity: number;
+  unit_price: number;
+  total: number;
+}
+
+// Sales Order (New Module)
+export interface SalesOrder extends BaseEntity {
+  so_number: string;
+  client_id: string;
+  quotation_id?: string;
+
+  order_date: string;
+  work_type: 'design_only' | 'print_only' | 'design_and_print';
+
+  subtotal: number;
+  gst_rate: number;
+  gst_amount: number;
+  total_amount: number;
+
+  status: 'draft' | 'confirmed' | 'in_progress' | 'ready_for_invoice' | 'invoiced' | 'completed' | 'cancelled';
+  payment_status: PaymentStatus;
+
+  project_name: string;
+  description?: string;
+  quantity: number;
+
+  created_by?: string;
+
+  // Joins
+  client?: Client;
+  quotation?: Quotation;
 }
 
 // Paper Stock

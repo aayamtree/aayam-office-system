@@ -98,6 +98,7 @@ const menuItems: MenuItem[] = [
     allowedRoles: ['admin', 'account'],
     submenu: [
       { name: 'Overview', href: '/admin/finance' },
+      { name: 'Sales Orders', href: '/admin/finance/sales-orders' },
       { name: 'Invoices', href: '/admin/finance/invoices' },
       { name: 'Payments', href: '/admin/finance/payments' },
       { name: 'Bank Accounts', href: '/admin/finance/banks' },

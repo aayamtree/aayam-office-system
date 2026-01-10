@@ -36,13 +36,14 @@ DECLARE
   v_new_balance DECIMAL;
 BEGIN
   -- 1. Get Payment Number
-  SELECT prefix || '-' || next_val INTO v_payment_number 
-  FROM counters WHERE id = 'payment_received';
+  -- 1. Get Payment Number
+  -- Ensure counter exists
+  INSERT INTO counters (id, current_number, prefix) VALUES ('payment_received', 0, 'REC') ON CONFLICT DO NOTHING;
+  
+  v_payment_number := get_next_number('payment_received');
   
   IF v_payment_number IS NULL THEN
-      v_payment_number := 'PAY-' || extract(epoch from now());
-  ELSE
-      UPDATE counters SET next_val = next_val + 1 WHERE id = 'payment_received';
+      v_payment_number := 'REC-' || extract(epoch from now());
   END IF;
 
   -- 2. Determine Bank Account
@@ -125,13 +126,14 @@ DECLARE
   v_new_balance DECIMAL;
 BEGIN
   -- 1. Get Payment Number
-  SELECT prefix || '-' || next_val INTO v_payment_number 
-  FROM counters WHERE id = 'vendor_payment';
+  -- 1. Get Payment Number
+  -- Ensure counter exists
+  INSERT INTO counters (id, current_number, prefix) VALUES ('vendor_payment', 0, 'VP') ON CONFLICT DO NOTHING;
+  
+  v_payment_number := get_next_number('vendor_payment');
 
   IF v_payment_number IS NULL THEN
      v_payment_number := 'VP-' || extract(epoch from now());
-  ELSE
-     UPDATE counters SET next_val = next_val + 1 WHERE id = 'vendor_payment';
   END IF;
 
   -- 2. Determine Bank Account
