@@ -851,116 +851,142 @@ export default function DesignerWorkspace() {
       </div>
       {/* New Project Modal */}
       {isNewTaskModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden">
-            <div className="p-4 border-b flex justify-between items-center bg-gray-50">
-              <h3 className="font-bold text-gray-800">Create New Project</h3>
-              <button onClick={() => setIsNewTaskModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in zoom-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-3xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b flex justify-between items-center bg-gray-50/80 backdrop-blur-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-indigo-100 rounded-xl text-indigo-600 shadow-sm"><Briefcase size={22} /></div>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-lg">Create New Project</h3>
+                  <p className="text-xs text-gray-500 font-medium">Initialize a new design or print job</p>
+                </div>
+              </div>
+              <button onClick={() => setIsNewTaskModalOpen(false)} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-lg transition-colors"><X size={20} /></button>
             </div>
-            <form id="create-project-form" onSubmit={handleCreateTask} className="space-y-6">
 
-              {/* Section 1: Core Info */}
-              <div className="space-y-4">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b pb-1">Project Details</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="col-span-2">
-                    <label className="block text-xs font-bold text-gray-700 mb-1.5">Project Name <span className="text-red-500">*</span></label>
-                    <input required type="text" className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 ring-indigo-500 focus:border-indigo-500"
-                      placeholder="e.g. Wedding Invitation - Sharma Family"
-                      value={newTaskData.title}
-                      onChange={e => setNewTaskData({ ...newTaskData, title: e.target.value })}
+            <div className="overflow-y-auto p-8 flex-1 bg-white">
+              <form id="create-project-form" onSubmit={handleCreateTask} className="space-y-8">
+
+                {/* 1. Core Identification */}
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold">1</span>
+                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Project Basics</h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="col-span-2">
+                      <label className="block text-xs font-bold text-gray-700 mb-2">Project Name <span className="text-red-500">*</span></label>
+                      <input required type="text" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
+                        placeholder="e.g. Wedding Invitation - Sharma Family"
+                        value={newTaskData.title}
+                        onChange={e => setNewTaskData({ ...newTaskData, title: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="col-span-2 md:col-span-1">
+                      <label className="block text-xs font-bold text-gray-700 mb-2">Client <span className="text-red-500">*</span></label>
+                      <select required className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
+                        value={newTaskData.clientId}
+                        onChange={e => setNewTaskData({ ...newTaskData, clientId: e.target.value })}
+                      >
+                        <option value="">Select Client</option>
+                        {clients?.map(c => <option key={c.id} value={c.id}>{c.company || c.name}</option>)}
+                      </select>
+                    </div>
+
+                    <div className="col-span-2 md:col-span-1">
+                      <label className="block text-xs font-bold text-gray-700 mb-2">Assign Designer</label>
+                      <select className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
+                        value={newTaskData.designerId}
+                        onChange={e => setNewTaskData({ ...newTaskData, designerId: e.target.value })}
+                      >
+                        <option value="">Assign to Me (Default)</option>
+                        {designers?.map(d => (
+                          <option key={d.id} value={d.id}>{d.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Parameters */}
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-orange-100 text-orange-600 text-xs font-bold">2</span>
+                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parameters</h4>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-2">Job Type</label>
+                      <select className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 ring-indigo-500/20 focus:border-indigo-500 bg-white"
+                        value={newTaskData.jobType}
+                        onChange={e => setNewTaskData({ ...newTaskData, jobType: e.target.value })}
+                      >
+                        <option value="Design">Design</option>
+                        <option value="Printing">Printing</option>
+                        <option value="Design + Printing">Design + Print</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-2">Deadline</label>
+                      <input type="date" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 ring-indigo-500/20 focus:border-indigo-500 font-medium text-gray-600"
+                        value={newTaskData.deadline}
+                        onChange={e => setNewTaskData({ ...newTaskData, deadline: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-2">Priority</label>
+                      <select className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 ring-indigo-500/20 focus:border-indigo-500 bg-white"
+                        value={newTaskData.priority}
+                        onChange={e => setNewTaskData({ ...newTaskData, priority: e.target.value })}
+                      >
+                        <option value="normal">Normal</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Assets & Content */}
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs font-bold">3</span>
+                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Assets & Brief</h4>
+                  </div>
+
+                  <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50 space-y-3">
+                    <label className="text-xs font-bold text-gray-700 flex items-center gap-2">
+                      <Folder size={14} className="text-blue-600" />
+                      Google Drive Assets Folder
+                    </label>
+                    <input type="url" className="w-full border border-blue-200 rounded-lg px-4 py-3 text-sm focus:ring-2 ring-blue-500/20 focus:border-blue-500 placeholder:text-blue-300 bg-white"
+                      placeholder="https://drive.google.com/drive/folders/..."
+                      value={newTaskData.driveLink}
+                      onChange={e => setNewTaskData({ ...newTaskData, driveLink: e.target.value })}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1.5">Client <span className="text-red-500">*</span></label>
-                    <select required className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 ring-indigo-500 focus:border-indigo-500"
-                      value={newTaskData.clientId}
-                      onChange={e => setNewTaskData({ ...newTaskData, clientId: e.target.value })}
-                    >
-                      <option value="">Select Client</option>
-                      {clients?.map(c => <option key={c.id} value={c.id}>{c.company || c.name}</option>)}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1.5">Job Type</label>
-                    <select className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 ring-indigo-500 focus:border-indigo-500"
-                      value={newTaskData.jobType}
-                      onChange={e => setNewTaskData({ ...newTaskData, jobType: e.target.value })}
-                    >
-                      <option value="Design">Design Only</option>
-                      <option value="Printing">Printing Only</option>
-                      <option value="Design + Printing">Design + Printing</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 2: Planning */}
-              <div className="space-y-4">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b pb-1">Timeline & Assignment</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1.5">Deadline</label>
-                    <input type="date" className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 ring-indigo-500 focus:border-indigo-500"
-                      value={newTaskData.deadline}
-                      onChange={e => setNewTaskData({ ...newTaskData, deadline: e.target.value })}
+                    <label className="block text-xs font-bold text-gray-700 mb-2">Description / Work Items</label>
+                    <textarea rows={4} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 ring-indigo-500/20 focus:border-indigo-500 leading-relaxed"
+                      placeholder="Describe specific requirements, items to print, size, quantity..."
+                      value={newTaskData.description}
+                      onChange={e => setNewTaskData({ ...newTaskData, description: e.target.value })}
                     />
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1.5">Priority</label>
-                    <select className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 ring-indigo-500 focus:border-indigo-500"
-                      value={newTaskData.priority}
-                      onChange={e => setNewTaskData({ ...newTaskData, priority: e.target.value })}
-                    >
-                      <option value="normal">Normal</option>
-                      <option value="high">High</option>
-                      <option value="urgent">Urgent</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1.5">Assign Designer</label>
-                    <select className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 ring-indigo-500 focus:border-indigo-500"
-                      value={newTaskData.designerId}
-                      onChange={e => setNewTaskData({ ...newTaskData, designerId: e.target.value })}
-                    >
-                      <option value="">Assign to Me (Default)</option>
-                      {designers?.map(d => (
-                        <option key={d.id} value={d.id}>{d.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 3: Assets */}
-              <div className="space-y-4">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b pb-1">Assets & Description</h4>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5 flex items-center gap-2">
-                    <span className="p-1 bg-blue-100 text-blue-600 rounded"><ExternalLink size={12} /></span>
-                    Google Drive Folder Link
-                  </label>
-                  <input type="url" className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400"
-                    placeholder="https://drive.google.com/drive/folders/..."
-                    value={newTaskData.driveLink}
-                    onChange={e => setNewTaskData({ ...newTaskData, driveLink: e.target.value })}
-                  />
-                  <p className="text-[10px] text-gray-500 mt-1">Paste the link to the Google Drive folder for this project.</p>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5">Description / Work Items</label>
-                  <textarea rows={4} className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 ring-indigo-500 focus:border-indigo-500"
-                    placeholder="Describe specific requirements, items to print, size, quantity..."
-                    value={newTaskData.description}
-                    onChange={e => setNewTaskData({ ...newTaskData, description: e.target.value })}
-                  />
-                </div>
-              </div>
+              </form>
+            </div>
 
-            </form>
+            <div className="p-5 border-t bg-gray-50 flex gap-4 items-center justify-end">
+              <button type="button" onClick={() => setIsNewTaskModalOpen(false)} className="px-6 py-2.5 border border-gray-300 rounded-xl font-bold text-gray-600 hover:bg-white hover:text-gray-800 transition-all text-sm">Cancel</button>
+              <button form="create-project-form" type="submit" disabled={creatingTask} className="px-8 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 disabled:opacity-50 shadow-lg shadow-indigo-200 transition-all transform hover:-translate-y-0.5 text-sm flex items-center gap-2">
+                {creatingTask ? <><Loader2 size={16} className="animate-spin" /> Creating...</> : <><CheckCircle size={16} /> Create Project</>}
+              </button>
+            </div>
           </div>
         </div>
       )}
