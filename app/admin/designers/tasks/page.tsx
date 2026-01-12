@@ -311,7 +311,7 @@ export default function DesignerWorkspace() {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] bg-gray-50 flex flex-col md:flex-row overflow-hidden">
+    <div className="flex flex-col md:flex-row bg-gray-50 md:h-[calc(100vh-4rem)] md:overflow-hidden h-auto overflow-y-auto">
 
       {/* =================================================================================
           COLUMN 1: TASK QUEUE (List)
