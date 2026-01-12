@@ -46,7 +46,7 @@ const initialLogs = [
 
 export default function DesignerWorkspace() {
   const { profile } = useAuth();
-  const { jobs, loading: jobsLoading, error: jobsError, updateJobStage } = useJobs();
+  const { jobs, loading: jobsLoading, error: jobsError, updateJobStage, createJob } = useJobs();
   const { clients } = useClients();
   const { designers } = useDesigners();
 
@@ -59,6 +59,7 @@ export default function DesignerWorkspace() {
 
   // UI State
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
+  const [creatingTask, setCreatingTask] = useState(false);
 
   const [activeTab, setActiveTab] = useState<'my_tasks' | 'team_tasks' | 'notes'>('my_tasks');
   const [searchQuery, setSearchQuery] = useState('');
@@ -85,7 +86,7 @@ export default function DesignerWorkspace() {
         .order('note_date', { ascending: false });
 
       if (error) {
-        if (error.code === '42P01') { // Undefined Table
+        if (error.code === '42P01') {
           console.warn('Notes table missing');
           return;
         }
@@ -124,7 +125,6 @@ export default function DesignerWorkspace() {
       }
 
       await fetchNotes();
-      // Reset
       setSelectedNote(null);
       setNoteTitle('');
       setNoteContent('');
@@ -153,7 +153,15 @@ export default function DesignerWorkspace() {
     await fetchNotes();
     if (selectedNote?.id === id) setSelectedNote(null);
   };
-  const [newTaskData, setNewTaskData] = useState({ title: '', clientName: '', deadline: '', description: '', priority: 'normal', orderId: '' });
+
+  const [newTaskData, setNewTaskData] = useState({
+    title: '',
+    clientId: '',
+    jobType: 'Design',
+    deadline: '',
+    description: '',
+    priority: 'normal'
+  });
 
   // Safety: Prevent infinite loading
   const [forceShow, setForceShow] = useState(false);
@@ -271,10 +279,43 @@ export default function DesignerWorkspace() {
   // User said "admin create new project", so Designer "Create Task" might be disabled OR it creates a 'Draft' job.
   // I will leave it as LOCAL for now, or alert "Only Admin can create projects".
   // But to be helpful, I'll log to console.
-  const handleCreateTask = (e: React.FormEvent) => {
+  const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Please ask Admin to create a new Project/Job. Designers manage active tasks.");
-    setIsNewTaskModalOpen(false);
+    setCreatingTask(true);
+
+    if (!newTaskData.title || !newTaskData.clientId) {
+      alert('Please select a client and enter project name');
+      setCreatingTask(false);
+      return;
+    }
+
+    try {
+      // Find selected client to get company name if needed, but ID is enough for DB
+      const { error } = await createJob({
+        project_name: newTaskData.title,
+        client_id: newTaskData.clientId,
+        job_type: newTaskData.jobType,
+        priority: newTaskData.priority as any,
+        description: newTaskData.description,
+        client_deadline: newTaskData.deadline || null,
+        current_stage: 'new',
+        total_amount: 0,
+        paid_amount: 0,
+        payment_status: 'pending',
+        designer_id: profile?.id // Auto assign to self if creator? Or leave unassigned? User said "designer can create", usually they start working on it.
+      } as any);
+
+      if (error) throw new Error(error);
+
+      alert('Project Created Successfully! Admin has been notified.');
+      setIsNewTaskModalOpen(false);
+      // Reset critical fields
+      setNewTaskData(prev => ({ ...prev, title: '', description: '', deadline: '' }));
+    } catch (e: any) {
+      alert('Error creating project: ' + e.message);
+    } finally {
+      setCreatingTask(false);
+    }
   };
 
   const handleAddLog = (e: React.FormEvent) => {
@@ -370,15 +411,12 @@ export default function DesignerWorkspace() {
               <Briefcase size={18} className="text-indigo-600" />
               {activeTab === 'notes' ? 'My Notes' : (activeTab === 'team_tasks' ? 'Team Queue' : 'My Queue')}
             </h2>
-            {/* 
-            <button 
+            <button
               onClick={() => setIsNewTaskModalOpen(true)}
-              className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-sm flex items-center gap-1 text-xs font-bold px-3 opacity-50 cursor-not-allowed"
-              title="Only Admin creates new projects"
+              className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-sm flex items-center gap-1 text-xs font-bold px-3"
             >
-              <Plus size={14} /> New Task
+              <Plus size={14} /> New Project
             </button>
-            */}
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
@@ -754,6 +792,88 @@ export default function DesignerWorkspace() {
           </div>
         </div>
       </div>
+      {/* New Project Modal */}
+      {isNewTaskModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden">
+            <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+              <h3 className="font-bold text-gray-800">Create New Project</h3>
+              <button onClick={() => setIsNewTaskModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+            </div>
+            <form onSubmit={handleCreateTask} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1">Project Name</label>
+                <input required type="text" className="w-full border rounded-lg p-2.5 text-sm focus:ring-2 ring-indigo-500"
+                  placeholder="e.g. Wedding Invitation - Sharma Family"
+                  value={newTaskData.title}
+                  onChange={e => setNewTaskData({ ...newTaskData, title: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Client</label>
+                  <select required className="w-full border rounded-lg p-2.5 text-sm"
+                    value={newTaskData.clientId}
+                    onChange={e => setNewTaskData({ ...newTaskData, clientId: e.target.value })}
+                  >
+                    <option value="">Select Client</option>
+                    {clients?.map(c => <option key={c.id} value={c.id}>{c.company || c.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Job Type</label>
+                  <select className="w-full border rounded-lg p-2.5 text-sm"
+                    value={newTaskData.jobType}
+                    onChange={e => setNewTaskData({ ...newTaskData, jobType: e.target.value })}
+                  >
+                    <option value="Design">Design</option>
+                    <option value="Printing">Printing</option>
+                    <option value="Design + Printing">Design + Printing</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Deadline</label>
+                  <input type="date" className="w-full border rounded-lg p-2.5 text-sm"
+                    value={newTaskData.deadline}
+                    onChange={e => setNewTaskData({ ...newTaskData, deadline: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Priority</label>
+                  <select className="w-full border rounded-lg p-2.5 text-sm"
+                    value={newTaskData.priority}
+                    onChange={e => setNewTaskData({ ...newTaskData, priority: e.target.value })}
+                  >
+                    <option value="normal">Normal</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1">Description / Items</label>
+                <textarea rows={3} className="w-full border rounded-lg p-2.5 text-sm"
+                  placeholder="Describe specific requirements..."
+                  value={newTaskData.description}
+                  onChange={e => setNewTaskData({ ...newTaskData, description: e.target.value })}
+                />
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button type="button" onClick={() => setIsNewTaskModalOpen(false)} className="flex-1 py-2.5 border rounded-xl font-bold text-gray-600 hover:bg-gray-50">Cancel</button>
+                <button type="submit" disabled={creatingTask} className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 disabled:opacity-50">
+                  {creatingTask ? 'Creating...' : 'Create Project'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
