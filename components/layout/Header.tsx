@@ -12,7 +12,7 @@ interface HeaderProps {
 
 export default function Header({ onMenuClick }: HeaderProps) {
   const router = useRouter();
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, isAdmin } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -33,30 +33,32 @@ export default function Header({ onMenuClick }: HeaderProps) {
         {/* Left - Menu Button (mobile) & Title */}
         <div className="flex items-center gap-3">
           {/* Hamburger Menu - Mobile Only */}
-          <button 
+          <button
             onClick={onMenuClick}
             className="lg:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-xl"
           >
             <Menu size={24} />
           </button>
-          
+
           <h1 className="text-lg font-semibold text-gray-900">Dashboard</h1>
         </div>
 
         {/* Right - Actions */}
         <div className="flex items-center gap-2 lg:gap-3">
-          {/* Quick Add - Hidden on small mobile */}
-          <Link 
-            href="/admin/sales/orders"
-            className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white px-3 lg:px-4 py-2 rounded-xl text-sm font-medium hover:from-indigo-700 hover:to-indigo-600 transition-all"
-          >
-            <Plus size={16} />
-            <span className="hidden md:inline">New Order</span>
-          </Link>
+          {/* Quick Add - Hidden on small mobile - ADMIN ONLY */}
+          {isAdmin && (
+            <Link
+              href="/admin/sales/orders"
+              className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white px-3 lg:px-4 py-2 rounded-xl text-sm font-medium hover:from-indigo-700 hover:to-indigo-600 transition-all"
+            >
+              <Plus size={16} />
+              <span className="hidden md:inline">New Order</span>
+            </Link>
+          )}
 
           {/* Notifications */}
           <div className="relative">
-            <button 
+            <button
               onClick={() => setShowNotifications(!showNotifications)}
               className="relative p-2 lg:p-2.5 hover:bg-gray-100 rounded-xl transition-colors"
             >
@@ -73,10 +75,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
                   {notifications.map((notif) => (
                     <div key={notif.id} className="p-4 hover:bg-gray-50 border-b border-gray-50 cursor-pointer">
                       <div className="flex items-start gap-3">
-                        <span className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                          notif.type === 'danger' ? 'bg-red-500' : 
+                        <span className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${notif.type === 'danger' ? 'bg-red-500' :
                           notif.type === 'success' ? 'bg-green-500' : 'bg-blue-500'
-                        }`}></span>
+                          }`}></span>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900">{notif.title}</p>
                           <p className="text-xs text-gray-500 truncate">{notif.desc}</p>
@@ -90,17 +91,19 @@ export default function Header({ onMenuClick }: HeaderProps) {
             )}
           </div>
 
-          {/* Settings - Hidden on mobile */}
-          <Link href="/admin/settings" className="hidden lg:block p-2.5 hover:bg-gray-100 rounded-xl transition-colors">
-            <Settings size={20} className="text-gray-600" />
-          </Link>
+          {/* Settings - Hidden on mobile - ADMIN ONLY */}
+          {isAdmin && (
+            <Link href="/admin/settings" className="hidden lg:block p-2.5 hover:bg-gray-100 rounded-xl transition-colors">
+              <Settings size={20} className="text-gray-600" />
+            </Link>
+          )}
 
           {/* Divider - Hidden on mobile */}
           <div className="hidden lg:block w-px h-8 bg-gray-200"></div>
 
           {/* User Menu */}
           <div className="relative">
-            <button 
+            <button
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-2 lg:gap-3 p-1.5 lg:p-2 hover:bg-gray-100 rounded-xl transition-colors"
             >
@@ -117,10 +120,12 @@ export default function Header({ onMenuClick }: HeaderProps) {
             {showUserMenu && (
               <div className="absolute right-0 top-12 lg:top-14 w-48 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden">
                 <div className="p-2">
-                  <Link href="/admin/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">
-                    Profile Settings
-                  </Link>
-                  <button 
+                  {isAdmin && (
+                    <Link href="/admin/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">
+                      Profile Settings
+                    </Link>
+                  )}
+                  <button
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
                   >
