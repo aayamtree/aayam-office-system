@@ -332,23 +332,32 @@ export default function DesignerWorkspace() {
             </div>
           </div>
 
-          {/* View Tabs */}
-          <div className="flex border-b border-gray-100 mt-4 mx-1">
+          {/* View Tabs - Color Blocks */}
+          <div className="grid grid-cols-3 gap-2 mt-4 px-1">
             <button
               onClick={() => setActiveTab('my_tasks')}
-              className={`flex-1 pb-2 text-center text-[10px] md:text-xs font-bold border-b-2 transition-all ${activeTab === 'my_tasks' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+              className={`py-2.5 rounded-xl text-[10px] md:text-xs font-bold transition-all shadow-sm border ${activeTab === 'my_tasks'
+                  ? 'bg-blue-600 text-white border-blue-700 ring-2 ring-blue-100'
+                  : 'bg-white text-gray-500 border-gray-100 hover:bg-gray-50'
+                }`}
             >
               My Tasks
             </button>
             <button
               onClick={() => setActiveTab('team_tasks')}
-              className={`flex-1 pb-2 text-center text-[10px] md:text-xs font-bold border-b-2 transition-all ${activeTab === 'team_tasks' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+              className={`py-2.5 rounded-xl text-[10px] md:text-xs font-bold transition-all shadow-sm border ${activeTab === 'team_tasks'
+                  ? 'bg-orange-500 text-white border-orange-600 ring-2 ring-orange-100'
+                  : 'bg-white text-gray-500 border-gray-100 hover:bg-gray-50'
+                }`}
             >
               Team Tasks
             </button>
             <button
               onClick={() => setActiveTab('notes')}
-              className={`flex-1 pb-2 text-center text-[10px] md:text-xs font-bold border-b-2 transition-all ${activeTab === 'notes' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+              className={`py-2.5 rounded-xl text-[10px] md:text-xs font-bold transition-all shadow-sm border ${activeTab === 'notes'
+                  ? 'bg-emerald-500 text-white border-emerald-600 ring-2 ring-emerald-100'
+                  : 'bg-white text-gray-500 border-gray-100 hover:bg-gray-50'
+                }`}
             >
               My Notes
             </button>
@@ -358,7 +367,6 @@ export default function DesignerWorkspace() {
         <div className="p-4 border-b bg-gray-50/50">
           <div className="flex justify-between items-center mb-4">
             <h2 className="font-bold text-gray-800 flex items-center gap-2">
-              <Briefcase size={18} className="text-indigo-600" />
               <Briefcase size={18} className="text-indigo-600" />
               {activeTab === 'notes' ? 'My Notes' : (activeTab === 'team_tasks' ? 'Team Queue' : 'My Queue')}
             </h2>
