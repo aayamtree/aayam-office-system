@@ -291,6 +291,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     // Optimistic Logout: Clear state immediately
     localStorage.removeItem('aayam_fallback_profile');
+    localStorage.removeItem('aayam_speed_role');
     setSession(null);
     setUser(null);
     setProfile(null);
