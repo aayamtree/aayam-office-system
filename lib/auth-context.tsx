@@ -126,21 +126,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // SPEED MODE: FORCE BYPASS
-    if (true) {
-      // Use a VALID UUID for database compatibility
-      const speedAdminId = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+    // SPEED MODE: DYNAMIC ROLE
+    const savedSpeedRole = typeof window !== 'undefined' ? localStorage.getItem('aayam_speed_role') : null;
+
+    if (savedSpeedRole) {
+      const roleKey = savedSpeedRole as UserRole;
+      // Mock Profiles for Speed Login
+      const mockId = `speed-${roleKey}-${Math.random().toString(36).substr(2, 5)}`;
 
       const speedProfile: Profile = {
-        id: speedAdminId,
-        email: 'admin@aayam.com',
-        full_name: 'Speed Admin',
-        role: 'admin',
+
+
+        id: roleKey === 'admin' ? 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' :
+          roleKey === 'designer' ? 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380d22' :
+            roleKey === 'marketing' ? 'm0eebc99-9c0b-4ef8-bb6d-6bb9bd380m33' :
+              roleKey === 'dispatch' ? 'dpebc99-9c0b-4ef8-bb6d-6bb9bd380p44' :
+                roleKey === 'account' ? 'acebc99-9c0b-4ef8-bb6d-6bb9bd380a55' :
+                  'u0eebc99-9c0b-4ef8-bb6d-6bb9bd380u66', // fallback
+
+        email: `${roleKey}@aayam.com`,
+        full_name: `Speed ${roleKey.charAt(0).toUpperCase() + roleKey.slice(1)}`,
+        role: roleKey,
         is_active: true,
         created_at: new Date().toISOString()
       };
+
       setProfile(speedProfile);
-      setUser({ id: speedAdminId, email: 'admin@aayam.com', role: 'authenticated' } as User);
+      setUser({ id: speedProfile.id, email: speedProfile.email, role: 'authenticated' } as User);
       setLoading(false);
       return;
     }
