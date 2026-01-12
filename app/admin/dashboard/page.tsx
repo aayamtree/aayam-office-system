@@ -215,7 +215,8 @@ export default function AdminDashboard() {
               </Link>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="text-left border-b border-gray-100">
@@ -244,6 +245,30 @@ export default function AdminDashboard() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4">
+              {recentJobs.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">No recent jobs found</div>
+              ) : recentJobs.map((job) => (
+                <div key={job.id} className="border border-gray-100 p-4 rounded-xl shadow-sm bg-gray-50/30">
+                  <div className="flex justify-between items-start mb-3">
+                    <span className="font-bold text-indigo-900 bg-indigo-50 px-3 py-1 rounded-lg text-sm">{job.job_number}</span>
+                    <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full ${getStatusColor(job.current_stage)}`}>
+                      {job.current_stage}
+                    </span>
+                  </div>
+
+                  <h3 className="font-bold text-gray-800 mb-1 leading-snug">{job.project_name}</h3>
+                  <p className="text-sm text-gray-500 mb-3">{job.client?.company || '-'}</p>
+
+                  <div className="flex justify-between items-center border-t border-gray-200 pt-3">
+                    <span className="text-xs text-gray-400 font-medium uppercase">Total Amount</span>
+                    <span className="font-bold text-gray-900">{formatCurrency(job.total_amount)}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
