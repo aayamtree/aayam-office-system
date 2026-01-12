@@ -84,6 +84,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_on_order_confirm ON sales_orders;
 CREATE TRIGGER trigger_on_order_confirm
   AFTER UPDATE ON sales_orders
   FOR EACH ROW

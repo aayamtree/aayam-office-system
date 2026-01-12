@@ -158,7 +158,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    /*
     // Check for Bypass Mode (Legacy)
     if (localStorage.getItem('aayam_bypass_mode') === 'true') {
       const cached = localStorage.getItem('aayam_fallback_profile');
@@ -232,7 +231,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
-    */
   }, [isConfigured]);
 
   // Sign in with email and password
