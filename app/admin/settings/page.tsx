@@ -15,12 +15,16 @@ interface Profile {
   created_at?: string;
 }
 
+
+import DesignersManager from '@/components/settings/DesignersManager';
+
 export default function UserManagementPage() {
+  const [activeTab, setActiveTab] = useState<'users' | 'designers'>('users');
+
+  // ... (existing state for Users) ...
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
-
-  // Add User State
   const [showAddModal, setShowAddModal] = useState(false);
   const [newUser, setNewUser] = useState({
     fullName: '',
@@ -31,7 +35,8 @@ export default function UserManagementPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [creationError, setCreationError] = useState<string | null>(null);
 
-  // Fetch profiles
+  // ... (existing fetchProfiles, handleRoleChange, handleCreateUser) ...
+
   const fetchProfiles = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -67,32 +72,28 @@ export default function UserManagementPage() {
     setIsCreating(true);
     setCreationError(null);
 
-    // 1. Construct fake email
     const email = `${newUser.username.toLowerCase().replace(/\s/g, '')}@aayam.local`;
 
     try {
-      // 2. Create a TEMPORARY Supabase client that does NOT persist the session
-      // This prevents the admin from being logged out
       const tempSupabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
           auth: {
-            persistSession: false, // Critical: Don't save this session to localStorage
+            persistSession: false,
             autoRefreshToken: false,
             detectSessionInUrl: false
           }
         }
       );
 
-      // 3. Sign Up the new user
       const { data, error } = await tempSupabase.auth.signUp({
         email,
         password: newUser.password,
         options: {
           data: {
             full_name: newUser.fullName,
-            role: newUser.role, // This should trigger the handle_new_user function we added
+            role: newUser.role,
           }
         }
       });
@@ -100,11 +101,9 @@ export default function UserManagementPage() {
       if (error) throw error;
 
       if (data.user) {
-        // Success!
         alert(`User created successfully!\n\nID: ${newUser.username}\nPass: ${newUser.password}`);
         setShowAddModal(false);
         setNewUser({ fullName: '', username: '', password: '', role: 'user' });
-        // Refresh list after a moment (give trigger time to run)
         setTimeout(fetchProfiles, 1000);
       }
     } catch (err: any) {
@@ -119,169 +118,194 @@ export default function UserManagementPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center bg-white p-4 rounded-xl border shadow-sm">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Team Management</h1>
-          <p className="text-gray-500">Create users and assign roles.</p>
+          <h1 className="text-2xl font-bold text-gray-900">Settings & Team</h1>
+          <p className="text-gray-500 text-sm">Manage users, roles, and designer directory.</p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
-        >
-          <Plus size={18} />
-          Add Team Member
-        </button>
+        <div className="flex bg-gray-100 p-1 rounded-lg">
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'users' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            Users & Roles
+          </button>
+          <button
+            onClick={() => setActiveTab('designers')}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'designers' ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            Designers Directory
+          </button>
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-gray-50 border-b border-gray-100">
-            <tr>
-              <th className="p-4 font-semibold text-gray-700">User</th>
-              <th className="p-4 font-semibold text-gray-700">Role</th>
-              <th className="p-4 font-semibold text-gray-700">Status</th>
-              <th className="p-4 font-semibold text-gray-700 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {loading ? (
-              <tr><td colSpan={4} className="p-8 text-center">Loading team...</td></tr>
-            ) : profiles.map((profile) => (
-              <tr key={profile.id} className="hover:bg-gray-50 transition-colors">
-                <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold">
-                      {profile.full_name?.charAt(0).toUpperCase() || '?'}
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{profile.full_name}</p>
-                      <p className="text-sm text-gray-500">{profile.email}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="p-4">
-                  <select
-                    value={profile.role}
-                    disabled={updating === profile.id}
-                    onChange={(e) => handleRoleChange(profile.id, e.target.value)}
-                    className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5"
-                  >
-                    {roles.map(r => (
-                      <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
-                    ))}
-                  </select>
-                </td>
-                <td className="p-4">
-                  <span className={`px-2 py-1 rounded-full text-xs font-bold 
-                    ${profile.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    {profile.is_active ? 'Active' : 'Suspended'}
-                  </span>
-                </td>
-                <td className="p-4 text-right">
-                  {/* Delete or Suspend buttons could go here */}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* ADD USER MODAL */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-gray-900">Add New Team Member</h2>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateUser} className="p-6 space-y-4">
-              {creationError && (
-                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
-                  {creationError}
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  value={newUser.fullName}
-                  onChange={e => setNewUser({ ...newUser, fullName: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="e.g. Rahul Sharma"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Username (Login ID)</label>
-                <div className="flex">
-                  <input
-                    type="text"
-                    required
-                    value={newUser.username}
-                    onChange={e => setNewUser({ ...newUser, username: e.target.value })}
-                    className="w-full border border-gray-300 rounded-l-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="e.g. rahul"
-                  />
-                  <span className="bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg px-3 py-2 text-gray-500 text-sm flex items-center">
-                    @aayam.local
-                  </span>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">This will be their login email.</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <input
-                  type="text"
-                  required
-                  minLength={6}
-                  value={newUser.password}
-                  onChange={e => setNewUser({ ...newUser, password: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Minimum 6 characters"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role / Department</label>
-                <select
-                  value={newUser.role}
-                  onChange={e => setNewUser({ ...newUser, role: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  {roles.map(r => (
-                    <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="pt-4 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isCreating}
-                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium disabled:opacity-50"
-                >
-                  {isCreating ? 'Creating...' : 'Create User'}
-                </button>
-              </div>
-            </form>
+      {activeTab === 'users' ? (
+        <>
+          <div className="flex justify-end">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+            >
+              <Plus size={18} />
+              Add User
+            </button>
           </div>
-        </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  <th className="p-4 font-semibold text-gray-700">User</th>
+                  <th className="p-4 font-semibold text-gray-700">Role</th>
+                  <th className="p-4 font-semibold text-gray-700">Status</th>
+                  <th className="p-4 font-semibold text-gray-700 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {loading ? (
+                  <tr><td colSpan={4} className="p-8 text-center">Loading team...</td></tr>
+                ) : profiles.map((profile) => (
+                  <tr key={profile.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold">
+                          {profile.full_name?.charAt(0).toUpperCase() || '?'}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{profile.full_name}</p>
+                          <p className="text-sm text-gray-500">{profile.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <select
+                        value={profile.role}
+                        disabled={updating === profile.id}
+                        onChange={(e) => handleRoleChange(profile.id, e.target.value)}
+                        className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5"
+                      >
+                        {roles.map(r => (
+                          <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="p-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold 
+                        ${profile.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {profile.is_active ? 'Active' : 'Suspended'}
+                      </span>
+                    </td>
+                    <td className="p-4 text-right">
+                      {/* Delete or Suspend buttons could go here */}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* ADD USER MODAL */}
+          {showAddModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+              <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                  <h2 className="text-xl font-bold text-gray-900">Add New Team Member</h2>
+                  <button
+                    onClick={() => setShowAddModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+
+                <form onSubmit={handleCreateUser} className="p-6 space-y-4">
+                  {creationError && (
+                    <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
+                      {creationError}
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={newUser.fullName}
+                      onChange={e => setNewUser({ ...newUser, fullName: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="e.g. Rahul Sharma"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Username (Login ID)</label>
+                    <div className="flex">
+                      <input
+                        type="text"
+                        required
+                        value={newUser.username}
+                        onChange={e => setNewUser({ ...newUser, username: e.target.value })}
+                        className="w-full border border-gray-300 rounded-l-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="e.g. rahul"
+                      />
+                      <span className="bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg px-3 py-2 text-gray-500 text-sm flex items-center">
+                        @aayam.local
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">This will be their login email.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input
+                      type="text"
+                      required
+                      minLength={6}
+                      value={newUser.password}
+                      onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="Minimum 6 characters"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Role / Department</label>
+                    <select
+                      value={newUser.role}
+                      onChange={e => setNewUser({ ...newUser, role: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                      {roles.map(r => (
+                        <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="pt-4 flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddModal(false)}
+                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isCreating}
+                      className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium disabled:opacity-50"
+                    >
+                      {isCreating ? 'Creating...' : 'Create User'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <DesignersManager />
       )}
     </div>
   );

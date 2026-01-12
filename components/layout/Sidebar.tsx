@@ -85,12 +85,7 @@ const menuItems: MenuItem[] = [
       { name: 'Purchases', href: '/admin/crm/vendors/purchases' },
     ]
   },
-  {
-    name: 'Designers Mgmt', // Renamed for clarity
-    icon: Palette,
-    href: '/admin/designers',
-    allowedRoles: ['admin', 'account'],
-  },
+
   {
     name: 'Finance',
     icon: IndianRupee,
