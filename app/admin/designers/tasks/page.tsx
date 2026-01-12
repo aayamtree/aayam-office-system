@@ -9,7 +9,7 @@ import {
   Plus, Search, Calendar, Clock, Edit, Trash2, Eye, X, ArrowLeft, ArrowRight, CheckCircle,
   AlertCircle, User, Briefcase, MessageSquare, Paperclip, ExternalLink,
   FileText, Image, Video, Music, File, ChevronRight, Save, Send, MoreHorizontal,
-  ChevronLeft, Loader2
+  ChevronLeft, Loader2, Folder, GanttChart
 } from 'lucide-react';
 
 // --- HELPERS ---
@@ -46,7 +46,7 @@ const initialLogs = [
 
 export default function DesignerWorkspace() {
   const { profile } = useAuth();
-  const { jobs, loading: jobsLoading, error: jobsError, updateJobStage, createJob } = useJobs();
+  const { jobs, loading: jobsLoading, error: jobsError, updateJobStage, createJob, updateJob } = useJobs();
   const { clients } = useClients();
   const { designers } = useDesigners();
 
@@ -61,7 +61,7 @@ export default function DesignerWorkspace() {
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [creatingTask, setCreatingTask] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'my_tasks' | 'team_tasks' | 'notes'>('my_tasks');
+  const [activeTab, setActiveTab] = useState<'my_tasks' | 'team_tasks' | 'timeline' | 'notes'>('my_tasks');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Notes State
@@ -160,7 +160,9 @@ export default function DesignerWorkspace() {
     jobType: 'Design',
     deadline: '',
     description: '',
-    priority: 'normal'
+    priority: 'normal',
+    driveLink: '',
+    designerId: ''
   });
 
   // Safety: Prevent infinite loading
@@ -296,13 +298,14 @@ export default function DesignerWorkspace() {
         client_id: newTaskData.clientId,
         job_type: newTaskData.jobType,
         priority: newTaskData.priority as any,
-        description: newTaskData.description,
+        description: newTaskData.description + (newTaskData.driveLink ? `\n\nDrive Link: ${newTaskData.driveLink}` : ''),
         client_deadline: newTaskData.deadline || null,
         current_stage: 'new',
         total_amount: 0,
         paid_amount: 0,
         payment_status: 'pending',
-        designer_id: profile?.id // Auto assign to self if creator? Or leave unassigned? User said "designer can create", usually they start working on it.
+        designer_id: newTaskData.designerId || profile?.id, // Use selected or self
+        files: newTaskData.driveLink ? [newTaskData.driveLink] : []
       } as any);
 
       if (error) throw new Error(error);
@@ -310,7 +313,7 @@ export default function DesignerWorkspace() {
       alert('Project Created Successfully! Admin has been notified.');
       setIsNewTaskModalOpen(false);
       // Reset critical fields
-      setNewTaskData(prev => ({ ...prev, title: '', description: '', deadline: '' }));
+      setNewTaskData(prev => ({ ...prev, title: '', description: '', deadline: '', driveLink: '' }));
     } catch (e: any) {
       alert('Error creating project: ' + e.message);
     } finally {
@@ -394,6 +397,15 @@ export default function DesignerWorkspace() {
               Team Tasks
             </button>
             <button
+              onClick={() => setActiveTab('timeline')}
+              className={`py-2.5 rounded-xl text-[10px] md:text-xs font-bold transition-all shadow-sm border ${activeTab === 'timeline'
+                ? 'bg-white text-blue-600 border-blue-600 ring-2 ring-blue-100'
+                : 'bg-blue-500 text-white border-blue-500 hover:bg-blue-600 opacity-90 hover:opacity-100'
+                }`}
+            >
+              Timeline
+            </button>
+            <button
               onClick={() => setActiveTab('notes')}
               className={`py-2.5 rounded-xl text-[10px] md:text-xs font-bold transition-all shadow-sm border ${activeTab === 'notes'
                 ? 'bg-white text-emerald-600 border-emerald-600 ring-2 ring-emerald-100'
@@ -442,6 +454,54 @@ export default function DesignerWorkspace() {
           ) : filteredTasks.length === 0 ? (
             <div className="text-center py-10 text-gray-400 text-sm">
               <p>No tasks found.</p>
+            </div>
+          ) : activeTab === 'timeline' ? (
+            <div className="space-y-4 pt-2">
+              <h3 className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2 mb-4">
+                <GanttChart size={16} /> Project Timeline Status
+              </h3>
+              {filteredTasks.length === 0 && <p className="text-sm text-gray-400">No active projects to show.</p>}
+              {filteredTasks.map(task => {
+                const start = new Date(task.createdAt).getTime();
+                const end = task.rawDeadline ? new Date(task.rawDeadline).getTime() : new Date().getTime() + 86400000;
+                const now = new Date().getTime();
+                const totalDuration = Math.max(end - start, 86400000); // at least 1 day
+                const elapsed = Math.max(0, now - start);
+                const progress = Math.min(100, (elapsed / totalDuration) * 100);
+
+                const isOverdue = now > end && task.status !== 'completed' && task.status !== 'delivered';
+
+                return (
+                  <div key={task.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-center mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${isOverdue ? 'bg-red-100 text-red-600' : 'bg-indigo-50 text-indigo-600'}`}>
+                          {isOverdue ? <AlertCircle size={18} /> : <Briefcase size={18} />}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm text-gray-800">{task.title}</h4>
+                          <p className="text-xs text-gray-500">{task.clientName}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${taskStatuses.find(s => s.id === task.status)?.color}`}>
+                          {taskStatuses.find(s => s.id === task.status)?.name}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="relative pt-2">
+                      <div className="flex justify-between text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">
+                        <span>Start: {new Date(task.createdAt).toLocaleDateString()}</span>
+                        <span>Due: {task.deadline || 'No Date'}</span>
+                      </div>
+                      <div className="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full transition-all duration-1000 ${isOverdue ? 'bg-red-500' : (task.status === 'completed' ? 'bg-emerald-500' : 'bg-indigo-600')}`} style={{ width: `${task.status === 'completed' ? 100 : progress}%` }}></div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : activeTab === 'notes' ? (
             <div className="space-y-4">
@@ -596,57 +656,54 @@ export default function DesignerWorkspace() {
                 </div>
               </section>
 
-              {/* 2. Reference & Work Area */}
-              <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* References */}
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Image size={16} className="text-blue-500" /> Reference Material
+              {/* 2. Assets & Assignment */}
+              <section className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
+                {/* Google Drive Link */}
+                <div>
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <Folder size={16} className="text-blue-600" /> Project Assets (Google Drive)
                   </h4>
-                  <div className="space-y-3 flex-1">
-                    <div className="flex items-center justify-between p-3 border rounded-xl hover:bg-gray-50 cursor-pointer group transition-colors bg-gray-50/50">
-                      {selectedTask.driveLink ? (
-                        <a href={selectedTask.driveLink} target="_blank" className="flex items-center gap-3 w-full">
-                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 shadow-sm">
-                            <File size={18} />
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-gray-700 group-hover:text-blue-600 transition-colors">Attached File</p>
-                            <p className="text-xs text-gray-400">Click to open</p>
-                          </div>
-                        </a>
-                      ) : (
-                        <p className="text-sm text-gray-400 italic p-2">No files attached.</p>
-                      )}
-                    </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      defaultValue={selectedTask.driveLink}
+                      placeholder="https://drive.google.com/..."
+                      className="flex-1 border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:bg-white transition-colors"
+                      onBlur={(e) => {
+                        if (e.target.value !== selectedTask.driveLink) {
+                          updateJob(selectedTask.realId, { drive_link: e.target.value } as any);
+                        }
+                      }}
+                    />
+                    {selectedTask.driveLink && (
+                      <a href={selectedTask.driveLink} target="_blank" className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors">
+                        <ExternalLink size={18} />
+                      </a>
+                    )}
                   </div>
                 </div>
 
-                {/* My Work */}
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Paperclip size={16} className="text-purple-500" /> My Submission
-                  </h4>
-                  <div className="space-y-4 flex-1">
-                    <div>
-                      <label className="text-xs font-bold text-gray-500 mb-1.5 block uppercase">Project Link (Drive/Canva)</label>
-                      <div className="flex gap-2 group focus-within:ring-2 ring-indigo-100 rounded-lg">
-                        <input
-                          type="text"
-                          placeholder="https://..."
-                          defaultValue={selectedTask.driveLink}
-                          className="flex-1 text-sm border-gray-200 rounded-lg px-3 py-2.5 text-blue-600 font-medium placeholder:text-gray-300 focus:outline-none focus:border-indigo-500 transition-all"
-                        />
-                        <button className="p-2.5 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors group">
-                          <ExternalLink size={18} className="text-gray-500 group-hover:text-indigo-600" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="mt-auto pt-2">
-                      <button className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl text-sm font-bold hover:shadow-lg hover:from-indigo-700 hover:to-violet-700 transition-all flex items-center justify-center gap-2 shadow-md hover:-translate-y-0.5 transform">
-                        <Save size={18} /> Update & Save Progress
-                      </button>
-                    </div>
+                {/* Metadata Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 mb-1.5 block uppercase">Assigned Designer</label>
+                    <select
+                      className="w-full border rounded-lg px-3 py-2 text-sm font-medium text-gray-700 bg-white"
+                      value={selectedTask.designerId || ''}
+                      onChange={(e) => updateJob(selectedTask.realId, { designer_id: e.target.value })}
+                    >
+                      <option value="">Unassigned</option>
+                      {designers?.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 mb-1.5 block uppercase">Deadline</label>
+                    <input
+                      type="date"
+                      className="w-full border rounded-lg px-3 py-2 text-sm font-medium text-gray-700 bg-white"
+                      defaultValue={selectedTask.rawDeadline ? selectedTask.rawDeadline.split('T')[0] : ''}
+                      onChange={(e) => updateJob(selectedTask.realId, { client_deadline: e.target.value })}
+                    />
                   </div>
                 </div>
               </section>
@@ -800,76 +857,109 @@ export default function DesignerWorkspace() {
               <h3 className="font-bold text-gray-800">Create New Project</h3>
               <button onClick={() => setIsNewTaskModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
             </div>
-            <form onSubmit={handleCreateTask} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-500 mb-1">Project Name</label>
-                <input required type="text" className="w-full border rounded-lg p-2.5 text-sm focus:ring-2 ring-indigo-500"
-                  placeholder="e.g. Wedding Invitation - Sharma Family"
-                  value={newTaskData.title}
-                  onChange={e => setNewTaskData({ ...newTaskData, title: e.target.value })}
-                />
+            <form id="create-project-form" onSubmit={handleCreateTask} className="space-y-6">
+
+              {/* Section 1: Core Info */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b pb-1">Project Details</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className="block text-xs font-bold text-gray-700 mb-1.5">Project Name <span className="text-red-500">*</span></label>
+                    <input required type="text" className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 ring-indigo-500 focus:border-indigo-500"
+                      placeholder="e.g. Wedding Invitation - Sharma Family"
+                      value={newTaskData.title}
+                      onChange={e => setNewTaskData({ ...newTaskData, title: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1.5">Client <span className="text-red-500">*</span></label>
+                    <select required className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 ring-indigo-500 focus:border-indigo-500"
+                      value={newTaskData.clientId}
+                      onChange={e => setNewTaskData({ ...newTaskData, clientId: e.target.value })}
+                    >
+                      <option value="">Select Client</option>
+                      {clients?.map(c => <option key={c.id} value={c.id}>{c.company || c.name}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1.5">Job Type</label>
+                    <select className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 ring-indigo-500 focus:border-indigo-500"
+                      value={newTaskData.jobType}
+                      onChange={e => setNewTaskData({ ...newTaskData, jobType: e.target.value })}
+                    >
+                      <option value="Design">Design Only</option>
+                      <option value="Printing">Printing Only</option>
+                      <option value="Design + Printing">Design + Printing</option>
+                    </select>
+                  </div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Client</label>
-                  <select required className="w-full border rounded-lg p-2.5 text-sm"
-                    value={newTaskData.clientId}
-                    onChange={e => setNewTaskData({ ...newTaskData, clientId: e.target.value })}
-                  >
-                    <option value="">Select Client</option>
-                    {clients?.map(c => <option key={c.id} value={c.id}>{c.company || c.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Job Type</label>
-                  <select className="w-full border rounded-lg p-2.5 text-sm"
-                    value={newTaskData.jobType}
-                    onChange={e => setNewTaskData({ ...newTaskData, jobType: e.target.value })}
-                  >
-                    <option value="Design">Design</option>
-                    <option value="Printing">Printing</option>
-                    <option value="Design + Printing">Design + Printing</option>
-                  </select>
+              {/* Section 2: Planning */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b pb-1">Timeline & Assignment</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1.5">Deadline</label>
+                    <input type="date" className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 ring-indigo-500 focus:border-indigo-500"
+                      value={newTaskData.deadline}
+                      onChange={e => setNewTaskData({ ...newTaskData, deadline: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1.5">Priority</label>
+                    <select className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 ring-indigo-500 focus:border-indigo-500"
+                      value={newTaskData.priority}
+                      onChange={e => setNewTaskData({ ...newTaskData, priority: e.target.value })}
+                    >
+                      <option value="normal">Normal</option>
+                      <option value="high">High</option>
+                      <option value="urgent">Urgent</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1.5">Assign Designer</label>
+                    <select className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 ring-indigo-500 focus:border-indigo-500"
+                      value={newTaskData.designerId}
+                      onChange={e => setNewTaskData({ ...newTaskData, designerId: e.target.value })}
+                    >
+                      <option value="">Assign to Me (Default)</option>
+                      {designers?.map(d => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* Section 3: Assets */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b pb-1">Assets & Description</h4>
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Deadline</label>
-                  <input type="date" className="w-full border rounded-lg p-2.5 text-sm"
-                    value={newTaskData.deadline}
-                    onChange={e => setNewTaskData({ ...newTaskData, deadline: e.target.value })}
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5 flex items-center gap-2">
+                    <span className="p-1 bg-blue-100 text-blue-600 rounded"><ExternalLink size={12} /></span>
+                    Google Drive Folder Link
+                  </label>
+                  <input type="url" className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400"
+                    placeholder="https://drive.google.com/drive/folders/..."
+                    value={newTaskData.driveLink}
+                    onChange={e => setNewTaskData({ ...newTaskData, driveLink: e.target.value })}
+                  />
+                  <p className="text-[10px] text-gray-500 mt-1">Paste the link to the Google Drive folder for this project.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5">Description / Work Items</label>
+                  <textarea rows={4} className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Describe specific requirements, items to print, size, quantity..."
+                    value={newTaskData.description}
+                    onChange={e => setNewTaskData({ ...newTaskData, description: e.target.value })}
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Priority</label>
-                  <select className="w-full border rounded-lg p-2.5 text-sm"
-                    value={newTaskData.priority}
-                    onChange={e => setNewTaskData({ ...newTaskData, priority: e.target.value })}
-                  >
-                    <option value="normal">Normal</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
-                  </select>
-                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-gray-500 mb-1">Description / Items</label>
-                <textarea rows={3} className="w-full border rounded-lg p-2.5 text-sm"
-                  placeholder="Describe specific requirements..."
-                  value={newTaskData.description}
-                  onChange={e => setNewTaskData({ ...newTaskData, description: e.target.value })}
-                />
-              </div>
-
-              <div className="pt-2 flex gap-3">
-                <button type="button" onClick={() => setIsNewTaskModalOpen(false)} className="flex-1 py-2.5 border rounded-xl font-bold text-gray-600 hover:bg-gray-50">Cancel</button>
-                <button type="submit" disabled={creatingTask} className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 disabled:opacity-50">
-                  {creatingTask ? 'Creating...' : 'Create Project'}
-                </button>
-              </div>
             </form>
           </div>
         </div>
