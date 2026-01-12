@@ -337,8 +337,8 @@ export default function DesignerWorkspace() {
             <button
               onClick={() => setActiveTab('my_tasks')}
               className={`py-2.5 rounded-xl text-[10px] md:text-xs font-bold transition-all shadow-sm border ${activeTab === 'my_tasks'
-                  ? 'bg-blue-600 text-white border-blue-700 ring-2 ring-blue-100'
-                  : 'bg-white text-gray-500 border-gray-100 hover:bg-gray-50'
+                ? 'bg-white text-blue-600 border-blue-600 ring-2 ring-blue-100'
+                : 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700 opacity-90 hover:opacity-100'
                 }`}
             >
               My Tasks
@@ -346,8 +346,8 @@ export default function DesignerWorkspace() {
             <button
               onClick={() => setActiveTab('team_tasks')}
               className={`py-2.5 rounded-xl text-[10px] md:text-xs font-bold transition-all shadow-sm border ${activeTab === 'team_tasks'
-                  ? 'bg-orange-500 text-white border-orange-600 ring-2 ring-orange-100'
-                  : 'bg-white text-gray-500 border-gray-100 hover:bg-gray-50'
+                ? 'bg-white text-orange-600 border-orange-600 ring-2 ring-orange-100'
+                : 'bg-orange-500 text-white border-orange-500 hover:bg-orange-600 opacity-90 hover:opacity-100'
                 }`}
             >
               Team Tasks
@@ -355,8 +355,8 @@ export default function DesignerWorkspace() {
             <button
               onClick={() => setActiveTab('notes')}
               className={`py-2.5 rounded-xl text-[10px] md:text-xs font-bold transition-all shadow-sm border ${activeTab === 'notes'
-                  ? 'bg-emerald-500 text-white border-emerald-600 ring-2 ring-emerald-100'
-                  : 'bg-white text-gray-500 border-gray-100 hover:bg-gray-50'
+                ? 'bg-white text-emerald-600 border-emerald-600 ring-2 ring-emerald-100'
+                : 'bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600 opacity-90 hover:opacity-100'
                 }`}
             >
               My Notes
@@ -507,37 +507,38 @@ export default function DesignerWorkspace() {
         ) : selectedTask ? (
           <>
             {/* Header */}
-            <div className="px-8 py-5 border-b flex justify-between items-start bg-white sticky top-0 z-20">
-              <div>
-                <div className="flex items-center gap-3 mb-1.5">
+            {/* Header */}
+            <div className="px-6 py-5 border-b flex flex-col md:flex-row md:justify-between md:items-start bg-white sticky top-0 z-20 gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2">
                   <span className="text-xl font-bold text-gray-900 leading-tight">{selectedTask.title}</span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold border ${priorities.find(p => p.id === selectedTask.priority)?.color}`}>
+                  <span className={`w-fit text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold border ${priorities.find(p => p.id === selectedTask.priority)?.color}`}>
                     {selectedTask.priority}
                   </span>
                 </div>
-                <div className="text-sm text-gray-500 flex items-center gap-4">
-                  <div className="flex items-center gap-1.5">
-                    <User size={14} /> {selectedTask.clientName}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">
+                  <div className="flex items-center gap-1.5 min-w-fit">
+                    <User size={14} /> <span className="truncate max-w-[150px]">{selectedTask.clientName}</span>
                   </div>
-                  <span className="text-gray-300">|</span>
-                  <div className="flex items-center gap-1.5">
+                  <span className="hidden md:inline text-gray-300">|</span>
+                  <div className="flex items-center gap-1.5 min-w-fit">
                     <Clock size={14} /> Due: {selectedTask.deadline || 'N/A'}
                   </div>
                   {/* Order ID Link if exists */}
-                  <span className="text-gray-300">|</span>
-                  <div className="flex items-center gap-1.5 text-indigo-600 font-medium bg-indigo-50 px-2 py-0.5 rounded-full">
-                    <FileText size={12} /> Ref Job: {selectedTask.taskId}
+                  <span className="hidden md:inline text-gray-300">|</span>
+                  <div className="flex items-center gap-1.5 text-indigo-600 font-medium bg-indigo-50 px-2 py-0.5 rounded-full whitespace-nowrap">
+                    <FileText size={12} /> Ref: {selectedTask.taskId}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-lg border">
-                  <span className="text-xs font-bold text-gray-500 pl-2 uppercase">Status:</span>
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                <div className="flex-1 md:flex-none flex items-center gap-2 bg-gray-50 p-1 rounded-lg border w-full md:w-auto">
+                  <span className="text-xs font-bold text-gray-500 pl-2 uppercase whitespace-nowrap">Status:</span>
                   <select
                     value={selectedTask.status}
                     onChange={(e) => updateStatus(selectedTask.realId, e.target.value)}
-                    className="bg-transparent text-gray-700 text-sm rounded px-2 py-1 cursor-pointer focus:ring-0 border-none outline-none font-semibold hover:bg-white transition-colors"
+                    className="flex-1 md:flex-none bg-transparent text-gray-700 text-sm rounded px-2 py-1 cursor-pointer focus:ring-0 border-none outline-none font-semibold hover:bg-white transition-colors"
                   >
                     {taskStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
