@@ -3,7 +3,7 @@
 // =============================================
 
 // Enums
-export type UserRole = 'admin' | 'manager' | 'sales' | 'designer' | 'dispatch' | 'marketing' | 'finance';
+export type UserRole = 'admin' | 'manager' | 'sales' | 'designer' | 'dispatch' | 'marketing' | 'finance' | 'cmyk';
 export type JobStatus = 'new' | 'designing' | 'approval' | 'printing' | 'finishing' | 'quality_check' | 'ready' | 'dispatched' | 'delivered' | 'cancelled';
 export type PaymentStatus = 'pending' | 'partial' | 'paid' | 'overdue';
 export type PriorityLevel = 'low' | 'normal' | 'high' | 'urgent';

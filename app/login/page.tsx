@@ -218,8 +218,7 @@ export default function LoginPage() {
                   { role: 'designer', label: 'Designer', color: 'bg-purple-50 text-purple-700 border-purple-200' },
                   { role: 'marketing', label: 'Marketing', color: 'bg-pink-50 text-pink-700 border-pink-200' },
                   { role: 'dispatch', label: 'Dispatch', color: 'bg-amber-50 text-amber-700 border-amber-200' },
-                  { role: 'account', label: 'Finance', color: 'bg-green-50 text-green-700 border-green-200' },
-                  { role: 'manager', label: 'Manager', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+                  { role: 'cmyk', label: 'CMYK Station', color: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
                 ].map((item) => (
                   <button
                     key={item.role}

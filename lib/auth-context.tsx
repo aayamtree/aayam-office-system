@@ -141,8 +141,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           roleKey === 'designer' ? 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380d22' :
             roleKey === 'marketing' ? 'm0eebc99-9c0b-4ef8-bb6d-6bb9bd380m33' :
               roleKey === 'dispatch' ? 'dpebc99-9c0b-4ef8-bb6d-6bb9bd380p44' :
-                roleKey === 'account' ? 'acebc99-9c0b-4ef8-bb6d-6bb9bd380a55' :
-                  'u0eebc99-9c0b-4ef8-bb6d-6bb9bd380u66', // fallback
+                roleKey === 'cmyk' ? 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380c55' :
+                  roleKey === 'finance' ? 'acebc99-9c0b-4ef8-bb6d-6bb9bd380a55' :
+                    'u0eebc99-9c0b-4ef8-bb6d-6bb9bd380u66', // fallback
 
         email: `${roleKey}@aayam.com`,
         full_name: `Speed ${roleKey.charAt(0).toUpperCase() + roleKey.slice(1)}`,
