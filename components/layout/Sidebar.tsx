@@ -81,8 +81,6 @@ const menuItems: MenuItem[] = [
     allowedRoles: ['admin', 'account', 'marketing'],
     submenu: [
       { name: 'Clients', href: '/admin/crm/clients' },
-      { name: 'Vendors', href: '/admin/crm/vendors' },
-      { name: 'Purchases', href: '/admin/crm/vendors/purchases' },
     ]
   },
 
@@ -95,6 +93,8 @@ const menuItems: MenuItem[] = [
       { name: 'Overview', href: '/admin/finance' },
       { name: 'Sales Orders', href: '/admin/finance/sales-orders' },
       { name: 'Invoices', href: '/admin/finance/invoices' },
+      { name: 'Vendors', href: '/admin/finance/vendors' },
+      { name: 'Purchases', href: '/admin/finance/vendors/purchases' },
       { name: 'Payments', href: '/admin/finance/payments' },
       { name: 'Bank Accounts', href: '/admin/finance/banks' },
       { name: 'Reconciliation', href: '/admin/finance/banking' },

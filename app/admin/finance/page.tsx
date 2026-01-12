@@ -104,7 +104,7 @@ export default function FinancePage() {
       </div>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Link href="/admin/finance/invoices" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -119,6 +119,22 @@ export default function FinancePage() {
             <span className="text-green-700 bg-green-50 px-2.5 py-1 rounded-full">132 Paid</span>
             <span className="text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full">12 Pending</span>
             <span className="text-red-700 bg-red-50 px-2.5 py-1 rounded-full">12 Overdue</span>
+          </div>
+        </Link>
+
+        <Link href="/admin/finance/vendors" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <CreditCard size={28} className="text-purple-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Purchases</h2>
+              <p className="text-sm font-medium text-gray-500">Vendors & Bills</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 text-xs font-medium">
+            <span className="text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full">34 Vendors</span>
+            <span className="text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">Manage Bills</span>
           </div>
         </Link>
 

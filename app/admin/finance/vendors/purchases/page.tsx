@@ -162,7 +162,7 @@ export default function VendorPurchasesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin/crm/vendors" className="p-2 hover:bg-gray-100 rounded-lg">
+          <Link href="/admin/finance/vendors" className="p-2 hover:bg-gray-100 rounded-lg">
             <ArrowLeft size={20} />
           </Link>
           <div>
@@ -441,7 +441,7 @@ export default function VendorPurchasesPage() {
                 </div>
               </div>
 
-              <Link href="/admin/crm/vendors/payments"
+              <Link href="/admin/finance/vendors/payments"
                 className="block w-full text-center px-4 py-2.5 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700">
                 Record Payment
               </Link>

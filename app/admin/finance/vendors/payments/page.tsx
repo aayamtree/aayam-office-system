@@ -102,7 +102,7 @@ export default function VendorPaymentsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin/crm/vendors" className="p-2 hover:bg-gray-100 rounded-lg">
+          <Link href="/admin/finance/vendors" className="p-2 hover:bg-gray-100 rounded-lg">
             <ArrowLeft size={20} />
           </Link>
           <div>

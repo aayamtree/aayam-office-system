@@ -6,7 +6,6 @@ import { Users, Building2, UserPlus, TrendingUp } from 'lucide-react';
 export default function CRMPage() {
   const stats = [
     { label: 'Total Clients', value: '156', change: '+12 this month', icon: Users, color: 'bg-blue-500' },
-    { label: 'Total Vendors', value: '34', change: '+3 this month', icon: Building2, color: 'bg-purple-500' },
     { label: 'New This Month', value: '15', change: '↑ 25%', icon: UserPlus, color: 'bg-green-500' },
     { label: 'Active Orders', value: '23', change: 'From 45 clients', icon: TrendingUp, color: 'bg-amber-500' },
   ];
@@ -17,7 +16,7 @@ export default function CRMPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">CRM</h1>
-          <p className="text-gray-500 mt-1">Manage your clients and vendors</p>
+          <p className="text-gray-500 mt-1">Manage your clients</p>
         </div>
         <Link
           href="/admin/crm/clients?new=true"
@@ -65,26 +64,6 @@ export default function CRMPage() {
             <span className="text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">14 Inactive</span>
           </div>
         </Link>
-
-        {/* Vendors Card */}
-        <Link href="/admin/crm/vendors" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Building2 size={28} className="text-purple-600" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-gray-900">Vendors</h2>
-              <p className="text-sm font-medium text-gray-500">34 total vendors</p>
-            </div>
-          </div>
-          <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-            Manage suppliers, track purchases, and maintain vendor relationships.
-          </p>
-          <div className="flex items-center gap-3 text-xs font-medium">
-            <span className="text-green-700 bg-green-50 px-2.5 py-1 rounded-full">30 Active</span>
-            <span className="text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">4 Inactive</span>
-          </div>
-        </Link>
       </div>
 
       {/* Recent Activity */}
@@ -97,7 +76,6 @@ export default function CRMPage() {
           {[
             { action: 'New client added', name: 'Tech Solutions Pvt Ltd', time: '2 hours ago', type: 'client' },
             { action: 'Client updated', name: 'ABC Industries', time: '5 hours ago', type: 'client' },
-            { action: 'New vendor added', name: 'Paper World Supplies', time: '1 day ago', type: 'vendor' },
             { action: 'Order placed by', name: 'Global Traders', time: '1 day ago', type: 'client' },
           ].map((item, index) => (
             <div key={index} className="flex items-center gap-4 p-4 bg-gray-50/80 rounded-xl hover:bg-gray-100 transition-colors border border-gray-100">
