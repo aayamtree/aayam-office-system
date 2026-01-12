@@ -48,7 +48,7 @@ const menuItems: MenuItem[] = [
     name: 'Design Tasks',
     icon: Palette,
     href: '/admin/designers/tasks', // Updated to point to new Workspace
-    allowedRoles: ['designer'],
+    allowedRoles: ['admin', 'designer'],
   },
   {
     name: 'Marketing',
