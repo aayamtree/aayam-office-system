@@ -115,7 +115,7 @@ const menuItems: MenuItem[] = [
     name: 'CMYK Print',
     icon: Printer,
     href: '/admin/cmyk-print',
-    allowedRoles: ['admin', 'account', 'marketing', 'cmyk'],
+    allowedRoles: ['admin', 'account', 'cmyk'],
   },
   {
     name: 'Reports',
