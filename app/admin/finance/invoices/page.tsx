@@ -4,11 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
-  Calendar, User, Download, MessageCircle, Printer, Loader2
+  Calendar, User, Download, MessageCircle, Printer, Loader2, CheckCircle
 } from 'lucide-react';
 import { InvoiceData, defaultCompanyData, downloadInvoicePDF, printInvoicePDF } from '@/components/invoice/InvoicePDF';
 import { shareOnWhatsApp, getInvoiceMessage, getPaymentReminderMessage } from '@/lib/whatsapp';
-import { useInvoices, useClients } from '@/lib/hooks';
+import { useInvoices, useClients, useJobs } from '@/lib/hooks';
 import { Invoice, Client, InvoiceItem } from '@/types/database';
 
 export default function InvoicesPage() {
@@ -342,6 +342,49 @@ export default function InvoicesPage() {
     }).format(amount);
   };
 
+  const { jobs } = useJobs();
+
+  // Jobs ready for invoicing (Dispatched/Delivered but not fully paid?)
+  // Ideally check if invoice exists, but for now we show dispatched jobs.
+  const pendingInvoicingJobs = jobs.filter(j =>
+    (['dispatched', 'delivered'].includes(j.current_stage)) &&
+    j.payment_status !== 'paid'
+  ).slice(0, 5); // Show top 5 recent
+
+  const handleCreateFromJob = (job: any) => {
+    // Pre-fill invoice with Job Data
+    const items = [{
+      description: `${job.job_type || 'Print Job'}: ${job.project_name}`,
+      quantity: job.quantity,
+      rate: job.quote_per_piece || 0, // Fallback if 0
+      amount: (job.quantity * (job.quote_per_piece || 0)),
+      gst_rate: job.gst_rate || 18,
+      hsn_code: '4911'
+    }];
+
+    // Calculate totals
+    const subtotal = items[0].amount;
+    const tax = Math.round(subtotal * (items[0].gst_rate / 100));
+
+    setFormData({
+      clientId: job.client_id || '',
+      invoiceNumber: '', // Auto
+      invoiceDate: new Date().toISOString().split('T')[0],
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      items: items as any, // Cast to InvoiceItem
+      subtotal: subtotal,
+      gstRate: items[0].gst_rate,
+      totalTax: tax,
+      totalAmount: subtotal + tax,
+      paidAmount: 0,
+      status: 'pending',
+      notes: `Generated from Job #${job.job_number}`,
+    });
+
+    setIsEditing(false);
+    setShowModal(true);
+  };
+
   const totalOutstanding = invoices
     .filter(i => i.payment_status !== 'paid')
     .reduce((sum, i) => sum + (i.total_amount - i.amount_paid), 0);
@@ -367,6 +410,43 @@ export default function InvoicesPage() {
           <span>New Invoice</span>
         </button>
       </div>
+
+      {/* Ready for Invoicing Alert (Data Flow: Jobs -> Finance) */}
+      {
+        pendingInvoicingJobs.length > 0 && (
+          <div className="bg-gradient-to-r from-indigo-50 to-white p-4 rounded-xl border border-indigo-100">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 bg-indigo-100 rounded-lg">
+                <CheckCircle size={18} className="text-indigo-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900">Completed Jobs Pending Invoice</h3>
+                <p className="text-xs text-gray-500">Recently dispatched jobs ready for billing</p>
+              </div>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
+              {pendingInvoicingJobs.map((job: any) => (
+                <div key={job.id} className="min-w-[280px] bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                  <div>
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="text-xs font-mono text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded">{job.job_number}</span>
+                      <span className="text-xs font-bold text-indigo-600">₹{job.total_amount}</span>
+                    </div>
+                    <p className="font-semibold text-gray-800 text-sm truncate" title={job.project_name}>{job.project_name}</p>
+                    <p className="text-xs text-gray-500 truncate">{job.client?.company || 'Unknown Client'}</p>
+                  </div>
+                  <button
+                    onClick={() => handleCreateFromJob(job)}
+                    className="mt-3 w-full py-2 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors flex items-center justify-center gap-1"
+                  >
+                    <Plus size={14} /> Create Invoice
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      }
 
       {/* Stats Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -476,311 +556,315 @@ export default function InvoicesPage() {
       </div>
 
       {/* Add/Edit Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-5 border-b border-gray-100 sticky top-0 bg-white z-10">
-              <h2 className="text-xl font-bold text-gray-900">
-                {isEditing ? 'Edit Invoice' : 'New Invoice'}
-              </h2>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Client *</label>
-                  <select
-                    required
-                    value={formData.clientId}
-                    onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
-                  >
-                    <option value="">Select Client</option>
-                    {clients.map(c => (
-                      <option key={c.id} value={c.id}>{c.company} ({c.name})</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Due Date *</label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.dueDate}
-                    onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
-                  />
-                </div>
+      {
+        showModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between p-5 border-b border-gray-100 sticky top-0 bg-white z-10">
+                <h2 className="text-xl font-bold text-gray-900">
+                  {isEditing ? 'Edit Invoice' : 'New Invoice'}
+                </h2>
+                <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                  <X size={20} />
+                </button>
               </div>
 
-              {/* Items */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-sm font-semibold text-gray-700">Items</label>
-                  <button type="button" onClick={addItem} className="text-sm font-medium text-indigo-600 hover:text-indigo-700">+ Add Item</button>
-                </div>
-                <div className="space-y-4">
-                  {formData.items.map((item, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-3 items-start bg-gray-50 p-3 rounded-xl border border-gray-100">
-                      <div className="col-span-12 sm:col-span-5">
-                        <input
-                          type="text"
-                          placeholder="Description"
-                          value={item.description}
-                          onChange={(e) => updateItem(index, 'description', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                        />
-                      </div>
-                      <div className="col-span-3 sm:col-span-2">
-                        <input
-                          type="number"
-                          placeholder="Qty"
-                          min="1"
-                          value={item.quantity}
-                          onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                        />
-                      </div>
-                      <div className="col-span-3 sm:col-span-2">
-                        <input
-                          type="number"
-                          placeholder="Rate"
-                          min="0"
-                          value={item.rate}
-                          onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                        />
-                      </div>
-                      <div className="col-span-5 sm:col-span-2 flex items-center justify-between">
-                        <span className="font-medium text-gray-700 text-sm">{formatCurrency(item.amount)}</span>
-                        {formData.items.length > 1 && (
-                          <button type="button" onClick={() => removeItem(index)} className="text-red-500 hover:text-red-700 p-1">
-                            <X size={16} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Financials */}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+              <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Subtotal</label>
-                    <div className="font-bold text-gray-900 text-lg">{formatCurrency(formData.subtotal)}</div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">GST (%)</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Client *</label>
                     <select
-                      value={formData.gstRate}
-                      onChange={(e) => {
-                        const newRate = parseInt(e.target.value);
-                        const tax = Math.round(formData.subtotal * (newRate / 100));
-                        setFormData(prev => ({ ...prev, gstRate: newRate, totalTax: tax, totalAmount: prev.subtotal + tax }));
-                      }}
-                      className="w-full px-2 py-1 border border-gray-200 rounded-lg bg-white text-sm"
+                      required
+                      value={formData.clientId}
+                      onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
                     >
-                      <option value="0">0%</option>
-                      <option value="5">5%</option>
-                      <option value="12">12%</option>
-                      <option value="18">18%</option>
-                      <option value="28">28%</option>
+                      <option value="">Select Client</option>
+                      {clients.map(c => (
+                        <option key={c.id} value={c.id}>{c.company} ({c.name})</option>
+                      ))}
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Tax Amount</label>
-                    <div className="font-bold text-gray-700">{formatCurrency(formData.totalTax)}</div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Grand Total</label>
-                    <div className="font-bold text-indigo-700 text-lg">{formatCurrency(formData.totalAmount)}</div>
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-gray-200 pt-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Paid Amount (₹)</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Due Date *</label>
                     <input
-                      type="number"
-                      value={formData.paidAmount}
-                      onChange={(e) => setFormData({ ...formData, paidAmount: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      type="date"
+                      required
+                      value={formData.dueDate}
+                      onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Status</label>
-                    <select
-                      value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="partial">Partial</option>
-                      <option value="paid">Paid</option>
-                      <option value="overdue">Overdue</option>
-                    </select>
+                </div>
+
+                {/* Items */}
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-semibold text-gray-700">Items</label>
+                    <button type="button" onClick={addItem} className="text-sm font-medium text-indigo-600 hover:text-indigo-700">+ Add Item</button>
+                  </div>
+                  <div className="space-y-4">
+                    {formData.items.map((item, index) => (
+                      <div key={index} className="grid grid-cols-12 gap-3 items-start bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <div className="col-span-12 sm:col-span-5">
+                          <input
+                            type="text"
+                            placeholder="Description"
+                            value={item.description}
+                            onChange={(e) => updateItem(index, 'description', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                          />
+                        </div>
+                        <div className="col-span-3 sm:col-span-2">
+                          <input
+                            type="number"
+                            placeholder="Qty"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                          />
+                        </div>
+                        <div className="col-span-3 sm:col-span-2">
+                          <input
+                            type="number"
+                            placeholder="Rate"
+                            min="0"
+                            value={item.rate}
+                            onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                          />
+                        </div>
+                        <div className="col-span-5 sm:col-span-2 flex items-center justify-between">
+                          <span className="font-medium text-gray-700 text-sm">{formatCurrency(item.amount)}</span>
+                          {formData.items.length > 1 && (
+                            <button type="button" onClick={() => removeItem(index)} className="text-red-500 hover:text-red-700 p-1">
+                              <X size={16} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
+
+                {/* Financials */}
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Subtotal</label>
+                      <div className="font-bold text-gray-900 text-lg">{formatCurrency(formData.subtotal)}</div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">GST (%)</label>
+                      <select
+                        value={formData.gstRate}
+                        onChange={(e) => {
+                          const newRate = parseInt(e.target.value);
+                          const tax = Math.round(formData.subtotal * (newRate / 100));
+                          setFormData(prev => ({ ...prev, gstRate: newRate, totalTax: tax, totalAmount: prev.subtotal + tax }));
+                        }}
+                        className="w-full px-2 py-1 border border-gray-200 rounded-lg bg-white text-sm"
+                      >
+                        <option value="0">0%</option>
+                        <option value="5">5%</option>
+                        <option value="12">12%</option>
+                        <option value="18">18%</option>
+                        <option value="28">28%</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Tax Amount</label>
+                      <div className="font-bold text-gray-700">{formatCurrency(formData.totalTax)}</div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Grand Total</label>
+                      <div className="font-bold text-indigo-700 text-lg">{formatCurrency(formData.totalAmount)}</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-gray-200 pt-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Paid Amount (₹)</label>
+                      <input
+                        type="number"
+                        value={formData.paidAmount}
+                        onChange={(e) => setFormData({ ...formData, paidAmount: parseFloat(e.target.value) || 0 })}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Status</label>
+                      <select
+                        value={formData.status}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="partial">Partial</option>
+                        <option value="paid">Paid</option>
+                        <option value="overdue">Overdue</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
 
 
-              <div className="flex gap-4 pt-4 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 px-6 py-3.5 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 px-6 py-3.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50"
-                >
-                  {submitting ? 'Saving...' : (isEditing ? 'Update' : 'Create')}
-                </button>
-              </div>
-            </form>
+                <div className="flex gap-4 pt-4 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="flex-1 px-6 py-3.5 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="flex-1 px-6 py-3.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50"
+                  >
+                    {submitting ? 'Saving...' : (isEditing ? 'Update' : 'Create')}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* View Modal */}
-      {showViewModal && selectedInvoice && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">{selectedInvoice.invoice_number}</h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <p className="text-sm text-gray-500">{new Date(selectedInvoice.invoice_date).toLocaleDateString()}</p>
-                  {selectedInvoice.payment_status === 'overdue' && (
-                    <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full">OVERDUE</span>
+      {
+        showViewModal && selectedInvoice && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">{selectedInvoice.invoice_number}</h2>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-sm text-gray-500">{new Date(selectedInvoice.invoice_date).toLocaleDateString()}</p>
+                    {selectedInvoice.payment_status === 'overdue' && (
+                      <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full">OVERDUE</span>
+                    )}
+                  </div>
+                </div>
+                <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Client Info */}
+                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <User size={24} className="text-indigo-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900">{selectedInvoice.client?.company}</h3>
+                    <p className="text-sm text-gray-600">{selectedInvoice.client?.name}</p>
+                  </div>
+                </div>
+
+                {/* Items */}
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Items</h4>
+                  <div className="space-y-3">
+                    {selectedInvoice.items?.map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-start text-sm pb-3 border-b border-gray-100 last:border-0 last:pb-0">
+                        <div>
+                          <p className="font-medium text-gray-900">{item.description}</p>
+                          <p className="text-gray-500">{item.quantity} x {formatCurrency(item.rate)}</p>
+                        </div>
+                        <p className="font-semibold text-gray-900">{formatCurrency(item.amount)}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Amount Details */}
+                <div className="bg-indigo-50/50 rounded-xl p-5 border border-indigo-100 space-y-3">
+                  <div className="flex justify-between text-gray-600">
+                    <span>Subtotal</span>
+                    <span>{formatCurrency(selectedInvoice.subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-600">
+                    <span>GST</span>
+                    <span>{formatCurrency(selectedInvoice.total_tax)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-gray-900 pt-3 border-t border-indigo-100">
+                    <span>Total Amount</span>
+                    <span className="text-lg">{formatCurrency(selectedInvoice.total_amount)}</span>
+                  </div>
+                  {selectedInvoice.amount_paid > 0 && (
+                    <>
+                      <div className="flex justify-between text-green-600 font-medium">
+                        <span>Paid</span>
+                        <span>- {formatCurrency(selectedInvoice.amount_paid)}</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-amber-700 pt-3 border-t border-indigo-100">
+                        <span>Balance Due</span>
+                        <span>{formatCurrency(selectedInvoice.total_amount - selectedInvoice.amount_paid)}</span>
+                      </div>
+                    </>
                   )}
                 </div>
-              </div>
-              <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X size={20} />
-              </button>
-            </div>
 
-            <div className="p-6 space-y-6">
-              {/* Client Info */}
-              <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                  <User size={24} className="text-indigo-600" />
+                {/* Due Date & Status */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 border rounded-xl">
+                    <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Due Date</p>
+                    <p className="font-medium text-gray-900 mt-1">{selectedInvoice.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : '-'}</p>
+                  </div>
+                  <div className="p-3 border rounded-xl">
+                    <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Status</p>
+                    <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-bold uppercase rounded-full ${getStatusColor(selectedInvoice.payment_status).replace('border', '')}`}>
+                      {selectedInvoice.payment_status}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-bold text-gray-900">{selectedInvoice.client?.company}</h3>
-                  <p className="text-sm text-gray-600">{selectedInvoice.client?.name}</p>
-                </div>
-              </div>
 
-              {/* Items */}
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-3">Items</h4>
-                <div className="space-y-3">
-                  {selectedInvoice.items?.map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-start text-sm pb-3 border-b border-gray-100 last:border-0 last:pb-0">
-                      <div>
-                        <p className="font-medium text-gray-900">{item.description}</p>
-                        <p className="text-gray-500">{item.quantity} x {formatCurrency(item.rate)}</p>
-                      </div>
-                      <p className="font-semibold text-gray-900">{formatCurrency(item.amount)}</p>
-                    </div>
-                  ))}
+                {/* Actions */}
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <button
+                    onClick={() => handlePrintPDF(selectedInvoice)}
+                    disabled={pdfLoading}
+                    className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                  >
+                    {pdfLoading ? <Loader2 size={18} className="animate-spin" /> : <Printer size={18} />}
+                    Print
+                  </button>
+                  <button
+                    onClick={() => handleDownloadPDF(selectedInvoice)}
+                    disabled={pdfLoading}
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white font-semibold rounded-xl hover:bg-black disabled:opacity-50 transition-colors"
+                  >
+                    {pdfLoading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+                    Download PDF
+                  </button>
+                  <button
+                    onClick={() => handleWhatsAppShare(selectedInvoice)}
+                    className="col-span-2 flex items-center justify-center gap-2 px-4 py-3 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition-colors"
+                  >
+                    <MessageCircle size={18} />
+                    Share on WhatsApp
+                  </button>
                 </div>
-              </div>
 
-              {/* Amount Details */}
-              <div className="bg-indigo-50/50 rounded-xl p-5 border border-indigo-100 space-y-3">
-                <div className="flex justify-between text-gray-600">
-                  <span>Subtotal</span>
-                  <span>{formatCurrency(selectedInvoice.subtotal)}</span>
-                </div>
-                <div className="flex justify-between text-gray-600">
-                  <span>GST</span>
-                  <span>{formatCurrency(selectedInvoice.total_tax)}</span>
-                </div>
-                <div className="flex justify-between font-bold text-gray-900 pt-3 border-t border-indigo-100">
-                  <span>Total Amount</span>
-                  <span className="text-lg">{formatCurrency(selectedInvoice.total_amount)}</span>
-                </div>
-                {selectedInvoice.amount_paid > 0 && (
-                  <>
-                    <div className="flex justify-between text-green-600 font-medium">
-                      <span>Paid</span>
-                      <span>- {formatCurrency(selectedInvoice.amount_paid)}</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-amber-700 pt-3 border-t border-indigo-100">
-                      <span>Balance Due</span>
-                      <span>{formatCurrency(selectedInvoice.total_amount - selectedInvoice.amount_paid)}</span>
-                    </div>
-                  </>
+                {/* Payment Reminder Button - Only show if balance due */}
+                {selectedInvoice.amount_paid < selectedInvoice.total_amount && (
+                  <button
+                    onClick={() => handlePaymentReminder(selectedInvoice)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-500 text-white font-semibold rounded-xl hover:bg-amber-600 transition-colors"
+                  >
+                    <MessageCircle size={18} />
+                    Send Payment Reminder
+                  </button>
                 )}
               </div>
-
-              {/* Due Date & Status */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 border rounded-xl">
-                  <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Due Date</p>
-                  <p className="font-medium text-gray-900 mt-1">{selectedInvoice.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : '-'}</p>
-                </div>
-                <div className="p-3 border rounded-xl">
-                  <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Status</p>
-                  <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-bold uppercase rounded-full ${getStatusColor(selectedInvoice.payment_status).replace('border', '')}`}>
-                    {selectedInvoice.payment_status}
-                  </span>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <button
-                  onClick={() => handlePrintPDF(selectedInvoice)}
-                  disabled={pdfLoading}
-                  className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-colors"
-                >
-                  {pdfLoading ? <Loader2 size={18} className="animate-spin" /> : <Printer size={18} />}
-                  Print
-                </button>
-                <button
-                  onClick={() => handleDownloadPDF(selectedInvoice)}
-                  disabled={pdfLoading}
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white font-semibold rounded-xl hover:bg-black disabled:opacity-50 transition-colors"
-                >
-                  {pdfLoading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
-                  Download PDF
-                </button>
-                <button
-                  onClick={() => handleWhatsAppShare(selectedInvoice)}
-                  className="col-span-2 flex items-center justify-center gap-2 px-4 py-3 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition-colors"
-                >
-                  <MessageCircle size={18} />
-                  Share on WhatsApp
-                </button>
-              </div>
-
-              {/* Payment Reminder Button - Only show if balance due */}
-              {selectedInvoice.amount_paid < selectedInvoice.total_amount && (
-                <button
-                  onClick={() => handlePaymentReminder(selectedInvoice)}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-500 text-white font-semibold rounded-xl hover:bg-amber-600 transition-colors"
-                >
-                  <MessageCircle size={18} />
-                  Send Payment Reminder
-                </button>
-              )}
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }

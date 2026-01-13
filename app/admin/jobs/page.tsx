@@ -20,7 +20,9 @@ const stages = [
   { id: 'approval', name: 'Approval', color: 'bg-yellow-500', bgLight: 'bg-yellow-50', border: 'border-yellow-200' },
   { id: 'printing', name: 'Print', color: 'bg-blue-500', bgLight: 'bg-blue-50', border: 'border-blue-200' },
   { id: 'finishing', name: 'Post Print', color: 'bg-cyan-500', bgLight: 'bg-cyan-50', border: 'border-cyan-200' },
-  { id: 'dispatched', name: 'Dispatch', color: 'bg-orange-500', bgLight: 'bg-orange-50', border: 'border-orange-200' },
+  { id: 'quality_check', name: 'QC Check', color: 'bg-emerald-500', bgLight: 'bg-emerald-50', border: 'border-emerald-200' },
+  { id: 'ready', name: 'Ready', color: 'bg-indigo-500', bgLight: 'bg-indigo-50', border: 'border-indigo-200' },
+  { id: 'dispatched', name: 'Dispatched', color: 'bg-orange-500', bgLight: 'bg-orange-50', border: 'border-orange-200' },
   { id: 'delivered', name: 'Delivered', color: 'bg-green-500', bgLight: 'bg-green-50', border: 'border-green-200' },
 ];
 
