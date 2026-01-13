@@ -296,11 +296,13 @@ export default function VendorPurchasesPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1.5">Link to Job</label>
+                  <label className="block text-sm font-medium mb-1.5">Job ID</label>
                   <select value={formData.jobId} onChange={(e) => setFormData({ ...formData, jobId: e.target.value })}
                     className="w-full px-3 py-2.5 border rounded-lg bg-white">
                     <option value="">General Stock</option>
-                    {(jobs || []).map(j => <option key={j.id} value={j.id}>{j.job_number} - {j.project_name}</option>)}
+                    {(jobs || [])
+                      .filter(j => j.job_number.startsWith('AAY-'))
+                      .map(j => <option key={j.id} value={j.id}>{j.job_number} - {j.project_name}</option>)}
                   </select>
                 </div>
                 <div className="col-span-2">
@@ -395,7 +397,7 @@ export default function VendorPurchasesPage() {
                   <p className="font-medium">{selectedPurchase.product_type}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Linked Job</p>
+                  <p className="text-xs text-gray-500">Job ID</p>
                   <p className="font-medium">{selectedPurchase.job ? `${selectedPurchase.job.job_number} - ${selectedPurchase.job.project_name}` : 'General Stock'}</p>
                 </div>
                 <div>
