@@ -302,10 +302,10 @@ export default function DesignerWorkspace() {
         client_deadline: newTaskData.deadline || null,
         current_stage: 'new',
         total_amount: 0,
-        paid_amount: 0,
+        amount_received: 0,
         payment_status: 'pending',
         designer_id: newTaskData.designerId || profile?.id, // Use selected or self
-        files: newTaskData.driveLink ? [newTaskData.driveLink] : []
+        files: newTaskData.driveLink ? [{ name: 'Drive Link', url: newTaskData.driveLink, type: 'link', size: 0, uploaded_at: new Date().toISOString() }] : []
       } as any);
 
       if (error) throw new Error(error);

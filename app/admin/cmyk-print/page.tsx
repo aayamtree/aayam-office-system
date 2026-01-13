@@ -84,7 +84,25 @@ export default function CMYKPrintPage() {
       </div>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        {/* NEW: Print Planner */}
+        <Link href="/admin/cmyk-print/planner" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow group relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-3 opacity-10">
+            <ListTodo size={64} className="text-indigo-600" />
+          </div>
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <ListTodo size={24} className="text-indigo-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Planner</h2>
+              <p className="text-sm text-gray-500">Create Batches</p>
+            </div>
+          </div>
+          <div className="text-sm text-indigo-600 font-medium">● Start New Run →</div>
+        </Link>
+
         <Link href="/admin/cmyk-print/retail-pos" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -92,7 +110,7 @@ export default function CMYKPrintPage() {
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Retail POS</h2>
-              <p className="text-sm text-gray-500">Quick billing counter</p>
+              <p className="text-sm text-gray-500">Quick billing</p>
             </div>
           </div>
           <div className="text-sm text-green-600">● Open Counter →</div>
@@ -105,30 +123,27 @@ export default function CMYKPrintPage() {
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Paper Stock</h2>
-              <p className="text-sm text-gray-500">Inventory management</p>
+              <p className="text-sm text-gray-500">Inventory</p>
             </div>
           </div>
           <div className="flex items-center gap-4 text-sm">
             <span className={lowStockItems.length > 0 ? "text-red-600 font-medium" : "text-gray-500"}>
-              ● {lowStockItems.length} Low stock
+              ● {lowStockItems.length} Low
             </span>
-            <span className="text-green-600">● {stock.length} Total items</span>
           </div>
         </Link>
 
         <Link href="/admin/cmyk-print/job-queue" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <ListTodo size={24} className="text-amber-600" />
+              <Printer size={24} className="text-amber-600" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Job Queue</h2>
-              <p className="text-sm text-gray-500">Production tracking</p>
+              <p className="text-sm text-gray-500">Track Production</p>
             </div>
           </div>
-          <div className="flex items-center gap-4 text-sm">
-            <span className="text-amber-600">● {pendingJobs.length} Pending</span>
-          </div>
+          <div className="text-sm text-amber-600">● {pendingJobs.length} Active</div>
         </Link>
       </div>
 

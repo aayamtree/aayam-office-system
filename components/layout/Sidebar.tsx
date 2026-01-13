@@ -111,6 +111,13 @@ const menuItems: MenuItem[] = [
     icon: Printer,
     href: '/admin/cmyk-print',
     allowedRoles: ['admin', 'account', 'cmyk'],
+    submenu: [
+      { name: 'Station Overview', href: '/admin/cmyk-print' },
+      { name: 'Print Planner', href: '/admin/cmyk-print/planner' },
+      { name: 'Job Queue', href: '/admin/cmyk-print/job-queue' },
+      { name: 'Paper Stock', href: '/admin/cmyk-print/paper-stock' },
+      { name: 'Retail POS', href: '/admin/cmyk-print/retail-pos' },
+    ]
   },
   {
     name: 'Reports',
