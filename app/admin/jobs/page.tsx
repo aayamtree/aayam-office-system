@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Plus, Search, Briefcase, Calendar,
   IndianRupee, Edit, Trash2, X,
   AlertCircle, ChevronDown, LayoutGrid,
-  List, Building2, UserPlus, Loader2
+  List, Building2, UserPlus, Loader2,
+  Layers, Printer, ArrowRight
 } from 'lucide-react';
 import {
   useJobs, useClients, useVendors, useDesigners, usePaymentsReceived
@@ -401,6 +403,31 @@ export default function JobsPage() {
         </div>
       </div>
 
+
+      {/* Print Production Links */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Link href="/admin/jobs/planner" className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-indigo-200 hover:shadow-md transition-all group">
+          <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+            <Layers size={24} className="text-indigo-600" />
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-900">Print Planner</h3>
+            <p className="text-sm text-gray-500">Create production batches</p>
+          </div>
+          <ArrowRight size={20} className="ml-auto text-gray-300 group-hover:text-indigo-600" />
+        </Link>
+        <Link href="/admin/jobs/queue" className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-amber-200 hover:shadow-md transition-all group">
+          <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+            <Printer size={24} className="text-amber-600" />
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-900">Production Queue</h3>
+            <p className="text-sm text-gray-500">Track job status</p>
+          </div>
+          <ArrowRight size={20} className="ml-auto text-gray-300 group-hover:text-amber-600" />
+        </Link>
+      </div>
+
       {/* Filters & Controls */}
       <div className="flex flex-col xl:flex-row gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
         <div className="relative flex-1">
@@ -455,324 +482,338 @@ export default function JobsPage() {
       </div>
 
       {/* Empty State */}
-      {filteredJobs.length === 0 && (
-        <div className="text-center py-24 bg-white rounded-3xl border border-dashed border-gray-300">
-          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Briefcase size={32} className="text-gray-400" />
+      {
+        filteredJobs.length === 0 && (
+          <div className="text-center py-24 bg-white rounded-3xl border border-dashed border-gray-300">
+            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Briefcase size={32} className="text-gray-400" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">No jobs found</h3>
+            <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+              {searchTerm ? 'Try adjusting your search terms or filters.' : 'Get started by creating your first job.'}
+            </p>
+            <button
+              onClick={handleAddNew}
+              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-medium transition-colors shadow-lg shadow-indigo-200"
+            >
+              <Plus size={20} />
+              <span>Create New Job</span>
+            </button>
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">No jobs found</h3>
-          <p className="text-gray-500 mb-6 max-w-sm mx-auto">
-            {searchTerm ? 'Try adjusting your search terms or filters.' : 'Get started by creating your first job.'}
-          </p>
-          <button
-            onClick={handleAddNew}
-            className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-medium transition-colors shadow-lg shadow-indigo-200"
-          >
-            <Plus size={20} />
-            <span>Create New Job</span>
-          </button>
-        </div>
-      )}
+        )
+      }
 
       {/* Kanban View */}
-      {viewMode === 'kanban' && filteredJobs.length > 0 && (
-        <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-220px)] items-start">
-          {stages.map(stage => {
-            const stageJobs = jobsByStage[stage.id] || [];
-            return (
-              <div key={stage.id} className="min-w-[300px] w-80 flex-shrink-0 bg-gray-50/50 rounded-xl border border-gray-200 flex flex-col max-h-full shadow-sm">
-                {/* Column Header */}
-                <div className="p-3 border-b border-gray-100 flex items-center justify-between bg-white rounded-t-xl sticky top-0 z-10">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${stage.color}`}></div>
-                    <span className="font-bold text-gray-700 text-sm">{stage.name}</span>
-                    <span className="bg-gray-100 px-2 py-0.5 rounded-full text-xs text-gray-600 font-medium">{stageJobs.length}</span>
+      {
+        viewMode === 'kanban' && filteredJobs.length > 0 && (
+          <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-220px)] items-start">
+            {stages.map(stage => {
+              const stageJobs = jobsByStage[stage.id] || [];
+              return (
+                <div key={stage.id} className="min-w-[300px] w-80 flex-shrink-0 bg-gray-50/50 rounded-xl border border-gray-200 flex flex-col max-h-full shadow-sm">
+                  {/* Column Header */}
+                  <div className="p-3 border-b border-gray-100 flex items-center justify-between bg-white rounded-t-xl sticky top-0 z-10">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3 h-3 rounded-full ${stage.color}`}></div>
+                      <span className="font-bold text-gray-700 text-sm">{stage.name}</span>
+                      <span className="bg-gray-100 px-2 py-0.5 rounded-full text-xs text-gray-600 font-medium">{stageJobs.length}</span>
+                    </div>
+                  </div>
+
+                  {/* Cards List */}
+                  <div className="p-3 space-y-3 overflow-y-auto">
+                    {stageJobs.length > 0 ? (
+                      stageJobs.map(job => <JobCard key={job.id} job={job} />)
+                    ) : (
+                      <div className="text-center py-6 text-gray-300 text-xs italic">
+                        Empty
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
+      }
+
+      {/* List View */}
+      {
+        viewMode === 'list' && filteredJobs.length > 0 && (
+          <div className="bg-white rounded-xl border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Job</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Client</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Stage</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Amount</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Deadline</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {filteredJobs.map(job => (
+                    <tr key={job.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => handleViewDetail(job)}>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-sm text-indigo-600">{job.job_number}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${getPriorityBadge(job.priority)}`}>{job.priority}</span>
+                        </div>
+                        <p className="text-sm font-medium">{job.project_name}</p>
+                      </td>
+                      <td className="px-4 py-3 text-sm">{job.client?.name || '-'}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs px-2 py-1 rounded-full text-white ${stages.find(s => s.id === job.current_stage)?.color}`}>
+                          {stages.find(s => s.id === job.current_stage)?.name}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${getPaymentBadge(job.payment_status)}`}>
+                          {formatCurrency(job.amount_received)} / {formatCurrency(job.total_amount)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {job.client_deadline ? (
+                          <span className={isOverdue(job.client_deadline, job.current_stage) ? 'text-red-600 font-medium' : ''}>
+                            {new Date(job.client_deadline).toLocaleDateString('en-IN')}
+                          </span>
+                        ) : '-'}
+                      </td>
+                      <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-1">
+                          <button onClick={() => handleEdit(job)} className="p-2 hover:bg-gray-100 rounded-lg"><Edit size={16} className="text-gray-500" /></button>
+                          <button onClick={() => handleDelete(job.id)} className="p-2 hover:bg-red-50 rounded-lg"><Trash2 size={16} className="text-red-500" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Add/Edit Job Modal */}
+      {
+        showModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto animate-scale-in">
+              <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white rounded-t-2xl z-10">
+                <h2 className="text-lg font-bold">{editingJob ? 'Edit Job' : 'New Job'}</h2>
+                <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+              </div>
+              <form onSubmit={handleSubmit} className="p-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Project Name *</label>
+                  <input type="text" required value={formData.project_name} onChange={(e) => setFormData({ ...formData, project_name: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl" placeholder="e.g., Wedding Invitation Cards" />
+                </div>
+
+                {/* Client Selection */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Client</label>
+                  <div className="flex gap-2">
+                    <select value={formData.client_id} onChange={(e) => setFormData({ ...formData, client_id: e.target.value })} className="flex-1 px-3 py-2 border rounded-xl">
+                      <option value="">Select Client</option>
+                      {clients.map(c => <option key={c.id} value={c.id}>{c.name} {c.company && `(${c.company})`}</option>)}
+                    </select>
+                    <button type="button" onClick={() => setShowAddClientModal(true)}
+                      className="px-3 py-2 bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200 flex items-center gap-1">
+                      <UserPlus size={16} /><span className="hidden sm:inline">Add</span>
+                    </button>
                   </div>
                 </div>
 
-                {/* Cards List */}
-                <div className="p-3 space-y-3 overflow-y-auto">
-                  {stageJobs.length > 0 ? (
-                    stageJobs.map(job => <JobCard key={job.id} job={job} />)
-                  ) : (
-                    <div className="text-center py-6 text-gray-300 text-xs italic">
-                      Empty
-                    </div>
-                  )}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Job Type</label>
+                  <select value={formData.job_type} onChange={(e) => setFormData({ ...formData, job_type: e.target.value })} className="w-full px-3 py-2 border rounded-xl">
+                    {jobTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
 
-      {/* List View */}
-      {viewMode === 'list' && filteredJobs.length > 0 && (
-        <div className="bg-white rounded-xl border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Job</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Client</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Stage</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Amount</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Deadline</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {filteredJobs.map(job => (
-                  <tr key={job.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => handleViewDetail(job)}>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm text-indigo-600">{job.job_number}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${getPriorityBadge(job.priority)}`}>{job.priority}</span>
-                      </div>
-                      <p className="text-sm font-medium">{job.project_name}</p>
-                    </td>
-                    <td className="px-4 py-3 text-sm">{job.client?.name || '-'}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-1 rounded-full text-white ${stages.find(s => s.id === job.current_stage)?.color}`}>
-                        {stages.find(s => s.id === job.current_stage)?.name}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${getPaymentBadge(job.payment_status)}`}>
-                        {formatCurrency(job.amount_received)} / {formatCurrency(job.total_amount)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      {job.client_deadline ? (
-                        <span className={isOverdue(job.client_deadline, job.current_stage) ? 'text-red-600 font-medium' : ''}>
-                          {new Date(job.client_deadline).toLocaleDateString('en-IN')}
-                        </span>
-                      ) : '-'}
-                    </td>
-                    <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => handleEdit(job)} className="p-2 hover:bg-gray-100 rounded-lg"><Edit size={16} className="text-gray-500" /></button>
-                        <button onClick={() => handleDelete(job.id)} className="p-2 hover:bg-red-50 rounded-lg"><Trash2 size={16} className="text-red-500" /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Quantity</label>
+                    <input type="number" min="1" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
+                      className="w-full px-3 py-2 border rounded-xl" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Rate/Pc (₹)</label>
+                    <input type="number" min="0" step="0.01" value={formData.quote_per_piece} onChange={(e) => setFormData({ ...formData, quote_per_piece: parseFloat(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 border rounded-xl" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">GST %</label>
+                    <select value={formData.gst_rate} onChange={(e) => setFormData({ ...formData, gst_rate: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-xl">
+                      <option value={0}>0%</option>
+                      <option value={5}>5%</option>
+                      <option value={12}>12%</option>
+                      <option value={18}>18%</option>
+                      <option value={28}>28%</option>
+                    </select>
+                  </div>
+                </div>
 
-      {/* Add/Edit Job Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto animate-scale-in">
-            <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white rounded-t-2xl z-10">
-              <h2 className="text-lg font-bold">{editingJob ? 'Edit Job' : 'New Job'}</h2>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+                {/* Amount Preview */}
+                <div className="bg-gray-50 rounded-xl p-4 grid grid-cols-3 gap-4 text-center">
+                  <div><p className="text-xs text-gray-500">Subtotal</p><p className="font-semibold">{formatCurrency(formData.quantity * formData.quote_per_piece)}</p></div>
+                  <div><p className="text-xs text-gray-500">GST ({formData.gst_rate}%)</p><p className="font-semibold text-blue-600">{formatCurrency(formData.quantity * formData.quote_per_piece * formData.gst_rate / 100)}</p></div>
+                  <div><p className="text-xs text-gray-500">Total</p><p className="font-bold text-indigo-600">{formatCurrency(formData.quantity * formData.quote_per_piece * (1 + formData.gst_rate / 100))}</p></div>
+                </div>
+
+                {/* Designer Selection */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Designer</label>
+                  <select value={formData.designer_id} onChange={(e) => setFormData({ ...formData, designer_id: e.target.value })} className="w-full px-3 py-2 border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Select Designer</option>
+                    {designers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </select>
+                </div>
+
+                {/* Vendor Selection */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Vendor</label>
+                  <div className="flex gap-2">
+                    <select value={formData.vendor_id} onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })} className="flex-1 px-3 py-2 border rounded-xl">
+                      <option value="">Select Vendor</option>
+                      {vendors.map(v => <option key={v.id} value={v.id}>{v.name} {v.category && `(${v.category})`}</option>)}
+                    </select>
+                    <button type="button" onClick={() => setShowAddVendorModal(true)}
+                      className="px-3 py-2 bg-orange-100 text-orange-700 rounded-xl hover:bg-orange-200 flex items-center gap-1">
+                      <UserPlus size={16} /><span className="hidden sm:inline">Add</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Priority</label>
+                    <select value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: e.target.value })} className="w-full px-3 py-2 border rounded-xl">
+                      {priorities.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Current Stage</label>
+                    <select value={formData.current_stage} onChange={(e) => setFormData({ ...formData, current_stage: e.target.value })} className="w-full px-3 py-2 border rounded-xl">
+                      {stages.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Deadline</label>
+                  <input type="date" value={formData.client_deadline} onChange={(e) => setFormData({ ...formData, client_deadline: e.target.value })} className="w-full px-3 py-2 border rounded-xl" />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200">
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {saving && <Loader2 size={16} className="animate-spin" />}
+                    {editingJob ? 'Update Job' : 'Create Job'}
+                  </button>
+                </div>
+              </form>
             </div>
-            <form onSubmit={handleSubmit} className="p-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Project Name *</label>
-                <input type="text" required value={formData.project_name} onChange={(e) => setFormData({ ...formData, project_name: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-xl" placeholder="e.g., Wedding Invitation Cards" />
-              </div>
-
-              {/* Client Selection */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Client</label>
-                <div className="flex gap-2">
-                  <select value={formData.client_id} onChange={(e) => setFormData({ ...formData, client_id: e.target.value })} className="flex-1 px-3 py-2 border rounded-xl">
-                    <option value="">Select Client</option>
-                    {clients.map(c => <option key={c.id} value={c.id}>{c.name} {c.company && `(${c.company})`}</option>)}
-                  </select>
-                  <button type="button" onClick={() => setShowAddClientModal(true)}
-                    className="px-3 py-2 bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200 flex items-center gap-1">
-                    <UserPlus size={16} /><span className="hidden sm:inline">Add</span>
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Job Type</label>
-                <select value={formData.job_type} onChange={(e) => setFormData({ ...formData, job_type: e.target.value })} className="w-full px-3 py-2 border rounded-xl">
-                  {jobTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Quantity</label>
-                  <input type="number" min="1" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
-                    className="w-full px-3 py-2 border rounded-xl" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Rate/Pc (₹)</label>
-                  <input type="number" min="0" step="0.01" value={formData.quote_per_piece} onChange={(e) => setFormData({ ...formData, quote_per_piece: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border rounded-xl" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">GST %</label>
-                  <select value={formData.gst_rate} onChange={(e) => setFormData({ ...formData, gst_rate: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-xl">
-                    <option value={0}>0%</option>
-                    <option value={5}>5%</option>
-                    <option value={12}>12%</option>
-                    <option value={18}>18%</option>
-                    <option value={28}>28%</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Amount Preview */}
-              <div className="bg-gray-50 rounded-xl p-4 grid grid-cols-3 gap-4 text-center">
-                <div><p className="text-xs text-gray-500">Subtotal</p><p className="font-semibold">{formatCurrency(formData.quantity * formData.quote_per_piece)}</p></div>
-                <div><p className="text-xs text-gray-500">GST ({formData.gst_rate}%)</p><p className="font-semibold text-blue-600">{formatCurrency(formData.quantity * formData.quote_per_piece * formData.gst_rate / 100)}</p></div>
-                <div><p className="text-xs text-gray-500">Total</p><p className="font-bold text-indigo-600">{formatCurrency(formData.quantity * formData.quote_per_piece * (1 + formData.gst_rate / 100))}</p></div>
-              </div>
-
-              {/* Designer Selection */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Designer</label>
-                <select value={formData.designer_id} onChange={(e) => setFormData({ ...formData, designer_id: e.target.value })} className="w-full px-3 py-2 border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500">
-                  <option value="">Select Designer</option>
-                  {designers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                </select>
-              </div>
-
-              {/* Vendor Selection */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Vendor</label>
-                <div className="flex gap-2">
-                  <select value={formData.vendor_id} onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })} className="flex-1 px-3 py-2 border rounded-xl">
-                    <option value="">Select Vendor</option>
-                    {vendors.map(v => <option key={v.id} value={v.id}>{v.name} {v.category && `(${v.category})`}</option>)}
-                  </select>
-                  <button type="button" onClick={() => setShowAddVendorModal(true)}
-                    className="px-3 py-2 bg-orange-100 text-orange-700 rounded-xl hover:bg-orange-200 flex items-center gap-1">
-                    <UserPlus size={16} /><span className="hidden sm:inline">Add</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Priority</label>
-                  <select value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: e.target.value })} className="w-full px-3 py-2 border rounded-xl">
-                    {priorities.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Current Stage</label>
-                  <select value={formData.current_stage} onChange={(e) => setFormData({ ...formData, current_stage: e.target.value })} className="w-full px-3 py-2 border rounded-xl">
-                    {stages.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Deadline</label>
-                <input type="date" value={formData.client_deadline} onChange={(e) => setFormData({ ...formData, client_deadline: e.target.value })} className="w-full px-3 py-2 border rounded-xl" />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200">
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {saving && <Loader2 size={16} className="animate-spin" />}
-                  {editingJob ? 'Update Job' : 'Create Job'}
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Payment Modal */}
-      {showPaymentModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm animate-scale-in">
-            <div className="p-4 border-b">
-              <h3 className="font-bold text-gray-900">Add Payment</h3>
-              <p className="text-sm text-gray-500">{selectedJob?.project_name}</p>
-            </div>
-            <div className="p-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Amount Received</label>
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    autoFocus
-                    value={paymentAmount}
-                    onChange={e => setPaymentAmount(parseFloat(e.target.value) || 0)}
-                    className="flex-1 px-4 py-3 text-xl font-bold border rounded-xl focus:ring-2 focus:ring-green-500"
-                  />
-                  <select
-                    value={paymentMode}
-                    onChange={(e) => setPaymentMode(e.target.value as PaymentMode)}
-                    className="w-1/3 px-3 py-3 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="cash">Cash</option>
-                    <option value="upi">UPI / GPay</option>
-                    <option value="bank_transfer">Bank Transfer</option>
-                    <option value="cheque">Cheque</option>
-                    <option value="card">Card</option>
-                  </select>
-                </div>
-                <p className="text-sm text-gray-500 mt-1">
-                  Total: {formatCurrency(selectedJob?.total_amount || 0)} |
-                  Pending: {formatCurrency((selectedJob?.total_amount || 0) - (selectedJob?.amount_received || 0))}
-                </p>
+      {
+        showPaymentModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl w-full max-w-sm animate-scale-in">
+              <div className="p-4 border-b">
+                <h3 className="font-bold text-gray-900">Add Payment</h3>
+                <p className="text-sm text-gray-500">{selectedJob?.project_name}</p>
               </div>
-              <div className="flex gap-3">
-                <button onClick={() => setShowPaymentModal(false)} className="flex-1 px-4 py-2 text-gray-600 border rounded-xl">Cancel</button>
-                <button onClick={submitPayment} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-xl">Confirm</button>
+              <div className="p-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Amount Received</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      autoFocus
+                      value={paymentAmount}
+                      onChange={e => setPaymentAmount(parseFloat(e.target.value) || 0)}
+                      className="flex-1 px-4 py-3 text-xl font-bold border rounded-xl focus:ring-2 focus:ring-green-500"
+                    />
+                    <select
+                      value={paymentMode}
+                      onChange={(e) => setPaymentMode(e.target.value as PaymentMode)}
+                      className="w-1/3 px-3 py-3 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="cash">Cash</option>
+                      <option value="upi">UPI / GPay</option>
+                      <option value="bank_transfer">Bank Transfer</option>
+                      <option value="cheque">Cheque</option>
+                      <option value="card">Card</option>
+                    </select>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Total: {formatCurrency(selectedJob?.total_amount || 0)} |
+                    Pending: {formatCurrency((selectedJob?.total_amount || 0) - (selectedJob?.amount_received || 0))}
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={() => setShowPaymentModal(false)} className="flex-1 px-4 py-2 text-gray-600 border rounded-xl">Cancel</button>
+                  <button onClick={submitPayment} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-xl">Confirm</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Quick Add Modals (simplified versions) */}
       {/* Client Quick Add */}
-      {showAddClientModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm animate-scale-in">
-            <div className="p-4 border-b flex justify-between items-center">
-              <h3 className="font-bold">Quick Add Client</h3>
-              <button onClick={() => setShowAddClientModal(false)}><X size={20} /></button>
-            </div>
-            <div className="p-4 space-y-3">
-              <input type="text" placeholder="Name" className="w-full px-3 py-2 border rounded-xl" value={newClient.name} onChange={e => setNewClient({ ...newClient, name: e.target.value })} />
-              <input type="text" placeholder="Phone" className="w-full px-3 py-2 border rounded-xl" value={newClient.phone} onChange={e => setNewClient({ ...newClient, phone: e.target.value })} />
-              <input type="text" placeholder="Company" className="w-full px-3 py-2 border rounded-xl" value={newClient.company} onChange={e => setNewClient({ ...newClient, company: e.target.value })} />
-              <button onClick={handleAddClient} className="w-full py-2 bg-indigo-600 text-white rounded-xl">Add Client</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showAddVendorModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm animate-scale-in">
-            <div className="p-4 border-b flex justify-between items-center">
-              <h3 className="font-bold">Quick Add Vendor</h3>
-              <button onClick={() => setShowAddVendorModal(false)}><X size={20} /></button>
-            </div>
-            <div className="p-4 space-y-3">
-              <input type="text" placeholder="Name" className="w-full px-3 py-2 border rounded-xl" value={newVendor.name} onChange={e => setNewVendor({ ...newVendor, name: e.target.value })} />
-              <input type="text" placeholder="Phone" className="w-full px-3 py-2 border rounded-xl" value={newVendor.phone} onChange={e => setNewVendor({ ...newVendor, phone: e.target.value })} />
-              <button onClick={handleAddVendor} className="w-full py-2 bg-indigo-600 text-white rounded-xl">Add Vendor</button>
+      {
+        showAddClientModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+            <div className="bg-white rounded-2xl w-full max-w-sm animate-scale-in">
+              <div className="p-4 border-b flex justify-between items-center">
+                <h3 className="font-bold">Quick Add Client</h3>
+                <button onClick={() => setShowAddClientModal(false)}><X size={20} /></button>
+              </div>
+              <div className="p-4 space-y-3">
+                <input type="text" placeholder="Name" className="w-full px-3 py-2 border rounded-xl" value={newClient.name} onChange={e => setNewClient({ ...newClient, name: e.target.value })} />
+                <input type="text" placeholder="Phone" className="w-full px-3 py-2 border rounded-xl" value={newClient.phone} onChange={e => setNewClient({ ...newClient, phone: e.target.value })} />
+                <input type="text" placeholder="Company" className="w-full px-3 py-2 border rounded-xl" value={newClient.company} onChange={e => setNewClient({ ...newClient, company: e.target.value })} />
+                <button onClick={handleAddClient} className="w-full py-2 bg-indigo-600 text-white rounded-xl">Add Client</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
+
+      {
+        showAddVendorModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+            <div className="bg-white rounded-2xl w-full max-w-sm animate-scale-in">
+              <div className="p-4 border-b flex justify-between items-center">
+                <h3 className="font-bold">Quick Add Vendor</h3>
+                <button onClick={() => setShowAddVendorModal(false)}><X size={20} /></button>
+              </div>
+              <div className="p-4 space-y-3">
+                <input type="text" placeholder="Name" className="w-full px-3 py-2 border rounded-xl" value={newVendor.name} onChange={e => setNewVendor({ ...newVendor, name: e.target.value })} />
+                <input type="text" placeholder="Phone" className="w-full px-3 py-2 border rounded-xl" value={newVendor.phone} onChange={e => setNewVendor({ ...newVendor, phone: e.target.value })} />
+                <button onClick={handleAddVendor} className="w-full py-2 bg-indigo-600 text-white rounded-xl">Add Vendor</button>
+              </div>
+            </div>
+          </div>
+        )
+      }
 
 
-    </div>
+    </div >
   );
 }

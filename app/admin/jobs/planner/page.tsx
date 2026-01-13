@@ -17,9 +17,10 @@ import {
     verticalListSortingStrategy,
     useSortable
 } from '@dnd-kit/sortable';
+import Link from 'next/link';
 import { CSS } from '@dnd-kit/utilities';
 import {
-    Layers, Package, Printer, ArrowRight, CheckCircle,
+    Layers, Package, Printer, ArrowRight, ArrowLeft, CheckCircle,
     AlertCircle, Filter, Plus, X, Box, FileText, Settings
 } from 'lucide-react';
 import { useJobs } from '@/lib/hooks';
@@ -123,12 +124,17 @@ export default function PrintPlannerPage() {
         <div className="h-[calc(100vh-100px)] flex flex-col gap-6 animate-fade-in">
             {/* Header */}
             <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        <Layers className="text-indigo-600" />
-                        Print Planner
-                    </h1>
-                    <p className="text-gray-500 text-sm">Group approved designs into optimized production batches</p>
+                <div className="flex items-center gap-3">
+                    <Link href="/admin/jobs" className="p-2 hover:bg-gray-100 rounded-lg">
+                        <ArrowLeft size={20} className="text-gray-600" />
+                    </Link>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                            <Layers className="text-indigo-600" />
+                            Print Planner
+                        </h1>
+                        <p className="text-gray-500 text-sm hidden sm:block">Group approved designs into optimized production batches</p>
+                    </div>
                 </div>
                 <div className="flex gap-2">
                     {/* Filters placeholder */}

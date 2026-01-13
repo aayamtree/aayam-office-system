@@ -97,7 +97,7 @@ export default function JobQueuePage() {
     <div className="space-y-4 lg:space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Link href="/admin/cmyk-print" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
+        <Link href="/admin/jobs" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
           <ArrowLeft size={20} />
         </Link>
         <div>

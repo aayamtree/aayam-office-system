@@ -84,24 +84,7 @@ export default function CMYKPrintPage() {
       </div>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-
-        {/* NEW: Print Planner */}
-        <Link href="/admin/cmyk-print/planner" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow group relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-3 opacity-10">
-            <ListTodo size={64} className="text-indigo-600" />
-          </div>
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <ListTodo size={24} className="text-indigo-600" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Planner</h2>
-              <p className="text-sm text-gray-500">Create Batches</p>
-            </div>
-          </div>
-          <div className="text-sm text-indigo-600 font-medium">● Start New Run →</div>
-        </Link>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         <Link href="/admin/cmyk-print/retail-pos" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
           <div className="flex items-center gap-4 mb-4">
@@ -131,19 +114,6 @@ export default function CMYKPrintPage() {
               ● {lowStockItems.length} Low
             </span>
           </div>
-        </Link>
-
-        <Link href="/admin/cmyk-print/job-queue" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Printer size={24} className="text-amber-600" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Job Queue</h2>
-              <p className="text-sm text-gray-500">Track Production</p>
-            </div>
-          </div>
-          <div className="text-sm text-amber-600">● {pendingJobs.length} Active</div>
         </Link>
       </div>
 
@@ -179,7 +149,7 @@ export default function CMYKPrintPage() {
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Pending Jobs</h2>
-            <Link href="/admin/cmyk-print/job-queue" className="text-sm text-indigo-600 hover:underline">
+            <Link href="/admin/jobs/queue" className="text-sm text-indigo-600 hover:underline">
               View All →
             </Link>
           </div>

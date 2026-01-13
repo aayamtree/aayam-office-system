@@ -43,6 +43,11 @@ const menuItems: MenuItem[] = [
     icon: Briefcase,
     href: '/admin/jobs',
     allowedRoles: ['admin', 'account'],
+    submenu: [
+      { name: 'Overview', href: '/admin/jobs' },
+      { name: 'Print Planner', href: '/admin/jobs/planner' },
+      { name: 'Production Queue', href: '/admin/jobs/queue' },
+    ]
   },
   {
     name: 'Design Tasks',
@@ -113,8 +118,6 @@ const menuItems: MenuItem[] = [
     allowedRoles: ['admin', 'account', 'cmyk'],
     submenu: [
       { name: 'Station Overview', href: '/admin/cmyk-print' },
-      { name: 'Print Planner', href: '/admin/cmyk-print/planner' },
-      { name: 'Job Queue', href: '/admin/cmyk-print/job-queue' },
       { name: 'Paper Stock', href: '/admin/cmyk-print/paper-stock' },
       { name: 'Retail POS', href: '/admin/cmyk-print/retail-pos' },
     ]
