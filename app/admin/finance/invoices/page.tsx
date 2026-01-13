@@ -38,6 +38,7 @@ export default function InvoicesPage() {
     paidAmount: 0,
     status: 'draft' as Invoice['payment_status'],
     notes: '',
+    jobId: '',
   });
 
   // Convert Database Invoice to PDF Data format
@@ -240,6 +241,7 @@ export default function InvoicesPage() {
       paidAmount: 0,
       status: 'pending',
       notes: '',
+      jobId: '',
     });
     setIsEditing(false);
     setShowModal(true);
@@ -263,6 +265,7 @@ export default function InvoicesPage() {
       paidAmount: inv.amount_paid,
       status: inv.payment_status,
       notes: inv.notes || '',
+      jobId: inv.job_id || '',
     });
     setSelectedInvoice(inv);
     setIsEditing(true);
@@ -289,6 +292,7 @@ export default function InvoicesPage() {
         amount_paid: formData.paidAmount,
         balance_due: formData.totalAmount - formData.paidAmount,
         notes: formData.notes,
+        job_id: formData.jobId || undefined,
         items: formData.items,
       };
 
@@ -379,6 +383,7 @@ export default function InvoicesPage() {
       paidAmount: 0,
       status: 'pending',
       notes: `Generated from Job #${job.job_number}`,
+      jobId: job.id,
     });
 
     setIsEditing(false);
@@ -576,13 +581,30 @@ export default function InvoicesPage() {
                     <select
                       required
                       value={formData.clientId}
-                      onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, clientId: e.target.value, jobId: '' })}
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
                     >
                       <option value="">Select Client</option>
                       {clients.map(c => (
                         <option key={c.id} value={c.id}>{c.company} ({c.name})</option>
                       ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Job ID</label>
+                    <select
+                      value={formData.jobId}
+                      onChange={(e) => setFormData({ ...formData, jobId: e.target.value })}
+                      disabled={!formData.clientId}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm disabled:bg-gray-100 disabled:text-gray-400"
+                    >
+                      <option value="">Select Job (Optional)</option>
+                      {jobs
+                        .filter(j => j.client_id === formData.clientId && (j.job_number.startsWith('AAY-')))
+                        .map(j => (
+                          <option key={j.id} value={j.id}>{j.job_number} - {j.project_name}</option>
+                        ))}
                     </select>
                   </div>
 
