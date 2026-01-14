@@ -160,7 +160,7 @@ export default function LeadsPage() {
   const handleConvertToClient = async (lead: Lead) => {
     if (!confirm(`Convert "${lead.name}" to Client?`)) return;
     try {
-      await convertToClient(lead.id);
+      await convertToClient(lead.id, profile?.id || user?.id || '');
       await refetch();
     } catch (e) {
       alert('Conversion failed');

@@ -8,8 +8,10 @@ import {
 } from 'lucide-react';
 import { useClients } from '@/lib/hooks';
 import { Client } from '@/types/database';
+import { useAuth } from '@/lib/auth-context';
 
 export default function ClientsPage() {
+  const { profile } = useAuth();
   const { clients, loading, createClient, updateClient, deleteClient } = useClients();
 
   const [saving, setSaving] = useState(false);
@@ -29,6 +31,12 @@ export default function ClientsPage() {
       client.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.phone?.includes(searchQuery);
     const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' ? client.is_active : !client.is_active);
+
+    // RBAC: Marketers only see their own clients
+    if (profile?.role === 'marketing') {
+      if (client.created_by !== profile.id) return false;
+    }
+
     return matchesSearch && matchesStatus;
   });
 
@@ -82,7 +90,8 @@ export default function ClientsPage() {
         await createClient({
           ...formData,
           client_type: 'regular',
-          credit_limit: 0
+          credit_limit: 0,
+          created_by: profile?.id // Explicitly track creator
         });
       }
       setShowModal(false);
@@ -137,11 +146,27 @@ export default function ClientsPage() {
 
       <div className="hidden lg:block bg-white rounded-xl shadow-sm border overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b"><tr><th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Client</th><th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Contact</th><th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">City</th><th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Status</th><th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Actions</th></tr></thead>
+          <thead className="bg-gray-50 border-b">
+            <tr>
+              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Client</th>
+              {profile?.role === 'admin' && <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Source</th>}
+              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Contact</th>
+              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">City</th>
+              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Status</th>
+              <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+            </tr>
+          </thead>
           <tbody className="divide-y">
             {filteredClients.map((client) => (
               <tr key={client.id} className="hover:bg-gray-50/50 transition-colors">
                 <td className="px-6 py-4"><div className="flex items-center gap-3"><div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center"><span className="text-indigo-600 font-semibold">{client.name?.charAt(0)}</span></div><div><p className="font-medium text-gray-900">{client.name}</p><p className="text-sm text-gray-500">{client.company}</p></div></div></td>
+                {profile?.role === 'admin' && (
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${client.created_by ? 'bg-indigo-50 text-indigo-700' : 'bg-gray-100 text-gray-600'}`}>
+                      {client.created_by ? 'Marketing / New' : 'Existing'}
+                    </span>
+                  </td>
+                )}
                 <td className="px-6 py-4"><p className="text-gray-900">{client.phone}</p><p className="text-sm text-gray-500">{client.email}</p></td>
                 <td className="px-6 py-4 text-gray-600">{client.city || '-'}</td>
                 <td className="px-6 py-4"><span className={`px-2 py-1 text-xs rounded-full ${client.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{client.is_active ? 'Active' : 'Inactive'}</span></td>

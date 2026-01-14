@@ -480,7 +480,7 @@ export function useLeads() {
     return { data, error: error?.message };
   };
 
-  const convertToClient = async (leadId: string) => {
+  const convertToClient = async (leadId: string, userId: string) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
     // Get lead data
@@ -502,7 +502,8 @@ export function useLeads() {
         phone: lead.phone,
         notes: lead.notes,
         is_active: true,
-        outstanding_balance: 0
+        outstanding_balance: 0,
+        created_by: userId // Owner is the user who converts
       }])
       .select()
       .single();

@@ -14,7 +14,7 @@ import { Lead } from '@/types/database';
 
 export default function LeadsPage() {
     const { user, profile } = useAuth();
-    const { leads, loading: leadsLoading, createLead, updateLead, deleteLead, refetch } = useLeads();
+    const { leads, loading: leadsLoading, createLead, updateLead, deleteLead, refetch, convertToClient } = useLeads();
     const { createFollowUp } = useFollowUps();
 
     // State Management
@@ -44,6 +44,24 @@ export default function LeadsPage() {
             alert('Operation failed: ' + e.message);
         }
     };
+
+    const handleConvertToClient = async (lead: Lead) => {
+        if (!confirm(`Convert "${lead.name}" to Client?`)) return;
+        try {
+            const currentUserId = profile?.id || user?.id;
+            if (!currentUserId) { alert('User not authenticated'); return; }
+
+            const res = await convertToClient(lead.id, currentUserId);
+            if (res.error) throw new Error(res.error);
+
+            await refetch();
+            alert(`Converted ${lead.name} to Client! You can now manage them in CRM > Clients.`);
+        } catch (e: any) {
+            console.error(e);
+            alert('Conversion failed: ' + e.message);
+        }
+    };
+
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [showModal, setShowModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
@@ -329,6 +347,16 @@ export default function LeadsPage() {
                                             className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
                                         >
                                             <CheckCircle size={14} /> Move to Follow-up
+                                        </button>
+                                    )}
+
+                                    {lead.status !== 'converted' && (
+                                        <button
+                                            onClick={() => handleConvertToClient(lead)}
+                                            className="text-xs font-bold text-green-600 hover:bg-green-50 px-2 py-1 rounded-lg transition-colors flex items-center gap-1"
+                                            title="Convert to Client"
+                                        >
+                                            <CheckCircle size={14} /> Convert
                                         </button>
                                     )}
                                 </div>

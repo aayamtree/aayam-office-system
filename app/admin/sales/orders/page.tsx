@@ -18,7 +18,11 @@ export default function OrdersPage() {
   // Filter jobs for Marketing role
   const jobs = useMemo(() => {
     if (profile?.role === 'marketing') {
-      return allJobs.filter(job => job.sales_person_id === profile.id || job.created_by === profile.id);
+      return allJobs.filter(job =>
+        job.sales_person_id === profile.id ||
+        job.created_by === profile.id ||
+        (job.client && job.client.created_by === profile.id)
+      );
     }
     return allJobs;
   }, [allJobs, profile]);
