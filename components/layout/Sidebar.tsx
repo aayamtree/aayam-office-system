@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useDashboardStats } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import {
   LayoutDashboard,
@@ -159,6 +160,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { profile, signOut } = useAuth();
   const [expandedItems, setExpandedItems] = useState<string[]>(['Design Studio', 'Marketing', 'Finance', 'Sales', 'CRM']);
 
+  const { stats } = useDashboardStats(); // Fetch stats for badges
+
   const toggleExpanded = (name: string) => {
     setExpandedItems(prev =>
       prev.includes(name)
@@ -289,20 +292,35 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 {/* Submenu */}
                 {hasSubmenu && (isExpanded || item.name === 'Design Studio') && (
                   <div className="ml-4 mt-1 space-y-1 border-l border-white/10 pl-4">
-                    {item.submenu!.map((sub) => (
-                      <Link
-                        key={sub.href}
-                        href={sub.href}
-                        onClick={handleLinkClick}
-                        className={`block px-3 py-2 rounded-lg text-sm transition-all
+                    {item.submenu!.map((sub) => {
+                      let badge = 0;
+                      if (sub.name === 'Leads') badge = stats?.leadsThisMonth || 0;
+                      if (sub.name === 'Follow-ups') badge = stats?.alerts?.followUpsDue || 0;
+                      if (sub.name === 'Production Queue') badge = (stats?.pipeline?.printing || 0) + (stats?.pipeline?.finishing || 0);
+                      // if (sub.name === 'My Queue' && profile?.id && stats?.myTasks) badge = stats.myTasks; 
+
+                      const showBadge = badge > 0;
+
+                      return (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          onClick={handleLinkClick}
+                          className={`group flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all
                           ${isSubActive(sub.href)
-                            ? 'bg-white/10 text-white font-medium'
-                            : 'text-gray-500 hover:text-white'
-                          }`}
-                      >
-                        {sub.name}
-                      </Link>
-                    ))}
+                              ? 'bg-white/10 text-white font-medium'
+                              : 'text-gray-500 hover:text-white'
+                            }`}
+                        >
+                          <span>{sub.name}</span>
+                          {showBadge && (
+                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${isSubActive(sub.href) ? 'bg-white text-indigo-600' : 'bg-white/10 text-gray-400 group-hover:bg-indigo-500 group-hover:text-white'}`}>
+                              {badge}
+                            </span>
+                          )}
+                        </Link>
+                      )
+                    })}
                   </div>
                 )}
               </div>
