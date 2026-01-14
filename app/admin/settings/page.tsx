@@ -17,9 +17,10 @@ interface Profile {
 
 
 import DesignersManager from '@/components/settings/DesignersManager';
+import ProductionSettings from './production/page';
 
 export default function UserManagementPage() {
-  const [activeTab, setActiveTab] = useState<'users' | 'designers'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'designers' | 'production'>('users');
 
   // ... (existing state for Users) ...
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -137,6 +138,13 @@ export default function UserManagementPage() {
               }`}
           >
             Designers Directory
+          </button>
+          <button
+            onClick={() => setActiveTab('production')}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'production' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            Production
           </button>
         </div>
       </div>
@@ -304,8 +312,10 @@ export default function UserManagementPage() {
             </div>
           )}
         </>
-      ) : (
+      ) : activeTab === 'designers' ? (
         <DesignersManager />
+      ) : (
+        <ProductionSettings />
       )}
     </div>
   );
