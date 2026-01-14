@@ -326,7 +326,17 @@ export default function DesignerWorkspace() {
     if (selectedNote?.id === id) setSelectedNote(null);
   };
 
-  const [newTaskData, setNewTaskData] = useState({
+  const [newTaskData, setNewTaskData] = useState<{
+    title: string;
+    clientId: string;
+    jobType: string;
+    deadline: string;
+    description: string;
+    priority: string;
+    driveLink: string;
+    designerId: string;
+    file?: File | null;
+  }>({
     title: '',
     clientId: '',
     jobType: 'Design',
@@ -334,7 +344,8 @@ export default function DesignerWorkspace() {
     description: '',
     priority: 'normal',
     driveLink: '',
-    designerId: ''
+    designerId: '',
+    file: null
   });
 
   // Safety: Prevent infinite loading
@@ -509,6 +520,34 @@ export default function DesignerWorkspace() {
     }
 
     try {
+      let initialFiles = [];
+
+      // 1. Add Drive Link if exists
+      if (newTaskData.driveLink) {
+        initialFiles.push({ name: 'Drive Link', url: newTaskData.driveLink, type: 'link', size: 0, uploaded_at: new Date().toISOString() });
+      }
+
+      // 2. Upload File if selected
+      if (newTaskData.file) {
+        const file = newTaskData.file;
+        const fileExt = file.name.split('.').pop();
+        // Use Timestamp + Random to ensure uniqueness in temp folder
+        const filePath = `temp-uploads/${Date.now()}_${Math.floor(Math.random() * 1000)}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage.from('files').upload(filePath, file);
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage.from('files').getPublicUrl(filePath);
+
+        initialFiles.push({
+          name: file.name,
+          url: publicUrl,
+          type: file.type,
+          size: file.size,
+          uploaded_at: new Date().toISOString()
+        });
+      }
+
       // Find selected client to get company name if needed, but ID is enough for DB
       const { error } = await createJob({
         project_name: newTaskData.title,
@@ -522,7 +561,7 @@ export default function DesignerWorkspace() {
         amount_received: 0,
         payment_status: 'pending',
         designer_id: newTaskData.designerId || profile?.id, // Use selected or self
-        files: newTaskData.driveLink ? [{ name: 'Drive Link', url: newTaskData.driveLink, type: 'link', size: 0, uploaded_at: new Date().toISOString() }] : []
+        files: initialFiles
       } as any);
 
       if (error) throw new Error(error);
@@ -530,7 +569,7 @@ export default function DesignerWorkspace() {
       alert('Project Created Successfully! Admin has been notified.');
       setIsNewTaskModalOpen(false);
       // Reset critical fields
-      setNewTaskData(prev => ({ ...prev, title: '', description: '', deadline: '', driveLink: '' }));
+      setNewTaskData(prev => ({ ...prev, title: '', description: '', deadline: '', driveLink: '', file: null }));
     } catch (e: any) {
       alert('Error creating project: ' + e.message);
     } finally {
@@ -1351,13 +1390,24 @@ export default function DesignerWorkspace() {
                     <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50 space-y-3">
                       <label className="text-xs font-bold text-gray-700 flex items-center gap-2">
                         <Folder size={14} className="text-blue-600" />
-                        Google Drive Assets Folder
+                        Assets (Drive Link or File Upload)
                       </label>
                       <input type="url" className="w-full border border-blue-200 rounded-lg px-4 py-3 text-sm focus:ring-2 ring-blue-500/20 focus:border-blue-500 placeholder:text-blue-300 bg-white"
                         placeholder="https://drive.google.com/drive/folders/..."
                         value={newTaskData.driveLink}
                         onChange={e => setNewTaskData({ ...newTaskData, driveLink: e.target.value })}
                       />
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-xs font-bold text-gray-400">OR</span>
+                        <input type="file"
+                          onChange={e => {
+                            if (e.target.files && e.target.files.length > 0) {
+                              setNewTaskData({ ...newTaskData, file: e.target.files[0] });
+                            }
+                          }}
+                          className="text-xs text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200"
+                        />
+                      </div>
                     </div>
 
                     <div>
