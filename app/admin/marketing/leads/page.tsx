@@ -84,6 +84,7 @@ export default function LeadsPage() {
         requirement: '',
         nextFollowUp: '',
         notes: '',
+        leadDate: '',
     });
 
     // --- ACTIONS ---
@@ -103,6 +104,7 @@ export default function LeadsPage() {
             requirement: '',
             nextFollowUp: '',
             notes: '',
+            leadDate: new Date().toISOString().split('T')[0],
         });
         setIsEditing(false);
         setShowModal(true);
@@ -123,6 +125,7 @@ export default function LeadsPage() {
             requirement: lead.requirement || '',
             nextFollowUp: lead.next_follow_up || '',
             notes: lead.notes || '',
+            leadDate: lead.created_at ? new Date(lead.created_at).toISOString().split('T')[0] : '',
         });
         setSelectedLead(lead);
         setIsEditing(true);
@@ -180,7 +183,8 @@ export default function LeadsPage() {
                 result = await createLead({
                     ...payload,
                     created_by: currentUserId,
-                    assigned_to: currentUserId
+                    assigned_to: currentUserId,
+                    created_at: formData.leadDate ? new Date(formData.leadDate).toISOString() : undefined
                 });
             }
 
@@ -390,7 +394,18 @@ export default function LeadsPage() {
                                 </div>
                             </div>
 
+                            {/* Date & Source */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1.5">Entry Date</label>
+                                    <input
+                                        type="date"
+                                        value={formData.leadDate}
+                                        onChange={(e) => setFormData({ ...formData, leadDate: e.target.value })}
+                                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
+                                    />
+                                    <p className="text-xs text-gray-400 mt-1 ml-1">Example: "When Lead Created"</p>
+                                </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-600 mb-1.5">Source</label>
                                     <select value={formData.source} onChange={e => setFormData({ ...formData, source: e.target.value as any })} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500">
@@ -400,6 +415,17 @@ export default function LeadsPage() {
                                         <option value="social_media">Social Media</option>
                                         <option value="cold_call">Cold Call</option>
                                         <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-600 mb-1.5">Service Req.</label>
+                                    <select value={formData.leadType} onChange={e => setFormData({ ...formData, leadType: e.target.value as any })} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                                        <option value="printing_only">Printing Only</option>
+                                        <option value="designing_only">Designing Only</option>
+                                        <option value="design_printing">Design + Printing</option>
                                     </select>
                                 </div>
                                 <div>

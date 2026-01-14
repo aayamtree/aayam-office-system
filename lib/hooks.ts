@@ -451,7 +451,7 @@ export function useLeads() {
     orderBy: { column: 'created_at', ascending: false }
   });
 
-  const createLead = async (lead: Omit<Lead, 'id' | 'created_at' | 'updated_at' | 'lead_number' | 'assigned_user' | 'follow_ups'>) => {
+  const createLead = async (lead: Omit<Lead, 'id' | 'created_at' | 'updated_at' | 'lead_number' | 'assigned_user' | 'follow_ups'> & { created_at?: string }) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
     const { data: numberData } = await supabase.rpc('get_next_number', { counter_id: 'lead' });
