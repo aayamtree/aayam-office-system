@@ -198,6 +198,7 @@ export default function QuotationsPage() {
         // Assuming user will convert lead to client via other flow, or we should handle it here?
         // Let's pass null and see if job allows.
         sales_person_id: profile?.id || user?.id || q.created_by, // Ensure visibility for current user
+        created_by: profile?.id || user?.id, // Explicitly set ownership to converter
         // No vendor or designer initially
         job_type: 'print', // Default or derived
         quantity: q.items?.[0]?.quantity || 1,
