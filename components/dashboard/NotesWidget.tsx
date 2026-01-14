@@ -29,7 +29,28 @@ export default function NotesWidget() {
 
         let linkedJobId = undefined;
         if (jobNumber.trim()) {
-            const { data: job } = await supabase.from('jobs').select('id').eq('job_number', jobNumber.trim()).single();
+            const searchNum = jobNumber.trim();
+            // Try exact match first
+            let { data: job } = await supabase.from('jobs').select('id, job_number').eq('job_number', searchNum).single();
+
+            // If not found and is numeric, try searching with JB- prefix
+            if (!job && /^\d+$/.test(searchNum)) {
+                const { data: jobPrefix } = await supabase.from('jobs').select('id, job_number').eq('job_number', `JB-${searchNum}`).single();
+                job = jobPrefix;
+            }
+
+            // Also try searching with # prefix removal if user typed #1045
+            if (!job && searchNum.startsWith('#')) {
+                const cleanNum = searchNum.replace('#', '');
+                const { data: jobHash } = await supabase.from('jobs').select('id, job_number').eq('job_number', cleanNum).single();
+                if (!jobHash && /^\d+$/.test(cleanNum)) {
+                    const { data: jobHashPrefix } = await supabase.from('jobs').select('id, job_number').eq('job_number', `JB-${cleanNum}`).single();
+                    job = jobHashPrefix;
+                } else {
+                    job = jobHash;
+                }
+            }
+
             if (job) linkedJobId = job.id;
         }
 
