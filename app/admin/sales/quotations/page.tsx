@@ -216,11 +216,14 @@ export default function QuotationsPage() {
       }
 
       // 2. Create Job Payload
+      // Use the current logged-in user as the creator/salesperson to ensure visibility
+      const ownerId = user?.id || profile?.id || q.created_by;
+
       const jobPayload = {
         project_name: q.items?.[0]?.description || `Order from ${q.quote_number}`,
         client_id: finalClientId,
-        sales_person_id: profile?.id || user?.id || q.created_by,
-        created_by: profile?.id || user?.id,
+        sales_person_id: ownerId,
+        created_by: ownerId,
         // No vendor or designer initially
         job_type: 'print', // Default
         quantity: q.items?.[0]?.quantity || 1,

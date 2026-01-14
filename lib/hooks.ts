@@ -60,8 +60,8 @@ export function useSupabaseQuery<T>(
   };
 
   const { data, error, isLoading, mutate } = useSWR(key, fetcher, {
-    revalidateOnFocus: false, // Don't refetch on window focus (save bandwidth)
-    dedupingInterval: 5000,   // Share requests within 5 secs
+    revalidateOnFocus: true, // Auto-refetch on window focus
+    dedupingInterval: 2000,   // Reduce deduping time
     keepPreviousData: true,   // Show previous data while fetching new data
   });
 
