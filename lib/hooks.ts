@@ -862,6 +862,11 @@ export function useDashboardStats() {
       jobsCompleted: 0,
       paymentsDue: 0
     },
+    vendorStats: {
+      jobsAtVendor: 0,
+      dueToday: 0,
+      delayed: 0
+    },
     salesPerformance: [] as { month: string; value: number; active?: boolean }[],
   });
   const [loading, setLoading] = useState(true);
@@ -891,8 +896,8 @@ export function useDashboardStats() {
           // 1. Total Clients
           supabase.from('clients').select('id', { count: 'exact', head: true }),
 
-          // 2. Active Jobs for Pipeline (fetch stage and deadline)
-          supabase.from('jobs').select('id, current_stage, client_deadline').neq('current_stage', 'delivered').neq('current_stage', 'cancelled'),
+          // 2. Active Jobs for Pipeline (fetch stage, deadline, vendor info)
+          supabase.from('jobs').select('id, current_stage, client_deadline, internal_deadline, vendor_id').neq('current_stage', 'delivered').neq('current_stage', 'cancelled'),
 
           // 3. Invoices for Revenue & Payments
           supabase.from('invoices').select('total_amount, payment_status, created_at, balance_due, due_date, job_id').gte('created_at', startOfYear),
@@ -994,6 +999,12 @@ export function useDashboardStats() {
             jobsCompleted: completedJobs.count || 0,
             paymentsDue: paymentsDueTodayCount
           },
+          vendorStats: {
+            jobsAtVendor: jobs.data?.filter(j => ['printing', 'finishing'].includes(j.current_stage || '')).length || 0,
+            dueToday: jobs.data?.filter(j => ['printing', 'finishing'].includes(j.current_stage || '') && j.internal_deadline && j.internal_deadline.split('T')[0] === todayStr).length || 0,
+            delayed: jobs.data?.filter(j => ['printing', 'finishing'].includes(j.current_stage || '') && j.internal_deadline && j.internal_deadline.split('T')[0] < todayStr).length || 0
+          },
+
           salesPerformance,
         });
       } catch (error) {

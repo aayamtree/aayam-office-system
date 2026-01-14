@@ -260,6 +260,41 @@ export default function AdminDashboard() {
                   <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Follow-ups</div>
                 </div>
               </Link>
+
+              {/* --- VENDOR SNAPSHOT --- */}
+
+              {/* Jobs At Vendor */}
+              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-indigo-50 border-indigo-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-200 text-gray-500'}`}>
+                  <Printer size={16} />
+                </div>
+                <div>
+                  <div className={`text-lg font-bold leading-none ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'text-indigo-700' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.jobsAtVendor || 0}</div>
+                  <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">At Process</div>
+                </div>
+              </div>
+
+              {/* Return Today */}
+              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-cyan-50 border-cyan-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-cyan-100 text-cyan-600' : 'bg-gray-200 text-gray-500'}`}>
+                  <Truck size={16} />
+                </div>
+                <div>
+                  <div className={`text-lg font-bold leading-none ${dashboardStats.vendorStats?.dueToday > 0 ? 'text-cyan-700' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.dueToday || 0}</div>
+                  <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Return Today</div>
+                </div>
+              </div>
+
+              {/* Vendor Delayed */}
+              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.vendorStats?.delayed > 0 ? 'bg-rose-50 border-rose-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.delayed > 0 ? 'bg-rose-100 text-rose-600' : 'bg-gray-200 text-gray-500'}`}>
+                  <AlertCircle size={16} />
+                </div>
+                <div>
+                  <div className={`text-lg font-bold leading-none ${dashboardStats.vendorStats?.delayed > 0 ? 'text-rose-700' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.delayed || 0}</div>
+                  <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Vendor Late</div>
+                </div>
+              </div>
             </div>
           </div>
 
