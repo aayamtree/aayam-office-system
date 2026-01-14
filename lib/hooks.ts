@@ -853,6 +853,12 @@ export function useDashboardStats() {
       followUpsDue: 0,
       lowStock: 0,
     },
+    todaysFocus: {
+      jobsDue: 0,
+      jobsDelayed: 0,
+      jobsCompleted: 0,
+      paymentsDue: 0
+    },
     salesPerformance: [] as { month: string; value: number; active?: boolean }[],
   });
   const [loading, setLoading] = useState(true);
@@ -876,13 +882,14 @@ export function useDashboardStats() {
           dispatches,
           leadsMonth,
           leadsFollowUp,
-          lowStock
+          lowStock,
+          completedJobs
         ] = await Promise.all([
           // 1. Total Clients
           supabase.from('clients').select('id', { count: 'exact', head: true }),
 
-          // 2. Active Jobs for Pipeline (fetch stage)
-          supabase.from('jobs').select('current_stage').neq('current_stage', 'delivered').neq('current_stage', 'cancelled'),
+          // 2. Active Jobs for Pipeline (fetch stage and deadline)
+          supabase.from('jobs').select('current_stage, client_deadline').neq('current_stage', 'delivered').neq('current_stage', 'cancelled'),
 
           // 3. Invoices for Revenue & Payments
           supabase.from('invoices').select('total_amount, payment_status, created_at, balance_due, due_date').gte('created_at', startOfYear),
@@ -898,6 +905,9 @@ export function useDashboardStats() {
 
           // 7. Low Stock
           supabase.from('paper_stock').select('quantity, reorder_level'),
+
+          // 8. Jobs Completed Today
+          supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('current_stage', 'delivered').gte('updated_at', todayStr),
         ]);
 
         // Aggregations
@@ -907,18 +917,30 @@ export function useDashboardStats() {
         const pendingPayments = invoices.data?.filter(inv => inv.payment_status !== 'paid').reduce((sum, inv) => sum + (inv.balance_due || 0), 0) || 0;
 
         const overduePaymentsCount = invoices.data?.filter(inv => inv.payment_status !== 'paid' && inv.due_date && inv.due_date < todayStr).length || 0;
+        const paymentsDueTodayCount = invoices.data?.filter(inv => inv.payment_status !== 'paid' && inv.due_date && inv.due_date === todayStr).length || 0;
 
-        // Pipeline
+        // Pipeline & Jobs Focus
         const pipelineCounts: Record<string, number> = {};
+        let jobsDueTodayCount = 0;
+        let jobsDelayedCount = 0;
+
         jobs.data?.forEach(j => {
           const stage = j.current_stage || 'new';
           pipelineCounts[stage] = (pipelineCounts[stage] || 0) + 1;
+
+          // Focus Checks on Active Jobs
+          if (j.client_deadline) {
+            const deadline = j.client_deadline.split('T')[0];
+            if (deadline === todayStr) jobsDueTodayCount++;
+            if (deadline < todayStr) jobsDelayedCount++;
+          }
         });
 
         // Low Stock
         const lowStockCount = lowStock.data?.filter(item => item.quantity <= (item.reorder_level || 0)).length || 0;
 
-        // Sales Performance (Monthly)
+        // ... (Sales Performance logic same) ...
+
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const monthlySales = new Array(12).fill(0);
         invoices.data?.forEach(inv => {
@@ -945,6 +967,12 @@ export function useDashboardStats() {
             overduePayments: overduePaymentsCount,
             followUpsDue: leadsFollowUp.count || 0,
             lowStock: lowStockCount,
+          },
+          todaysFocus: {
+            jobsDue: jobsDueTodayCount,
+            jobsDelayed: jobsDelayedCount,
+            jobsCompleted: completedJobs.count || 0,
+            paymentsDue: paymentsDueTodayCount
           },
           salesPerformance,
         });
