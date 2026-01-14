@@ -120,11 +120,13 @@ export default function MarketingFollowUpsPage() {
   };
 
   const handleCreateQuote = (followUp: any) => {
-    if (!followUp.clientId) {
-      alert('This follow-up is not linked to a Client. Please convert the Lead to a Client first.');
-      return;
+    if (followUp.clientId) {
+      router.push(`/admin/marketing/quotations?new=true&clientId=${followUp.clientId}`);
+    } else if (followUp.leadId) {
+      router.push(`/admin/marketing/quotations?new=true&leadId=${followUp.leadId}`);
+    } else {
+      alert('Error: No Client or Lead linked to this follow-up.');
     }
-    router.push(`/admin/marketing/quotations?new=true&clientId=${followUp.clientId}`);
   };
 
   const getTypeInfo = (type: string) => followUpTypes.find(t => t.id === type) || followUpTypes[0];

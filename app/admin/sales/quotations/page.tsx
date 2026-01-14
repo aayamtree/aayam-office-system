@@ -51,8 +51,11 @@ export default function QuotationsPage() {
       const params = new URLSearchParams(window.location.search);
       if (params.get('new') === 'true') {
         const clientIdParam = params.get('clientId');
+        const leadIdParam = params.get('leadId');
         if (clientIdParam) {
           setFormData(prev => ({ ...prev, clientId: clientIdParam }));
+        } else if (leadIdParam) {
+          setFormData(prev => ({ ...prev, leadId: leadIdParam }));
         }
         // Clear URL to prevent reopen
         window.history.replaceState({}, '', window.location.pathname);
