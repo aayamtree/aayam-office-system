@@ -33,9 +33,9 @@ export default function NotesWidget() {
             // Try exact match first
             let { data: job } = await supabase.from('jobs').select('id, job_number').eq('job_number', searchNum).single();
 
-            // If not found and is numeric, try searching with JB- prefix
+            // If not found and is numeric, try searching with AAY- prefix
             if (!job && /^\d+$/.test(searchNum)) {
-                const { data: jobPrefix } = await supabase.from('jobs').select('id, job_number').eq('job_number', `JB-${searchNum}`).single();
+                const { data: jobPrefix } = await supabase.from('jobs').select('id, job_number').eq('job_number', `AAY-${searchNum}`).single();
                 job = jobPrefix;
             }
 
@@ -44,7 +44,7 @@ export default function NotesWidget() {
                 const cleanNum = searchNum.replace('#', '');
                 const { data: jobHash } = await supabase.from('jobs').select('id, job_number').eq('job_number', cleanNum).single();
                 if (!jobHash && /^\d+$/.test(cleanNum)) {
-                    const { data: jobHashPrefix } = await supabase.from('jobs').select('id, job_number').eq('job_number', `JB-${cleanNum}`).single();
+                    const { data: jobHashPrefix } = await supabase.from('jobs').select('id, job_number').eq('job_number', `AAY-${cleanNum}`).single();
                     job = jobHashPrefix;
                 } else {
                     job = jobHash;
