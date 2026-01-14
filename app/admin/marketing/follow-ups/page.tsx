@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Plus, Search, Phone, Mail, Calendar, Clock, Edit, Trash2, X,
-  CheckCircle, MessageSquare, Users, Video, AlertCircle, Loader2
+  CheckCircle, MessageSquare, Users, Video, AlertCircle, Loader2, FileText
 } from 'lucide-react';
 import { useClients, useFollowUps, useAuth } from '@/lib/hooks';
 
@@ -17,6 +18,7 @@ const followUpTypes = [
 ];
 
 export default function MarketingFollowUpsPage() {
+  const router = useRouter();
   const { user, profile } = useAuth();
 
   // Real Data Hooks
@@ -122,6 +124,14 @@ export default function MarketingFollowUpsPage() {
     if (confirm('Delete this follow-up?')) await deleteFollowUp(id);
   };
 
+  const handleCreateQuote = (followUp: any) => {
+    if (!followUp.clientId) {
+      alert('This follow-up is not linked to a Client. Please convert the Lead to a Client first.');
+      return;
+    }
+    router.push(`/admin/marketing/quotations?new=true&clientId=${followUp.clientId}`);
+  };
+
   const getTypeInfo = (type: string) => followUpTypes.find(t => t.id === type) || followUpTypes[0];
 
   const FollowUpCard = ({ followUp, showDate = false }: { followUp: any, showDate?: boolean }) => {
@@ -161,6 +171,16 @@ export default function MarketingFollowUpsPage() {
             <button onClick={() => handleEdit(followUp)} className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg"><Edit size={18} /></button>
             <button onClick={() => handleDelete(followUp.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={18} /></button>
           </div>
+        </div>
+
+        {/* Quick Actions Footer */}
+        <div className="mt-3 pt-3 border-t flex justify-end">
+          <button
+            onClick={() => handleCreateQuote(followUp)}
+            className="text-xs font-bold text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded-lg transition-colors flex items-center gap-1"
+          >
+            <FileText size={14} /> Create Quote
+          </button>
         </div>
       </div>
     );

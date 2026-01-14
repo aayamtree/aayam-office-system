@@ -43,6 +43,22 @@ export default function QuotationsPage() {
     terms: '',
   });
 
+  // Handle URL Params for quick actions
+  useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('new') === 'true') {
+        const clientIdParam = params.get('clientId');
+        if (clientIdParam) {
+          setFormData(prev => ({ ...prev, clientId: clientIdParam }));
+        }
+        // Clear URL to prevent reopen
+        window.history.replaceState({}, '', window.location.pathname);
+        setTimeout(() => setShowModal(true), 500);
+      }
+    }
+  });
+
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'draft': 'bg-gray-100 text-gray-700',
@@ -172,7 +188,7 @@ export default function QuotationsPage() {
       const jobPayload = {
         project_name: q.items?.[0]?.description || `Order from ${q.quote_number}`,
         client_id: q.client_id,
-        sales_person_id: q.created_by, // Link to marketing person
+        sales_person_id: profile?.id || user?.id || q.created_by, // Ensure visibility for current user
         // No vendor or designer initially
         job_type: 'print', // Default or derived
         quantity: q.items?.[0]?.quantity || 1,
