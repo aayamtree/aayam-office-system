@@ -252,10 +252,10 @@ export default function QuotationsPage() {
 
     try {
       const { items, ...quoteFields } = {
-        client_id: formData.clientId || undefined,
-        lead_id: formData.leadId || undefined,
+        client_id: formData.clientId || null,
+        lead_id: formData.leadId || null,
         created_by: profile?.id || user?.id,
-        valid_until: formData.validUntil,
+        valid_until: formData.validUntil || null,
         subtotal: formData.subtotal,
         gst_amount: formData.totalTax,
         discount_amount: 0,
@@ -281,9 +281,9 @@ export default function QuotationsPage() {
       }
 
       setShowModal(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving quotation:', error);
-      alert('Failed to save quotation');
+      alert('Failed to save quotation: ' + (error.message || 'Unknown error'));
     } finally {
       setSubmitting(false);
     }

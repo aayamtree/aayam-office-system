@@ -480,8 +480,8 @@ export interface FollowUp {
 export interface Quotation extends BaseEntity {
   quote_number: string;
 
-  client_id?: string;
-  lead_id?: string;
+  client_id?: string | null;
+  lead_id?: string | null;
 
   status: QuoteStatus;
 
@@ -490,7 +490,7 @@ export interface Quotation extends BaseEntity {
   discount_amount: number;
   total_amount: number;
 
-  valid_until?: string;
+  valid_until?: string | null;
 
   terms?: string;
   notes?: string;
