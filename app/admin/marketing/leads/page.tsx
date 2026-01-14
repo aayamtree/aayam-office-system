@@ -411,7 +411,7 @@ export default function LeadsPage() {
                                         onChange={(e) => setFormData({ ...formData, leadDate: e.target.value })}
                                         className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
                                     />
-                                    <p className="text-xs text-gray-400 mt-1 ml-1">Example: "When Lead Created"</p>
+                                    <p className="text-xs text-gray-400 mt-1 ml-1">Example: &quot;When Lead Created&quot;</p>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-600 mb-1.5">Source</label>
