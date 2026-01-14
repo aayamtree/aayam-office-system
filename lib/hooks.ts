@@ -853,6 +853,8 @@ export function useDashboardStats() {
       overduePayments: 0,
       followUpsDue: 0,
       lowStock: 0,
+      blockedJobs: 0,
+      blockedBreakdown: { feedback: 0, payment: 0 }
     },
     todaysFocus: {
       jobsDue: 0,
@@ -890,10 +892,10 @@ export function useDashboardStats() {
           supabase.from('clients').select('id', { count: 'exact', head: true }),
 
           // 2. Active Jobs for Pipeline (fetch stage and deadline)
-          supabase.from('jobs').select('current_stage, client_deadline').neq('current_stage', 'delivered').neq('current_stage', 'cancelled'),
+          supabase.from('jobs').select('id, current_stage, client_deadline').neq('current_stage', 'delivered').neq('current_stage', 'cancelled'),
 
           // 3. Invoices for Revenue & Payments
-          supabase.from('invoices').select('total_amount, payment_status, created_at, balance_due, due_date').gte('created_at', startOfYear),
+          supabase.from('invoices').select('total_amount, payment_status, created_at, balance_due, due_date, job_id').gte('created_at', startOfYear),
 
           // 4. Pending Dispatches
           supabase.from('dispatches').select('id', { count: 'exact', head: true }).in('status', ['pending', 'packed', 'ready']),
@@ -913,6 +915,17 @@ export function useDashboardStats() {
 
         // Aggregations
         const totalRevenue = invoices.data?.reduce((sum, inv) => sum + (inv.total_amount || 0), 0) || 0;
+
+        // Blocked Jobs Logic
+        const feedbackPendingCount = jobs.data?.filter(j => j.current_stage === 'approval').length || 0;
+
+        // Payment Hold: Jobs in Ready/Packed/Dispatched/Delivered but unpaid?
+        // Let's strictly say "Ready or Packed" (completed production) but not paid.
+        // We need to map Job ID to Payment Status.
+        const unpaidJobIds = new Set(invoices.data?.filter(inv => inv.payment_status !== 'paid' && inv.job_id).map(inv => inv.job_id));
+        const paymentHoldCount = jobs.data?.filter(j => ['ready', 'packed'].includes(j.current_stage || '') && unpaidJobIds.has(j.id)).length || 0;
+
+        const totalBlocked = feedbackPendingCount + paymentHoldCount;
 
         // This calculates total pending from ALL fetched invoices (this year). For total outstanding, we might need all time unpaid, but this year is a good proxy.
         const pendingPayments = invoices.data?.filter(inv => inv.payment_status !== 'paid').reduce((sum, inv) => sum + (inv.balance_due || 0), 0) || 0;
@@ -944,8 +957,7 @@ export function useDashboardStats() {
         // Low Stock
         const lowStockCount = lowStock.data?.filter(item => item.quantity <= (item.reorder_level || 0)).length || 0;
 
-        // ... (Sales Performance logic same) ...
-
+        // Sales Performance (Monthly)
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const monthlySales = new Array(12).fill(0);
         invoices.data?.forEach(inv => {
@@ -973,6 +985,8 @@ export function useDashboardStats() {
             overduePayments: overduePaymentsCount,
             followUpsDue: leadsFollowUp.count || 0,
             lowStock: lowStockCount,
+            blockedJobs: totalBlocked,
+            blockedBreakdown: { feedback: feedbackPendingCount, payment: paymentHoldCount }
           },
           todaysFocus: {
             jobsDue: jobsDueTodayCount,

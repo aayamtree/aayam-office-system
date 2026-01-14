@@ -16,7 +16,8 @@ import {
   Clock,
   CheckCircle,
   Receipt,
-  Phone
+  Phone,
+  Ban
 } from 'lucide-react';
 import { useDashboardStats, useJobs } from '@/lib/hooks';
 import NotesWidget from '@/components/dashboard/NotesWidget';
@@ -78,9 +79,18 @@ export default function AdminDashboard() {
 
   const totalPipeline = pipeline.reduce((acc, item) => acc + item.count, 0) || 1; // Avoid div by zero
 
-  // Alerts - Dynamic
   // Alerts - Dynamic with Sorting
   const alertsData = [
+    {
+      id: 'blocked',
+      label: 'Blocked Jobs',
+      count: dashboardStats.alerts?.blockedJobs || 0,
+      priority: 0,
+      href: '/admin/jobs?status=approval',
+      activeText: `blocked (${dashboardStats.alerts?.blockedBreakdown?.feedback || 0} feedback, ${dashboardStats.alerts?.blockedBreakdown?.payment || 0} payment)`,
+      emptyText: 'No blocked jobs',
+      icon: <Ban size={20} />
+    },
     {
       id: 'payments',
       label: 'Overdue Payments',
@@ -526,6 +536,7 @@ export default function AdminDashboard() {
 
                   // Specific Alert Colors
                   if (!isSafe) {
+                    if (alert.id === 'blocked') { colors = 'bg-slate-50 text-slate-700 border-slate-200'; iconColors = 'bg-slate-100 text-slate-600'; }
                     if (alert.id === 'payments') { colors = 'bg-red-50 text-red-700 border-red-200'; iconColors = 'bg-red-100 text-red-600'; }
                     if (alert.id === 'stock') { colors = 'bg-orange-50 text-orange-800 border-orange-200'; iconColors = 'bg-orange-100 text-orange-600'; }
                     if (alert.id === 'followups') { colors = 'bg-amber-50 text-amber-800 border-amber-200'; iconColors = 'bg-amber-100 text-amber-600'; }
