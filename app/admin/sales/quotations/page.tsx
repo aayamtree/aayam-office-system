@@ -18,7 +18,7 @@ export default function QuotationsPage() {
   // Show all quotations
   const quotations = allQuotations;
   const { clients } = useClients();
-  const { leads } = useLeads();
+  const { leads, convertToClient } = useLeads();
   const { createJob } = useJobs();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -191,19 +191,38 @@ export default function QuotationsPage() {
     if (!confirm(`Create a new Job Order from Quotation "${q.quote_number}"? This will mark the quote as Accepted.`)) return;
 
     try {
-      // 1. Create Job Payload
-      // 1. Create Job Payload
+      let finalClientId = q.client_id;
+
+      // 1. Auto-Convert Lead to Client if needed
+      if ((!finalClientId || finalClientId === '') && q.lead_id) {
+        const confirmConvert = confirm('This quotation is for a Lead. To create an order, the Lead must be converted to a Client. Proceed with conversion?');
+        if (!confirmConvert) return;
+
+        // Use the hook function we exposed
+        const { data: newClient, error: convertError } = await convertToClient(q.lead_id, user?.id || '');
+
+        if (convertError) {
+          throw new Error('Failed to convert Lead to Client: ' + convertError);
+        }
+
+        if (newClient) {
+          finalClientId = newClient.id;
+          alert(`Lead converted to Client: ${newClient.company || newClient.name}`);
+        }
+      }
+
+      if (!finalClientId) {
+        throw new Error('Cannot create an order without a valid Client. Please ensure the lead is converted properly.');
+      }
+
+      // 2. Create Job Payload
       const jobPayload = {
         project_name: q.items?.[0]?.description || `Order from ${q.quote_number}`,
-        client_id: q.client_id, // If it's a lead, this will be null. Job might require client.
-        // If it's a lead, we might need to convert it first? 
-        // For now, if no client_id, the job creation might fail if schema enforces it.
-        // Assuming user will convert lead to client via other flow, or we should handle it here?
-        // Let's pass null and see if job allows.
-        sales_person_id: profile?.id || user?.id || q.created_by, // Ensure visibility for current user
-        created_by: profile?.id || user?.id, // Explicitly set ownership to converter
+        client_id: finalClientId,
+        sales_person_id: profile?.id || user?.id || q.created_by,
+        created_by: profile?.id || user?.id,
         // No vendor or designer initially
-        job_type: 'print', // Default or derived
+        job_type: 'print', // Default
         quantity: q.items?.[0]?.quantity || 1,
 
         quote_per_piece: q.items?.[0]?.rate || 0,
@@ -213,11 +232,11 @@ export default function QuotationsPage() {
         discount_amount: q.discount_amount,
         total_amount: q.total_amount,
 
-        payment_status: 'pending' as const, // Default
+        payment_status: 'pending' as const,
         amount_received: 0,
 
         order_date: new Date().toISOString(),
-        client_deadline: q.valid_until, // Use quote validity or today + 3 days? Let's use valid_until as a placeholder logic or undefined
+        client_deadline: q.valid_until || undefined,
 
         current_stage: 'new' as JobStatus,
         priority: 'normal' as const,
@@ -226,25 +245,28 @@ export default function QuotationsPage() {
         notes: `Converted from Quotation ${q.quote_number}. ${q.notes || ''}`
       };
 
-      // 2. Create Job
+      // 3. Create Job
       const { data: job, error: jobError } = await createJob(jobPayload);
 
       if (jobError) throw new Error(jobError);
 
-      // 3. Update Quotation Status
+      // 4. Update Quotation Status
       await updateQuotation(q.id, {
         status: 'accepted',
-        converted_to_job_id: job?.id
+        converted_to_job_id: job?.id,
+        client_id: finalClientId // Ensure the quotation is now linked to the real client
       });
 
       alert(`Order created successfully! Job #${job?.job_number}`);
-      // Optional: Redirect to order page or refresh to show status change
+      // Refresh logic handled by hooks automatically
+
 
     } catch (err: any) {
       console.error('Error converting to order:', err);
       alert('Failed to convert quotation to order: ' + err.message);
     }
   };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
