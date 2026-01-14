@@ -262,27 +262,60 @@ export default function AdminDashboard() {
                   <tr className="text-left border-b border-gray-100">
                     <th className="pb-4 text-xs font-bold text-gray-500 uppercase tracking-wider pl-4">Order</th>
                     <th className="pb-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Project</th>
-                    <th className="pb-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Client</th>
+                    <th className="pb-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Dept</th>
+                    <th className="pb-4 text-xs font-bold text-gray-500 uppercase tracking-wider">SLA / Time</th>
                     <th className="pb-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Amount</th>
                     <th className="pb-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right pr-4">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {recentJobs.length === 0 ? (
-                    <tr><td colSpan={5} className="text-center py-8 text-gray-500">No recent jobs found</td></tr>
-                  ) : recentJobs.map((job) => (
-                    <tr key={job.id} className="hover:bg-gray-50/80 transition-colors group">
-                      <td className="py-5 pl-4"><span className="font-bold text-indigo-900 bg-indigo-50 px-3 py-1 rounded-lg">{job.job_number}</span></td>
-                      <td className="py-5 font-medium text-gray-700">{job.project_name}</td>
-                      <td className="py-5 text-gray-600">{job.client?.company || '-'}</td>
-                      <td className="py-5 text-right font-bold text-gray-900">{formatCurrency(job.total_amount)}</td>
-                      <td className="py-5 text-right pr-4">
-                        <span className={`px-4 py-1.5 text-xs font-bold rounded-full ${getStatusColor(job.current_stage)} shadow-sm`}>
-                          {job.current_stage}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                    <tr><td colSpan={6} className="text-center py-8 text-gray-500">No recent jobs found</td></tr>
+                  ) : recentJobs.map((job) => {
+                    // Logic for Dept
+                    let dept = 'Design';
+                    if (['printing', 'finishing', 'ready'].includes(job.current_stage)) dept = 'Print';
+                    if (['dispatched', 'delivered'].includes(job.current_stage)) dept = 'Dispatch';
+
+                    // Logic for SLA
+                    const deadline = job.client_deadline ? new Date(job.client_deadline) : null;
+                    const diffDays = deadline ? Math.ceil((deadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+                    let slaText = '-';
+                    let slaColor = 'text-gray-400';
+
+                    if (diffDays !== null) {
+                      if (diffDays < 0) { slaText = `${Math.abs(diffDays)}d Overdue`; slaColor = 'text-red-600 font-bold'; }
+                      else if (diffDays === 0) { slaText = 'Due Today'; slaColor = 'text-orange-600 font-bold'; }
+                      else { slaText = `⏳ ${diffDays} days left`; slaColor = 'text-indigo-600 font-medium'; }
+                    }
+
+                    // Row Class
+                    let rowClass = 'hover:bg-gray-50/80 transition-colors group';
+                    if (job.current_stage === 'new') rowClass = 'bg-blue-50/40 hover:bg-blue-50/60 transition-colors group';
+                    if (diffDays !== null && diffDays < 0 && job.current_stage !== 'delivered') rowClass = 'bg-red-50/40 hover:bg-red-50/60 transition-colors group';
+
+                    return (
+                      <tr key={job.id} className={rowClass}>
+                        <td className="py-4 pl-4"><span className="font-bold text-indigo-900 bg-indigo-50 px-2 py-1 rounded-md text-xs">{job.job_number}</span></td>
+                        <td className="py-4">
+                          <div className="font-bold text-gray-800 text-sm">{job.project_name}</div>
+                          <div className="text-xs text-gray-500">{job.client?.company || '-'}</div>
+                        </td>
+                        <td className="py-4">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 border border-gray-200 px-2 py-0.5 rounded-full bg-white">{dept}</span>
+                        </td>
+                        <td className={`py-4 text-xs ${slaColor}`}>
+                          {slaText}
+                        </td>
+                        <td className="py-4 text-right font-bold text-gray-900 text-sm">{formatCurrency(job.total_amount)}</td>
+                        <td className="py-4 text-right pr-4">
+                          <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full ${getStatusColor(job.current_stage)} shadow-sm`}>
+                            {job.current_stage.replace('_', ' ')}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
