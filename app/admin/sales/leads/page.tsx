@@ -340,7 +340,7 @@ export default function LeadsPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-1.5">Mobile Number *</label>
-                  <input required type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium font-mono" />
+                  <input required type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })} className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium font-mono" />
                 </div>
               </div>
 

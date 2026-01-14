@@ -788,7 +788,7 @@ export default function JobsPage() {
               </div>
               <div className="p-4 space-y-3">
                 <input type="text" placeholder="Name" className="w-full px-3 py-2 border rounded-xl" value={newClient.name} onChange={e => setNewClient({ ...newClient, name: e.target.value })} />
-                <input type="text" placeholder="Phone" className="w-full px-3 py-2 border rounded-xl" value={newClient.phone} onChange={e => setNewClient({ ...newClient, phone: e.target.value })} />
+                <input type="text" placeholder="Phone" className="w-full px-3 py-2 border rounded-xl" value={newClient.phone} onChange={e => setNewClient({ ...newClient, phone: e.target.value.replace(/\D/g, '') })} />
                 <input type="text" placeholder="Company" className="w-full px-3 py-2 border rounded-xl" value={newClient.company} onChange={e => setNewClient({ ...newClient, company: e.target.value })} />
                 <button onClick={handleAddClient} className="w-full py-2 bg-indigo-600 text-white rounded-xl">Add Client</button>
               </div>
@@ -807,7 +807,7 @@ export default function JobsPage() {
               </div>
               <div className="p-4 space-y-3">
                 <input type="text" placeholder="Name" className="w-full px-3 py-2 border rounded-xl" value={newVendor.name} onChange={e => setNewVendor({ ...newVendor, name: e.target.value })} />
-                <input type="text" placeholder="Phone" className="w-full px-3 py-2 border rounded-xl" value={newVendor.phone} onChange={e => setNewVendor({ ...newVendor, phone: e.target.value })} />
+                <input type="text" placeholder="Phone" className="w-full px-3 py-2 border rounded-xl" value={newVendor.phone} onChange={e => setNewVendor({ ...newVendor, phone: e.target.value.replace(/\D/g, '') })} />
                 <button onClick={handleAddVendor} className="w-full py-2 bg-indigo-600 text-white rounded-xl">Add Vendor</button>
               </div>
             </div>
