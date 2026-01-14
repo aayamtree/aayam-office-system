@@ -94,6 +94,7 @@ const menuItems: MenuItem[] = [
     allowedRoles: ['admin', 'account', 'marketing'],
     submenu: [
       { name: 'Clients', href: '/admin/crm/clients' },
+      { name: 'Vendors', href: '/admin/finance/vendors' },
     ]
   },
 
