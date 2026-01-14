@@ -848,6 +848,7 @@ export function useDashboardStats() {
     pendingDispatches: 0,
     leadsThisMonth: 0,
     pipeline: {} as Record<string, number>,
+    pipelineOverdue: {} as Record<string, number>,
     alerts: {
       overduePayments: 0,
       followUpsDue: 0,
@@ -921,6 +922,7 @@ export function useDashboardStats() {
 
         // Pipeline & Jobs Focus
         const pipelineCounts: Record<string, number> = {};
+        const pipelineOverdue: Record<string, number> = {};
         let jobsDueTodayCount = 0;
         let jobsDelayedCount = 0;
 
@@ -932,7 +934,10 @@ export function useDashboardStats() {
           if (j.client_deadline) {
             const deadline = j.client_deadline.split('T')[0];
             if (deadline === todayStr) jobsDueTodayCount++;
-            if (deadline < todayStr) jobsDelayedCount++;
+            if (deadline < todayStr) {
+              jobsDelayedCount++;
+              pipelineOverdue[stage] = (pipelineOverdue[stage] || 0) + 1;
+            }
           }
         });
 
@@ -963,6 +968,7 @@ export function useDashboardStats() {
           pendingDispatches: dispatches.count || 0,
           leadsThisMonth: leadsMonth.count || 0,
           pipeline: pipelineCounts,
+          pipelineOverdue,
           alerts: {
             overduePayments: overduePaymentsCount,
             followUpsDue: leadsFollowUp.count || 0,

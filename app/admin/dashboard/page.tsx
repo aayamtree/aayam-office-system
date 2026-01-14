@@ -463,16 +463,34 @@ export default function AdminDashboard() {
                 const percent = Math.round((item.count / totalPipeline) * 100);
                 const isBottleneck = item.count > item.thresh;
 
+                // Calculate Overdue for this stage group
+                let overdueCount = 0;
+                if (item.label === 'In Design') overdueCount = (dashboardStats.pipelineOverdue?.designing || 0) + (dashboardStats.pipelineOverdue?.approval || 0);
+                if (item.label === 'Production') overdueCount = (dashboardStats.pipelineOverdue?.printing || 0) + (dashboardStats.pipelineOverdue?.finishing || 0);
+                if (item.label === 'QC Check') overdueCount = (dashboardStats.pipelineOverdue?.quality_check || 0);
+                if (item.label === 'Ready/Packed') overdueCount = (dashboardStats.pipelineOverdue?.ready || 0) + (dashboardStats.pipelineOverdue?.packed || 0);
+                // Dispatched usually doesn't have "overdue" in same sense unless delivery date passed, but let's skip or include
+
                 return (
                   <Link key={item.label} href={item.href} className={`block group`}>
                     <div className={`flex items-center justify-between p-3 rounded-xl transition-all border 
-                      ${isBottleneck ? 'bg-red-50 border-red-200' : 'hover:bg-gray-50 border-transparent hover:border-gray-100'}
+                      ${isBottleneck || overdueCount > 0 ? 'bg-red-50/50 border-red-100' : 'hover:bg-gray-50 border-transparent hover:border-gray-100'}
                   `}>
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <span className={`w-2.5 h-2.5 rounded-full ${item.color.split(' ')[0]} shadow-sm`}></span>
-                          <span className={`text-sm font-bold ${isBottleneck ? 'text-red-700' : 'text-gray-700'}`}>{item.label}</span>
-                          {isBottleneck && <AlertCircle size={14} className="text-red-500 animate-pulse" />}
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`w-2 h-2 rounded-full ${item.color.split(' ')[0]} shadow-sm`}></span>
+                          <span className={`text-sm font-bold ${isBottleneck || overdueCount > 0 ? 'text-gray-900' : 'text-gray-700'}`}>{item.label}</span>
+                        </div>
+
+                        {/* Health Status */}
+                        <div className="text-[10px] font-medium mb-2 pl-4">
+                          {overdueCount > 0 ? (
+                            <span className="text-red-600 flex items-center gap-1">⚠️ {overdueCount} overdue</span>
+                          ) : isBottleneck ? (
+                            <span className="text-amber-600 flex items-center gap-1">🟡 High Load</span>
+                          ) : (
+                            <span className="text-green-600 flex items-center gap-1">✅ On Track</span>
+                          )}
                         </div>
 
                         {/* Prorgess Bar */}
@@ -482,7 +500,7 @@ export default function AdminDashboard() {
                       </div>
 
                       <div className="ml-4 text-right">
-                        <span className={`text-lg font-bold ${isBottleneck ? 'text-red-600' : 'text-gray-900 group-hover:text-indigo-600'}`}>{item.count}</span>
+                        <span className={`text-lg font-bold ${isBottleneck || overdueCount > 0 ? 'text-red-600' : 'text-gray-900 group-hover:text-indigo-600'}`}>{item.count}</span>
                         <p className="text-[10px] text-gray-400 font-medium">{percent}%</p>
                       </div>
                     </div>
