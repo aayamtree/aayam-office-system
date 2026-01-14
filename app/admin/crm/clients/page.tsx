@@ -114,7 +114,9 @@ export default function ClientsPage() {
           <Link href="/admin/crm" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden"><ArrowLeft size={20} /></Link>
           <div><h1 className="text-xl lg:text-2xl font-bold text-gray-900">Clients</h1><p className="text-sm text-gray-500">{filteredClients.length} clients</p></div>
         </div>
-        <button onClick={handleAddNew} className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-colors shadow-lg shadow-gray-900/20"><Plus size={18} /><span>Add Client</span></button>
+        {profile?.role !== 'marketing' && (
+          <button onClick={handleAddNew} className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-colors shadow-lg shadow-gray-900/20"><Plus size={18} /><span>Add Client</span></button>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -122,7 +124,13 @@ export default function ClientsPage() {
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)} className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="all">All</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
       </div>
 
-      {filteredClients.length === 0 && <div className="text-center py-12 bg-white rounded-xl border"><Building2 size={48} className="mx-auto text-gray-300 mb-4" /><h3 className="text-lg font-medium mb-2">No clients found</h3><button onClick={handleAddNew} className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"><Plus size={18} />Add Client</button></div>}
+      {filteredClients.length === 0 && <div className="text-center py-12 bg-white rounded-xl border">
+        <Building2 size={48} className="mx-auto text-gray-300 mb-4" />
+        <h3 className="text-lg font-medium mb-2">No clients found</h3>
+        {profile?.role !== 'marketing' && (
+          <button onClick={handleAddNew} className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"><Plus size={18} />Add Client</button>
+        )}
+      </div>}
 
       <div className="lg:hidden space-y-3">
         {filteredClients.map((client) => (

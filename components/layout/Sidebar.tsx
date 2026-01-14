@@ -73,7 +73,7 @@ const menuItems: MenuItem[] = [
     name: 'Sales',
     icon: ShoppingCart,
     href: '/admin/sales',
-    allowedRoles: ['admin', 'account', 'marketing'],
+    allowedRoles: ['admin', 'account'], // Removed 'marketing' to avoid redundancy
     submenu: [
       { name: 'Quotations', href: '/admin/sales/quotations' },
       { name: 'Orders', href: '/admin/sales/orders' },
