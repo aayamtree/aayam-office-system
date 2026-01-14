@@ -717,7 +717,8 @@ export default function DesignerWorkspace() {
             </div>
 
             {/* Gantt Chart Body */}
-            <div className="flex-1 overflow-auto p-6 bg-gray-50">
+            {/* Gantt Chart Body */}
+            <div className="flex-1 overflow-x-auto overflow-y-auto p-2 md:p-6 bg-gray-50">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-w-[800px]">
                 {/* Header Row */}
                 <div className="grid grid-cols-12 bg-gray-50 border-b text-[10px] font-bold text-gray-500 uppercase tracking-wider h-10 items-center px-4">
@@ -1295,7 +1296,7 @@ export default function DesignerWorkspace() {
                 <button onClick={() => setIsNewTaskModalOpen(false)} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-lg transition-colors"><X size={20} /></button>
               </div>
 
-              <div className="overflow-y-auto p-8 flex-1 bg-white">
+              <div className="overflow-y-auto p-4 md:p-8 flex-1 bg-white">
                 <form id="create-project-form" onSubmit={handleCreateTask} className="space-y-8">
 
                   {/* 1. Core Identification */}

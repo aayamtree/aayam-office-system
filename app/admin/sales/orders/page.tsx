@@ -249,7 +249,7 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+      <div className="flex flex-col sm:flex-row gap-3 bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-gray-100">
         <div className="relative flex-1">
           <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -296,7 +296,7 @@ export default function OrdersPage() {
             <tbody className="divide-y divide-gray-50">
               {filteredJobs.map((job) => (
                 <tr key={job.id} className="hover:bg-gray-50/50 transition-colors group block lg:table-row">
-                  <td className="px-6 py-4 align-top block lg:table-cell">
+                  <td className="px-4 md:px-6 py-4 align-top block lg:table-cell">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-bold text-gray-900 font-mono text-sm bg-gray-100 px-2 py-1 rounded-md">{job.job_number}</span>
                       {job.priority === 'urgent' && <span className="text-[10px] font-bold uppercase text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Urgent</span>}
@@ -304,13 +304,13 @@ export default function OrdersPage() {
                     <div className="font-semibold text-gray-800">{job.project_name}</div>
                     <div className="text-xs text-gray-500 mt-1">{job.quantity} items</div>
                   </td>
-                  <td className="px-6 py-4 align-top block lg:table-cell">
+                  <td className="px-4 md:px-6 py-2 md:py-4 align-top block lg:table-cell">
                     <div className="font-medium text-gray-900">{job.client?.company || '-'}</div>
                     <div className="text-sm text-gray-500 flex items-center gap-1">
                       <User size={12} /> {job.client?.name || 'Unknown'}
                     </div>
                   </td>
-                  <td className="px-6 py-4 align-top block lg:table-cell">
+                  <td className="px-4 md:px-6 py-2 md:py-4 align-top block lg:table-cell">
                     <div className="font-bold text-gray-900">{formatCurrency(job.total_amount)}</div>
                     {job.payment_status !== 'paid' && (
                       <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full mt-1 inline-block">
