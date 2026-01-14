@@ -138,14 +138,29 @@ export default function DesignerWorkspace() {
   const activeTab = (searchParams.get('view') || 'board');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Pre-print Checklist State
-  const [checklist, setChecklist] = useState({
-    bleed: false,
-    cmyk: false,
-    spelling: false,
-    size: false,
-    approval: false
-  });
+  // Dynamic Checklist State
+  const [checklist, setChecklist] = useState<Record<string, boolean>>({});
+  const [checklistConfig, setChecklistConfig] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    const fetchChecklists = async () => {
+      const { data } = await supabase.from('job_checklists').select('*');
+      if (data) {
+        const map: Record<string, string[]> = {};
+        data.forEach((d: any) => {
+          // Items might be JSON string or array depending on DB driver behavior
+          map[d.job_type] = Array.isArray(d.items) ? d.items : JSON.parse(d.items || '[]');
+        });
+        setChecklistConfig(map);
+      }
+    };
+    fetchChecklists();
+  }, []);
+
+  // Reset checklist when task selection changes
+  useEffect(() => {
+    setChecklist({});
+  }, [selectedTaskId]);
 
   // Handle ?action=new
   useEffect(() => {
@@ -367,7 +382,8 @@ export default function DesignerWorkspace() {
             designerId: job.designer_id,
             designerName: designer?.name || 'Unassigned',  // Name resolved!
             createdAt: job.created_at,
-            current_stage: job.current_stage
+            current_stage: job.current_stage,
+            jobType: job.job_type || 'Design'
           };
         })
         .sort((a, b) => {
@@ -438,6 +454,50 @@ export default function DesignerWorkspace() {
   // User said "admin create new project", so Designer "Create Task" might be disabled OR it creates a 'Draft' job.
   // I will leave it as LOCAL for now, or alert "Only Admin can create projects".
   // But to be helpful, I'll log to console.
+  // File Upload Logic
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0 || !selectedTask) return;
+    const file = e.target.files[0];
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `job-files/${selectedTask.realId}/${fileName}`;
+
+    try {
+      const { data, error } = await supabase.storage
+        .from('files')
+        .upload(filePath, file);
+
+      if (error) throw error;
+
+      // Get Public URL
+      const { data: { publicUrl } } = supabase.storage.from('files').getPublicUrl(filePath);
+
+      // Update Job
+      // We need to fetch existing files first to append, but for now we might just set it as "drive_link" or a new field?
+      // The current schema uses `files` JSONB array.
+      const newFile = {
+        name: file.name,
+        url: publicUrl,
+        type: file.type,
+        size: file.size,
+        uploaded_at: new Date().toISOString()
+      };
+
+      // Update local state temporarily
+      const updatedFiles = [...(selectedTask.files || []), newFile];
+
+      if (updateJob) {
+        // This assumes updateJob can handle the 'files' column update (jsonb)
+        // We need to cast it properly
+        await updateJob(selectedTask.realId, { files: updatedFiles } as any);
+        alert('File uploaded successfully!');
+      }
+
+    } catch (e: any) {
+      alert('Upload failed: ' + e.message);
+    }
+  };
+
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreatingTask(true);
@@ -599,6 +659,66 @@ export default function DesignerWorkspace() {
                   </div>
                 )
               })}
+            </div>
+          </div>
+        ) : activeTab === 'timeline' ? (
+          <div className="flex-1 overflow-hidden flex flex-col bg-white">
+            {/* Timeline Header */}
+            <div className="flex bg-white p-4 justify-between items-center border-b">
+              <div className="flex items-center gap-4">
+                <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2"><GanttChart size={20} /> Production Timeline</h2>
+                <div className="flex bg-gray-100 p-1 rounded-lg">
+                  <button onClick={() => setView('my_tasks')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">List</button>
+                  <button onClick={() => setView('board')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Board</button>
+                  <button className="px-3 py-1 text-xs font-bold bg-white text-purple-600 rounded shadow-sm">Timeline</button>
+                  <button onClick={() => setView('notes')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Notes</button>
+                </div>
+              </div>
+              <button onClick={() => setIsNewTaskModalOpen(true)} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold flex gap-2 items-center"><Plus size={16} /> New Task</button>
+            </div>
+
+            {/* Gantt Chart Body */}
+            <div className="flex-1 overflow-auto p-6 bg-gray-50">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-w-[800px]">
+                {/* Header Row */}
+                <div className="grid grid-cols-12 bg-gray-50 border-b text-[10px] font-bold text-gray-500 uppercase tracking-wider h-10 items-center px-4">
+                  <div className="col-span-3">Task / Designer</div>
+                  <div className="col-span-1 border-l pl-2">Start</div>
+                  <div className="col-span-8 flex justify-between px-2">
+                    <span>Progression</span>
+                    <span>Deadline</span>
+                  </div>
+                </div>
+
+                {/* Rows */}
+                {tasks.length === 0 ? <p className="p-8 text-center text-gray-400">No active tasks to show.</p> : tasks.map(task => {
+                  // Calculate simplified progress bar width
+                  const isOverdue = task.rawDeadline && new Date(task.rawDeadline) < new Date();
+
+                  return (
+                    <div key={task.id} className="grid grid-cols-12 border-b h-16 items-center px-4 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => { setSelectedTaskId(task.id); setView('my_tasks'); }}>
+                      <div className="col-span-3 pr-4">
+                        <div className="font-bold text-sm text-gray-800 truncate">{task.title}</div>
+                        <div className="text-xs text-gray-400 flex items-center gap-1"><User size={10} /> {task.designerName}</div>
+                      </div>
+                      <div className="col-span-1 text-xs text-gray-500 pl-2 border-l">
+                        {new Date(task.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                      </div>
+                      <div className="col-span-8 px-2 relative h-full flex items-center">
+                        {/* Track */}
+                        <div className="w-full h-2 bg-gray-100 rounded-full relative overflow-hidden">
+                          {/* Bar */}
+                          <div className={`h-full rounded-full ${isOverdue ? 'bg-red-500' : 'bg-purple-500'}`} style={{ width: Math.random() * 60 + 20 + '%' }}></div>
+                        </div>
+                        {/* Deadline Tooltip */}
+                        <div className="absolute right-0 text-xs font-bold text-gray-400">
+                          {task.deadline || 'No Date'}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         ) : (
@@ -891,9 +1011,9 @@ export default function DesignerWorkspace() {
                       {/* Google Drive Link */}
                       <div>
                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                          <Folder size={16} className="text-blue-600" /> Project Assets (Google Drive)
+                          <Folder size={16} className="text-blue-600" /> Project Assets (Drive / Local)
                         </h4>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 mb-2">
                           <input
                             type="url"
                             defaultValue={selectedTask.driveLink}
@@ -910,6 +1030,10 @@ export default function DesignerWorkspace() {
                               <ExternalLink size={18} />
                             </a>
                           )}
+                        </div>
+                        {/* Local File Upload */}
+                        <div className="flex items-center gap-2">
+                          <input type="file" onChange={handleFileUpload} className="text-xs text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200" />
                         </div>
                       </div>
                     </section>
@@ -960,24 +1084,19 @@ export default function DesignerWorkspace() {
                         <CheckCircle size={16} /> Pre-Print Checklist (Mandatory)
                       </h4>
                       <div className="grid grid-cols-2 gap-3">
-                        {[
-                          { id: 'bleed', label: 'Bleed Checked' },
-                          { id: 'cmyk', label: 'CMYK Confirmed' },
-                          { id: 'spelling', label: 'Spelling Verified' },
-                          { id: 'size', label: 'Size Confirmed' }
-                        ].map(item => (
-                          <label key={item.id} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl cursor-pointer hover:border-indigo-200 transition-colors">
+                        {(checklistConfig[selectedTask.jobType] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed']).map((label, i) => (
+                          <label key={i} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl cursor-pointer hover:border-indigo-200 transition-colors">
                             <input type="checkbox"
-                              checked={(checklist as any)[item.id]}
-                              onChange={e => setChecklist(prev => ({ ...prev, [item.id]: e.target.checked }))}
+                              checked={!!checklist[`item_${i}`]}
+                              onChange={e => setChecklist(prev => ({ ...prev, [`item_${i}`]: e.target.checked }))}
                               className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"
                             />
-                            <span className="text-sm font-bold text-gray-600">{item.label}</span>
+                            <span className="text-sm font-bold text-gray-600">{label}</span>
                           </label>
                         ))}
                         <label className="col-span-2 flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl cursor-pointer hover:border-indigo-200 transition-colors">
                           <input type="checkbox"
-                            checked={checklist.approval}
+                            checked={checklist.approval || false}
                             onChange={e => setChecklist(prev => ({ ...prev, approval: e.target.checked }))}
                             className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"
                           />
@@ -986,18 +1105,26 @@ export default function DesignerWorkspace() {
                       </div>
 
                       <div className="pt-4 border-t border-indigo-100">
-                        <button
-                          disabled={!Object.values(checklist).every(Boolean)}
-                          onClick={() => {
-                            if (confirm('Are you sure? This will lock the task for printing.')) {
-                              updateStatus(selectedTask.realId, 'completed');
-                            }
-                          }}
-                          className="w-full py-4 rounded-xl font-bold text-white shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition-all
+                        {(() => {
+                          const requiredList = checklistConfig[selectedTask.jobType] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed'];
+                          const allMainChecks = requiredList.every((_, i) => checklist[`item_${i}`]);
+                          const isComplete = allMainChecks && checklist.approval;
+
+                          return (
+                            <button
+                              disabled={!isComplete}
+                              onClick={() => {
+                                if (confirm('Are you sure? This will lock the task for printing.')) {
+                                  updateStatus(selectedTask.realId, 'completed');
+                                }
+                              }}
+                              className="w-full py-4 rounded-xl font-bold text-white shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition-all
                              disabled:bg-gray-300 disabled:shadow-none disabled:cursor-not-allowed bg-indigo-600 hover:bg-indigo-700 hover:scale-[1.01]"
-                        >
-                          {Object.values(checklist).every(Boolean) ? <><Printer size={20} /> Client Approved - Ready for Print</> : 'Complete Checklist to Finish'}
-                        </button>
+                            >
+                              {isComplete ? <><Printer size={20} /> Client Approved - Ready for Print</> : 'Complete Checklist to Finish'}
+                            </button>
+                          )
+                        })()}
                         <p className="text-center text-[10px] text-gray-400 mt-2 font-medium uppercase tracking-wide">Prevents costly print mistakes</p>
                       </div>
                     </section>
