@@ -11,7 +11,8 @@ import {
   Truck,
   ArrowUpRight,
   Plus,
-  AlertCircle
+  AlertCircle,
+  Check
 } from 'lucide-react';
 import { useDashboardStats, useJobs } from '@/lib/hooks';
 import NotesWidget from '@/components/dashboard/NotesWidget';
@@ -74,11 +75,48 @@ export default function AdminDashboard() {
   const totalPipeline = pipeline.reduce((acc, item) => acc + item.count, 0) || 1; // Avoid div by zero
 
   // Alerts - Dynamic
-  const alerts = [
-    { label: 'Overdue Payments', count: dashboardStats.alerts?.overduePayments || 0, color: 'bg-red-50 text-red-700', iconBg: 'bg-red-100', icon: '₹' },
-    { label: 'Follow-ups Due', count: dashboardStats.alerts?.followUpsDue || 0, color: 'bg-amber-50 text-amber-700', iconBg: 'bg-amber-100', icon: '!' },
-    { label: 'Low Stock Items', count: dashboardStats.alerts?.lowStock || 0, color: 'bg-orange-50 text-orange-700', iconBg: 'bg-orange-100', icon: '⚠' },
+  // Alerts - Dynamic with Sorting
+  const alertsData = [
+    {
+      id: 'payments',
+      label: 'Overdue Payments',
+      count: dashboardStats.alerts?.overduePayments || 0,
+      priority: 1,
+      href: '/admin/finance/invoices',
+      activeText: 'invoices are overdue',
+      emptyText: 'All payments clear',
+      icon: '₹'
+    },
+    {
+      id: 'stock',
+      label: 'Low Stock Items',
+      count: dashboardStats.alerts?.lowStock || 0,
+      priority: 2,
+      href: '/admin/cmyk-print/paper-stock',
+      activeText: 'items below threshold',
+      emptyText: 'Stock levels healthy',
+      icon: '⚠'
+    },
+    {
+      id: 'followups',
+      label: 'Follow-ups Due',
+      count: dashboardStats.alerts?.followUpsDue || 0,
+      priority: 3,
+      href: '/admin/marketing/follow-ups',
+      activeText: 'follow-ups due today',
+      emptyText: 'No pending follow-ups',
+      icon: '!'
+    },
   ];
+
+  const sortedAlerts = [...alertsData].sort((a, b) => {
+    // 1. Alerting items first (count > 0)
+    if (a.count > 0 && b.count === 0) return -1;
+    if (a.count === 0 && b.count > 0) return 1;
+
+    // 2. Then by Priority
+    return a.priority - b.priority;
+  });
 
   const getStatusColor = (stage: string) => {
     const map: any = {
@@ -357,17 +395,40 @@ export default function AdminDashboard() {
             </div>
 
             <div className="space-y-4">
-              {alerts.map((alert) => (
-                <div key={alert.label} className={`flex items-center justify-between p-4 rounded-xl ${alert.color} border border-transparent transition-all hover:border-current`}>
-                  <div className="flex items-center gap-3.5">
-                    <span className={`w-9 h-9 ${alert.iconBg} rounded-lg flex items-center justify-center text-sm font-bold shadow-sm`}>
-                      {alert.icon}
-                    </span>
-                    <span className="text-base font-medium">{alert.label}</span>
-                  </div>
-                  <span className="font-bold text-lg">{alert.count}</span>
-                </div>
-              ))}
+              <div className="space-y-4">
+                {sortedAlerts.map((alert) => {
+                  const isSafe = alert.count === 0;
+                  let colors = isSafe ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-700 border-gray-200';
+                  let iconColors = isSafe ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500';
+
+                  // Specific Alert Colors
+                  if (!isSafe) {
+                    if (alert.id === 'payments') { colors = 'bg-red-50 text-red-700 border-red-200'; iconColors = 'bg-red-100 text-red-600'; }
+                    if (alert.id === 'stock') { colors = 'bg-orange-50 text-orange-800 border-orange-200'; iconColors = 'bg-orange-100 text-orange-600'; }
+                    if (alert.id === 'followups') { colors = 'bg-amber-50 text-amber-800 border-amber-200'; iconColors = 'bg-amber-100 text-amber-600'; }
+                  }
+
+                  return (
+                    <Link key={alert.label} href={alert.href} className={`flex items-center justify-between p-4 rounded-xl border transition-all hover:shadow-md ${colors}`}>
+                      <div className="flex items-center gap-4">
+                        <span className={`w-10 h-10 ${iconColors} rounded-lg flex items-center justify-center text-lg font-bold shadow-sm`}>
+                          {isSafe ? <Check size={20} /> : alert.icon}
+                        </span>
+                        <div>
+                          <h4 className="text-base font-bold leading-tight">{alert.label}</h4>
+                          <p className={`text-xs mt-0.5 font-medium opacity-80`}>
+                            {isSafe ? alert.emptyText : `${alert.count} ${alert.activeText}`}
+                          </p>
+                        </div>
+                      </div>
+
+                      {!isSafe && (
+                        <span className="font-bold text-xl">{alert.count}</span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
