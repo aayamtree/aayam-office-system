@@ -10,7 +10,7 @@ export default function RemindersWidget() {
     const { reminders, loading, createReminder, updateReminder, deleteReminder } = useReminders();
     const [isAdding, setIsAdding] = useState(false);
     const [newTitle, setNewTitle] = useState('');
-    const [newDate, setNewDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+    const [newDate, setNewDate] = useState(''); // Empty by default (optional)
     const [saving, setSaving] = useState(false);
 
     const handleAdd = async (e: React.FormEvent) => {
@@ -19,12 +19,12 @@ export default function RemindersWidget() {
         setSaving(true);
         await createReminder({
             title: newTitle,
-            due_date: new Date(newDate).toISOString(),
+            due_date: newDate ? new Date(newDate).toISOString() : null, // Send null if empty
             is_completed: false,
             priority: 'normal'
         });
         setNewTitle('');
-        setNewDate(format(new Date(), 'yyyy-MM-dd'));
+        setNewDate('');
         setIsAdding(false);
         setSaving(false);
     };
@@ -33,15 +33,17 @@ export default function RemindersWidget() {
         await updateReminder(reminder.id, { is_completed: !reminder.is_completed });
     };
 
-    const getDateLabel = (dateStr: string) => {
+    const getDateLabel = (dateStr?: string | null) => {
+        if (!dateStr) return 'No Date';
         const date = new Date(dateStr);
         if (isToday(date)) return 'Today';
         if (isTomorrow(date)) return 'Tomorrow';
         return format(date, 'MMM d');
     };
 
-    const getDateColor = (dateStr: string, completed: boolean) => {
+    const getDateColor = (dateStr?: string | null, completed?: boolean) => {
         if (completed) return 'text-gray-400';
+        if (!dateStr) return 'text-gray-400';
         const date = new Date(dateStr);
         if (isPast(date) && !isToday(date)) return 'text-red-500 font-medium';
         if (isToday(date)) return 'text-orange-500 font-medium';
@@ -77,12 +79,15 @@ export default function RemindersWidget() {
                             className="w-full bg-transparent border-none focus:ring-0 text-sm font-medium placeholder-gray-400 mb-2"
                         />
                         <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                            <input
-                                type="date"
-                                value={newDate}
-                                onChange={(e) => setNewDate(e.target.value)}
-                                className="bg-transparent border-none text-xs text-gray-500 focus:ring-0 p-0"
-                            />
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-400">Due:</span>
+                                <input
+                                    type="date"
+                                    value={newDate}
+                                    onChange={(e) => setNewDate(e.target.value)}
+                                    className="bg-transparent border-none text-xs text-gray-500 focus:ring-0 p-0"
+                                />
+                            </div>
                             <button
                                 type="submit"
                                 disabled={saving}
@@ -111,10 +116,12 @@ export default function RemindersWidget() {
                             </button>
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-gray-700 truncate">{reminder.title}</p>
-                                <p className={`text-xs ${getDateColor(reminder.due_date, false)} flex items-center gap-1`}>
-                                    <Calendar size={10} />
-                                    {getDateLabel(reminder.due_date)}
-                                </p>
+                                {reminder.due_date && (
+                                    <p className={`text-xs ${getDateColor(reminder.due_date, false)} flex items-center gap-1`}>
+                                        <Calendar size={10} />
+                                        {getDateLabel(reminder.due_date)}
+                                    </p>
+                                )}
                             </div>
                             <button
                                 onClick={() => deleteReminder(reminder.id)}

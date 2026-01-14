@@ -678,13 +678,15 @@ export interface Note extends BaseEntity {
   color: string;
   is_pinned: boolean;
   user_id?: string;
+  linked_job_id?: string;
+  job?: Job; // For joined data
 }
 
 // Reminder
 export interface Reminder extends BaseEntity {
   title: string;
   description?: string;
-  due_date: string;
+  due_date?: string | null; // Optional
   is_completed: boolean;
   priority: PriorityLevel;
   user_id?: string;

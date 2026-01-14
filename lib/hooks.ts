@@ -1260,6 +1260,7 @@ export function usePOSProducts() {
 // =============================================
 export function useNotes() {
   const { data, loading, error, refetch } = useSupabaseQuery<Note>('notes', {
+    select: '*, job:jobs(job_number, project_name)',
     orderBy: { column: 'created_at', ascending: false }
   });
 

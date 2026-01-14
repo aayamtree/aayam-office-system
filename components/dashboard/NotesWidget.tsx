@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useNotes } from '@/lib/hooks';
-import { Plus, X, Pin, Trash2, Check, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { Plus, X, Pin, Trash2, Check, Loader2, Link as LinkIcon } from 'lucide-react';
 import { Note } from '@/types/database';
 
 const colors = [
@@ -17,18 +19,28 @@ export default function NotesWidget() {
     const { notes, loading, createNote, deleteNote, updateNote } = useNotes();
     const [isAdding, setIsAdding] = useState(false);
     const [newNoteContent, setNewNoteContent] = useState('');
+    const [jobNumber, setJobNumber] = useState('');
     const [selectedColor, setSelectedColor] = useState('yellow');
     const [saving, setSaving] = useState(false);
 
     const handleAdd = async () => {
         if (!newNoteContent.trim()) return;
         setSaving(true);
+
+        let linkedJobId = undefined;
+        if (jobNumber.trim()) {
+            const { data: job } = await supabase.from('jobs').select('id').eq('job_number', jobNumber.trim()).single();
+            if (job) linkedJobId = job.id;
+        }
+
         await createNote({
             content: newNoteContent,
             color: selectedColor,
-            is_pinned: false
+            is_pinned: false,
+            linked_job_id: linkedJobId
         });
         setNewNoteContent('');
+        setJobNumber('');
         setIsAdding(false);
         setSaving(false);
     };
@@ -69,9 +81,21 @@ export default function NotesWidget() {
                             value={newNoteContent}
                             onChange={(e) => setNewNoteContent(e.target.value)}
                             placeholder="Type your note..."
-                            className="w-full bg-transparent border-none focus:ring-0 resize-none text-sm mb-3 min-h-[80px]"
+                            className="w-full bg-transparent border-none focus:ring-0 resize-none text-sm mb-2 min-h-[80px]"
                         />
-                        <div className="flex items-center justify-between">
+
+                        <div className="flex items-center gap-2 mb-3 px-1">
+                            <LinkIcon size={14} className="text-gray-400" />
+                            <input
+                                type="text"
+                                value={jobNumber}
+                                onChange={(e) => setJobNumber(e.target.value)}
+                                placeholder="Link Job # (Optional)"
+                                className="bg-transparent border-b border-gray-200 text-xs w-full focus:outline-none focus:border-gray-400 pb-1"
+                            />
+                        </div>
+
+                        <div className="flex items-center justify-between mt-2">
                             <div className="flex gap-1.5">
                                 {colors.map(c => (
                                     <button
@@ -111,6 +135,17 @@ export default function NotesWidget() {
                     return (
                         <div key={note.id} className={`group relative p-4 rounded-xl ${style.bg} border ${style.border} transition-all hover:shadow-md`}>
                             <p className="text-sm text-gray-800 whitespace-pre-wrap">{note.content}</p>
+
+                            {note.job && (
+                                <Link
+                                    href={`/admin/jobs?search=${note.job.job_number}`}
+                                    className="inline-flex items-center gap-1.5 mt-2 px-2 py-1 bg-white/50 rounded-lg text-xs font-medium text-gray-600 hover:text-indigo-600 hover:bg-white transition-colors"
+                                >
+                                    <LinkIcon size={10} />
+                                    Job #{note.job.job_number}
+                                </Link>
+                            )}
+
                             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                                 <button
                                     onClick={() => togglePin(note)}
