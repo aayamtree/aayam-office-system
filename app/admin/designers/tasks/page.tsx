@@ -133,7 +133,7 @@ export default function DesignerWorkspace() {
   // Daily Briefing State
   const [showDailyBriefing, setShowDailyBriefing] = useState(false);
 
-  const activeTab = (searchParams.get('view') || 'my_tasks') as 'my_tasks' | 'team_tasks' | 'timeline' | 'notes' | 'board';
+  const activeTab = (searchParams.get('view') || 'my_tasks');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Handle ?action=new
