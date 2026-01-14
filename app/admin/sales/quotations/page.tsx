@@ -439,7 +439,7 @@ export default function QuotationsPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredQuotations.map((q) => (
-                <tr key={q.id} className="hover:bg-gray-50">
+                <tr key={q.id} className={`hover:bg-gray-50 transition-colors ${q.status === 'accepted' || q.status === 'rejected' ? 'bg-gray-50/50 opacity-60' : ''}`}>
                   <td className="px-6 py-4">
                     <span className="font-semibold text-gray-900">{q.quote_number}</span>
                     <p className="text-xs text-gray-400 mt-1">{new Date(q.created_at).toLocaleDateString()}</p>
