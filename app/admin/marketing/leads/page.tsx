@@ -104,7 +104,7 @@ export default function LeadsPage() {
             requirement: '',
             nextFollowUp: '',
             notes: '',
-            leadDate: new Date().toISOString().split('T')[0],
+            leadDate: new Date().toLocaleDateString('en-CA'), // Local YYYY-MM-DD
         });
         setIsEditing(false);
         setShowModal(true);
@@ -180,11 +180,18 @@ export default function LeadsPage() {
             if (isEditing && selectedLead) {
                 result = await updateLead(selectedLead.id, payload);
             } else {
+                // Determine Creation Date
+                // If user selected TODAY, send undefined so DB uses NOW() (preserving time).
+                // If user selected Backdate, send that date (Time will be 00:00).
+                const todayStr = new Date().toLocaleDateString('en-CA');
+                const isBackdated = formData.leadDate && formData.leadDate !== todayStr;
+                const creationDate = isBackdated ? new Date(formData.leadDate).toISOString() : undefined;
+
                 result = await createLead({
                     ...payload,
                     created_by: currentUserId,
                     assigned_to: currentUserId,
-                    created_at: formData.leadDate ? new Date(formData.leadDate).toISOString() : undefined
+                    created_at: creationDate
                 });
             }
 
