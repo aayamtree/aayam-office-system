@@ -52,7 +52,7 @@ const menuItems: MenuItem[] = [
   {
     name: 'Design Studio',
     icon: Palette,
-    href: '/admin/designers/tasks',
+    href: '/admin/designers/tasks?view=board',
     allowedRoles: ['admin', 'designer'],
     submenu: [
       { name: 'My Queue', href: '/admin/designers/tasks?view=my_tasks' },

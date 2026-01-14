@@ -544,8 +544,10 @@ export default function DesignerWorkspace() {
                           <p className="text-xs text-gray-500 mb-3">{task.clientName}</p>
                           <div className="flex justify-between items-center border-t pt-3 mt-1">
                             <div className="flex -space-x-2">
-                              <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-600 border-2 border-white">
-                                {task.designerName ? task.designerName.charAt(0) : '?'}
+                              <div className="flex -space-x-2">
+                                <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded overflow-hidden text-ellipsis whitespace-nowrap max-w-[120px]">
+                                  {task.designerName || 'Unassigned'}
+                                </span>
                               </div>
                             </div>
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity">
