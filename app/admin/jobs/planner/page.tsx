@@ -144,10 +144,10 @@ export default function PrintPlannerPage() {
                 </div>
             </div>
 
-            <div className="flex-1 flex gap-6 min-h-0">
+            <div className="flex-1 flex flex-col md:flex-row gap-6 min-h-0">
 
                 {/* LEFT COLUMN: Input Queue */}
-                <div className="w-1/3 flex flex-col bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden">
+                <div className="w-full md:w-1/3 flex flex-col bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden h-1/3 md:h-auto">
                     <div className="p-4 border-b bg-white flex justify-between items-center sticky top-0">
                         <h3 className="font-bold text-gray-700 flex items-center gap-2">
                             <FileText size={18} /> Ready for Print ({poolJobs.length})
@@ -165,7 +165,7 @@ export default function PrintPlannerPage() {
                 </div>
 
                 {/* MIDDLE: Batch Composer */}
-                <div className="flex-1 flex flex-col bg-white rounded-2xl border-2 border-dashed border-indigo-200 overflow-hidden shadow-sm relative">
+                <div className="w-full md:flex-1 flex flex-col bg-white rounded-2xl border-2 border-dashed border-indigo-200 overflow-hidden shadow-sm relative h-2/3 md:h-auto">
 
                     {/* Batch Config Header */}
                     <div className="p-6 border-b bg-indigo-50/50">
