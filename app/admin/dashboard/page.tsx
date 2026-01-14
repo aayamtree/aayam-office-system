@@ -192,71 +192,81 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Today's Focus Panel */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col md:flex-row items-start md:items-center gap-6 animate-fade-in-up md:h-24">
-        <div className="min-w-[120px]">
-          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <span className="w-2 h-8 bg-indigo-600 rounded-full"></span>
-            Today
-          </h2>
-          <p className="text-xs text-gray-400 pl-4 mt-1">Daily Focus</p>
-        </div>
-
-        <div className="flex-1 grid grid-cols-2 lg:grid-cols-5 gap-4 w-full">
-          {/* Jobs Due */}
-          <div className={`flex items-center gap-3 p-2 rounded-xl border ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-200 text-gray-500'}`}>
-              <AlertCircle size={16} />
+      {/* Daily Briefing Panel (Focus + Activity) */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-fade-in-up">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left: Today's Focus Stats */}
+          <div className="lg:col-span-2 space-y-5">
+            <div className="min-w-[120px]">
+              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <span className="w-2 h-8 bg-indigo-600 rounded-full"></span>
+                Today
+              </h2>
+              <p className="text-xs text-gray-400 pl-4 mt-1">Daily Focus</p>
             </div>
-            <div>
-              <div className={`text-lg font-bold leading-none ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'text-red-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsDue || 0}</div>
-              <div className="text-[10px] text-gray-500 font-medium">Jobs Due</div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
+              {/* Jobs Due */}
+              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-200 text-gray-500'}`}>
+                  <AlertCircle size={16} />
+                </div>
+                <div>
+                  <div className={`text-lg font-bold leading-none ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'text-red-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsDue || 0}</div>
+                  <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Jobs Due</div>
+                </div>
+              </div>
+
+              {/* Jobs Delayed */}
+              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-orange-50 border-orange-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-orange-100 text-orange-600' : 'bg-gray-200 text-gray-500'}`}>
+                  <Clock size={16} />
+                </div>
+                <div>
+                  <div className={`text-lg font-bold leading-none ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'text-orange-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsDelayed || 0}</div>
+                  <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Delayed</div>
+                </div>
+              </div>
+
+              {/* Jobs Completed */}
+              <div className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-green-50/50 border-green-100 hover:bg-green-50' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'}`}>
+                  <CheckCircle size={16} />
+                </div>
+                <div>
+                  <div className={`text-lg font-bold leading-none ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'text-green-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsCompleted || 0}</div>
+                  <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Completed</div>
+                </div>
+              </div>
+
+              {/* Payments Due */}
+              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-blue-50 border-blue-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-500'}`}>
+                  <Receipt size={16} />
+                </div>
+                <div>
+                  <div className={`text-lg font-bold leading-none ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'text-blue-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.paymentsDue || 0}</div>
+                  <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Payments</div>
+                </div>
+              </div>
+
+              {/* Follow-ups */}
+              <Link href="/admin/marketing/follow-ups" className={`flex items-center gap-3 p-3 rounded-xl border transition-all hover:scale-105 ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-purple-50 border-purple-100 cursor-pointer' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-purple-100 text-purple-600' : 'bg-gray-200 text-gray-500'}`}>
+                  <Phone size={16} />
+                </div>
+                <div>
+                  <div className={`text-lg font-bold leading-none ${dashboardStats.alerts?.followUpsDue > 0 ? 'text-purple-700' : 'text-gray-500'}`}>{dashboardStats.alerts?.followUpsDue || 0}</div>
+                  <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Follow-ups</div>
+                </div>
+              </Link>
             </div>
           </div>
 
-          {/* Jobs Delayed */}
-          <div className={`flex items-center gap-3 p-2 rounded-xl border ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-orange-50 border-orange-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-orange-100 text-orange-600' : 'bg-gray-200 text-gray-500'}`}>
-              <Clock size={16} />
-            </div>
-            <div>
-              <div className={`text-lg font-bold leading-none ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'text-orange-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsDelayed || 0}</div>
-              <div className="text-[10px] text-gray-500 font-medium">Delayed</div>
-            </div>
+          {/* Right: Activity Feed (Merged) */}
+          <div className="lg:col-span-1 border-t lg:border-t-0 lg:border-l border-gray-100 pt-6 lg:pt-0 lg:pl-8 h-full">
+            <ActivityFeed variant="minimal" />
           </div>
-
-          {/* Jobs Completed */}
-          <div className={`flex items-center gap-3 p-2 rounded-xl border transition-colors ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-green-50/50 border-green-100 hover:bg-green-50' : 'bg-gray-50 border-transparent opacity-60'}`}>
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'}`}>
-              <CheckCircle size={16} />
-            </div>
-            <div>
-              <div className={`text-lg font-bold leading-none ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'text-green-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsCompleted || 0}</div>
-              <div className="text-[10px] text-gray-500 font-medium">Completed</div>
-            </div>
-          </div>
-
-          {/* Payments Due */}
-          <div className={`flex items-center gap-3 p-2 rounded-xl border ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-blue-50 border-blue-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-500'}`}>
-              <Receipt size={16} />
-            </div>
-            <div>
-              <div className={`text-lg font-bold leading-none ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'text-blue-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.paymentsDue || 0}</div>
-              <div className="text-[10px] text-gray-500 font-medium">Payments</div>
-            </div>
-          </div>
-
-          {/* Follow-ups */}
-          <Link href="/admin/marketing/follow-ups" className={`flex items-center gap-3 p-2 rounded-xl border transition-all hover:scale-105 ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-purple-50 border-purple-100 cursor-pointer' : 'bg-gray-50 border-transparent opacity-60'}`}>
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-purple-100 text-purple-600' : 'bg-gray-200 text-gray-500'}`}>
-              <Phone size={16} />
-            </div>
-            <div>
-              <div className={`text-lg font-bold leading-none ${dashboardStats.alerts?.followUpsDue > 0 ? 'text-purple-700' : 'text-gray-500'}`}>{dashboardStats.alerts?.followUpsDue || 0}</div>
-              <div className="text-[10px] text-gray-500 font-medium">Follow-ups</div>
-            </div>
-          </Link>
         </div>
       </div>
 
@@ -322,11 +332,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Split Row: Reminders & Notes (Moved Up to Fill Gap) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 h-[500px]">
-            <RemindersWidget />
-            <NotesWidget />
-          </div>
+
 
           {/* Recent Jobs */}
           <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
@@ -571,7 +577,6 @@ export default function AdminDashboard() {
 
         {/* Right Column - 1/3 width */}
         <div className="space-y-6 lg:space-y-8">
-          <ActivityFeed />
           <NotesWidget />
           <RemindersWidget />
         </div>
