@@ -64,12 +64,14 @@ export default function AdminDashboard() {
 
   // Pipeline Data - Dynamic
   const pipeline = [
-    { label: 'In Design', count: (dashboardStats.pipeline?.designing || 0) + (dashboardStats.pipeline?.approval || 0), color: 'bg-indigo-500' },
-    { label: 'Production', count: (dashboardStats.pipeline?.printing || 0) + (dashboardStats.pipeline?.finishing || 0), color: 'bg-amber-500' },
-    { label: 'QC Check', count: dashboardStats.pipeline?.quality_check || 0, color: 'bg-purple-500' },
-    { label: 'Ready/Packed', count: (dashboardStats.pipeline?.ready || 0) + (dashboardStats.pipeline?.packed || 0), color: 'bg-green-500' },
-    { label: 'Dispatched', count: (dashboardStats.pipeline?.dispatched || 0) + (dashboardStats.pipeline?.in_transit || 0), color: 'bg-blue-500' },
+    { label: 'In Design', count: (dashboardStats.pipeline?.designing || 0) + (dashboardStats.pipeline?.approval || 0), color: 'bg-indigo-500', href: '/admin/designers/tasks?view=team_tasks', thresh: 10 },
+    { label: 'Production', count: (dashboardStats.pipeline?.printing || 0) + (dashboardStats.pipeline?.finishing || 0), color: 'bg-amber-500', href: '/admin/jobs/queue', thresh: 15 },
+    { label: 'QC Check', count: dashboardStats.pipeline?.quality_check || 0, color: 'bg-purple-500', href: '/admin/jobs?status=quality_check', thresh: 5 },
+    { label: 'Ready/Packed', count: (dashboardStats.pipeline?.ready || 0) + (dashboardStats.pipeline?.packed || 0), color: 'bg-green-500', href: '/admin/dispatch', thresh: 20 },
+    { label: 'Dispatched', count: (dashboardStats.pipeline?.dispatched || 0) + (dashboardStats.pipeline?.in_transit || 0), color: 'bg-blue-500', href: '/admin/dispatch/history', thresh: 999 },
   ];
+
+  const totalPipeline = pipeline.reduce((acc, item) => acc + item.count, 0) || 1; // Avoid div by zero
 
   // Alerts - Dynamic
   const alerts = [
@@ -314,15 +316,36 @@ export default function AdminDashboard() {
             </div>
 
             <div className="space-y-4">
-              {pipeline.map((item) => (
-                <div key={item.label} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-colors cursor-default">
-                  <div className="flex items-center gap-3">
-                    <span className={`w-3.5 h-3.5 rounded-full ${item.color.split(' ')[0]} shadow-sm`}></span>
-                    <span className="text-base text-gray-600 font-medium">{item.label}</span>
-                  </div>
-                  <span className="font-bold text-gray-900 bg-gray-100 px-2.5 py-0.5 rounded-md text-sm">{item.count}</span>
-                </div>
-              ))}
+              {pipeline.map((item) => {
+                const percent = Math.round((item.count / totalPipeline) * 100);
+                const isBottleneck = item.count > item.thresh;
+
+                return (
+                  <Link key={item.label} href={item.href} className={`block group`}>
+                    <div className={`flex items-center justify-between p-3 rounded-xl transition-all border 
+                      ${isBottleneck ? 'bg-red-50 border-red-200' : 'hover:bg-gray-50 border-transparent hover:border-gray-100'}
+                  `}>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className={`w-2.5 h-2.5 rounded-full ${item.color.split(' ')[0]} shadow-sm`}></span>
+                          <span className={`text-sm font-bold ${isBottleneck ? 'text-red-700' : 'text-gray-700'}`}>{item.label}</span>
+                          {isBottleneck && <AlertCircle size={14} className="text-red-500 animate-pulse" />}
+                        </div>
+
+                        {/* Prorgess Bar */}
+                        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                          <div className={`h-full rounded-full ${item.color.replace('text-', 'bg-')} transition-all duration-500`} style={{ width: `${percent}%` }}></div>
+                        </div>
+                      </div>
+
+                      <div className="ml-4 text-right">
+                        <span className={`text-lg font-bold ${isBottleneck ? 'text-red-600' : 'text-gray-900 group-hover:text-indigo-600'}`}>{item.count}</span>
+                        <p className="text-[10px] text-gray-400 font-medium">{percent}%</p>
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
           </div>
 
