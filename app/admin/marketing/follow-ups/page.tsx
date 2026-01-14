@@ -6,7 +6,7 @@ import {
   Plus, Search, Phone, Mail, Calendar, Clock, Edit, Trash2, X,
   CheckCircle, MessageSquare, Users, Video, AlertCircle, Loader2, FileText
 } from 'lucide-react';
-import { useClients, useFollowUps, useAuth } from '@/lib/hooks';
+import { useLeads, useFollowUps, useAuth } from '@/lib/hooks';
 
 // Type Definitions
 const followUpTypes = [
@@ -22,7 +22,7 @@ export default function MarketingFollowUpsPage() {
   const { user, profile } = useAuth();
 
   // Real Data Hooks
-  const { clients, loading: clientsLoading } = useClients();
+  const { leads, loading: leadsLoading } = useLeads();
   const { followUps, loading: followUpsLoading, createFollowUp, updateFollowUp, deleteFollowUp, refetch } = useFollowUps();
 
   // Local State
@@ -34,7 +34,7 @@ export default function MarketingFollowUpsPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
-    clientId: '',
+    leadId: '',
     type: 'call',
     date: '',
     time: '',
@@ -46,19 +46,14 @@ export default function MarketingFollowUpsPage() {
   // Transform DB data to UI format
   const formattedFollowUps = (followUps || []).map((f: any) => ({
     id: f.id,
-    clientId: f.client_id,
-    clientName: f.client?.name || f.lead?.name || 'Unknown',
+    leadId: f.lead_id,
+    clientName: f.lead?.name || f.client?.name || 'Unknown',
+    companyName: f.lead?.company || f.client?.company,
     type: 'call', // DB might not have type yet, defaulting
     date: f.follow_up_date ? new Date(f.follow_up_date).toISOString().split('T')[0] : '',
     time: f.follow_up_date ? new Date(f.follow_up_date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '',
     notes: f.notes || '',
-    status: f.follow_up_date && new Date(f.follow_up_date) < new Date() ? 'pending' : 'pending', // Logic needs refinement
-    // For now, let's assume all are pending unless marked done (using a done flag? schema missed status column!)
-    // Schema misses 'status' and 'type' columns! 
-    // We will use 'notes' to store type for now or just default.
-    // Wait, the user wants "Type". We should add it to schema properly later.
-    // For now, I will save type in Notes prefix? No, that's hacky.
-    // I will add columns to schema in the same SQL script!
+    status: f.follow_up_date && new Date(f.follow_up_date) < new Date() ? 'pending' : 'pending',
   }));
 
   // Filtering
@@ -81,7 +76,7 @@ export default function MarketingFollowUpsPage() {
     try {
       const dateTime = new Date(`${formData.date}T${formData.time}`).toISOString();
       const payload = {
-        client_id: formData.clientId,
+        lead_id: formData.leadId,
         follow_up_date: dateTime,
         notes: `[${formData.type}] ${formData.notes}`, // Storing type in notes for now as temporary fix
         done_by: profile?.id || user?.id
@@ -103,14 +98,14 @@ export default function MarketingFollowUpsPage() {
   };
 
   const resetForm = () => {
-    setFormData({ clientId: '', type: 'call', date: '', time: '', notes: '' });
+    setFormData({ leadId: '', type: 'call', date: '', time: '', notes: '' });
     setEditingFollowUp(null);
     setShowModal(false);
   };
 
   const handleEdit = (followUp: any) => {
     setFormData({
-      clientId: followUp.clientId,
+      leadId: followUp.leadId || '',
       type: 'call',
       date: followUp.date,
       time: followUp.time,
@@ -153,6 +148,7 @@ export default function MarketingFollowUpsPage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-gray-900">{followUp.clientName}</h3>
+              {followUp.companyName && <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{followUp.companyName}</span>}
             </div>
             <p className="text-sm text-gray-600 mt-1">{cleanNotes}</p>
             <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
@@ -186,7 +182,7 @@ export default function MarketingFollowUpsPage() {
     );
   };
 
-  if (clientsLoading || followUpsLoading) return <div className="p-12 text-center"><Loader2 className="animate-spin mx-auto" /> Loading Data...</div>;
+  if (leadsLoading || followUpsLoading) return <div className="p-12 text-center"><Loader2 className="animate-spin mx-auto" /> Loading Data...</div>;
 
   return (
     <div className="p-4 sm:p-6 space-y-5 animate-fade-in">
@@ -280,11 +276,11 @@ export default function MarketingFollowUpsPage() {
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1.5">Client *</label>
-                <select required value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+                <label className="block text-sm font-medium mb-1.5">Lead / Potential Client *</label>
+                <select required value={formData.leadId} onChange={(e) => setFormData({ ...formData, leadId: e.target.value })}
                   className="w-full px-3 py-2.5 border rounded-lg bg-white">
-                  <option value="">Select Client</option>
-                  {(clients || []).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  <option value="">Select Lead</option>
+                  {(leads || []).map(l => <option key={l.id} value={l.id}>{l.name} {l.company ? `(${l.company})` : ''}</option>)}
                 </select>
               </div>
               <div>

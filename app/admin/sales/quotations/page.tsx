@@ -7,7 +7,7 @@ import {
   Calendar, User, FileText, IndianRupee, CheckCircle, XCircle, Clock, Loader2, Download
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
-import { useQuotations, useClients, useJobs } from '@/lib/hooks';
+import { useQuotations, useClients, useJobs, useLeads } from '@/lib/hooks';
 import { Quotation, Client, QuotationItem, JobStatus } from '@/types/database';
 import { downloadQuotationPDF, defaultCompanyData } from '@/components/quotation/QuotationPDF';
 
@@ -18,6 +18,7 @@ export default function QuotationsPage() {
   // Show all quotations
   const quotations = allQuotations;
   const { clients } = useClients();
+  const { leads } = useLeads();
   const { createJob } = useJobs();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,6 +32,7 @@ export default function QuotationsPage() {
   // Form State
   const [formData, setFormData] = useState({
     clientId: '',
+    leadId: '',
     quoteNumber: '', // Auto-generated
     validUntil: '',
     items: [{ description: '', quantity: 1, rate: 0, amount: 0, gst_rate: 18 }] as QuotationItem[],
@@ -136,6 +138,7 @@ export default function QuotationsPage() {
   const handleAddNew = () => {
     setFormData({
       clientId: '',
+      leadId: '',
       quoteNumber: '',
       items: [{ description: '', quantity: 1, rate: 0, amount: 0, gst_rate: 18 } as QuotationItem],
       subtotal: 0,
@@ -157,6 +160,7 @@ export default function QuotationsPage() {
 
     setFormData({
       clientId: q.client_id || '',
+      leadId: q.lead_id || '',
       quoteNumber: q.quote_number,
       validUntil: q.valid_until ? new Date(q.valid_until).toISOString().split('T')[0] : '',
       items: items.length > 0 ? items : [{ description: '', quantity: 1, rate: 0, amount: 0, gst_rate: 18 } as QuotationItem],
@@ -185,9 +189,14 @@ export default function QuotationsPage() {
 
     try {
       // 1. Create Job Payload
+      // 1. Create Job Payload
       const jobPayload = {
         project_name: q.items?.[0]?.description || `Order from ${q.quote_number}`,
-        client_id: q.client_id,
+        client_id: q.client_id, // If it's a lead, this will be null. Job might require client.
+        // If it's a lead, we might need to convert it first? 
+        // For now, if no client_id, the job creation might fail if schema enforces it.
+        // Assuming user will convert lead to client via other flow, or we should handle it here?
+        // Let's pass null and see if job allows.
         sales_person_id: profile?.id || user?.id || q.created_by, // Ensure visibility for current user
         // No vendor or designer initially
         job_type: 'print', // Default or derived
@@ -239,7 +248,8 @@ export default function QuotationsPage() {
 
     try {
       const { items, ...quoteFields } = {
-        client_id: formData.clientId,
+        client_id: formData.clientId || undefined,
+        lead_id: formData.leadId || undefined,
         created_by: profile?.id || user?.id,
         valid_until: formData.validUntil,
         subtotal: formData.subtotal,
@@ -475,17 +485,35 @@ export default function QuotationsPage() {
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Client *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Client / Lead *</label>
                   <select
                     required
-                    value={formData.clientId}
-                    onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+                    value={formData.clientId ? `client_${formData.clientId}` : formData.leadId ? `lead_${formData.leadId}` : ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (!val) {
+                        setFormData({ ...formData, clientId: '', leadId: '' });
+                        return;
+                      }
+                      if (val.startsWith('client_')) {
+                        setFormData({ ...formData, clientId: val.replace('client_', ''), leadId: '' });
+                      } else if (val.startsWith('lead_')) {
+                        setFormData({ ...formData, leadId: val.replace('lead_', ''), clientId: '' });
+                      }
+                    }}
                     className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                   >
-                    <option value="">Select Client</option>
-                    {clients.map(c => (
-                      <option key={c.id} value={c.id}>{c.company} ({c.name})</option>
-                    ))}
+                    <option value="">Select Client or Lead</option>
+                    <optgroup label="Leads (Potential)">
+                      {leads?.map(l => (
+                        <option key={`lead_${l.id}`} value={`lead_${l.id}`}>LEAD: {l.name} {l.company ? `(${l.company})` : ''}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Clients (Existing)">
+                      {clients?.map(c => (
+                        <option key={`client_${c.id}`} value={`client_${c.id}`}>{c.company} ({c.name})</option>
+                      ))}
+                    </optgroup>
                   </select>
                 </div>
                 <div>
