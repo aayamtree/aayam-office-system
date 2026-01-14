@@ -158,7 +158,7 @@ export default function AdminDashboard() {
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 hover:bg-white/15 transition-all duration-300 border border-white/5 shadow-inner">
+              <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 hover:bg-white/15 transition-all duration-150 border border-white/5 shadow-inner">
                 <div className="flex items-start justify-between mb-3">
                   <p className="text-indigo-100 text-sm font-medium opacity-90">{stat.label}</p>
                   <Icon size={20} className="text-indigo-300" />
@@ -310,7 +310,7 @@ export default function AdminDashboard() {
                         <td className="py-4 text-right font-bold text-gray-900 text-sm">{formatCurrency(job.total_amount)}</td>
                         <td className="py-4 text-right pr-4">
                           <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full ${getStatusColor(job.current_stage)} shadow-sm`}>
-                            {job.current_stage.replace('_', ' ')}
+                            {job.current_stage.replace(/_/g, ' ')}
                           </span>
                         </td>
                       </tr>
