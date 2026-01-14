@@ -273,6 +273,57 @@ export default function AdminDashboard() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
 
+        {/* Needs Attention */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col h-full">
+          <div className="flex items-center gap-2.5 mb-6">
+            <AlertCircle size={20} className="text-amber-500" />
+            <h2 className="text-lg font-bold text-gray-900">Needs Attention</h2>
+          </div>
+
+          <div className="space-y-4 flex-1 overflow-y-auto max-h-[400px] pr-1">
+            {sortedAlerts.map((alert) => {
+              const isSafe = alert.count === 0;
+              let colors = isSafe ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-700 border-gray-200';
+              let iconColors = isSafe ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500';
+
+              // Specific Alert Colors
+              if (!isSafe) {
+                if (alert.id === 'blocked') { colors = 'bg-slate-50 text-slate-700 border-slate-200'; iconColors = 'bg-slate-100 text-slate-600'; }
+                if (alert.id === 'payments') { colors = 'bg-red-50 text-red-700 border-red-200'; iconColors = 'bg-red-100 text-red-600'; }
+                if (alert.id === 'stock') { colors = 'bg-orange-50 text-orange-800 border-orange-200'; iconColors = 'bg-orange-100 text-orange-600'; }
+                if (alert.id === 'followups') { colors = 'bg-amber-50 text-amber-800 border-amber-200'; iconColors = 'bg-amber-100 text-amber-600'; }
+              }
+
+              return (
+                <Link key={alert.label} href={alert.href} className={`flex items-center justify-between p-4 rounded-xl border transition-all hover:shadow-md ${colors}`}>
+                  <div className="flex items-center gap-4">
+                    <span className={`w-10 h-10 ${iconColors} rounded-lg flex items-center justify-center text-lg font-bold shadow-sm`}>
+                      {isSafe ? <Check size={20} /> : alert.icon}
+                    </span>
+                    <div>
+                      <h4 className="text-base font-bold leading-tight">{alert.label}</h4>
+                      <p className={`text-xs mt-0.5 font-medium opacity-80`}>
+                        {isSafe ? alert.emptyText : `${alert.count} ${alert.activeText}`}
+                      </p>
+                    </div>
+                  </div>
+
+                  {!isSafe && (
+                    <span className="font-bold text-xl">{alert.count}</span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Notes */}
+        <NotesWidget />
+
+        {/* Reminders */}
+        <RemindersWidget />
+
+        {/* Row 2: Main Business Data */}
         {/* Left Column - 2/3 width */}
         <div className="lg:col-span-2 space-y-6 lg:space-y-8">
 
@@ -331,8 +382,6 @@ export default function AdminDashboard() {
               </Link>
             </div>
           </div>
-
-
 
           {/* Recent Jobs */}
           <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
@@ -436,9 +485,9 @@ export default function AdminDashboard() {
         </div>
 
         {/* Right Column - 1/3 width */}
-        <div className="space-y-6 lg:space-y-8">
+        <div className="lg:col-span-1 space-y-6 lg:space-y-8">
 
-          {/* Quick Actions (Moved to Top of Right Column for Easy Access) */}
+          {/* Quick Actions */}
           <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
             <h2 className="text-lg font-bold text-gray-900 mb-5">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-4">
@@ -486,7 +535,6 @@ export default function AdminDashboard() {
                 if (item.label === 'Production') overdueCount = (dashboardStats.pipelineOverdue?.printing || 0) + (dashboardStats.pipelineOverdue?.finishing || 0);
                 if (item.label === 'QC Check') overdueCount = (dashboardStats.pipelineOverdue?.quality_check || 0);
                 if (item.label === 'Ready/Packed') overdueCount = (dashboardStats.pipelineOverdue?.ready || 0) + (dashboardStats.pipelineOverdue?.packed || 0);
-                // Dispatched usually doesn't have "overdue" in same sense unless delivery date passed, but let's skip or include
 
                 return (
                   <Link key={item.label} href={item.href} className={`block group`}>
@@ -526,59 +574,6 @@ export default function AdminDashboard() {
               })}
             </div>
           </div>
-
-          {/* Needs Attention */}
-          <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-2.5 mb-6">
-              <AlertCircle size={20} className="text-amber-500" />
-              <h2 className="text-lg font-bold text-gray-900">Needs Attention</h2>
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-4">
-                {sortedAlerts.map((alert) => {
-                  const isSafe = alert.count === 0;
-                  let colors = isSafe ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-700 border-gray-200';
-                  let iconColors = isSafe ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500';
-
-                  // Specific Alert Colors
-                  if (!isSafe) {
-                    if (alert.id === 'blocked') { colors = 'bg-slate-50 text-slate-700 border-slate-200'; iconColors = 'bg-slate-100 text-slate-600'; }
-                    if (alert.id === 'payments') { colors = 'bg-red-50 text-red-700 border-red-200'; iconColors = 'bg-red-100 text-red-600'; }
-                    if (alert.id === 'stock') { colors = 'bg-orange-50 text-orange-800 border-orange-200'; iconColors = 'bg-orange-100 text-orange-600'; }
-                    if (alert.id === 'followups') { colors = 'bg-amber-50 text-amber-800 border-amber-200'; iconColors = 'bg-amber-100 text-amber-600'; }
-                  }
-
-                  return (
-                    <Link key={alert.label} href={alert.href} className={`flex items-center justify-between p-4 rounded-xl border transition-all hover:shadow-md ${colors}`}>
-                      <div className="flex items-center gap-4">
-                        <span className={`w-10 h-10 ${iconColors} rounded-lg flex items-center justify-center text-lg font-bold shadow-sm`}>
-                          {isSafe ? <Check size={20} /> : alert.icon}
-                        </span>
-                        <div>
-                          <h4 className="text-base font-bold leading-tight">{alert.label}</h4>
-                          <p className={`text-xs mt-0.5 font-medium opacity-80`}>
-                            {isSafe ? alert.emptyText : `${alert.count} ${alert.activeText}`}
-                          </p>
-                        </div>
-                      </div>
-
-                      {!isSafe && (
-                        <span className="font-bold text-xl">{alert.count}</span>
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Right Column - 1/3 width */}
-        <div className="space-y-6 lg:space-y-8">
-          <NotesWidget />
-          <RemindersWidget />
         </div>
       </div>
     </div>
