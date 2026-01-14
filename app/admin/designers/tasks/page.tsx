@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useJobs, useClients, useDesigners } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
@@ -46,6 +47,8 @@ const initialLogs = [
 
 export default function DesignerWorkspace() {
   const { profile } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const { jobs, loading: jobsLoading, error: jobsError, updateJobStage, createJob, updateJob } = useJobs();
   const { clients } = useClients();
   const { designers } = useDesigners();
@@ -61,8 +64,19 @@ export default function DesignerWorkspace() {
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [creatingTask, setCreatingTask] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'my_tasks' | 'team_tasks' | 'timeline' | 'notes'>('my_tasks');
+  const activeTab = (searchParams.get('view') || 'my_tasks') as 'my_tasks' | 'team_tasks' | 'timeline' | 'notes';
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Handle ?action=new
+  useEffect(() => {
+    if (searchParams.get('action') === 'new') {
+      setIsNewTaskModalOpen(true);
+    }
+  }, [searchParams]);
+
+  const setView = (view: string) => {
+    router.push(`/admin/designers/tasks?view=${view}`);
+  };
 
   // Notes State
   const [notes, setNotes] = useState<any[]>([]);
@@ -379,7 +393,7 @@ export default function DesignerWorkspace() {
           {/* View Tabs - Color Blocks */}
           <div className="grid grid-cols-3 gap-2 mt-4 px-1">
             <button
-              onClick={() => setActiveTab('my_tasks')}
+              onClick={() => setView('my_tasks')}
               className={`py-2.5 rounded-xl text-[10px] md:text-xs font-bold transition-all shadow-sm border ${activeTab === 'my_tasks'
                 ? 'bg-white text-blue-600 border-blue-600 ring-2 ring-blue-100'
                 : 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700 opacity-90 hover:opacity-100'
@@ -388,7 +402,7 @@ export default function DesignerWorkspace() {
               My Tasks
             </button>
             <button
-              onClick={() => setActiveTab('team_tasks')}
+              onClick={() => setView('team_tasks')}
               className={`py-2.5 rounded-xl text-[10px] md:text-xs font-bold transition-all shadow-sm border ${activeTab === 'team_tasks'
                 ? 'bg-white text-orange-600 border-orange-600 ring-2 ring-orange-100'
                 : 'bg-orange-500 text-white border-orange-500 hover:bg-orange-600 opacity-90 hover:opacity-100'
@@ -397,7 +411,7 @@ export default function DesignerWorkspace() {
               Team Tasks
             </button>
             <button
-              onClick={() => setActiveTab('timeline')}
+              onClick={() => setView('timeline')}
               className={`py-2.5 rounded-xl text-[10px] md:text-xs font-bold transition-all shadow-sm border ${activeTab === 'timeline'
                 ? 'bg-white text-blue-600 border-blue-600 ring-2 ring-blue-100'
                 : 'bg-blue-500 text-white border-blue-500 hover:bg-blue-600 opacity-90 hover:opacity-100'
@@ -406,7 +420,7 @@ export default function DesignerWorkspace() {
               Timeline
             </button>
             <button
-              onClick={() => setActiveTab('notes')}
+              onClick={() => setView('notes')}
               className={`py-2.5 rounded-xl text-[10px] md:text-xs font-bold transition-all shadow-sm border ${activeTab === 'notes'
                 ? 'bg-white text-emerald-600 border-emerald-600 ring-2 ring-emerald-100'
                 : 'bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600 opacity-90 hover:opacity-100'

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import {
   LayoutDashboard,
@@ -50,10 +50,17 @@ const menuItems: MenuItem[] = [
     ]
   },
   {
-    name: 'Design Tasks',
+    name: 'Design Studio',
     icon: Palette,
-    href: '/admin/designers/tasks', // Updated to point to new Workspace
+    href: '/admin/designers/tasks',
     allowedRoles: ['admin', 'designer'],
+    submenu: [
+      { name: 'My Queue', href: '/admin/designers/tasks?view=my_tasks' },
+      { name: 'Team Queue', href: '/admin/designers/tasks?view=team_tasks' },
+      { name: 'Timeline', href: '/admin/designers/tasks?view=timeline' },
+      { name: 'My Notes', href: '/admin/designers/tasks?view=notes' },
+      { name: '+ New Project', href: '/admin/designers/tasks?action=new' },
+    ]
   },
   {
     name: 'Marketing',
@@ -98,18 +105,16 @@ const menuItems: MenuItem[] = [
       { name: 'Overview', href: '/admin/finance' },
       { name: 'Sales Orders', href: '/admin/finance/sales-orders' },
       { name: 'Invoices', href: '/admin/finance/invoices' },
-      { name: 'Vendors', href: '/admin/finance/vendors' },
-      { name: 'Purchases', href: '/admin/finance/vendors/purchases' },
       { name: 'Payments', href: '/admin/finance/payments' },
-      { name: 'Bank Accounts', href: '/admin/finance/banks' },
-      { name: 'Reconciliation', href: '/admin/finance/banking' },
+      { name: 'Banking', href: '/admin/finance/banking' },
+      { name: 'Purchase Bills', href: '/admin/finance/purchase-bills' },
     ]
   },
   {
     name: 'Dispatch',
     icon: Truck,
     href: '/admin/dispatch',
-    allowedRoles: ['admin', 'account', 'dispatch'],
+    allowedRoles: ['admin', 'dispatch'],
   },
   {
     name: 'CMYK Print',
@@ -149,9 +154,10 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { profile, signOut } = useAuth();
-  const [expandedItems, setExpandedItems] = useState<string[]>(['Marketing', 'Finance', 'Sales', 'CRM']);
+  const [expandedItems, setExpandedItems] = useState<string[]>(['Design Studio', 'Marketing', 'Finance', 'Sales', 'CRM']);
 
   const toggleExpanded = (name: string) => {
     setExpandedItems(prev =>
@@ -167,6 +173,21 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   };
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
+
+  // Helper to check if a submenu link is active (handling query params)
+  const isSubActive = (href: string) => {
+    if (href.includes('?')) {
+      const [path, query] = href.split('?');
+      if (pathname !== path) return false;
+      const subParams = new URLSearchParams(query);
+      const entries = Array.from(subParams.entries());
+      for (const [key, val] of entries) {
+        if (searchParams.get(key) !== val) return false;
+      }
+      return true;
+    }
+    return pathname === href;
+  }
 
   const handleLinkClick = () => {
     // Close sidebar on mobile when clicking a link
@@ -218,7 +239,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       <nav className="flex-1 overflow-y-auto px-3">
         <div className="space-y-1">
           {menuItems.filter(item => {
-            // If allowedRoles is missing, default to showing (safe fallback) or admin only? 
+            // If allowedRoles is missing, default to showing (safe fallback) or admin only?
             // Let's mimic 'admin' logic if profile is missing, or show nothing.
             // If profile.role is undefined (loading), maybe show nothing or loaders.
             // But for now, if item.allowedRoles includes current role, show it.
@@ -274,8 +295,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                         href={sub.href}
                         onClick={handleLinkClick}
                         className={`block px-3 py-2 rounded-lg text-sm transition-all
-                          ${pathname === sub.href
-                            ? 'bg-white/10 text-white'
+                          ${isSubActive(sub.href)
+                            ? 'bg-white/10 text-white font-medium'
                             : 'text-gray-500 hover:text-white'
                           }`}
                       >
