@@ -10,7 +10,7 @@ import {
   Plus, Search, Calendar, Clock, Edit, Trash2, Eye, X, ArrowLeft, ArrowRight, CheckCircle,
   AlertCircle, User, Briefcase, MessageSquare, Paperclip, ExternalLink,
   FileText, Image, Video, Music, File, ChevronRight, Save, Send, MoreHorizontal,
-  ChevronLeft, Loader2, Folder, GanttChart, Layout, Monitor, AlertTriangle
+  ChevronLeft, Loader2, Folder, GanttChart, Layout, Monitor, AlertTriangle, Palette, Printer
 } from 'lucide-react';
 
 // --- HELPERS ---
@@ -18,8 +18,9 @@ const getDesignerStatus = (stage: string) => {
   const map: Record<string, string> = {
     'new': 'pending',
     'designing': 'in_progress',
-    'approval': 'review',
-    'printing': 'completed',
+    'quality_check': 'review', // Internal Review
+    'approval': 'waiting',     // Waiting for Client
+    'printing': 'completed',   // Ready for Print
     'completed': 'completed',
     'delivered': 'completed'
   };
@@ -29,8 +30,8 @@ const getDesignerStatus = (stage: string) => {
 const taskStatuses = [
   { id: 'pending', name: 'To Do', color: 'bg-gray-100 text-gray-700' },
   { id: 'in_progress', name: 'Designing', color: 'bg-blue-100 text-blue-700' },
-  { id: 'review', name: 'Client Review', color: 'bg-purple-100 text-purple-700' },
-  { id: 'rework', name: 'Correction', color: 'bg-orange-100 text-orange-700' },
+  { id: 'review', name: 'Review', color: 'bg-purple-100 text-purple-700' },
+  { id: 'waiting', name: 'Waiting Client', color: 'bg-amber-100 text-amber-700' },
   { id: 'completed', name: 'Done', color: 'bg-green-100 text-green-700' },
 ];
 
@@ -137,6 +138,15 @@ export default function DesignerWorkspace() {
   const activeTab = (searchParams.get('view') || 'board');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Pre-print Checklist State
+  const [checklist, setChecklist] = useState({
+    bleed: false,
+    cmyk: false,
+    spelling: false,
+    size: false,
+    approval: false
+  });
+
   // Handle ?action=new
   useEffect(() => {
     if (searchParams.get('action') === 'new') {
@@ -204,10 +214,11 @@ export default function DesignerWorkspace() {
 
   // Kanban Columns
   const kanbanColumns = [
-    { id: 'pending', title: 'To Do', color: 'bg-gray-100 text-gray-600' },
-    { id: 'in_progress', title: 'Designing', color: 'bg-blue-50 text-blue-600' },
-    { id: 'review', title: 'Review', color: 'bg-purple-50 text-purple-600' },
-    { id: 'completed', title: 'Done', color: 'bg-green-50 text-green-600' }
+    { id: 'pending', title: 'To Do', color: 'bg-gray-100 text-gray-600', border: 'border-gray-400' },
+    { id: 'in_progress', title: 'Designing', color: 'bg-blue-50 text-blue-600', border: 'border-blue-500' },
+    { id: 'review', title: 'Review', color: 'bg-purple-50 text-purple-600', border: 'border-purple-500' },
+    { id: 'waiting', title: 'Waiting', color: 'bg-amber-50 text-amber-600', border: 'border-amber-500' },
+    { id: 'completed', title: 'Done', color: 'bg-green-50 text-green-600', border: 'border-green-500' }
   ];
 
   // Notes State
@@ -528,34 +539,62 @@ export default function DesignerWorkspace() {
                   <div key={col.id} className="w-80 flex flex-col bg-gray-100/50 rounded-2xl border border-gray-200/50">
                     <div className={`p-4 font-bold text-sm uppercase tracking-wide flex justify-between items-center ${col.color.replace('bg-', 'text-')}`}>
                       {col.title}
-                      <span className="bg-white/50 px-2 py-0.5 rounded text-xs">{colTasks.length}</span>
+                      <span className="bg-white/50 px-2 py-0.5 rounded text-xs text-gray-700">{colTasks.length}</span>
                     </div>
                     <div className="flex-1 overflow-y-auto p-3 space-y-3">
-                      {colTasks.map(task => (
-                        <div key={task.id}
-                          onClick={() => { setView('my_tasks'); setSelectedTaskId(task.id); }}
-                          className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer group"
-                        >
-                          <div className="flex justify-between items-start mb-2">
-                            <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${priorities.find(p => p.id === task.priority)?.color}`}>{task.priority}</span>
-                            {task.rawDeadline && <span className={`text-[10px] font-bold ${new Date(task.rawDeadline) < new Date() ? 'text-red-500' : 'text-gray-400'}`}>{task.deadline}</span>}
-                          </div>
-                          <h4 className="font-bold text-gray-800 mb-1 line-clamp-2">{task.title}</h4>
-                          <p className="text-xs text-gray-500 mb-3">{task.clientName}</p>
-                          <div className="flex justify-between items-center border-t pt-3 mt-1">
-                            <div className="flex -space-x-2">
-                              <div className="flex -space-x-2">
-                                <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded overflow-hidden text-ellipsis whitespace-nowrap max-w-[120px]">
+                      {colTasks.map(task => {
+                        // Job Type Icon Logic
+                        let TypeIcon = Palette;
+                        let typeLabel = "Design";
+                        const descLower = (task.description || '').toLowerCase();
+                        if (descLower.includes('print')) { TypeIcon = Printer; typeLabel = "Print"; }
+                        if (descLower.includes('box') || descLower.includes('package')) { TypeIcon = Folder; typeLabel = "Pkg"; }
+
+                        // Urgency Border Logic
+                        let borderClass = col.border ? col.border.replace('border-', 'border-l-4 border-') : 'border-l-4 border-gray-400';
+                        if (task.rawDeadline && new Date(task.rawDeadline) < new Date()) borderClass = 'border-l-4 border-red-500'; // Overdue overrides status
+
+                        return (
+                          <div key={task.id}
+                            onClick={() => { setView('my_tasks'); setSelectedTaskId(task.id); }}
+                            className={`bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer group relative ${borderClass}`}
+                          >
+                            {/* Revision Badge (Mocked based on description or random) */}
+                            <div className="absolute top-4 right-4 text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border">Rev {(task.id % 3) + 1}</div>
+
+                            <div className="flex justify-between items-start mb-2 pr-12">
+                              {/* Job Type Tag */}
+                              <span className="flex items-center gap-1 text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded uppercase tracking-wider">
+                                <TypeIcon size={10} /> {typeLabel}
+                              </span>
+                            </div>
+
+                            <h4 className="font-bold text-gray-800 mb-1 line-clamp-2 leading-tight">{task.title}</h4>
+                            <p className="text-xs text-gray-500 mb-3 font-medium">{task.clientName}</p>
+
+                            {/* Footer Info */}
+                            <div className="flex justify-between items-center border-t pt-3 mt-1">
+                              <div className="flex items-center gap-3">
+                                {/* Designer Avatar */}
+                                <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded overflow-hidden text-ellipsis whitespace-nowrap max-w-[80px]">
                                   {task.designerName || 'Unassigned'}
                                 </span>
+
+                                {/* Date / Risk */}
+                                {task.rawDeadline && (
+                                  <span className={`flex items-center gap-1 text-[10px] font-bold ${new Date(task.rawDeadline) < new Date() ? 'text-red-500' : 'text-gray-400'}`}>
+                                    {new Date(task.rawDeadline) < new Date() && <AlertTriangle size={10} />}
+                                    {task.deadline}
+                                  </span>
+                                )}
                               </div>
-                            </div>
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                              <span className="text-xs font-bold text-indigo-600 hover:underline">View Details -&gt;</span>
+
+                              {/* Drive Link Indicator (if exists) */}
+                              {task.driveLink && <div className="text-blue-500"><Folder size={12} /></div>}
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
                 )
@@ -875,25 +914,91 @@ export default function DesignerWorkspace() {
                       </div>
                     </section>
 
-                    {/* 3. Feedback Loop */}
+                    {/* 3. Feedback & Corrections */}
                     <section className="flex-1 flex flex-col min-h-[300px]">
                       <div className="flex items-center justify-between mb-4">
                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
                           <MessageSquare size={16} className="text-orange-500" /> Feedback & Corrections
                         </h4>
                       </div>
-                      <div className="flex-1 bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden shadow-sm h-[400px]">
+                      <div className="bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden shadow-sm h-[320px]">
                         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/30">
-                          {/* Placeholder */}
-                          <div className="h-full flex flex-col items-center justify-center text-gray-400">
-                            <MessageSquare size={48} className="mb-4 text-gray-200 opacity-50" />
-                            <p className="text-sm font-medium">No feedback yet.</p>
+                          {/* Simulated Threaded Comments */}
+                          {/* In a real app, map through 'remarks' joined to task */}
+                          <div className="space-y-4">
+                            <div className="flex gap-3">
+                              <div className="min-w-8 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600">M</div>
+                              <div className="bg-white p-3 rounded-2xl rounded-tl-none border shadow-sm max-w-[80%]">
+                                <div className="flex justify-between items-center mb-1 gap-4">
+                                  <span className="text-[10px] font-bold text-gray-900">Manager</span>
+                                  <span className="text-[9px] font-bold bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded">Correction ❌</span>
+                                </div>
+                                <p className="text-xs text-gray-600">Client wants the logo bigger. Please check brand guidelines.</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-3 flex-row-reverse">
+                              <div className="min-w-8 w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">Me</div>
+                              <div className="bg-indigo-600 p-3 rounded-2xl rounded-tr-none border border-indigo-600 shadow-custom max-w-[80%] text-white">
+                                <div className="flex justify-between items-center mb-1 gap-4">
+                                  <span className="text-[10px] font-bold text-indigo-100">You</span>
+                                </div>
+                                <p className="text-xs text-indigo-50">Updated. V2 attached in drive.</p>
+                              </div>
+                            </div>
                           </div>
                         </div>
                         <form onSubmit={handleAddFeedback} className="p-4 border-t bg-white flex gap-3 items-center">
-                          <input type="text" value={newFeedback} onChange={(e) => setNewFeedback(e.target.value)} placeholder="Type reply..." className="flex-1 border rounded-xl px-4 py-2 text-sm" />
-                          <button type="submit" disabled={!newFeedback.trim()} className="p-2 bg-indigo-600 text-white rounded-xl"><Send size={18} /></button>
+                          <input type="text" value={newFeedback} onChange={(e) => setNewFeedback(e.target.value)} placeholder="Type reply (tag: #correction, #approved)..." className="flex-1 border rounded-xl px-4 py-2 text-sm focus:ring-2 ring-indigo-500/20 outline-none" />
+                          <button type="submit" disabled={!newFeedback.trim()} className="p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors"><Send size={18} /></button>
                         </form>
+                      </div>
+                    </section>
+
+                    {/* 4. Final Review & Checklist */}
+                    <section className="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-2xl border border-indigo-100 shadow-sm space-y-4">
+                      <h4 className="text-xs font-bold text-indigo-800 uppercase tracking-widest flex items-center gap-2">
+                        <CheckCircle size={16} /> Pre-Print Checklist (Mandatory)
+                      </h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          { id: 'bleed', label: 'Bleed Checked' },
+                          { id: 'cmyk', label: 'CMYK Confirmed' },
+                          { id: 'spelling', label: 'Spelling Verified' },
+                          { id: 'size', label: 'Size Confirmed' }
+                        ].map(item => (
+                          <label key={item.id} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl cursor-pointer hover:border-indigo-200 transition-colors">
+                            <input type="checkbox"
+                              checked={(checklist as any)[item.id]}
+                              onChange={e => setChecklist(prev => ({ ...prev, [item.id]: e.target.checked }))}
+                              className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"
+                            />
+                            <span className="text-sm font-bold text-gray-600">{item.label}</span>
+                          </label>
+                        ))}
+                        <label className="col-span-2 flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl cursor-pointer hover:border-indigo-200 transition-colors">
+                          <input type="checkbox"
+                            checked={checklist.approval}
+                            onChange={e => setChecklist(prev => ({ ...prev, approval: e.target.checked }))}
+                            className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"
+                          />
+                          <span className="text-sm font-bold text-gray-600 flex items-center gap-2"><Paperclip size={14} /> Client Approval Attached / Verified</span>
+                        </label>
+                      </div>
+
+                      <div className="pt-4 border-t border-indigo-100">
+                        <button
+                          disabled={!Object.values(checklist).every(Boolean)}
+                          onClick={() => {
+                            if (confirm('Are you sure? This will lock the task for printing.')) {
+                              updateStatus(selectedTask.realId, 'completed');
+                            }
+                          }}
+                          className="w-full py-4 rounded-xl font-bold text-white shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition-all
+                             disabled:bg-gray-300 disabled:shadow-none disabled:cursor-not-allowed bg-indigo-600 hover:bg-indigo-700 hover:scale-[1.01]"
+                        >
+                          {Object.values(checklist).every(Boolean) ? <><Printer size={20} /> Client Approved - Ready for Print</> : 'Complete Checklist to Finish'}
+                        </button>
+                        <p className="text-center text-[10px] text-gray-400 mt-2 font-medium uppercase tracking-wide">Prevents costly print mistakes</p>
                       </div>
                     </section>
                   </div>
