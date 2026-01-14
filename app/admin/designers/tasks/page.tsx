@@ -98,7 +98,7 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
             onClick={onClose}
             className="px-6 py-2 bg-gray-900 text-white rounded-lg font-bold text-sm hover:bg-black transition-colors"
           >
-            Let's Start Working
+            Let&apos;s Start Working
           </button>
         </div>
       </div>
