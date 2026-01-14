@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+// import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/lib/supabase';
 import { Plus, Trash2, Save, X, Edit2, Check, AlertCircle, RefreshCcw } from 'lucide-react';
 
 export default function ProductionSettings() {
-    const supabase = createClientComponentClient();
+    // const supabase = createClientComponentClient(); 
+    // Use global client instead
     const [loading, setLoading] = useState(true);
     const [checklists, setChecklists] = useState<any[]>([]);
 
