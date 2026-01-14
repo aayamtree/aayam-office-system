@@ -7,7 +7,7 @@ import {
   Client, Vendor, Designer, Job, Invoice, Lead,
   Quotation, Dispatch, BankAccount, DesignTask, DesignProject,
   PurchaseBill, VendorPayment, PaymentReceived, POSCategory, POSProduct,
-  PaperStock, POSSale, Note, Reminder, BankTransaction, SalesOrder
+  PaperStock, POSSale, Note, Reminder, BankTransaction, SalesOrder, ActivityLog
 } from '@/types/database';
 
 // Generic hook for fetching data
@@ -1706,4 +1706,17 @@ export function useVendorPayments() {
   };
 
   return { vendorPayments: data, loading, error, refetch, createVendorPayment, deleteVendorPayment };
+}
+
+// =============================================
+// ACTIVITY LOGS HOOK
+// =============================================
+export function useActivityLogs(limit = 20) {
+  const { data, loading, error, refetch } = useSupabaseQuery<ActivityLog>('activity_logs', {
+    select: '*, user:profiles(*)',
+    orderBy: { column: 'created_at', ascending: false },
+    limit
+  });
+
+  return { logs: data, loading, error, refetch };
 }

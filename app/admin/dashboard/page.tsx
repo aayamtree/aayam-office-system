@@ -22,6 +22,7 @@ import {
 import { useDashboardStats, useJobs } from '@/lib/hooks';
 import NotesWidget from '@/components/dashboard/NotesWidget';
 import RemindersWidget from '@/components/dashboard/RemindersWidget';
+import ActivityFeed from '@/components/dashboard/ActivityFeed';
 
 export default function AdminDashboard() {
   const { profile } = useAuth();
@@ -566,6 +567,13 @@ export default function AdminDashboard() {
             </div>
           </div>
 
+        </div>
+
+        {/* Right Column - 1/3 width */}
+        <div className="space-y-6 lg:space-y-8">
+          <ActivityFeed />
+          <NotesWidget />
+          <RemindersWidget />
         </div>
       </div>
     </div>
