@@ -139,11 +139,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         id: roleKey === 'admin' ? 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' :
           roleKey === 'designer' ? 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380d22' :
-            roleKey === 'marketing' ? 'm0eebc99-9c0b-4ef8-bb6d-6bb9bd380m33' :
-              roleKey === 'dispatch' ? 'dpebc99-9c0b-4ef8-bb6d-6bb9bd380p44' :
+            roleKey === 'marketing' ? '40eebc99-9c0b-4ef8-bb6d-6bb9bd380433' : // Valid UUID (replaced m with 4)
+              roleKey === 'dispatch' ? '50eebc99-9c0b-4ef8-bb6d-6bb9bd380544' : // Valid UUID (replaced p with 5)
                 roleKey === 'cmyk' ? 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380c55' :
                   roleKey === 'finance' ? 'acebc99-9c0b-4ef8-bb6d-6bb9bd380a55' :
-                    'u0eebc99-9c0b-4ef8-bb6d-6bb9bd380u66', // fallback
+                    '60eebc99-9c0b-4ef8-bb6d-6bb9bd380666', // fallback (replaced u with 6)
 
         email: `${roleKey}@aayam.com`,
         full_name: `Speed ${roleKey.charAt(0).toUpperCase() + roleKey.slice(1)}`,
