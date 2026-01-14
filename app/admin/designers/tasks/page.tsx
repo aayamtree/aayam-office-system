@@ -133,7 +133,8 @@ export default function DesignerWorkspace() {
   // Daily Briefing State
   const [showDailyBriefing, setShowDailyBriefing] = useState(false);
 
-  const activeTab = (searchParams.get('view') || 'my_tasks');
+  /* Update default to 'board' */
+  const activeTab = (searchParams.get('view') || 'board');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Handle ?action=new
@@ -507,8 +508,9 @@ export default function DesignerWorkspace() {
                 <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2"><Layout size={20} /> Kanban Team Board</h2>
                 <div className="flex bg-gray-100 p-1 rounded-lg">
                   <button onClick={() => setView('my_tasks')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">List</button>
-                  <button className="px-3 py-1 text-xs font-bold bg-white text-indigo-600 rounded shadow-sm">Board</button>
+                  <button onClick={() => setView('board')} className="px-3 py-1 text-xs font-bold bg-white text-indigo-600 rounded shadow-sm">Board</button>
                   <button onClick={() => setView('timeline')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Timeline</button>
+                  <button onClick={() => setView('notes')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Notes</button>
                 </div>
               </div>
               <button onClick={() => setIsNewTaskModalOpen(true)} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold flex gap-2 items-center"><Plus size={16} /> New Task</button>
