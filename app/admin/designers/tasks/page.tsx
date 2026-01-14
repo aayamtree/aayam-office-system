@@ -1147,8 +1147,8 @@ export default function DesignerWorkspace() {
           </div>
         )
       }
-    </div >
-        );
+    </>
+  );
 }
 
 // Helper for download icon
