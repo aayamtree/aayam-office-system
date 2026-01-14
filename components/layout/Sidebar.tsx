@@ -253,7 +253,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
             return (
               <div key={item.name}>
-                {hasSubmenu ? (
+                {hasSubmenu && item.name !== 'Design Studio' ? (
                   <button
                     onClick={() => toggleExpanded(item.name)}
                     className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all
@@ -287,7 +287,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 )}
 
                 {/* Submenu */}
-                {hasSubmenu && isExpanded && (
+                {hasSubmenu && (isExpanded || item.name === 'Design Studio') && (
                   <div className="ml-4 mt-1 space-y-1 border-l border-white/10 pl-4">
                     {item.submenu!.map((sub) => (
                       <Link
