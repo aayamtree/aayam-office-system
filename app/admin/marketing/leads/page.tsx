@@ -361,15 +361,7 @@ export default function LeadsPage() {
                                         </button>
                                     )}
 
-                                    {lead.status !== 'converted' && (
-                                        <button
-                                            onClick={() => handleConvertToClient(lead)}
-                                            className="text-xs font-bold text-green-600 hover:bg-green-50 px-2 py-1 rounded-lg transition-colors flex items-center gap-1"
-                                            title="Convert to Client"
-                                        >
-                                            <CheckCircle size={14} /> Convert
-                                        </button>
-                                    )}
+                                    {/* Convert button removed to enforce workflow hierarchy */}
                                 </div>
                             </div>
                         </div>
