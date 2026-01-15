@@ -7,6 +7,7 @@ import {
   Package, Filter, ArrowLeft, CheckCircle, Clock, AlertCircle, Loader2
 } from 'lucide-react';
 import { usePurchaseBills, useVendors, useJobs } from '@/lib/hooks';
+import { formatDate } from '@/lib/utils';
 
 const productTypes = [
   'Pouches', 'Labels', 'Boxes', 'Brochures', 'Visiting Cards', 'Envelopes',
@@ -238,7 +239,7 @@ export default function VendorPurchasesPage() {
                 <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mt-1">
                   <span className="flex items-center gap-1"><Building2 size={14} />{purchase.vendor?.name || 'Unknown Vendor'}</span>
                   <span className="flex items-center gap-1"><Package size={14} />{purchase.job?.project_name ? `${purchase.job.job_number} - ${purchase.job.project_name}` : 'General Stock'}</span>
-                  <span className="flex items-center gap-1"><Calendar size={14} />Due: {purchase.due_date ? new Date(purchase.due_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'N/A'}</span>
+                  <span className="flex items-center gap-1"><Calendar size={14} />Due: {purchase.due_date ? formatDate(purchase.due_date) : 'N/A'}</span>
                 </div>
               </div>
               <div className="flex items-center gap-4">
@@ -408,11 +409,11 @@ export default function VendorPurchasesPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Bill Date</p>
-                  <p className="font-medium">{selectedPurchase.bill_date ? new Date(selectedPurchase.bill_date).toLocaleDateString('en-IN') : '-'}</p>
+                  <p className="font-medium">{selectedPurchase.bill_date ? formatDate(selectedPurchase.bill_date) : '-'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Due Date</p>
-                  <p className="font-medium">{selectedPurchase.due_date ? new Date(selectedPurchase.due_date).toLocaleDateString('en-IN') : '-'}</p>
+                  <p className="font-medium">{selectedPurchase.due_date ? formatDate(selectedPurchase.due_date) : '-'}</p>
                 </div>
               </div>
 
