@@ -332,16 +332,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <p className="font-medium text-white text-sm truncate">{profile?.full_name}</p>
             <div className="flex items-center gap-2">
               <p className="text-xs text-gray-500 capitalize">{profile?.role}</p>
-              <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded">v1.4</span>
+              <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded">v1.5</span>
             </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              title="Logout"
+            >
+              <LogOut size={16} className="text-gray-500" />
+            </button>
           </div>
-          <button
-            onClick={handleLogout}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-            title="Logout"
-          >
-            <LogOut size={16} className="text-gray-500" />
-          </button>
         </div>
       </div>
     </aside>
