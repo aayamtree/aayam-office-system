@@ -77,16 +77,7 @@ const menuItems: MenuItem[] = [
       { name: 'Commissions', href: '/admin/marketing/commissions' },
     ]
   },
-  {
-    name: 'Sales',
-    icon: ShoppingCart,
-    href: '/admin/sales',
-    allowedRoles: ['admin', 'account'], // Removed 'marketing' to avoid redundancy
-    submenu: [
-      { name: 'Quotations', href: '/admin/sales/quotations' },
-      { name: 'Orders', href: '/admin/sales/orders' },
-    ]
-  },
+
   {
     name: 'CRM',
     icon: Users,
@@ -94,22 +85,23 @@ const menuItems: MenuItem[] = [
     allowedRoles: ['admin', 'account', 'marketing'],
     submenu: [
       { name: 'Clients', href: '/admin/crm/clients' },
-      { name: 'Vendors', href: '/admin/finance/vendors' },
     ]
   },
 
   {
-    name: 'Finance',
+    name: 'Sales & Finance',
     icon: IndianRupee,
     href: '/admin/finance',
     allowedRoles: ['admin', 'account'],
     submenu: [
       { name: 'Overview', href: '/admin/finance' },
-      { name: 'Sales Orders', href: '/admin/finance/sales-orders' },
+      { name: 'Quotations', href: '/admin/sales/quotations' },
+      { name: 'Orders', href: '/admin/sales/orders' },
       { name: 'Invoices', href: '/admin/finance/invoices' },
       { name: 'Payments', href: '/admin/finance/payments' },
       { name: 'Banking', href: '/admin/finance/banking' },
       { name: 'Purchase Bills', href: '/admin/finance/purchase-bills' },
+      { name: 'Vendors', href: '/admin/finance/vendors' },
     ]
   },
   {
@@ -159,7 +151,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { profile, signOut } = useAuth();
-  const [expandedItems, setExpandedItems] = useState<string[]>(['Design Studio', 'Marketing', 'Finance', 'Sales', 'CRM']);
+  const [expandedItems, setExpandedItems] = useState<string[]>(['Design Studio', 'Marketing', 'Sales & Finance', 'CRM']);
 
   const { stats } = useDashboardStats(); // Fetch stats for badges
 
