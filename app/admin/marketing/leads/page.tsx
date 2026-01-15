@@ -427,14 +427,6 @@ export default function LeadsPage() {
                                         <option value="design_printing">Design + Printing</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-600 mb-1.5">Service Req.</label>
-                                    <select value={formData.leadType} onChange={e => setFormData({ ...formData, leadType: e.target.value as any })} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500">
-                                        <option value="printing_only">Printing Only</option>
-                                        <option value="designing_only">Designing Only</option>
-                                        <option value="design_printing">Design + Printing</option>
-                                    </select>
-                                </div>
                             </div>
 
                             {/* Status Section */}
