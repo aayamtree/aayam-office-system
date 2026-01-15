@@ -23,16 +23,22 @@ export default function Header({ onMenuClick }: HeaderProps) {
     // Remove /admin and split
     const pathSegments = pathname.split('/').filter(p => p !== '' && p !== 'admin');
 
-    // Default to Dashboard if empty (shouldn't happen on /admin/...)
+    // Default to Dashboard if empty
     if (pathSegments.length === 0) return [{ label: 'Dashboard', href: '/admin/dashboard' }];
 
+    const segmentLabels: Record<string, string> = {
+      'crm': 'CRM',
+      'cmyk-print': 'CMYK Print',
+      'pos': 'POS',
+      'retail-pos': 'Retail POS',
+      'purchase-bills': 'Purchase Bills',
+    };
+
     const breadcrumbs = pathSegments.map((segment, index) => {
-      // Build href for this segment
-      // Reconstruct path: /admin + /segment1 + ...
       const href = '/admin/' + pathSegments.slice(0, index + 1).join('/');
 
-      // Format Name: "sales-orders" -> "Sales Orders"
-      const label = segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+      // Use map or auto-format
+      const label = segmentLabels[segment] || segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
       return { label, href };
     });
@@ -57,7 +63,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
     <header className="fixed top-0 left-0 right-0 lg:left-64 h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 z-20">
       <div className="h-full px-4 lg:px-6 flex items-center justify-between">
         {/* Left - Menu Button & Breadcrumbs */}
-        <div className="flex items-center gap-2 lg:gap-3 flex-1 overflow-hidden mr-4">
+        <div className="flex items-center gap-2 lg:gap-3 flex-1 overflow-hidden mr-4 h-full">
           <button
             onClick={onMenuClick}
             className="lg:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-xl flex-shrink-0"
@@ -65,7 +71,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
             <Menu size={24} />
           </button>
 
-          <nav className="flex items-center text-sm font-medium text-gray-500 overflow-x-auto scrollbar-hide whitespace-nowrap h-full">
+          <nav className="flex items-center text-sm font-medium text-gray-500 overflow-x-auto scrollbar-hide whitespace-nowrap">
             {breadcrumbs.map((crumb, index) => {
               const isLast = index === breadcrumbs.length - 1;
               const isDeep = breadcrumbs.length > 1;
@@ -86,7 +92,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
                   )}
                   <Link
                     href={crumb.href}
-                    className={`flex items-center h-full ${isLast ? 'text-gray-900 font-semibold' : 'hover:text-gray-900'} transition-colors`}
+                    className={`flex items-center ${isLast ? 'text-gray-900 font-semibold' : 'hover:text-gray-900'} transition-colors py-1`}
                   >
                     {crumb.label}
                   </Link>
