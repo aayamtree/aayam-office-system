@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { Bell, Settings, ChevronDown, Plus, Menu } from 'lucide-react';
+import { Bell, Settings, ChevronDown, Plus, Menu, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { Fragment } from 'react';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -12,9 +13,34 @@ interface HeaderProps {
 
 export default function Header({ onMenuClick }: HeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { profile, signOut, isAdmin } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+
+  // Generate Breadcrumbs
+  const generateBreadcrumbs = () => {
+    // Remove /admin and split
+    const pathSegments = pathname.split('/').filter(p => p !== '' && p !== 'admin');
+
+    // Default to Dashboard if empty (shouldn't happen on /admin/...)
+    if (pathSegments.length === 0) return [{ label: 'Dashboard', href: '/admin/dashboard' }];
+
+    const breadcrumbs = pathSegments.map((segment, index) => {
+      // Build href for this segment
+      // Reconstruct path: /admin + /segment1 + ...
+      const href = '/admin/' + pathSegments.slice(0, index + 1).join('/');
+
+      // Format Name: "sales-orders" -> "Sales Orders"
+      const label = segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+      return { label, href };
+    });
+
+    return [{ label: 'Dashboard', href: '/admin/dashboard' }, ...breadcrumbs];
+  };
+
+  const breadcrumbs = generateBreadcrumbs();
 
   const notifications = [
     { id: 1, title: 'Payment overdue', desc: 'XYZ Corp - ₹50,445', time: '2h ago', type: 'danger' },
@@ -30,17 +56,31 @@ export default function Header({ onMenuClick }: HeaderProps) {
   return (
     <header className="fixed top-0 left-0 right-0 lg:left-64 h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 z-20">
       <div className="h-full px-4 lg:px-6 flex items-center justify-between">
-        {/* Left - Menu Button (mobile) & Title */}
-        <div className="flex items-center gap-3">
-          {/* Hamburger Menu - Mobile Only */}
+        {/* Left - Menu Button & Breadcrumbs */}
+        <div className="flex items-center gap-2 lg:gap-3 flex-1 overflow-hidden mr-4">
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-xl"
+            className="lg:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-xl flex-shrink-0"
           >
             <Menu size={24} />
           </button>
 
-          <h1 className="text-lg font-semibold text-gray-900">Dashboard</h1>
+          <nav className="flex items-center text-sm font-medium text-gray-500 overflow-x-auto scrollbar-hide whitespace-nowrap mask-linear-fade">
+            {breadcrumbs.map((crumb, index) => {
+              const isLast = index === breadcrumbs.length - 1;
+              return (
+                <Fragment key={crumb.href}>
+                  {index > 0 && <ChevronRight size={14} className="mx-1 lg:mx-2 text-gray-400 flex-shrink-0" />}
+                  <Link
+                    href={crumb.href}
+                    className={`${isLast ? 'text-gray-900 font-semibold' : 'hover:text-gray-900'} transition-colors`}
+                  >
+                    {crumb.label}
+                  </Link>
+                </Fragment>
+              );
+            })}
+          </nav>
         </div>
 
         {/* Right - Actions */}
