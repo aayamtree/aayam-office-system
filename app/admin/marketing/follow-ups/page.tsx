@@ -42,7 +42,7 @@ export default function MarketingFollowUpsPage() {
     notes: ''
   });
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('en-CA');
 
   // Transform DB data to UI format
   const formattedFollowUps = (followUps || []).map((f: any) => ({
@@ -51,10 +51,10 @@ export default function MarketingFollowUpsPage() {
     clientName: f.lead?.name || f.client?.name || 'Unknown',
     companyName: f.lead?.company || f.client?.company,
     type: 'call', // DB might not have type yet, defaulting
-    date: f.follow_up_date ? new Date(f.follow_up_date).toISOString().split('T')[0] : '',
-    time: f.follow_up_date ? new Date(f.follow_up_date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '',
+    date: f.follow_up_date ? new Date(f.follow_up_date).toLocaleDateString('en-CA') : '',
+    time: f.follow_up_date ? new Date(f.follow_up_date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) : '',
     notes: f.notes || '',
-    status: f.follow_up_date && new Date(f.follow_up_date) < new Date() ? 'pending' : 'pending',
+    status: 'pending',
   }));
 
   // Filtering
