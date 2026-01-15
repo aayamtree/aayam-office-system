@@ -221,46 +221,103 @@ export default function PaymentsPage() {
         </select>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hidden lg:block">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Type</th>
-              <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Party</th>
-              <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Amount</th>
-              <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Mode</th>
-              <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Date</th>
-              <th className="text-right px-6 py-4 text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
+      <div className="space-y-4">
+        <>
+          {/* Mobile View: Cards */}
+          <div className="lg:hidden space-y-4">
             {filteredPayments.map((p) => (
-              <tr key={p.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  <span className={`flex items-center gap-2 font-medium ${p.type === 'received' ? 'text-green-600' : 'text-red-600'}`}>
-                    {p.type === 'received' ? <ArrowDownRight size={16} /> : <ArrowUpRight size={16} />}
+              <div key={p.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 relative">
+                {/* Row 1: Type & Amount */}
+                <div className="flex justify-between items-start mb-3">
+                  <span className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-full uppercase tracking-wide border ${p.type === 'received' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                    {p.type === 'received' ? <ArrowDownRight size={14} /> : <ArrowUpRight size={14} />}
                     {p.type === 'received' ? 'Received' : 'Paid'}
                   </span>
-                </td>
-                <td className="px-6 py-4">
-                  <p className="font-medium text-gray-900">{p.display_name}</p>
-                  {p.attachment_url && (
-                    <a href={p.attachment_url} target="_blank" rel="noreferrer" className="text-xs text-indigo-600 flex items-center gap-1 hover:underline mt-1">
-                      <FileText size={12} /> View Proof
-                    </a>
-                  )}
-                </td>
-                <td className="px-6 py-4 font-bold text-gray-900">{formatCurrency(p.amount)}</td>
-                <td className="px-6 py-4 capitalize text-gray-600">{p.payment_mode?.replace('_', ' ')}</td>
-                <td className="px-6 py-4 text-gray-600">{new Date(p.raw_date).toLocaleDateString()}</td>
-                <td className="px-6 py-4 text-right">
-                  <button onClick={() => handleDelete(p)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
-                </td>
-              </tr>
+                  <div className={`text-lg font-bold ${p.type === 'received' ? 'text-green-700' : 'text-red-700'}`}>
+                    {formatCurrency(p.amount)}
+                  </div>
+                </div>
+
+                {/* Row 2: Party Info */}
+                <div className="mb-4">
+                  <h3 className="font-bold text-gray-900 leading-tight mb-1">{p.display_name}</h3>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-gray-500">{p.display_company}</p>
+                    {p.attachment_url && (
+                      <a href={p.attachment_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-600 px-2 py-1 rounded-md font-medium">
+                        <FileText size={10} /> Proof
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {/* Row 3: Footer (Date, Mode, Actions) */}
+                <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                      <Calendar size={12} /> {new Date(p.raw_date).toLocaleDateString()}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-gray-600 font-medium capitalize">
+                      <CreditCard size={12} /> {p.payment_mode?.replace('_', ' ')}
+                    </div>
+                  </div>
+
+                  <button onClick={() => handleDelete(p)} className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
             ))}
-            {filteredPayments.length === 0 && <tr><td colSpan={6} className="text-center py-8 text-gray-500">No payments found.</td></tr>}
-          </tbody>
-        </table>
+            {filteredPayments.length === 0 && (
+              <div className="text-center py-10 text-gray-400 bg-white rounded-2xl border border-gray-100">
+                No payments found.
+              </div>
+            )}
+          </div>
+
+          {/* Desktop View: Table */}
+          <div className="hidden lg:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Type</th>
+                  <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Party</th>
+                  <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Amount</th>
+                  <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Mode</th>
+                  <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Date</th>
+                  <th className="text-right px-6 py-4 text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredPayments.map((p) => (
+                  <tr key={p.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <span className={`flex items-center gap-2 font-medium ${p.type === 'received' ? 'text-green-600' : 'text-red-600'}`}>
+                        {p.type === 'received' ? <ArrowDownRight size={16} /> : <ArrowUpRight size={16} />}
+                        {p.type === 'received' ? 'Received' : 'Paid'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-medium text-gray-900">{p.display_name}</p>
+                      {p.attachment_url && (
+                        <a href={p.attachment_url} target="_blank" rel="noreferrer" className="text-xs text-indigo-600 flex items-center gap-1 hover:underline mt-1">
+                          <FileText size={12} /> View Proof
+                        </a>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 font-bold text-gray-900">{formatCurrency(p.amount)}</td>
+                    <td className="px-6 py-4 capitalize text-gray-600">{p.payment_mode?.replace('_', ' ')}</td>
+                    <td className="px-6 py-4 text-gray-600">{new Date(p.raw_date).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-right">
+                      <button onClick={() => handleDelete(p)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
+                    </td>
+                  </tr>
+                ))}
+                {filteredPayments.length === 0 && <tr><td colSpan={6} className="text-center py-8 text-gray-500">No payments found.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </>
       </div>
 
       {showModal && (
