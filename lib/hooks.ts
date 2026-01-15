@@ -891,7 +891,8 @@ export function useDashboardStats() {
           leadsMonth,
           leadsFollowUp,
           lowStock,
-          completedJobs
+          completedJobs,
+          followUpsTable
         ] = await Promise.all([
           // 1. Total Clients
           supabase.from('clients').select('id', { count: 'exact', head: true }),
@@ -908,7 +909,7 @@ export function useDashboardStats() {
           // 5. Leads this month
           supabase.from('leads').select('id', { count: 'exact', head: true }).gte('created_at', startOfMonth),
 
-          // 6. Follow-ups Due (today or earlier and not won/lost)
+          // 6. Follow-ups Due (today or earlier and not won/lost) - NOTE: This only checks leads. Ideally should combine with `follow_ups` table.
           supabase.from('leads').select('id', { count: 'exact', head: true }).lte('next_follow_up', todayStr).not('status', 'in', '("won","lost")'),
 
           // 7. Low Stock
@@ -916,6 +917,9 @@ export function useDashboardStats() {
 
           // 8. Jobs Completed Today
           supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('current_stage', 'delivered').gte('updated_at', todayStr),
+
+          // 9. Follow ups table count (Add this to the Promise.all array if index allows, or separate query)
+          supabase.from('follow_ups').select('id', { count: 'exact', head: true }).lte('follow_up_date', todayStr).eq('status', 'pending'),
         ]);
 
         // Aggregations
@@ -988,7 +992,7 @@ export function useDashboardStats() {
           pipelineOverdue,
           alerts: {
             overduePayments: overduePaymentsCount,
-            followUpsDue: leadsFollowUp.count || 0,
+            followUpsDue: (leadsFollowUp.count || 0) + (followUpsTable.count || 0),
             lowStock: lowStockCount,
             blockedJobs: totalBlocked,
             blockedBreakdown: { feedback: feedbackPendingCount, payment: paymentHoldCount }
