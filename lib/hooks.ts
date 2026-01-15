@@ -1722,7 +1722,7 @@ export function useVendorPayments() {
 // =============================================
 // ACTIVITY LOGS HOOK
 // =============================================
-export function useActivityLogs(limit = 20) {
+export function useActivityLogs(limit = 100) {
   const { data, loading, error, refetch } = useSupabaseQuery<ActivityLog>('activity_logs', {
     select: '*, user:profiles(*)',
     orderBy: { column: 'created_at', ascending: false },

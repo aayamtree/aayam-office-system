@@ -1,55 +1,36 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Filter, User, Calendar, Clock, FileText, Package, Users, CreditCard, Truck, Settings, Printer } from 'lucide-react';
-
-interface ActivityLog {
-  id: string;
-  timestamp: string;
-  user: string;
-  action: string;
-  module: string;
-  details: string;
-  ipAddress: string;
-}
-
-const demoLogs: ActivityLog[] = [
-  { id: '1', timestamp: '2024-12-25 14:32:15', user: 'Admin User', action: 'Created Order', module: 'Sales', details: 'Order AAY-2024-156 created for ABC Industries', ipAddress: '192.168.1.10' },
-  { id: '2', timestamp: '2024-12-25 14:28:45', user: 'Rahul Patel', action: 'Updated Client', module: 'CRM', details: 'Updated contact info for Tech Solutions', ipAddress: '192.168.1.15' },
-  { id: '3', timestamp: '2024-12-25 14:15:30', user: 'Admin User', action: 'Payment Received', module: 'Finance', details: 'Payment of ₹15,000 received from XYZ Corp', ipAddress: '192.168.1.10' },
-  { id: '4', timestamp: '2024-12-25 13:45:22', user: 'Priya Shah', action: 'Job Completed', module: 'CMYK', details: 'JOB-155 marked as ready', ipAddress: '192.168.1.20' },
-  { id: '5', timestamp: '2024-12-25 13:30:10', user: 'Admin User', action: 'Dispatched Order', module: 'Dispatch', details: 'Order AAY-2024-154 dispatched via Om Logistics', ipAddress: '192.168.1.10' },
-  { id: '6', timestamp: '2024-12-25 12:55:33', user: 'Amit Kumar', action: 'Invoice Generated', module: 'Finance', details: 'Invoice INV-2024-156 generated', ipAddress: '192.168.1.25' },
-  { id: '7', timestamp: '2024-12-25 12:20:45', user: 'Rahul Patel', action: 'Lead Converted', module: 'Sales', details: 'Lead LID-089 converted to order', ipAddress: '192.168.1.15' },
-  { id: '8', timestamp: '2024-12-25 11:45:18', user: 'Admin User', action: 'User Created', module: 'Settings', details: 'New user Neha Sharma added', ipAddress: '192.168.1.10' },
-  { id: '9', timestamp: '2024-12-25 11:30:00', user: 'Priya Shah', action: 'Stock Updated', module: 'CMYK', details: 'A4 Paper stock updated: +50 reams', ipAddress: '192.168.1.20' },
-  { id: '10', timestamp: '2024-12-25 11:15:22', user: 'Admin User', action: 'QC Passed', module: 'Dispatch', details: 'Order AAY-2024-153 passed QC check', ipAddress: '192.168.1.10' },
-  { id: '11', timestamp: '2024-12-25 10:45:30', user: 'Rahul Patel', action: 'Quotation Sent', module: 'Sales', details: 'Quotation QUO-2024-089 sent to Prime Motors', ipAddress: '192.168.1.15' },
-  { id: '12', timestamp: '2024-12-25 10:30:15', user: 'Admin User', action: 'Login', module: 'System', details: 'Admin logged in', ipAddress: '192.168.1.10' },
-  { id: '13', timestamp: '2024-12-24 18:30:00', user: 'Priya Shah', action: 'Logout', module: 'System', details: 'User logged out', ipAddress: '192.168.1.20' },
-  { id: '14', timestamp: '2024-12-24 17:45:22', user: 'Admin User', action: 'Vendor Added', module: 'CRM', details: 'New vendor Paper World added', ipAddress: '192.168.1.10' },
-  { id: '15', timestamp: '2024-12-24 16:30:10', user: 'Amit Kumar', action: 'Expense Added', module: 'Finance', details: 'Expense of ₹25,000 for paper purchase', ipAddress: '192.168.1.25' },
-];
+import { Search, Filter, User, Calendar, Clock, FileText, Package, Users, CreditCard, Truck, Settings, Printer, Loader2 } from 'lucide-react';
+import { useActivityLogs } from '@/lib/hooks';
 
 const modules = ['All', 'Sales', 'CRM', 'Finance', 'Dispatch', 'CMYK', 'Settings', 'System'];
-const users = ['All', 'Admin User', 'Rahul Patel', 'Priya Shah', 'Amit Kumar'];
+// const users = ['All', 'Admin User', 'Rahul Patel', 'Priya Shah', 'Amit Kumar']; // Removed hardcoded users
 
 export default function ActivityPage() {
+  const { logs, loading } = useActivityLogs(100); // Fetch 100 logs
   const [searchQuery, setSearchQuery] = useState('');
   const [moduleFilter, setModuleFilter] = useState('All');
   const [userFilter, setUserFilter] = useState('All');
   const [dateFilter, setDateFilter] = useState('');
 
-  const filteredLogs = demoLogs.filter(log => {
+  // Extract unique users dynamically from logs
+  const dynamicUsers = ['All', ...Array.from(new Set((logs || []).map(l => l.user?.full_name || 'Unknown')))];
+
+  const filteredLogs = (logs || []).filter(log => {
+    const userName = log.user?.full_name || 'Unknown';
     const matchesSearch = log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.details.toLowerCase().includes(searchQuery.toLowerCase());
+      (log.details || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesModule = moduleFilter === 'All' || log.module === moduleFilter;
-    const matchesUser = userFilter === 'All' || log.user === userFilter;
-    const matchesDate = !dateFilter || log.timestamp.startsWith(dateFilter);
+    const matchesUser = userFilter === 'All' || userName === userFilter;
+    const matchesDate = !dateFilter || new Date(log.created_at).toISOString().split('T')[0] === dateFilter;
     return matchesSearch && matchesModule && matchesUser && matchesDate;
   });
 
-  const getModuleIcon = (module: string) => {
+  const getModuleIcon = (module: string | undefined) => {
+    // Safety check for undefined module
+    if (!module) return <FileText size={16} className="text-gray-600" />;
+
     const icons: Record<string, React.ReactNode> = {
       'Sales': <Package size={16} className="text-green-600" />,
       'CRM': <Users size={16} className="text-blue-600" />,
@@ -83,18 +64,28 @@ export default function ActivityPage() {
     return 'text-gray-700';
   };
 
-  // Stats
-  const todayLogs = demoLogs.filter(l => l.timestamp.startsWith('2024-12-25')).length;
-  const uniqueUsers = Array.from(new Set(demoLogs.map(l => l.user))).length;
-  const salesActions = demoLogs.filter(l => l.module === 'Sales').length;
-  const financeActions = demoLogs.filter(l => l.module === 'Finance').length;
+  // Stats calculation from actual logs
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayLogs = (logs || []).filter(l => new Date(l.created_at).toISOString().startsWith(todayStr)).length;
+  const uniqueUsersCount = new Set((logs || []).map(l => l.user_id)).size;
+  const salesActions = (logs || []).filter(l => l.module === 'Sales').length;
+  const financeActions = (logs || []).filter(l => l.module === 'Finance').length;
+
+  if (loading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="animate-spin text-indigo-600" size={32} />
+        <span className="ml-3 text-gray-500 font-medium">Loading activity logs...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 lg:space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Activity Logs</h1>
-        <p className="text-sm text-gray-500">Track all system activities</p>
+        <p className="text-sm text-gray-500">Track all system activities (Last 100 entries)</p>
       </div>
 
       {/* Stats */}
@@ -111,7 +102,7 @@ export default function ActivityPage() {
             <User size={18} className="text-blue-600" />
             <span className="text-sm text-gray-500">Active Users</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{uniqueUsers}</p>
+          <p className="text-2xl font-bold text-gray-900">{uniqueUsersCount}</p>
         </div>
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
@@ -149,7 +140,7 @@ export default function ActivityPage() {
           <select
             value={moduleFilter}
             onChange={(e) => setModuleFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-200 rounded-xl"
+            className="px-3 py-2 border border-gray-200 rounded-xl bg-white"
           >
             {modules.map(m => (
               <option key={m} value={m}>{m === 'All' ? 'All Modules' : m}</option>
@@ -158,9 +149,9 @@ export default function ActivityPage() {
           <select
             value={userFilter}
             onChange={(e) => setUserFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-200 rounded-xl"
+            className="px-3 py-2 border border-gray-200 rounded-xl bg-white"
           >
-            {users.map(u => (
+            {dynamicUsers.map(u => (
               <option key={u} value={u}>{u === 'All' ? 'All Users' : u}</option>
             ))}
           </select>
@@ -181,7 +172,7 @@ export default function ActivityPage() {
         </div>
         <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
           {filteredLogs.map((log) => (
-            <div key={log.id} className="p-4 hover:bg-gray-50">
+            <div key={log.id} className="p-4 hover:bg-gray-50 transition-colors">
               <div className="flex items-start gap-4">
                 {/* Icon */}
                 <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -192,26 +183,31 @@ export default function ActivityPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className={`font-medium ${getActionColor(log.action)}`}>{log.action}</span>
-                    <span className={`px-2 py-0.5 text-xs rounded-full ${getModuleColor(log.module)}`}>
-                      {log.module}
+                    <span className={`px-2 py-0.5 text-xs rounded-full ${getModuleColor(log.module || 'System')}`}>
+                      {log.module || 'System'}
                     </span>
                   </div>
                   <p className="text-sm text-gray-600 mt-1">{log.details}</p>
                   <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
                     <span className="flex items-center gap-1">
                       <User size={12} />
-                      {log.user}
+                      {log.user?.full_name || 'System User'}
                     </span>
                     <span className="flex items-center gap-1">
                       <Calendar size={12} />
-                      {log.timestamp}
+                      {new Date(log.created_at).toLocaleString()}
                     </span>
-                    <span className="hidden sm:block">{log.ipAddress}</span>
+                    <span className="hidden sm:block truncate max-w-[100px]">{log.ip_address}</span>
                   </div>
                 </div>
               </div>
             </div>
           ))}
+          {filteredLogs.length === 0 && (
+            <div className="p-8 text-center text-gray-500">
+              No activity logs found matching your filters.
+            </div>
+          )}
         </div>
       </div>
     </div>

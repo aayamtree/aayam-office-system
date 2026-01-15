@@ -720,3 +720,15 @@ export type DesignerInput = Omit<Designer, 'id' | 'created_at' | 'updated_at'>;
 export type JobInput = Omit<Job, 'id' | 'created_at' | 'updated_at' | 'job_number' | 'client' | 'vendor' | 'designer'>;
 export type InvoiceInput = Omit<Invoice, 'id' | 'created_at' | 'updated_at' | 'invoice_number' | 'client' | 'job' | 'items'>;
 export type LeadInput = Omit<Lead, 'id' | 'created_at' | 'updated_at' | 'lead_number' | 'assigned_user' | 'follow_ups'>;
+
+// Activity Log
+export interface ActivityLog {
+  id: string;
+  user_id: string;
+  user?: Profile; // linked
+  action: string;
+  module?: string;
+  details?: string;
+  ip_address?: string;
+  created_at: string;
+}
