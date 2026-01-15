@@ -65,15 +65,28 @@ export default function Header({ onMenuClick }: HeaderProps) {
             <Menu size={24} />
           </button>
 
-          <nav className="flex items-center text-sm font-medium text-gray-500 overflow-x-auto scrollbar-hide whitespace-nowrap mask-linear-fade">
+          <nav className="flex items-center text-sm font-medium text-gray-500 overflow-x-auto scrollbar-hide whitespace-nowrap mask-linear-fade h-full">
             {breadcrumbs.map((crumb, index) => {
               const isLast = index === breadcrumbs.length - 1;
+              const isDeep = breadcrumbs.length > 1;
+              const isDashboard = index === 0;
+              const isFirstSeparator = index === 1;
+
+              // Hide Dashboard on mobile if we have a deeper path to save space
+              const hideOnMobile = isDashboard && isDeep;
+              const hideSeparatorOnMobile = isFirstSeparator && isDeep;
+
               return (
                 <Fragment key={crumb.href}>
-                  {index > 0 && <ChevronRight size={14} className="mx-1 lg:mx-2 text-gray-400 flex-shrink-0" />}
+                  {index > 0 && (
+                    <ChevronRight
+                      size={14}
+                      className={`mx-1 lg:mx-2 text-gray-400 flex-shrink-0 ${hideSeparatorOnMobile ? 'hidden sm:block' : ''}`}
+                    />
+                  )}
                   <Link
                     href={crumb.href}
-                    className={`${isLast ? 'text-gray-900 font-semibold' : 'hover:text-gray-900'} transition-colors`}
+                    className={`${isLast ? 'text-gray-900 font-semibold' : 'hover:text-gray-900'} transition-colors ${hideOnMobile ? 'hidden sm:inline' : ''}`}
                   >
                     {crumb.label}
                   </Link>
