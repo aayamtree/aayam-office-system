@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Search, Filter, User, Calendar, Clock, FileText, Package, Users, CreditCard, Truck, Settings, Printer, Loader2 } from 'lucide-react';
 import { useActivityLogs } from '@/lib/hooks';
+import { formatDate } from '@/lib/utils';
 
 const modules = ['All', 'Sales', 'CRM', 'Finance', 'Dispatch', 'CMYK', 'Settings', 'System'];
 // const users = ['All', 'Admin User', 'Rahul Patel', 'Priya Shah', 'Amit Kumar']; // Removed hardcoded users
@@ -195,7 +196,7 @@ export default function ActivityPage() {
                     </span>
                     <span className="flex items-center gap-1">
                       <Calendar size={12} />
-                      {new Date(log.created_at).toLocaleString()}
+                      {formatDate(log.created_at, true)}
                     </span>
                     <span className="hidden sm:block truncate max-w-[100px]">{log.ip_address}</span>
                   </div>

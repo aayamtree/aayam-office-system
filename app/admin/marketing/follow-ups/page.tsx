@@ -7,6 +7,7 @@ import {
   CheckCircle, MessageSquare, Users, Video, AlertCircle, Loader2, FileText
 } from 'lucide-react';
 import { useLeads, useFollowUps, useAuth } from '@/lib/hooks';
+import { formatDate } from '@/lib/utils';
 
 // Type Definitions
 const followUpTypes = [
@@ -156,11 +157,11 @@ export default function MarketingFollowUpsPage() {
             <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
               <span className="flex items-center gap-1">
                 <Calendar size={12} />
-                {new Date(followUp.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                {formatDate(followUp.date)}
               </span>
               <span className="flex items-center gap-1">
                 <Clock size={12} />
-                {followUp.time}
+                {followUp.time ? new Date(`2000-01-01T${followUp.time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : ''}
               </span>
               <span className={`px-2 py-0.5 rounded ${typeInfo.color}`}>{typeInfo.name}</span>
             </div>
