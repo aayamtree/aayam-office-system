@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
@@ -17,8 +17,22 @@ export default function QuotationsPage() {
 
   // Show all quotations
   const quotations = allQuotations;
-  const { clients } = useClients();
-  const { leads, convertToClient } = useLeads();
+  const { clients: allClients } = useClients();
+  const { leads: allLeads, convertToClient } = useLeads();
+
+  const clients = useMemo(() => {
+    if (profile?.role === 'marketing') {
+      return allClients.filter(c => c.created_by === profile.id);
+    }
+    return allClients;
+  }, [allClients, profile]);
+
+  const leads = useMemo(() => {
+    if (profile?.role === 'marketing') {
+      return allLeads.filter(l => l.assigned_to === profile.id || l.created_by === profile.id);
+    }
+    return allLeads;
+  }, [allLeads, profile]);
   const { createJob } = useJobs();
 
   const [searchQuery, setSearchQuery] = useState('');

@@ -27,7 +27,14 @@ export default function OrdersPage() {
     return allJobs;
   }, [allJobs, profile]);
 
-  const { clients } = useClients();
+  const { clients: allClients } = useClients();
+
+  const clients = useMemo(() => {
+    if (profile?.role === 'marketing') {
+      return allClients.filter(c => c.created_by === profile.id);
+    }
+    return allClients;
+  }, [allClients, profile]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
