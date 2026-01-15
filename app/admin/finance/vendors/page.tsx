@@ -119,43 +119,147 @@ export default function VendorsPage() {
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl"><option value="all">All</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
       </div>
 
-      {filteredVendors.length === 0 && <div className="text-center py-12 bg-white rounded-xl border"><Package size={48} className="mx-auto text-gray-300 mb-4" /><h3 className="text-lg font-medium mb-2">No vendors</h3><button onClick={handleAddNew} className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg"><Plus size={18} />Add Vendor</button></div>}
-
-      <div className="lg:hidden space-y-3">
-        {filteredVendors.map((vendor) => (
-          <div key={vendor.id} className="bg-white rounded-xl p-4 shadow-sm border">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center"><span className="text-orange-600 font-semibold">{vendor.name?.charAt(0)}</span></div>
-                <div><h3 className="font-semibold">{vendor.name}</h3><p className="text-sm text-gray-500">{vendor.company}</p></div>
-              </div>
-              <span className={`px-2 py-1 text-xs rounded-full ${getCategoryColor(vendor.category || 'Paper')}`}>{vendor.category}</span>
-            </div>
-            <div className="space-y-2 text-sm text-gray-500 mb-3"><div className="flex items-center gap-2"><Phone size={14} /><span>{vendor.phone}</span></div></div>
-            <div className="flex items-center justify-end gap-2 pt-3 border-t">
-              <button onClick={() => handleView(vendor)} className="p-2 hover:bg-gray-100 rounded-lg"><Eye size={18} className="text-gray-500" /></button>
-              <button onClick={() => handleEdit(vendor)} className="p-2 hover:bg-gray-100 rounded-lg"><Edit size={18} className="text-gray-500" /></button>
-              <button onClick={() => handleDelete(vendor.id)} className="p-2 hover:bg-red-50 rounded-lg"><Trash2 size={18} className="text-red-500" /></button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="hidden lg:block bg-white rounded-xl shadow-sm border overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b"><tr><th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Vendor</th><th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Contact</th><th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Category</th><th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Status</th><th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Actions</th></tr></thead>
-          <tbody className="divide-y">
+      <div className="space-y-4">
+        <>
+          {/* Mobile View: Cards */}
+          <div className="lg:hidden space-y-4">
             {filteredVendors.map((vendor) => (
-              <tr key={vendor.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4"><div className="flex items-center gap-3"><div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center"><span className="text-orange-600 font-semibold">{vendor.name?.charAt(0)}</span></div><div><p className="font-medium">{vendor.name}</p><p className="text-sm text-gray-500">{vendor.company}</p></div></div></td>
-                <td className="px-6 py-4"><p>{vendor.phone}</p><p className="text-sm text-gray-500">{vendor.email}</p></td>
-                <td className="px-6 py-4"><span className={`px-2 py-1 text-xs rounded-full ${getCategoryColor(vendor.category || 'Paper')}`}>{vendor.category}</span></td>
-                <td className="px-6 py-4"><span className={`px-2 py-1 text-xs rounded-full ${vendor.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{vendor.is_active ? 'Active' : 'Inactive'}</span></td>
-                <td className="px-6 py-4"><div className="flex items-center justify-end gap-1"><button onClick={() => handleView(vendor)} className="p-2 hover:bg-gray-100 rounded-lg"><Eye size={18} className="text-gray-500" /></button><button onClick={() => handleEdit(vendor)} className="p-2 hover:bg-gray-100 rounded-lg"><Edit size={18} className="text-gray-500" /></button><button onClick={() => handleDelete(vendor.id)} className="p-2 hover:bg-red-50 rounded-lg"><Trash2 size={18} className="text-red-500" /></button></div></td>
-              </tr>
+              <div key={vendor.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 relative">
+                {/* Row 1: Name & Category */}
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center shrink-0">
+                      <span className="text-orange-600 font-bold text-lg">{vendor.name?.charAt(0)}</span>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900 leading-tight mobile-card-title">{vendor.name}</h3>
+                      <p className="text-xs text-gray-500">{vendor.company || 'Individual'}</p>
+                    </div>
+                  </div>
+                  <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full ${getCategoryColor(vendor.category || 'Paper')}`}>
+                    {vendor.category}
+                  </span>
+                </div>
+
+                {/* Row 2: Contact Info */}
+                <div className="mb-4 pl-[3.25rem]"> {/* Indent to align with text next to avatar */}
+                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                    <Phone size={14} className="text-gray-400" />
+                    <span>{vendor.phone}</span>
+                  </div>
+                  {vendor.city && (
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <MapPin size={12} className="text-gray-400" />
+                      <span>{vendor.city}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Row 3: Footer */}
+                <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
+                  <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${vendor.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                    <div className={`w-1.5 h-1.5 rounded-full ${vendor.is_active ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                    {vendor.is_active ? 'Active' : 'Inactive'}
+                  </span>
+
+                  <div className="flex items-center gap-1">
+                    <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                      <Package size={16} />
+                    </Link>
+                    <button onClick={() => handleView(vendor)} className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg">
+                      <Eye size={16} />
+                    </button>
+                    <button onClick={() => handleEdit(vendor)} className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg">
+                      <Edit size={16} />
+                    </button>
+                    <button onClick={() => handleDelete(vendor.id)} className="p-2 hover:bg-red-50 text-red-500 rounded-lg">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+            {filteredVendors.length === 0 && (
+              <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
+                <Package size={48} className="mx-auto text-gray-300 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-1">No vendors found</h3>
+                <p className="text-sm text-gray-500 mb-4">Try adjusting your filters</p>
+                <button onClick={handleAddNew} className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm">
+                  <Plus size={16} /> Add Vendor
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop View: Table */}
+          <div className="hidden lg:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Vendor</th>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Contact</th>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Category</th>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredVendors.map((vendor) => (
+                  <tr key={vendor.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-bold">
+                          {vendor.name?.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">{vendor.name}</p>
+                          <p className="text-xs text-gray-500">{vendor.company || 'Individual'}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm text-gray-900 font-medium">{vendor.phone}</p>
+                      <p className="text-xs text-gray-500">{vendor.email || '-'}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2.5 py-1 text-xs font-bold rounded-full uppercase tracking-wide ${getCategoryColor(vendor.category || 'Paper')}`}>
+                        {vendor.category}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2.5 py-1 text-xs font-bold rounded-full uppercase tracking-wide ${vendor.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                        {vendor.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="p-2 hover:bg-indigo-50 text-indigo-600 rounded-lg" title="View Bills">
+                          <Package size={18} />
+                        </Link>
+                        <button onClick={() => handleView(vendor)} className="p-2 hover:bg-gray-100 rounded-lg" title="View Details">
+                          <Eye size={18} className="text-gray-500" />
+                        </button>
+                        <button onClick={() => handleEdit(vendor)} className="p-2 hover:bg-gray-100 rounded-lg" title="Edit">
+                          <Edit size={18} className="text-gray-500" />
+                        </button>
+                        <button onClick={() => handleDelete(vendor.id)} className="p-2 hover:bg-red-50 rounded-lg" title="Delete">
+                          <Trash2 size={18} className="text-red-500" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filteredVendors.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                      No vendors found. <button onClick={handleAddNew} className="text-indigo-600 font-bold hover:underline">Add New Vendor</button>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
       </div>
 
       {showModal && (

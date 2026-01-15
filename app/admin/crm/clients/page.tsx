@@ -124,65 +124,150 @@ export default function ClientsPage() {
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)} className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"><option value="all">All</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
       </div>
 
-      {filteredClients.length === 0 && <div className="text-center py-12 bg-white rounded-xl border">
-        <Building2 size={48} className="mx-auto text-gray-300 mb-4" />
-        <h3 className="text-lg font-medium mb-2">No clients found</h3>
-        {profile?.role !== 'marketing' && (
-          <button onClick={handleAddNew} className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"><Plus size={18} />Add Client</button>
-        )}
-      </div>}
-
-      <div className="lg:hidden space-y-3">
-        {filteredClients.map((client) => (
-          <div key={client.id} className="bg-white rounded-xl p-4 shadow-sm border">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center"><span className="text-indigo-600 font-semibold">{client.name?.charAt(0)}</span></div>
-                <div><h3 className="font-semibold">{client.name}</h3><p className="text-sm text-gray-500">{client.company}</p></div>
-              </div>
-              <span className={`px-2 py-1 text-xs rounded-full ${client.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{client.is_active ? 'Active' : 'Inactive'}</span>
-            </div>
-            <div className="space-y-2 text-sm text-gray-500 mb-3"><div className="flex items-center gap-2"><Phone size={14} /><span>{client.phone}</span></div></div>
-            <div className="flex items-center justify-end gap-2 pt-3 border-t">
-              <button onClick={() => handleView(client)} className="p-2 hover:bg-gray-100 rounded-lg"><Eye size={18} className="text-gray-500" /></button>
-              <button onClick={() => handleEdit(client)} className="p-2 hover:bg-gray-100 rounded-lg"><Edit size={18} className="text-gray-500" /></button>
-              <button onClick={() => handleDelete(client.id)} className="p-2 hover:bg-red-50 rounded-lg"><Trash2 size={18} className="text-red-500" /></button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="hidden lg:block bg-white rounded-xl shadow-sm border overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Client</th>
-              {profile?.role === 'admin' && <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Source</th>}
-              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Contact</th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">City</th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Status</th>
-              <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
+      <div className="space-y-4">
+        <>
+          {/* Mobile View: Cards */}
+          <div className="lg:hidden space-y-4">
             {filteredClients.map((client) => (
-              <tr key={client.id} className="hover:bg-gray-50/50 transition-colors">
-                <td className="px-6 py-4"><div className="flex items-center gap-3"><div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center"><span className="text-indigo-600 font-semibold">{client.name?.charAt(0)}</span></div><div><p className="font-medium text-gray-900">{client.name}</p><p className="text-sm text-gray-500">{client.company}</p></div></div></td>
-                {profile?.role === 'admin' && (
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${client.created_by ? 'bg-indigo-50 text-indigo-700' : 'bg-gray-100 text-gray-600'}`}>
-                      {client.created_by ? 'Marketing / New' : 'Existing'}
+              <div key={client.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 relative">
+                {/* Row 1: Name & Status */}
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center shrink-0">
+                      <span className="text-indigo-600 font-bold text-lg">{client.name?.charAt(0)}</span>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900 leading-tight mobile-card-title">{client.name}</h3>
+                      <p className="text-xs text-gray-500">{client.company || 'Individual'}</p>
+                    </div>
+                  </div>
+                  <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${client.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                    <div className={`w-1.5 h-1.5 rounded-full ${client.is_active ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                    {client.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+
+                {/* Row 2: Contact Info */}
+                <div className="mb-4 pl-[3.25rem]">
+                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                    <Phone size={14} className="text-gray-400" />
+                    <span>{client.phone}</span>
+                  </div>
+                  {client.city && (
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <MapPin size={12} className="text-gray-400" />
+                      <span>{client.city}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Row 3: Footer */}
+                <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
+                  {profile?.role === 'admin' && (
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${client.created_by ? 'bg-indigo-50 text-indigo-700' : 'bg-gray-100 text-gray-600'}`}>
+                      {client.created_by ? 'Marketing' : 'Existing'}
                     </span>
-                  </td>
-                )}
-                <td className="px-6 py-4"><p className="text-gray-900">{client.phone}</p><p className="text-sm text-gray-500">{client.email}</p></td>
-                <td className="px-6 py-4 text-gray-600">{client.city || '-'}</td>
-                <td className="px-6 py-4"><span className={`px-2 py-1 text-xs rounded-full ${client.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{client.is_active ? 'Active' : 'Inactive'}</span></td>
-                <td className="px-6 py-4"><div className="flex items-center justify-end gap-1"><button onClick={() => handleView(client)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors"><Eye size={18} className="text-gray-500" /></button><button onClick={() => handleEdit(client)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors"><Edit size={18} className="text-gray-500" /></button><button onClick={() => handleDelete(client.id)} className="p-2 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={18} className="text-red-500" /></button></div></td>
-              </tr>
+                  )}
+                  {!profile?.role && <span></span> /* Spacer if not admin */}
+
+                  <div className="flex items-center gap-1 ml-auto">
+                    <button onClick={() => handleView(client)} className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg">
+                      <Eye size={16} />
+                    </button>
+                    <button onClick={() => handleEdit(client)} className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg">
+                      <Edit size={16} />
+                    </button>
+                    <button onClick={() => handleDelete(client.id)} className="p-2 hover:bg-red-50 text-red-500 rounded-lg">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+            {filteredClients.length === 0 && (
+              <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
+                <Building2 size={48} className="mx-auto text-gray-300 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-1">No clients found</h3>
+                <p className="text-sm text-gray-500 mb-4">Try adjusting your filters</p>
+                {profile?.role !== 'marketing' && (
+                  <button onClick={handleAddNew} className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm">
+                    <Plus size={16} /> Add Client
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Desktop View: Table */}
+          <div className="hidden lg:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Client</th>
+                  {profile?.role === 'admin' && <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Source</th>}
+                  <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Contact</th>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">City</th>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredClients.map((client) => (
+                  <tr key={client.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold">
+                          {client.name?.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">{client.name}</p>
+                          <p className="text-sm text-gray-500">{client.company}</p>
+                        </div>
+                      </div>
+                    </td>
+                    {profile?.role === 'admin' && (
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide ${client.created_by ? 'bg-indigo-50 text-indigo-700' : 'bg-gray-100 text-gray-600'}`}>
+                          {client.created_by ? 'Marketing' : 'Existing'}
+                        </span>
+                      </td>
+                    )}
+                    <td className="px-6 py-4">
+                      <p className="text-sm text-gray-900 font-medium">{client.phone}</p>
+                      <p className="text-sm text-gray-500">{client.email}</p>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{client.city || '-'}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2.5 py-1 text-xs font-bold rounded-full uppercase tracking-wide ${client.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                        {client.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => handleView(client)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
+                          <Eye size={18} />
+                        </button>
+                        <button onClick={() => handleEdit(client)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
+                          <Edit size={18} />
+                        </button>
+                        <button onClick={() => handleDelete(client.id)} className="p-2 hover:bg-red-50 rounded-lg text-red-500 transition-colors">
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filteredClients.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                      No clients found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
       </div>
 
       {showModal && (
