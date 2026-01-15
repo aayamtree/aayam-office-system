@@ -100,7 +100,7 @@ const menuItems: MenuItem[] = [
       { name: 'Invoices', href: '/admin/finance/invoices' },
       { name: 'Payments', href: '/admin/finance/payments' },
       { name: 'Banking', href: '/admin/finance/banking' },
-      { name: 'Purchase Bills', href: '/admin/finance/purchase-bills' },
+      { name: 'Purchase Bills', href: '/admin/finance/vendors/purchases' },
       { name: 'Vendors', href: '/admin/finance/vendors' },
     ]
   },
