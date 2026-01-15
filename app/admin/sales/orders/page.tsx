@@ -10,6 +10,7 @@ import {
 import { useJobs, useClients } from '@/lib/hooks';
 import { Job, Client } from '@/types/database';
 import { useAuth } from '@/lib/auth-context';
+import { formatDate } from '@/lib/utils';
 
 export default function OrdersPage() {
   const { user, profile } = useAuth();
@@ -323,7 +324,7 @@ export default function OrdersPage() {
                   <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-md">
                       <Calendar size={12} />
-                      <span>{job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : 'No Deadline'}</span>
+                      <span>{job.client_deadline ? formatDate(job.client_deadline) : 'No Deadline'}</span>
                     </div>
 
                     <div className="flex items-center gap-1">
@@ -391,7 +392,7 @@ export default function OrdersPage() {
                       <td className="px-6 py-4 align-top">
                         <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg w-fit">
                           <Calendar size={14} className="text-gray-400" />
-                          {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}
+                          {job.client_deadline ? formatDate(job.client_deadline) : '-'}
                         </div>
                       </td>
                       <td className="px-6 py-4 align-top">
@@ -594,7 +595,7 @@ export default function OrdersPage() {
                   <h2 className="text-xl font-bold text-gray-900">{selectedJob.project_name}</h2>
                   <span className="bg-gray-100 text-gray-600 text-xs font-mono px-2 py-0.5 rounded-md">{selectedJob.job_number}</span>
                 </div>
-                <p className="text-sm text-gray-500 mt-1">Ordered on {new Date(selectedJob.order_date).toLocaleDateString()}</p>
+                <p className="text-sm text-gray-500 mt-1">Ordered on {formatDate(selectedJob.order_date)}</p>
               </div>
               <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
                 <X size={20} />
@@ -623,7 +624,7 @@ export default function OrdersPage() {
                 </div>
                 <div className="p-3 border rounded-xl">
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Deadline</p>
-                  <p className="font-medium text-gray-900 mt-1">{selectedJob.client_deadline ? new Date(selectedJob.client_deadline).toLocaleDateString() : '-'}</p>
+                  <p className="font-medium text-gray-900 mt-1">{selectedJob.client_deadline ? formatDate(selectedJob.client_deadline) : '-'}</p>
                 </div>
                 <div className="p-3 border rounded-xl">
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Quantity</p>

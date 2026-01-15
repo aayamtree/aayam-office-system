@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { useLeads, useFollowUps } from '@/lib/hooks';
 import { Lead } from '@/types/database';
+import { formatDate } from '@/lib/utils';
 
 export default function LeadsPage() {
     const { user, profile } = useAuth();
@@ -334,7 +335,7 @@ export default function LeadsPage() {
                                     {lead.next_follow_up && (
                                         <div className="flex items-center gap-2 text-amber-600 bg-amber-50 p-2 rounded-lg border border-amber-100">
                                             <Clock size={14} />
-                                            <span className="text-xs font-bold">Follow up: {new Date(lead.next_follow_up).toLocaleDateString()}</span>
+                                            <span className="text-xs font-bold">Follow up: {formatDate(lead.next_follow_up)}</span>
                                         </div>
                                     )}
 

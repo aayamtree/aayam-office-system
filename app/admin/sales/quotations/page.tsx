@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useQuotations, useClients, useJobs, useLeads } from '@/lib/hooks';
 import { Quotation, Client, QuotationItem, JobStatus } from '@/types/database';
 import { downloadQuotationPDF, defaultCompanyData } from '@/components/quotation/QuotationPDF';
+import { formatDate } from '@/lib/utils';
 
 export default function QuotationsPage() {
   const { user, profile } = useAuth();
@@ -332,8 +333,8 @@ export default function QuotationsPage() {
     const pdfData = {
       ...defaultCompanyData,
       quoteNumber: q.quote_number,
-      date: new Date(q.created_at).toLocaleDateString(),
-      validUntil: q.valid_until ? new Date(q.valid_until).toLocaleDateString() : '-',
+      date: formatDate(new Date(q.created_at)),
+      validUntil: q.valid_until ? formatDate(new Date(q.valid_until)) : '-',
       clientName: q.client?.name || 'Unknown',
       clientCompany: q.client?.company,
       clientAddress: q.client?.address,
@@ -448,7 +449,7 @@ export default function QuotationsPage() {
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <span className="font-bold text-gray-900 font-mono text-sm bg-gray-100 px-2 py-1 rounded-md">{q.quote_number}</span>
-                      <p className="text-[10px] text-gray-400 mt-1">{new Date(q.created_at).toLocaleDateString()}</p>
+                      <p className="text-[10px] text-gray-400 mt-1">{formatDate(q.created_at)}</p>
                     </div>
                     <span className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full ${getStatusColor(q.status)}`}>
                       {getStatusIcon(q.status)}
@@ -479,7 +480,7 @@ export default function QuotationsPage() {
                   <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-md">
                       <Clock size={12} />
-                      <span>Valid: {q.valid_until ? new Date(q.valid_until).toLocaleDateString() : 'N/A'}</span>
+                      <span>Valid: {q.valid_until ? formatDate(q.valid_until) : 'N/A'}</span>
                     </div>
 
                     <div className="flex items-center gap-1">
@@ -530,7 +531,7 @@ export default function QuotationsPage() {
                     <tr key={q.id} className={`hover:bg-gray-50 transition-colors ${q.status === 'accepted' || q.status === 'rejected' ? 'bg-gray-50/50 opacity-60' : ''}`}>
                       <td className="px-6 py-4">
                         <span className="font-semibold text-gray-900">{q.quote_number}</span>
-                        <p className="text-xs text-gray-400 mt-1">{new Date(q.created_at).toLocaleDateString()}</p>
+                        <p className="text-xs text-gray-400 mt-1">{formatDate(q.created_at)}</p>
                       </td>
                       <td className="px-6 py-4">
                         <p className="font-medium text-gray-900">{q.client?.company || 'Unknown'}</p>
@@ -538,7 +539,7 @@ export default function QuotationsPage() {
                       </td>
                       <td className="px-6 py-4 text-gray-600 max-w-xs truncate">{q.items?.map(i => i.description).join(', ')}</td>
                       <td className="px-6 py-4 font-semibold text-gray-900">{formatCurrency(q.total_amount)}</td>
-                      <td className="px-6 py-4 text-gray-600">{q.valid_until ? new Date(q.valid_until).toLocaleDateString() : '-'}</td>
+                      <td className="px-6 py-4 text-gray-600">{q.valid_until ? formatDate(q.valid_until) : '-'}</td>
                       <td className="px-6 py-4">
                         <span className={`flex items-center gap-1 w-fit px-3 py-1 text-xs rounded-full ${getStatusColor(q.status)}`}>
                           {getStatusIcon(q.status)}

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { usePaymentsReceived, useVendorPayments, useClients, useVendors, useInvoices, usePurchaseBills, useBankAccounts } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
+import { formatDate } from '@/lib/utils';
 
 export default function PaymentsPage() {
   const { paymentsReceived, loading: loadingReceived, createPaymentReceived, deletePaymentReceived, refetch: refetchReceived } = usePaymentsReceived();
@@ -263,7 +264,7 @@ export default function PaymentsPage() {
                 <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                      <Calendar size={12} /> {new Date(p.raw_date).toLocaleDateString()}
+                      <Calendar size={12} /> {formatDate(p.raw_date)}
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-gray-600 font-medium capitalize">
                       <CreditCard size={12} /> {p.payment_mode?.replace('_', ' ')}
@@ -315,7 +316,7 @@ export default function PaymentsPage() {
                     </td>
                     <td className="px-6 py-4 font-bold text-gray-900">{formatCurrency(p.amount)}</td>
                     <td className="px-6 py-4 capitalize text-gray-600">{p.payment_mode?.replace('_', ' ')}</td>
-                    <td className="px-6 py-4 text-gray-600">{new Date(p.raw_date).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-gray-600">{formatDate(p.raw_date)}</td>
                     <td className="px-6 py-4 text-right">
                       <button onClick={() => handleDelete(p)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
                     </td>

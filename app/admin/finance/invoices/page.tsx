@@ -10,6 +10,7 @@ import { InvoiceData, defaultCompanyData, downloadInvoicePDF, printInvoicePDF } 
 import { shareOnWhatsApp, getInvoiceMessage, getPaymentReminderMessage } from '@/lib/whatsapp';
 import { useInvoices, useClients, useJobs } from '@/lib/hooks';
 import { Invoice, Client, InvoiceItem } from '@/types/database';
+import { formatDate } from '@/lib/utils';
 
 export default function InvoicesPage() {
   const { invoices, loading: invoicesLoading, createInvoice, updateInvoice, saveInvoiceItems } = useInvoices();
@@ -68,8 +69,8 @@ export default function InvoicesPage() {
     return {
       ...defaultCompanyData,
       invoiceNumber: invoice.invoice_number,
-      invoiceDate: new Date(invoice.invoice_date).toLocaleDateString(),
-      dueDate: invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : '',
+      invoiceDate: formatDate(new Date(invoice.invoice_date)),
+      dueDate: invoice.due_date ? formatDate(new Date(invoice.due_date)) : '',
       clientName,
       clientCompany,
       clientAddress,
@@ -155,7 +156,7 @@ export default function InvoicesPage() {
       clientCompany: invoice.client?.company || '',
       totalAmount: invoice.total_amount,
       paidAmount: invoice.amount_paid,
-      dueDate: invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : '',
+      dueDate: invoice.due_date ? formatDate(new Date(invoice.due_date)) : '',
       items: itemsList,
     });
     shareOnWhatsApp(invoice.client.phone, message, `${invoice.client.name} (${invoice.client.company})`);
@@ -173,7 +174,7 @@ export default function InvoicesPage() {
       clientCompany: invoice.client?.company || '',
       totalAmount: invoice.total_amount,
       paidAmount: invoice.amount_paid,
-      dueDate: invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : '',
+      dueDate: invoice.due_date ? formatDate(new Date(invoice.due_date)) : '',
     });
     shareOnWhatsApp(invoice.client.phone, message, `${invoice.client.name} (${invoice.client.company})`);
   };
@@ -511,7 +512,7 @@ export default function InvoicesPage() {
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <span className="font-bold text-gray-900 font-mono text-sm bg-gray-100 px-2 py-1 rounded-md">{inv.invoice_number}</span>
-                      <p className="text-[10px] text-gray-400 mt-1">{new Date(inv.invoice_date).toLocaleDateString()}</p>
+                      <p className="text-[10px] text-gray-400 mt-1">{formatDate(inv.invoice_date)}</p>
                     </div>
                     <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full border ${getStatusColor(inv.payment_status)}`}>
                       {inv.payment_status}
@@ -536,7 +537,7 @@ export default function InvoicesPage() {
                   <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-md">
                       <Calendar size={12} />
-                      <span>Due: {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : 'N/A'}</span>
+                      <span>Due: {inv.due_date ? formatDate(inv.due_date) : 'N/A'}</span>
                     </div>
 
                     <div className="flex items-center gap-1">
@@ -576,7 +577,7 @@ export default function InvoicesPage() {
                     <tr key={inv.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <span className="font-semibold text-gray-900">{inv.invoice_number}</span>
-                        <p className="text-xs text-gray-400 mt-1">{new Date(inv.invoice_date).toLocaleDateString()}</p>
+                        <p className="text-xs text-gray-400 mt-1">{formatDate(inv.invoice_date)}</p>
                       </td>
                       <td className="px-6 py-4">
                         <p className="font-medium text-gray-900">{inv.client?.company || 'Unknown'}</p>
@@ -588,7 +589,7 @@ export default function InvoicesPage() {
                           <p className="text-xs text-amber-600">Paid: {formatCurrency(inv.amount_paid)}</p>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-gray-600">{inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '-'}</td>
+                      <td className="px-6 py-4 text-gray-600">{inv.due_date ? formatDate(inv.due_date) : '-'}</td>
                       <td className="px-6 py-4">
                         <span className={`px-3 py-1 text-xs rounded-full border ${getStatusColor(inv.payment_status)}`}>
                           {inv.payment_status}
