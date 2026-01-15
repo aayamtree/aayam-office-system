@@ -6,16 +6,17 @@ import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
   ArrowDownRight, ArrowUpRight, Calendar, CreditCard, Banknote, Loader2, User, Building2, Upload, FileText
 } from 'lucide-react';
-import { usePaymentsReceived, useVendorPayments, useClients, useVendors, useInvoices, usePurchaseBills } from '@/lib/hooks';
+import { usePaymentsReceived, useVendorPayments, useClients, useVendors, useInvoices, usePurchaseBills, useBankAccounts } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
 
 export default function PaymentsPage() {
-  const { paymentsReceived, loading: loadingReceived, createPaymentReceived, deletePaymentReceived } = usePaymentsReceived();
-  const { vendorPayments, loading: loadingPaid, createVendorPayment, deleteVendorPayment } = useVendorPayments();
+  const { paymentsReceived, loading: loadingReceived, createPaymentReceived, deletePaymentReceived, refetch: refetchReceived } = usePaymentsReceived();
+  const { vendorPayments, loading: loadingPaid, createVendorPayment, deleteVendorPayment, refetch: refetchPaid } = useVendorPayments();
   const { clients, error: clientsError } = useClients();
   const { vendors, error: vendorsError } = useVendors();
   const { invoices } = useInvoices();
   const { purchaseBills } = usePurchaseBills();
+  const { bankAccounts } = useBankAccounts();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'received' | 'paid'>('all');
@@ -53,14 +54,15 @@ export default function PaymentsPage() {
     type: 'received' as 'received' | 'paid',
     clientId: '',
     vendorId: '',
-    amount: '' as string | number, // Changed to string to allow better typing
+    amount: '' as string | number,
     method: 'bank_transfer',
     date: new Date().toISOString().split('T')[0],
     reference: '',
     notes: '',
     attachmentUrl: '',
     invoiceId: '',
-    purchaseBillId: ''
+    purchaseBillId: '',
+    bankAccountId: ''
   });
 
   const filteredPayments = payments.filter(p => {
@@ -80,11 +82,15 @@ export default function PaymentsPage() {
   };
 
   const handleAddNew = () => {
+    // Default to first active bank account for non-cash, or leave empty to force selection
+    const defaultBank = bankAccounts.find(b => b.is_default)?.id || '';
+
     setFormData({
       type: 'received', clientId: '', vendorId: '', amount: '',
       method: 'bank_transfer', date: new Date().toISOString().split('T')[0],
       reference: '', notes: '', attachmentUrl: '',
-      invoiceId: '', purchaseBillId: ''
+      invoiceId: '', purchaseBillId: '',
+      bankAccountId: defaultBank
     });
     setShowModal(true);
   };
@@ -104,7 +110,6 @@ export default function PaymentsPage() {
         .upload(filePath, file);
 
       if (uploadError) {
-        // If bucket doesn't exist, try creating bucket (client side not ideal, but fallback)
         console.error('Upload error:', uploadError);
         throw uploadError;
       }
@@ -125,7 +130,6 @@ export default function PaymentsPage() {
     e.preventDefault();
     setSubmitting(true);
 
-    // Parse Amount
     const finalAmount = parseFloat(formData.amount.toString()) || 0;
     if (finalAmount <= 0) {
       alert('Please enter a valid amount');
@@ -144,8 +148,10 @@ export default function PaymentsPage() {
           reference_number: formData.reference,
           notes: formData.notes,
           attachment_url: formData.attachmentUrl,
-          invoice_id: formData.invoiceId || undefined
+          invoice_id: formData.invoiceId || undefined,
+          bank_account_id: formData.method === 'cash' ? undefined : formData.bankAccountId
         } as any);
+        await refetchReceived(); // Manual refetch
       } else {
         if (!formData.vendorId) throw new Error('Please select a vendor');
         await createVendorPayment({
@@ -156,8 +162,10 @@ export default function PaymentsPage() {
           reference_number: formData.reference,
           notes: formData.notes,
           attachment_url: formData.attachmentUrl,
-          purchase_bill_id: formData.purchaseBillId || undefined
+          purchase_bill_id: formData.purchaseBillId || undefined,
+          bank_account_id: formData.method === 'cash' ? undefined : formData.bankAccountId
         } as any);
+        await refetchPaid(); // Manual refetch
       }
       setShowModal(false);
     } catch (error: any) {
@@ -461,6 +469,19 @@ export default function PaymentsPage() {
                   <option value="card">Card</option>
                 </select>
               </div>
+
+              {formData.method !== 'cash' && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">Bank Account *</label>
+                  <select required value={formData.bankAccountId} onChange={(e) => setFormData({ ...formData, bankAccountId: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl bg-white">
+                    <option value="">Select Bank Account</option>
+                    {bankAccounts.map(b => (
+                      <option key={b.id} value={b.id}>{b.name} ({b.account_number})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium mb-1">Reference / Note</label>
