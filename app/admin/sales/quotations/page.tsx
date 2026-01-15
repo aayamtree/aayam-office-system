@@ -431,84 +431,156 @@ export default function QuotationsPage() {
       </div>
 
       {/* List */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="space-y-4">
         {quotationsLoading ? (
-          <div className="p-12 text-center text-gray-500">Loading quotations...</div>
+          <div className="p-12 text-center text-gray-500 bg-white rounded-2xl border border-gray-100">Loading quotations...</div>
         ) : filteredQuotations.length === 0 ? (
-          <div className="p-12 text-center text-gray-400">
+          <div className="p-12 text-center text-gray-400 bg-white rounded-2xl border border-gray-100">
             No quotations found matching your criteria.
           </div>
         ) : (
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Quotation</th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Client</th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Items</th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Amount</th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Valid Until</th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="text-right px-6 py-4 text-xs font-medium text-gray-500 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
+          <>
+            {/* Mobile View: Cards */}
+            <div className="lg:hidden space-y-4">
               {filteredQuotations.map((q) => (
-                <tr key={q.id} className={`hover:bg-gray-50 transition-colors ${q.status === 'accepted' || q.status === 'rejected' ? 'bg-gray-50/50 opacity-60' : ''}`}>
-                  <td className="px-6 py-4">
-                    <span className="font-semibold text-gray-900">{q.quote_number}</span>
-                    <p className="text-xs text-gray-400 mt-1">{new Date(q.created_at).toLocaleDateString()}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="font-medium text-gray-900">{q.client?.company || 'Unknown'}</p>
-                    <p className="text-sm text-gray-500">{q.client?.name}</p>
-                  </td>
-                  <td className="px-6 py-4 text-gray-600 max-w-xs truncate">{q.items?.map(i => i.description).join(', ')}</td>
-                  <td className="px-6 py-4 font-semibold text-gray-900">{formatCurrency(q.total_amount)}</td>
-                  <td className="px-6 py-4 text-gray-600">{q.valid_until ? new Date(q.valid_until).toLocaleDateString() : '-'}</td>
-                  <td className="px-6 py-4">
-                    <span className={`flex items-center gap-1 w-fit px-3 py-1 text-xs rounded-full ${getStatusColor(q.status)}`}>
+                <div key={q.id} className={`bg-white p-4 rounded-2xl shadow-sm border border-gray-100 relative ${q.status === 'accepted' || q.status === 'rejected' ? 'bg-gray-50/50' : ''}`}>
+                  {/* Row 1: ID & Status */}
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <span className="font-bold text-gray-900 font-mono text-sm bg-gray-100 px-2 py-1 rounded-md">{q.quote_number}</span>
+                      <p className="text-[10px] text-gray-400 mt-1">{new Date(q.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <span className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full ${getStatusColor(q.status)}`}>
                       {getStatusIcon(q.status)}
                       {q.status}
                     </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-2">
+                  </div>
+
+                  {/* Row 2: Client & Amount */}
+                  <div className="flex justify-between items-start gap-3 mb-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-gray-900 leading-tight mb-0.5">{q.client?.company || 'Unknown Client'}</h3>
+                      <div className="text-sm text-gray-600">{q.client?.name}</div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className="font-bold text-gray-900 text-lg">{formatCurrency(q.total_amount)}</div>
+                      <div className="text-xs text-gray-500">Total</div>
+                    </div>
+                  </div>
+
+                  {/* Row 3: Items Preview */}
+                  <div className="mb-4 bg-gray-50 p-2.5 rounded-xl border border-gray-100/50">
+                    <p className="text-xs text-gray-600 line-clamp-2">
+                      {q.items?.map(i => `${i.description} (${i.quantity})`).join(', ')}
+                    </p>
+                  </div>
+
+                  {/* Row 4: Footer (Validation & Actions) */}
+                  <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-md">
+                      <Clock size={12} />
+                      <span>Valid: {q.valid_until ? new Date(q.valid_until).toLocaleDateString() : 'N/A'}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1">
                       {q.status === 'accepted' && (
                         <button
                           onClick={() => handleConvertToOrder(q)}
-                          className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200"
+                          className="px-2 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-bold uppercase tracking-wide"
                         >
                           → Order
                         </button>
                       )}
-                      {/* Show 'Make Order' even if not accepted, maybe? Usually workflow is Quote -> Accept -> Order. Keeping it strict to Accepted for now, 
-                          but user might want to short circuit. Let's allow conversion if status is sent or draft too for flexibility? 
-                          No, stick to Accepted for 'proper' flow, OR add a button to 'Accept & Order' */}
                       {(q.status === 'sent' || q.status === 'viewed' || q.status === 'draft') && (
                         <button
                           onClick={() => handleConvertToOrder(q)}
-                          className="p-2 hover:bg-indigo-50 text-indigo-600 rounded-lg"
-                          title="Convert to Order"
+                          className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"
                         >
-                          <CheckCircle size={18} />
+                          <CheckCircle size={16} />
                         </button>
                       )}
-
-                      <button onClick={() => handleEdit(q)} className="p-2 hover:bg-gray-100 rounded-lg" title="Edit">
-                        <Edit size={18} className="text-gray-500" />
+                      <button onClick={() => handleEdit(q)} className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg">
+                        <Edit size={16} />
                       </button>
-                      <button onClick={() => handleDownloadPDF(q)} className="p-2 hover:bg-gray-100 rounded-lg" title="Download PDF">
-                        <Download size={18} className="text-gray-500" />
-                      </button>
-                      <button onClick={() => handleDelete(q.id, q.quote_number)} className="p-2 hover:bg-red-50 rounded-lg" title="Delete">
-                        <Trash2 size={18} className="text-red-500" />
+                      <button onClick={() => handleDownloadPDF(q)} className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg">
+                        <Download size={16} />
                       </button>
                     </div>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+
+            {/* Desktop View: Table */}
+            <div className="hidden lg:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Quotation</th>
+                    <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Client</th>
+                    <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Items</th>
+                    <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Amount</th>
+                    <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Valid Until</th>
+                    <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="text-right px-6 py-4 text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredQuotations.map((q) => (
+                    <tr key={q.id} className={`hover:bg-gray-50 transition-colors ${q.status === 'accepted' || q.status === 'rejected' ? 'bg-gray-50/50 opacity-60' : ''}`}>
+                      <td className="px-6 py-4">
+                        <span className="font-semibold text-gray-900">{q.quote_number}</span>
+                        <p className="text-xs text-gray-400 mt-1">{new Date(q.created_at).toLocaleDateString()}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="font-medium text-gray-900">{q.client?.company || 'Unknown'}</p>
+                        <p className="text-sm text-gray-500">{q.client?.name}</p>
+                      </td>
+                      <td className="px-6 py-4 text-gray-600 max-w-xs truncate">{q.items?.map(i => i.description).join(', ')}</td>
+                      <td className="px-6 py-4 font-semibold text-gray-900">{formatCurrency(q.total_amount)}</td>
+                      <td className="px-6 py-4 text-gray-600">{q.valid_until ? new Date(q.valid_until).toLocaleDateString() : '-'}</td>
+                      <td className="px-6 py-4">
+                        <span className={`flex items-center gap-1 w-fit px-3 py-1 text-xs rounded-full ${getStatusColor(q.status)}`}>
+                          {getStatusIcon(q.status)}
+                          {q.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          {q.status === 'accepted' && (
+                            <button
+                              onClick={() => handleConvertToOrder(q)}
+                              className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200"
+                            >
+                              → Order
+                            </button>
+                          )}
+                          {(q.status === 'sent' || q.status === 'viewed' || q.status === 'draft') && (
+                            <button
+                              onClick={() => handleConvertToOrder(q)}
+                              className="p-2 hover:bg-indigo-50 text-indigo-600 rounded-lg"
+                              title="Convert to Order"
+                            >
+                              <CheckCircle size={18} />
+                            </button>
+                          )}
+                          <button onClick={() => handleEdit(q)} className="p-2 hover:bg-gray-100 rounded-lg" title="Edit">
+                            <Edit size={18} className="text-gray-500" />
+                          </button>
+                          <button onClick={() => handleDownloadPDF(q)} className="p-2 hover:bg-gray-100 rounded-lg" title="Download PDF">
+                            <Download size={18} className="text-gray-500" />
+                          </button>
+                          <button onClick={() => handleDelete(q.id, q.quote_number)} className="p-2 hover:bg-red-50 rounded-lg" title="Delete">
+                            <Trash2 size={18} className="text-red-500" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
