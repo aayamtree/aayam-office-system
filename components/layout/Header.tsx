@@ -20,6 +20,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
 
   // Generate Breadcrumbs
   const generateBreadcrumbs = () => {
+    // Safety check for pathname
+    if (!pathname) return [{ label: 'Dashboard', href: '/admin/dashboard' }];
+
     // Remove /admin and split
     const pathSegments = pathname.split('/').filter(p => p !== '' && p !== 'admin');
 
