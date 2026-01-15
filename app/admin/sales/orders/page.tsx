@@ -281,82 +281,147 @@ export default function OrdersPage() {
         </select>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="space-y-4">
         {jobsLoading ? (
-          <div className="p-12 text-center text-gray-500">Loading orders...</div>
+          <div className="p-12 text-center text-gray-500 bg-white rounded-2xl border border-gray-100">Loading orders...</div>
         ) : filteredJobs.length === 0 ? (
-          <div className="p-12 text-center text-gray-400">
+          <div className="p-12 text-center text-gray-400 bg-white rounded-2xl border border-gray-100">
             No orders found matching your criteria.
           </div>
         ) : (
-          <table className="w-full">
-            <thead className="bg-gray-50/50 border-b border-gray-100 hidden lg:table-header-group">
-              <tr>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Order Info</th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Client</th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Amount</th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Delivery</th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-                <th className="text-right px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
+          <>
+            {/* Mobile View: Cards */}
+            <div className="lg:hidden space-y-4">
               {filteredJobs.map((job) => (
-                <tr key={job.id} className="hover:bg-gray-50/50 transition-colors group block lg:table-row">
-                  <td className="px-4 md:px-6 py-4 align-top block lg:table-cell">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-bold text-gray-900 font-mono text-sm bg-gray-100 px-2 py-1 rounded-md">{job.job_number}</span>
-                      {job.priority === 'urgent' && <span className="text-[10px] font-bold uppercase text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Urgent</span>}
-                    </div>
-                    <div className="font-semibold text-gray-800">{job.project_name}</div>
-                    <div className="text-xs text-gray-500 mt-1">{job.quantity} items</div>
-                  </td>
-                  <td className="px-4 md:px-6 py-2 md:py-4 align-top block lg:table-cell">
-                    <div className="font-medium text-gray-900">{job.client?.company || '-'}</div>
-                    <div className="text-sm text-gray-500 flex items-center gap-1">
-                      <User size={12} /> {job.client?.name || 'Unknown'}
-                    </div>
-                  </td>
-                  <td className="px-4 md:px-6 py-2 md:py-4 align-top block lg:table-cell">
-                    <div className="font-bold text-gray-900">{formatCurrency(job.total_amount)}</div>
-                    {job.payment_status !== 'paid' && (
-                      <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full mt-1 inline-block">
-                        Due: {formatCurrency(job.total_amount - job.amount_received)}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 align-top block lg:table-cell">
-                    <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg w-fit">
-                      <Calendar size={14} className="text-gray-400" />
-                      {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 align-top block lg:table-cell">
-                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(job.current_stage)}`}>
+                <div key={job.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 relative">
+                  {/* Row 1: ID & Status */}
+                  <div className="flex justify-between items-start mb-3">
+                    <span className="font-bold font-mono text-xs text-gray-700 bg-gray-100 px-2 py-1 rounded-md">
+                      {job.job_number}
+                    </span>
+                    <span className={`px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded-full ${getStatusColor(job.current_stage)}`}>
                       {job.current_stage.replace('_', ' ')}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 align-middle block lg:table-cell text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => { setSelectedJob(job); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-indigo-600 transition-colors">
-                        <Eye size={18} />
+                  </div>
+
+                  {/* Row 2: Main Details (Split Left/Right) */}
+                  <div className="flex justify-between items-start gap-3 mb-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-gray-900 leading-tight mb-1">{job.project_name}</h3>
+                      <div className="flex items-center gap-1 text-sm text-gray-600">
+                        <User size={12} className="text-gray-400" />
+                        <span className="truncate">{job.client?.company || job.client?.name || 'Unknown'}</span>
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className="font-bold text-gray-900">{formatCurrency(job.total_amount)}</div>
+                      <div className="text-xs text-gray-500 font-medium">{job.quantity} pcs</div>
+                    </div>
+                  </div>
+
+                  {/* Row 3: Footer (Date & Actions) */}
+                  <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-md">
+                      <Calendar size={12} />
+                      <span>{job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : 'No Deadline'}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => { setSelectedJob(job); setShowViewModal(true); }}
+                        className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"
+                      >
+                        <Eye size={16} />
                       </button>
                       {profile?.role !== 'marketing' && (
                         <>
-                          <button onClick={() => handleEdit(job)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-indigo-600 transition-colors">
-                            <Edit size={18} />
+                          <button
+                            onClick={() => handleEdit(job)}
+                            className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg"
+                          >
+                            <Edit size={16} />
                           </button>
-                          <button onClick={(e) => handleDelete(job.id, e)} className="p-2 hover:bg-red-50 rounded-lg text-gray-500 hover:text-red-500 transition-colors">
-                            <Trash2 size={18} />
-                          </button>
+                          {/* Optional: Stick Delete in a menu or remove to save space if needed */}
                         </>
                       )}
                     </div>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+
+            {/* Desktop View: Table */}
+            <div className="hidden lg:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50/50 border-b border-gray-100">
+                  <tr>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Order Info</th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Client</th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Amount</th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Delivery</th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                    <th className="text-right px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredJobs.map((job) => (
+                    <tr key={job.id} className="hover:bg-gray-50/50 transition-colors group">
+                      <td className="px-6 py-4 align-top">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-bold text-gray-900 font-mono text-sm bg-gray-100 px-2 py-1 rounded-md">{job.job_number}</span>
+                          {job.priority === 'urgent' && <span className="text-[10px] font-bold uppercase text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Urgent</span>}
+                        </div>
+                        <div className="font-semibold text-gray-800">{job.project_name}</div>
+                        <div className="text-xs text-gray-500 mt-1">{job.quantity} items</div>
+                      </td>
+                      <td className="px-6 py-4 align-top">
+                        <div className="font-medium text-gray-900">{job.client?.company || '-'}</div>
+                        <div className="text-sm text-gray-500 flex items-center gap-1">
+                          <User size={12} /> {job.client?.name || 'Unknown'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 align-top">
+                        <div className="font-bold text-gray-900">{formatCurrency(job.total_amount)}</div>
+                        {job.payment_status !== 'paid' && (
+                          <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full mt-1 inline-block">
+                            Due: {formatCurrency(job.total_amount - job.amount_received)}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 align-top">
+                        <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg w-fit">
+                          <Calendar size={14} className="text-gray-400" />
+                          {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 align-top">
+                        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(job.current_stage)}`}>
+                          {job.current_stage.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 align-middle text-right">
+                        <div className="flex items-center justify-end gap-2 text-gray-500">
+                          <button onClick={() => { setSelectedJob(job); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-lg hover:text-indigo-600 transition-colors">
+                            <Eye size={18} />
+                          </button>
+                          {profile?.role !== 'marketing' && (
+                            <>
+                              <button onClick={() => handleEdit(job)} className="p-2 hover:bg-gray-100 rounded-lg hover:text-indigo-600 transition-colors">
+                                <Edit size={18} />
+                              </button>
+                              <button onClick={(e) => handleDelete(job.id, e)} className="p-2 hover:bg-red-50 rounded-lg hover:text-red-500 transition-colors">
+                                <Trash2 size={18} />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
