@@ -1653,7 +1653,7 @@ export { useAuth } from './auth-context';
 // =============================================
 export function usePaymentsReceived() {
   const { data, loading, error, refetch } = useSupabaseQuery<PaymentReceived>('payments_received', {
-    select: '*, client:clients(*), bank_account:bank_accounts(*)',
+    select: '*',  // TEMPORARY FIX: Removed joins to fix 400 errors
     orderBy: { column: 'payment_date', ascending: false }
   });
 
@@ -1691,7 +1691,7 @@ export function usePaymentsReceived() {
 // =============================================
 export function useVendorPayments() {
   const { data, loading, error, refetch } = useSupabaseQuery<VendorPayment>('vendor_payments', {
-    select: '*, vendor:vendors(*), bank_account:bank_accounts(*)',
+    select: '*',  // TEMPORARY FIX: Removed joins to fix 400 errors
     orderBy: { column: 'payment_date', ascending: false }
   });
 
