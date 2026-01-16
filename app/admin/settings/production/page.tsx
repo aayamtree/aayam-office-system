@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createBrowserClient } from '@supabase/ssr';
 import { Plus, Trash2, Save, X, Edit2, Check, AlertCircle } from 'lucide-react';
 
 type ChecklistCategory = 'design' | 'dispatch';
 
 export default function ProductionSettings() {
-    const supabase = createClientComponentClient();
+    const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
     const [loading, setLoading] = useState(true);
     const [checklists, setChecklists] = useState<any[]>([]);
 
@@ -139,8 +142,8 @@ export default function ProductionSettings() {
                         <button
                             onClick={() => setActiveCategory('design')}
                             className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeCategory === 'design'
-                                    ? 'bg-white text-indigo-600 shadow-sm'
-                                    : 'text-gray-500 hover:text-gray-700'
+                                ? 'bg-white text-indigo-600 shadow-sm'
+                                : 'text-gray-500 hover:text-gray-700'
                                 }`}
                         >
                             Pre-Print (Design)
@@ -148,8 +151,8 @@ export default function ProductionSettings() {
                         <button
                             onClick={() => setActiveCategory('dispatch')}
                             className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeCategory === 'dispatch'
-                                    ? 'bg-white text-orange-600 shadow-sm'
-                                    : 'text-gray-500 hover:text-gray-700'
+                                ? 'bg-white text-orange-600 shadow-sm'
+                                : 'text-gray-500 hover:text-gray-700'
                                 }`}
                         >
                             <span className="flex items-center gap-2">
