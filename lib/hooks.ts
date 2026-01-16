@@ -1652,10 +1652,35 @@ export { useAuth } from './auth-context';
 // PAYMENTS RECEIVED HOOK
 // =============================================
 export function usePaymentsReceived() {
-  const { data, loading, error, refetch } = useSupabaseQuery<PaymentReceived>('payments_received', {
-    select: '*',  // TEMPORARY FIX: Removed joins to fix 400 errors
-    orderBy: { column: 'payment_date', ascending: false }
-  });
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = async () => {
+    if (!isSupabaseConfigured()) {
+      setError('Database not configured');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { data: result, error: rpcError } = await supabase.rpc('get_all_payments_received');
+
+      if (rpcError) throw rpcError;
+      setData(result || []);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch payments');
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const createPaymentReceived = async (payment: Omit<PaymentReceived, 'id' | 'created_at' | 'updated_at' | 'payment_number' | 'client' | 'bank_account'>) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
@@ -1672,28 +1697,53 @@ export function usePaymentsReceived() {
       p_attachment_url: payment.attachment_url
     });
 
-    if (!error) refetch();
+    if (!error) await fetchData();
     return { data: result, error: error?.message };
   };
 
   const deletePaymentReceived = async (id: string) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
     const { error } = await supabase.from('payments_received').delete().eq('id', id);
-    if (!error) refetch();
+    if (!error) await fetchData();
     return { error: error?.message };
   };
 
-  return { paymentsReceived: data, loading, error, refetch, createPaymentReceived, deletePaymentReceived };
+  return { paymentsReceived: data, loading, error, refetch: fetchData, createPaymentReceived, deletePaymentReceived };
 }
 
 // =============================================
 // VENDOR PAYMENTS HOOK (Paid)
 // =============================================
 export function useVendorPayments() {
-  const { data, loading, error, refetch } = useSupabaseQuery<VendorPayment>('vendor_payments', {
-    select: '*',  // TEMPORARY FIX: Removed joins to fix 400 errors
-    orderBy: { column: 'payment_date', ascending: false }
-  });
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = async () => {
+    if (!isSupabaseConfigured()) {
+      setError('Database not configured');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { data: result, error: rpcError } = await supabase.rpc('get_all_vendor_payments');
+
+      if (rpcError) throw rpcError;
+      setData(result || []);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch payments');
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const createVendorPayment = async (payment: Omit<VendorPayment, 'id' | 'created_at' | 'updated_at' | 'payment_number' | 'vendor' | 'bank_account'>) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
@@ -1710,18 +1760,18 @@ export function useVendorPayments() {
       p_attachment_url: payment.attachment_url
     });
 
-    if (!error) refetch();
+    if (!error) await fetchData();
     return { data: result, error: error?.message };
   };
 
   const deleteVendorPayment = async (id: string) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
     const { error } = await supabase.from('vendor_payments').delete().eq('id', id);
-    if (!error) refetch();
+    if (!error) await fetchData();
     return { error: error?.message };
   };
 
-  return { vendorPayments: data, loading, error, refetch, createVendorPayment, deleteVendorPayment };
+  return { vendorPayments: data, loading, error, refetch: fetchData, createVendorPayment, deleteVendorPayment };
 }
 
 // =============================================
