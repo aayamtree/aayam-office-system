@@ -413,18 +413,30 @@ export default function DesignerWorkspace() {
       task.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (task.deadline && task.deadline.includes(searchQuery));
 
-    // Team Logic
+    // Team Logic with Admin Special Handling
     const isAssignedToMe = task.designerId === profile?.id;
-    // If showTeamTasks is true -> Show All
-    // If showTeamTasks is false -> Show Mine + Unassigned (to pick up)
-    // If showTeamTasks is false -> Show Mine + Unassigned (to pick up)
-    const matchesView = activeTab === 'team_tasks' ? true : (isAssignedToMe || !task.designerId);
+    const isAdmin = profile?.role === 'admin';
 
-    // Filter out completed tasks from MAIN VIEW unless searching?
-    // Maybe keep them but at bottom. For now, show active only in default views?
-    // User wants "Work Summary", so keeping them in state is good.
-    // Let's hide 'delivered' from active queue to reduce clutter?
-    // User didn't specify, so I'll show all.
+    // Admin My Queue Logic: Show tasks needing admin attention + unassigned tasks
+    const needsAdminAttention = isAdmin && (
+      !task.designerId || // Unassigned tasks
+      task.current_stage === 'approval' || // Waiting for client approval (admin might need to follow up)
+      (task.rawDeadline && new Date(task.rawDeadline) < new Date() && task.status !== 'completed') // Overdue tasks
+    );
+
+    // View Matching Logic
+    let matchesView = false;
+    if (activeTab === 'team_tasks') {
+      matchesView = true; // Team view shows all tasks
+    } else if (activeTab === 'my_tasks') {
+      if (isAdmin) {
+        matchesView = needsAdminAttention; // Admin sees tasks needing attention + unassigned
+      } else {
+        matchesView = isAssignedToMe || !task.designerId; // Designers see their tasks + unassigned
+      }
+    } else {
+      matchesView = true; // Other views (board, timeline, notes) show all
+    }
 
     return matchesSearch && matchesView;
   });
@@ -800,10 +812,18 @@ export default function DesignerWorkspace() {
 
               <div className="p-4 border-b bg-gray-50/50">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="font-bold text-gray-800 flex items-center gap-2">
-                    <Briefcase size={18} className="text-indigo-600" />
-                    {activeTab === 'notes' ? 'My Notes' : (activeTab === 'team_tasks' ? 'Team Queue' : 'My Queue')}
-                  </h2>
+                  <div>
+                    <h2 className="font-bold text-gray-800 flex items-center gap-2">
+                      <Briefcase size={18} className="text-indigo-600" />
+                      {activeTab === 'notes' ? 'My Notes' : (activeTab === 'team_tasks' ? 'Team Queue' : 'My Queue')}
+                    </h2>
+                    {activeTab === 'my_tasks' && profile?.role === 'admin' && (
+                      <p className="text-[10px] text-gray-500 mt-1 ml-7">Unassigned + Needs Attention + Overdue</p>
+                    )}
+                    {activeTab === 'my_tasks' && profile?.role === 'designer' && (
+                      <p className="text-[10px] text-gray-500 mt-1 ml-7">Your assigned tasks</p>
+                    )}
+                  </div>
                   <button
                     onClick={() => setIsNewTaskModalOpen(true)}
                     className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-sm flex items-center gap-1 text-xs font-bold px-3"
