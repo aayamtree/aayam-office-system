@@ -134,12 +134,6 @@ const menuItems: MenuItem[] = [
     allowedRoles: ['admin'],
   },
   {
-    name: 'Workflow Guide',
-    icon: FileText, // Reusing FileText or import GitGraph? Let's use FileText or HelpCircle if available. Map it to FileText for now or import new one.
-    href: '/admin/help/workflow',
-    allowedRoles: ['admin', 'manager'],
-  },
-  {
     name: 'Settings',
     icon: Settings,
     href: '/admin/settings',
