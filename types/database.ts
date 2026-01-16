@@ -194,7 +194,9 @@ export interface Job extends BaseEntity {
   designer?: Designer;
   sales_person?: Profile;
   invoices?: Invoice[];
-  checklist_progress?: Record<string, boolean>; // Stores {"Item": true/false}
+  checklist_progress?: Record<string, boolean>; // Design QC
+  dispatch_checklist_progress?: Record<string, boolean>; // Dispatch QC
+  qc_status?: 'pending' | 'passed' | 'failed' | 'hold';
 }
 
 // File Attachment
@@ -684,6 +686,7 @@ export interface Reminder extends BaseEntity {
 export interface JobChecklist {
   id: string;
   job_type: string;
+  category: 'design' | 'dispatch';
   items: string[]; // JSONB stored as array of strings
   created_at: string;
 }
