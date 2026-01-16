@@ -152,7 +152,6 @@ export default function PaymentsPage() {
           invoice_id: formData.invoiceId || undefined,
           bank_account_id: formData.method === 'cash' ? undefined : formData.bankAccountId
         } as any);
-        await refetchReceived(); // Manual refetch
       } else {
         if (!formData.vendorId) throw new Error('Please select a vendor');
         await createVendorPayment({
@@ -166,8 +165,12 @@ export default function PaymentsPage() {
           purchase_bill_id: formData.purchaseBillId || undefined,
           bank_account_id: formData.method === 'cash' ? undefined : formData.bankAccountId
         } as any);
-        await refetchPaid(); // Manual refetch
       }
+
+      // Refetch data to update the list
+      await Promise.all([refetchReceived(), refetchPaid()]);
+
+      // Close modal only after data is refreshed
       setShowModal(false);
     } catch (error: any) {
       alert(error.message);
