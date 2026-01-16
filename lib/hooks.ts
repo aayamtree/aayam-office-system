@@ -60,8 +60,9 @@ export function useSupabaseQuery<T>(
   };
 
   const { data, error, isLoading, mutate } = useSWR(key, fetcher, {
-    revalidateOnFocus: true, // Auto-refetch on window focus
-    dedupingInterval: 2000,   // Reduce deduping time
+    revalidateOnFocus: false, // Don't auto-refetch on window focus (was causing flickering)
+    revalidateOnReconnect: false, // Don't refetch on reconnect
+    dedupingInterval: 5000,   // Increase to 5s to prevent excessive refetching
     keepPreviousData: true,   // Show previous data while fetching new data
   });
 
