@@ -7,7 +7,7 @@ import {
   Client, Vendor, Designer, Job, Invoice, Lead,
   Quotation, Dispatch, BankAccount, DesignTask, DesignProject,
   PurchaseBill, VendorPayment, PaymentReceived, POSCategory, POSProduct,
-  PaperStock, POSSale, Note, Reminder, BankTransaction, SalesOrder, ActivityLog
+  PaperStock, POSSale, Note, Reminder, BankTransaction, SalesOrder, ActivityLog, JobChecklist
 } from '@/types/database';
 
 // Generic hook for fetching data
@@ -1734,4 +1734,16 @@ export function useActivityLogs(limit = 100) {
   });
 
   return { logs: data, loading, error, refetch };
+}
+
+// =============================================
+// CHECKLISTS HOOK
+// =============================================
+export function useJobChecklists() {
+  const { data, loading, error, refetch } = useSupabaseQuery<JobChecklist>('job_checklists', {
+    select: '*',
+    orderBy: { column: 'job_type', ascending: true }
+  });
+
+  return { checklists: data, loading, error, refetch };
 }

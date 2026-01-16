@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { 
+import {
   Search, IndianRupee, Eye, Building2, Calendar, X,
   CheckCircle, Clock, Lock, AlertCircle, CreditCard
 } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 
 const currentUser = { id: 1, name: 'Marketing User' };
 
@@ -17,23 +18,29 @@ const paymentStatuses = [
 
 // Payment records for orders belonging to this marketing user
 const myPayments = [
-  { id: 1, orderId: 'ORD-001', clientName: 'Sharma Industries', subject: 'Wedding Invitation Cards',
+  {
+    id: 1, orderId: 'ORD-001', clientName: 'Sharma Industries', subject: 'Wedding Invitation Cards',
     totalAmount: 35400, paidAmount: 20000, pendingAmount: 15400, status: 'partial',
     dueDate: '2025-12-30', lastPaymentDate: '2025-12-22',
     payments: [
       { date: '2025-12-20', amount: 10000, mode: 'NEFT' },
       { date: '2025-12-22', amount: 10000, mode: 'UPI' },
-    ], ownerId: 1 },
-  { id: 2, orderId: 'ORD-002', clientName: 'Royal Prints', subject: 'Brochures and Catalogs',
+    ], ownerId: 1
+  },
+  {
+    id: 2, orderId: 'ORD-002', clientName: 'Royal Prints', subject: 'Brochures and Catalogs',
     totalAmount: 20650, paidAmount: 0, pendingAmount: 20650, status: 'pending',
-    dueDate: '2025-12-28', lastPaymentDate: null, payments: [], ownerId: 1 },
-  { id: 3, orderId: 'ORD-003', clientName: 'Patel Enterprises', subject: 'Business Stationery',
+    dueDate: '2025-12-28', lastPaymentDate: null, payments: [], ownerId: 1
+  },
+  {
+    id: 3, orderId: 'ORD-003', clientName: 'Patel Enterprises', subject: 'Business Stationery',
     totalAmount: 8260, paidAmount: 8260, pendingAmount: 0, status: 'paid',
     dueDate: '2025-12-20', lastPaymentDate: '2025-12-18',
     payments: [
       { date: '2025-12-10', amount: 4000, mode: 'Cash' },
       { date: '2025-12-18', amount: 4260, mode: 'NEFT' },
-    ], ownerId: 1 },
+    ], ownerId: 1
+  },
 ];
 
 export default function MarketingPaymentsPage() {
@@ -45,12 +52,12 @@ export default function MarketingPaymentsPage() {
 
   const filteredPayments = payments.filter(p => {
     const matchesSearch = p.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         p.clientName.toLowerCase().includes(searchTerm.toLowerCase());
+      p.clientName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const formatCurrency = (amount: number) => 
+  const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 
   const getStatusBadge = (status: string) => paymentStatuses.find(s => s.id === status)?.color || 'bg-gray-100 text-gray-700';
@@ -118,8 +125,7 @@ export default function MarketingPaymentsPage() {
         {filteredPayments.map(payment => {
           const progress = (payment.paidAmount / payment.totalAmount) * 100;
           return (
-            <div key={payment.id} className={`bg-white rounded-xl shadow-sm border p-4 hover:shadow-md transition-shadow ${
-              payment.status === 'overdue' ? 'border-l-4 border-l-red-500' : 
+            <div key={payment.id} className={`bg-white rounded-xl shadow-sm border p-4 hover:shadow-md transition-shadow ${payment.status === 'overdue' ? 'border-l-4 border-l-red-500' :
               payment.status === 'pending' ? 'border-l-4 border-l-yellow-500' : ''}`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -132,7 +138,7 @@ export default function MarketingPaymentsPage() {
                   <h3 className="font-semibold text-gray-900">{payment.subject}</h3>
                   <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mt-1">
                     <span className="flex items-center gap-1"><Building2 size={14} />{payment.clientName}</span>
-                    <span className="flex items-center gap-1"><Calendar size={14} />Due: {new Date(payment.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
+                    <span className="flex items-center gap-1"><Calendar size={14} />Due: {formatDate(payment.dueDate)}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
@@ -148,7 +154,7 @@ export default function MarketingPaymentsPage() {
                   </button>
                 </div>
               </div>
-              
+
               {/* Progress Bar */}
               <div className="mt-4 pt-3 border-t">
                 <div className="flex justify-between text-xs mb-1">
@@ -156,9 +162,8 @@ export default function MarketingPaymentsPage() {
                   <span className="font-medium">{progress.toFixed(0)}%</span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full transition-all duration-300 ${
-                    progress >= 100 ? 'bg-green-500' : progress > 0 ? 'bg-orange-500' : 'bg-gray-300'
-                  }`} style={{ width: `${progress}%` }} />
+                  <div className={`h-full rounded-full transition-all duration-300 ${progress >= 100 ? 'bg-green-500' : progress > 0 ? 'bg-orange-500' : 'bg-gray-300'
+                    }`} style={{ width: `${progress}%` }} />
                 </div>
                 <div className="flex justify-between text-xs mt-1">
                   <span className="text-green-600">Paid: {formatCurrency(payment.paidAmount)}</span>
@@ -203,13 +208,13 @@ export default function MarketingPaymentsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Due Date</p>
-                  <p className="font-medium">{new Date(selectedPayment.dueDate).toLocaleDateString('en-IN')}</p>
+                  <p className="font-medium">{formatDate(selectedPayment.dueDate)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Last Payment</p>
                   <p className="font-medium">
-                    {selectedPayment.lastPaymentDate 
-                      ? new Date(selectedPayment.lastPaymentDate).toLocaleDateString('en-IN') 
+                    {selectedPayment.lastPaymentDate
+                      ? formatDate(selectedPayment.lastPaymentDate)
                       : '-'}
                   </p>
                 </div>
@@ -244,7 +249,7 @@ export default function MarketingPaymentsPage() {
                           </div>
                           <div>
                             <p className="font-medium text-sm">{formatCurrency(p.amount)}</p>
-                            <p className="text-xs text-gray-500">{new Date(p.date).toLocaleDateString('en-IN')}</p>
+                            <p className="text-xs text-gray-500">{formatDate(p.date)}</p>
                           </div>
                         </div>
                         <span className="text-xs px-2 py-1 bg-white rounded-full">{p.mode}</span>

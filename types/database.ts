@@ -194,6 +194,7 @@ export interface Job extends BaseEntity {
   designer?: Designer;
   sales_person?: Profile;
   invoices?: Invoice[];
+  checklist_progress?: Record<string, boolean>; // Stores {"Item": true/false}
 }
 
 // File Attachment
@@ -648,20 +649,7 @@ export interface PaperStock extends BaseEntity {
   last_restocked?: string;
 }
 
-// Activity Log
-export interface ActivityLog {
-  id: string;
-  user_id?: string;
-  action: string;
-  entity_type: string;
-  entity_id?: string;
-  description?: string;
-  metadata?: Record<string, any>;
-  ip_address?: string;
-  user_agent?: string;
-  created_at: string;
-  user?: Profile;
-}
+
 
 // Counter
 export interface Counter {
@@ -690,6 +678,14 @@ export interface Reminder extends BaseEntity {
   is_completed: boolean;
   priority: PriorityLevel;
   user_id?: string;
+}
+
+// Checklist
+export interface JobChecklist {
+  id: string;
+  job_type: string;
+  items: string[]; // JSONB stored as array of strings
+  created_at: string;
 }
 
 // =============================================

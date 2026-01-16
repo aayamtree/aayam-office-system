@@ -12,6 +12,7 @@ import {
 import {
   useJobs, useClients, useVendors, useDesigners, usePaymentsReceived
 } from '@/lib/hooks';
+import { formatDate } from '@/lib/utils';
 import { Job, Client, Vendor, Designer, JobStatus, PaymentMode } from '@/types/database';
 
 const stages = [
@@ -340,7 +341,7 @@ export default function JobsPage() {
         {job.client_deadline && (
           <span className={`flex items-center gap-1.5 font-medium ${isOverdue(job.client_deadline, job.current_stage) ? 'text-red-600' : 'text-gray-400'}`}>
             <Calendar size={14} />
-            {new Date(job.client_deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+            {formatDate(job.client_deadline)}
           </span>
         )}
       </div>
@@ -579,7 +580,7 @@ export default function JobsPage() {
                       <td className="px-4 py-3 text-sm">
                         {job.client_deadline ? (
                           <span className={isOverdue(job.client_deadline, job.current_stage) ? 'text-red-600 font-medium' : ''}>
-                            {new Date(job.client_deadline).toLocaleDateString('en-IN')}
+                            {formatDate(job.client_deadline)}
                           </span>
                         ) : '-'}
                       </td>

@@ -32,7 +32,7 @@ export default function ActivityFeed({ variant = 'card' }: { variant?: 'card' | 
                         </div>
 
                         <p className="text-sm text-gray-800 leading-snug">
-                            <span className="font-semibold">{log.user?.full_name || 'System'}</span> {log.description || log.action}
+                            <span className="font-semibold">{log.user?.full_name || 'System'}</span> {log.details || log.action}
                         </p>
                         <p className="text-xs text-gray-400 mt-1 font-medium">
                             {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}

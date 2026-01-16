@@ -3,20 +3,22 @@
 import { useState } from 'react';
 import { useJobs } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
-import { Palette, Play, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Palette, Play, CheckCircle, Clock, AlertCircle, CheckSquare } from 'lucide-react';
+import ChecklistModal from '@/components/design/ChecklistModal';
+import { useJobChecklists } from '@/lib/hooks';
 
 export default function DesignTasksPage() {
     const { profile } = useAuth();
-
-    // Fetch jobs relevant to design
-    // Ideally filtering should be done on server/query level, but for now filtering locally
     const { jobs, loading, updateJobStage, refetch } = useJobs({
         orderBy: { column: 'created_at', ascending: false }
     });
 
     const [processingId, setProcessingId] = useState<string | null>(null);
+    const [checklistJob, setChecklistJob] = useState<any>(null);
 
-    // Filter for design stages
+    // Fetch checklists for progress calculation
+    const { checklists } = useJobChecklists();
+
     const designJobs = jobs.filter(job =>
         ['new', 'designing', 'approval'].includes(job.current_stage)
     );
@@ -29,6 +31,19 @@ export default function DesignTasksPage() {
         setProcessingId(null);
         refetch();
     };
+
+    function getChecklistProgress(job: any) {
+        if (!checklists || !job.checklist_progress) return null;
+        const jobType = job.job_type || 'Other';
+        const template = checklists.find(c => c.job_type.toLowerCase() === jobType.toLowerCase()) || checklists[0];
+
+        if (!template || !template.items?.length) return null;
+
+        const total = template.items.length;
+        const completed = template.items.filter((i: string) => job.checklist_progress[i]).length;
+
+        return { completed, total, percentage: (completed / total) * 100 };
+    }
 
     if (loading) return <div className="p-8 text-center text-gray-500">Loading tasks...</div>;
 
@@ -46,7 +61,7 @@ export default function DesignTasksPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {designJobs.map(job => (
-                    <div key={job.id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5">
+                    <div key={job.id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col">
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <span className="bg-gray-100 text-gray-600 text-xs font-mono px-2 py-1 rounded">{job.job_number}</span>
@@ -65,6 +80,30 @@ export default function DesignTasksPage() {
                             {job.description || 'No description provided.'}
                         </p>
 
+                        {/* Checklist Progress Indicator */}
+                        {(() => {
+                            const progress = getChecklistProgress(job);
+                            if (progress) {
+                                return (
+                                    <div className="mb-4">
+                                        <div className="flex justify-between text-xs text-gray-500 mb-1">
+                                            <span className="flex items-center gap-1 font-medium text-gray-700">
+                                                <CheckSquare size={12} /> QC Checklist
+                                            </span>
+                                            <span>{progress.completed}/{progress.total}</span>
+                                        </div>
+                                        <div className="bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                            <div
+                                                className={`h-full ${progress.percentage === 100 ? 'bg-green-500' : 'bg-indigo-500'}`}
+                                                style={{ width: `${progress.percentage}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                            return null;
+                        })()}
+
                         <div className="flex gap-2 mt-auto pt-4 border-t border-gray-100">
                             {job.current_stage === 'new' && (
                                 <button
@@ -76,12 +115,21 @@ export default function DesignTasksPage() {
                             )}
 
                             {job.current_stage === 'designing' && (
-                                <button
-                                    disabled={processingId === job.id}
-                                    onClick={() => handleStageUpdate(job.id, 'approval')}
-                                    className="flex-1 bg-purple-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-purple-700 flex items-center justify-center gap-2">
-                                    <Clock size={16} /> Send Approval
-                                </button>
+                                <>
+                                    <button
+                                        onClick={() => setChecklistJob(job)}
+                                        className="bg-white border border-gray-200 text-gray-700 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                                        title="Quality Checklist"
+                                    >
+                                        <CheckSquare size={16} />
+                                    </button>
+                                    <button
+                                        disabled={processingId === job.id}
+                                        onClick={() => handleStageUpdate(job.id, 'approval')}
+                                        className="flex-1 bg-purple-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-purple-700 flex items-center justify-center gap-2">
+                                        <Clock size={16} /> Send Approval
+                                    </button>
+                                </>
                             )}
 
                             {job.current_stage === 'approval' && (
@@ -109,6 +157,16 @@ export default function DesignTasksPage() {
                     </div>
                 )}
             </div>
+
+            {checklistJob && (
+                <ChecklistModal
+                    job={checklistJob}
+                    onClose={() => setChecklistJob(null)}
+                    onSave={() => {
+                        refetch(); // Refresh to update progress bar
+                    }}
+                />
+            )}
         </div>
     );
 }
