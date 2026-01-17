@@ -10,6 +10,7 @@ export default function PaymentsPageNew() {
     const [error, setError] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [paymentType, setPaymentType] = useState<'received' | 'paid'>('received');
     const [clients, setClients] = useState<any[]>([]);
     const [vendors, setVendors] = useState<any[]>([]);
 
@@ -185,21 +186,39 @@ export default function PaymentsPageNew() {
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
                                 <label className="block mb-2 font-medium">Type</label>
-                                <select name="type" required className="w-full border rounded p-2" defaultValue="received">
+                                <select
+                                    name="type"
+                                    value={paymentType}
+                                    onChange={(e) => setPaymentType(e.target.value as 'received' | 'paid')}
+                                    required
+                                    className="w-full border rounded p-2"
+                                >
                                     <option value="received">Received (from client)</option>
                                     <option value="paid">Paid (to vendor)</option>
                                 </select>
                             </div>
 
-                            <div>
-                                <label className="block mb-2 font-medium">Client</label>
-                                <select name="client_id" required className="w-full border rounded p-2">
-                                    <option value="">Select client...</option>
-                                    {clients.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name} - {c.company}</option>
-                                    ))}
-                                </select>
-                            </div>
+                            {paymentType === 'received' ? (
+                                <div>
+                                    <label className="block mb-2 font-medium">Client</label>
+                                    <select name="client_id" required className="w-full border rounded p-2">
+                                        <option value="">Select client...</option>
+                                        {clients.map(c => (
+                                            <option key={c.id} value={c.id}>{c.name} - {c.company}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            ) : (
+                                <div>
+                                    <label className="block mb-2 font-medium">Vendor</label>
+                                    <select name="vendor_id" required className="w-full border rounded p-2">
+                                        <option value="">Select vendor...</option>
+                                        {vendors.map(v => (
+                                            <option key={v.id} value={v.id}>{v.name} - {v.company}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
 
                             <div>
                                 <label className="block mb-2 font-medium">Amount (₹)</label>
