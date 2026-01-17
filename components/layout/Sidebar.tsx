@@ -60,7 +60,7 @@ const menuItems: MenuItem[] = [
       { name: 'Team Queue', href: '/admin/designers/team-queue' },
       { name: 'Timeline', href: '/admin/designers/timeline' },
       { name: 'My Notes', href: '/admin/designers/my-notes' },
-      { name: '+ New Project', href: '/admin/designers/tasks?action=new' },
+      { name: '+ New Project', href: '/admin/designers/new-project' },
     ]
   },
   {
