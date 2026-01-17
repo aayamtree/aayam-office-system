@@ -22,17 +22,17 @@ export default function MyQueueRedesigned() {
     // Filter tasks assigned to current user
     const myTasks = (jobs || [])
         .filter(job => {
-            const isMyTask = job.design_assignee === profile?.id;
-            const notCompleted = job.design_stage !== 'delivered' && job.design_stage !== 'completed';
+            const isMyTask = job.designer_id === profile?.id;
+            const notCompleted = job.current_stage !== 'delivered' && job.current_stage !== 'dispatched';
             return isMyTask && notCompleted;
         })
         .map(job => ({
             id: job.id,
             title: job.project_name,
             client: clients.find(c => c.id === job.client_id)?.name || 'Unknown',
-            status: job.design_stage || 'pending',
+            status: job.current_stage || 'new',
             priority: job.priority || 'normal',
-            deadline: job.design_deadline ? new Date(job.design_deadline) : null,
+            deadline: job.client_deadline ? new Date(job.client_deadline) : null,
             jobType: job.job_type,
             jobNumber: job.job_number
         }));
@@ -52,9 +52,9 @@ export default function MyQueueRedesigned() {
 
     // Group by priority and status
     const urgentTasks = filteredTasks.filter(t => t.priority === 'urgent');
-    const highTasks = filteredTasks.filter(t => t.priority === 'high' && t.priority !== 'urgent');
-    const inProgressTasks = filteredTasks.filter(t => t.status === 'in_progress' && t.priority === 'normal');
-    const todoTasks = filteredTasks.filter(t => t.status === 'pending' && t.priority === 'normal');
+    const highTasks = filteredTasks.filter(t => t.priority === 'high');
+    const inProgressTasks = filteredTasks.filter(t => (t.status === 'designing' || t.status === 'printing') && t.priority === 'normal');
+    const todoTasks = filteredTasks.filter(t => t.status === 'new' && t.priority === 'normal');
 
     // Calendar logic
     const getDaysInMonth = () => {
@@ -93,9 +93,19 @@ export default function MyQueueRedesigned() {
             : null;
 
         const statusColors: any = {
-            pending: 'bg-gray-100 text-gray-700',
-            in_progress: 'bg-blue-100 text-blue-700',
-            review: 'bg-purple-100 text-purple-700',
+            new: 'bg-gray-100 text-gray-700',
+            designing: 'bg-blue-100 text-blue-700',
+            approval: 'bg-purple-100 text-purple-700',
+            printing: 'bg-indigo-100 text-indigo-700',
+            finishing: 'bg-cyan-100 text-cyan-700',
+        };
+
+        const statusLabels: any = {
+            new: 'To Do',
+            designing: 'Designing',
+            approval: 'Approval',
+            printing: 'Printing',
+            finishing: 'Finishing',
         };
 
         return (
@@ -123,8 +133,8 @@ export default function MyQueueRedesigned() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[task.status] || statusColors.pending}`}>
-                        {task.status === 'in_progress' ? 'Designing' : task.status === 'pending' ? 'To Do' : 'Review'}
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[task.status] || statusColors.new}`}>
+                        {statusLabels[task.status] || task.status}
                     </span>
 
                     {task.deadline && (
