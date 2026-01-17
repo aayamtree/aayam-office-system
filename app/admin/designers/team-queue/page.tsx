@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useJobs, useClients, useDesigners } from '@/lib/hooks';
 import { Users, Search, User, Clock, LayoutGrid, List } from 'lucide-react';
+import Link from 'next/link';
 
 export default function TeamQueue() {
     const { jobs, loading } = useJobs();
@@ -131,19 +132,21 @@ export default function TeamQueue() {
 
                                     <div className="space-y-3">
                                         {tasksInStatus.map(task => (
-                                            <div key={task.id} className="bg-gray-50 rounded-lg p-3 border hover:shadow-md transition-shadow cursor-pointer">
-                                                <h4 className="font-semibold text-sm text-gray-900 mb-2">{task.title}</h4>
-                                                <div className="text-xs text-gray-600 mb-2">{task.client}</div>
-                                                <div className="flex items-center justify-between text-xs">
-                                                    <span className="flex items-center gap-1">
-                                                        <User size={12} />
-                                                        {task.designer}
-                                                    </span>
-                                                    {task.priority === 'urgent' && (
-                                                        <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full font-bold">!</span>
-                                                    )}
+                                            <Link key={task.id} href={`/admin/jobs/${task.id}`}>
+                                                <div className="bg-gray-50 rounded-lg p-3 border hover:shadow-md transition-shadow cursor-pointer">
+                                                    <h4 className="font-semibold text-sm text-gray-900 mb-2">{task.title}</h4>
+                                                    <div className="text-xs text-gray-600 mb-2">{task.client}</div>
+                                                    <div className="flex items-center justify-between text-xs">
+                                                        <span className="flex items-center gap-1">
+                                                            <User size={12} />
+                                                            {task.designer}
+                                                        </span>
+                                                        {task.priority === 'urgent' && (
+                                                            <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full font-bold">!</span>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            </Link>
                                         ))}
                                         {tasksInStatus.length === 0 && (
                                             <p className="text-gray-400 text-sm text-center py-4">No tasks</p>
@@ -170,37 +173,39 @@ export default function TeamQueue() {
                             </thead>
                             <tbody className="divide-y">
                                 {filteredTasks.map(task => (
-                                    <tr key={task.id} className="hover:bg-gray-50 cursor-pointer">
-                                        <td className="p-4">
-                                            <div className="font-semibold text-gray-900">{task.title}</div>
-                                            <div className="text-sm text-gray-500">#{task.jobNumber}</div>
-                                        </td>
-                                        <td className="p-4 text-gray-700">{task.client}</td>
-                                        <td className="p-4">
-                                            <div className="flex items-center gap-2">
-                                                <User size={16} className="text-gray-400" />
-                                                <span className="text-gray-700">{task.designer}</span>
-                                            </div>
-                                        </td>
-                                        <td className="p-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
+                                    <Link key={task.id} href={`/admin/jobs/${task.id}`} className="contents">
+                                        <tr className="hover:bg-gray-50 cursor-pointer">
+                                            <td className="p-4">
+                                                <div className="font-semibold text-gray-900">{task.title}</div>
+                                                <div className="text-sm text-gray-500">#{task.jobNumber}</div>
+                                            </td>
+                                            <td className="p-4 text-gray-700">{task.client}</td>
+                                            <td className="p-4">
+                                                <div className="flex items-center gap-2">
+                                                    <User size={16} className="text-gray-400" />
+                                                    <span className="text-gray-700">{task.designer}</span>
+                                                </div>
+                                            </td>
+                                            <td className="p-4">
+                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
                                                     task.priority === 'high' ? 'bg-orange-100 text-orange-700' :
                                                         'bg-gray-100 text-gray-700'
-                                                }`}>
-                                                {task.status}
-                                            </span>
-                                        </td>
-                                        <td className="p-4">
-                                            {task.deadline ? (
-                                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                    <Clock size={16} />
-                                                    {new Date(task.deadline).toLocaleDateString()}
-                                                </div>
-                                            ) : (
-                                                <span className="text-gray-400 text-sm">No deadline</span>
-                                            )}
-                                        </td>
-                                    </tr>
+                                                    }`}>
+                                                    {task.status}
+                                                </span>
+                                            </td>
+                                            <td className="p-4">
+                                                {task.deadline ? (
+                                                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                        <Clock size={16} />
+                                                        {new Date(task.deadline).toLocaleDateString()}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-gray-400 text-sm">No deadline</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    </Link>
                                 ))}
                                 {filteredTasks.length === 0 && (
                                     <tr>

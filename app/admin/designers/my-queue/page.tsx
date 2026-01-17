@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useJobs, useClients } from '@/lib/hooks';
 import { Calendar, Clock, User, AlertCircle, Search } from 'lucide-react';
+import Link from 'next/link';
 
 export default function MyQueue() {
     const { profile } = useAuth();
@@ -76,28 +77,30 @@ export default function MyQueue() {
                             </div>
                             <div className="grid gap-4">
                                 {urgentTasks.map(task => (
-                                    <div key={task.id} className="bg-white p-6 rounded-xl border-2 border-red-200 shadow-sm">
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div>
-                                                <h3 className="text-lg font-bold text-gray-900">{task.title}</h3>
-                                                <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                                                    <User size={16} />
-                                                    <span>{task.client}</span>
-                                                    <span className="text-gray-400">•</span>
-                                                    <span>#{task.jobNumber}</span>
+                                    <Link key={task.id} href={`/admin/jobs/${task.id}`}>
+                                        <div className="bg-white p-6 rounded-xl border-2 border-red-200 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div>
+                                                    <h3 className="text-lg font-bold text-gray-900">{task.title}</h3>
+                                                    <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                                                        <User size={16} />
+                                                        <span>{task.client}</span>
+                                                        <span className="text-gray-400">•</span>
+                                                        <span>#{task.jobNumber}</span>
+                                                    </div>
                                                 </div>
+                                                <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-bold">
+                                                    URGENT
+                                                </span>
                                             </div>
-                                            <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-bold">
-                                                URGENT
-                                            </span>
+                                            {task.deadline && (
+                                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                    <Clock size={16} />
+                                                    <span>Due: {new Date(task.deadline).toLocaleDateString()}</span>
+                                                </div>
+                                            )}
                                         </div>
-                                        {task.deadline && (
-                                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                <Clock size={16} />
-                                                <span>Due: {new Date(task.deadline).toLocaleDateString()}</span>
-                                            </div>
-                                        )}
-                                    </div>
+                                    </Link>
                                 ))}
                             </div>
                         </div>
@@ -112,31 +115,32 @@ export default function MyQueue() {
                             </div>
                             <div className="grid gap-4">
                                 {highTasks.map(task => (
-                                    <div key={task.id} className="bg-white p-6 rounded-xl border-2 border-orange-200 shadow-sm">
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div>
-                                                <h3 className="text-lg font-bold text-gray-900">{task.title}</h3>
-                                                <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                                                    <User size={16} />
-                                                    <span>{task.client}</span>
-                                                    <span className="text-gray-400">•</span>
-                                                    <span>#{task.jobNumber}</span>
+                                    <Link key={task.id} href={`/admin/jobs/${task.id}`}>
+                                        <div className="bg-white p-6 rounded-xl border-2 border-orange-200 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div>
+                                                    <h3 className="text-lg font-bold text-gray-900">{task.title}</h3>
+                                                    <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                                                        <User size={16} />
+                                                        <span>{task.client}</span>
+                                                        <span className="text-gray-400">•</span>
+                                                        <span>#{task.jobNumber}</span>
+                                                    </div>
                                                 </div>
+                                                <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-bold">
+                                                    HIGH
+                                                </span>
                                             </div>
-                                            <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-bold">
-                                                HIGH
-                                            </span>
+                                            {task.deadline && (
+                                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                    <Clock size={16} />
+                                                    <span>Due: {new Date(task.deadline).toLocaleDateString()}</span>
+                                                </div>
+                                            )}
                                         </div>
-                                        {task.deadline && (
-                                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                <Clock size={16} />
-                                                <span>Due: {new Date(task.deadline).toLocaleDateString()}</span>
-                                            </div>
-                                        )}
-                                    </div>
+                                    </Link>
                                 ))}
-                            </div>
-                        </div>
+                            </div>                      </div>
                     )}
 
                     {/* Normal Tasks */}
@@ -148,31 +152,32 @@ export default function MyQueue() {
                             </div>
                             <div className="grid gap-4">
                                 {normalTasks.map(task => (
-                                    <div key={task.id} className="bg-white p-6 rounded-xl border shadow-sm hover:shadow-md transition-shadow">
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div>
-                                                <h3 className="text-lg font-bold text-gray-900">{task.title}</h3>
-                                                <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                                                    <User size={16} />
-                                                    <span>{task.client}</span>
-                                                    <span className="text-gray-400">•</span>
-                                                    <span>#{task.jobNumber}</span>
+                                    <Link key={task.id} href={`/admin/jobs/${task.id}`}>
+                                        <div className="bg-white p-6 rounded-xl border shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div>
+                                                    <h3 className="text-lg font-bold text-gray-900">{task.title}</h3>
+                                                    <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                                                        <User size={16} />
+                                                        <span>{task.client}</span>
+                                                        <span className="text-gray-400">•</span>
+                                                        <span>#{task.jobNumber}</span>
+                                                    </div>
                                                 </div>
+                                                <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm capitalize">
+                                                    {task.status}
+                                                </span>
                                             </div>
-                                            <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm capitalize">
-                                                {task.status}
-                                            </span>
+                                            {task.deadline && (
+                                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                    <Clock size={16} />
+                                                    <span>Due: {new Date(task.deadline).toLocaleDateString()}</span>
+                                                </div>
+                                            )}
                                         </div>
-                                        {task.deadline && (
-                                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                <Clock size={16} />
-                                                <span>Due: {new Date(task.deadline).toLocaleDateString()}</span>
-                                            </div>
-                                        )}
-                                    </div>
+                                    </Link>
                                 ))}
-                            </div>
-                        </div>
+                            </div>                      </div>
                     )}
 
                     {filteredTasks.length === 0 && (
