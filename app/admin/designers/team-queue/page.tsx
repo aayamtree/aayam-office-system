@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useJobs, useClients, useDesigners } from '@/lib/hooks';
-import { Users, Search, User, Clock } from 'lucide-react';
+import { Users, Search, User, Clock, LayoutGrid, List } from 'lucide-react';
 
 export default function TeamQueue() {
     const { jobs, loading } = useJobs();
@@ -10,6 +10,7 @@ export default function TeamQueue() {
     const { designers } = useDesigners();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterDesigner, setFilterDesigner] = useState('all');
+    const [viewMode, setViewMode] = useState<'table' | 'board'>('board'); // Default to board
 
     // Get all design tasks
     const allTasks = (jobs || [])
@@ -41,6 +42,14 @@ export default function TeamQueue() {
         count: allTasks.filter(t => t.designerId === d.id).length
     }));
 
+    // Group by status for Kanban
+    const statuses = [
+        { id: 'new', name: 'To Do', color: 'bg-gray-100' },
+        { id: 'designing', name: 'Designing', color: 'bg-blue-100' },
+        { id: 'approval', name: 'Approval', color: 'bg-purple-100' },
+        { id: 'printing', name: 'Printing', color: 'bg-indigo-100' },
+    ];
+
     if (loading) {
         return <div className="min-h-screen flex items-center justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
@@ -66,7 +75,7 @@ export default function TeamQueue() {
                     ))}
                 </div>
 
-                {/* Filters */}
+                {/* Filters & View Toggle */}
                 <div className="flex gap-3 mb-6">
                     <div className="flex-1 relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -88,64 +97,122 @@ export default function TeamQueue() {
                             <option key={d.id} value={d.id}>{d.name}</option>
                         ))}
                     </select>
+
+                    {/* View Toggle */}
+                    <div className="flex border rounded-lg overflow-hidden bg-white">
+                        <button
+                            onClick={() => setViewMode('board')}
+                            className={`px-4 py-3 flex items-center gap-2 ${viewMode === 'board' ? 'bg-purple-100 text-purple-700' : 'text-gray-600'}`}
+                        >
+                            <LayoutGrid size={20} />
+                            Board
+                        </button>
+                        <button
+                            onClick={() => setViewMode('table')}
+                            className={`px-4 py-3 flex items-center gap-2 border-l ${viewMode === 'table' ? 'bg-purple-100 text-purple-700' : 'text-gray-600'}`}
+                        >
+                            <List size={20} />
+                            Table
+                        </button>
+                    </div>
                 </div>
 
-                {/* Task List */}
-                <div className="bg-white rounded-xl border overflow-hidden">
-                    <table className="w-full">
-                        <thead className="bg-gray-50 border-b">
-                            <tr>
-                                <th className="text-left p-4 font-semibold text-gray-700">Task</th>
-                                <th className="text-left p-4 font-semibold text-gray-700">Client</th>
-                                <th className="text-left p-4 font-semibold text-gray-700">Designer</th>
-                                <th className="text-left p-4 font-semibold text-gray-700">Status</th>
-                                <th className="text-left p-4 font-semibold text-gray-700">Deadline</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                            {filteredTasks.map(task => (
-                                <tr key={task.id} className="hover:bg-gray-50">
-                                    <td className="p-4">
-                                        <div className="font-semibold text-gray-900">{task.title}</div>
-                                        <div className="text-sm text-gray-500">#{task.jobNumber}</div>
-                                    </td>
-                                    <td className="p-4 text-gray-700">{task.client}</td>
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-2">
-                                            <User size={16} className="text-gray-400" />
-                                            <span className="text-gray-700">{task.designer}</span>
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
-                                                task.priority === 'high' ? 'bg-orange-100 text-orange-700' :
-                                                    'bg-gray-100 text-gray-700'
-                                            }`}>
-                                            {task.status}
-                                        </span>
-                                    </td>
-                                    <td className="p-4">
-                                        {task.deadline ? (
-                                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                <Clock size={16} />
-                                                {new Date(task.deadline).toLocaleDateString()}
+                {/* Kanban Board View */}
+                {viewMode === 'board' && (
+                    <div className="grid grid-cols-4 gap-4">
+                        {statuses.map(status => {
+                            const tasksInStatus = filteredTasks.filter(t => t.status === status.id);
+                            return (
+                                <div key={status.id} className="bg-white rounded-xl p-4 border">
+                                    <div className={`${status.color} rounded-lg p-3 mb-4`}>
+                                        <h3 className="font-bold text-gray-900">{status.name}</h3>
+                                        <p className="text-sm text-gray-600">{tasksInStatus.length} tasks</p>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {tasksInStatus.map(task => (
+                                            <div key={task.id} className="bg-gray-50 rounded-lg p-3 border hover:shadow-md transition-shadow cursor-pointer">
+                                                <h4 className="font-semibold text-sm text-gray-900 mb-2">{task.title}</h4>
+                                                <div className="text-xs text-gray-600 mb-2">{task.client}</div>
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <span className="flex items-center gap-1">
+                                                        <User size={12} />
+                                                        {task.designer}
+                                                    </span>
+                                                    {task.priority === 'urgent' && (
+                                                        <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full font-bold">!</span>
+                                                    )}
+                                                </div>
                                             </div>
-                                        ) : (
-                                            <span className="text-gray-400 text-sm">No deadline</span>
+                                        ))}
+                                        {tasksInStatus.length === 0 && (
+                                            <p className="text-gray-400 text-sm text-center py-4">No tasks</p>
                                         )}
-                                    </td>
-                                </tr>
-                            ))}
-                            {filteredTasks.length === 0 && (
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {/* Table View */}
+                {viewMode === 'table' && (
+                    <div className="bg-white rounded-xl border overflow-hidden">
+                        <table className="w-full">
+                            <thead className="bg-gray-50 border-b">
                                 <tr>
-                                    <td colSpan={5} className="p-12 text-center text-gray-500">
-                                        No tasks found
-                                    </td>
+                                    <th className="text-left p-4 font-semibold text-gray-700">Task</th>
+                                    <th className="text-left p-4 font-semibold text-gray-700">Client</th>
+                                    <th className="text-left p-4 font-semibold text-gray-700">Designer</th>
+                                    <th className="text-left p-4 font-semibold text-gray-700">Status</th>
+                                    <th className="text-left p-4 font-semibold text-gray-700">Deadline</th>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody className="divide-y">
+                                {filteredTasks.map(task => (
+                                    <tr key={task.id} className="hover:bg-gray-50 cursor-pointer">
+                                        <td className="p-4">
+                                            <div className="font-semibold text-gray-900">{task.title}</div>
+                                            <div className="text-sm text-gray-500">#{task.jobNumber}</div>
+                                        </td>
+                                        <td className="p-4 text-gray-700">{task.client}</td>
+                                        <td className="p-4">
+                                            <div className="flex items-center gap-2">
+                                                <User size={16} className="text-gray-400" />
+                                                <span className="text-gray-700">{task.designer}</span>
+                                            </div>
+                                        </td>
+                                        <td className="p-4">
+                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
+                                                    task.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                                                        'bg-gray-100 text-gray-700'
+                                                }`}>
+                                                {task.status}
+                                            </span>
+                                        </td>
+                                        <td className="p-4">
+                                            {task.deadline ? (
+                                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                    <Clock size={16} />
+                                                    {new Date(task.deadline).toLocaleDateString()}
+                                                </div>
+                                            ) : (
+                                                <span className="text-gray-400 text-sm">No deadline</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {filteredTasks.length === 0 && (
+                                    <tr>
+                                        <td colSpan={5} className="p-12 text-center text-gray-500">
+                                            No tasks found
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
         </div>
     );
