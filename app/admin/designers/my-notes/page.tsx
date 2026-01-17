@@ -28,15 +28,25 @@ export default function MyNotes() {
     };
 
     const createNote = async () => {
-        const { data } = await supabase
-            .from('notes')
-            .insert({ user_id: profile?.id, content: 'New note...', color: 'yellow', is_pinned: false })
-            .select()
-            .single();
-        if (data) {
-            setNotes([data, ...notes]);
-            setSelectedNote(data);
-            setContent(data.content);
+        try {
+            const { data, error } = await supabase
+                .from('notes')
+                .insert({ user_id: profile?.id, content: 'New note...', color: 'yellow', is_pinned: false })
+                .select()
+                .single();
+            if (error) {
+                console.error('Create note error:', error);
+                alert('Error creating note: ' + error.message + '. Check if RLS is disabled on notes table.');
+                return;
+            }
+            if (data) {
+                setNotes([data, ...notes]);
+                setSelectedNote(data);
+                setContent(data.content);
+            }
+        } catch (err: any) {
+            console.error('Create note exception:', err);
+            alert('Failed to create note: ' + err.message);
         }
     };
 
