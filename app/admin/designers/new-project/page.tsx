@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useClients, useDesigners } from '@/lib/hooks';
-import { createJob } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { Briefcase, Folder, Loader2, CheckCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -46,7 +45,10 @@ export default function NewProjectPage() {
                 status: 'active' as const
             };
 
-            await createJob(jobData);
+            const { error } = await supabase.from('jobs').insert([jobData]);
+
+            if (error) throw error;
+
             alert('✅ Project created successfully!');
             router.push('/admin/designers/my-queue');
         } catch (error: any) {
