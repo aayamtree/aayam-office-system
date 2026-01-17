@@ -56,7 +56,7 @@ const menuItems: MenuItem[] = [
     href: '/admin/designers/tasks?view=board',
     allowedRoles: ['admin', 'designer'],
     submenu: [
-      { name: 'My Queue', href: '/admin/designers/tasks?view=my_tasks' },
+      { name: 'My Queue', href: '/admin/designers/my-queue' },
       { name: 'Team Queue', href: '/admin/designers/tasks?view=team_tasks' },
       { name: 'Timeline', href: '/admin/designers/tasks?view=timeline' },
       { name: 'My Notes', href: '/admin/designers/tasks?view=notes' },
