@@ -1303,42 +1303,65 @@ export default function DesignerWorkspace() {
       {/* New Project Modal */}
       {
         isNewTaskModalOpen && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in zoom-in duration-200">
-            <div className="bg-white rounded-2xl w-full max-w-3xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
-              <div className="p-5 border-b flex justify-between items-center bg-gray-50/80 backdrop-blur-sm">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-indigo-100 rounded-xl text-indigo-600 shadow-sm"><Briefcase size={22} /></div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 text-lg">Create New Project</h3>
-                    <p className="text-xs text-gray-500 font-medium">Initialize a new design or print job</p>
+          <div className="fixed inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60 flex items-center justify-center z-50 p-4 animate-in fade-in zoom-in duration-300 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-gray-100">
+              {/* Premium Gradient Header */}
+              <div className="relative p-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 overflow-hidden">
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30"></div>
+                <div className="relative flex justify-between items-start">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-white/20 backdrop-blur-lg rounded-2xl shadow-lg">
+                      <Briefcase size={28} className="text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-white text-2xl mb-1">Create New Project</h3>
+                      <p className="text-indigo-100 text-sm">Initialize a new design or print job with all details</p>
+                    </div>
                   </div>
+                  <button
+                    onClick={() => setIsNewTaskModalOpen(false)}
+                    className="text-white/80 hover:text-white hover:bg-white/20 p-2.5 rounded-xl transition-all"
+                  >
+                    <X size={22} />
+                  </button>
                 </div>
-                <button onClick={() => setIsNewTaskModalOpen(false)} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-lg transition-colors"><X size={20} /></button>
               </div>
 
-              <div className="overflow-y-auto p-4 md:p-8 flex-1 bg-white">
+              {/* Scrollable Content */}
+              <div className="overflow-y-auto p-8 flex-1 bg-gradient-to-b from-gray-50/50 to-white">
                 <form id="create-project-form" onSubmit={handleCreateTask} className="space-y-8">
 
-                  {/* 1. Core Identification */}
-                  <div className="space-y-5">
-                    <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold">1</span>
-                      <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Project Basics</h4>
+                  {/* 1. Project Basics */}
+                  <div className="space-y-5 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-3 pb-3 border-b-2 border-gradient-to-r from-indigo-500 to-purple-500">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-sm font-bold shadow-lg shadow-indigo-200">
+                        1
+                      </div>
+                      <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Project Basics</h4>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div className="col-span-2">
-                        <label className="block text-xs font-bold text-gray-700 mb-2">Project Name <span className="text-red-500">*</span></label>
-                        <input required type="text" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
+                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                          📝 Project Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          required
+                          type="text"
+                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium hover:border-gray-300"
                           placeholder="e.g. Wedding Invitation - Sharma Family"
                           value={newTaskData.title}
                           onChange={e => setNewTaskData({ ...newTaskData, title: e.target.value })}
                         />
                       </div>
 
-                      <div className="col-span-2 md:col-span-1">
-                        <label className="block text-xs font-bold text-gray-700 mb-2">Client <span className="text-red-500">*</span></label>
-                        <select required className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                          👤 Client <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          required
+                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white hover:border-gray-300"
                           value={newTaskData.clientId}
                           onChange={e => setNewTaskData({ ...newTaskData, clientId: e.target.value })}
                         >
@@ -1347,9 +1370,12 @@ export default function DesignerWorkspace() {
                         </select>
                       </div>
 
-                      <div className="col-span-2 md:col-span-1">
-                        <label className="block text-xs font-bold text-gray-700 mb-2">Assign Designer</label>
-                        <select className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                          🎨 Assign Designer
+                        </label>
+                        <select
+                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white hover:border-gray-300"
                           value={newTaskData.designerId}
                           onChange={e => setNewTaskData({ ...newTaskData, designerId: e.target.value })}
                         >
@@ -1363,78 +1389,102 @@ export default function DesignerWorkspace() {
                   </div>
 
                   {/* 2. Parameters */}
-                  <div className="space-y-5">
-                    <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-orange-100 text-orange-600 text-xs font-bold">2</span>
-                      <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parameters</h4>
+                  <div className="space-y-5 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-3 pb-3 border-b-2 border-gradient-to-r from-orange-500 to-red-500">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 text-white text-sm font-bold shadow-lg shadow-orange-200">
+                        2
+                      </div>
+                      <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Project Parameters</h4>
                     </div>
-                    <div className="grid grid-cols-3 gap-4">
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                       <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-2">Job Type</label>
-                        <select className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 ring-indigo-500/20 focus:border-indigo-500 bg-white"
+                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                          📋 Job Type
+                        </label>
+                        <select
+                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-4 ring-orange-500/20 focus:border-orange-500 bg-white hover:border-gray-300 transition-all"
                           value={newTaskData.jobType}
                           onChange={e => setNewTaskData({ ...newTaskData, jobType: e.target.value })}
                         >
-                          <option value="Design">Design</option>
-                          <option value="Printing">Printing</option>
-                          <option value="Design + Printing">Design + Print</option>
+                          <option value="Design">🎨 Design Only</option>
+                          <option value="Printing">🖨️ Printing Only</option>
+                          <option value="Design + Printing">✨ Design + Print</option>
                         </select>
                       </div>
+
                       <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-2">Deadline</label>
-                        <input type="date" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 ring-indigo-500/20 focus:border-indigo-500 font-medium text-gray-600"
+                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                          📅 Deadline
+                        </label>
+                        <input
+                          type="date"
+                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-4 ring-orange-500/20 focus:border-orange-500 font-medium text-gray-600 hover:border-gray-300 transition-all"
                           value={newTaskData.deadline}
                           onChange={e => setNewTaskData({ ...newTaskData, deadline: e.target.value })}
                         />
                       </div>
+
                       <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-2">Priority</label>
-                        <select className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 ring-indigo-500/20 focus:border-indigo-500 bg-white"
+                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                          ⚡ Priority
+                        </label>
+                        <select
+                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-4 ring-orange-500/20 focus:border-orange-500 bg-white hover:border-gray-300 transition-all"
                           value={newTaskData.priority}
                           onChange={e => setNewTaskData({ ...newTaskData, priority: e.target.value })}
                         >
                           <option value="normal">Normal</option>
-                          <option value="high">High</option>
-                          <option value="urgent">Urgent</option>
+                          <option value="high">⚠️ High</option>
+                          <option value="urgent">🔥 Urgent</option>
                         </select>
                       </div>
                     </div>
                   </div>
 
-                  {/* 3. Assets & Content */}
-                  <div className="space-y-5">
-                    <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs font-bold">3</span>
-                      <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Assets & Brief</h4>
+                  {/* 3. Assets & Brief */}
+                  <div className="space-y-5 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-3 pb-3 border-b-2 border-gradient-to-r from-blue-500 to-cyan-500">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white text-sm font-bold shadow-lg shadow-blue-200">
+                        3
+                      </div>
+                      <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Assets & Brief</h4>
                     </div>
 
-                    <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50 space-y-3">
-                      <label className="text-xs font-bold text-gray-700 flex items-center gap-2">
-                        <Folder size={14} className="text-blue-600" />
-                        Assets (Drive Link or File Upload)
+                    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-5 rounded-xl border-2 border-blue-100 space-y-3">
+                      <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                        <Folder size={18} className="text-blue-600" />
+                        Design Assets (Drive Link or File Upload)
                       </label>
-                      <input type="url" className="w-full border border-blue-200 rounded-lg px-4 py-3 text-sm focus:ring-2 ring-blue-500/20 focus:border-blue-500 placeholder:text-blue-300 bg-white"
+                      <input
+                        type="url"
+                        className="w-full border-2 border-blue-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-blue-500/20 focus:border-blue-500 placeholder:text-blue-300 bg-white hover:border-blue-300 transition-all"
                         placeholder="https://drive.google.com/drive/folders/..."
                         value={newTaskData.driveLink}
                         onChange={e => setNewTaskData({ ...newTaskData, driveLink: e.target.value })}
                       />
-                      <div className="flex items-center gap-2 mt-2">
+                      <div className="flex items-center gap-3">
                         <span className="text-xs font-bold text-gray-400">OR</span>
-                        <input type="file"
+                        <input
+                          type="file"
                           onChange={e => {
                             if (e.target.files && e.target.files.length > 0) {
                               setNewTaskData({ ...newTaskData, file: e.target.files[0] });
                             }
                           }}
-                          className="text-xs text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200"
+                          className="text-xs text-gray-600 file:mr-3 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-500 file:text-white hover:file:bg-blue-600 file:shadow-lg file:shadow-blue-200 file:transition-all"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-2">Description / Work Items</label>
-                      <textarea rows={4} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 ring-indigo-500/20 focus:border-indigo-500 leading-relaxed"
-                        placeholder="Describe specific requirements, items to print, size, quantity..."
+                      <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                        📄 Description / Work Items
+                      </label>
+                      <textarea
+                        rows={4}
+                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-blue-500/20 focus:border-blue-500 leading-relaxed hover:border-gray-300 transition-all"
+                        placeholder="Describe specific requirements, items to print, size, quantity, special instructions..."
                         value={newTaskData.description}
                         onChange={e => setNewTaskData({ ...newTaskData, description: e.target.value })}
                       />
@@ -1444,10 +1494,22 @@ export default function DesignerWorkspace() {
                 </form>
               </div>
 
-              <div className="p-5 border-t bg-gray-50 flex gap-4 items-center justify-end">
-                <button type="button" onClick={() => setIsNewTaskModalOpen(false)} className="px-6 py-2.5 border border-gray-300 rounded-xl font-bold text-gray-600 hover:bg-white hover:text-gray-800 transition-all text-sm">Cancel</button>
-                <button form="create-project-form" type="submit" disabled={creatingTask} className="px-8 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 disabled:opacity-50 shadow-lg shadow-indigo-200 transition-all transform hover:-translate-y-0.5 text-sm flex items-center gap-2">
-                  {creatingTask ? <><Loader2 size={16} className="animate-spin" /> Creating...</> : <><CheckCircle size={16} /> Create Project</>}
+              {/* Premium Footer with Action Buttons */}
+              <div className="p-6 border-t-2 border-gray-100 bg-gradient-to-r from-gray-50 to-white flex gap-4 items-center justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsNewTaskModalOpen(false)}
+                  className="px-6 py-3 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  form="create-project-form"
+                  type="submit"
+                  disabled={creatingTask}
+                  className="px-8 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-xl font-bold hover:shadow-2xl hover:shadow-purple-300 disabled:opacity-50 transition-all transform hover:scale-105 text-sm flex items-center gap-2"
+                >
+                  {creatingTask ? <><Loader2 size={18} className="animate-spin" /> Creating...</> : <><CheckCircle size={18} /> Create Project</>}
                 </button>
               </div>
             </div>
