@@ -77,7 +77,7 @@ export default function MyQueue() {
                             </div>
                             <div className="grid gap-4">
                                 {urgentTasks.map(task => (
-                                    <Link key={task.id} href={`/admin/jobs/${task.id}`}>
+                                    <Link key={task.id} href="/admin/jobs/queue">
                                         <div className="bg-white p-6 rounded-xl border-2 border-red-200 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
                                             <div className="flex justify-between items-start mb-3">
                                                 <div>
@@ -115,7 +115,7 @@ export default function MyQueue() {
                             </div>
                             <div className="grid gap-4">
                                 {highTasks.map(task => (
-                                    <Link key={task.id} href={`/admin/jobs/${task.id}`}>
+                                    <Link key={task.id} href="/admin/jobs/queue">
                                         <div className="bg-white p-6 rounded-xl border-2 border-orange-200 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
                                             <div className="flex justify-between items-start mb-3">
                                                 <div>
@@ -152,7 +152,7 @@ export default function MyQueue() {
                             </div>
                             <div className="grid gap-4">
                                 {normalTasks.map(task => (
-                                    <Link key={task.id} href={`/admin/jobs/${task.id}`}>
+                                    <Link key={task.id} href="/admin/jobs/queue">
                                         <div className="bg-white p-6 rounded-xl border shadow-sm hover:shadow-md transition-shadow cursor-pointer">
                                             <div className="flex justify-between items-start mb-3">
                                                 <div>

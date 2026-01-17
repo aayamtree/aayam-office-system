@@ -132,7 +132,7 @@ export default function TeamQueue() {
 
                                     <div className="space-y-3">
                                         {tasksInStatus.map(task => (
-                                            <Link key={task.id} href={`/admin/jobs/${task.id}`}>
+                                            <Link key={task.id} href="/admin/jobs/queue">
                                                 <div className="bg-gray-50 rounded-lg p-3 border hover:shadow-md transition-shadow cursor-pointer">
                                                     <h4 className="font-semibold text-sm text-gray-900 mb-2">{task.title}</h4>
                                                     <div className="text-xs text-gray-600 mb-2">{task.client}</div>
@@ -173,7 +173,7 @@ export default function TeamQueue() {
                             </thead>
                             <tbody className="divide-y">
                                 {filteredTasks.map(task => (
-                                    <Link key={task.id} href={`/admin/jobs/${task.id}`} className="contents">
+                                    <Link key={task.id} href="/admin/jobs/queue" className="contents">
                                         <tr className="hover:bg-gray-50 cursor-pointer">
                                             <td className="p-4">
                                                 <div className="font-semibold text-gray-900">{task.title}</div>
