@@ -311,7 +311,7 @@ export default function NewProjectPage() {
                                             <p className="font-semibold">Cannot verify file</p>
                                             <p className="text-sm mt-1">{driveFileError}</p>
                                             <p className="text-xs mt-2 text-red-600">
-                                                Make sure the file is shared with "Anyone with the link"
+                                                Make sure the file is shared with &quot;Anyone with the link&quot;
                                             </p>
                                         </div>
                                     </div>
