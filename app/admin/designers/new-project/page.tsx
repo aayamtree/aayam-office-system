@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useClients, useDesigners } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
+import { extractFileIdFromLink, verifyDriveFile, formatBytes, getFileIcon, DriveFileInfo } from '@/lib/google-drive';
 import { Briefcase, Folder, Loader2, CheckCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -24,6 +25,44 @@ export default function NewProjectPage() {
         description: '',
         file: null as File | null
     });
+
+    // Drive verification state
+    const [driveFileStatus, setDriveFileStatus] = useState<'idle' | 'verifying' | 'verified' | 'error'>('idle');
+    const [driveFileInfo, setDriveFileInfo] = useState<DriveFileInfo | null>(null);
+    const [driveFileError, setDriveFileError] = useState<string>('');
+
+    // Handle Drive link change with verification
+    const handleDriveLinkChange = async (link: string) => {
+        setFormData({ ...formData, driveLink: link });
+
+        if (!link.trim()) {
+            setDriveFileStatus('idle');
+            setDriveFileInfo(null);
+            setDriveFileError('');
+            return;
+        }
+
+        // Extract file ID
+        const fileId = extractFileIdFromLink(link);
+        if (!fileId) {
+            setDriveFileStatus('error');
+            setDriveFileError('Invalid Google Drive link format');
+            return;
+        }
+
+        // Verify file
+        setDriveFileStatus('verifying');
+        const result = await verifyDriveFile(fileId);
+
+        if (result.success && result.file) {
+            setDriveFileStatus('verified');
+            setDriveFileInfo(result.file);
+            setDriveFileError('');
+        } else {
+            setDriveFileStatus('error');
+            setDriveFileError(result.error || 'Could not verify file');
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -233,8 +272,52 @@ export default function NewProjectPage() {
                                 className="w-full border-2 border-blue-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-blue-500/20 focus:border-blue-500 placeholder:text-blue-300 bg-white hover:border-blue-300 transition-all"
                                 placeholder="https://drive.google.com/drive/folders/..."
                                 value={formData.driveLink}
-                                onChange={e => setFormData({ ...formData, driveLink: e.target.value })}
+                                onChange={e => handleDriveLinkChange(e.target.value)}
                             />
+
+                            {/* Drive Verification Status */}
+                            {driveFileStatus === 'verifying' && (
+                                <div className="flex items-center gap-2 text-blue-600 text-sm">
+                                    <Loader2 size={16} className="animate-spin" />
+                                    <span>Verifying file...</span>
+                                </div>
+                            )}
+
+                            {driveFileStatus === 'verified' && driveFileInfo && (
+                                <div className="bg-white p-4 rounded-xl border-2 border-green-200 shadow-sm">
+                                    <div className="flex items-start gap-3">
+                                        <span className="text-3xl">{getFileIcon(driveFileInfo.mimeType)}</span>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-green-600 font-bold">✅ Verified</span>
+                                            </div>
+                                            <p className="font-semibold text-gray-900 truncate">{driveFileInfo.name}</p>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                {formatBytes(driveFileInfo.size)}
+                                                {driveFileInfo.modifiedTime && (
+                                                    <span className="ml-2">• Modified: {new Date(driveFileInfo.modifiedTime).toLocaleDateString()}</span>
+                                                )}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {driveFileStatus === 'error' && driveFileError && (
+                                <div className="bg-red-50 p-4 rounded-xl border-2 border-red-200">
+                                    <div className="flex items-start gap-2 text-red-700">
+                                        <span className="text-lg">❌</span>
+                                        <div>
+                                            <p className="font-semibold">Cannot verify file</p>
+                                            <p className="text-sm mt-1">{driveFileError}</p>
+                                            <p className="text-xs mt-2 text-red-600">
+                                                Make sure the file is shared with "Anyone with the link"
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="flex items-center gap-3">
                                 <span className="text-sm font-bold text-gray-400">OR</span>
                                 <input
