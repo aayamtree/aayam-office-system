@@ -19,7 +19,7 @@ export default function TeamQueue() {
         .map(job => ({
             id: job.id,
             title: job.project_name,
-            client: clients.find(c => c.id === job.client_id)?.name || 'Unknown',
+            client: clients.find(c => c.id === job.client_id)?.company || clients.find(c => c.id === job.client_id)?.name || 'Unknown',
             designer: designers.find(d => d.id === job.designer_id)?.name || 'Unassigned',
             designerId: job.designer_id,
             status: job.current_stage || 'new',
@@ -136,13 +136,27 @@ export default function TeamQueue() {
                                                 <div className="bg-gray-50 rounded-lg p-3 border hover:shadow-md transition-shadow cursor-pointer">
                                                     <h4 className="font-semibold text-sm text-gray-900 mb-2">{task.title}</h4>
                                                     <div className="text-xs text-gray-600 mb-2">{task.client}</div>
+
+                                                    {/* Deadline */}
+                                                    {task.deadline && (
+                                                        <div className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                                                            <span>📅</span>
+                                                            {new Date(task.deadline).toLocaleDateString()}
+                                                        </div>
+                                                    )}
+
                                                     <div className="flex items-center justify-between text-xs">
-                                                        <span className="flex items-center gap-1">
+                                                        <span className="flex items-center gap-1 text-gray-600">
                                                             <User size={12} />
                                                             {task.designer}
                                                         </span>
+
+                                                        {/* Priority Badge */}
                                                         {task.priority === 'urgent' && (
-                                                            <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full font-bold">!</span>
+                                                            <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full font-bold text-xs">🔥 Urgent</span>
+                                                        )}
+                                                        {task.priority === 'high' && (
+                                                            <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full font-bold text-xs">⚠️ High</span>
                                                         )}
                                                     </div>
                                                 </div>
