@@ -11,8 +11,11 @@ export default function PaymentsPageNew() {
     const [showModal, setShowModal] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [paymentType, setPaymentType] = useState<'received' | 'paid'>('received');
+    const [paymentMethod, setPaymentMethod] = useState('cash');
     const [clients, setClients] = useState<any[]>([]);
     const [vendors, setVendors] = useState<any[]>([]);
+    const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+    const [cashAccounts, setCashAccounts] = useState<any[]>([]);
 
     // Fetch payments
     const fetchPayments = async () => {
@@ -43,8 +46,12 @@ export default function PaymentsPageNew() {
     const fetchParties = async () => {
         const { data: clientsData } = await supabase.from('clients').select('id, name, company');
         const { data: vendorsData } = await supabase.from('vendors').select('id, name, company');
+        const { data: banksData } = await supabase.from('bank_accounts').select('*').eq('is_active', true);
+        const { data: cashData } = await supabase.from('cash_accounts').select('*').eq('is_active', true);
         setClients(clientsData || []);
         setVendors(vendorsData || []);
+        setBankAccounts(banksData || []);
+        setCashAccounts(cashData || []);
     };
 
     useEffect(() => {
@@ -59,15 +66,17 @@ export default function PaymentsPageNew() {
         const formData = new FormData(e.currentTarget);
         const type = formData.get('type') as string;
         const amount = parseFloat(formData.get('amount') as string);
+        const payMode = formData.get('payment_mode') as string;
+        const accountId = formData.get('account_id') as string;
 
         try {
             if (type === 'received') {
                 const { error } = await supabase.rpc('record_payment_received', {
                     p_client_id: formData.get('client_id'),
                     p_amount: amount,
-                    p_payment_mode: formData.get('payment_mode') || 'cash',
+                    p_payment_mode: payMode,
                     p_payment_date: formData.get('payment_date') || new Date().toISOString().split('T')[0],
-                    p_bank_account_id: null,
+                    p_bank_account_id: payMode === 'cash' ? null : accountId,
                     p_reference: formData.get('reference') as string,
                     p_notes: formData.get('notes') as string,
                     p_invoice_id: null,
@@ -78,9 +87,9 @@ export default function PaymentsPageNew() {
                 const { error } = await supabase.rpc('record_vendor_payment', {
                     p_vendor_id: formData.get('vendor_id'),
                     p_amount: amount,
-                    p_payment_mode: formData.get('payment_mode') || 'cash',
+                    p_payment_mode: payMode,
                     p_payment_date: formData.get('payment_date') || new Date().toISOString().split('T')[0],
-                    p_bank_account_id: null,
+                    p_bank_account_id: payMode === 'cash' ? null : accountId,
                     p_reference: formData.get('reference') as string,
                     p_notes: formData.get('notes') as string,
                     p_purchase_bill_id: null,
@@ -235,12 +244,46 @@ export default function PaymentsPageNew() {
 
                             <div>
                                 <label className="block mb-2 font-medium">Payment Method</label>
-                                <select name="payment_mode" className="w-full border rounded p-2" defaultValue="cash">
+                                <select
+                                    name="payment_mode"
+                                    className="w-full border rounded p-2"
+                                    value={paymentMethod}
+                                    onChange={(e) => setPaymentMethod(e.target.value)}
+                                >
                                     <option value="cash">Cash</option>
                                     <option value="bank_transfer">Bank Transfer</option>
                                     <option value="upi">UPI</option>
                                     <option value="cheque">Cheque</option>
                                 </select>
+                            </div>
+
+                            {/* Account Selection */}
+                            <div>
+                                <label className="block mb-2 font-medium">
+                                    {paymentMethod === 'cash' ? 'Cash Account' : 'Bank Account'}
+                                </label>
+                                {paymentMethod === 'cash' ? (
+                                    <select name="account_id" required className="w-full border rounded p-2">
+                                        <option value="">Select cash account...</option>
+                                        {cashAccounts.map((acc: any) => (
+                                            <option key={acc.id} value={acc.id}>
+                                                {acc.name} - ₹{acc.current_balance?.toLocaleString()}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <select name="account_id" required className="w-full border rounded p-2">
+                                        <option value="">Select bank account...</option>
+                                        {bankAccounts.map((acc: any) => (
+                                            <option key={acc.id} value={acc.id}>
+                                                {acc.name} ({acc.account_number}) - ₹{acc.current_balance?.toLocaleString()}
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Current balance shown
+                                </p>
                             </div>
 
                             <div>

@@ -613,10 +613,57 @@ export function useBankAccounts() {
     loading,
     error,
     refetch,
+    refresh: refetch,
     createBankAccount,
     updateBankAccount,
     setDefaultAccount,
     deleteBankAccount
+  };
+}
+
+// =============================================
+// CASH ACCOUNTS HOOK
+// =============================================
+export function useCashAccounts() {
+  const { data, loading, error, refetch } = useSupabaseQuery<any>('cash_accounts', {
+    orderBy: { column: 'created_at', ascending: false }
+  });
+
+  const createCashAccount = async (account: any) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const { data, error } = await supabase
+      .from('cash_accounts')
+      .insert([account])
+      .select()
+      .single();
+
+    if (!error) refetch();
+    return { data, error: error?.message };
+  };
+
+  const updateCashAccount = async (id: string, updates: any) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const { data, error } = await supabase
+      .from('cash_accounts')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (!error) refetch();
+    return { data, error: error?.message };
+  };
+
+  return {
+    cashAccounts: data,
+    loading,
+    error,
+    refetch,
+    refresh: refetch,
+    createCashAccount,
+    updateCashAccount
   };
 }
 

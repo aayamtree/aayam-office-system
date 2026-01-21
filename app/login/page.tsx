@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Lock, Mail, AlertCircle, Info } from 'lucide-react';
+import { Eye, EyeOff, Lock, User, AlertCircle, Info } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import { logLogin } from '@/lib/activity-logger';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,11 +34,11 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Auto-append domain if user enters just a username
-      const cleanInput = email.trim();
+      // Convert username to internal email format
+      const cleanInput = email.trim().toLowerCase();
       const loginEmail = cleanInput.includes('@')
         ? cleanInput
-        : `${cleanInput}@aayam.local`;
+        : `${cleanInput}@aayam.internal`;
 
       const { error: signInError } = await signIn(loginEmail, password);
 
@@ -45,37 +46,18 @@ export default function LoginPage() {
         console.error('Sign in error:', signInError);
         const errorMessage = typeof signInError === 'string'
           ? signInError
-          : (signInError as any).message || 'Invalid credentials';
+          : (signInError as any).message || 'Invalid username orpassword';
         setError(errorMessage);
         setIsLoading(false);
       } else {
+        // Log successful login
+        await logLogin();
         console.log('Sign in successful (Waiting for redirect)...');
-        // Do NOT set isLoading(false). wait for useEffect to redirect.
+        // Redirect handled by useEffect
       }
     } catch (err: any) {
       console.error('Login exception:', err);
       setError(err.message || 'An error occurred');
-      setIsLoading(false);
-    }
-  };
-
-  const handleDemoLogin = async () => {
-    setEmail('admin@aayam.com');
-    setPassword('admin123');
-    setError('');
-    setIsLoading(true);
-
-    try {
-      const { error: signInError } = await signIn('admin@aayam.com', 'admin123');
-
-      if (signInError) {
-        setError(signInError);
-      } else {
-        router.push('/admin/dashboard');
-      }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -110,24 +92,6 @@ export default function LoginPage() {
           <p className="text-gray-600 mt-1">Sign in to your account</p>
         </div>
 
-        {/* Demo Mode Notice */}
-        {!isConfigured && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-            <div className="flex items-start gap-3">
-              <Info className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
-              <div>
-                <p className="text-sm font-medium text-blue-900">Demo Mode</p>
-                <p className="text-sm text-blue-700 mt-1">
-                  Supabase is not configured. Use demo credentials:
-                </p>
-                <p className="text-sm font-mono text-blue-800 mt-1">
-                  admin@aayam.com / admin123
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -140,21 +104,22 @@ export default function LoginPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Username / Email
+                Username
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
-                  placeholder="username or email"
+                  placeholder="designer1, admin1, etc."
                   required
                   disabled={isLoading}
                   autoComplete="username"
                 />
               </div>
+              <p className="text-xs text-gray-500 mt-1">Enter your username only (no email needed)</p>
             </div>
 
             <div>
@@ -208,67 +173,21 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Speed Login Grid */}
-
-          <div className="mt-6 border-t pt-4 border-gray-100">
-            <p className="text-center text-xs text-gray-400 mb-3 uppercase tracking-wide font-semibold">Speed Login As</p>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { role: 'admin', label: 'Admin', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-                { role: 'designer', label: 'Designer', color: 'bg-purple-50 text-purple-700 border-purple-200' },
-                { role: 'marketing', label: 'Marketing', color: 'bg-pink-50 text-pink-700 border-pink-200' },
-                { role: 'dispatch', label: 'Dispatch', color: 'bg-amber-50 text-amber-700 border-amber-200' },
-                { role: 'cmyk', label: 'CMYK Station', color: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
-              ].map((item) => (
-                <button
-                  key={item.role}
-                  onClick={() => {
-                    localStorage.setItem('aayam_speed_role', item.role);
-                    window.location.reload();
-                  }}
-                  className={`p-2.5 rounded-xl border text-sm font-medium transition-all hover:scale-105 active:scale-95 flex items-center justify-center ${item.color}`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-            {/* Clear Speed Login */}
-            <button
-              onClick={() => {
-                localStorage.removeItem('aayam_speed_role');
-                window.location.reload();
-              }}
-              className="w-full mt-3 text-xs text-gray-400 hover:text-gray-600 underline"
-            >
-              Reset / Logout Speed Mode
-            </button>
-          </div>
-
-
-          {/* Divider */}
+          {/* Help Text */}
           <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-center text-sm text-gray-500">
-              Need help? Contact{' '}
-              <a href="mailto:support@aayam.com" className="text-indigo-600 hover:underline">
-                support@aayam.com
-              </a>
+              Need help? Contact your system administrator.
             </p>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-6 space-y-2">
+        <div className="text-center mt-6">
           <p className="text-sm text-gray-500">
-            © 2024 Aayam Creative. All rights reserved.
+            © 2026 Aayam Creative. All rights reserved.
           </p>
-          <button
-            onClick={(e) => { e.preventDefault(); bypassLogin(); }}
-            className="text-xs text-red-500 hover:text-red-700 hover:underline"
-          >
-            Emergency Access (Debug)
-          </button>
         </div>
       </div>
-    </div >
+    </div>
   );
 }
