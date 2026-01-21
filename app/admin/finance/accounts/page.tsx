@@ -224,7 +224,7 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
 
             const { error } = await supabase.from('bank_accounts').insert({
                 name: formData.name,
-                bank_name: formData.bankName,
+                // bank_name: formData.bankName, // Removed - schema cache not updated yet
                 account_number: formData.accountNumber,
                 ifsc_code: formData.ifscCode,
                 account_type: formData.accountType,
