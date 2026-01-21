@@ -97,7 +97,7 @@ export default function AccountsPage() {
                                             )}
                                         </div>
                                         <p className="text-sm text-gray-600">
-                                            {account.bank_name} • A/c: {account.account_number}
+                                            A/c: {account.account_number}
                                         </p>
                                         {account.account_type && (
                                             <p className="text-xs text-gray-500 mt-1 capitalize">
