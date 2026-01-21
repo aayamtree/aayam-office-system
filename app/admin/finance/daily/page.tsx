@@ -241,12 +241,18 @@ export default function DailyFinancePage() {
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
                 <Link
                     href="/admin/finance/payments?new=true"
                     className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl p-4 text-center font-medium"
                 >
                     Record Payment
+                </Link>
+                <Link
+                    href="/admin/finance/expenses/quick"
+                    className="bg-orange-600 hover:bg-orange-700 text-white rounded-xl p-4 text-center font-medium"
+                >
+                    Quick Expense
                 </Link>
                 <Link
                     href="/admin/finance/accounts"

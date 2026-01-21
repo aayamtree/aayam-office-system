@@ -1,0 +1,389 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { ArrowLeft, Download, Printer, Calendar, FileSpreadsheet, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import * as XLSX from 'xlsx';
+
+export default function CashBookPage() {
+    const router = useRouter();
+    const [loading, setLoading] = useState(true);
+    const [cashAccounts, setCashAccounts] = useState<any[]>([]);
+    const [transactions, setTransactions] = useState<any[]>([]);
+    const [selectedAccount, setSelectedAccount] = useState<string>('all');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [transactionType, setTransactionType] = useState<'all' | 'in' | 'out'>('all');
+
+    useEffect(() => {
+        loadCashAccounts();
+    }, []);
+
+    useEffect(() => {
+        if (cashAccounts.length > 0) {
+            loadTransactions();
+        }
+    }, [selectedAccount, startDate, endDate, transactionType, cashAccounts]);
+
+    const loadCashAccounts = async () => {
+        const { data } = await supabase
+            .from('cash_accounts')
+            .select('*')
+            .eq('is_active', true)
+            .order('name');
+
+        setCashAccounts(data || []);
+    };
+
+    const loadTransactions = async () => {
+        setLoading(true);
+        try {
+            let query = supabase
+                .from('cash_transactions')
+                .select('*, cash_accounts(name)')
+                .order('transaction_date', { ascending: false })
+                .order('created_at', { ascending: false });
+
+            if (selectedAccount !== 'all') {
+                query = query.eq('cash_account_id', selectedAccount);
+            }
+
+            if (startDate) query = query.gte('transaction_date', startDate);
+            if (endDate) query = query.lte('transaction_date', endDate);
+            if (transactionType !== 'all') query = query.eq('transaction_type', transactionType);
+
+            const { data } = await query;
+            setTransactions(data || []);
+        } catch (error) {
+            console.error('Error loading transactions:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const totalCashIn = transactions
+        .filter(t => t.transaction_type === 'in')
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+    const totalCashOut = transactions
+        .filter(t => t.transaction_type === 'out')
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+    const netCash = totalCashIn - totalCashOut;
+
+    const currentCashBalance = selectedAccount === 'all'
+        ? cashAccounts.reduce((sum, acc) => sum + (acc.current_balance || 0), 0)
+        : cashAccounts.find(acc => acc.id === selectedAccount)?.current_balance || 0;
+
+    const handlePrint = () => {
+        window.print();
+    };
+
+    const handleExportExcel = () => {
+        const exportData = transactions.map((txn) => ({
+            'Date': new Date(txn.transaction_date).toLocaleDateString('en-IN'),
+            'Account': txn.cash_accounts?.name || '-',
+            'Description': txn.description || '-',
+            'Reference': txn.reference || '-',
+            'Category': txn.category || '-',
+            'Cash In': txn.transaction_type === 'in' ? txn.amount : '',
+            'Cash Out': txn.transaction_type === 'out' ? txn.amount : '',
+            'Balance': txn.balance_after || 0
+        }));
+
+        // Add summary row
+        exportData.push({
+            'Date': '',
+            'Account': '',
+            'Description': '',
+            'Reference': '',
+            'Category': 'TOTALS',
+            'Cash In': totalCashIn,
+            'Cash Out': totalCashOut,
+            'Balance': currentCashBalance
+        });
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+
+        ws['!cols'] = [
+            { wch: 12 }, // Date
+            { wch: 20 }, // Account
+            { wch: 30 }, // Description
+            { wch: 15 }, // Reference
+            { wch: 15 }, // Category
+            { wch: 12 }, // Cash In
+            { wch: 12 }, // Cash Out
+            { wch: 12 }  // Balance
+        ];
+
+        XLSX.utils.book_append_sheet(wb, ws, 'Cash Book');
+
+        const filename = `Cash_Book_${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(wb, filename);
+    };
+
+    const handleExportCSV = () => {
+        let csv = 'Date,Account,Description,Reference,Category,Cash In,Cash Out,Balance\n';
+
+        transactions.forEach((txn) => {
+            const date = new Date(txn.transaction_date).toLocaleDateString('en-IN');
+            const account = txn.cash_accounts?.name || '-';
+            const desc = (txn.description || '-').replace(/,/g, ';');
+            const ref = (txn.reference || '-').replace(/,/g, ';');
+            const category = (txn.category || '-').replace(/,/g, ';');
+            const cashIn = txn.transaction_type === 'in' ? txn.amount : '';
+            const cashOut = txn.transaction_type === 'out' ? txn.amount : '';
+            const balance = txn.balance_after || 0;
+
+            csv += `${date},${account},${desc},${ref},${category},${cashIn},${cashOut},${balance}\n`;
+        });
+
+        csv += `,,,TOTALS,${totalCashIn},${totalCashOut},${currentCashBalance}\n`;
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Cash_Book_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    };
+
+    return (
+        <div className="space-y-6 pb-20">
+            {/* Header - Hide on print */}
+            <div className="flex justify-between items-start print:hidden">
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => router.back()}
+                        className="p-2 hover:bg-gray-100 rounded-lg"
+                    >
+                        <ArrowLeft size={20} />
+                    </button>
+                    <div>
+                        <h1 className="text-2xl font-bold">Cash Book Report</h1>
+                        <p className="text-gray-500">All cash movements across accounts</p>
+                    </div>
+                </div>
+
+                <div className="flex gap-3">
+                    <button
+                        onClick={handlePrint}
+                        className="flex items-center gap-2 px-4 py-2 border rounded-xl hover:bg-gray-50"
+                    >
+                        <Printer size={18} />
+                        Print
+                    </button>
+                    <button
+                        onClick={handleExportExcel}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700"
+                    >
+                        <FileSpreadsheet size={18} />
+                        Export Excel
+                    </button>
+                    <button
+                        onClick={handleExportCSV}
+                        className="flex items-center gap-2 px-4 py-2 border rounded-xl hover:bg-gray-50"
+                    >
+                        <Download size={18} />
+                        Export CSV
+                    </button>
+                </div>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-4 gap-4">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Wallet className="text-blue-600" size={20} />
+                        <p className="text-sm font-medium text-blue-900">Current Balance</p>
+                    </div>
+                    <p className="text-2xl font-bold text-blue-900">₹{currentCashBalance.toLocaleString()}</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+                    <div className="flex items-center gap-2 mb-2">
+                        <TrendingDown className="text-green-600" size={20} />
+                        <p className="text-sm font-medium text-green-900">Total Cash In</p>
+                    </div>
+                    <p className="text-2xl font-bold text-green-900">₹{totalCashIn.toLocaleString()}</p>
+                    <p className="text-xs text-green-700 mt-1">{transactions.filter(t => t.transaction_type === 'in').length} transactions</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
+                    <div className="flex items-center gap-2 mb-2">
+                        <TrendingUp className="text-red-600" size={20} />
+                        <p className="text-sm font-medium text-red-900">Total Cash Out</p>
+                    </div>
+                    <p className="text-2xl font-bold text-red-900">₹{totalCashOut.toLocaleString()}</p>
+                    <p className="text-xs text-red-700 mt-1">{transactions.filter(t => t.transaction_type === 'out').length} transactions</p>
+                </div>
+
+                <div className={`bg-gradient-to-br rounded-xl p-4 border ${netCash >= 0 ? 'from-indigo-50 to-indigo-100 border-indigo-200' : 'from-orange-50 to-orange-100 border-orange-200'}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                        <TrendingUp className={netCash >= 0 ? 'text-indigo-600' : 'text-orange-600'} size={20} />
+                        <p className={`text-sm font-medium ${netCash >= 0 ? 'text-indigo-900' : 'text-orange-900'}`}>Net Change</p>
+                    </div>
+                    <p className={`text-2xl font-bold ${netCash >= 0 ? 'text-indigo-900' : 'text-orange-900'}`}>
+                        {netCash >= 0 ? '+' : ''}₹{netCash.toLocaleString()}
+                    </p>
+                </div>
+            </div>
+
+            {/* Filters - Hide on print */}
+            <div className="bg-white rounded-xl border p-4 print:hidden">
+                <div className="grid grid-cols-4 gap-4">
+                    <div>
+                        <label className="text-sm text-gray-600 mb-1 block">Cash Account</label>
+                        <select
+                            value={selectedAccount}
+                            onChange={(e) => setSelectedAccount(e.target.value)}
+                            className="w-full px-3 py-2 border rounded-lg"
+                        >
+                            <option value="all">All Accounts</option>
+                            {cashAccounts.map((acc) => (
+                                <option key={acc.id} value={acc.id}>{acc.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="text-sm text-gray-600 mb-1 block">From Date</label>
+                        <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="w-full px-3 py-2 border rounded-lg"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="text-sm text-gray-600 mb-1 block">To Date</label>
+                        <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="w-full px-3 py-2 border rounded-lg"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="text-sm text-gray-600 mb-1 block">Transaction Type</label>
+                        <select
+                            value={transactionType}
+                            onChange={(e) => setTransactionType(e.target.value as any)}
+                            className="w-full px-3 py-2 border rounded-lg"
+                        >
+                            <option value="all">All</option>
+                            <option value="in">Cash In Only</option>
+                            <option value="out">Cash Out Only</option>
+                        </select>
+                    </div>
+                </div>
+
+                {(startDate || endDate || selectedAccount !== 'all' || transactionType !== 'all') && (
+                    <button
+                        onClick={() => {
+                            setStartDate('');
+                            setEndDate('');
+                            setSelectedAccount('all');
+                            setTransactionType('all');
+                        }}
+                        className="text-sm text-blue-600 hover:text-blue-700 mt-3"
+                    >
+                        Clear all filters
+                    </button>
+                )}
+            </div>
+
+            {/* Cash Book Table */}
+            <div className="bg-white rounded-xl border shadow-sm print:shadow-none">
+                <div className="p-6 border-b print:text-center">
+                    <h2 className="text-xl font-bold">Cash Book</h2>
+                    {(startDate || endDate) && (
+                        <p className="text-sm text-gray-600 mt-1">
+                            Period: {startDate || 'Beginning'} to {endDate || 'Now'}
+                        </p>
+                    )}
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead className="bg-gray-50 border-b">
+                            <tr>
+                                <th className="p-3 text-left text-xs font-semibold text-gray-600 uppercase">Date</th>
+                                <th className="p-3 text-left text-xs font-semibold text-gray-600 uppercase">Account</th>
+                                <th className="p-3 text-left text-xs font-semibold text-gray-600 uppercase">Description</th>
+                                <th className="p-3 text-left text-xs font-semibold text-gray-600 uppercase">Reference</th>
+                                <th className="p-3 text-left text-xs font-semibold text-gray-600 uppercase">Category</th>
+                                <th className="p-3 text-right text-xs font-semibold text-gray-600 uppercase">Cash In</th>
+                                <th className="p-3 text-right text-xs font-semibold text-gray-600 uppercase">Cash Out</th>
+                                <th className="p-3 text-right text-xs font-semibold text-gray-600 uppercase">Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={8} className="p-8 text-center text-gray-400">
+                                        Loading transactions...
+                                    </td>
+                                </tr>
+                            ) : transactions.length === 0 ? (
+                                <tr>
+                                    <td colSpan={8} className="p-8 text-center text-gray-400">
+                                        No transactions found for this period
+                                    </td>
+                                </tr>
+                            ) : (
+                                transactions.map((txn) => (
+                                    <tr key={txn.id} className="hover:bg-gray-50">
+                                        <td className="p-3 text-sm">
+                                            {new Date(txn.transaction_date).toLocaleDateString('en-IN')}
+                                        </td>
+                                        <td className="p-3 text-sm">{txn.cash_accounts?.name || '-'}</td>
+                                        <td className="p-3 text-sm">{txn.description || '-'}</td>
+                                        <td className="p-3 text-sm text-gray-500">{txn.reference || '-'}</td>
+                                        <td className="p-3 text-sm">
+                                            {txn.category && (
+                                                <span className="px-2 py-1 bg-gray-100 rounded text-xs">
+                                                    {txn.category}
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="p-3 text-sm text-right text-green-600 font-medium">
+                                            {txn.transaction_type === 'in' ? `₹${txn.amount?.toLocaleString()}` : '-'}
+                                        </td>
+                                        <td className="p-3 text-sm text-right text-red-600 font-medium">
+                                            {txn.transaction_type === 'out' ? `₹${txn.amount?.toLocaleString()}` : '-'}
+                                        </td>
+                                        <td className="p-3 text-sm text-right font-bold">
+                                            ₹{(txn.balance_after || 0).toLocaleString()}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                        {transactions.length > 0 && (
+                            <tfoot className="bg-gray-50 border-t-2">
+                                <tr>
+                                    <td colSpan={5} className="p-3 text-sm font-bold">TOTALS</td>
+                                    <td className="p-3 text-sm text-right font-bold text-green-600">
+                                        ₹{totalCashIn.toLocaleString()}
+                                    </td>
+                                    <td className="p-3 text-sm text-right font-bold text-red-600">
+                                        ₹{totalCashOut.toLocaleString()}
+                                    </td>
+                                    <td className="p-3 text-sm text-right font-bold">
+                                        ₹{currentCashBalance.toLocaleString()}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        )}
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+}

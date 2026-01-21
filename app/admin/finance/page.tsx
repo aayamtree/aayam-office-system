@@ -51,8 +51,8 @@ export default function FinancePage() {
         </div>
       </div>
 
-      {/* Quick Actions - Opening Balance & Banks */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Quick Actions - Finance Tools */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Link href="/admin/finance/opening-balance"
           className="flex items-center gap-4 bg-indigo-50 border border-indigo-100 rounded-2xl p-5 hover:bg-indigo-100 transition-colors group">
           <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
@@ -81,6 +81,26 @@ export default function FinancePage() {
           <div>
             <p className="font-bold text-emerald-900 text-lg">Reconciliation</p>
             <p className="text-sm font-medium text-emerald-600/80">Match statements</p>
+          </div>
+        </Link>
+        <Link href="/admin/finance/expenses/quick"
+          className="flex items-center gap-4 bg-orange-50 border border-orange-100 rounded-2xl p-5 hover:bg-orange-100 transition-colors group">
+          <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+            <TrendingDown className="text-orange-600" size={24} />
+          </div>
+          <div>
+            <p className="font-bold text-orange-900 text-lg">Quick Expense</p>
+            <p className="text-sm font-medium text-orange-600/80">Fast entry</p>
+          </div>
+        </Link>
+        <Link href="/admin/finance/reports/cashbook"
+          className="flex items-center gap-4 bg-purple-50 border border-purple-100 rounded-2xl p-5 hover:bg-purple-100 transition-colors group">
+          <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+            <FileText className="text-purple-600" size={24} />
+          </div>
+          <div>
+            <p className="font-bold text-purple-900 text-lg">Cash Book</p>
+            <p className="text-sm font-medium text-purple-600/80">Cash report</p>
           </div>
         </Link>
       </div>
