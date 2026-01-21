@@ -120,7 +120,7 @@ export default function DailyFinancePage() {
 
             {/* Today's Activity */}
             <div className="bg-white rounded-2xl border p-6 shadow-sm">
-                <h2 className="text-lg font-bold mb-4">Today's Activity</h2>
+                <h2 className="text-lg font-bold mb-4">Today&apos;s Activity</h2>
 
                 <div className="grid grid-cols-3 gap-4">
                     <div className="bg-green-50 rounded-xl p-4">
@@ -205,7 +205,7 @@ export default function DailyFinancePage() {
 
             {/* Today's Transactions */}
             <div className="bg-white rounded-2xl border p-5 shadow-sm">
-                <h3 className="font-bold mb-4">Today's Transactions</h3>
+                <h3 className="font-bold mb-4">Today&apos;s Transactions</h3>
 
                 <div className="space-y-2">
                     {todayPayments.map((payment) => (
