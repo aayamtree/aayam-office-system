@@ -23,6 +23,7 @@ import { useDashboardStats, useJobs } from '@/lib/hooks';
 import NotesWidget from '@/components/dashboard/NotesWidget';
 import RemindersWidget from '@/components/dashboard/RemindersWidget';
 import ActivityFeed from '@/components/dashboard/ActivityFeed';
+import { usePageVisibility } from '@/lib/usePageVisibility';
 
 export default function AdminDashboard() {
   const { profile } = useAuth();
