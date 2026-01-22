@@ -90,8 +90,8 @@ export default function NotificationSettings() {
                 <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
                     <li>Add this site to your home screen (Share → Add to Home Screen)</li>
                     <li>Open the app from the home screen icon</li>
-                    <li>Click "Enable Notifications" button above</li>
-                    <li>Tap "Allow" when iOS asks for permission</li>
+                    <li>Click Enable Notifications button above</li>
+                    <li>Tap Allow when iOS asks for permission</li>
                 </ol>
             </div>
         </div>
