@@ -22,7 +22,7 @@ export default function NotificationSettings() {
             setPermission(result);
 
             if (result === 'granted') {
-                setMessage('✅ Notifications enabled! You\'ll receive alerts.');
+                setMessage('✅ Notifications enabled! You&apos;ll receive alerts.');
                 // Send test notification
                 new Notification('Aayam Office System', {
                     body: 'Notifications are now enabled!',
