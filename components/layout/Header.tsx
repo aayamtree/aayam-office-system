@@ -183,7 +183,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
               <div className="absolute right-0 top-12 lg:top-14 w-48 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden">
                 <div className="p-2">
                   {isAdmin && (
-                    <Link href="/admin/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <Link href="/admin/settings/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">
                       Profile Settings
                     </Link>
                   )}

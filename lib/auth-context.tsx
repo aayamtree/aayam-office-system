@@ -15,6 +15,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string, role?: UserRole) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: string | null }>;
+  refreshProfile: () => Promise<void>;
   hasRole: (roles: UserRole | UserRole[]) => boolean;
   isAdmin: boolean;
   isManager: boolean;
@@ -349,6 +350,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signUp,
     signOut,
     updateProfile,
+    refreshProfile: async () => {
+      if (user) await fetchProfile(user.id, user.email);
+    },
     hasRole,
     isAdmin: profile?.role === 'admin',
     isManager: hasRole(['admin', 'manager']),

@@ -152,9 +152,6 @@ export default function AdminDashboard() {
     <div className="space-y-6 animate-fade-in pb-10">
       {/* Welcome Header */}
       <div className="bg-gradient-to-r from-[#1e1b4b] via-[#312e81] to-[#4338ca] rounded-2xl p-6 lg:p-8 text-white shadow-lg">
-        {/* DEBUG: Remove later */}
-        <p className="text-xs text-yellow-300 font-mono mb-2">DEBUG ROLE: {profile?.role || 'loading...'}</p>
-
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl lg:text-4xl font-bold tracking-tight">
