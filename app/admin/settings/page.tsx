@@ -115,7 +115,7 @@ export default function UserManagementPage() {
     }
   };
 
-  const roles = ['admin', 'marketing', 'designer', 'dispatch', 'finance'];
+  const roles = ['admin', 'designer', 'marketing', 'dispatch', 'cmyk'];
 
   return (
     <div className="space-y-6">
