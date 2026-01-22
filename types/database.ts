@@ -28,7 +28,7 @@ export interface Profile extends BaseEntity {
   full_name: string;
   phone?: string;
   role: UserRole;
-  avatar_url?: string;
+  avatar_url?: string;  // Google Drive photo link
   is_active: boolean;
   commission_rate?: number;
 }

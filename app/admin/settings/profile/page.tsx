@@ -14,7 +14,8 @@ export default function ProfileSettingsPage() {
     const [formData, setFormData] = useState({
         full_name: profile?.full_name || '',
         email: profile?.email || '',
-        phone: profile?.phone || ''
+        phone: profile?.phone || '',
+        avatar_url: profile?.avatar_url || ''
     });
 
     const [saving, setSaving] = useState(false);
@@ -30,7 +31,8 @@ export default function ProfileSettingsPage() {
                 .from('profiles')
                 .update({
                     full_name: formData.full_name,
-                    phone: formData.phone
+                    phone: formData.phone,
+                    avatar_url: formData.avatar_url
                 })
                 .eq('id', profile?.id);
 
@@ -84,20 +86,23 @@ export default function ProfileSettingsPage() {
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     {/* Avatar Section */}
                     <div className="flex items-center gap-6">
-                        <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl">
-                            {profile?.full_name?.charAt(0) || 'A'}
+                        <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl overflow-hidden">
+                            {formData.avatar_url ? (
+                                <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                            ) : (
+                                profile?.full_name?.charAt(0) || 'A'
+                            )}
                         </div>
-                        <div>
-                            <p className="text-sm font-medium text-gray-700 mb-2">Profile Picture</p>
-                            <button
-                                type="button"
-                                onClick={() => setMessage({ type: 'error', text: 'Photo upload coming soon! For now, your initials are used as your avatar.' })}
-                                className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium transition-colors"
-                            >
-                                <Upload size={16} />
-                                Upload Photo
-                            </button>
-                            <p className="text-xs text-gray-400 mt-1">Coming soon - JPG, PNG or GIF (max. 2MB)</p>
+                        <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-700 mb-2">Profile Picture (Google Drive)</p>
+                            <input
+                                type="url"
+                                value={formData.avatar_url}
+                                onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
+                                placeholder="Paste Google Drive shareable link..."
+                                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                            />
+                            <p className="text-xs text-gray-400 mt-1">Upload photo to Google Drive, make it shareable, paste link here</p>
                         </div>
                     </div>
 
