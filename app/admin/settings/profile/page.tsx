@@ -67,8 +67,8 @@ export default function ProfileSettingsPage() {
             {/* Messages */}
             {message && (
                 <div className={`rounded-xl p-4 ${message.type === 'success'
-                        ? 'bg-green-50 border border-green-200 text-green-800'
-                        : 'bg-red-50 border border-red-200 text-red-800'
+                    ? 'bg-green-50 border border-green-200 text-green-800'
+                    : 'bg-red-50 border border-red-200 text-red-800'
                     }`}>
                     <p className="font-medium">{message.text}</p>
                 </div>
@@ -91,12 +91,13 @@ export default function ProfileSettingsPage() {
                             <p className="text-sm font-medium text-gray-700 mb-2">Profile Picture</p>
                             <button
                                 type="button"
+                                onClick={() => setMessage({ type: 'error', text: 'Photo upload coming soon! For now, your initials are used as your avatar.' })}
                                 className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium transition-colors"
                             >
                                 <Upload size={16} />
                                 Upload Photo
                             </button>
-                            <p className="text-xs text-gray-400 mt-1">JPG, PNG or GIF (max. 2MB)</p>
+                            <p className="text-xs text-gray-400 mt-1">Coming soon - JPG, PNG or GIF (max. 2MB)</p>
                         </div>
                     </div>
 
