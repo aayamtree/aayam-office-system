@@ -31,6 +31,8 @@ export default function BankingPage() {
     const [importText, setImportText] = useState('');
     const [showImportModal, setShowImportModal] = useState(false);
     const [parsing, setParsing] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
     // Auto-select first account
     React.useEffect(() => {
@@ -80,6 +82,9 @@ export default function BankingPage() {
     // ------------------------------------------------------------------
     const handleParse = async () => {
         setParsing(true);
+        setErrorMessage('');
+        setSuccessMessage('');
+
         try {
             const rows = importText.split('\n').filter(r => r.trim());
             const newTxns: any[] = [];
@@ -132,21 +137,21 @@ export default function BankingPage() {
             if (newTxns.length > 0) {
                 const result = await importTransactions(newTxns);
                 if (result.error) {
-                    alert('Error importing: ' + result.error);
+                    setErrorMessage(`Import failed: ${result.error}`);
                 } else {
                     // Clear form
                     setImportText('');
                     setShowImportModal(false);
                     // Show success message
-                    alert(`✅ Successfully imported ${newTxns.length} transactions!`);
+                    setSuccessMessage(`✅ Successfully imported ${newTxns.length} transactions!`);
                 }
             } else {
-                alert('Could not parse any transactions. Please check format.');
+                setErrorMessage('Could not parse any transactions. Please check format.');
             }
 
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
-            alert('Error parsing data');
+            setErrorMessage(`Error: ${e.message || 'Failed to parse data'}`);
         }
         setParsing(false);
     };
@@ -188,6 +193,38 @@ export default function BankingPage() {
                     </button>
                 </div>
             </div>
+
+            {/* Success Message */}
+            {successMessage && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <CheckCircle size={24} className="text-green-600" />
+                        <p className="text-green-800 font-medium">{successMessage}</p>
+                    </div>
+                    <button
+                        onClick={() => setSuccessMessage('')}
+                        className="text-green-600 hover:text-green-800 text-xl"
+                    >
+                        ✕
+                    </button>
+                </div>
+            )}
+
+            {/* Error Message */}
+            {errorMessage && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <AlertTriangle size={24} className="text-red-600" />
+                        <p className="text-red-800 font-medium">{errorMessage}</p>
+                    </div>
+                    <button
+                        onClick={() => setErrorMessage('')}
+                        className="text-red-600 hover:text-red-800 text-xl"
+                    >
+                        ✕
+                    </button>
+                </div>
+            )}
 
             {/* Main Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
