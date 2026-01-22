@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isConfigured] = useState<boolean>(isSupabaseConfigured());
 
-  // Fetch user profile
+  // Fetch user profile (optimized with better caching)
   const fetchProfile = async (userId: string, userEmail?: string) => {
     try {
       const { data, error } = await supabase
@@ -110,6 +110,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } else {
         setProfile(data);
+        // Cache for faster subsequent loads
+        localStorage.setItem('aayam_fallback_profile', JSON.stringify(data));
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -175,11 +177,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let mounted = true;
 
-    // Get initial session with timeout
+    // Get initial session with faster timeout
     const initSession = async () => {
       try {
+        // Reduced timeout from 2s to 500ms for faster perceived performance
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Auth Timeout')), 2000)
+          setTimeout(() => reject(new Error('Auth Timeout')), 500)
         );
         const sessionPromise = supabase.auth.getSession();
 
@@ -190,6 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
+          // Fetch profile but don't block - allow optimistic rendering
           fetchProfile(session.user.id, session.user.email);
         } else {
           setLoading(false);
@@ -201,13 +205,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     initSession();
-    // Safety timeout (5 seconds)
+    // Reduced safety timeout from 5s to 2s
     const safetyTimeout = setTimeout(() => {
       if (mounted && loading) {
         console.warn('Auth check timed out, forcing load completion');
         setLoading(false);
       }
-    }, 5000);
+    }, 2000);
 
     // Listen for auth changes - but don't cause flickering
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
