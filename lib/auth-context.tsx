@@ -4,8 +4,6 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from './supabase';
 import { Profile, UserRole } from '@/types/database';
-import { useIdleTimeout } from './useIdleTimeout';
-import { IdleWarningModal } from '@/components/IdleWarningModal';
 
 interface AuthContextType {
   user: User | null;
