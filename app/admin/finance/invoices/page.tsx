@@ -713,6 +713,7 @@ export default function InvoicesPage() {
                             type="number"
                             placeholder="Rate"
                             min="0"
+                            step="0.01"
                             value={item.rate}
                             onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
                             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
