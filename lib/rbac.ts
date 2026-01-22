@@ -71,7 +71,7 @@ export const rolePermissions = {
         canAccessSettings: true,
         canManageUsers: true,
     },
-    account: {
+    finance: {
         canAccessDesignStudio: true,
         canAccessCRM: true,
         canAccessSales: true,
