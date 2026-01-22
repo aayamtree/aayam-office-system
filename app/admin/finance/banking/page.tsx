@@ -130,10 +130,16 @@ export default function BankingPage() {
             });
 
             if (newTxns.length > 0) {
-                await importTransactions(newTxns);
-                setImportText('');
-                setShowImportModal(false);
-                alert(`Imported ${newTxns.length} transactions!`);
+                const result = await importTransactions(newTxns);
+                if (result.error) {
+                    alert('Error importing: ' + result.error);
+                } else {
+                    // Clear form
+                    setImportText('');
+                    setShowImportModal(false);
+                    // Show success message
+                    alert(`✅ Successfully imported ${newTxns.length} transactions!`);
+                }
             } else {
                 alert('Could not parse any transactions. Please check format.');
             }
