@@ -177,12 +177,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let mounted = true;
 
-    // Get initial session with faster timeout
+    // Get initial session with timeout
     const initSession = async () => {
       try {
-        // Reduced timeout from 2s to 500ms for faster perceived performance
+        // Timeout increased to 2s to prevent session errors
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Auth Timeout')), 500)
+          setTimeout(() => reject(new Error('Auth Timeout')), 2000)
         );
         const sessionPromise = supabase.auth.getSession();
 
