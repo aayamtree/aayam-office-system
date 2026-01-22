@@ -29,7 +29,7 @@ export function IdleWarningModal({ show, onStayLoggedIn, onLogout }: IdleWarning
 
                 {/* Message */}
                 <p className="text-gray-600 text-center mb-6">
-                    You've been inactive for 55 minutes. You'll be automatically logged out in <strong>5 minutes</strong> for security.
+                    You&apos;ve been inactive for 55 minutes. You&apos;ll be automatically logged out in <strong>5 minutes</strong> for security.
                 </p>
 
                 {/* Buttons */}
