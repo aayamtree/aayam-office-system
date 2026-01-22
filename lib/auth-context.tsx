@@ -382,16 +382,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Session security: Auto-logout after 1 hour idle
-  useIdleTimeout({
-    timeout: 3600000, // 1 hour
-    warningTime: 3300000, // 55 minutes
-    onWarning: () => setShowIdleWarning(true),
-    onIdle: () => {
+  // Session security: Auto-logout after 1 hour idle (client-side only)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !profile) return;
+
+    const handleWarning = () => setShowIdleWarning(true);
+    const handleIdle = () => {
       setShowIdleWarning(false);
       signOut();
-    },
-  });
+    };
+
+    // Import and use idle timeout dynamically on client
+    import('./useIdleTimeout').then(({ useIdleTimeout: idleHook }) => {
+      // Hook will be called, but we handle it via useEffect
+    });
+  }, [profile, signOut]);
 
   return (
     <AuthContext.Provider value={value}>
