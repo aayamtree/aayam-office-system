@@ -37,13 +37,13 @@ const menuItems: MenuItem[] = [
     name: 'Overview',
     icon: LayoutDashboard,
     href: '/admin/dashboard',
-    allowedRoles: ['admin', 'accountant'],
+    allowedRoles: ['admin', 'finance'],
   },
   {
     name: 'Projects & Jobs',
     icon: Briefcase,
     href: '/admin/jobs',
-    allowedRoles: ['admin', 'accountant'],
+    allowedRoles: ['admin', 'finance'],
     submenu: [
       { name: 'Overview', href: '/admin/jobs' },
       { name: 'Print Planner', href: '/admin/jobs/planner' },
@@ -67,7 +67,7 @@ const menuItems: MenuItem[] = [
     name: 'Marketing',
     icon: Megaphone,
     href: '/admin/marketing',
-    allowedRoles: ['admin', 'accountant', 'marketing'],
+    allowedRoles: ['admin', 'finance', 'marketing'],
     submenu: [
       { name: 'Dashboard', href: '/admin/marketing' },
       { name: 'Leads', href: '/admin/marketing/leads' },
@@ -82,7 +82,7 @@ const menuItems: MenuItem[] = [
     name: 'CRM',
     icon: Users,
     href: '/admin/crm',
-    allowedRoles: ['admin', 'accountant', 'marketing'],
+    allowedRoles: ['admin', 'finance', 'marketing'],
     submenu: [
       { name: 'Clients', href: '/admin/crm/clients' },
     ]
@@ -92,7 +92,7 @@ const menuItems: MenuItem[] = [
     name: 'Sales & Finance',
     icon: IndianRupee,
     href: '/admin/finance',
-    allowedRoles: ['admin', 'accountant'],
+    allowedRoles: ['admin', 'finance'],
     submenu: [
       { name: 'Overview', href: '/admin/finance' },
       { name: 'Quotations', href: '/admin/sales/quotations' },
@@ -114,7 +114,7 @@ const menuItems: MenuItem[] = [
     name: 'CMYK Print',
     icon: Printer,
     href: '/admin/cmyk-print',
-    allowedRoles: ['admin', 'accountant', 'cmyk'],
+    allowedRoles: ['admin', 'finance', 'cmyk'],
     submenu: [
       { name: 'Station Overview', href: '/admin/cmyk-print' },
       { name: 'Paper Stock', href: '/admin/cmyk-print/paper-stock' },
@@ -125,7 +125,7 @@ const menuItems: MenuItem[] = [
     name: 'Reports',
     icon: FileText,
     href: '/admin/reports',
-    allowedRoles: ['admin', 'accountant'],
+    allowedRoles: ['admin', 'finance'],
   },
   {
     name: 'Activity',
