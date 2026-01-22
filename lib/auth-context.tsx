@@ -39,7 +39,6 @@ const DEMO_USER: Profile = {
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [showIdleWarning, setShowIdleWarning] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(() => {
     // Try to load from local storage immediately to prevent flicker
