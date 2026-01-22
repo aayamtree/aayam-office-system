@@ -4,6 +4,8 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from './supabase';
 import { Profile, UserRole } from '@/types/database';
+import { useIdleTimeout } from './useIdleTimeout';
+import { IdleWarningModal } from '@/components/IdleWarningModal';
 
 interface AuthContextType {
   user: User | null;
@@ -37,6 +39,7 @@ const DEMO_USER: Profile = {
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const [showIdleWarning, setShowIdleWarning] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(() => {
     // Try to load from local storage immediately to prevent flicker
@@ -379,9 +382,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Session security: Auto-logout after 1 hour idle
+  useIdleTimeout({
+    timeout: 3600000, // 1 hour
+    warningTime: 3300000, // 55 minutes
+    onWarning: () => setShowIdleWarning(true),
+    onIdle: () => {
+      setShowIdleWarning(false);
+      signOut();
+    },
+  });
+
   return (
     <AuthContext.Provider value={value}>
       {children}
+      <IdleWarningModal
+        show={showIdleWarning}
+        onStayLoggedIn={() => setShowIdleWarning(false)}
+        onLogout={() => signOut()}
+      />
     </AuthContext.Provider>
   );
 }
