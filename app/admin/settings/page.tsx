@@ -10,7 +10,7 @@ interface Profile {
   id: string;
   email: string;
   full_name: string;
-  role: 'admin' | 'marketing' | 'designer' | 'dispatch' | 'account' | 'user';
+  role: 'admin' | 'marketing' | 'designer' | 'dispatch' | 'finance';
   is_active: boolean;
   created_at?: string;
 }
@@ -115,7 +115,7 @@ export default function UserManagementPage() {
     }
   };
 
-  const roles = ['admin', 'marketing', 'designer', 'dispatch', 'account', 'user'];
+  const roles = ['admin', 'marketing', 'designer', 'dispatch', 'finance'];
 
   return (
     <div className="space-y-6">

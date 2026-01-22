@@ -4,7 +4,7 @@
 
 import { supabase } from './supabase';
 
-export type UserRole = 'admin' | 'account' | 'designer' | 'marketing' | 'dispatch' | 'cmyk';
+export type UserRole = 'admin' | 'finance' | 'designer' | 'marketing' | 'dispatch' | 'cmyk';
 
 export interface UserProfile {
     id: string;
@@ -53,7 +53,7 @@ export async function hasAnyRole(roles: UserRole[]): Promise<boolean> {
  * Check if user is admin or account (full access)
  */
 export async function isAdminOrAccount(): Promise<boolean> {
-    return await hasAnyRole(['admin', 'account']);
+    return await hasAnyRole(['admin', 'finance']);
 }
 
 /**
