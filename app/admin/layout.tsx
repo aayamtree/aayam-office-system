@@ -6,6 +6,7 @@ import { SessionProvider } from 'next-auth/react';
 import { useAuth } from '@/lib/auth-context';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
+import { NotificationPopup } from '@/components/NotificationPopup';
 
 export default function AdminLayout({
   children,
@@ -63,6 +64,9 @@ export default function AdminLayout({
 
         {/* Header */}
         <Header onMenuClick={() => setSidebarOpen(true)} />
+
+        {/* Broadcast Notifications Popup */}
+        <NotificationPopup />
 
         {/* Main Content - Full width on mobile, with sidebar margin on desktop */}
         <main className="lg:ml-64 pt-20 lg:pt-24 p-4 lg:p-6 min-h-screen">
