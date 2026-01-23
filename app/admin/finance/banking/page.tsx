@@ -228,21 +228,21 @@ export default function BankingPage() {
                 </div>
             )}
 
-            {/* Main Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                    <p className="text-sm text-gray-500">Bank Balance (System)</p>
-                    <p className="text-2xl font-bold text-gray-900">₹{(bankAccounts.find(b => b.id === selectedAccountId)?.current_balance || 0).toLocaleString()}</p>
+            {/* Main Stats - Better mobile layout */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+                <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm">
+                    <p className="text-xs md:text-sm text-gray-500">Bank Balance (System)</p>
+                    <p className="text-xl md:text-2xl font-bold text-gray-900 truncate">₹{(bankAccounts.find(b => b.id === selectedAccountId)?.current_balance || 0).toLocaleString()}</p>
                 </div>
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                    <p className="text-sm text-gray-500">Action Required</p>
-                    <p className="text-2xl font-bold text-orange-600">
+                <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm">
+                    <p className="text-xs md:text-sm text-gray-500">Action Required</p>
+                    <p className="text-xl md:text-2xl font-bold text-orange-600">
                         {reconciledData.filter(r => r.status === 'unmatched_bank').length}
                     </p>
                 </div>
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                    <p className="text-sm text-gray-500">Verified</p>
-                    <p className="text-2xl font-bold text-green-600">
+                <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm">
+                    <p className="text-xs md:text-sm text-gray-500">Verified</p>
+                    <p className="text-xl md:text-2xl font-bold text-green-600">
                         {reconciledData.filter(r => r.status === 'matched').length}
                     </p>
                 </div>
@@ -265,12 +265,12 @@ export default function BankingPage() {
                         <tbody className="divide-y">
                             {reconciledData.map((txn) => (
                                 <tr key={txn.id} className={`hover:bg-gray-50 group ${txn.status === 'ignored' ? 'opacity-50 bg-gray-50' : ''}`}>
-                                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                                    <td className="px-3 md:px-4 py-3 text-gray-500 whitespace-nowrap text-xs md:text-sm">
                                         {new Date(txn.transaction_date).toLocaleDateString()}
                                     </td>
-                                    <td className="px-4 py-3 max-w-xs truncate" title={txn.description}>
-                                        {txn.description}
-                                        <div className="text-xs text-gray-400">{txn.reference_number}</div>
+                                    <td className="px-3 md:px-4 py-3 min-w-[200px] md:min-w-[300px]">
+                                        <div className="text-xs md:text-sm font-medium text-gray-900 break-words">{txn.description}</div>
+                                        <div className="text-xs text-gray-400 mt-0.5">{txn.reference_number}</div>
                                     </td>
                                     <td className={`px-4 py-3 text-right font-bold ${txn.transaction_type === 'inflow' ? 'text-green-600' : 'text-red-600'}`}>
                                         {txn.transaction_type === 'inflow' ? '+' : '-'} ₹{txn.amount.toLocaleString()}
