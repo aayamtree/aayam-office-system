@@ -119,33 +119,45 @@ export default function UserManagementPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white p-4 rounded-xl border shadow-sm">
+      {/* Header Card - Stack on mobile, row on desktop */}
+      <div className="bg-white p-4 md:p-6 rounded-xl border shadow-sm space-y-4">
+        {/* Title Section */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings & Team</h1>
-          <p className="text-gray-500 text-sm">Manage users, roles, and designer directory.</p>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Settings & Team</h1>
+          <p className="text-gray-500 text-sm mt-1">Manage users, roles, and designer directory.</p>
         </div>
-        <div className="flex bg-gray-100 p-1 rounded-lg">
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'users' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
-          >
-            Users & Roles
-          </button>
-          <button
-            onClick={() => setActiveTab('designers')}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'designers' ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
-          >
-            Designers Directory
-          </button>
-          <button
-            onClick={() => setActiveTab('production')}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'production' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
-          >
-            Production
-          </button>
+
+        {/* Tabs - Horizontal scroll on mobile */}
+        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="flex bg-gray-100 p-1 rounded-lg min-w-max md:min-w-0">
+            <button
+              onClick={() => setActiveTab('users')}
+              className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'users'
+                  ? 'bg-white text-indigo-600 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              Users & Roles
+            </button>
+            <button
+              onClick={() => setActiveTab('designers')}
+              className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'designers'
+                  ? 'bg-white text-purple-600 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              Designers Directory
+            </button>
+            <button
+              onClick={() => setActiveTab('production')}
+              className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'production'
+                  ? 'bg-white text-orange-600 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              Production
+            </button>
+          </div>
         </div>
       </div>
 
