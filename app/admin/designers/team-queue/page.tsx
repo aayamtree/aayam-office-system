@@ -237,6 +237,7 @@ export default function TeamQueue() {
                             </div>
                         )}
                     </div>
+                </div>
         </div>
-            );
+    );
 }
