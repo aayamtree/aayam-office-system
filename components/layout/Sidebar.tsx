@@ -22,6 +22,7 @@ import {
   Palette,
   Briefcase,
   Megaphone,
+  Bell,
 } from 'lucide-react';
 
 interface MenuItem {
