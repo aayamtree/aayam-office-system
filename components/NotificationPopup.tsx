@@ -90,7 +90,7 @@ export function NotificationPopup() {
 
         // Remove from UI
         setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-        setDismissedIds((prev) => new Set([...prev, notificationId]));
+        setDismissedIds((prev) => new Set(Array.from(prev).concat(notificationId)));
     };
 
     // Don't render if no notifications
