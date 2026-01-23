@@ -111,20 +111,22 @@ export default function MyNotes() {
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold text-gray-900">My Notes</h1>
+                {/* Header - Responsive */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900">My Notes</h1>
                     <button
                         onClick={createNote}
-                        className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+                        className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2.5 rounded-xl hover:bg-purple-700 text-sm font-medium w-full sm:w-auto justify-center"
                     >
-                        <Plus size={20} />
+                        <Plus size={18} />
                         New Note
                     </button>
                 </div>
 
-                <div className="grid grid-cols-3 gap-6">
-                    {/* Notes List */}
-                    <div className="col-span-1 space-y-3">
+                {/* Mobile: Stack layout, Desktop: Side-by-side */}
+                <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4 lg:gap-6">
+                    {/* Notes List - Full width on mobile, 1/3 on desktop */}
+                    <div className="lg:col-span-1 space-y-3 order-2 lg:order-1">
                         {/* Search Bar */}
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -213,8 +215,8 @@ export default function MyNotes() {
                         </div>
                     </div>
 
-                    {/* Editor */}
-                    <div className="col-span-2">
+                    {/* Editor - Full width on mobile, 2/3 on desktop, shows first on mobile */}
+                    <div className="lg:col-span-2 order-1 lg:order-2">
                         {selectedNote ? (
                             <div className="bg-white rounded-xl p-6 border h-full">
                                 <div className="flex justify-between items-center mb-4">
@@ -223,14 +225,14 @@ export default function MyNotes() {
                                         value={title}
                                         onChange={(e) => setTitle(e.target.value)}
                                         placeholder="Note title..."
-                                        className="text-xl font-bold text-gray-900 border-b-2 border-transparent hover:border-gray-200 focus:border-purple-500 outline-none flex-1 mr-4"
+                                        className="text-lg md:text-xl font-bold text-gray-900 border-b-2 border-transparent hover:border-gray-200 focus:border-purple-500 outline-none flex-1 mr-2 md:mr-4"
                                     />
                                     <button
                                         onClick={saveNote}
-                                        className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+                                        className="flex items-center gap-1.5 md:gap-2 bg-purple-600 text-white px-3 md:px-4 py-2 md:py-2.5 rounded-xl hover:bg-purple-700 text-sm font-medium flex-shrink-0"
                                     >
-                                        <Save size={18} />
-                                        Save
+                                        <Save size={16} />
+                                        <span className="hidden sm:inline">Save</span>
                                     </button>
                                 </div>
                                 <textarea
