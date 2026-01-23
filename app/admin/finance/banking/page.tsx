@@ -161,25 +161,27 @@ export default function BankingPage() {
     // ------------------------------------------------------------------
     return (
         <div className="space-y-6 animate-fade-in pb-20">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            {/* Header - Responsive */}
+            <div className="flex flex-col gap-3 md:gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Bank Reconciliation</h1>
-                    <p className="text-gray-500">Sync HDFC Bank with Aayam System</p>
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-900">Bank Reconciliation</h1>
+                    <p className="text-sm md:text-base text-gray-500">Sync HDFC Bank with Aayam System</p>
                     {loadingTxns && <span className="text-xs text-indigo-500 ml-2">Loading Txns...</span>}
                     {loadingAccounts && <span className="text-xs text-indigo-500 ml-2">Loading Accounts...</span>}
                     {errorAccounts && <div className="text-red-500 text-sm mt-1">Error: {errorAccounts}</div>}
                 </div>
-                <div className="flex gap-2 items-center">
+
+                {/* Controls - Stack on mobile */}
+                <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
                     {bankAccounts.length === 0 && (
-                        <span className="text-xs text-red-500 font-medium mr-2">
+                        <span className="text-xs text-red-500 font-medium">
                             No accounts found. <a href="/admin/finance/banks" className="underline">Add one here</a>
                         </span>
                     )}
                     <select
                         value={selectedAccountId}
                         onChange={e => setSelectedAccountId(e.target.value)}
-                        className="px-4 py-2 bg-white border rounded-xl"
+                        className="flex-1 sm:flex-none px-3 md:px-4 py-2 md:py-2.5 bg-white border rounded-xl text-sm"
                     >
                         <option value="">Select Account</option>
                         {bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name} - {b.account_number}</option>)}
@@ -187,9 +189,9 @@ export default function BankingPage() {
                     <button
                         onClick={() => setShowImportModal(true)}
                         disabled={!selectedAccountId}
-                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50"
+                        className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50 whitespace-nowrap text-sm font-medium"
                     >
-                        <Upload size={18} /> Import Statement
+                        <Upload size={16} /> Import Statement
                     </button>
                 </div>
             </div>
@@ -246,10 +248,10 @@ export default function BankingPage() {
                 </div>
             </div>
 
-            {/* Reconciliation Grid */}
+            {/* Reconciliation Grid - Responsive table */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-xs md:text-sm min-w-[800px]">
                         <thead className="bg-gray-50 border-b">
                             <tr>
                                 <th className="px-4 py-3 text-left font-semibold text-gray-600">Date</th>
