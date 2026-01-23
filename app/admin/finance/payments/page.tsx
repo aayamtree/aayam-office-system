@@ -118,17 +118,18 @@ export default function PaymentsPageNew() {
     }
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
+        <div className="p-4 md:p-6 max-w-7xl mx-auto">
+            {/* Header - Stack on mobile */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 md:mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold">Payments (New)</h1>
-                    <p className="text-gray-500">{payments.length} transactions</p>
+                    <h1 className="text-xl md:text-2xl font-bold">Payments (New)</h1>
+                    <p className="text-sm text-gray-500">{payments.length} transactions</p>
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
-                    className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800"
+                    className="flex items-center gap-2 bg-black text-white px-4 py-2.5 rounded-xl hover:bg-gray-800 w-full sm:w-auto justify-center text-sm font-medium"
                 >
-                    <Plus size={20} />
+                    <Plus size={18} />
                     Record Payment
                 </button>
             </div>
@@ -139,47 +140,50 @@ export default function PaymentsPageNew() {
                 </div>
             )}
 
-            <div className="bg-white rounded-lg shadow">
-                <table className="w-full">
-                    <thead className="bg-gray-50 border-b">
-                        <tr>
-                            <th className="text-left p-4">Type</th>
-                            <th className="text-left p-4">Party</th>
-                            <th className="text-left p-4">Amount</th>
-                            <th className="text-left p-4">Mode</th>
-                            <th className="text-left p-4">Date</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                        {payments.length === 0 ? (
+            {/* Table - Horizontal scroll on mobile */}
+            <div className="bg-white rounded-xl shadow overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full min-w-[640px]">
+                        <thead className="bg-gray-50 border-b">
                             <tr>
-                                <td colSpan={5} className="text-center p-8 text-gray-500">
-                                    No payments found
-                                </td>
+                                <th className="text-left p-3 md:p-4 text-xs md:text-sm font-semibold text-gray-700">Type</th>
+                                <th className="text-left p-3 md:p-4 text-xs md:text-sm font-semibold text-gray-700">Party</th>
+                                <th className="text-left p-3 md:p-4 text-xs md:text-sm font-semibold text-gray-700">Amount</th>
+                                <th className="text-left p-3 md:p-4 text-xs md:text-sm font-semibold text-gray-700">Mode</th>
+                                <th className="text-left p-3 md:p-4 text-xs md:text-sm font-semibold text-gray-700">Date</th>
                             </tr>
-                        ) : (
-                            payments.map((payment) => (
-                                <tr key={payment.id} className="hover:bg-gray-50">
-                                    <td className="p-4">
-                                        <span className={`flex items-center gap-2 ${payment.type === 'received' ? 'text-green-600' : 'text-red-600'}`}>
-                                            {payment.type === 'received' ? <ArrowDownRight size={16} /> : <ArrowUpRight size={16} />}
-                                            {payment.type === 'received' ? 'Received' : 'Paid'}
-                                        </span>
+                        </thead>
+                        <tbody className="divide-y">
+                            {payments.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="text-center p-8 text-gray-500">
+                                        No payments found
                                     </td>
-                                    <td className="p-4">
-                                        <div>
-                                            <div className="font-medium">{payment.type === 'received' ? payment.client_name : payment.vendor_name}</div>
-                                            <div className="text-sm text-gray-500">{payment.type === 'received' ? payment.client_company : payment.vendor_company}</div>
-                                        </div>
-                                    </td>
-                                    <td className="p-4 font-bold">₹{payment.amount?.toLocaleString('en-IN')}</td>
-                                    <td className="p-4 capitalize">{payment.payment_mode?.replace('_', ' ')}</td>
-                                    <td className="p-4">{new Date(payment.payment_date).toLocaleDateString('en-IN')}</td>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            ) : (
+                                payments.map((payment) => (
+                                    <tr key={payment.id} className="hover:bg-gray-50">
+                                        <td className="p-3 md:p-4">
+                                            <span className={`flex items-center gap-1.5 md:gap-2 text-xs md:text-sm ${payment.type === 'received' ? 'text-green-600' : 'text-red-600'}`}>
+                                                {payment.type === 'received' ? <ArrowDownRight size={14} /> : <ArrowUpRight size={14} />}
+                                                {payment.type === 'received' ? 'Received' : 'Paid'}
+                                            </span>
+                                        </td>
+                                        <td className="p-3 md:p-4">
+                                            <div>
+                                                <div className="font-medium text-xs md:text-sm">{payment.type === 'received' ? payment.client_name : payment.vendor_name}</div>
+                                                <div className="text-xs text-gray-500 truncate max-w-[150px]">{payment.type === 'received' ? payment.client_company : payment.vendor_company}</div>
+                                            </div>
+                                        </td>
+                                        <td className="p-3 md:p-4 font-bold text-xs md:text-sm">₹{payment.amount?.toLocaleString('en-IN')}</td>
+                                        <td className="p-3 md:p-4 capitalize text-xs md:text-sm">{payment.payment_mode?.replace('_', ' ')}</td>
+                                        <td className="p-3 md:p-4 text-xs md:text-sm">{new Date(payment.payment_date).toLocaleDateString('en-IN')}</td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {showModal && (
