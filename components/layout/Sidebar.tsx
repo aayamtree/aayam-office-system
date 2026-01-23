@@ -250,12 +250,31 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </div>
           ) : (
             menuItems.filter(item => {
-              // If allowedRoles is missing, default to showing (safe fallback) or admin only?
-              // Let's mimic 'admin' logic if profile is missing, or show nothing.
-              // If profile.role is undefined (loading), maybe show nothing or loaders.
-              // But for now, if item.allowedRoles includes current role, show it.
-              const userRole = profile?.role || 'admin'; // Default to admin for dev safety if profile missing
-              return !item.allowedRoles || item.allowedRoles.includes(userRole);
+              // CRITICAL FIX: Don't default to admin if profile exists
+              // Only show menu items that match the user's actual role
+              const userRole = profile?.role;
+
+              // Debug logging to help diagnose role issues
+              console.log('[Sidebar Debug]', {
+                userRole,
+                itemName: item.name,
+                allowedRoles: item.allowedRoles,
+                profileEmail: profile?.email
+              });
+
+              // If no role is set on profile (shouldn't happen), show nothing for safety
+              if (!userRole) {
+                console.warn('[Sidebar] User has no role set:', profile?.email);
+                return false;
+              }
+
+              // If no allowed roles specified, show to everyone (unsafe items should always have allowedRoles)
+              if (!item.allowedRoles || item.allowedRoles.length === 0) {
+                return true;
+              }
+
+              // Otherwise check if user's role is in the allowed list
+              return item.allowedRoles.includes(userRole);
             }).map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href);
