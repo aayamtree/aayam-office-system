@@ -76,8 +76,8 @@ export default function TeamQueue() {
                     ))}
                 </div>
 
-                {/* Filters & View Toggle */}
-                <div className="flex gap-3 mb-6">
+                {/* Filters & View Toggle - Responsive */}
+                <div className="flex flex-col md:flex-row gap-3 mb-6">
                     <div className="flex-1 relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                         <input
@@ -85,36 +85,39 @@ export default function TeamQueue() {
                             placeholder="Search tasks..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-3 border rounded-lg"
+                            className="w-full pl-10 pr-4 py-2.5 md:py-3 border rounded-xl text-sm"
                         />
                     </div>
-                    <select
-                        value={filterDesigner}
-                        onChange={(e) => setFilterDesigner(e.target.value)}
-                        className="px-4 py-3 border rounded-lg bg-white"
-                    >
-                        <option value="all">All Designers</option>
-                        {designers.map(d => (
-                            <option key={d.id} value={d.id}>{d.name}</option>
-                        ))}
-                    </select>
 
-                    {/* View Toggle */}
-                    <div className="flex border rounded-lg overflow-hidden bg-white">
-                        <button
-                            onClick={() => setViewMode('board')}
-                            className={`px-4 py-3 flex items-center gap-2 ${viewMode === 'board' ? 'bg-purple-100 text-purple-700' : 'text-gray-600'}`}
+                    <div className="flex gap-3">
+                        <select
+                            value={filterDesigner}
+                            onChange={(e) => setFilterDesigner(e.target.value)}
+                            className="flex-1 md:flex-none px-3 md:px-4 py-2.5 md:py-3 border rounded-xl bg-white text-sm"
                         >
-                            <LayoutGrid size={20} />
-                            Board
-                        </button>
-                        <button
-                            onClick={() => setViewMode('table')}
-                            className={`px-4 py-3 flex items-center gap-2 border-l ${viewMode === 'table' ? 'bg-purple-100 text-purple-700' : 'text-gray-600'}`}
-                        >
-                            <List size={20} />
-                            Table
-                        </button>
+                            <option value="all">All Designers</option>
+                            {designers.map(d => (
+                                <option key={d.id} value={d.id}>{d.name}</option>
+                            ))}
+                        </select>
+
+                        {/* View Toggle */}
+                        <div className="flex border rounded-xl overflow-hidden bg-white flex-shrink-0">
+                            <button
+                                onClick={() => setViewMode('board')}
+                                className={`px-3 md:px-4 py-2.5 md:py-3 flex items-center gap-1.5 md:gap-2 ${viewMode === 'board' ? 'bg-purple-100 text-purple-700' : 'text-gray-600'}`}
+                            >
+                                <LayoutGrid size={18} />
+                                <span className="text-xs md:text-sm font-medium">Board</span>
+                            </button>
+                            <button
+                                onClick={() => setViewMode('table')}
+                                className={`px-3 md:px-4 py-2.5 md:py-3 flex items-center gap-1.5 md:gap-2 border-l ${viewMode === 'table' ? 'bg-purple-100 text-purple-700' : 'text-gray-600'}`}
+                            >
+                                <List size={18} />
+                                <span className="text-xs md:text-sm font-medium">Table</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
