@@ -128,10 +128,11 @@ export default function TeamQueue() {
                             {statuses.map(status => {
                                 const tasksInStatus = filteredTasks.filter(t => t.status === status.id);
                                 return (
-                                    <div key={status.id} className="bg-white rounded-xl p-3 md:p-4 border w-64 md:w-auto flex-shrink-0">\n                                        <div className={`${status.color} rounded-lg p-2.5 md:p-3 mb-3 md:mb-4`}>
-                                        <h3 className="font-bold text-gray-900">{status.name}</h3>
-                                        <p className="text-sm text-gray-600">{tasksInStatus.length} tasks</p>
-                                    </div>
+                                    <div key={status.id} className="bg-white rounded-xl p-3 md:p-4 border w-64 md:w-auto flex-shrink-0">
+                                        <div className={`${status.color} rounded-lg p-2.5 md:p-3 mb-3 md:mb-4`}>
+                                            <h3 className="font-bold text-gray-900">{status.name}</h3>
+                                            <p className="text-sm text-gray-600">{tasksInStatus.length} tasks</p>
+                                        </div>
 
                                         <div className="space-y-3">
                                             {tasksInStatus.map(task => (
