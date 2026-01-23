@@ -78,12 +78,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } catch (e) { }
           }
 
+          // CRITICAL FIX: Do NOT default to 'admin' - this is a security risk!
+          // If a user's profile is missing from DB, we should NOT grant admin access
+          // Instead, log an error and handle gracefully
+          console.error('🚨 CRITICAL: User profile missing from database!', {
+            userId,
+            email: userEmail
+          });
+
+          // Create a minimal profile WITHOUT a role - this will prevent any menu items from showing
+          // Admin must manually assign the correct role via Supabase dashboard or settings
           const newProfile: Profile = {
             id: userId,
             email: userEmail,
             full_name: userEmail.split('@')[0].toUpperCase(),
-            role: 'admin', // Default role for recovered users
-            is_active: true,
+            role: null as any, // EXPLICIT NULL - forces manual role assignment
+            is_active: false, // Mark as inactive until properly configured
             created_at: new Date().toISOString(),
           };
 

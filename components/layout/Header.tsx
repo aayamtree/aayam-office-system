@@ -129,27 +129,34 @@ export default function Header({ onMenuClick }: HeaderProps) {
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 top-12 w-72 lg:w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                <div className="p-4 border-b border-gray-100">
-                  <h3 className="font-semibold text-gray-900">Notifications</h3>
-                </div>
-                <div className="max-h-80 overflow-y-auto">
-                  {notifications.map((notif) => (
-                    <div key={notif.id} className="p-4 hover:bg-gray-50 border-b border-gray-50 cursor-pointer">
-                      <div className="flex items-start gap-3">
-                        <span className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${notif.type === 'danger' ? 'bg-red-500' :
-                          notif.type === 'success' ? 'bg-green-500' : 'bg-blue-500'
-                          }`}></span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900">{notif.title}</p>
-                          <p className="text-xs text-gray-500 truncate">{notif.desc}</p>
-                          <p className="text-xs text-gray-400 mt-1">{notif.time}</p>
+              <>
+                {/* Backdrop to close notifications when clicking outside */}
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowNotifications(false)}
+                />
+                <div className="absolute right-0 top-12 w-72 lg:w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-20">
+                  <div className="p-4 border-b border-gray-100">
+                    <h3 className="font-semibold text-gray-900">Notifications</h3>
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {notifications.map((notif) => (
+                      <div key={notif.id} className="p-4 hover:bg-gray-50 border-b border-gray-50 cursor-pointer">
+                        <div className="flex items-start gap-3">
+                          <span className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${notif.type === 'danger' ? 'bg-red-500' :
+                            notif.type === 'success' ? 'bg-green-500' : 'bg-blue-500'
+                            }`}></span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900">{notif.title}</p>
+                            <p className="text-xs text-gray-500 truncate">{notif.desc}</p>
+                            <p className="text-xs text-gray-400 mt-1">{notif.time}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
 

@@ -248,33 +248,43 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <div key={i} className="h-12 bg-white/5 rounded-xl animate-pulse" />
               ))}
             </div>
+          ) : !profile.role ? (
+            // User has no role assigned - show error state
+            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+              <p className="text-sm text-red-400 font-medium">⚠️ No Role Assigned</p>
+              <p className="text-xs text-gray-400 mt-1">Contact admin to assign your role</p>
+              <p className="text-xs text-gray-500 mt-2">Email: {profile.email}</p>
+            </div>
           ) : (
             menuItems.filter(item => {
-              // CRITICAL FIX: Don't default to admin if profile exists
-              // Only show menu items that match the user's actual role
-              const userRole = profile?.role;
+              // Get the user's role - no defaults, no fallbacks
+              const userRole = profile.role;
 
-              // Debug logging to help diagnose role issues
-              console.log('[Sidebar Debug]', {
-                userRole,
-                itemName: item.name,
-                allowedRoles: item.allowedRoles,
-                profileEmail: profile?.email
-              });
-
-              // If no role is set on profile (shouldn't happen), show nothing for safety
-              if (!userRole) {
-                console.warn('[Sidebar] User has no role set:', profile?.email);
-                return false;
+              // Debug logging to help diagnose role issues  
+              if (process.env.NODE_ENV === 'development') {
+                console.log('[Sidebar Debug]', {
+                  userRole,
+                  itemName: item.name,
+                  allowedRoles: item.allowedRoles,
+                  profileEmail: profile.email,
+                  will_show: item.allowedRoles ? item.allowedRoles.includes(userRole) : true
+                });
               }
 
-              // If no allowed roles specified, show to everyone (unsafe items should always have allowedRoles)
+              // If no allowed roles specified, show to everyone
+              // (Note: All sensitive menu items should ALWAYS have allowedRoles defined)
               if (!item.allowedRoles || item.allowedRoles.length === 0) {
                 return true;
               }
 
-              // Otherwise check if user's role is in the allowed list
-              return item.allowedRoles.includes(userRole);
+              // Check if user's role is in the allowed list
+              const isAllowed = item.allowedRoles.includes(userRole);
+
+              if (!isAllowed && process.env.NODE_ENV === 'development') {
+                console.log(`[Sidebar] Hiding "${item.name}" from ${userRole} (allowed: ${item.allowedRoles.join(', ')})`);
+              }
+
+              return isAllowed;
             }).map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href);
