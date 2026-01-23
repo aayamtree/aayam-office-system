@@ -11,6 +11,7 @@ import { shareOnWhatsApp, getInvoiceMessage, getPaymentReminderMessage } from '@
 import { useInvoices, useClients, useJobs } from '@/lib/hooks';
 import { Invoice, Client, InvoiceItem } from '@/types/database';
 import { formatDate } from '@/lib/utils';
+import { logActivity } from '@/lib/logger';
 
 export default function InvoicesPage() {
   const { invoices, loading: invoicesLoading, createInvoice, updateInvoice, saveInvoiceItems } = useInvoices();
@@ -301,10 +302,30 @@ export default function InvoicesPage() {
 
       if (isEditing && invoiceId) {
         await updateInvoice(invoiceId, invoiceFields);
+
+        // Log activity
+        const client = clients.find(c => c.id === formData.clientId);
+        await logActivity(
+          'Updated Invoice',
+          'Finance',
+          invoiceId,
+          `Updated invoice ${selectedInvoice?.invoice_number} for ${client?.company || client?.name}`
+        );
       } else {
         const { data, error } = await createInvoice(invoiceFields);
         if (error) throw new Error(error);
-        if (data) invoiceId = data.id;
+        if (data) {
+          invoiceId = data.id;
+
+          // Log activity
+          const client = clients.find(c => c.id === formData.clientId);
+          await logActivity(
+            'Created Invoice',
+            'Finance',
+            invoiceId,
+            `Created invoice for ${client?.company || client?.name} - Amount: ₹${formData.totalAmount.toLocaleString()}`
+          );
+        }
       }
 
       if (invoiceId) {

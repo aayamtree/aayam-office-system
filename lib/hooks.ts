@@ -9,6 +9,7 @@ import {
   PurchaseBill, VendorPayment, PaymentReceived, POSCategory, POSProduct,
   PaperStock, POSSale, Note, Reminder, BankTransaction, SalesOrder, ActivityLog, JobChecklist
 } from '@/types/database';
+import { logActivity } from './logger';
 
 // Generic hook for fetching data
 export interface UseSupabaseQueryOptions {
@@ -319,7 +320,7 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
     // Get current job
     const { data: job } = await supabase
       .from('jobs')
-      .select('current_stage')
+      .select('current_stage, job_number')
       .eq('id', id)
       .single();
 
@@ -338,6 +339,14 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
       to_stage: newStage,
       notes
     }]);
+
+    // Log activity
+    await logActivity(
+      'Updated Job Stage',
+      'Sales',
+      id,
+      `Job ${job?.job_number} moved from ${job?.current_stage || 'new'} to ${newStage}${notes ? ': ' + notes : ''}`
+    );
 
     refetch();
     return { error: null };
@@ -856,7 +865,16 @@ export function useDispatches() {
       .select()
       .single();
 
-    if (!error) refetch();
+    if (!error && data) {
+      // Log activity
+      await logActivity(
+        'Created Dispatch',
+        'Dispatch',
+        data.id,
+        `Created dispatch ${data.dispatch_number} - ${dispatch.packages} package(s)`
+      );
+      refetch();
+    }
     return { data, error: error?.message };
   };
 
@@ -1092,7 +1110,16 @@ export function useQuotations() {
       .select()
       .single();
 
-    if (!error) refetch();
+    if (!error && data) {
+      // Log activity
+      await logActivity(
+        'Created Quotation',
+        'Sales',
+        data.id,
+        `Created quotation ${data.quote_number} for ₹${quotation.total_amount?.toLocaleString() || 0}`
+      );
+      refetch();
+    }
     return { data, error: error?.message };
   };
 

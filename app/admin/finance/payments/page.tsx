@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Plus, X, Loader2, ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { logActivity } from '@/lib/logger';
 
 export default function PaymentsPageNew() {
     const [payments, setPayments] = useState<any[]>([]);
@@ -71,8 +72,9 @@ export default function PaymentsPageNew() {
 
         try {
             if (type === 'received') {
+                const clientId = formData.get('client_id') as string;
                 const { error } = await supabase.rpc('record_payment_received', {
-                    p_client_id: formData.get('client_id'),
+                    p_client_id: clientId,
                     p_amount: amount,
                     p_payment_mode: payMode,
                     p_payment_date: formData.get('payment_date') || new Date().toISOString().split('T')[0],
@@ -83,9 +85,19 @@ export default function PaymentsPageNew() {
                     p_attachment_url: null
                 });
                 if (error) throw error;
+
+                // Log activity
+                const client = clients.find(c => c.id === clientId);
+                await logActivity(
+                    'Recorded Payment',
+                    'Finance',
+                    undefined,
+                    `Received ₹${amount.toLocaleString()} from ${client?.company || client?.name} via ${payMode.replace('_', ' ')}`
+                );
             } else {
+                const vendorId = formData.get('vendor_id') as string;
                 const { error } = await supabase.rpc('record_vendor_payment', {
-                    p_vendor_id: formData.get('vendor_id'),
+                    p_vendor_id: vendorId,
                     p_amount: amount,
                     p_payment_mode: payMode,
                     p_payment_date: formData.get('payment_date') || new Date().toISOString().split('T')[0],
@@ -96,6 +108,15 @@ export default function PaymentsPageNew() {
                     p_attachment_url: null
                 });
                 if (error) throw error;
+
+                // Log activity
+                const vendor = vendors.find(v => v.id === vendorId);
+                await logActivity(
+                    'Recorded Payment',
+                    'Finance',
+                    undefined,
+                    `Paid ₹${amount.toLocaleString()} to ${vendor?.company || vendor?.name} via ${payMode.replace('_', ' ')}`
+                );
             }
 
             await fetchPayments();
