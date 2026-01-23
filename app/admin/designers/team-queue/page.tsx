@@ -11,7 +11,7 @@ export default function TeamQueue() {
     const { designers } = useDesigners();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterDesigner, setFilterDesigner] = useState('all');
-    const [viewMode, setViewMode] = useState('board' as 'table' | 'board'); // Default to board
+    const [viewMode, setViewMode] = useState('board'); // 'board' or 'table'
 
     // Get all design tasks
     const allTasks = (jobs || [])
