@@ -176,43 +176,45 @@ export default function QuickExpensePage() {
     const accounts = formData.payment_mode === 'cash' ? cashAccounts : bankAccounts;
 
     return (
-        <div className="space-y-6 pb-20">
+        <div className="space-y-4 md:space-y-6 pb-20">
             {/* Header */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 md:gap-4">
                 <button
                     onClick={() => router.back()}
-                    className="p-2 hover:bg-gray-100 rounded-lg"
+                    className="p-2 hover:bg-gray-100 rounded-lg flex-shrink-0"
                 >
                     <ArrowLeft size={20} />
                 </button>
-                <div>
-                    <h1 className="text-2xl font-bold">Quick Expense Entry</h1>
-                    <p className="text-gray-500">Record expenses quickly without full vendor flow</p>
+                <div className="min-w-0">
+                    <h1 className="text-xl md:text-2xl font-bold truncate">Quick Expense Entry</h1>
+                    <p className="text-sm md:text-base text-gray-500 line-clamp-1">Record expenses quickly without full vendor flow</p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-6">
+            {/* Main Grid - Stack on mobile, side-by-side on desktop */}
+            <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4 md:gap-6">
                 {/* Main Form */}
-                <div className="col-span-2">
-                    <div className="bg-white rounded-xl border p-6 shadow-sm">
+                <div className="lg:col-span-2">
+                    <div className="bg-white rounded-xl border p-4 md:p-6 shadow-sm">
                         <h2 className="text-lg font-bold mb-4">Add New Expense</h2>
 
                         {success && (
-                            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-800">
-                                <Check size={20} />
+                            <div className="mb-4 p-3 md:p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-sm md:text-base text-green-800">
+                                <Check size={18} className="flex-shrink-0" />
                                 <span>Expense recorded successfully!</span>
                             </div>
                         )}
 
                         {error && (
-                            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-800">
-                                <AlertCircle size={20} />
+                            <div className="mb-4 p-3 md:p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm md:text-base text-red-800">
+                                <AlertCircle size={18} className="flex-shrink-0" />
                                 <span>{error}</span>
                             </div>
                         )}
 
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
+                            {/* Category & Amount - Stack on mobile */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {/* Category */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -221,7 +223,7 @@ export default function QuickExpensePage() {
                                     <select
                                         value={formData.category}
                                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
                                         required
                                     >
                                         <option value="">Select category</option>
@@ -241,7 +243,7 @@ export default function QuickExpensePage() {
                                         value={formData.amount}
                                         onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                                         placeholder="0.00"
-                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
                                         required
                                         min="0"
                                         step="0.01"
@@ -258,13 +260,14 @@ export default function QuickExpensePage() {
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     placeholder="Enter expense details..."
-                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
                                     rows={3}
                                     required
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            {/* Payment Mode & Account - Stack on mobile */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {/* Payment Mode */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -273,7 +276,7 @@ export default function QuickExpensePage() {
                                     <select
                                         value={formData.payment_mode}
                                         onChange={(e) => handlePaymentModeChange(e.target.value)}
-                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
                                         required
                                     >
                                         <option value="cash">Cash</option>
@@ -291,7 +294,7 @@ export default function QuickExpensePage() {
                                     <select
                                         value={formData.account_id}
                                         onChange={(e) => setFormData({ ...formData, account_id: e.target.value })}
-                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
                                         required
                                     >
                                         <option value="">Select account</option>
@@ -304,7 +307,8 @@ export default function QuickExpensePage() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            {/* Vendor & Date - Stack on mobile */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {/* Vendor (Optional) */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -313,7 +317,7 @@ export default function QuickExpensePage() {
                                     <select
                                         value={formData.vendor_id}
                                         onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })}
-                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
                                     >
                                         <option value="">None (Petty Expense)</option>
                                         {vendors.map((vendor) => (
@@ -333,7 +337,7 @@ export default function QuickExpensePage() {
                                         type="date"
                                         value={formData.payment_date}
                                         onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })}
-                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
                                         required
                                     />
                                 </div>
@@ -349,22 +353,22 @@ export default function QuickExpensePage() {
                                     value={formData.reference_number}
                                     onChange={(e) => setFormData({ ...formData, reference_number: e.target.value })}
                                     placeholder="Invoice/Receipt number..."
-                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
                                 />
                             </div>
 
-                            {/* Submit Button */}
-                            <div className="flex gap-3 pt-4">
+                            {/* Submit Buttons */}
+                            <div className="flex flex-col sm:flex-row gap-3 pt-4">
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
                                 >
                                     {loading ? (
                                         <>Processing...</>
                                     ) : (
                                         <>
-                                            <Plus size={20} />
+                                            <Plus size={18} />
                                             Record Expense
                                         </>
                                     )}
@@ -372,7 +376,7 @@ export default function QuickExpensePage() {
                                 <button
                                     type="button"
                                     onClick={() => router.back()}
-                                    className="px-6 py-3 border rounded-lg hover:bg-gray-50"
+                                    className="px-6 py-3 border rounded-lg hover:bg-gray-50 text-sm font-medium"
                                 >
                                     Cancel
                                 </button>
@@ -382,8 +386,8 @@ export default function QuickExpensePage() {
                 </div>
 
                 {/* Recent Expenses Sidebar */}
-                <div className="col-span-1">
-                    <div className="bg-white rounded-xl border p-5 shadow-sm">
+                <div className="lg:col-span-1">
+                    <div className="bg-white rounded-xl border p-4 md:p-5 shadow-sm">
                         <h3 className="font-bold mb-4">Recent Expenses</h3>
                         <div className="space-y-3">
                             {recentExpenses.length === 0 ? (
@@ -392,10 +396,10 @@ export default function QuickExpensePage() {
                                 recentExpenses.map((expense) => (
                                     <div key={expense.id} className="p-3 bg-gray-50 rounded-lg">
                                         <div className="flex justify-between items-start mb-1">
-                                            <p className="font-medium text-sm">
+                                            <p className="font-medium text-sm truncate flex-1 mr-2">
                                                 {expense.vendors?.name || 'Expense'}
                                             </p>
-                                            <p className="font-bold text-sm text-red-600">
+                                            <p className="font-bold text-sm text-red-600 flex-shrink-0">
                                                 ₹{expense.amount?.toLocaleString()}
                                             </p>
                                         </div>
