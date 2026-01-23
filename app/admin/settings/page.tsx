@@ -228,110 +228,111 @@ export default function UserManagementPage() {
                 </tbody>
               </table>
             </div>
+          </div>
 
-            {/* ADD USER MODAL */}
-            {showAddModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-                  <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-gray-900">Add New Team Member</h2>
-                    <button
-                      onClick={() => setShowAddModal(false)}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <X size={24} />
-                    </button>
+          {/* ADD USER MODAL */}
+          {showAddModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+              <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                  <h2 className="text-xl font-bold text-gray-900">Add New Team Member</h2>
+                  <button
+                    onClick={() => setShowAddModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+
+                <form onSubmit={handleCreateUser} className="p-6 space-y-4">
+                  {creationError && (
+                    <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
+                      {creationError}
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={newUser.fullName}
+                      onChange={e => setNewUser({ ...newUser, fullName: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="e.g. Rahul Sharma"
+                    />
                   </div>
 
-                  <form onSubmit={handleCreateUser} className="p-6 space-y-4">
-                    {creationError && (
-                      <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
-                        {creationError}
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Username (Login ID)</label>
+                    <div className="flex">
                       <input
                         type="text"
                         required
-                        value={newUser.fullName}
-                        onChange={e => setNewUser({ ...newUser, fullName: e.target.value })}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="e.g. Rahul Sharma"
+                        value={newUser.username}
+                        onChange={e => setNewUser({ ...newUser, username: e.target.value })}
+                        className="w-full border border-gray-300 rounded-l-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="e.g. rahul"
                       />
+                      <span className="bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg px-3 py-2 text-gray-500 text-sm flex items-center">
+                        @aayam.local
+                      </span>
                     </div>
+                    <p className="text-xs text-gray-500 mt-1">This will be their login email.</p>
+                  </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Username (Login ID)</label>
-                      <div className="flex">
-                        <input
-                          type="text"
-                          required
-                          value={newUser.username}
-                          onChange={e => setNewUser({ ...newUser, username: e.target.value })}
-                          className="w-full border border-gray-300 rounded-l-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
-                          placeholder="e.g. rahul"
-                        />
-                        <span className="bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg px-3 py-2 text-gray-500 text-sm flex items-center">
-                          @aayam.local
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">This will be their login email.</p>
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input
+                      type="text"
+                      required
+                      minLength={6}
+                      value={newUser.password}
+                      onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="Minimum 6 characters"
+                    />
+                  </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                      <input
-                        type="text"
-                        required
-                        minLength={6}
-                        value={newUser.password}
-                        onChange={e => setNewUser({ ...newUser, password: e.target.value })}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="Minimum 6 characters"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Role / Department</label>
+                    <select
+                      value={newUser.role}
+                      onChange={e => setNewUser({ ...newUser, role: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                      {roles.map(r => (
+                        <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
+                      ))}
+                    </select>
+                  </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Role / Department</label>
-                      <select
-                        value={newUser.role}
-                        onChange={e => setNewUser({ ...newUser, role: e.target.value })}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
-                      >
-                        {roles.map(r => (
-                          <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="pt-4 flex gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setShowAddModal(false)}
-                        className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={isCreating}
-                        className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium disabled:opacity-50"
-                      >
-                        {isCreating ? 'Creating...' : 'Create User'}
-                      </button>
-                    </div>
-                  </form>
-                </div>
+                  <div className="pt-4 flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddModal(false)}
+                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isCreating}
+                      className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium disabled:opacity-50"
+                    >
+                      {isCreating ? 'Creating...' : 'Create User'}
+                    </button>
+                  </div>
+                </form>
               </div>
-            )}
-          </>
-          ) : activeTab === 'designers' ? (
-          <DesignersManager />
-          ) : (
-          <ProductionSettings />
+            </div>
+          )}
+        </>
+      ) : activeTab === 'designers' ? (
+        <DesignersManager />
+      ) : (
+        <ProductionSettings />
       )}
-        </div>
-      );
+    </div>
+  );
 }
