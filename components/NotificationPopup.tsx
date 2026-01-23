@@ -9,6 +9,7 @@ interface Notification {
     id: string;
     message: string;
     priority: 'normal' | 'urgent';
+    target_audience: string;
     created_at: string;
 }
 
