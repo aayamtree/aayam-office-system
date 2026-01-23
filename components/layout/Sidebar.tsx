@@ -134,6 +134,12 @@ const menuItems: MenuItem[] = [
     allowedRoles: ['admin'],
   },
   {
+    name: 'Broadcast',
+    icon: Bell,
+    href: '/admin/broadcast',
+    allowedRoles: ['admin', 'finance'],
+  },
+  {
     name: 'Settings',
     icon: Settings,
     href: '/admin/settings',
