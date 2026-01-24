@@ -172,8 +172,8 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                         </div>
                         <div>
                             <p className="text-xs text-gray-500 uppercase tracking-wide">Amount</p>
-                            <p className={`font-bold text-lg ${transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
-                                {transaction.type === 'credit' ? '+' : '-'}₹{transaction.amount.toLocaleString('en-IN')}
+                            <p className={`font-bold text-lg ${(transaction as any).transaction_type === 'inflow' ? 'text-green-600' : 'text-red-600'}`}>
+                                {(transaction as any).transaction_type === 'inflow' ? '+' : '-'}₹{transaction.amount.toLocaleString('en-IN')}
                             </p>
                         </div>
                     </div>
