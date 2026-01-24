@@ -375,32 +375,33 @@ export default function JobsPage() {
         </div>
         <button
           onClick={handleAddNew}
-          className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white px-5 py-3 rounded-xl shadow-lg shadow-gray-900/20 transition-all hover:scale-105 active:scale-95"
+          className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white px-4 md:px-5 py-2.5 md:py-3 rounded-xl shadow-lg shadow-gray-900/20 transition-all hover:scale-105 active:scale-95 text-sm md:text-base"
         >
-          <Plus size={20} />
+          <Plus size={18} className="md:hidden" />
+          <Plus size={20} className="hidden md:block" />
           <span className="font-medium">New Job</span>
         </button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Total Jobs</p>
-          <p className="text-3xl font-bold text-gray-900">{totalJobs}</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <div className="bg-white rounded-xl md:rounded-2xl p-3 md:p-5 border border-gray-100 shadow-sm">
+          <p className="text-[10px] md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Total Jobs</p>
+          <p className="text-2xl md:text-3xl font-bold text-gray-900">{totalJobs}</p>
         </div>
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Active</p>
-          <p className="text-3xl font-bold text-indigo-600">{activeJobs}</p>
+        <div className="bg-white rounded-xl md:rounded-2xl p-3 md:p-5 border border-gray-100 shadow-sm">
+          <p className="text-[10px] md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Active</p>
+          <p className="text-2xl md:text-3xl font-bold text-indigo-600">{activeJobs}</p>
         </div>
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Revenue</p>
-          <p className="text-2xl font-bold text-green-600 truncate" title={formatCurrency(totalRevenue)}>
+        <div className="bg-white rounded-xl md:rounded-2xl p-3 md:p-5 border border-gray-100 shadow-sm">
+          <p className="text-[10px] md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Revenue</p>
+          <p className="text-xl md:text-2xl font-bold text-green-600 truncate" title={formatCurrency(totalRevenue)}>
             {formatCurrency(totalRevenue)}
           </p>
         </div>
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Pending</p>
-          <p className="text-2xl font-bold text-amber-600 truncate" title={formatCurrency(pendingPayments)}>
+        <div className="bg-white rounded-xl md:rounded-2xl p-3 md:p-5 border border-gray-100 shadow-sm">
+          <p className="text-[10px] md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Pending</p>
+          <p className="text-xl md:text-2xl font-bold text-amber-600 truncate" title={formatCurrency(pendingPayments)}>
             {formatCurrency(pendingPayments)}
           </p>
         </div>
@@ -432,24 +433,24 @@ export default function JobsPage() {
       </div>
 
       {/* Filters & Controls */}
-      <div className="flex flex-col xl:flex-row gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+      <div className="flex flex-col xl:flex-row gap-3 md:gap-4 bg-white p-3 md:p-4 rounded-xl md:rounded-2xl shadow-sm border border-gray-100">
         <div className="relative flex-1">
-          <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={18} className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Search jobs, clients, or numbers..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-gray-900 placeholder-gray-400 transition-all font-medium"
+            className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-gray-50 border-0 rounded-lg md:rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-sm md:text-base text-gray-900 placeholder-gray-400 transition-all font-medium"
           />
         </div>
 
-        <div className="flex flex-wrap gap-2 sm:gap-4 overflow-x-auto pb-2 sm:pb-0">
+        <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
           <div className="flex gap-2 min-w-max">
             <select
               value={stageFilter}
               onChange={(e) => setStageFilter(e.target.value)}
-              className="px-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-indigo-500/20 font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+              className="px-3 md:px-4 py-2.5 md:py-3 bg-gray-50 border-0 rounded-lg md:rounded-xl focus:ring-2 focus:ring-indigo-500/20 font-medium text-sm md:text-base text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
             >
               <option value="all">All Stages</option>
               {stages.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -458,27 +459,29 @@ export default function JobsPage() {
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
-              className="px-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-indigo-500/20 font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+              className="px-3 md:px-4 py-2.5 md:py-3 bg-gray-50 border-0 rounded-lg md:rounded-xl focus:ring-2 focus:ring-indigo-500/20 font-medium text-sm md:text-base text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
             >
               <option value="all">All Priority</option>
               {priorities.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
 
-          <div className="flex gap-1 bg-gray-100 p-1 rounded-xl ml-auto">
+          <div className="flex gap-1 bg-gray-100 p-1 rounded-lg md:rounded-xl sm:ml-auto">
             <button
               onClick={() => setViewMode('kanban')}
-              className={`p-2.5 rounded-lg transition-all ${viewMode === 'kanban' ? 'bg-white shadow text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`p-2 md:p-2.5 rounded-md md:rounded-lg transition-all ${viewMode === 'kanban' ? 'bg-white shadow text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
               title="Board View"
             >
-              <LayoutGrid size={20} />
+              <LayoutGrid size={18} className="md:hidden" />
+              <LayoutGrid size={20} className="hidden md:block" />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`p-2 md:p-2.5 rounded-md md:rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
               title="List View"
             >
-              <List size={20} />
+              <List size={18} className="md:hidden" />
+              <List size={20} className="hidden md:block" />
             </button>
           </div>
         </div>
@@ -545,7 +548,7 @@ export default function JobsPage() {
         viewMode === 'list' && filteredJobs.length > 0 && (
           <div className="bg-white rounded-xl border overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[800px]">
                 <thead className="bg-gray-50 border-b">
                   <tr>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Job</th>
