@@ -24,10 +24,26 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
     const { categories: incomeCategories, createCategory: createIncomeCategory, getParentCategories: getIncomeParents, getSubcategories: getIncomeSubcategories } = useIncomeCategories();
     const { categorizeTransaction, saving } = useTransactionCategorization();
 
-    // Form state
-    const [transactionType, setTransactionType] = useState<'expense' | 'income'>(
-        transaction.type === 'debit' ? 'expense' : 'income'
-    );
+    // Form state - Auto-detect transaction type based on transaction data
+    const detectTransactionType = (): 'expense' | 'income' => {
+        // Method 1: Check transaction_type field (outflow/inflow)
+        if ('transaction_type' in transaction) {
+            return (transaction as any).transaction_type === 'outflow' ? 'expense' : 'income';
+        }
+
+        // Method 2: Check type field (debit/credit) 
+        if (transaction.type === 'debit') return 'expense';
+        if (transaction.type === 'credit') return 'income';
+
+        // Method 3: Check amount sign (negative = outflow/expense, positive = inflow/income)
+        if (transaction.amount < 0) return 'expense';
+        if (transaction.amount > 0) return 'income';
+
+        // Default to expense if unclear
+        return 'expense';
+    };
+
+    const [transactionType, setTransactionType] = useState<'expense' | 'income'>(detectTransactionType());
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedSubcategory, setSelectedSubcategory] = useState('');
     const [expenseType, setExpenseType] = useState<'goods' | 'services'>('services');
