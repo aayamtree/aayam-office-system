@@ -69,7 +69,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
 
         // Prepare categorization data
         const categorizationData: TransactionCategorization = {
-            transaction_type: transactionType,
+            categorization_type: transactionType,
             payment_method: paymentMethod,
             categorization_notes: notes,
             transaction_date: transactionDate,
@@ -171,8 +171,8 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                                 type="button"
                                 onClick={() => setTransactionType('expense')}
                                 className={`flex-1 px-4 py-3 rounded-xl border-2 font-medium transition-all ${transactionType === 'expense'
-                                        ? 'border-red-500 bg-red-50 text-red-700'
-                                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                                    ? 'border-red-500 bg-red-50 text-red-700'
+                                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                                     }`}
                             >
                                 🔴 Expense
@@ -181,8 +181,8 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                                 type="button"
                                 onClick={() => setTransactionType('income')}
                                 className={`flex-1 px-4 py-3 rounded-xl border-2 font-medium transition-all ${transactionType === 'income'
-                                        ? 'border-green-500 bg-green-50 text-green-700'
-                                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                                    ? 'border-green-500 bg-green-50 text-green-700'
+                                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                                     }`}
                             >
                                 🟢 Income
@@ -286,8 +286,8 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                                     type="button"
                                     onClick={() => setExpenseType('goods')}
                                     className={`flex-1 px-4 py-2.5 rounded-xl border-2 font-medium transition-all ${expenseType === 'goods'
-                                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                                         }`}
                                 >
                                     📦 Goods
@@ -296,8 +296,8 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                                     type="button"
                                     onClick={() => setExpenseType('services')}
                                     className={`flex-1 px-4 py-2.5 rounded-xl border-2 font-medium transition-all ${expenseType === 'services'
-                                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                                         }`}
                                 >
                                     🛠️ Services

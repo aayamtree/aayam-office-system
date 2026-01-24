@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS income_categories (
 -- Add categorization fields
 -- =====================================================
 ALTER TABLE bank_transactions 
-  ADD COLUMN IF NOT EXISTS transaction_type TEXT CHECK (transaction_type IN ('expense', 'income')),
+  ADD COLUMN IF NOT EXISTS categorization_type TEXT CHECK (categorization_type IN ('expense', 'income')),
   ADD COLUMN IF NOT EXISTS expense_category_id UUID REFERENCES expense_categories(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS income_category_id UUID REFERENCES income_categories(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS expense_type TEXT CHECK (expense_type IN ('goods', 'services')),
@@ -149,7 +149,7 @@ CREATE INDEX IF NOT EXISTS idx_income_categories_parent ON income_categories(par
 CREATE INDEX IF NOT EXISTS idx_bank_transactions_expense_category ON bank_transactions(expense_category_id);
 CREATE INDEX IF NOT EXISTS idx_bank_transactions_income_category ON bank_transactions(income_category_id);
 CREATE INDEX IF NOT EXISTS idx_bank_transactions_is_verified ON bank_transactions(is_verified);
-CREATE INDEX IF NOT EXISTS idx_bank_transactions_transaction_type ON bank_transactions(transaction_type);
+CREATE INDEX IF NOT EXISTS idx_bank_transactions_categorization_type ON bank_transactions(categorization_type);
 
 -- =====================================================
 -- 8. HELPER FUNCTIONS

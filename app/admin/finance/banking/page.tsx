@@ -184,10 +184,10 @@ export default function BankingPage() {
     const getCategoryName = (txn: any) => {
         if (!txn.is_verified) return null;
 
-        if (txn.transaction_type === 'expense' && txn.expense_category_id) {
+        if (txn.categorization_type === 'expense' && txn.expense_category_id) {
             const cat = expenseCategories.find(c => c.id === txn.expense_category_id);
             return cat?.name || 'Expense';
-        } else if (txn.transaction_type === 'income' && txn.income_category_id) {
+        } else if (txn.categorization_type === 'income' && txn.income_category_id) {
             const cat = incomeCategories.find(c => c.id === txn.income_category_id);
             return cat?.name || 'Income';
         }

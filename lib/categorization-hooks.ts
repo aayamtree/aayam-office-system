@@ -30,7 +30,7 @@ export interface IncomeCategory {
 }
 
 export interface TransactionCategorization {
-    transaction_type: 'expense' | 'income';
+    categorization_type: 'expense' | 'income';
     expense_category_id?: string;
     income_category_id?: string;
     expense_type?: 'goods' | 'services';
@@ -192,7 +192,7 @@ export function useTransactionCategorization() {
 
             // Update transaction with categorization
             const updateData: any = {
-                transaction_type: categorization.transaction_type,
+                categorization_type: categorization.categorization_type,
                 payment_method: categorization.payment_method,
                 categorization_notes: categorization.categorization_notes,
                 is_verified: true,
@@ -206,7 +206,7 @@ export function useTransactionCategorization() {
             }
 
             // Add category based on type
-            if (categorization.transaction_type === 'expense') {
+            if (categorization.categorization_type === 'expense') {
                 updateData.expense_category_id = categorization.expense_category_id;
                 updateData.expense_type = categorization.expense_type;
                 updateData.income_category_id = null; // Clear income category if any
@@ -239,7 +239,7 @@ export function useTransactionCategorization() {
             const { error: updateError } = await supabase
                 .from('bank_transactions')
                 .update({
-                    transaction_type: null,
+                    categorization_type: null,
                     expense_category_id: null,
                     income_category_id: null,
                     expense_type: null,
