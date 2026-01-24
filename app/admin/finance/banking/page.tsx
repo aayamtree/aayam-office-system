@@ -4,13 +4,15 @@ import React, { useState, useMemo } from 'react';
 import {
     Building2, Upload, RefreshCw, CheckCircle,
     AlertTriangle, Search, Plus, Trash2, ArrowUpRight, ArrowDownLeft,
-    Eye, EyeOff, ClipboardCopy
+    Eye, EyeOff, ClipboardCopy, Edit3, Tag
 } from 'lucide-react';
 import {
     useBankTransactions, usePaymentsReceived,
     useExpenses, useBankAccounts
 } from '@/lib/hooks';
 import { BankTransaction } from '@/types/database';
+import { CategoryModal } from '@/components/banking/CategoryModal';
+import { useExpenseCategories, useIncomeCategories } from '@/lib/categorization-hooks';
 
 export default function BankingPage() {
     const [selectedAccountId, setSelectedAccountId] = useState('');
@@ -33,6 +35,15 @@ export default function BankingPage() {
     const [parsing, setParsing] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+
+    // Categorization State
+    const [showCategoryModal, setShowCategoryModal] = useState(false);
+    const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+    const { categories: expenseCategories } = useExpenseCategories();
+    const { categories: incomeCategories } = useIncomeCategories();
+
+    // Filter State
+    const [statusFilter, setStatusFilter] = useState<'all' | 'missing' | 'verified'>('all');
 
     // Auto-select first account
     React.useEffect(() => {
@@ -157,6 +168,41 @@ export default function BankingPage() {
     };
 
     // ------------------------------------------------------------------
+    // CATEGORIZATION AND FILTER HELPERS
+    // ------------------------------------------------------------------
+    const handleCategorize = (txn: any) => {
+        setSelectedTransaction(txn);
+        setShowCategoryModal(true);
+    };
+
+    const handleCategorySuccess = () => {
+        setSuccessMessage('✅ Transaction categorized successfully!');
+        setTimeout(() => setSuccessMessage(''), 3000);
+    };
+
+    // Get category name
+    const getCategoryName = (txn: any) => {
+        if (!txn.is_verified) return null;
+
+        if (txn.transaction_type === 'expense' && txn.expense_category_id) {
+            const cat = expenseCategories.find(c => c.id === txn.expense_category_id);
+            return cat?.name || 'Expense';
+        } else if (txn.transaction_type === 'income' && txn.income_category_id) {
+            const cat = incomeCategories.find(c => c.id === txn.income_category_id);
+            return cat?.name || 'Income';
+        }
+        return null;
+    };
+
+    // Filter transactions by status
+    const filteredReconciledData = useMemo(() => {
+        if (statusFilter === 'all') return reconciledData;
+        if (statusFilter === 'verified') return reconciledData.filter(t => t.is_verified);
+        if (statusFilter === 'missing') return reconciledData.filter(t => !t.is_verified && t.status === 'unmatched_bank');
+        return reconciledData;
+    }, [reconciledData, statusFilter]);
+
+    // ------------------------------------------------------------------
     // RENDER
     // ------------------------------------------------------------------
     return (
@@ -228,6 +274,37 @@ export default function BankingPage() {
                 </div>
             )}
 
+            {/* Filter Tabs */}
+            <div className="flex gap-2 overflow-x-auto pb-2">
+                <button
+                    onClick={() => setStatusFilter('all')}
+                    className={`px-4 py-2 rounded-xl font-medium text-sm whitespace-nowrap transition-colors ${statusFilter === 'all'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-white border border-gray-200 text-gray-600 hover:border-indigo-300'
+                        }`}
+                >
+                    All ({reconciledData.length})
+                </button>
+                <button
+                    onClick={() => setStatusFilter('missing')}
+                    className={`px-4 py-2 rounded-xl font-medium text-sm whitespace-nowrap transition-colors ${statusFilter === 'missing'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-white border border-gray-200 text-gray-600 hover:border-red-300'
+                        }`}
+                >
+                    Missing ({reconciledData.filter(t => !t.is_verified && t.status === 'unmatched_bank').length})
+                </button>
+                <button
+                    onClick={() => setStatusFilter('verified')}
+                    className={`px-4 py-2 rounded-xl font-medium text-sm whitespace-nowrap transition-colors ${statusFilter === 'verified'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-white border border-gray-200 text-gray-600 hover:border-green-300'
+                        }`}
+                >
+                    Verified ({reconciledData.filter(t => t.is_verified).length})
+                </button>
+            </div>
+
             {/* Main Stats - Better mobile layout */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
                 <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm">
@@ -235,15 +312,15 @@ export default function BankingPage() {
                     <p className="text-xl md:text-2xl font-bold text-gray-900 truncate">₹{(bankAccounts.find(b => b.id === selectedAccountId)?.current_balance || 0).toLocaleString()}</p>
                 </div>
                 <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm">
-                    <p className="text-xs md:text-sm text-gray-500">Action Required</p>
+                    <p className="text-xs md:text-sm text-gray-500">Need Categorization</p>
                     <p className="text-xl md:text-2xl font-bold text-orange-600">
-                        {reconciledData.filter(r => r.status === 'unmatched_bank').length}
+                        {reconciledData.filter(r => !r.is_verified && r.status === 'unmatched_bank').length}
                     </p>
                 </div>
                 <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm">
                     <p className="text-xs md:text-sm text-gray-500">Verified</p>
                     <p className="text-xl md:text-2xl font-bold text-green-600">
-                        {reconciledData.filter(r => r.status === 'matched').length}
+                        {reconciledData.filter(r => r.is_verified).length}
                     </p>
                 </div>
             </div>
@@ -263,7 +340,7 @@ export default function BankingPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y">
-                            {reconciledData.map((txn) => (
+                            {filteredReconciledData.map((txn) => (
                                 <tr key={txn.id} className={`hover:bg-gray-50 group ${txn.status === 'ignored' ? 'opacity-50 bg-gray-50' : ''}`}>
                                     <td className="px-3 md:px-4 py-3 text-gray-500 whitespace-nowrap text-xs md:text-sm">
                                         {new Date(txn.transaction_date).toLocaleDateString()}
@@ -276,8 +353,19 @@ export default function BankingPage() {
                                         {txn.transaction_type === 'inflow' ? '+' : '-'} ₹{txn.amount.toLocaleString()}
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        {txn.status === 'matched' ? (
-                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                        {txn.is_verified ? (
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                                    <CheckCircle size={12} /> Verified
+                                                </span>
+                                                {getCategoryName(txn) && (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs">
+                                                        <Tag size={10} /> {getCategoryName(txn)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        ) : txn.status === 'matched' ? (
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
                                                 <CheckCircle size={12} /> Matched
                                             </span>
                                         ) : txn.status === 'ignored' ? (
@@ -304,6 +392,17 @@ export default function BankingPage() {
                                     </td>
                                     <td className="px-4 py-3 text-center">
                                         <div className="flex items-center justify-center gap-1">
+                                            {/* Categorize Button */}
+                                            {!txn.is_verified && txn.status !== 'ignored' && (
+                                                <button
+                                                    onClick={() => handleCategorize(txn)}
+                                                    className="p-1.5 hover:bg-indigo-50 text-gray-600 hover:text-indigo-600 rounded-lg transition-colors"
+                                                    title="Categorize Transaction"
+                                                >
+                                                    <Edit3 size={16} />
+                                                </button>
+                                            )}
+
                                             {/* Toggle Ignore */}
                                             {txn.status === 'ignored' ? (
                                                 <button
@@ -335,6 +434,13 @@ export default function BankingPage() {
                                     </td>
                                 </tr>
                             ))}
+                            {filteredReconciledData.length === 0 && reconciledData.length > 0 && (
+                                <tr>
+                                    <td colSpan={6} className="text-center py-8 text-gray-400 italic">
+                                        No transactions match your filter.
+                                    </td>
+                                </tr>
+                            )}
                             {reconciledData.length === 0 && (
                                 <tr>
                                     <td colSpan={6} className="text-center py-8 text-gray-400 italic">
@@ -394,6 +500,18 @@ export default function BankingPage() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Category Modal */}
+            {showCategoryModal && selectedTransaction && (
+                <CategoryModal
+                    transaction={selectedTransaction}
+                    onClose={() => {
+                        setShowCategoryModal(false);
+                        setSelectedTransaction(null);
+                    }}
+                    onSuccess={handleCategorySuccess}
+                />
             )}
 
         </div>

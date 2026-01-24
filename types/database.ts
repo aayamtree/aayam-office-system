@@ -434,6 +434,16 @@ export interface BankTransaction {
 
   created_by?: string;
   created_at: string;
+
+  // Categorization fields
+  is_verified?: boolean;
+  verified_by?: string;
+  verified_at?: string;
+  expense_category_id?: string;
+  income_category_id?: string;
+  expense_type?: 'goods' | 'services';
+  payment_method?: string;
+  categorization_notes?: string;
 }
 
 // Opening Balance
