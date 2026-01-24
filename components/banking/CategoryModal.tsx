@@ -9,7 +9,9 @@ interface Transaction {
     transaction_date: string;
     description: string;
     amount: number;
-    type: 'credit' | 'debit';
+    type?: 'credit' | 'debit';
+    transaction_type?: 'inflow' | 'outflow'; // Bank transaction field
+    [key: string]: any; // Allow additional properties from bank transactions
 }
 
 interface CategoryModalProps {
