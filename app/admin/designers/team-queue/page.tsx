@@ -11,7 +11,7 @@ export default function TeamQueue() {
     const { designers } = useDesigners();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterDesigner, setFilterDesigner] = useState('all');
-    const [viewMode, setViewMode] = useState<'table' | 'board'>('board'); // Default to board
+    const [viewMode, setViewMode] = useState<'table' | 'board'>('table'); // Default to table for mobile
 
     // Get all design tasks
     const allTasks = (jobs || [])
@@ -58,16 +58,16 @@ export default function TeamQueue() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
+        <div className="min-h-screen bg-gray-50 p-3 md:p-6">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
-                <div className="mb-6">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Team Queue</h1>
-                    <p className="text-gray-600">{filteredTasks.length} active tasks</p>
+                <div className="mb-4 md:mb-6">
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 md:mb-2">Team Queue</h1>
+                    <p className="text-sm md:text-base text-gray-600">{filteredTasks.length} active tasks</p>
                 </div>
 
                 {/* Designer Summary Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
                     {designerCounts.map(d => (
                         <div key={d.id} className="bg-white p-4 rounded-xl border text-center">
                             <div className="text-2xl font-bold text-purple-600">{d.count}</div>
@@ -177,62 +177,64 @@ export default function TeamQueue() {
 
                 {/* Table View */}
                 {viewMode === 'table' && (
-                    <div className="bg-white rounded-xl border overflow-hidden">
-                        <table className="w-full">
-                            <thead className="bg-gray-50 border-b">
-                                <tr>
-                                    <th className="text-left p-4 font-semibold text-gray-700">Task</th>
-                                    <th className="text-left p-4 font-semibold text-gray-700">Client</th>
-                                    <th className="text-left p-4 font-semibold text-gray-700">Designer</th>
-                                    <th className="text-left p-4 font-semibold text-gray-700">Status</th>
-                                    <th className="text-left p-4 font-semibold text-gray-700">Deadline</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y">
-                                {filteredTasks.map(task => (
-                                    <Link key={task.id} href="/admin/designers/tasks" className="contents">
-                                        <tr className="hover:bg-gray-50 cursor-pointer">
-                                            <td className="p-4">
-                                                <div className="font-semibold text-gray-900">{task.title}</div>
-                                                <div className="text-sm text-gray-500">#{task.jobNumber}</div>
-                                            </td>
-                                            <td className="p-4 text-gray-700">{task.client}</td>
-                                            <td className="p-4">
-                                                <div className="flex items-center gap-2">
-                                                    <User size={16} className="text-gray-400" />
-                                                    <span className="text-gray-700">{task.designer}</span>
-                                                </div>
-                                            </td>
-                                            <td className="p-4">
-                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
-                                                    task.priority === 'high' ? 'bg-orange-100 text-orange-700' :
-                                                        'bg-gray-100 text-gray-700'
-                                                    }`}>
-                                                    {task.status}
-                                                </span>
-                                            </td>
-                                            <td className="p-4">
-                                                {task.deadline ? (
-                                                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                        <Clock size={16} />
-                                                        {new Date(task.deadline).toLocaleDateString()}
+                    <div className="bg-white rounded-lg md:rounded-xl border overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full min-w-[800px]">
+                                <thead className="bg-gray-50 border-b">
+                                    <tr>
+                                        <th className="text-left p-4 font-semibold text-gray-700">Task</th>
+                                        <th className="text-left p-4 font-semibold text-gray-700">Client</th>
+                                        <th className="text-left p-4 font-semibold text-gray-700">Designer</th>
+                                        <th className="text-left p-4 font-semibold text-gray-700">Status</th>
+                                        <th className="text-left p-4 font-semibold text-gray-700">Deadline</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y">
+                                    {filteredTasks.map(task => (
+                                        <Link key={task.id} href="/admin/designers/tasks" className="contents">
+                                            <tr className="hover:bg-gray-50 cursor-pointer">
+                                                <td className="p-4">
+                                                    <div className="font-semibold text-gray-900">{task.title}</div>
+                                                    <div className="text-sm text-gray-500">#{task.jobNumber}</div>
+                                                </td>
+                                                <td className="p-4 text-gray-700">{task.client}</td>
+                                                <td className="p-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <User size={16} className="text-gray-400" />
+                                                        <span className="text-gray-700">{task.designer}</span>
                                                     </div>
-                                                ) : (
-                                                    <span className="text-gray-400 text-sm">No deadline</span>
-                                                )}
+                                                </td>
+                                                <td className="p-4">
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
+                                                        task.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                                                            'bg-gray-100 text-gray-700'
+                                                        }`}>
+                                                        {task.status}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4">
+                                                    {task.deadline ? (
+                                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                            <Clock size={16} />
+                                                            {new Date(task.deadline).toLocaleDateString()}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-gray-400 text-sm">No deadline</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        </Link>
+                                    ))}
+                                    {filteredTasks.length === 0 && (
+                                        <tr>
+                                            <td colSpan={5} className="p-12 text-center text-gray-500">
+                                                No tasks found
                                             </td>
                                         </tr>
-                                    </Link>
-                                ))}
-                                {filteredTasks.length === 0 && (
-                                    <tr>
-                                        <td colSpan={5} className="p-12 text-center text-gray-500">
-                                            No tasks found
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
             </div>
