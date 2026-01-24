@@ -46,56 +46,58 @@ export default function MyQueue() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
+        <div className="min-h-screen bg-gray-50 p-3 md:p-6">
             <div className="max-w-6xl mx-auto">
                 {/* Header */}
-                <div className="mb-6">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">My Queue</h1>
-                    <p className="text-gray-600">{filteredTasks.length} active tasks</p>
+                <div className="mb-4 md:mb-6">
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 md:mb-2">My Queue</h1>
+                    <p className="text-sm md:text-base text-gray-600">{filteredTasks.length} active tasks</p>
                 </div>
 
                 {/* Search */}
-                <div className="mb-6 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <div className="mb-4 md:mb-6 relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <input
                         type="text"
                         placeholder="Search tasks..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 border rounded-lg"
+                        className="w-full pl-10 pr-3 md:pr-4 py-2.5 md:py-3 border rounded-lg text-sm md:text-base"
                     />
                 </div>
 
                 {/* Task Groups */}
-                <div className="space-y-8">
+                <div className="space-y-6 md:space-y-8">
                     {/* Urgent */}
                     {urgentTasks.length > 0 && (
                         <div>
-                            <div className="flex items-center gap-2 mb-4">
-                                <AlertCircle className="text-red-600" size={24} />
-                                <h2 className="text-xl font-bold text-red-600">Urgent ({urgentTasks.length})</h2>
+                            <div className="flex items-center gap-2 mb-3 md:mb-4">
+                                <AlertCircle className="text-red-600" size={20} />
+                                <h2 className="text-lg md:text-xl font-bold text-red-600">Urgent ({urgentTasks.length})</h2>
                             </div>
-                            <div className="grid gap-4">
+                            <div className="grid gap-3 md:gap-4">
                                 {urgentTasks.map(task => (
                                     <Link key={task.id} href="/admin/designers/tasks">
-                                        <div className="bg-white p-6 rounded-xl border-2 border-red-200 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div>
-                                                    <h3 className="text-lg font-bold text-gray-900">{task.title}</h3>
-                                                    <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                                                        <User size={16} />
+                                        <div className="bg-white p-4 md:p-6 rounded-lg md:rounded-xl border-2 border-red-200 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
+                                            <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2 md:gap-0 mb-2 md:mb-3">
+                                                <div className="flex-1">
+                                                    <h3 className="text-base md:text-lg font-bold text-gray-900 line-clamp-2">{task.title}</h3>
+                                                    <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600 mt-1">
+                                                        <User size={14} className="md:hidden" />
+                                                        <User size={16} className="hidden md:block" />
                                                         <span>{task.client}</span>
                                                         <span className="text-gray-400">•</span>
                                                         <span>#{task.jobNumber}</span>
                                                     </div>
                                                 </div>
-                                                <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-bold">
+                                                <span className="px-2.5 md:px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs md:text-sm font-bold whitespace-nowrap self-start">
                                                     URGENT
                                                 </span>
                                             </div>
                                             {task.deadline && (
-                                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                    <Clock size={16} />
+                                                <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600">
+                                                    <Clock size={14} className="md:hidden" />
+                                                    <Clock size={16} className="hidden md:block" />
                                                     <span>Due: {new Date(task.deadline).toLocaleDateString()}</span>
                                                 </div>
                                             )}
@@ -109,31 +111,33 @@ export default function MyQueue() {
                     {/* High Priority */}
                     {highTasks.length > 0 && (
                         <div>
-                            <div className="flex items-center gap-2 mb-4">
-                                <AlertCircle className="text-orange-600" size={24} />
-                                <h2 className="text-xl font-bold text-orange-600">High Priority ({highTasks.length})</h2>
+                            <div className="flex items-center gap-2 mb-3 md:mb-4">
+                                <AlertCircle className="text-orange-600" size={20} />
+                                <h2 className="text-lg md:text-xl font-bold text-orange-600">High Priority ({highTasks.length})</h2>
                             </div>
-                            <div className="grid gap-4">
+                            <div className="grid gap-3 md:gap-4">
                                 {highTasks.map(task => (
                                     <Link key={task.id} href="/admin/designers/tasks">
-                                        <div className="bg-white p-6 rounded-xl border-2 border-orange-200 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div>
-                                                    <h3 className="text-lg font-bold text-gray-900">{task.title}</h3>
-                                                    <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                                                        <User size={16} />
+                                        <div className="bg-white p-4 md:p-6 rounded-lg md:rounded-xl border-2 border-orange-200 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
+                                            <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2 md:gap-0 mb-2 md:mb-3">
+                                                <div className="flex-1">
+                                                    <h3 className="text-base md:text-lg font-bold text-gray-900 line-clamp-2">{task.title}</h3>
+                                                    <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600 mt-1">
+                                                        <User size={14} className="md:hidden" />
+                                                        <User size={16} className="hidden md:block" />
                                                         <span>{task.client}</span>
                                                         <span className="text-gray-400">•</span>
                                                         <span>#{task.jobNumber}</span>
                                                     </div>
                                                 </div>
-                                                <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-bold">
+                                                <span className="px-2.5 md:px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs md:text-sm font-bold whitespace-nowrap self-start">
                                                     HIGH
                                                 </span>
                                             </div>
                                             {task.deadline && (
-                                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                    <Clock size={16} />
+                                                <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600">
+                                                    <Clock size={14} className="md:hidden" />
+                                                    <Clock size={16} className="hidden md:block" />
                                                     <span>Due: {new Date(task.deadline).toLocaleDateString()}</span>
                                                 </div>
                                             )}
@@ -146,11 +150,11 @@ export default function MyQueue() {
                     {/* Normal Tasks */}
                     {normalTasks.length > 0 && (
                         <div>
-                            <div className="flex items-center gap-2 mb-4">
-                                <Calendar className="text-blue-600" size={24} />
-                                <h2 className="text-xl font-bold text-blue-600">All Tasks ({normalTasks.length})</h2>
+                            <div className="flex items-center gap-2 mb-3 md:mb-4">
+                                <Calendar className="text-blue-600" size={20} />
+                                <h2 className="text-lg md:text-xl font-bold text-blue-600">All Tasks ({normalTasks.length})</h2>
                             </div>
-                            <div className="grid gap-4">
+                            <div className="grid gap-3 md:gap-4">
                                 {normalTasks.map(task => (
                                     <Link key={task.id} href="/admin/designers/tasks">
                                         <div className="bg-white p-6 rounded-xl border shadow-sm hover:shadow-md transition-shadow cursor-pointer">
