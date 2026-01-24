@@ -133,6 +133,12 @@ const menuItems: MenuItem[] = [
     icon: FileText,
     href: '/admin/reports',
     allowedRoles: ['admin', 'finance'],
+    submenu: [
+      { name: 'Overview', href: '/admin/reports' },
+      { name: 'Finance Reports', href: '/admin/reports/finance' },
+      { name: 'Sales Reports', href: '/admin/reports/sales' },
+      { name: 'Dispatch Reports', href: '/admin/reports/dispatch' },
+    ]
   },
   {
     name: 'Activity',
@@ -151,6 +157,15 @@ const menuItems: MenuItem[] = [
     icon: Settings,
     href: '/admin/settings',
     allowedRoles: ['admin'],
+    submenu: [
+      { name: 'General', href: '/admin/settings' },
+      { name: 'Company Info', href: '/admin/settings/company' },
+      { name: 'My Profile', href: '/admin/settings/profile' },
+      { name: 'User Management', href: '/admin/settings/users' },
+      { name: 'Notifications', href: '/admin/settings/notifications' },
+      { name: 'Preferences', href: '/admin/settings/preferences' },
+      { name: 'Production Settings', href: '/admin/settings/production' },
+    ]
   },
 ];
 
