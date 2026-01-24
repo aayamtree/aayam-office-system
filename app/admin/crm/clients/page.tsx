@@ -108,14 +108,14 @@ export default function ClientsPage() {
   if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /><span className="ml-2">Loading...</span></div>;
 
   return (
-    <div className="space-y-4 lg:space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-4 lg:space-y-6 animate-fade-in px-3 md:px-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/crm" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden"><ArrowLeft size={20} /></Link>
-          <div><h1 className="text-xl lg:text-2xl font-bold text-gray-900">Clients</h1><p className="text-sm text-gray-500">{filteredClients.length} clients</p></div>
+          <div><h1 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900">Clients</h1><p className="text-xs md:text-sm text-gray-500">{filteredClients.length} clients</p></div>
         </div>
         {profile?.role !== 'marketing' && (
-          <button onClick={handleAddNew} className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-colors shadow-lg shadow-gray-900/20"><Plus size={18} /><span>Add Client</span></button>
+          <button onClick={handleAddNew} className="flex items-center justify-center gap-2 bg-gray-900 text-white px-3 md:px-4 py-2 md:py-2.5 rounded-xl hover:bg-gray-800 transition-colors shadow-lg shadow-gray-900/20 text-sm md:text-base"><Plus size={16} className="md:hidden" /><Plus size={18} className="hidden md:block" /><span>Add Client</span></button>
         )}
       </div>
 
