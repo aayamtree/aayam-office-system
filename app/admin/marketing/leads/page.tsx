@@ -241,39 +241,40 @@ export default function LeadsPage() {
     }
 
     return (
-        <div className="space-y-6 pb-20 animate-fade-in text-sm lg:text-base">
+        <div className="space-y-4 md:space-y-6 pb-12 md:pb-20 animate-fade-in text-sm lg:text-base px-3 md:px-0">
 
             {/* HEADER */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 md:gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Leads & Enquiries (Marketing)</h1>
-                    <p className="text-gray-500 text-sm">Manage potential clients and follow-ups</p>
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-900">Leads & Enquiries (Marketing)</h1>
+                    <p className="text-gray-500 text-xs md:text-sm">Manage potential clients and follow-ups</p>
                 </div>
                 <button
                     onClick={handleAddNew}
-                    className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-indigo-200 transition-all hover:scale-105 active:scale-95"
+                    className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 md:px-5 py-2 md:py-2.5 rounded-xl font-medium shadow-lg shadow-indigo-200 transition-all hover:scale-105 active:scale-95 text-sm md:text-base"
                 >
-                    <Plus size={18} />
+                    <Plus size={16} className="md:hidden" />
+                    <Plus size={18} className="hidden md:block" />
                     <span>New Lead</span>
                 </button>
             </div>
 
             {/* FILTERS */}
-            <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 bg-white p-3 md:p-4 rounded-xl md:rounded-2xl shadow-sm border border-gray-100">
                 <div className="relative flex-1">
-                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Search size={16} className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                         type="text"
                         placeholder="Search name, phone, company..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-gray-900 placeholder-gray-400"
+                        className="w-full pl-9 md:pl-11 pr-3 md:pr-4 py-2 md:py-2.5 bg-gray-50 border-0 rounded-lg md:rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-sm md:text-base text-gray-900 placeholder-gray-400"
                     />
                 </div>
                 <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-indigo-500/20 font-medium text-gray-700 cursor-pointer"
+                    className="px-3 md:px-4 py-2 md:py-2.5 bg-gray-50 border-0 rounded-lg md:rounded-xl focus:ring-2 focus:ring-indigo-500/20 font-medium text-sm md:text-base text-gray-700 cursor-pointer"
                 >
                     <option value="all">All Status</option>
                     <option value="new">New</option>
@@ -286,15 +287,15 @@ export default function LeadsPage() {
             </div>
 
             {/* LEAD LIST */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
                 {filteredLeads.length === 0 ? (
-                    <div className="col-span-full py-12 text-center text-gray-400 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                    <div className="col-span-full py-8 md:py-12 text-center text-sm md:text-base text-gray-400 bg-gray-50 rounded-xl md:rounded-2xl border-2 border-dashed border-gray-200">
                         No leads found matching your search.
                         <br /><span className="text-xs text-gray-300">If you just added a lead, try refreshing the page manually.</span>
                     </div>
                 ) : (
                     filteredLeads.map((lead) => (
-                        <div key={lead.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all group relative overflow-hidden">
+                        <div key={lead.id} className="bg-white rounded-xl md:rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all group relative overflow-hidden">
                             {/* Status Strip */}
                             <div className={`absolute top-0 left-0 w-1.5 h-full 
                  ${lead.status === 'new' ? 'bg-blue-500' :
