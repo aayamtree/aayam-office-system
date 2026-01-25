@@ -357,7 +357,6 @@ export default function VendorPurchasesPage() {
                   <input
                     type="file"
                     accept="image/*,application/pdf"
-                    capture="environment"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
@@ -371,7 +370,7 @@ export default function VendorPurchasesPage() {
                   {formData.attachmentUrl && (
                     <p className="text-xs text-green-600 mt-1">✓ {formData.attachmentUrl}</p>
                   )}
-                  <p className="text-xs text-gray-500 mt-1">Upload invoice as image or PDF from gallery/camera</p>
+                  <p className="text-xs text-gray-500 mt-1">Choose from gallery or take photo</p>
                 </div>
               </div>
 
