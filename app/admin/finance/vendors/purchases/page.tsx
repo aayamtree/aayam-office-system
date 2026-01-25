@@ -356,7 +356,7 @@ export default function VendorPurchasesPage() {
                   <label className="block text-sm font-medium mb-1.5">Attachment (Invoice/Slip)</label>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,application/pdf"
                     capture="environment"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
@@ -371,7 +371,7 @@ export default function VendorPurchasesPage() {
                   {formData.attachmentUrl && (
                     <p className="text-xs text-green-600 mt-1">✓ {formData.attachmentUrl}</p>
                   )}
-                  <p className="text-xs text-gray-500 mt-1">Upload invoice image from gallery or camera</p>
+                  <p className="text-xs text-gray-500 mt-1">Upload invoice as image or PDF from gallery/camera</p>
                 </div>
               </div>
 
