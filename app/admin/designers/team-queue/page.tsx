@@ -189,41 +189,39 @@ export default function TeamQueue() {
                                         <th className="text-left p-4 font-semibold text-gray-700">Deadline</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y">
+                                <tbody>
                                     {filteredTasks.map(task => (
-                                        <Link key={task.id} href="/admin/designers/tasks" className="contents">
-                                            <tr className="hover:bg-gray-50 cursor-pointer">
-                                                <td className="p-4">
-                                                    <div className="font-semibold text-gray-900">{task.title}</div>
-                                                    <div className="text-sm text-gray-500">#{task.jobNumber}</div>
-                                                </td>
-                                                <td className="p-4 text-gray-700">{task.client}</td>
-                                                <td className="p-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <User size={16} className="text-gray-400" />
-                                                        <span className="text-gray-700">{task.designer}</span>
+                                        <tr key={task.id} className="hover:bg-gray-50 cursor-pointer border-b border-gray-200" onClick={() => window.location.href = '/admin/designers/tasks'}>
+                                            <td className="p-4">
+                                                <div className="font-semibold text-gray-900">{task.title}</div>
+                                                <div className="text-sm text-gray-500">#{task.jobNumber}</div>
+                                            </td>
+                                            <td className="p-4 text-gray-700">{task.client}</td>
+                                            <td className="p-4">
+                                                <div className="flex items-center gap-2">
+                                                    <User size={16} className="text-gray-400" />
+                                                    <span className="text-gray-700">{task.designer}</span>
+                                                </div>
+                                            </td>
+                                            <td className="p-4">
+                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
+                                                    task.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                                                        'bg-gray-100 text-gray-700'
+                                                    }`}>
+                                                    {task.status}
+                                                </span>
+                                            </td>
+                                            <td className="p-4">
+                                                {task.deadline ? (
+                                                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                        <Clock size={16} />
+                                                        {new Date(task.deadline).toLocaleDateString()}
                                                     </div>
-                                                </td>
-                                                <td className="p-4">
-                                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
-                                                        task.priority === 'high' ? 'bg-orange-100 text-orange-700' :
-                                                            'bg-gray-100 text-gray-700'
-                                                        }`}>
-                                                        {task.status}
-                                                    </span>
-                                                </td>
-                                                <td className="p-4">
-                                                    {task.deadline ? (
-                                                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                            <Clock size={16} />
-                                                            {new Date(task.deadline).toLocaleDateString()}
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-gray-400 text-sm">No deadline</span>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        </Link>
+                                                ) : (
+                                                    <span className="text-gray-400 text-sm">No deadline</span>
+                                                )}
+                                            </td>
+                                        </tr>
                                     ))}
                                     {filteredTasks.length === 0 && (
                                         <tr>
