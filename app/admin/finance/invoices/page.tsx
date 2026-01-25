@@ -690,15 +690,15 @@ export default function InvoicesPage() {
                     </select>
                   </div>
 
-                  <div>
+                  <div className="sm:col-span-1">
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Due Date *</label>
                     <input
                       type="date"
                       required
                       value={formData.dueDate}
                       onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                      style={{ boxSizing: 'border-box' }}
-                      className="w-full max-w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm text-sm md:text-base [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
+                      style={{ boxSizing: 'border-box', minWidth: 0 }}
+                      className="w-full max-w-[200px] sm:max-w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm text-sm md:text-base"
                     />
                   </div>
                 </div>
