@@ -100,47 +100,51 @@ export default function JobQueuePage() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-6 animate-fade-in">
+    <div className="space-y-4 lg:space-y-6 animate-fade-in px-3 md:px-0">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 md:gap-3">
         <Link href="/admin/jobs" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
           <ArrowLeft size={20} />
         </Link>
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Job Queue</h1>
-          <p className="text-sm text-gray-500">{filteredJobs.length} jobs in system</p>
+          <h1 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900">Job Queue</h1>
+          <p className="text-xs md:text-sm text-gray-500">{filteredJobs.length} jobs in system</p>
         </div>
       </div>
 
       {/* Stats Cards - Updated Layout */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-purple-50 border border-purple-200 rounded-xl p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <Clock size={16} className="text-purple-600" />
-            <span className="text-xs text-purple-600 font-medium">Design Stage</span>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+        <div className="bg-purple-50 border border-purple-200 rounded-lg md:rounded-xl p-2 md:p-3">
+          <div className="flex items-center gap-1 md:gap-2 mb-1">
+            <Clock size={14} className="text-purple-600 md:hidden" />
+            <Clock size={16} className="text-purple-600 hidden md:block" />
+            <span className="text-[10px] md:text-xs text-purple-600 font-medium">Design Stage</span>
           </div>
-          <p className="text-2xl font-bold text-purple-700">{designCount}</p>
+          <p className="text-xl md:text-2xl font-bold text-purple-700">{designCount}</p>
         </div>
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <Printer size={16} className="text-blue-600" />
-            <span className="text-xs text-blue-600 font-medium">In Production</span>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg md:rounded-xl p-2 md:p-3">
+          <div className="flex items-center gap-1 md:gap-2 mb-1">
+            <Printer size={14} className="text-blue-600 md:hidden" />
+            <Printer size={16} className="text-blue-600 hidden md:block" />
+            <span className="text-[10px] md:text-xs text-blue-600 font-medium">In Production</span>
           </div>
-          <p className="text-2xl font-bold text-blue-700">{productionCount}</p>
+          <p className="text-xl md:text-2xl font-bold text-blue-700">{productionCount}</p>
         </div>
-        <div className="bg-green-50 border border-green-200 rounded-xl p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <CheckCircle size={16} className="text-green-600" />
-            <span className="text-xs text-green-600 font-medium">Dispatched</span>
+        <div className="bg-green-50 border border-green-200 rounded-lg md:rounded-xl p-2 md:p-3">
+          <div className="flex items-center gap-1 md:gap-2 mb-1">
+            <CheckCircle size={14} className="text-green-600 md:hidden" />
+            <CheckCircle size={16} className="text-green-600 hidden md:block" />
+            <span className="text-[10px] md:text-xs text-green-600 font-medium">Dispatched</span>
           </div>
-          <p className="text-2xl font-bold text-green-700">{dispatchedCount}</p>
+          <p className="text-xl md:text-2xl font-bold text-green-700">{dispatchedCount}</p>
         </div>
-        <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <AlertTriangle size={16} className="text-red-600" />
-            <span className="text-xs text-red-600 font-medium">High Priority</span>
+        <div className="bg-red-50 border border-red-200 rounded-lg md:rounded-xl p-2 md:p-3">
+          <div className="flex items-center gap-1 md:gap-2 mb-1">
+            <AlertTriangle size={14} className="text-red-600 md:hidden" />
+            <AlertTriangle size={16} className="text-red-600 hidden md:block" />
+            <span className="text-[10px] md:text-xs text-red-600 font-medium">High Priority</span>
           </div>
-          <p className="text-2xl font-bold text-red-700">{urgentCount}</p>
+          <p className="text-xl md:text-2xl font-bold text-red-700">{urgentCount}</p>
         </div>
       </div>
 

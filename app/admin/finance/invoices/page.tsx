@@ -417,23 +417,24 @@ export default function InvoicesPage() {
     .reduce((sum, i) => sum + (i.total_amount - i.amount_paid), 0);
 
   return (
-    <div className="space-y-4 lg:space-y-6">
+    <div className="space-y-4 lg:space-y-6 px-3 md:px-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
+        <div className="flex items-center gap-2 md:gap-3">
           <Link href="/admin/finance" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Invoices</h1>
-            <p className="text-sm text-gray-500">{filteredInvoices.length} invoices • Outstanding: {formatCurrency(totalOutstanding)}</p>
+            <h1 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900">Invoices</h1>
+            <p className="text-xs md:text-sm text-gray-500">{filteredInvoices.length} invoices • Outstanding: {formatCurrency(totalOutstanding)}</p>
           </div>
         </div>
         <button
           onClick={handleAddNew}
-          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-colors"
+          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-3 md:px-4 py-2 md:py-2.5 rounded-xl hover:bg-gray-800 transition-colors text-sm md:text-base"
         >
-          <Plus size={18} />
+          <Plus size={16} className="md:hidden" />
+          <Plus size={18} className="hidden md:block" />
           <span>New Invoice</span>
         </button>
       </div>
@@ -476,16 +477,16 @@ export default function InvoicesPage() {
       }
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-3">
         {[
           { status: 'pending', label: 'Pending', bg: 'bg-gray-100 border-gray-200', text: 'text-gray-700' },
           { status: 'partial', label: 'Partial', bg: 'bg-amber-100 border-amber-200', text: 'text-amber-700' },
           { status: 'paid', label: 'Paid', bg: 'bg-green-100 border-green-200', text: 'text-green-700' },
           { status: 'overdue', label: 'Overdue', bg: 'bg-red-100 border-red-200', text: 'text-red-700' },
         ].map((item) => (
-          <div key={item.status} className={`rounded-xl p-3 text-center border ${item.bg}`}>
-            <p className={`text-xl font-bold ${item.text}`}>{invoices.filter(i => i.payment_status === item.status).length}</p>
-            <p className={`text-xs font-medium ${item.text}`}>{item.label}</p>
+          <div key={item.status} className={`rounded-lg md:rounded-xl p-2 md:p-3 text-center border ${item.bg}`}>
+            <p className={`text-lg md:text-xl font-bold ${item.text}`}>{invoices.filter(i => i.payment_status === item.status).length}</p>
+            <p className={`text-[10px] md:text-xs font-medium ${item.text}`}>{item.label}</p>
           </div>
         ))}
       </div>
