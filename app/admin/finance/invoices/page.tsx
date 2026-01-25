@@ -664,7 +664,7 @@ export default function InvoicesPage() {
                       required
                       value={formData.clientId}
                       onChange={(e) => setFormData({ ...formData, clientId: e.target.value, jobId: '' })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
+                      className="w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm text-sm md:text-base"
                     >
                       <option value="">Select Client</option>
                       {clients.map(c => (
@@ -679,7 +679,7 @@ export default function InvoicesPage() {
                       value={formData.jobId}
                       onChange={(e) => setFormData({ ...formData, jobId: e.target.value })}
                       disabled={!formData.clientId}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm disabled:bg-gray-100 disabled:text-gray-400"
+                      className="w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm disabled:bg-gray-100 disabled:text-gray-400 text-sm md:text-base"
                     >
                       <option value="">Select Job (Optional)</option>
                       {jobs
