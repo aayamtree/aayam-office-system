@@ -40,7 +40,8 @@ export default function VendorPurchasesPage() {
     gstRate: 18,
     jobId: '',
     billDate: new Date().toISOString().split('T')[0],
-    dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    attachmentUrl: ''
   });
 
   const filteredPurchases = purchases.filter(p => {
@@ -111,7 +112,8 @@ export default function VendorPurchasesPage() {
     setFormData({
       vendorId: '', productType: 'Boxes', description: '', quantity: 0, rate: 0,
       gstRate: 18, jobId: '', billDate: new Date().toISOString().split('T')[0],
-      dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      attachmentUrl: ''
     });
     setEditingPurchase(null);
     setShowModal(false);
@@ -127,7 +129,8 @@ export default function VendorPurchasesPage() {
       gstRate: purchase.gst_rate || 18,
       jobId: purchase.job_id || '',
       billDate: purchase.bill_date || '',
-      dueDate: purchase.due_date || ''
+      dueDate: purchase.due_date || '',
+      attachmentUrl: purchase.attachment_url || ''
     });
     setEditingPurchase(purchase);
     setShowModal(true);
@@ -339,13 +342,36 @@ export default function VendorPurchasesPage() {
                   <label className="block text-sm font-medium mb-1.5">Bill Date *</label>
                   <input type="date" required value={formData.billDate}
                     onChange={(e) => setFormData({ ...formData, billDate: e.target.value })}
-                    className="w-full px-3 py-2.5 border rounded-lg" />
+                    style={{ boxSizing: 'border-box', minWidth: 0 }}
+                    className="w-full max-w-[200px] sm:max-w-full px-2 py-2 md:px-3 md:py-2.5 border rounded-lg text-sm" />
                 </div>
-                <div className="col-span-2">
+                <div>
                   <label className="block text-sm font-medium mb-1.5">Due Date *</label>
                   <input type="date" required value={formData.dueDate}
                     onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                    className="w-full px-3 py-2.5 border rounded-lg" />
+                    style={{ boxSizing: 'border-box', minWidth: 0 }}
+                    className="w-full max-w-[200px] sm:max-w-full px-2 py-2 md:px-3 md:py-2.5 border rounded-lg text-sm" />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium mb-1.5">Attachment (Invoice/Slip)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        // TODO: Upload to storage and get URL
+                        // For now, store filename
+                        setFormData({ ...formData, attachmentUrl: file.name });
+                      }
+                    }}
+                    className="w-full px-3 py-2 border rounded-lg text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                  />
+                  {formData.attachmentUrl && (
+                    <p className="text-xs text-green-600 mt-1">✓ {formData.attachmentUrl}</p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">Upload invoice image from gallery or camera</p>
                 </div>
               </div>
 
