@@ -115,29 +115,31 @@ export default function DispatchPage() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-4 md:space-y-6 animate-fade-in px-3 md:px-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dispatch Command Center</h1>
-          <p className="text-gray-500">Welcome, {profile?.full_name || 'Dispatcher'} | QC & Logistics</p>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Dispatch Command Center</h1>
+          <p className="text-sm md:text-base text-gray-500">Welcome, {profile?.full_name || 'Dispatcher'} | QC & Logistics</p>
         </div>
         <Link
           href="/admin/dispatch/qc-check"
-          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-colors"
+          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-3 md:px-4 py-2 md:py-2.5 rounded-xl hover:bg-gray-800 transition-colors text-sm md:text-base"
         >
-          <ClipboardCheck size={18} />
+          <ClipboardCheck size={16} className="md:hidden" />
+          <ClipboardCheck size={18} className="hidden md:block" />
           <span>Start QC</span>
         </Link>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-2xl p-4 lg:p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3 mb-3">
-              <div className={`w-10 h-10 ${stat.color} rounded-xl flex items-center justify-center`}>
-                <stat.icon size={20} className="text-white" />
+          <div key={stat.label} className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
+              <div className={`w-8 h-8 md:w-10 md:h-10 ${stat.color} rounded-lg md:rounded-xl flex items-center justify-center`}>
+                <stat.icon size={16} className="text-white md:hidden" />
+                <stat.icon size={20} className="text-white hidden md:block" />
               </div>
             </div>
             <p className="text-2xl lg:text-3xl font-bold text-gray-900">

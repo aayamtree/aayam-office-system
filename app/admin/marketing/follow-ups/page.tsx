@@ -188,33 +188,34 @@ export default function MarketingFollowUpsPage() {
   if (leadsLoading || followUpsLoading) return <div className="p-12 text-center"><Loader2 className="animate-spin mx-auto" /> Loading Data...</div>;
 
   return (
-    <div className="p-4 sm:p-6 space-y-5 animate-fade-in">
+    <div className="p-3 md:p-4 lg:p-6 space-y-4 md:space-y-5 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Follow-ups</h1>
-          <p className="text-gray-500">Track and manage your client follow-ups</p>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Follow-ups</h1>
+          <p className="text-sm md:text-base text-gray-500">Track and manage your client follow-ups</p>
         </div>
         <button onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 font-medium">
-          <Plus size={18} />
+          className="flex items-center gap-2 bg-indigo-600 text-white px-3 md:px-4 py-2 md:py-2.5 rounded-lg hover:bg-indigo-700 font-medium text-sm md:text-base w-full sm:w-auto justify-center">
+          <Plus size={16} className="md:hidden" />
+          <Plus size={18} className="hidden md:block" />
           <span>Add Follow-up</span>
         </button>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border p-4">
-          <p className="text-sm text-gray-500">Today</p>
-          <p className="text-2xl font-bold text-blue-600">{todayFollowUps.length}</p>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+        <div className="bg-white rounded-lg md:rounded-xl shadow-sm border p-3 md:p-4">
+          <p className="text-xs md:text-sm text-gray-500">Today</p>
+          <p className="text-xl md:text-2xl font-bold text-blue-600">{todayFollowUps.length}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-4">
-          <p className="text-sm text-gray-500">Upcoming</p>
-          <p className="text-2xl font-bold text-green-600">{upcomingFollowUps.length}</p>
+        <div className="bg-white rounded-lg md:rounded-xl shadow-sm border p-3 md:p-4">
+          <p className="text-xs md:text-sm text-gray-500">Upcoming</p>
+          <p className="text-xl md:text-2xl font-bold text-green-600">{upcomingFollowUps.length}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-4">
-          <p className="text-sm text-gray-500">Overdue</p>
-          <p className="text-2xl font-bold text-red-600">{overdueFollowUps.length}</p>
+        <div className="bg-white rounded-lg md:rounded-xl shadow-sm border p-3 md:p-4">
+          <p className="text-xs md:text-sm text-gray-500">Overdue</p>
+          <p className="text-xl md:text-2xl font-bold text-red-600">{overdueFollowUps.length}</p>
         </div>
       </div>
 
