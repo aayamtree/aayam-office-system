@@ -343,15 +343,15 @@ export default function VendorPurchasesPage() {
                   <label className="block text-sm font-medium mb-1.5">Bill Date *</label>
                   <input type="date" required value={formData.billDate}
                     onChange={(e) => setFormData({ ...formData, billDate: e.target.value })}
-                    style={{ boxSizing: 'border-box', minWidth: 0 }}
-                    className="w-full max-w-[180px] sm:max-w-full px-1.5 py-1.5 md:px-3 md:py-2.5 border rounded-lg text-xs sm:text-sm" />
+                    style={{ boxSizing: 'border-box', minWidth: 0, fontSize: '11px' }}
+                    className="w-full max-w-[150px] sm:max-w-full px-1.5 py-1.5 md:px-3 md:py-2.5 border rounded-lg md:text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Due Date *</label>
                   <input type="date" required value={formData.dueDate}
                     onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                    style={{ boxSizing: 'border-box', minWidth: 0 }}
-                    className="w-full max-w-[180px] sm:max-w-full px-1.5 py-1.5 md:px-3 md:py-2.5 border rounded-lg text-xs sm:text-sm" />
+                    style={{ boxSizing: 'border-box', minWidth: 0, fontSize: '11px' }}
+                    className="w-full max-w-[150px] sm:max-w-full px-1.5 py-1.5 md:px-3 md:py-2.5 border rounded-lg md:text-sm" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-sm font-medium mb-1.5">Attachment (Invoice/Slip)</label>
