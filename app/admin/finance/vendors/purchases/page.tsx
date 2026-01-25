@@ -330,7 +330,8 @@ export default function VendorPurchasesPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1.5">GST Rate</label>
                   <select value={formData.gstRate} onChange={(e) => setFormData({ ...formData, gstRate: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2.5 border rounded-lg">
+                    style={{ boxSizing: 'border-box', minWidth: 0 }}
+                    className="w-full max-w-[180px] sm:max-w-full px-1.5 py-1.5 md:px-3 md:py-2.5 border rounded-lg text-xs sm:text-sm bg-white">
                     <option value={0}>0%</option>
                     <option value={5}>5%</option>
                     <option value={12}>12%</option>
@@ -350,7 +351,7 @@ export default function VendorPurchasesPage() {
                   <input type="date" required value={formData.dueDate}
                     onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                     style={{ boxSizing: 'border-box', minWidth: 0 }}
-                    className="w-full max-w-[200px] sm:max-w-full px-2 py-2 md:px-3 md:py-2.5 border rounded-lg text-sm" />
+                    className="w-full max-w-[180px] sm:max-w-full px-1.5 py-1.5 md:px-3 md:py-2.5 border rounded-lg text-xs sm:text-sm" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-sm font-medium mb-1.5">Attachment (Invoice/Slip)</label>
