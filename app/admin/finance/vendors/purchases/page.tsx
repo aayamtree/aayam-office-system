@@ -343,7 +343,7 @@ export default function VendorPurchasesPage() {
                   <input type="date" required value={formData.billDate}
                     onChange={(e) => setFormData({ ...formData, billDate: e.target.value })}
                     style={{ boxSizing: 'border-box', minWidth: 0 }}
-                    className="w-full max-w-[200px] sm:max-w-full px-2 py-2 md:px-3 md:py-2.5 border rounded-lg text-sm" />
+                    className="w-full max-w-[180px] sm:max-w-full px-1.5 py-1.5 md:px-3 md:py-2.5 border rounded-lg text-xs sm:text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Due Date *</label>
