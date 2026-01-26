@@ -26,8 +26,10 @@ export default function Header({ onMenuClick }: HeaderProps) {
     // Remove /admin and split
     const pathSegments = pathname.split('/').filter(p => p !== '' && p !== 'admin');
 
-    // Default to Dashboard if empty
-    if (pathSegments.length === 0) return [{ label: 'Dashboard', href: '/admin/dashboard' }];
+    // Default to Dashboard if empty or on /admin/dashboard
+    if (pathSegments.length === 0 || (pathSegments.length === 1 && pathSegments[0] === 'dashboard')) {
+      return [{ label: 'Dashboard', href: '/admin/dashboard' }];
+    }
 
     const segmentLabels: Record<string, string> = {
       'crm': 'CRM',

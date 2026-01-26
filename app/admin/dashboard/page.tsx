@@ -34,16 +34,22 @@ export default function AdminDashboard() {
     orderBy: { column: 'created_at', ascending: false }
   });
 
-  // Redirect Designers to their specific workspace
+  // Redirect non-admin users to their specific dashboards
   useEffect(() => {
     if (profile?.role === 'designer') {
       router.replace('/admin/designers/tasks');
+    } else if (profile?.role === 'dispatch') {
+      router.replace('/admin/dispatch');
+    } else if (profile?.role === 'marketing') {
+      router.replace('/admin/marketing');
+    } else if (profile?.role === 'cmyk') {
+      router.replace('/admin/cmyk-print');
     }
   }, [profile, router]);
 
-  // Prevent flash of admin content for designers
-  if (profile?.role === 'designer') {
-    return <div className="h-screen flex items-center justify-center bg-gray-50 text-gray-500">Redirecting to workspace...</div>;
+  // Prevent flash of admin content for non-admin users
+  if (profile?.role && profile.role !== 'admin') {
+    return <div className="h-screen flex items-center justify-center bg-gray-50 text-gray-500">Redirecting to your dashboard...</div>;
   }
 
   const formatCurrency = (amount: number) => {

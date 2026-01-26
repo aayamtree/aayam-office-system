@@ -25,7 +25,10 @@ export default function LoginPage() {
         router.push('/admin/dispatch');
       } else if (profile.role === 'marketing') {
         router.push('/admin/marketing');
+      } else if (profile.role === 'cmyk') {
+        router.push('/admin/cmyk-print');
       } else {
+        // Admin only
         router.push('/admin/dashboard');
       }
     }
