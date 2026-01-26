@@ -24,7 +24,8 @@ export default function DispatchPage() {
     driver_name: '',
     driver_phone: '',
     packages: 1,
-    notes: ''
+    notes: '',
+    attachmentUrl: ''
   });
 
   const loading = jobsLoading || dispatchesLoading;
@@ -79,7 +80,8 @@ export default function DispatchPage() {
     setSelectedJob(job);
     setDispatchForm({
       transporter_name: '', tracking_number: '', vehicle_number: '',
-      driver_name: '', driver_phone: '', packages: job.quantity || 1, notes: ''
+      driver_name: '', driver_phone: '', packages: job.quantity || 1, notes: '',
+      attachmentUrl: ''
     });
     setShowDispatchModal(true);
   };
@@ -320,6 +322,27 @@ export default function DispatchPage() {
                 <textarea rows={3} placeholder="Any delivery instructions..."
                   value={dispatchForm.notes} onChange={e => setDispatchForm({ ...dispatchForm, notes: e.target.value })}
                   className="w-full px-3 py-2 border rounded-xl" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Attachment (Transport Slip/Package Photo)</label>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      // TODO: Upload to storage and get URL
+                      // For now, store filename
+                      setDispatchForm({ ...dispatchForm, attachmentUrl: file.name });
+                    }
+                  }}
+                  className="w-full px-3 py-2 border rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
+                />
+                {dispatchForm.attachmentUrl && (
+                  <p className="text-xs text-green-600 mt-1">✓ {dispatchForm.attachmentUrl}</p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">Upload slip/photo from gallery or camera</p>
               </div>
 
               <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-500 flex gap-2">

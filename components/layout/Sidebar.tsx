@@ -110,12 +110,6 @@ const menuItems: MenuItem[] = [
     icon: Truck,
     href: '/admin/dispatch',
     allowedRoles: ['admin', 'dispatch'],
-    submenu: [
-      { name: 'Command Center', href: '/admin/dispatch' },
-      { name: 'QC & Packing', href: '/admin/dispatch/qc-check' },
-      { name: 'Delivery History', href: '/admin/dispatch/history' },
-      { name: 'Transporters', href: '/admin/dispatch/transporters' },
-    ]
   },
   {
     name: 'CMYK Print',
