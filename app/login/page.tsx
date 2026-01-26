@@ -16,12 +16,15 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Redirect if already logged in
   // Redirect if already logged in - Optimized for Role
   useEffect(() => {
     if (!loading && profile) {
       if (profile.role === 'designer') {
         router.push('/admin/designers/tasks');
+      } else if (profile.role === 'dispatch') {
+        router.push('/admin/dispatch');
+      } else if (profile.role === 'marketing') {
+        router.push('/admin/marketing');
       } else {
         router.push('/admin/dashboard');
       }
