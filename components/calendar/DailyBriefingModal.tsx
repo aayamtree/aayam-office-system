@@ -125,7 +125,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                                 <div>
                                     <div className="flex items-center gap-2 mb-3">
                                         <Calendar className="w-5 h-5 text-indigo-600" />
-                                        <h3 className="font-bold text-gray-900">Today's Tasks ({todayEvents.length})</h3>
+                                        <h3 className="font-bold text-gray-900">Today&apos;s Tasks ({todayEvents.length})</h3>
                                     </div>
                                     <div className="space-y-2">
                                         {todayEvents.map(event => (
@@ -140,7 +140,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                                 <div>
                                     <div className="flex items-center gap-2 mb-3">
                                         <User className="w-5 h-5 text-blue-600" />
-                                        <h3 className="font-bold text-gray-900">You're Tagged ({taggedEvents.length})</h3>
+                                        <h3 className="font-bold text-gray-900">You&apos;re Tagged ({taggedEvents.length})</h3>
                                     </div>
                                     <div className="space-y-2">
                                         {taggedEvents.slice(0, 3).map(event => (
@@ -159,7 +159,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                         onClick={onClose}
                         className="text-sm text-gray-600 hover:text-gray-900"
                     >
-                        I'll check this later
+                        I&apos;ll check this later
                     </button>
                     <button
                         onClick={() => {
@@ -188,12 +188,12 @@ function TaskCard({ event, isOverdue, isTagged }: { event: any; isOverdue?: bool
 
     return (
         <div className={`p-3 rounded-lg border-l-4 ${isCompleted
-                ? 'bg-green-50 border-l-green-500 opacity-75'
-                : isOverdue
-                    ? 'bg-red-50 border-l-red-500'
-                    : isTagged
-                        ? 'bg-blue-50 border-l-blue-500'
-                        : 'bg-gray-50 border-l-indigo-500'
+            ? 'bg-green-50 border-l-green-500 opacity-75'
+            : isOverdue
+                ? 'bg-red-50 border-l-red-500'
+                : isTagged
+                    ? 'bg-blue-50 border-l-blue-500'
+                    : 'bg-gray-50 border-l-indigo-500'
             }`}>
             <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -236,7 +236,7 @@ function TaskCard({ event, isOverdue, isTagged }: { event: any; isOverdue?: bool
                             </span>
                         )}
                         {isTagged && (
-                            <span className="text-blue-600">• You're mentioned</span>
+                            <span className="text-blue-600">• You&apos;re mentioned</span>
                         )}
                         {isCompleted && event.completed_at && (
                             <span className="text-green-600">
