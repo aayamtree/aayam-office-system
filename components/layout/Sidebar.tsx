@@ -110,6 +110,12 @@ const menuItems: MenuItem[] = [
     icon: Truck,
     href: '/admin/dispatch',
     allowedRoles: ['admin', 'dispatch'],
+    submenu: [
+      { name: 'Command Center', href: '/admin/dispatch' },
+      { name: 'QC & Packing', href: '/admin/dispatch/qc-check' },
+      { name: 'Delivery History', href: '/admin/dispatch/history' },
+      { name: 'Transporters', href: '/admin/dispatch/transporters' },
+    ]
   },
   {
     name: 'CMYK Print',
@@ -173,7 +179,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { profile, signOut } = useAuth();
-  const [expandedItems, setExpandedItems] = useState<string[]>(['Design Studio', 'Marketing', 'Sales & Finance', 'CRM']);
+  const [expandedItems, setExpandedItems] = useState<string[]>(['Design Studio', 'Marketing', 'Sales & Finance', 'CRM', 'Dispatch']);
 
   const { stats } = useDashboardStats(); // Fetch stats for badges
 
