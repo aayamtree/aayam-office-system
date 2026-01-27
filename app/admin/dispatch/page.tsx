@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Package, CheckCircle, Truck, Clock, AlertTriangle, ClipboardCheck, Loader2, X } from 'lucide-react';
 import { useJobs, useDispatches } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
+import DriveConnectionStatus from '@/components/drive/DriveConnectionStatus';
 import { Job, Dispatch } from '@/types/database';
 
 export default function DispatchPage() {

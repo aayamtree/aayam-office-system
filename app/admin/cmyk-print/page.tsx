@@ -5,6 +5,7 @@ import { Printer, ShoppingCart, Package, ListTodo, TrendingUp, Clock, CheckCircl
 import { useJobs, usePaperStock, usePOSSales } from '@/lib/hooks';
 import { Job, PaperStock, POSSale } from '@/types/database';
 import { useAuth } from '@/lib/auth-context';
+import DriveConnectionStatus from '@/components/drive/DriveConnectionStatus';
 
 export default function CMYKPrintPage() {
   const { profile } = useAuth();
@@ -60,9 +61,12 @@ export default function CMYKPrintPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">CMYK Print Station</h1>
-        <p className="text-gray-500">Welcome, {profile?.full_name || 'Operator'} | Ready for Production</p>
+      <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">CMYK Print Station</h1>
+          <p className="text-gray-500">Welcome, {profile?.full_name || 'Operator'} | Ready for Production</p>
+        </div>
+        <DriveConnectionStatus />
       </div>
 
       {/* Stats */}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/lib/auth-context';
+import DriveConnectionStatus from '@/components/drive/DriveConnectionStatus';
 import { useLeads } from '@/lib/hooks';
 import { Lead } from '@/types/database';
 import Link from 'next/link';
@@ -48,9 +49,12 @@ export default function MarketingDashboard() {
   return (
     <div className="space-y-8 animate-fade-in pb-10">
       {/* Welcome Header */}
-      <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Marketing Dashboard</h1>
-        <p className="text-gray-500 mt-1">Welcome back, {profile?.full_name || 'Marketer'}. Here is your daily focus.</p>
+      <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Marketing Dashboard</h1>
+          <p className="text-gray-500 mt-1">Welcome back, {profile?.full_name || 'Marketer'}. Here is your daily focus.</p>
+        </div>
+        <DriveConnectionStatus />
       </div>
 
       {/* Hero Stats */}
