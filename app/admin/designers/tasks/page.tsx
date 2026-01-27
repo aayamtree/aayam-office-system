@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import DriveConnectionStatus from '@/components/drive/DriveConnectionStatus';
 import { useJobs, useClients, useDesigners } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
 import {

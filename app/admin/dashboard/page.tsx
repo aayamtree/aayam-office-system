@@ -24,6 +24,7 @@ import NotesWidget from '@/components/dashboard/NotesWidget';
 import RemindersWidget from '@/components/dashboard/RemindersWidget';
 import ActivityFeed from '@/components/dashboard/ActivityFeed';
 import { usePageVisibility } from '@/lib/usePageVisibility';
+import DriveConnectionStatus from '@/components/drive/DriveConnectionStatus';
 
 export default function AdminDashboard() {
   const { profile } = useAuth();
@@ -166,9 +167,12 @@ export default function AdminDashboard() {
             </h1>
             <p className="text-indigo-200 text-sm md:text-base mt-1 md:mt-2">{dateStr}</p>
           </div>
-          <div className="flex items-center gap-1.5 md:gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 md:px-5 py-1.5 md:py-2.5 w-fit border border-white/10">
-            <span className="w-2 h-2 md:w-2.5 md:h-2.5 bg-green-400 rounded-full animate-pulse-soft"></span>
-            <span className="text-xs md:text-base font-medium">Live Dashboard</span>
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
+            <DriveConnectionStatus />
+            <div className="flex items-center gap-1.5 md:gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 md:px-5 py-1.5 md:py-2.5 w-fit border border-white/10">
+              <span className="w-2 h-2 md:w-2.5 md:h-2.5 bg-green-400 rounded-full animate-pulse-soft"></span>
+              <span className="text-xs md:text-base font-medium">Live Dashboard</span>
+            </div>
           </div>
         </div>
 
