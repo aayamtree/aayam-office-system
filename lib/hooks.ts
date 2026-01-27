@@ -7,7 +7,7 @@ import {
   Client, Vendor, Designer, Job, Invoice, Lead,
   Quotation, Dispatch, BankAccount, DesignTask, DesignProject,
   PurchaseBill, VendorPayment, PaymentReceived, POSCategory, POSProduct,
-  PaperStock, POSSale, Note, Reminder, BankTransaction, SalesOrder, ActivityLog, JobChecklist
+  PaperStock, POSSale, Note, Reminder, BankTransaction, SalesOrder, ActivityLog, JobChecklist, UserCalendarEvent
 } from '@/types/database';
 import { logActivity } from './logger';
 
@@ -1871,4 +1871,125 @@ export function useJobChecklists() {
   });
 
   return { checklists: data, loading, error, refetch };
+}
+
+// =============================================
+// PERSONAL CALENDAR HOOK
+// =============================================
+export function useCalendarEvents(startDate?: string, endDate?: string) {
+  // Build query conditions
+  const conditions: any[] = [];
+
+  if (startDate) {
+    conditions.push({ column: 'start_date', operator: 'gte', value: startDate });
+  }
+  if (endDate) {
+    conditions.push({ column: 'start_date', operator: 'lte', value: endDate });
+  }
+
+  const { data, loading, error, refetch } = useSupabaseQuery<UserCalendarEvent>('user_calendar_events', {
+    select: '*',
+    filter: conditions.length > 0 ? conditions : undefined,
+    orderBy: { column: 'start_date', ascending: true }
+  });
+
+  const createEvent = async (event: Partial<UserCalendarEvent>) => {
+    // user_id should be provided by the component
+    if (!event.user_id) throw new Error('user_id is required');
+
+    const newEvent = {
+      ...event,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const { data: created, error: createError } = await supabase
+      .from('user_calendar_events')
+      .insert([newEvent])
+      .select()
+      .single();
+
+    if (createError) throw createError;
+
+    // If there are tagged users, create mentions
+    if (event.tagged_users && event.tagged_users.length > 0) {
+      const mentions = event.tagged_users.map(userId => ({
+        event_id: created.id,
+        tagged_user_id: userId
+      }));
+
+      await supabase.from('calendar_event_mentions').insert(mentions);
+    }
+
+    refetch();
+    return created;
+  };
+
+  const updateEvent = async (id: string, updates: Partial<UserCalendarEvent>) => {
+    const { data: updated, error: updateError } = await supabase
+      .from('user_calendar_events')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    // Update mentions if tagged_users changed
+    if (updates.tagged_users !== undefined) {
+      // Delete existing mentions
+      await supabase.from('calendar_event_mentions').delete().eq('event_id', id);
+
+      // Create new mentions
+      if (updates.tagged_users.length > 0) {
+        const mentions = updates.tagged_users.map(userId => ({
+          event_id: id,
+          tagged_user_id: userId
+        }));
+        await supabase.from('calendar_event_mentions').insert(mentions);
+      }
+    }
+
+    refetch();
+    return updated;
+  };
+
+  const deleteEvent = async (id: string) => {
+    const { error: deleteError } = await supabase
+      .from('user_calendar_events')
+      .delete()
+      .eq('id', id);
+
+    if (deleteError) throw deleteError;
+
+    refetch();
+  };
+
+  const toggleComplete = async (id: string, completed: boolean) => {
+    const updates: Partial<UserCalendarEvent> = {
+      status: completed ? 'completed' : 'pending',
+      completed_at: completed ? new Date().toISOString() : undefined,
+      updated_at: new Date().toISOString()
+    };
+
+    const { error: updateError } = await supabase
+      .from('user_calendar_events')
+      .update(updates)
+      .eq('id', id);
+
+    if (updateError) throw updateError;
+
+    refetch();
+  };
+
+  return {
+    events: data,
+    loading,
+    error,
+    createEvent,
+    updateEvent,
+    deleteEvent,
+    toggleComplete,
+    refetch
+  };
 }

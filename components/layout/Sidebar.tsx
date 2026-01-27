@@ -23,6 +23,7 @@ import {
   Briefcase,
   Megaphone,
   Bell,
+  Calendar,
 } from 'lucide-react';
 
 interface MenuItem {
@@ -145,6 +146,12 @@ const menuItems: MenuItem[] = [
     icon: Activity,
     href: '/admin/activity',
     allowedRoles: ['admin'],
+  },
+  {
+    name: 'Calendar',
+    icon: Calendar,
+    href: '/admin/calendar',
+    allowedRoles: ['admin', 'finance', 'designer', 'marketing', 'dispatch'], // All roles
   },
   {
     name: 'Broadcast',

@@ -33,13 +33,22 @@ export interface CalendarEventResult {
 }
 
 /**
- * Create a Calendar event for a project deadline
+ * Create a Calendar event with user attribution
+ * Events are automatically tagged with [Username] in the title
  */
 export async function createCalendarEvent(
     accessToken: string,
-    event: CalendarEvent
+    event: CalendarEvent,
+    createdBy?: string  // Optional: user's name for attribution
 ): Promise<CalendarEventResult> {
     try {
+        // Add user attribution if provided
+        const eventWithAttribution = createdBy ? {
+            ...event,
+            summary: `[${createdBy}] ${event.summary}`,
+            description: `Created by: ${createdBy}\n${event.description ? `\n${event.description}` : ''}\n\n⚠️ Please contact ${createdBy} before modifying or deleting this event.`
+        } : event;
+
         const response = await fetch(
             'https://www.googleapis.com/calendar/v3/calendars/primary/events',
             {
@@ -48,7 +57,7 @@ export async function createCalendarEvent(
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(event),
+                body: JSON.stringify(eventWithAttribution),
             }
         );
 
@@ -140,16 +149,18 @@ export function createProjectCalendarEvent(
     projectName: string,
     deadline: string,
     description?: string,
-    driveLink?: string
+    driveLink?: string,
+    createdBy?: string  // Optional: user's name
 ): CalendarEvent {
     // Create all-day event for deadline
     const eventDescription = [
         description || 'Project deadline',
         driveLink ? `\nFiles: ${driveLink}` : '',
+        createdBy ? `\nCreated by: ${createdBy}` : '',
     ].filter(Boolean).join('\n');
 
     return {
-        summary: `🎨 ${projectName} - Deadline`,
+        summary: createdBy ? `[${createdBy}] 🎨 ${projectName} - Deadline` : `🎨 ${projectName} - Deadline`,
         description: eventDescription,
         start: {
             date: deadline, // All-day event

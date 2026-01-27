@@ -741,3 +741,36 @@ export interface ActivityLog {
   ip_address?: string;
   created_at: string;
 }
+
+// User Calendar Events - Personal calendar for each user
+export interface UserCalendarEvent {
+  id: string;
+  user_id: string;
+  title: string;
+  description?: string;
+  event_type: 'task' | 'meeting' | 'reminder' | 'personal';
+  start_date: string;
+  end_date?: string;
+  start_time?: string;
+  end_time?: string;
+  all_day: boolean;
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  category?: string;
+  color: string;
+  is_recurring: boolean;
+  recurrence_pattern?: 'daily' | 'weekly' | 'monthly';
+  recurrence_end_date?: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  completed_at?: string;
+  created_at: string;
+  updated_at: string;
+  tagged_users?: string[];  // Array of user IDs who are tagged/mentioned
+}
+
+export interface CalendarEventMention {
+  id: string;
+  event_id: string;
+  tagged_user_id: string;
+  notified: boolean;
+  created_at: string;
+}

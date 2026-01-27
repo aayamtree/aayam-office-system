@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import { NotificationPopup } from '@/components/NotificationPopup';
+import DailyBriefingTrigger from '@/components/calendar/DailyBriefingTrigger';
 
 export default function AdminLayout({
   children,
@@ -31,7 +32,7 @@ export default function AdminLayout({
   }, [mounted, profile, loading, router]);
 
   // Close sidebar when clicking outside on mobile
-  const closeSidebar = () => setSidebarOpen(false);
+  const closeSidebar () => setSidebarOpen(false);
 
   if (!mounted || loading) {
     return (
@@ -67,6 +68,9 @@ export default function AdminLayout({
 
         {/* Broadcast Notifications Popup */}
         <NotificationPopup />
+
+        {/* Daily Briefing - Auto shows once per day on login */}
+        {profile && <DailyBriefingTrigger />}
 
         {/* Main Content - Full width on mobile, with sidebar margin on desktop */}
         <main className="lg:ml-64 pt-20 lg:pt-24 p-4 lg:p-6 min-h-screen">
