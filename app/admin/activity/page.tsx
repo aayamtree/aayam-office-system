@@ -188,7 +188,9 @@ export default function ActivityPage() {
                       {log.module || 'System'}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">{log.details}</p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {typeof log.details === 'string' ? log.details : log.details?.description || JSON.stringify(log.details)}
+                  </p>
                   <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
                     <span className="flex items-center gap-1">
                       <User size={12} />

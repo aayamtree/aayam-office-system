@@ -14,7 +14,8 @@ export type ActivityAction =
     | 'view'
     | 'export'
     | 'approve'
-    | 'reject';
+    | 'reject'
+    | 'upload';
 
 export type ResourceType =
     | 'job'
@@ -25,7 +26,8 @@ export type ResourceType =
     | 'user'
     | 'order'
     | 'lead'
-    | 'delivery';
+    | 'delivery'
+    | 'file';
 
 interface LogActivityParams {
     action: ActivityAction;
@@ -116,6 +118,33 @@ export async function logDelete(resourceType: ResourceType, resourceId: string, 
  */
 export async function logView(resourceType: ResourceType, resourceId: string, details?: Record<string, any>) {
     await logActivity({ action: 'view', resourceType, resourceId, details });
+}
+
+/**
+ * Log file upload activity
+ * @param details - File details (name, size, type, url, uploadedTo)
+ */
+export async function logFileUpload(details: {
+    fileName: string;
+    fileSize: number;
+    fileType: string;
+    fileUrl: string;
+    uploadedTo: string;
+    resourceId?: string;
+}) {
+    await logActivity({
+        action: 'upload',
+        resourceType: 'file',
+        resourceId: details.resourceId,
+        details: {
+            fileName: details.fileName,
+            fileSize: details.fileSize,
+            fileType: details.fileType,
+            fileUrl: details.fileUrl,
+            uploadedTo: details.uploadedTo,
+            description: `uploaded ${details.fileName} to ${details.uploadedTo}`
+        }
+    });
 }
 
 /**

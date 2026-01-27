@@ -8,7 +8,7 @@ const authOptions: NextAuthOptions = {
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
             authorization: {
                 params: {
-                    scope: 'openid email profile https://www.googleapis.com/auth/calendar.events',
+                    scope: 'openid email profile https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.file',
                     access_type: 'offline',
                     prompt: 'consent',
                 },
@@ -20,12 +20,14 @@ const authOptions: NextAuthOptions = {
             if (account) {
                 token.accessToken = account.access_token;
                 token.refreshToken = account.refresh_token;
+                token.scope = account.scope;
             }
             return token;
         },
         async session({ session, token }) {
             session.accessToken = token.accessToken as string;
             session.refreshToken = token.refreshToken as string;
+            session.scope = token.scope as string;
             return session;
         },
     },

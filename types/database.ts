@@ -737,7 +737,7 @@ export interface ActivityLog {
   user?: Profile; // linked
   action: string;
   module?: string;
-  details?: string;
+  details?: Record<string, any>;
   ip_address?: string;
   created_at: string;
 }
