@@ -32,7 +32,7 @@ export default function AdminLayout({
   }, [mounted, profile, loading, router]);
 
   // Close sidebar when clicking outside on mobile
-  const closeSidebar () => setSidebarOpen(false);
+  const closeSidebar = () => setSidebarOpen(false);
 
   if (!mounted || loading) {
     return (
