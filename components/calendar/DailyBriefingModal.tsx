@@ -206,7 +206,7 @@ function TaskCard({ event, isOverdue, isTagged }: { event: any; isOverdue?: bool
                             {event.title}
                         </h4>
                         {!isCompleted && (
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${priorityColors[event.priority] || priorityColors.normal
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${priorityColors[event.priority as keyof typeof priorityColors] || priorityColors.normal
                                 }`}>
                                 {event.priority}
                             </span>
