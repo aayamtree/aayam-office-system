@@ -515,6 +515,7 @@ export interface Quotation extends BaseEntity {
 
   // Joined data
   client?: Client;
+  lead?: Lead;
   items?: QuotationItem[];
 }
 
