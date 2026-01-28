@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
@@ -61,23 +61,33 @@ export default function QuotationsPage() {
   });
 
   // Handle URL Params for quick actions
-  useState(() => {
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
+      console.log('URL Params:', {
+        new: params.get('new'),
+        clientId: params.get('clientId'),
+        leadId: params.get('leadId')
+      });
+
       if (params.get('new') === 'true') {
         const clientIdParam = params.get('clientId');
         const leadIdParam = params.get('leadId');
+
+        console.log('Setting form data:', { clientIdParam, leadIdParam });
+
         if (clientIdParam) {
-          setFormData(prev => ({ ...prev, clientId: clientIdParam }));
+          setFormData(prev => ({ ...prev, clientId: clientIdParam, leadId: '' }));
         } else if (leadIdParam) {
-          setFormData(prev => ({ ...prev, leadId: leadIdParam }));
+          setFormData(prev => ({ ...prev, leadId: leadIdParam, clientId: '' }));
         }
+
         // Clear URL to prevent reopen
         window.history.replaceState({}, '', window.location.pathname);
         setTimeout(() => setShowModal(true), 500);
       }
     }
-  });
+  }, []);
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
