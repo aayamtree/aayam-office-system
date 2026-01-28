@@ -32,7 +32,10 @@ export default function GoogleDriveSettings() {
     // Handle Google Drive connection
     const handleConnect = async () => {
         console.log('Starting Google Drive connection...');
-        setConnecting(true); // Set BEFORE signIn
+
+        // Store in localStorage so it persists after OAuth redirect
+        localStorage.setItem('gdrive_connecting', 'true');
+        setConnecting(true);
 
         // Authenticate with Google
         const result = await signIn('google', {
@@ -42,6 +45,15 @@ export default function GoogleDriveSettings() {
 
         console.log('SignIn result:', result);
     };
+
+    // Check localStorage on mount to see if we're returning from OAuth
+    useEffect(() => {
+        const isConnecting = localStorage.getItem('gdrive_connecting') === 'true';
+        if (isConnecting) {
+            console.log('Detected returning from OAuth, setting connecting=true');
+            setConnecting(true);
+        }
+    }, []);
 
     // After Google OAuth, save credentials to database
     useEffect(() => {
@@ -53,6 +65,8 @@ export default function GoogleDriveSettings() {
 
         if (session?.accessToken && connecting) {
             console.log('Triggering saveCredentials...');
+            // Clear the localStorage flag
+            localStorage.removeItem('gdrive_connecting');
             saveCredentials();
         }
     }, [session, connecting]);
