@@ -1,7 +1,8 @@
--- Quick Fix: Disable RLS for Google Drive credentials table
--- This is safe because the API already checks if user is admin before allowing access
+-- Simple fix: Make refresh_token optional
+-- We can work with just access_token for now
 
-ALTER TABLE google_drive_credentials DISABLE ROW LEVEL SECURITY;
+ALTER TABLE google_drive_credentials 
+ALTER COLUMN refresh_token DROP NOT NULL;
 
--- Verify it's disabled
-SELECT tablename, rowsecurity FROM pg_tables WHERE tablename = 'google_drive_credentials';
+-- Verify the change
+\d google_drive_credentials;

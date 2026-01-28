@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
             .from('google_drive_credentials')
             .insert({
                 access_token: accessToken,
-                refresh_token: refreshToken,
+                refresh_token: refreshToken || null, // Allow null
                 token_expiry: expiryDate.toISOString(),
                 scopes,
                 connected_by: userId,
