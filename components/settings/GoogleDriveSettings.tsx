@@ -47,7 +47,13 @@ export default function GoogleDriveSettings() {
 
     const saveCredentials = async () => {
         try {
+            if (!profile?.id) {
+                alert('User not authenticated. Please refresh and try again.');
+                return;
+            }
+
             console.log('Attempting to save credentials...', {
+                userId: profile.id,
                 hasAccessToken: !!session?.accessToken,
                 hasRefreshToken: !!session?.refreshToken,
                 scopes: session?.scope
@@ -56,10 +62,10 @@ export default function GoogleDriveSettings() {
             const res = await fetch('/api/drive/connect', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session?.accessToken}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
+                    userId: profile.id,  // Send user ID from auth context
                     accessToken: session?.accessToken,
                     refreshToken: session?.refreshToken,
                     expiresIn: 3600, // Default 1 hour
