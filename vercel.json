@@ -1,0 +1,8 @@
+{
+    "crons": [
+        {
+            "path": "/api/cron/refresh-drive-token",
+            "schedule": "*/50 * * * *"
+        }
+    ]
+}

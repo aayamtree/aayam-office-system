@@ -11,6 +11,7 @@ export default function GoogleDriveSettings() {
     const [driveStatus, setDriveStatus] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [connecting, setConnecting] = useState(false);
+    const [disconnecting, setDisconnecting] = useState(false);
 
     // Load current Drive status
     const loadStatus = async () => {
@@ -116,6 +117,32 @@ export default function GoogleDriveSettings() {
         }
     };
 
+    const handleDisconnect = async () => {
+        if (!confirm('Are you sure you want to disconnect Google Drive? All users will lose upload access until you reconnect.')) {
+            return;
+        }
+
+        setDisconnecting(true);
+        try {
+            const res = await fetch('/api/drive/connect', {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                await loadStatus();
+                alert('Google Drive disconnected successfully');
+            } else {
+                const data = await res.json();
+                alert(`Failed to disconnect: ${data.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error disconnecting:', error);
+            alert('Error disconnecting Drive');
+        } finally {
+            setDisconnecting(false);
+        }
+    };
+
     if (profile?.role !== 'admin') {
         return (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
@@ -167,16 +194,38 @@ export default function GoogleDriveSettings() {
                             {driveStatus.isExpired && (
                                 <div className="flex items-center gap-2 mt-3 text-amber-700">
                                     <AlertCircle className="w-4 h-4" />
-                                    <span className="text-sm">Token expired - please reconnect</span>
+                                    <span className="text-sm">Token expired - reconnect to enable auto-refresh</span>
+                                </div>
+                            )}
+                            {!driveStatus.isExpired && driveStatus.hasRefreshToken && (
+                                <div className="flex items-center gap-2 mt-3 text-blue-700">
+                                    <RefreshCw className="w-4 h-4" />
+                                    <span className="text-sm">✓ Auto-refresh enabled</span>
+                                </div>
+                            )}
+                            {!driveStatus.hasRefreshToken && !driveStatus.isExpired && (
+                                <div className="flex items-center gap-2 mt-3 text-amber-700">
+                                    <AlertCircle className="w-4 h-4" />
+                                    <span className="text-sm">Reconnect to enable auto-refresh</span>
                                 </div>
                             )}
                         </div>
-                        <button
-                            onClick={() => { setConnecting(true); handleConnect(); }}
-                            className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700"
-                        >
-                            Reconnect
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => { setConnecting(true); handleConnect(); }}
+                                disabled={connecting}
+                                className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50"
+                            >
+                                {connecting ? 'Connecting...' : 'Reconnect'}
+                            </button>
+                            <button
+                                onClick={handleDisconnect}
+                                disabled={disconnecting}
+                                className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50"
+                            >
+                                {disconnecting ? 'Disconnecting...' : 'Disconnect'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             ) : (

@@ -95,11 +95,40 @@ export async function GET() {
         return NextResponse.json({
             connected: true,
             isExpired,
+            hasRefreshToken: !!credentials.refresh_token,
             connectedAt: credentials.connected_at,
             scopes: credentials.scopes
         });
 
     } catch (error) {
         return NextResponse.json({ connected: false });
+    }
+}
+
+// Disconnect Google Drive
+export async function DELETE() {
+    try {
+        const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+
+        // Deactivate all active credentials
+        const { error } = await supabase
+            .from('google_drive_credentials')
+            .update({ is_active: false })
+            .eq('is_active', true);
+
+        if (error) {
+            console.error('Error disconnecting:', error);
+            return NextResponse.json({ error: 'Failed to disconnect' }, { status: 500 });
+        }
+
+        console.log('✅ Google Drive disconnected successfully');
+        return NextResponse.json({ success: true });
+
+    } catch (error: any) {
+        console.error('Disconnect error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
