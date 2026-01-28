@@ -675,9 +675,47 @@ export default function QuotationsPage() {
                     type="date"
                     value={formData.validUntil}
                     onChange={(e) => setFormData({ ...formData, validUntil: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Order Type *</label>
+                  <select
+                    required
+                    value={formData.orderType}
+                    onChange={(e) => setFormData({ ...formData, orderType: e.target.value as any })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all"
+                  >
+                    <option value="print">Print Only</option>
+                    <option value="design">Design Only</option>
+                    <option value="design_print">Design + Print</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formData.orderType === 'print' && 'Client provides design files'}
+                    {formData.orderType === 'design' && 'Design work only, no printing'}
+                    {formData.orderType === 'design_print' && 'Full service with design and printing'}
+                  </p>
+                </div>
+
+                {formData.orderType === 'design_print' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Product Category *</label>
+                    <select
+                      required
+                      value={formData.productCategory}
+                      onChange={(e) => setFormData({ ...formData, productCategory: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all"
+                    >
+                      <option value="">Select Product</option>
+                      <option value="box">Box / Packaging</option>
+                      <option value="pouch">Pouch / Bag</option>
+                      <option value="label">Label</option>
+                      <option value="sticker">Sticker / Decal</option>
+                      <option value="other">Other Product</option>
+                    </select>
+                  </div>
+                )}
               </div>
 
               {/* Items */}
