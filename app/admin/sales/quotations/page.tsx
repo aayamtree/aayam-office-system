@@ -230,7 +230,10 @@ export default function QuotationsPage() {
 
   // Implement Convert Logic
   const handleConvertToOrder = async (q: Quotation) => {
-    if (!confirm(`Create a new Job Order from Quotation "${q.quote_number}"? This will mark the quote as Accepted.`)) return;
+    const orderTypeLabel = q.order_type === 'print' ? 'Print Only' :
+      q.order_type === 'design' ? 'Design Only' : 'Design + Print';
+
+    if (!confirm(`Create a new Job Order from Quotation "${q.quote_number}" (${orderTypeLabel})? This will mark the quote as Accepted.`)) return;
 
     try {
       let finalClientId = q.client_id;
@@ -267,7 +270,8 @@ export default function QuotationsPage() {
         sales_person_id: ownerId,
         created_by: ownerId,
         // No vendor or designer initially
-        job_type: 'print', // Default
+        job_type: q.order_type || 'print',
+        product_category: q.product_category,
         quantity: q.items?.[0]?.quantity || 1,
 
         quote_per_piece: q.items?.[0]?.rate || 0,
@@ -287,7 +291,7 @@ export default function QuotationsPage() {
         priority: 'normal' as const,
 
         files: [],
-        notes: `Converted from Quotation ${q.quote_number}. ${q.notes || ''}`
+        notes: `Converted from Quotation ${q.quote_number} (${orderTypeLabel}). ${q.notes || ''}`
       };
 
       // 3. Create Job
@@ -302,9 +306,25 @@ export default function QuotationsPage() {
         client_id: finalClientId // Ensure the quotation is now linked to the real client
       });
 
-      alert(`Order created successfully! Job #${job?.job_number}`);
-      // Refresh logic handled by hooks automatically
+      // 5. Route based on order type
+      if (q.order_type === 'design_print') {
+        // Design + Print: Redirect to product requirements collection
+        alert(`Order created successfully! Job #${job?.job_number}\n\nNext: Collect product requirements for design and printing.`);
+        // TODO: Redirect to product requirements page when implemented
+        // router.push(`/admin/marketing/product-requirements/${job?.id}?quotation=${q.id}`);
+      } else if (q.order_type === 'print') {
+        // Print Only: Client needs to upload design files
+        alert(`Order created successfully! Job #${job?.job_number}\n\nNext: Client will provide design files for printing.`);
+        // TODO: Could redirect to file upload page
+      } else if (q.order_type === 'design') {
+        // Design Only: Goes straight to design queue
+        alert(`Order created successfully! Job #${job?.job_number}\n\nNext: Job added to design queue.`);
+        // TODO: Could redirect to design tasks
+      } else {
+        alert(`Order created successfully! Job #${job?.job_number}`);
+      }
 
+      // Refresh logic handled by hooks automatically
 
     } catch (err: any) {
       console.error('Error converting to order:', err);
