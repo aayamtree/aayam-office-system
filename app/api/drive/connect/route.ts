@@ -6,16 +6,24 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {
     try {
+        // Get the authorization header from the request
+        const authHeader = request.headers.get('authorization');
+        const token = authHeader?.replace('Bearer ', '');
+
         const supabase = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         );
 
-        // Check if user is admin
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        // Get user from session - need to check both cookie and header
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+        if (authError || !user) {
+            console.error('Auth error:', authError);
+            return NextResponse.json({ error: 'Unauthorized - Please login again' }, { status: 401 });
         }
+
+        console.log('Authenticated user:', user.id);
 
         const { data: profile } = await supabase
             .from('profiles')

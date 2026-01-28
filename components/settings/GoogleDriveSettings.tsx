@@ -55,7 +55,10 @@ export default function GoogleDriveSettings() {
 
             const res = await fetch('/api/drive/connect', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.accessToken}`
+                },
                 body: JSON.stringify({
                     accessToken: session?.accessToken,
                     refreshToken: session?.refreshToken,
