@@ -345,8 +345,8 @@ export default function QuotationsPage() {
       quoteNumber: q.quote_number,
       date: formatDate(new Date(q.created_at)),
       validUntil: q.valid_until ? formatDate(new Date(q.valid_until)) : '-',
-      clientName: q.client?.name || 'Unknown',
-      clientCompany: q.client?.company,
+      clientName: q.client?.name || q.lead?.name || 'Unknown',
+      clientCompany: q.client?.company || q.lead?.company,
       clientAddress: q.client?.address,
       clientPhone: q.client?.phone,
       clientEmail: q.client?.email,
@@ -372,7 +372,9 @@ export default function QuotationsPage() {
     const matchesSearch =
       q.quote_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
       q.client?.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      q.client?.name.toLowerCase().includes(searchQuery.toLowerCase());
+      q.client?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      q.lead?.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      q.lead?.name?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || q.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -470,8 +472,8 @@ export default function QuotationsPage() {
                   {/* Row 2: Client & Amount */}
                   <div className="flex justify-between items-start gap-3 mb-4">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-900 leading-tight mb-0.5">{q.client?.company || 'Unknown Client'}</h3>
-                      <div className="text-sm text-gray-600">{q.client?.name}</div>
+                      <h3 className="font-bold text-gray-900 leading-tight mb-0.5">{q.client?.company || q.lead?.company || q.lead?.name || 'Unknown Client'}</h3>
+                      <div className="text-sm text-gray-600">{q.client?.name || (q.lead ? 'LEAD' : '')}</div>
                     </div>
                     <div className="text-right flex-shrink-0">
                       <div className="font-bold text-gray-900 text-lg">{formatCurrency(q.total_amount)}</div>
@@ -544,8 +546,8 @@ export default function QuotationsPage() {
                         <p className="text-xs text-gray-400 mt-1">{formatDate(q.created_at)}</p>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="font-medium text-gray-900">{q.client?.company || 'Unknown'}</p>
-                        <p className="text-sm text-gray-500">{q.client?.name}</p>
+                        <p className="font-medium text-gray-900">{q.client?.company || q.lead?.company || q.lead?.name || 'Unknown'}</p>
+                        <p className="text-sm text-gray-500">{q.client?.name || (q.lead ? 'LEAD' : '')}</p>
                       </td>
                       <td className="px-6 py-4 text-gray-600 max-w-xs truncate">{q.items?.map(i => i.description).join(', ')}</td>
                       <td className="px-6 py-4 font-semibold text-gray-900">{formatCurrency(q.total_amount)}</td>

@@ -1095,7 +1095,7 @@ export function useDashboardStats() {
 // =============================================
 export function useQuotations() {
   const { data, loading, error, refetch } = useSupabaseQuery<Quotation>('quotations', {
-    select: '*, client:clients(*), items:quotation_items(*)',
+    select: '*, client:clients(*), lead:leads(*), items:quotation_items(*)',
     orderBy: { column: 'created_at', ascending: false }
   });
 
