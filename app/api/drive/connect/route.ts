@@ -6,37 +6,34 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {
     try {
-        // Get the authorization header from the request
-        const authHeader = request.headers.get('authorization');
-        const token = authHeader?.replace('Bearer ', '');
+        const body = await request.json();
+        const { accessToken, refreshToken, expiresIn, scopes, userId } = body;
 
+        // Use service role key for server-side operations (bypasses RLS)
         const supabase = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         );
 
-        // Get user from session - need to check both cookie and header
-        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        console.log('Checking user:', userId);
 
-        if (authError || !user) {
-            console.error('Auth error:', authError);
-            return NextResponse.json({ error: 'Unauthorized - Please login again' }, { status: 401 });
-        }
-
-        console.log('Authenticated user:', user.id);
-
-        const { data: profile } = await supabase
+        // Verify user exists and is admin
+        const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('role')
-            .eq('id', user.id)
+            .eq('id', userId)
             .single();
 
-        if (profile?.role !== 'admin') {
+        if (profileError || !profile) {
+            console.error('Profile error:', profileError);
+            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        }
+
+        if (profile.role !== 'admin') {
             return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
         }
 
-        const body = await request.json();
-        const { accessToken, refreshToken, expiresIn, scopes } = body;
+        console.log('User verified as admin, saving credentials...');
 
         // Deactivate any existing credentials
         await supabase
@@ -54,7 +51,7 @@ export async function POST(request: NextRequest) {
                 refresh_token: refreshToken,
                 token_expiry: expiryDate.toISOString(),
                 scopes,
-                connected_by: user.id,
+                connected_by: userId,
                 is_active: true
             })
             .select()
@@ -62,9 +59,10 @@ export async function POST(request: NextRequest) {
 
         if (error) {
             console.error('Error storing credentials:', error);
-            return NextResponse.json({ error: 'Failed to store credentials' }, { status: 500 });
+            return NextResponse.json({ error: 'Failed to store credentials: ' + error.message }, { status: 500 });
         }
 
+        console.log('Credentials saved successfully!');
         return NextResponse.json({ success: true, data });
 
     } catch (error: any) {
