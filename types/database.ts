@@ -474,20 +474,19 @@ export interface Expense extends BaseEntity {
 // Follow Up
 export interface FollowUp {
   id: string;
-  lead_id: string;
-
-  follow_up_date: string;
-  follow_up_type?: string;
-
-  notes?: string;
-  outcome?: string;
-
-  next_follow_up?: string;
-
+  lead_id?: string;
+  client_id?: string;
+  quotation_id?: string;
   done_by?: string;
+  follow_up_date: string;
+  notes?: string;
   created_at: string;
+  updated_at: string;
 
-  user?: Profile;
+  // Joined
+  lead?: Lead;
+  client?: Client;
+  quotation?: Quotation;
 }
 
 // Quotation
@@ -496,6 +495,9 @@ export interface Quotation extends BaseEntity {
 
   client_id?: string | null;
   lead_id?: string | null;
+
+  order_type?: 'print' | 'design' | 'design_print';
+  product_category?: string;
 
   status: QuoteStatus;
 
@@ -786,4 +788,23 @@ export interface CalendarEventMention {
   tagged_user_id: string;
   notified: boolean;
   created_at: string;
+}
+
+// Product Requirements (for Design + Print orders)
+export interface ProductRequirement extends BaseEntity {
+  job_id?: string;
+  quotation_id?: string;
+  
+  product_category: "box" | "pouch" | "label" | "sticker" | "other";
+  product_name?: string;
+  
+  specifications: Record<string, any>; // JSONB field
+  
+  collected_by?: string;
+  collected_at?: string;
+  forwarded_to_design: boolean;
+  forwarded_at?: string;
+  
+  reference_files: string[];
+  notes?: string;
 }
