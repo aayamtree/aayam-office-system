@@ -47,6 +47,12 @@ export default function GoogleDriveSettings() {
 
     const saveCredentials = async () => {
         try {
+            console.log('Attempting to save credentials...', {
+                hasAccessToken: !!session?.accessToken,
+                hasRefreshToken: !!session?.refreshToken,
+                scopes: session?.scope
+            });
+
             const res = await fetch('/api/drive/connect', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -58,12 +64,16 @@ export default function GoogleDriveSettings() {
                 })
             });
 
+            const data = await res.json();
+            console.log('API Response:', { status: res.status, data });
+
             if (res.ok) {
                 await loadStatus();
                 setConnecting(false);
                 alert('Google Drive connected successfully!');
             } else {
-                alert('Failed to save Drive credentials');
+                console.error('Failed to save credentials:', data);
+                alert(`Failed to save Drive credentials: ${data.error || 'Unknown error'}`);
             }
         } catch (error) {
             console.error('Error saving credentials:', error);
