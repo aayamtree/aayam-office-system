@@ -121,12 +121,12 @@ export default function MarketingFollowUpsPage() {
   };
 
   const handleCreateQuote = (followUp: any) => {
-    if (followUp.clientId) {
-      router.push(`/admin/marketing/quotations?new=true&clientId=${followUp.clientId}`);
-    } else if (followUp.leadId) {
+    console.log('Creating quote for follow-up:', followUp);
+
+    if (followUp.leadId) {
       router.push(`/admin/marketing/quotations?new=true&leadId=${followUp.leadId}`);
     } else {
-      alert('Error: No Client or Lead linked to this follow-up.');
+      alert('Error: No Lead linked to this follow-up.');
     }
   };
 
