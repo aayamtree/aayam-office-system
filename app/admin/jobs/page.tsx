@@ -36,6 +36,10 @@ const priorities = [
 
 const jobTypes = ['Design Only', 'Print Only', 'Design + Print', 'Packaging', 'Branding', 'Other'];
 
+// Product categories must match Settings > Production checklist types
+const productCategories = ['Banner', 'Book', 'Box', 'Brochure', 'Label', 'Poster', 'Other'];
+
+
 export default function JobsPage() {
   const { jobs, loading: jobsLoading, createJob, updateJob, deleteJob, updateJobStage } = useJobs();
   const { clients, createClient } = useClients();
@@ -71,7 +75,7 @@ export default function JobsPage() {
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
-    project_name: '', client_id: '', job_type: 'Design + Print', quantity: 1, vendor_id: '',
+    project_name: '', client_id: '', job_type: 'Design + Print', product_category: 'Other', quantity: 1, vendor_id: '',
     designer_id: '', client_deadline: '', priority: 'normal', quote_per_piece: 0, gst_rate: 18, current_stage: 'new'
   });
 
@@ -170,6 +174,7 @@ export default function JobsPage() {
         vendor_id: formData.vendor_id || undefined,
         designer_id: formData.designer_id || undefined,
         job_type: formData.job_type,
+        product_category: formData.product_category,
         quantity: formData.quantity,
         quote_per_piece: formData.quote_per_piece,
         subtotal,
@@ -215,7 +220,7 @@ export default function JobsPage() {
 
   const resetForm = () => {
     setFormData({
-      project_name: '', client_id: '', job_type: 'Design + Print', quantity: 1, vendor_id: '',
+      project_name: '', client_id: '', job_type: 'Design + Print', product_category: 'Other', quantity: 1, vendor_id: '',
       designer_id: '', client_deadline: '', priority: 'normal', quote_per_piece: 0, gst_rate: 18, current_stage: 'new'
     });
   };
@@ -225,6 +230,7 @@ export default function JobsPage() {
       project_name: job.project_name,
       client_id: job.client_id || '',
       job_type: job.job_type || 'Design + Print',
+      product_category: job.product_category || 'Other',
       quantity: job.quantity,
       vendor_id: job.vendor_id || '',
       designer_id: job.designer_id || '',
@@ -638,6 +644,14 @@ export default function JobsPage() {
                   <select value={formData.job_type} onChange={(e) => setFormData({ ...formData, job_type: e.target.value })} className="w-full px-3 py-2 border rounded-xl">
                     {jobTypes.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Product Category *</label>
+                  <select value={formData.product_category} onChange={(e) => setFormData({ ...formData, product_category: e.target.value })} className="w-full px-3 py-2 border rounded-xl bg-indigo-50">
+                    {productCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Used for production checklists in EOD reports</p>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">

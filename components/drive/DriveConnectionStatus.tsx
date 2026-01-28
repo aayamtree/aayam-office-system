@@ -1,13 +1,32 @@
 'use client';
 
-import { useSession, signIn } from 'next-auth/react';
+import { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
-import { checkDriveConnection } from '@/lib/google-drive-upload';
+import { useAuth } from '@/lib/auth-context';
+import Link from 'next/link';
 
 export default function DriveConnectionStatus() {
-    const { data: session, status } = useSession();
+    const { profile } = useAuth();
+    const [status, setStatus] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
-    if (status === 'loading') {
+    useEffect(() => {
+        fetchStatus();
+    }, []);
+
+    const fetchStatus = async () => {
+        try {
+            const res = await fetch('/api/drive/connect');
+            const data = await res.json();
+            setStatus(data);
+        } catch (error) {
+            console.error('Error fetching Drive status:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
         return (
             <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
                 <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
@@ -16,25 +35,27 @@ export default function DriveConnectionStatus() {
         );
     }
 
-    const driveStatus = checkDriveConnection(session);
-
-    // Not connected or missing scope - show connect button
-    if (!driveStatus.connected || !driveStatus.hasDriveScope) {
+    // Not connected - show warning
+    if (!status?.connected || status?.isExpired) {
         return (
             <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
                 <XCircle className="w-4 h-4 text-amber-600" />
-                <span className="text-xs font-medium text-amber-900">Drive: Disconnected</span>
-                <button
-                    onClick={() => signIn('google', { callbackUrl: window.location.href })}
-                    className="ml-auto px-3 py-1 bg-amber-600 text-white text-xs font-medium rounded hover:bg-amber-700 transition-colors"
-                >
-                    Connect
-                </button>
+                <span className="text-xs font-medium text-amber-900">
+                    Drive: {status?.isExpired ? 'Expired' : 'Not Connected'}
+                </span>
+                {profile?.role === 'admin' && (
+                    <Link
+                        href="/admin/settings"
+                        className="ml-auto px-3 py-1 bg-amber-600 text-white text-xs font-medium rounded hover:bg-amber-700 transition-colors"
+                    >
+                        Configure
+                    </Link>
+                )}
             </div>
         );
     }
 
-    // Connected - show status only
+    // Connected - show success
     return (
         <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
             <CheckCircle className="w-4 h-4 text-green-600" />

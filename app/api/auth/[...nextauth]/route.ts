@@ -10,7 +10,7 @@ const authOptions: NextAuthOptions = {
                 params: {
                     scope: 'openid email profile https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.file',
                     access_type: 'offline',
-                    prompt: 'consent',
+                    prompt: 'select_account', // Changed from 'consent' - only asks for permission once
                 },
             },
         }),

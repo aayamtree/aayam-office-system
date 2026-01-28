@@ -1993,3 +1993,264 @@ export function useCalendarEvents(startDate?: string, endDate?: string) {
     refetch
   };
 }
+
+// =============================================
+// DAILY WORK REPORTS HOOK (EOD Reports)
+// =============================================
+export function useDailyReports(userId?: string, dateFilter?: { start?: string; end?: string }) {
+  // Build options for main reports
+  const options: UseSupabaseQueryOptions = {
+    select: '*, task_updates:report_task_updates(*, job:jobs(*, client:clients(*)))',
+    orderBy: { column: 'report_date', ascending: false }
+  };
+
+  if (userId) {
+    options.filter = [{ column: 'user_id', value: userId }];
+  }
+
+  const { data, loading, error, refetch } = useSupabaseQuery<any>('daily_work_reports', options);
+
+  // Fetch today's pending tasks for the user
+  const fetchMyTodayTasks = async (currentUserId: string) => {
+    if (!isSupabaseConfigured()) return { data: [], error: null };
+
+    // Get all jobs assigned to user that are NOT completed/delivered/cancelled
+    const { data: jobs, error } = await supabase
+      .from('jobs')
+      .select('*, client:clients(*)')
+      .eq('designer_id', currentUserId)
+      .not('current_stage', 'in', '(completed,delivered,cancelled)')
+      .order('client_deadline', { ascending: true });
+
+    return { data: jobs || [], error: error?.message };
+  };
+
+  // Submit EOD Report
+  const submitEODReport = async (reportData: {
+    user_id: string;
+    report_date: string;
+    overall_notes?: string;
+    blockers?: string;
+    tomorrow_plan?: string;
+    work_hours?: number;
+    task_updates: Array<{
+      job_id: string;
+      status_update: string;
+      completion_percentage?: number;
+      time_spent?: number;
+      checklist?: any;
+      client_comments?: string;
+      client_approval_received?: boolean;
+      approval_file_url?: string;
+      print_file_ready?: boolean;
+      print_checklist_done?: boolean;
+    }>;
+  }) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    try {
+      // 1. Create or update main report
+      const { data: report, error: reportError } = await supabase
+        .from('daily_work_reports')
+        .upsert([{
+          user_id: reportData.user_id,
+          report_date: reportData.report_date,
+          overall_notes: reportData.overall_notes,
+          blockers: reportData.blockers,
+          tomorrow_plan: reportData.tomorrow_plan,
+          work_hours: reportData.work_hours,
+          submitted_at: new Date().toISOString()
+        }], { onConflict: 'user_id,report_date' })
+        .select()
+        .single();
+
+      if (reportError) throw reportError;
+
+      // 2. Delete existing task updates for this report
+      await supabase
+        .from('report_task_updates')
+        .delete()
+        .eq('report_id', report.id);
+
+      // 3. Insert new task updates
+      if (reportData.task_updates.length > 0) {
+        const { error: updatesError } = await supabase
+          .from('report_task_updates')
+          .insert(reportData.task_updates.map(update => ({
+            report_id: report.id,
+            ...update
+          })));
+
+        if (updatesError) throw updatesError;
+      }
+
+      // 4. Log activity
+      await logActivity(
+        'Submitted EOD Report',
+        'System',
+        report.id,
+        `Daily work report submitted for ${reportData.report_date}`
+      );
+
+      refetch();
+      return { data: report, error: null };
+    } catch (e: any) {
+      return { error: e.message || 'Failed to submit report' };
+    }
+  };
+
+  // Get user's reports within date range
+  const getMyReports = async (currentUserId: string, startDate?: string, endDate?: string) => {
+    if (!isSupabaseConfigured()) return { data: [], error: null };
+
+    let query = supabase
+      .from('daily_work_reports')
+      .select('*, task_updates:report_task_updates(*, job:jobs(*, client:clients(*)))')
+      .eq('user_id', currentUserId)
+      .order('report_date', { ascending: false });
+
+    if (startDate) query = query.gte('report_date', startDate);
+    if (endDate) query = query.lte('report_date', endDate);
+
+    const { data, error } = await query;
+    return { data: data || [], error: error?.message };
+  };
+
+  // Admin: Get all team reports
+  const getAllReports = async (filters?: { userId?: string; startDate?: string; endDate?: string; searchQuery?: string }) => {
+    if (!isSupabaseConfigured()) return { data: [], error: null };
+
+    let query = supabase
+      .from('daily_work_reports')
+      .select('*, task_updates:report_task_updates(*, job:jobs(*, client:clients(*)))')
+      .order('report_date', { ascending: false });
+
+    if (filters?.userId) query = query.eq('user_id', filters.userId);
+    if (filters?.startDate) query = query.gte('report_date', filters.startDate);
+    if (filters?.endDate) query = query.lte('report_date', filters.endDate);
+
+    const { data, error } = await query.limit(100);
+
+    // Client-side search for hashtags and text
+    let filteredData = data || [];
+    if (filters?.searchQuery) {
+      const searchLower = filters.searchQuery.toLowerCase();
+      filteredData = filteredData.filter((report: any) => {
+        const notesMatch = (report.overall_notes || '').toLowerCase().includes(searchLower);
+        const tagsMatch = report.tags?.some((tag: string) => tag.toLowerCase().includes(searchLower));
+        const userMatch = (report.user?.full_name || '').toLowerCase().includes(searchLower);
+        return notesMatch || tagsMatch || userMatch;
+      });
+    }
+
+    return { data: filteredData, error: error?.message };
+  };
+
+  // Search reports by hashtag or text
+  const searchReports = async (query: string, isAdmin: boolean = false, currentUserId?: string) => {
+    if (!isSupabaseConfigured()) return { data: [], error: null };
+
+    const { data: allReports, error } = isAdmin
+      ? await getAllReports({ searchQuery: query })
+      : currentUserId
+        ? await getMyReports(currentUserId)
+        : { data: [], error: null };
+
+    if (error) return { data: [], error };
+
+    // Filter based on query
+    const searchLower = query.toLowerCase();
+    const filtered = (allReports as any[]).filter((report: any) => {
+      const notesMatch = (report.overall_notes || '').toLowerCase().includes(searchLower);
+      const blockersMatch = (report.blockers || '').toLowerCase().includes(searchLower);
+      const tagsMatch = report.tags?.some((tag: string) => tag.toLowerCase().includes(searchLower));
+      return notesMatch || blockersMatch || tagsMatch;
+    });
+
+    return { data: filtered, error: null };
+  };
+
+  // Get today's submission status for team (Admin)
+  const getTodaySubmissionStatus = async () => {
+    if (!isSupabaseConfigured()) return { data: [], error: null };
+
+    const today = new Date().toISOString().split('T')[0];
+
+    // Get all active users
+    const { data: users, error: usersError } = await supabase
+      .from('user_profiles')
+      .select('id, full_name, role')
+      .eq('is_active', true);
+
+    if (usersError) return { data: [], error: usersError.message };
+
+    // Get today's reports
+    const { data: reports, error: reportsError } = await supabase
+      .from('daily_work_reports')
+      .select('user_id, submitted_at')
+      .eq('report_date', today);
+
+    if (reportsError) return { data: [], error: reportsError.message };
+
+    // Combine data
+    const statusData = (users || []).map((user: any) => {
+      const report = (reports || []).find((r: any) => r.user_id === user.id);
+      return {
+        user_id: user.id,
+        user_name: user.full_name,
+        role: user.role,
+        submitted: !!report,
+        submitted_at: report?.submitted_at
+      };
+    });
+
+    return { data: statusData, error: null };
+  };
+
+  // Fetch product-specific checklist from job_checklists
+  const fetchProductChecklist = async (productType: string, category: 'design' | 'dispatch' = 'design') => {
+    if (!isSupabaseConfigured()) return { data: [], error: null };
+
+    try {
+      const { data, error } = await supabase
+        .from('job_checklists')
+        .select('items')
+        .eq('job_type', productType)
+        .eq('category', category)
+        .single();
+
+      if (error) {
+        console.log('No checklist found for', productType, error);
+        return { data: [], error: null }; // Return empty instead of error
+      }
+
+      // Convert items to checklist format
+      const items = data?.items || [];
+      const checklistItems = items.map((item: string, index: number) => ({
+        item,
+        checked: false,
+        comment: '',
+        order: index + 1
+      }));
+
+      return { data: checklistItems, error: null };
+    } catch (e: any) {
+      console.error('Error fetching checklist:', e);
+      return { data: [], error: e.message };
+    }
+  };
+
+  return {
+    reports: data,
+    loading,
+    error,
+    refetch,
+    fetchMyTodayTasks,
+    submitEODReport,
+    getMyReports,
+    getAllReports,
+    searchReports,
+    getTodaySubmissionStatus,
+    fetchProductChecklist // Add new function
+  };
+}

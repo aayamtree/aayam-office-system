@@ -18,9 +18,10 @@ interface Profile {
 
 import DesignersManager from '@/components/settings/DesignersManager';
 import ProductionSettings from './production/page';
+import GoogleDriveSettings from '@/components/settings/GoogleDriveSettings';
 
 export default function UserManagementPage() {
-  const [activeTab, setActiveTab] = useState<'users' | 'designers' | 'production'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'designers' | 'production' | 'drive'>('users');
 
   // ... (existing state for Users) ...
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -156,6 +157,15 @@ export default function UserManagementPage() {
                 }`}
             >
               Production
+            </button>
+            <button
+              onClick={() => setActiveTab('drive')}
+              className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'drive'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              Google Drive
             </button>
           </div>
         </div>
@@ -330,8 +340,10 @@ export default function UserManagementPage() {
         </>
       ) : activeTab === 'designers' ? (
         <DesignersManager />
-      ) : (
+      ) : activeTab === 'production' ? (
         <ProductionSettings />
+      ) : (
+        <GoogleDriveSettings />
       )}
     </div>
   );

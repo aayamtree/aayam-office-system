@@ -154,6 +154,12 @@ const menuItems: MenuItem[] = [
     allowedRoles: ['admin', 'finance', 'designer', 'marketing', 'dispatch'], // All roles
   },
   {
+    name: 'EOD Report',
+    icon: FileText,
+    href: '/admin/eod-report',
+    allowedRoles: ['admin', 'finance', 'designer', 'marketing', 'dispatch'], // All roles - accountability for everyone
+  },
+  {
     name: 'Broadcast',
     icon: Bell,
     href: '/admin/broadcast',
@@ -172,6 +178,7 @@ const menuItems: MenuItem[] = [
       { name: 'Notifications', href: '/admin/settings/notifications' },
       { name: 'Preferences', href: '/admin/settings/preferences' },
       { name: 'Production Settings', href: '/admin/settings/production' },
+      { name: 'Google Drive', href: '/admin/settings/drive' },
     ]
   },
 ];

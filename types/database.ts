@@ -162,6 +162,7 @@ export interface Job extends BaseEntity {
   sales_order_id?: string;
 
   job_type?: string;
+  product_category?: string;
   description?: string;
   quantity: number;
 
@@ -670,6 +671,17 @@ export interface Counter {
   current_number: number;
   financial_year?: string;
   updated_at: string;
+}
+
+export interface GoogleDriveCredentials extends BaseEntity {
+  access_token: string;
+  refresh_token: string;
+  token_expiry: string;
+  scopes: string;
+  connected_by?: string;
+  connected_at: string;
+  is_active: boolean;
+  last_used_at?: string;
 }
 
 // Note
