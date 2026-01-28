@@ -166,6 +166,12 @@ const menuItems: MenuItem[] = [
     allowedRoles: ['admin', 'finance'],
   },
   {
+    name: 'My Profile',
+    icon: Settings,
+    href: '/admin/settings/profile',
+    allowedRoles: ['admin', 'finance', 'designer', 'marketing', 'dispatch', 'cmyk'], // All roles can access their own profile
+  },
+  {
     name: 'Settings',
     icon: Settings,
     href: '/admin/settings',
@@ -173,7 +179,6 @@ const menuItems: MenuItem[] = [
     submenu: [
       { name: 'General', href: '/admin/settings' },
       { name: 'Company Info', href: '/admin/settings/company' },
-      { name: 'My Profile', href: '/admin/settings/profile' },
       { name: 'User Management', href: '/admin/settings/users' },
       { name: 'Notifications', href: '/admin/settings/notifications' },
       { name: 'Preferences', href: '/admin/settings/preferences' },
