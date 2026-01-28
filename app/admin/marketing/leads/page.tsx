@@ -305,12 +305,34 @@ export default function LeadsPage() {
 
                             <div className="pl-3">
                                 <div className="flex justify-between items-start mb-3">
-                                    <div>
-                                        <span className="inline-block px-2 py-0.5 rounded-md bg-gray-100 text-xs font-mono font-bold text-gray-600 mb-1">
-                                            {lead.lead_number}
-                                        </span>
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                                            <span className="inline-block px-2 py-0.5 rounded-md bg-gray-100 text-xs font-mono font-bold text-gray-600">
+                                                {lead.lead_number}
+                                            </span>
+                                            {/* Owner Tag - visible for admin */}
+                                            {profile?.role === 'admin' && lead.assigned_user && (
+                                                <span className="inline-block px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 text-xs font-bold">
+                                                    👤 {lead.assigned_user.full_name || 'Unassigned'}
+                                                </span>
+                                            )}
+                                        </div>
                                         <h3 className="font-bold text-gray-900 text-lg leading-tight">{lead.name}</h3>
                                         {lead.company && <p className="text-gray-500 text-sm font-medium">{lead.company}</p>}
+
+                                        {/* Project Type Badge */}
+                                        {lead.project_type && (
+                                            <div className="mt-2">
+                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${lead.project_type === 'print' ? 'bg-purple-100 text-purple-700' :
+                                                    lead.project_type === 'design' ? 'bg-pink-100 text-pink-700' :
+                                                        'bg-indigo-100 text-indigo-700'
+                                                    }`}>
+                                                    {lead.project_type === 'print' ? '🖨️ Print Only' :
+                                                        lead.project_type === 'design' ? '🎨 Design Only' :
+                                                            '✨ Design + Print'}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="flex gap-1">
                                         <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
@@ -324,6 +346,30 @@ export default function LeadsPage() {
                                         </button>
                                     </div>
                                 </div>
+
+                                {/* Project Details Summary */}
+                                {(lead.quantity || lead.estimated_amount || lead.deadline) && (
+                                    <div className="grid grid-cols-3 gap-2 mb-3 p-2 bg-gray-50 rounded-lg">
+                                        {lead.quantity && (
+                                            <div className="text-center">
+                                                <p className="text-xs text-gray-500 font-medium">Qty</p>
+                                                <p className="text-sm font-bold text-gray-900">{lead.quantity.toLocaleString()}</p>
+                                            </div>
+                                        )}
+                                        {lead.estimated_amount && (
+                                            <div className="text-center">
+                                                <p className="text-xs text-gray-500 font-medium">Amount</p>
+                                                <p className="text-sm font-bold text-green-600">₹{lead.estimated_amount.toLocaleString()}</p>
+                                            </div>
+                                        )}
+                                        {lead.deadline && (
+                                            <div className="text-center">
+                                                <p className="text-xs text-gray-500 font-medium">Deadline</p>
+                                                <p className="text-xs font-bold text-gray-900">{formatDate(lead.deadline)}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 <div className="space-y-2 mt-4">
                                     <div className="flex items-center gap-2 text-gray-600">

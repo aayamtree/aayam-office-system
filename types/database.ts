@@ -82,6 +82,12 @@ export interface Lead extends BaseEntity {
 
   created_by?: string;
 
+  // Enhanced fields for admin monitoring
+  project_type?: 'print' | 'design' | 'design_print';
+  quantity?: number;
+  estimated_amount?: number;
+  deadline?: string;
+
   // Joined data
   assigned_user?: Profile;
   follow_ups?: FollowUp[];
@@ -794,17 +800,17 @@ export interface CalendarEventMention {
 export interface ProductRequirement extends BaseEntity {
   job_id?: string;
   quotation_id?: string;
-  
+
   product_category: "box" | "pouch" | "label" | "sticker" | "other";
   product_name?: string;
-  
+
   specifications: Record<string, any>; // JSONB field
-  
+
   collected_by?: string;
   collected_at?: string;
   forwarded_to_design: boolean;
   forwarded_at?: string;
-  
+
   reference_files: string[];
   notes?: string;
 }
