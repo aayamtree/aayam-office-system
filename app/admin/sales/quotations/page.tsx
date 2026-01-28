@@ -7,7 +7,7 @@ import {
   Calendar, User, FileText, IndianRupee, CheckCircle, XCircle, Clock, Loader2, Download
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
-import { useQuotations, useClients, useJobs, useLeads } from '@/lib/hooks';
+import { useQuotations, useClients, useJobs, useLeads, useFollowUps } from '@/lib/hooks';
 import { Quotation, Client, QuotationItem, JobStatus } from '@/types/database';
 import { downloadQuotationPDF, defaultCompanyData } from '@/components/quotation/QuotationPDF';
 import { formatDate } from '@/lib/utils';
@@ -15,6 +15,7 @@ import { formatDate } from '@/lib/utils';
 export default function QuotationsPage() {
   const { user, profile } = useAuth();
   const { quotations: allQuotations, loading: quotationsLoading, createQuotation, updateQuotation, saveQuotationItems, deleteQuotation } = useQuotations();
+  const { linkQuotationToFollowUp } = useFollowUps();
 
   // Show all quotations
   const quotations = allQuotations;
@@ -50,6 +51,8 @@ export default function QuotationsPage() {
     leadId: '',
     quoteNumber: '', // Auto-generated
     validUntil: '',
+    orderType: 'print' as 'print' | 'design' | 'design_print',
+    productCategory: '',
     items: [{ description: '', quantity: 1, rate: 0, amount: 0, gst_rate: 18 }] as QuotationItem[],
     subtotal: 0,
     gstRate: 18,
@@ -61,20 +64,28 @@ export default function QuotationsPage() {
   });
 
   // Handle URL Params for quick actions
+  const [followUpIdParam, setFollowUpIdParam] = useState<string | null>(null);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       console.log('URL Params:', {
         new: params.get('new'),
         clientId: params.get('clientId'),
-        leadId: params.get('leadId')
+        leadId: params.get('leadId'),
+        followUpId: params.get('followUpId')
       });
 
       if (params.get('new') === 'true') {
         const clientIdParam = params.get('clientId');
         const leadIdParam = params.get('leadId');
+        const followUpId = params.get('followUpId');
 
-        console.log('Setting form data:', { clientIdParam, leadIdParam });
+        console.log('Setting form data:', { clientIdParam, leadIdParam, followUpId });
+
+        if (followUpId) {
+          setFollowUpIdParam(followUpId);
+        }
 
         if (clientIdParam) {
           setFormData(prev => ({ ...prev, clientId: clientIdParam, leadId: '' }));
@@ -168,13 +179,15 @@ export default function QuotationsPage() {
       clientId: '',
       leadId: '',
       quoteNumber: '',
+      validUntil: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      orderType: 'print',
+      productCategory: '',
       items: [{ description: '', quantity: 1, rate: 0, amount: 0, gst_rate: 18 } as QuotationItem],
       subtotal: 0,
       gstRate: 18,
       totalTax: 0,
       totalAmount: 0,
       status: 'draft',
-      validUntil: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       notes: '',
       terms: '',
     });
@@ -184,6 +197,8 @@ export default function QuotationsPage() {
 
   const handleEdit = (q: Quotation) => {
     const items = q.items || [];
+    // The gstRate in formData is for new items, existing items have their own gst_rate
+    // For editing, we can take the gstRate from the first item if available, or default
     const gstRate = items.length > 0 ? items[0].gst_rate : 18;
 
     setFormData({
@@ -191,6 +206,8 @@ export default function QuotationsPage() {
       leadId: q.lead_id || '',
       quoteNumber: q.quote_number,
       validUntil: q.valid_until ? new Date(q.valid_until).toISOString().split('T')[0] : '',
+      orderType: q.order_type || 'print',
+      productCategory: q.product_category || '',
       items: items.length > 0 ? items : [{ description: '', quantity: 1, rate: 0, amount: 0, gst_rate: 18 } as QuotationItem],
       subtotal: q.subtotal,
       gstRate: gstRate,
@@ -304,6 +321,8 @@ export default function QuotationsPage() {
       const { items, ...quoteFields } = {
         client_id: formData.clientId || null,
         lead_id: formData.leadId || null,
+        order_type: formData.orderType,
+        product_category: formData.productCategory || undefined,
         created_by: profile?.id || user?.id,
         valid_until: formData.validUntil || null,
         subtotal: formData.subtotal,
@@ -324,6 +343,12 @@ export default function QuotationsPage() {
         const { data, error } = await createQuotation(quoteFields);
         if (error) throw new Error(error);
         if (data) quoteId = data.id;
+
+        // Link quotation to follow-up if created from follow-up
+        if (quoteId && followUpIdParam) {
+          await linkQuotationToFollowUp(followUpIdParam, quoteId);
+          setFollowUpIdParam(null); // Clear after linking
+        }
       }
 
       if (quoteId) {
