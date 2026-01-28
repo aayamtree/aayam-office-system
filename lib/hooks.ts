@@ -1579,7 +1579,7 @@ export function useExpenses() {
 // =============================================
 export function useFollowUps() {
   const { data, loading, error, refetch } = useSupabaseQuery<any>('follow_ups', {
-    select: '*, lead:leads(name), client:clients(name)',
+    select: '*, lead:leads(name, company), client:clients(name, company), quotation:quotations(id, quote_number, status)',
     orderBy: { column: 'follow_up_date', ascending: true }
   });
 
@@ -1622,6 +1622,18 @@ export function useFollowUps() {
     return { error: error?.message };
   };
 
+  // Link a quotation to a follow-up to prevent duplicates
+  const linkQuotationToFollowUp = async (followUpId: string, quotationId: string) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const { error } = await supabase
+      .from('follow_ups')
+      .update({ quotation_id: quotationId })
+      .eq('id', followUpId);
+
+    if (!error) refetch();
+    return { error: error?.message };
+  };
+
   return {
     followUps: data,
     loading,
@@ -1629,7 +1641,8 @@ export function useFollowUps() {
     refetch,
     createFollowUp,
     updateFollowUp,
-    deleteFollowUp
+    deleteFollowUp,
+    linkQuotationToFollowUp,
   };
 }
 

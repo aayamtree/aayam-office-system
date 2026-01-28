@@ -55,6 +55,8 @@ export default function MarketingFollowUpsPage() {
     time: f.follow_up_date ? new Date(f.follow_up_date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) : '',
     notes: f.notes || '',
     status: 'pending',
+    quotation: f.quotation, // Include quotation data
+    quotationNumber: f.quotation?.quote_number,
   }));
 
   // Filtering
@@ -124,10 +126,15 @@ export default function MarketingFollowUpsPage() {
     console.log('Creating quote for follow-up:', followUp);
 
     if (followUp.leadId) {
-      router.push(`/admin/marketing/quotations?new=true&leadId=${followUp.leadId}`);
+      router.push(`/admin/marketing/quotations?new=true&leadId=${followUp.leadId}&followUpId=${followUp.id}`);
     } else {
       alert('Error: No Lead linked to this follow-up.');
     }
+  };
+
+  const handleViewQuote = (followUp: any) => {
+    // Navigate to quotations page (could add highlight or filter)
+    router.push(`/admin/marketing/quotations`);
   };
 
   const getTypeInfo = (type: string) => followUpTypes.find(t => t.id === type) || followUpTypes[0];
@@ -174,12 +181,21 @@ export default function MarketingFollowUpsPage() {
 
         {/* Quick Actions Footer */}
         <div className="mt-3 pt-3 border-t flex justify-end">
-          <button
-            onClick={() => handleCreateQuote(followUp)}
-            className="text-xs font-bold text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded-lg transition-colors flex items-center gap-1"
-          >
-            <FileText size={14} /> Create Quote
-          </button>
+          {followUp.quotation ? (
+            <button
+              onClick={() => handleViewQuote(followUp)}
+              className="text-xs font-bold text-green-600 hover:bg-green-50 px-2 py-1 rounded-lg transition-colors flex items-center gap-1"
+            >
+              <CheckCircle size={14} /> View Quote {followUp.quotationNumber}
+            </button>
+          ) : (
+            <button
+              onClick={() => handleCreateQuote(followUp)}
+              className="text-xs font-bold text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded-lg transition-colors flex items-center gap-1"
+            >
+              <FileText size={14} /> Create Quote
+            </button>
+          )}
         </div>
       </div>
     );
