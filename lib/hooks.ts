@@ -3,6 +3,7 @@
 import useSWR from 'swr';
 import { useState, useCallback, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from './supabase';
+import { useAuth } from './auth-context';
 import {
   Client, Vendor, Designer, Job, Invoice, Lead,
   Quotation, Dispatch, BankAccount, DesignTask, DesignProject,
@@ -79,14 +80,26 @@ export function useSupabaseQuery<T>(
 // CLIENTS HOOK
 // =============================================
 export function useClients() {
+  const { user, profile } = useAuth();
+
+  // Build filter based on role
+  const filter = profile?.role === 'marketing'
+    ? [{ column: 'assigned_to', value: user?.id }]  // Marketing sees only their clients
+    : undefined;  // Admin sees all
+
   const { data, loading, error, refetch } = useSupabaseQuery<Client>('clients', {
+    filter,
     orderBy: { column: 'created_at', ascending: false }
   });
 
   const createClient = async (client: Omit<Client, 'id' | 'created_at' | 'updated_at' | 'outstanding_balance'>) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
-    const payload = { ...client } as any;
+    const payload = {
+      ...client,
+      assigned_to: user?.id,  // Auto-assign to creator
+      created_by: user?.id
+    } as any;
     delete payload.outstanding_balance;
     delete payload.client_type;
     delete payload.credit_limit;
@@ -456,8 +469,16 @@ export function useInvoices() {
 // LEADS HOOK
 // =============================================
 export function useLeads() {
+  const { user, profile } = useAuth();
+
+  // Build filter based on role
+  const filter = profile?.role === 'marketing'
+    ? [{ column: 'assigned_to', value: user?.id }]  // Marketing sees only their leads
+    : undefined;  // Admin sees all
+
   const { data, loading, error, refetch } = useSupabaseQuery<Lead>('leads', {
     select: '*',
+    filter,
     orderBy: { column: 'created_at', ascending: false }
   });
 
@@ -468,7 +489,12 @@ export function useLeads() {
 
     const { data, error } = await supabase
       .from('leads')
-      .insert([{ ...lead, lead_number: numberData || `LD-${Date.now()}` }])
+      .insert([{
+        ...lead,
+        lead_number: numberData || `LD-${Date.now()}`,
+        assigned_to: user?.id,  // Auto-assign to creator
+        created_by: user?.id
+      }])
       .select()
       .single();
 
@@ -513,7 +539,8 @@ export function useLeads() {
         notes: lead.notes,
         is_active: true,
         outstanding_balance: 0,
-        created_by: userId // Owner is the user who converts
+        assigned_to: lead.assigned_to || userId,  // Inherit ownership from lead
+        created_by: userId // User who converts
       }])
       .select()
       .single();
@@ -1094,8 +1121,16 @@ export function useDashboardStats() {
 // QUOTATIONS HOOK
 // =============================================
 export function useQuotations() {
+  const { user, profile } = useAuth();
+
+  // Build filter based on role
+  const filter = profile?.role === 'marketing'
+    ? [{ column: 'created_by', value: user?.id }]  // Marketing sees only their quotations
+    : undefined;  // Admin sees all
+
   const { data, loading, error, refetch } = useSupabaseQuery<Quotation>('quotations', {
     select: '*, client:clients(*), lead:leads(*), items:quotation_items(*)',
+    filter,
     orderBy: { column: 'created_at', ascending: false }
   });
 
@@ -1578,10 +1613,22 @@ export function useExpenses() {
 // FOLLOW UPS HOOK
 // =============================================
 export function useFollowUps() {
+  const { user, profile } = useAuth();
+
   const { data, loading, error, refetch } = useSupabaseQuery<any>('follow_ups', {
-    select: '*, lead:leads(name, company), client:clients(name, company), quotation:quotations(id, quote_number, status)',
+    select: '*, lead:leads(name, company, assigned_to), client:clients(name, company, assigned_to), quotation:quotations(id, quote_number, status)',
     orderBy: { column: 'follow_up_date', ascending: true }
   });
+
+  // Filter follow-ups based on role - marketing users see only follow-ups for their leads/clients
+  const filteredData = profile?.role === 'marketing'
+    ? (data || []).filter((followUp: any) => {
+      // Check if this follow-up belongs to the user
+      const leadOwnerId = followUp.lead?.assigned_to;
+      const clientOwnerId = followUp.client?.assigned_to;
+      return leadOwnerId === user?.id || clientOwnerId === user?.id;
+    })
+    : data || [];
 
   const createFollowUp = async (followUp: any) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
@@ -1635,7 +1682,7 @@ export function useFollowUps() {
   };
 
   return {
-    followUps: data,
+    followUps: filteredData,  // Return filtered data instead of raw data
     loading,
     error,
     refetch,
