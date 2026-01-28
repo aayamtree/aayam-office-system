@@ -31,16 +31,28 @@ export default function GoogleDriveSettings() {
 
     // Handle Google Drive connection
     const handleConnect = async () => {
-        // First, authenticate with Google (opens popup)
-        await signIn('google', {
+        console.log('Starting Google Drive connection...');
+        setConnecting(true); // Set BEFORE signIn
+
+        // Authenticate with Google
+        const result = await signIn('google', {
             callbackUrl: window.location.href,
             redirect: false
         });
+
+        console.log('SignIn result:', result);
     };
 
     // After Google OAuth, save credentials to database
     useEffect(() => {
+        console.log('Session changed:', {
+            hasAccessToken: !!session?.accessToken,
+            connecting,
+            session
+        });
+
         if (session?.accessToken && connecting) {
+            console.log('Triggering saveCredentials...');
             saveCredentials();
         }
     }, [session, connecting]);
