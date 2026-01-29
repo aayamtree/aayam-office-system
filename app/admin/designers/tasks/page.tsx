@@ -119,6 +119,14 @@ export default function DesignerWorkspace() {
   const router = useRouter();
   const { jobs, loading: jobsLoading, error: jobsError, updateJobStage, createJob, updateJob } = useJobs();
   const { clients } = useClients();
+
+  // DEBUG: Check why clients dropdown is empty
+  console.log('🔍 [Create Project Modal] Clients data:', {
+    hasClients: !!clients,
+    clientsLength: clients?.length || 0,
+    firstClient: clients?.[0],
+    profile: profile?.role
+  });
   const { designers } = useDesigners();
 
   // Local State
