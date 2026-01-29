@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS commissions (
   -- Links
   job_id UUID REFERENCES jobs(id) ON DELETE SET NULL,
   quotation_id UUID REFERENCES quotations(id) ON DELETE SET NULL,
-  order_id UUID REFERENCES orders(id) ON DELETE SET NULL,
+  order_id UUID, -- No foreign key - for future use if needed
   marketing_person_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   
   -- Project Details
