@@ -372,7 +372,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       {item.submenu!.map((sub) => {
                         let badge = 0;
                         if (sub.name === 'Leads') badge = stats?.leadsThisMonth || 0;
-                        if (sub.name === 'Follow-ups') badge = stats?.alerts?.followUpsDue || 0;
+                        // Follow-ups counter removed - was showing incorrect numbers
+                        // if (sub.name === 'Follow-ups') badge = stats?.alerts?.followUpsDue || 0;
                         if (sub.name === 'Production Queue') badge = (stats?.pipeline?.printing || 0) + (stats?.pipeline?.finishing || 0);
                         // if (sub.name === 'My Queue' && profile?.id && stats?.myTasks) badge = stats.myTasks; 
 
