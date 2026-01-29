@@ -270,7 +270,7 @@ export default function QuotationsPage() {
         sales_person_id: ownerId,
         created_by: ownerId,
         // No vendor or designer initially
-        job_type: q.order_type || 'print',
+        job_type: (q.order_type === 'print' ? 'print_only' : q.order_type === 'design' ? 'design_only' : 'design_print') as 'print_only' | 'design_only' | 'design_print',
         product_category: q.product_category,
         quantity: q.items?.[0]?.quantity || 1,
 

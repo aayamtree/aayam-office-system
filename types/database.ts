@@ -168,29 +168,41 @@ export interface Job extends BaseEntity {
   designer_id?: string;
   sales_order_id?: string;
 
-  job_type?: string;
-  product_category?: string;
+  job_type?: 'print_only' | 'design_only' | 'design_print';
+  product_category_id?: string;
+  product_category?: string; // Legacy field
   description?: string;
   quantity: number;
 
+  // Financial fields
   quote_per_piece: number;
   subtotal: number;
   gst_rate: number;
   gst_amount: number;
   discount_amount: number;
   total_amount: number;
+  base_price?: number; // New field
 
   payment_status: PaymentStatus;
   amount_received: number;
 
+  // Dates
   order_date: string;
   client_deadline?: string;
   internal_deadline?: string;
   completed_date?: string;
 
+  // Workflow status
   current_stage: JobStatus;
   priority: PriorityLevel;
 
+  // Print-specific fields (new)
+  client_approval?: boolean;
+  approval_date?: string;
+  print_ready?: boolean;
+  file_version?: string;
+
+  // Files and notes
   files: FileAttachment[];
   notes?: string;
   created_by?: string;
@@ -202,6 +214,7 @@ export interface Job extends BaseEntity {
   designer?: Designer;
   sales_person?: Profile;
   invoices?: Invoice[];
+  product_category_rel?: ProductCategory; // Renamed to avoid conflict
   checklist_progress?: Record<string, boolean>; // Design QC
   dispatch_checklist_progress?: Record<string, boolean>; // Dispatch QC
   qc_status?: 'pending' | 'passed' | 'failed' | 'hold';
@@ -886,7 +899,7 @@ export interface PrintRun extends BaseEntity {
   status: 'planned' | 'printed' | 'delivered';
   notes?: string;
   created_by?: string;
-  
+
   // Joined data
   machine?: Machine;
   sheet_size?: SheetSize;
@@ -904,7 +917,7 @@ export interface PrintRunJob extends BaseEntity {
   file_version?: string;
   notes?: string;
   added_at: string;
-  
+
   // Joined data
   print_run?: PrintRun;
   job?: Job;

@@ -108,11 +108,11 @@ export default function CommissionsPage() {
                                     key={f}
                                     onClick={() => setFilter(f)}
                                     className={`px-4 py-2 rounded-lg text-sm font-bold transition-all capitalize ${filter === f
-                                            ? f === 'all' ? 'bg-indigo-600 text-white'
-                                                : f === 'pending' ? 'bg-blue-600 text-white'
-                                                    : f === 'approved' ? 'bg-purple-600 text-white'
-                                                        : 'bg-green-600 text-white'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        ? f === 'all' ? 'bg-indigo-600 text-white'
+                                            : f === 'pending' ? 'bg-blue-600 text-white'
+                                                : f === 'approved' ? 'bg-purple-600 text-white'
+                                                    : 'bg-green-600 text-white'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                         }`}
                                 >
                                     {f}
@@ -253,8 +253,8 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                         }
                                     }}
                                     className={`px-3 py-2 rounded-lg text-sm font-bold transition-all ${formData.gstPercentage === rate.value.toString()
-                                            ? 'bg-green-600 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                         }`}
                                 >
                                     {rate.value > 0 ? `${rate.value}%` : 'Custom'}
@@ -335,7 +335,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                 </div>
                                 <div className="flex justify-between items-center text-blue-600">
                                     <span className="text-sm">
-                                        Commission ({form Data.commissionType === 'percentage' ? `${calculationResult.commissionValue}%` : 'Fixed'})
+                                        Commission ({formData.commissionType === 'percentage' ? `${calculationResult.commissionValue}%` : 'Fixed'})
                                     </span>
                                     <span className="font-bold">× {formData.commissionType === 'percentage' ? `${calculationResult.commissionValue}%` : formatCurrency(calculationResult.commissionValue)}</span>
                                 </div>

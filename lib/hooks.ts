@@ -2345,7 +2345,12 @@ export function useCommissions() {
     }
 
     if (user) {
-      await logActivity(user.id, 'created', 'commission', newCommission.id, `Created commission for ${commission.project_name || 'project'}: ₹${commission.project_total_amount}`);
+      await logActivity(
+        'Created Commission',
+        'Commissions',
+        newCommission.id,
+        `Created commission for ${commission.project_name || 'project'}: ₹${commission.project_total_amount}`
+      );
     }
 
     refetch();
@@ -2368,7 +2373,12 @@ export function useCommissions() {
     }
 
     if (user) {
-      await logActivity(user.id, 'updated', 'commission', id, `Updated commission status to ${updates.status || 'updated'}`);
+      await logActivity(
+        'Updated Commission',
+        'Commissions',
+        id,
+        `Updated commission status to ${updates.status || 'updated'}`
+      );
     }
 
     refetch();
@@ -2389,7 +2399,12 @@ export function useCommissions() {
     }
 
     if (user) {
-      await logActivity(user.id, 'deleted', 'commission', id, 'Deleted commission record');
+      await logActivity(
+        'Deleted Commission',
+        'Commissions',
+        id,
+        'Deleted commission record'
+      );
     }
 
     refetch();
@@ -2419,7 +2434,12 @@ export function useCommissions() {
     }
 
     if (user) {
-      await logActivity(user.id, 'updated', 'commission', id, `Marked commission as paid${paymentReference ? ` (Ref: ${paymentReference})` : ''}`);
+      await logActivity(
+        'Marked Commission Paid',
+        'Commissions',
+        id,
+        `Marked commission as paid${paymentReference ? ` (Ref: ${paymentReference})` : ''}`
+      );
     }
 
     refetch();
@@ -2442,7 +2462,12 @@ export function useCommissions() {
     }
 
     if (user) {
-      await logActivity(user.id, 'updated', 'commission', id, 'Approved commission for payment');
+      await logActivity(
+        'Approved Commission',
+        'Commissions',
+        id,
+        'Approved commission for payment'
+      );
     }
 
     refetch();

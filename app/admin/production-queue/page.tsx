@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { Palette, Printer, AlertCircle, Clock, CheckCircle2, TrendingUp } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import type { Job, ProductionSummary } from '@/types/database';
 
 export default function ProductionQueuePage() {
-    const supabase = createClientComponentClient();
+
     const [jobs, setJobs] = useState<Job[]>([]);
     const [summary, setSummary] = useState<ProductionSummary>({
         design_stage: 0,
@@ -64,15 +64,15 @@ export default function ProductionQueuePage() {
 
         switch (filter) {
             case 'design_stage':
-                return jobs.filter(j => j.current_stage === 'design' && j.status !== 'completed');
+                return jobs.filter(j => j.current_stage === 'designing');
             case 'print_ready':
                 return jobs.filter(j => j.print_ready && j.client_approval);
             case 'awaiting_approval':
-                return jobs.filter(j => !j.client_approval && ['design', 'revision'].includes(j.current_stage));
+                return jobs.filter(j => !j.client_approval && (j.current_stage === 'approval' || j.current_stage === 'designing'));
             case 'high_priority':
-                return jobs.filter(j => j.priority === 'high' && j.status !== 'completed');
+                return jobs.filter(j => j.priority === 'high' || j.priority === 'urgent');
             case 'in_production':
-                return jobs.filter(j => j.current_stage === 'production');
+                return jobs.filter(j => j.current_stage === 'printing' || j.current_stage === 'finishing');
             default:
                 return jobs;
         }
@@ -88,9 +88,10 @@ export default function ProductionQueuePage() {
             return <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs rounded-full font-bold">Awaiting Approval</span>;
         }
         switch (job.current_stage) {
-            case 'design':
+            case 'designing':
                 return <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-bold">Designing</span>;
-            case 'production':
+            case 'printing':
+            case 'finishing':
                 return <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-bold">In Production</span>;
             default:
                 return <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full font-bold capitalize">{job.current_stage}</span>;

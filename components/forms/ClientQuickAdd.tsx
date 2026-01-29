@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X, User, Building2, Mail, Phone, MapPin } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/lib/supabase';
 import type { Client, ClientInput } from '@/types/database';
 
 interface ClientQuickAddProps {
@@ -11,7 +11,7 @@ interface ClientQuickAddProps {
 }
 
 export default function ClientQuickAdd({ onClientCreated, onClose }: ClientQuickAddProps) {
-    const supabase = createClientComponentClient();
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 

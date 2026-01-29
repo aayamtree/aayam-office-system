@@ -173,7 +173,7 @@ export default function JobsPage() {
         client_id: formData.client_id || undefined, // Types generally prefer undefined over null for optional
         vendor_id: formData.vendor_id || undefined,
         designer_id: formData.designer_id || undefined,
-        job_type: formData.job_type,
+        job_type: formData.job_type as 'print_only' | 'design_only' | 'design_print' | undefined,
         product_category: formData.product_category,
         quantity: formData.quantity,
         quote_per_piece: formData.quote_per_piece,

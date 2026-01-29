@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Printer, Search, Filter, Eye, Edit2, CheckCircle } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/lib/supabase';
 import type { PrintRun, Machine, SheetSize, Material } from '@/types/database';
 import Link from 'next/link';
 
 export default function PrintPlannerPage() {
-    const supabase = createClientComponentClient();
     const [printRuns, setPrintRuns] = useState<PrintRun[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'planned' | 'printed' | 'delivered'>('all');
@@ -141,11 +140,11 @@ export default function PrintPlannerPage() {
                                     key={f}
                                     onClick={() => setFilter(f)}
                                     className={`px-4 py-2 rounded-lg text-sm font-bold transition-all capitalize ${filter === f
-                                            ? f === 'all' ? 'bg-indigo-600 text-white'
-                                                : f === 'planned' ? 'bg-blue-600 text-white'
-                                                    : f === 'printed' ? 'bg-purple-600 text-white'
-                                                        : 'bg-green-600 text-white'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        ? f === 'all' ? 'bg-indigo-600 text-white'
+                                            : f === 'planned' ? 'bg-blue-600 text-white'
+                                                : f === 'printed' ? 'bg-purple-600 text-white'
+                                                    : 'bg-green-600 text-white'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                         }`}
                                 >
                                     {f}
@@ -245,7 +244,6 @@ export default function PrintPlannerPage() {
 
 // New Print Run Modal Component
 function NewPrintRunModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
-    const supabase = createClientComponentClient();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 

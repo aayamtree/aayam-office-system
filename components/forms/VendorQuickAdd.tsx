@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X, Truck, Building2, Mail, Phone, MapPin } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/lib/supabase';
 import type { Vendor, VendorInput } from '@/types/database';
 
 interface VendorQuickAddProps {
@@ -11,7 +11,7 @@ interface VendorQuickAddProps {
 }
 
 export default function VendorQuickAdd({ onVendorCreated, onClose }: VendorQuickAddProps) {
-    const supabase = createClientComponentClient();
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +26,6 @@ export default function VendorQuickAdd({ onVendorCreated, onClose }: VendorQuick
         state: '',
         category: '',
         payment_terms: 30,
-        outstanding_balance: 0,
         is_active: true
     });
 

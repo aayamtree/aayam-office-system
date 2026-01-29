@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Plus, Trash2, CheckCircle, Printer, AlertCircle } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/lib/supabase';
 import type { PrintRun, PrintRunJob, Job } from '@/types/database';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -11,7 +11,7 @@ export default function PrintRunDetailPage() {
     const params = useParams();
     const router = useRouter();
     const printRunId = params.id as string;
-    const supabase = createClientComponentClient();
+
 
     const [printRun, setPrintRun] = useState<PrintRun | null>(null);
     const [printRunJobs, setPrintRunJobs] = useState<PrintRunJob[]>([]);
@@ -231,7 +231,7 @@ export default function PrintRunDetailPage() {
                         <div className="p-12 text-center">
                             <Printer className="mx-auto h-12 w-12 text-gray-300 mb-4" />
                             <p className="text-gray-500 font-medium">No jobs added yet</p>
-                            <p className="text-sm text-gray-400 mt-1">Click "Add Jobs" to add client jobs to this print run</p>
+                            <p className="text-sm text-gray-400 mt-1">Click &quot;Add Jobs&quot; to add client jobs to this print run</p>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
@@ -318,7 +318,7 @@ function AddJobsModal({
     onClose: () => void;
     onJobsAdded: () => void;
 }) {
-    const supabase = createClientComponentClient();
+
     const [eligibleJobs, setEligibleJobs] = useState<any[]>([]);
     const [selectedJobs, setSelectedJobs] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
@@ -446,8 +446,8 @@ function AddJobsModal({
                                     <label
                                         key={job.id}
                                         className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${selectedJobs.has(job.id)
-                                                ? 'bg-indigo-50 border-indigo-300'
-                                                : 'bg-white border-gray-200 hover:border-gray-300'
+                                            ? 'bg-indigo-50 border-indigo-300'
+                                            : 'bg-white border-gray-200 hover:border-gray-300'
                                             }`}
                                     >
                                         <input

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, FolderOpen, User, Calendar, DollarSign, Plus, Upload, Trash2 } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import type { Client, Vendor, ProductCategory, Profile, Job } from '@/types/database';
 import ClientQuickAdd from './ClientQuickAdd';
@@ -21,7 +21,7 @@ interface UnifiedProjectFormProps {
 }
 
 export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob }: UnifiedProjectFormProps) {
-    const supabase = createClientComponentClient();
+
     const { profile } = useAuth();
     const isDesigner = profile?.role === 'designer';
 
@@ -58,7 +58,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
         product_category_id: existingJob?.product_category_id || '',
         quantity: existingJob?.quantity || 1,
         base_price: existingJob?.base_price || 0,
-        gst_percentage: existingJob?.gst_percentage || 18.00,
+        gst_rate: existingJob?.gst_rate || 18.00,
         total_amount: existingJob?.total_amount || 0,
         vendor_id: existingJob?.vendor_id || '',
         current_stage: existingJob?.current_stage || 'new',
@@ -94,11 +94,11 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
     useEffect(() => {
         if (!isDesigner) {
             const base = parseFloat(formData.base_price as any) || 0;
-            const gst = parseFloat(formData.gst_percentage as any) || 0;
+            const gst = parseFloat(formData.gst_rate as any) || 0;
             const total = base * (1 + gst / 100);
             setFormData(prev => ({ ...prev, total_amount: total }));
         }
-    }, [formData.base_price, formData.gst_percentage, isDesigner]);
+    }, [formData.base_price, formData.gst_rate, isDesigner]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -140,7 +140,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                 jobData.product_category_id = formData.product_category_id || null;
                 jobData.quantity = formData.quantity;
                 jobData.base_price = formData.base_price;
-                jobData.gst_percentage = formData.gst_percentage;
+                jobData.gst_rate = formData.gst_rate;
                 jobData.total_amount = formData.total_amount;
                 jobData.vendor_id = formData.vendor_id || null;
             }
@@ -266,7 +266,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                         <select
                                             required
                                             value={formData.job_type}
-                                            onChange={(e) => setFormData({ ...formData, job_type: e.target.value })}
+                                            onChange={(e) => setFormData({ ...formData, job_type: e.target.value as 'print_only' | 'design_only' | 'design_print' })}
                                             className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-purple-500/20 focus:border-purple-500 transition-all"
                                         >
                                             {JOB_TYPES.map(type => (
@@ -333,7 +333,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                     </label>
                                     <select
                                         value={formData.priority}
-                                        onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                                        onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
                                         className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-purple-500/20 focus:border-purple-500 transition-all"
                                     >
                                         <option value="low">Low</option>
@@ -427,7 +427,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                             </label>
                                             <select
                                                 value={formData.current_stage}
-                                                onChange={(e) => setFormData({ ...formData, current_stage: e.target.value })}
+                                                onChange={(e) => setFormData({ ...formData, current_stage: e.target.value as any })}
                                                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-purple-500/20 focus:border-purple-500 transition-all"
                                             >
                                                 <option value="new">New</option>
@@ -461,8 +461,8 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                             <input
                                                 type="number"
                                                 step="0.01"
-                                                value={formData.gst_percentage}
-                                                onChange={(e) => setFormData({ ...formData, gst_percentage: parseFloat(e.target.value) || 0 })}
+                                                value={formData.gst_rate}
+                                                onChange={(e) => setFormData({ ...formData, gst_rate: parseFloat(e.target.value) || 0 })}
                                                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-purple-500/20 focus:border-purple-500 transition-all"
                                             />
                                         </div>
