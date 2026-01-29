@@ -492,8 +492,8 @@ export function useLeads() {
       .insert([{
         ...lead,
         lead_number: numberData || `LD-${Date.now()}`,
-        assigned_to: user?.id,  // Auto-assign to creator
-        created_by: user?.id
+        assigned_to: lead.assigned_to || user?.id,  // Use passed value or fallback to current user
+        created_by: lead.created_by || user?.id     // Use passed value or fallback to current user
       }])
       .select()
       .single();
@@ -1011,8 +1011,8 @@ export function useDashboardStats() {
           // 8. Jobs Completed Today
           supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('current_stage', 'delivered').gte('updated_at', todayStr),
 
-          // 9. Follow ups table count (Add this to the Promise.all array if index allows, or separate query)
-          supabase.from('follow_ups').select('id', { count: 'exact', head: true }).lte('follow_up_date', todayStr).eq('status', 'pending'),
+          // 9. Follow ups table count - get follow-ups due today or earlier
+          supabase.from('follow_ups').select('id', { count: 'exact', head: true }).lte('follow_up_date', todayStr),
         ]);
 
         // Aggregations
@@ -1623,12 +1623,30 @@ export function useFollowUps() {
   // Filter follow-ups based on role - marketing users see only follow-ups for their leads/clients
   const filteredData = profile?.role === 'marketing'
     ? (data || []).filter((followUp: any) => {
+      // Debug logging
+      console.log('Follow-up filtering:', {
+        followUpId: followUp.id,
+        leadOwnerId: followUp.lead?.assigned_to,
+        clientOwnerId: followUp.client?.assigned_to,
+        currentUserId: user?.id,
+        hasLead: !!followUp.lead,
+        hasClient: !!followUp.client
+      });
+
       // Check if this follow-up belongs to the user
       const leadOwnerId = followUp.lead?.assigned_to;
       const clientOwnerId = followUp.client?.assigned_to;
-      return leadOwnerId === user?.id || clientOwnerId === user?.id;
+
+      // Return true if EITHER the lead or client is assigned to this user
+      // Also return true if follow-up has no lead/client (shouldn't happen but safety check)
+      const belongsToUser = leadOwnerId === user?.id || clientOwnerId === user?.id;
+
+      console.log('Follow-up belongs to user?', belongsToUser);
+      return belongsToUser;
     })
     : data || [];
+
+  console.log('useFollowUps - Total data:', data?.length, 'Filtered:', filteredData?.length, 'Role:', profile?.role);
 
   const createFollowUp = async (followUp: any) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
