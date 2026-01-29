@@ -64,10 +64,10 @@ CREATE INDEX idx_leads_next_follow_up ON leads(next_follow_up);
 CREATE TABLE IF NOT EXISTS follow_ups (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   
-  -- Link to lead or job
-  lead_id UUID REFERENCES leads(id) ON DELETE CASCADE,
-  job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
-  quotation_id UUID REFERENCES quotations(id) ON DELETE SET NULL,
+  -- Link to lead or job (nullable - no FK constraints for now)
+  lead_id UUID,
+  job_id UUID,
+  quotation_id UUID,
   
   -- Follow-up Details
   follow_up_date TIMESTAMP NOT NULL,
@@ -88,14 +88,7 @@ CREATE TABLE IF NOT EXISTS follow_ups (
   -- Metadata
   created_by UUID REFERENCES profiles(id),
   created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW(),
-  
-  -- Constraint: Must link to either lead or job
-  CONSTRAINT follow_up_link CHECK (
-    (lead_id IS NOT NULL AND job_id IS NULL) OR
-    (lead_id IS NULL AND job_id IS NOT NULL) OR
-    (lead_id IS NULL AND job_id IS NULL AND quotation_id IS NOT NULL)
-  )
+  updated_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE INDEX idx_follow_ups_lead ON follow_ups(lead_id);
@@ -159,9 +152,9 @@ CREATE INDEX idx_quotations_date ON quotations(quotation_date);
 CREATE TABLE IF NOT EXISTS design_tasks (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   
-  -- Links
-  job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
-  project_id UUID REFERENCES design_projects(id) ON DELETE SET NULL,
+  -- Links (no FK constraints - tables may not exist)
+  job_id UUID,
+  project_id UUID,
   assigned_to UUID REFERENCES profiles(id),
   
   -- Task Details
