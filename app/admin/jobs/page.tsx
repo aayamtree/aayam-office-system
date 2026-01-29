@@ -416,7 +416,7 @@ export default function JobsPage() {
 
       {/* Print Production Links */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Link href="/admin/jobs/planner" className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-indigo-200 hover:shadow-md transition-all group">
+        <Link href="/admin/print-planner" className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-indigo-200 hover:shadow-md transition-all group">
           <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
             <Layers size={24} className="text-indigo-600" />
           </div>
@@ -426,7 +426,7 @@ export default function JobsPage() {
           </div>
           <ArrowRight size={20} className="ml-auto text-gray-300 group-hover:text-indigo-600" />
         </Link>
-        <Link href="/admin/jobs/queue" className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-amber-200 hover:shadow-md transition-all group">
+        <Link href="/admin/production-queue" className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-amber-200 hover:shadow-md transition-all group">
           <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center group-hover:bg-amber-100 transition-colors">
             <Printer size={24} className="text-amber-600" />
           </div>

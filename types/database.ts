@@ -843,3 +843,87 @@ export interface Commission extends BaseEntity {
   notes?: string;
   created_by?: string;
 }
+
+// =============================================
+// PRINT PLANNER & CONFIGURATION TABLES
+// =============================================
+
+// Machine configuration
+export interface Machine extends BaseEntity {
+  name: string;
+  description?: string;
+  is_active: boolean;
+}
+
+// Sheet Size configuration
+export interface SheetSize extends BaseEntity {
+  size: string;
+  description?: string;
+  is_active: boolean;
+}
+
+// Material configuration
+export interface Material extends BaseEntity {
+  name: string;
+  description?: string;
+  is_active: boolean;
+}
+
+// Product Category
+export interface ProductCategory extends BaseEntity {
+  name: string;
+  description?: string;
+  production_checklist_id?: string;
+  is_active: boolean;
+}
+
+// Print Run (container for multiple jobs)
+export interface PrintRun extends BaseEntity {
+  print_run_number: string;
+  machine_id?: string;
+  sheet_size_id?: string;
+  material_id?: string;
+  status: 'planned' | 'printed' | 'delivered';
+  notes?: string;
+  created_by?: string;
+  
+  // Joined data
+  machine?: Machine;
+  sheet_size?: SheetSize;
+  material?: Material;
+  jobs?: PrintRunJob[];
+}
+
+// Print Run Job (junction table)
+export interface PrintRunJob extends BaseEntity {
+  print_run_id: string;
+  job_id: string;
+  client_name?: string;
+  item_name?: string;
+  qty_on_sheet?: number;
+  file_version?: string;
+  notes?: string;
+  added_at: string;
+  
+  // Joined data
+  print_run?: PrintRun;
+  job?: Job;
+}
+
+// Production Summary (for dashboard)
+export interface ProductionSummary {
+  design_stage: number;
+  print_ready: number;
+  awaiting_approval: number;
+  high_priority: number;
+  in_production: number;
+  total_active: number;
+}
+
+// Input types for new tables
+export type MachineInput = Omit<Machine, 'id' | 'created_at' | 'updated_at'>;
+export type SheetSizeInput = Omit<SheetSize, 'id' | 'created_at' | 'updated_at'>;
+export type MaterialInput = Omit<Material, 'id' | 'created_at' | 'updated_at'>;
+export type ProductCategoryInput = Omit<ProductCategory, 'id' | 'created_at' | 'updated_at'>;
+export type PrintRunInput = Omit<PrintRun, 'id' | 'created_at' | 'updated_at' | 'print_run_number' | 'machine' | 'sheet_size' | 'material' | 'jobs'>;
+export type PrintRunJobInput = Omit<PrintRunJob, 'id' | 'created_at' | 'updated_at' | 'added_at' | 'print_run' | 'job'>;
