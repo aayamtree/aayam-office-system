@@ -8,7 +8,7 @@ import {
   Client, Vendor, Designer, Job, Invoice, Lead,
   Quotation, Dispatch, BankAccount, DesignTask, DesignProject,
   PurchaseBill, VendorPayment, PaymentReceived, POSCategory, POSProduct,
-  PaperStock, POSSale, Note, Reminder, BankTransaction, SalesOrder, ActivityLog, JobChecklist, UserCalendarEvent
+  PaperStock, POSSale, Note, Reminder, BankTransaction, SalesOrder, ActivityLog, JobChecklist, UserCalendarEvent, Commission
 } from '@/types/database';
 import { logActivity } from './logger';
 
@@ -2305,5 +2305,159 @@ export function useDailyReports(userId?: string, dateFilter?: { start?: string; 
     searchReports,
     getTodaySubmissionStatus,
     fetchProductChecklist // Add new function
+  };
+}
+
+// =============================================
+// COMMISSIONS HOOK
+// =============================================
+export function useCommissions() {
+  const { user, profile } = useAuth();
+
+  // Build filter based on role
+  const filter = profile?.role === 'admin'
+    ? undefined // Admin sees all commissions
+    : [{ column: 'marketing_person_id', value: user?.id }]; // Marketing users see only their own
+
+  const { data, loading, error, refetch } = useSupabaseQuery<Commission>('commissions', {
+    select: '*, marketing_person:profiles!marketing_person_id(*)',
+    filter,
+    orderBy: { column: 'created_at', ascending: false }
+  });
+
+  const createCommission = async (commission: Omit<Commission, 'id' | 'created_at' | 'updated_at' | 'gst_amount' | 'base_amount' | 'commission_amount'>) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const payload = {
+      ...commission,
+      created_by: user?.id,
+    };
+
+    const { data: newCommission, error: insertError } = await supabase
+      .from('commissions')
+      .insert([payload])
+      .select('*, marketing_person:profiles!marketing_person_id(*)')
+      .single();
+
+    if (insertError) {
+      console.error('Error creating commission:', insertError);
+      return { error: insertError.message };
+    }
+
+    if (user) {
+      await logActivity(user.id, 'created', 'commission', newCommission.id, `Created commission for ${commission.project_name || 'project'}: ₹${commission.project_total_amount}`);
+    }
+
+    refetch();
+    return { data: newCommission, error: null };
+  };
+
+  const updateCommission = async (id: string, updates: Partial<Commission>) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const { data: updatedCommission, error: updateError } = await supabase
+      .from('commissions')
+      .update(updates)
+      .eq('id', id)
+      .select('*, marketing_person:profiles!marketing_person_id(*)')
+      .single();
+
+    if (updateError) {
+      console.error('Error updating commission:', updateError);
+      return { error: updateError.message };
+    }
+
+    if (user) {
+      await logActivity(user.id, 'updated', 'commission', id, `Updated commission status to ${updates.status || 'updated'}`);
+    }
+
+    refetch();
+    return { data: updatedCommission, error: null };
+  };
+
+  const deleteCommission = async (id: string) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const { error: deleteError } = await supabase
+      .from('commissions')
+      .delete()
+      .eq('id', id);
+
+    if (deleteError) {
+      console.error('Error deleting commission:', deleteError);
+      return { error: deleteError.message };
+    }
+
+    if (user) {
+      await logActivity(user.id, 'deleted', 'commission', id, 'Deleted commission record');
+    }
+
+    refetch();
+    return { error: null };
+  };
+
+  const markAsPaid = async (id: string, paymentReference?: string) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const updates = {
+      status: 'paid' as const,
+      paid_at: new Date().toISOString(),
+      paid_by: user?.id,
+      payment_reference: paymentReference
+    };
+
+    const { data: updatedCommission, error: updateError } = await supabase
+      .from('commissions')
+      .update(updates)
+      .eq('id', id)
+      .select('*, marketing_person:profiles!marketing_person_id(*)')
+      .single();
+
+    if (updateError) {
+      console.error('Error marking commission as paid:', updateError);
+      return { error: updateError.message };
+    }
+
+    if (user) {
+      await logActivity(user.id, 'updated', 'commission', id, `Marked commission as paid${paymentReference ? ` (Ref: ${paymentReference})` : ''}`);
+    }
+
+    refetch();
+    return { data: updatedCommission, error: null };
+  };
+
+  const approveCommission = async (id: string) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    const { data: updatedCommission, error: updateError } = await supabase
+      .from('commissions')
+      .update({ status: 'approved' })
+      .eq('id', id)
+      .select('*, marketing_person:profiles!marketing_person_id(*)')
+      .single();
+
+    if (updateError) {
+      console.error('Error approving commission:', updateError);
+      return { error: updateError.message };
+    }
+
+    if (user) {
+      await logActivity(user.id, 'updated', 'commission', id, 'Approved commission for payment');
+    }
+
+    refetch();
+    return { data: updatedCommission, error: null };
+  };
+
+  return {
+    commissions: data,
+    loading,
+    error,
+    refetch,
+    createCommission,
+    updateCommission,
+    deleteCommission,
+    markAsPaid,
+    approveCommission
   };
 }

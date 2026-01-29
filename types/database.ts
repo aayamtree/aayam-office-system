@@ -814,3 +814,31 @@ export interface ProductRequirement extends BaseEntity {
   reference_files: string[];
   notes?: string;
 }
+
+// Commission (Marketing)
+export interface Commission extends BaseEntity {
+  job_id?: string;
+  quotation_id?: string;
+  order_id?: string;
+  marketing_person_id: string;
+  marketing_person?: Profile;
+  project_name?: string;
+  project_total_amount: number;
+  gst_percentage: number;
+  gst_amount?: number;
+  base_amount?: number;
+  commission_type: 'percentage' | 'fixed';
+  commission_value: number;
+  commission_amount?: number;
+  is_eligible: boolean;
+  quote_status?: string;
+  payment_status?: string;
+  payment_received_date?: string;
+  status: 'pending' | 'approved' | 'paid' | 'rejected';
+  salary_month?: string;
+  paid_at?: string;
+  paid_by?: string;
+  payment_reference?: string;
+  notes?: string;
+  created_by?: string;
+}
