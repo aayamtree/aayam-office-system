@@ -110,6 +110,7 @@ export interface Client extends BaseEntity {
   outstanding_balance: number;
   notes?: string;
   is_active: boolean;
+  assigned_to?: string;  // Marketing person assigned to this client
   created_by?: string;
 }
 
