@@ -71,7 +71,7 @@ const menuItems: MenuItem[] = [
     href: '/admin/marketing',
     allowedRoles: ['admin', 'finance', 'marketing'],
     submenu: [
-      { name: 'Dashboard', href: '/admin/marketing' },
+      { name: 'Dashboard', href: '/admin/marketing/dashboard' },
       { name: 'Leads', href: '/admin/marketing/leads' },
       { name: 'Follow-ups', href: '/admin/marketing/follow-ups' },
       { name: 'Quotations', href: '/admin/marketing/quotations' },
