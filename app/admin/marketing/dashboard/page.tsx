@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useLeads, useFollowUps, useJobs } from '@/lib/hooks';
@@ -115,137 +114,132 @@ export default function AdminMarketingDashboard() {
     // Only show for admin
     if (profile?.role !== 'admin') {
         return (
-            <div className=\"min-h-screen flex items-center justify-center\">
-                < div className =\"text-center\">
-                    < AlertCircle className =\"mx-auto h-12 w-12 text-red-500 mb-4\" />
-                        < h2 className =\"text-xl font-bold text-gray-900\">Access Denied</h2>
-                            < p className =\"text-gray-500 mt-2\">This page is only accessible to admins.</p>
-        </div >
-      </div >
-    );
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
+                    <h2 className="text-xl font-bold text-gray-900">Access Denied</h2>
+                    <p className="text-gray-500 mt-2">This page is only accessible to admins.</p>
+                </div>
+            </div>
+        );
     }
 
     return (
-        <div className=\"min-h-screen bg-gray-50\">
-    {/* Header */ }
-    <div className=\"bg-white border-b border-gray-200 px-6 py-6\">
-        < div className =\"max-w-7xl mx-auto\">
-            < h1 className =\"text-3xl font-bold text-gray-900 flex items-center gap-3\">
-                < Activity className =\"text-indigo-600\" size={32} />
-            Marketing Team Overview
-          </h1 >
-        <p className=\"text-gray-500 mt-1\">Monitor team performance and key metrics</p>
-        </div >
-      </div >
-
-        <div className=\"max-w-7xl mx-auto p-6 space-y-6\">
-    {/* Stats Grid */ }
-    <div className=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6\">
-    {
-        statCards.map((stat) => (
-            <button
-                key={stat.title}
-                onClick={() => router.push(stat.link)}
-                className=\"bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all hover:scale-105 text-left group\"
-        >
-        <div className=\"flex items-start justify-between mb-4\">
-        < div className = {`p-3 rounded-xl ${stat.bgColor}`}>
-            <stat.icon className={stat.textColor} size={24} />
-                </div >
-        <ArrowRight className=\"text-gray-400 group-hover:text-indigo-600 transition-colors\" size={20} />
-              </div >
-        <h3 className=\"text-gray-500 text-sm font-medium mb-1\">{stat.title}</h3>
-            < p className =\"text-3xl font-bold text-gray-900\">{loading ? '...' : stat.value}</p>
-            </button >
-          ))
-}
-        </div >
-
-    {/* Team Activity Section */ }
-    < div className =\"bg-white rounded-2xl p-6 border border-gray-100 shadow-sm\">
-        < div className =\"flex items-center justify-between mb-6\">
-            < div >
-            <h2 className=\"text-xl font-bold text-gray-900 flex items-center gap-2\">
-                < Users className =\"text-indigo-600\" size={24} />
-                Team Activity
-              </h2 >
-    <p className=\"text-gray-500 text-sm mt-1\">Performance breakdown by marketing person</p>
-            </div >
-          </div >
-
-{
-    loading?(
-            <div className =\"text-center py-8\">
-              <div className =\"inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600\"></div>
+        <div className="min-h-screen bg-gray-50">
+            {/* Header */}
+            <div className="bg-white border-b border-gray-200 px-6 py-6">
+                <div className="max-w-7xl mx-auto">
+                    <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                        <Activity className="text-indigo-600" size={32} />
+                        Marketing Team Overview
+                    </h1>
+                    <p className="text-gray-500 mt-1">Monitor team performance and key metrics</p>
+                </div>
             </div>
-          ) : teamMembers.length === 0 ? (
-    <p className=\"text-center text-gray-400 py-8\">No activity data available</p>
-          ) : (
-    <div className=\"space-y-4\">
-{
-    teamMembers.map((member: any, idx: number) => (
-        <div key={idx} className=\"flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-indigo-200 transition-colors\">
-    < div className =\"flex items-center gap-4\">
-    < div className =\"w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-600\">
-                      { member.name.charAt(0) }
-                    </div >
-                    <div>
-                      <p className=\"font-bold text-gray-900\">{member.name}</p>
-                      <p className=\"text-sm text-gray-500\">{member.leads} leads | {member.converted} converted</p>
-                    </div >
-                  </div >
-        <div className=\"text-right\">
-    < p className =\"text-sm text-gray-500\">Commission Est.</p>
-    < p className =\"text-lg font-bold text-gray-900\">₹{member.commission.toLocaleString()}</p>
-                  </div >
-                </div >
-              ))
-}
-            </div >
-          )}
-        </div >
 
-    {/* Commission Overview */ }
-    < div className =\"bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-100 shadow-sm\">
-        < div className =\"flex items-center justify-between mb-6\">
-            < div >
-            <h2 className=\"text-xl font-bold text-gray-900 flex items-center gap-2\">
-                < DollarSign className =\"text-indigo-600\" size={24} />
-                Commission Overview
-              </h2 >
-    <p className=\"text-gray-500 text-sm mt-1\">This month's earnings summary</p>
-            </div >
-    <button
-        onClick={() => router.push('/admin/marketing/commissions')}
-        className=\"px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-bold\"
-            >
-            View All
-            </button >
-          </div >
+            <div className="max-w-7xl mx-auto p-6 space-y-6">
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {statCards.map((stat) => (
+                        <button
+                            key={stat.title}
+                            onClick={() => router.push(stat.link)}
+                            className="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all hover:scale-105 text-left group"
+                        >
+                            <div className="flex items-start justify-between mb-4">
+                                <div className={`p-3 rounded-xl ${stat.bgColor}`}>
+                                    <stat.icon className={stat.textColor} size={24} />
+                                </div>
+                                <ArrowRight className="text-gray-400 group-hover:text-indigo-600 transition-colors" size={20} />
+                            </div>
+                            <h3 className="text-gray-500 text-sm font-medium mb-1">{stat.title}</h3>
+                            <p className="text-3xl font-bold text-gray-900">{loading ? '...' : stat.value}</p>
+                        </button>
+                    ))}
+                </div>
 
-    <div className=\"grid grid-cols-1 md:grid-cols-3 gap-4\">
-        < div className =\"bg-white rounded-xl p-4 border border-indigo-100\">
-            < p className =\"text-sm text-gray-500 mb-1\">Total This Month</p>
-                < p className =\"text-2xl font-bold text-gray-900\">₹0</p>
-                    < p className =\"text-xs text-gray-400 mt-1\">0 eligible projects</p>
-            </div >
-    <div className=\"bg-white rounded-xl p-4 border border-green-100\">
-        < p className =\"text-sm text-gray-500 mb-1\">Paid Out</p>
-            < p className =\"text-2xl font-bold text-green-600\">₹0</p>
-                < p className =\"text-xs text-gray-400 mt-1\">Last month</p>
-            </div >
-    <div className=\"bg-white rounded-xl p-4 border border-amber-100\">
-        < p className =\"text-sm text-gray-500 mb-1\">Pending</p>
-            < p className =\"text-2xl font-bold text-amber-600\">₹0</p>
-                < p className =\"text-xs text-gray-400 mt-1\">Awaiting payment</p>
-            </div >
-          </div >
+                {/* Team Activity Section */}
+                <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <Users className="text-indigo-600" size={24} />
+                                Team Activity
+                            </h2>
+                            <p className="text-gray-500 text-sm mt-1">Performance breakdown by marketing person</p>
+                        </div>
+                    </div>
 
-    <p className=\"text-xs text-gray-500 mt-4 text-center\">
-            💡 Commission system will be configured based on GST calculations
-          </p >
-        </div >
-      </div >
-    </div >
-  );
+                    {loading ? (
+                        <div className="text-center py-8">
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                        </div>
+                    ) : teamMembers.length === 0 ? (
+                        <p className="text-center text-gray-400 py-8">No activity data available</p>
+                    ) : (
+                        <div className="space-y-4">
+                            {teamMembers.map((member: any, idx: number) => (
+                                <div key={idx} className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-indigo-200 transition-colors">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-600">
+                                            {member.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-gray-900">{member.name}</p>
+                                            <p className="text-sm text-gray-500">{member.leads} leads | {member.converted} converted</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm text-gray-500">Commission Est.</p>
+                                        <p className="text-lg font-bold text-gray-900">₹{member.commission.toLocaleString()}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Commission Overview */}
+                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-100 shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <DollarSign className="text-indigo-600" size={24} />
+                                Commission Overview
+                            </h2>
+                            <p className="text-gray-500 text-sm mt-1">This month&apos;s earnings summary</p>
+                        </div>
+                        <button
+                            onClick={() => router.push('/admin/marketing/commissions')}
+                            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-bold"
+                        >
+                            View All
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-white rounded-xl p-4 border border-indigo-100">
+                            <p className="text-sm text-gray-500 mb-1">Total This Month</p>
+                            <p className="text-2xl font-bold text-gray-900">₹0</p>
+                            <p className="text-xs text-gray-400 mt-1">0 eligible projects</p>
+                        </div>
+                        <div className="bg-white rounded-xl p-4 border border-green-100">
+                            <p className="text-sm text-gray-500 mb-1">Paid Out</p>
+                            <p className="text-2xl font-bold text-green-600">₹0</p>
+                            <p className="text-xs text-gray-400 mt-1">Last month</p>
+                        </div>
+                        <div className="bg-white rounded-xl p-4 border border-amber-100">
+                            <p className="text-sm text-gray-500 mb-1">Pending</p>
+                            <p className="text-2xl font-bold text-amber-600">₹0</p>
+                            <p className="text-xs text-gray-400 mt-1">Awaiting payment</p>
+                        </div>
+                    </div>
+
+                    <p className="text-xs text-gray-500 mt-4 text-center">
+                        💡 Commission system will be configured based on GST calculations
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
 }
