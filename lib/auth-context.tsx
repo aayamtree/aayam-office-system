@@ -190,9 +190,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Get initial session with timeout
     const initSession = async () => {
       try {
-        // Timeout increased to 2s to prevent session errors
+        // Timeout increased to 10s for server stability (especially after DB operations)
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Auth Timeout')), 2000)
+          setTimeout(() => reject(new Error('Auth Timeout')), 10000)
         );
         const sessionPromise = supabase.auth.getSession();
 
@@ -215,13 +215,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     initSession();
-    // Reduced safety timeout from 5s to 2s
+    // Safety timeout matches auth timeout (10s)
     const safetyTimeout = setTimeout(() => {
       if (mounted && loading) {
         console.warn('Auth check timed out, forcing load completion');
         setLoading(false);
       }
-    }, 2000);
+    }, 10000);
 
     // Listen for auth changes - but don't cause flickering
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
