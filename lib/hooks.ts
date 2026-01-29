@@ -1610,43 +1610,18 @@ export function useExpenses() {
 
 
 // =============================================
-// FOLLOW UPS HOOK
+// FOLLOW UPS HOOK (REBUILT - SIMPLE VERSION)
 // =============================================
 export function useFollowUps() {
   const { user, profile } = useAuth();
 
   const { data, loading, error, refetch } = useSupabaseQuery<any>('follow_ups', {
-    select: '*, lead:leads(name, company, assigned_to), client:clients(name, company, assigned_to), quotation:quotations(id, quote_number, status)',
+    select: '*, lead:leads(name, company, assigned_to), client:clients(name, company), quotation:quotations(id, quote_number, status)',
     orderBy: { column: 'follow_up_date', ascending: true }
   });
 
-  // Filter follow-ups based on role - marketing users see only follow-ups for their leads/clients
-  const filteredData = profile?.role === 'marketing'
-    ? (data || []).filter((followUp: any) => {
-      // Debug logging
-      console.log('Follow-up filtering:', {
-        followUpId: followUp.id,
-        leadOwnerId: followUp.lead?.assigned_to,
-        clientOwnerId: followUp.client?.assigned_to,
-        currentUserId: user?.id,
-        hasLead: !!followUp.lead,
-        hasClient: !!followUp.client
-      });
-
-      // Check if this follow-up belongs to the user
-      const leadOwnerId = followUp.lead?.assigned_to;
-      const clientOwnerId = followUp.client?.assigned_to;
-
-      // Return true if EITHER the lead or client is assigned to this user
-      // Also return true if follow-up has no lead/client (shouldn't happen but safety check)
-      const belongsToUser = leadOwnerId === user?.id || clientOwnerId === user?.id;
-
-      console.log('Follow-up belongs to user?', belongsToUser);
-      return belongsToUser;
-    })
-    : data || [];
-
-  console.log('useFollowUps - Total data:', data?.length, 'Filtered:', filteredData?.length, 'Role:', profile?.role);
+  // Simple: just return all data, RLS handles access control
+  const followUps = data || [];
 
   const createFollowUp = async (followUp: any) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
@@ -1700,7 +1675,7 @@ export function useFollowUps() {
   };
 
   return {
-    followUps: filteredData,  // Return filtered data instead of raw data
+    followUps,  // All data (RLS filtered)
     loading,
     error,
     refetch,
