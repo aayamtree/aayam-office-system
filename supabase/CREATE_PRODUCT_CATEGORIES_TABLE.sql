@@ -39,6 +39,9 @@ ON CONFLICT (name) DO NOTHING;
 CREATE INDEX IF NOT EXISTS idx_product_categories_active ON product_categories(is_active);
 
 -- Update timestamp trigger
+DROP TRIGGER IF EXISTS trigger_product_categories_updated_at ON product_categories;
+DROP FUNCTION IF EXISTS update_product_categories_updated_at() CASCADE;
+
 CREATE OR REPLACE FUNCTION update_product_categories_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN

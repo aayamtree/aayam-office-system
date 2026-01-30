@@ -14,8 +14,10 @@ import {
 } from '@/lib/hooks';
 import { formatDate } from '@/lib/utils';
 import { Job, Client, Vendor, Designer, JobStatus, PaymentMode } from '@/types/database';
+import { supabase } from '@/lib/supabase';
 import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
 import VendorQuickAddModal from '@/components/shared/VendorQuickAddModal';
+import ProductCategoryQuickAdd from '@/components/shared/ProductCategoryQuickAdd';
 
 const stages = [
   { id: 'new', name: 'New', color: 'bg-gray-500', bgLight: 'bg-gray-50', border: 'border-gray-200' },
@@ -61,6 +63,19 @@ export default function JobsPage() {
     return () => clearTimeout(t);
   }, []);
 
+  // Load product categories from database
+  useEffect(() => {
+    const loadCategories = async () => {
+      const { data } = await supabase
+        .from('product_categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+      if (data) setProductCategories(data);
+    };
+    loadCategories();
+  }, []);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
@@ -71,6 +86,8 @@ export default function JobsPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [showAddVendorModal, setShowAddVendorModal] = useState(false);
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [productCategories, setProductCategories] = useState<any[]>([]);
 
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -654,9 +671,15 @@ export default function JobsPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-1">Product Category *</label>
-                  <select value={formData.product_category} onChange={(e) => setFormData({ ...formData, product_category: e.target.value })} className="w-full px-3 py-2 border rounded-xl bg-indigo-50">
-                    {productCategories.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <div className="flex gap-2">
+                    <select value={formData.product_category} onChange={(e) => setFormData({ ...formData, product_category: e.target.value })} className="flex-1 px-3 py-2 border rounded-xl bg-indigo-50">
+                      {productCategories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                    </select>
+                    <button type="button" onClick={() => setShowAddCategoryModal(true)}
+                      className="px-3 py-2 bg-purple-100 text-purple-700 rounded-xl hover:bg-purple-200 flex items-center gap-1">
+                      <Plus size={16} /><span className="hidden sm:inline">Add</span>
+                    </button>
+                  </div>
                   <p className="text-xs text-gray-500 mt-1">Used for production checklists in EOD reports</p>
                 </div>
 
@@ -824,6 +847,21 @@ export default function JobsPage() {
         onSuccess={(vendorId) => {
           setFormData({ ...formData, vendor_id: vendorId });
           setShowAddVendorModal(false);
+        }}
+      />
+
+      <ProductCategoryQuickAdd
+        isOpen={showAddCategoryModal}
+        onClose={() => setShowAddCategoryModal(false)}
+        onSuccess={async () => {
+          // Reload categories from database
+          const { data } = await supabase
+            .from('product_categories')
+            .select('*')
+            .eq('is_active', true)
+            .order('name');
+          if (data) setProductCategories(data);
+          setShowAddCategoryModal(false);
         }}
       />
 
