@@ -162,7 +162,6 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                                 <option value="Delhi">Delhi</option>
                                 <option value="Karnataka">Karnataka</option>
                                 <option value="Tamil Nadu">Tamil Nadu</option>
-                                <option value="Other">Other</option>
                             </select>
                         </div>
 

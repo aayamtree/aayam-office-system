@@ -202,7 +202,6 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                                 <option value="Delhi">Delhi</option>
                                 <option value="Karnataka">Karnataka</option>
                                 <option value="Tamil Nadu">Tamil Nadu</option>
-                                <option value="Other">Other</option>
                             </select>
                         </div>
 
