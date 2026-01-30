@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Printer, Users, X, Calendar, DollarSign, CheckCircle } from 'lucide-react';
+import { Printer, Users, X, Calendar, DollarSign, CheckCircle, Plus } from 'lucide-react';
+import { QuickAddMachine, QuickAddSheetSize, QuickAddMaterial } from '@/components/print-planner/QuickAddModals';
 
 interface PendingJob {
     id: string;
@@ -42,6 +43,11 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
     const [machines, setMachines] = useState<any[]>([]);
     const [sheetSizes, setSheetSizes] = useState<any[]>([]);
     const [materials, setMaterials] = useState<any[]>([]);
+
+    // QuickAdd modal states
+    const [showMachineModal, setShowMachineModal] = useState(false);
+    const [showSheetModal, setShowSheetModal] = useState(false);
+    const [showMaterialModal, setShowMaterialModal] = useState(false);
 
     useEffect(() => {
         fetchVendors();
@@ -165,8 +171,8 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                 {/* Job Type Lock Badge */}
                 {lockedJobType && (
                     <div className={`p-3 rounded-xl border-2 ${isMultiClient
-                            ? 'bg-gradient-to-r from-purple-50 to-pink-50 border-purple-300'
-                            : 'bg-blue-50 border-blue-300'
+                        ? 'bg-gradient-to-r from-purple-50 to-pink-50 border-purple-300'
+                        : 'bg-blue-50 border-blue-300'
                         }`}>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -213,7 +219,16 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                 {/* Print Specifications */}
                 <div className="grid grid-cols-3 gap-4">
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Machine</label>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="block text-sm font-bold text-gray-700">Machine</label>
+                            <button
+                                type="button"
+                                onClick={() => setShowMachineModal(true)}
+                                className="px-2 py-1 text-xs font-bold text-purple-600 hover:bg-purple-50 rounded flex items-center gap-1"
+                            >
+                                <Plus size={14} /> Add
+                            </button>
+                        </div>
                         <select
                             value={machineId}
                             onChange={(e) => setMachineId(e.target.value)}
@@ -226,7 +241,16 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Sheet Size</label>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="block text-sm font-bold text-gray-700">Sheet Size</label>
+                            <button
+                                type="button"
+                                onClick={() => setShowSheetModal(true)}
+                                className="px-2 py-1 text-xs font-bold text-purple-600 hover:bg-purple-50 rounded flex items-center gap-1"
+                            >
+                                <Plus size={14} /> Add
+                            </button>
+                        </div>
                         <select
                             value={sheetSizeId}
                             onChange={(e) => setSheetSizeId(e.target.value)}
@@ -239,7 +263,16 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Material</label>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="block text-sm font-bold text-gray-700">Material</label>
+                            <button
+                                type="button"
+                                onClick={() => setShowMaterialModal(true)}
+                                className="px-2 py-1 text-xs font-bold text-purple-600 hover:bg-purple-50 rounded flex items-center gap-1"
+                            >
+                                <Plus size={14} /> Add
+                            </button>
+                        </div>
                         <select
                             value={materialId}
                             onChange={(e) => setMaterialId(e.target.value)}
@@ -342,6 +375,32 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                     )}
                 </button>
             </form>
+
+            {/* QuickAdd Modals */}
+            <QuickAddMachine
+                isOpen={showMachineModal}
+                onClose={() => setShowMachineModal(false)}
+                onSuccess={() => {
+                    fetchDropdownData();
+                    setShowMachineModal(false);
+                }}
+            />
+            <QuickAddSheetSize
+                isOpen={showSheetModal}
+                onClose={() => setShowSheetModal(false)}
+                onSuccess={() => {
+                    fetchDropdownData();
+                    setShowSheetModal(false);
+                }}
+            />
+            <QuickAddMaterial
+                isOpen={showMaterialModal}
+                onClose={() => setShowMaterialModal(false)}
+                onSuccess={() => {
+                    fetchDropdownData();
+                    setShowMaterialModal(false);
+                }}
+            />
         </div>
     );
 }
