@@ -199,10 +199,19 @@ export default function PrintRunDetailPage() {
                 {/* Summary */}
                 <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
                     <h2 className="text-lg font-bold text-gray-900 mb-4">Print Run Summary</h2>
-                    <div className="grid grid-cols-4 gap-6">
+                    <div className="grid grid-cols-5 gap-6">
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Total Jobs</p>
                             <p className="text-2xl font-bold text-indigo-600">{printRunJobs.length}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-500 mb-1">Total Sheets</p>
+                            <p className="text-2xl font-bold text-purple-600">
+                                {printRunJobs.reduce((sum, job) => {
+                                    const sheets = Math.ceil((job.quantity_needed || 0) / (job.ups_in_sheet || 1));
+                                    return sum + sheets;
+                                }, 0)}
+                            </p>
                         </div>
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Created Date</p>
@@ -241,9 +250,10 @@ export default function PrintRunDetailPage() {
                                         <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Job #</th>
                                         <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Client</th>
                                         <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Item Name</th>
-                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Qty on Sheet</th>
-                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">File Version</th>
-                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Notes</th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Qty Needed</th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Ups</th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Sheets</th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Version</th>
                                         <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Actions</th>
                                     </tr>
                                 </thead>
@@ -264,16 +274,21 @@ export default function PrintRunDetailPage() {
                                             <td className="px-6 py-4 text-sm text-gray-900">
                                                 {prj.item_name || (prj.job as any)?.project_name || 'N/A'}
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-gray-900 font-bold">
-                                                {prj.qty_on_sheet || '-'}
+                                            <td className="px-6 py-4 text-sm text-gray-900 font-medium">
+                                                {prj.quantity_needed || 0}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-900 font-medium">
+                                                {prj.ups_in_sheet || 1}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-lg text-sm font-bold">
+                                                    {Math.ceil((prj.quantity_needed || 0) / (prj.ups_in_sheet || 1))} sheets
+                                                </span>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-bold">
                                                     {prj.file_version || 'v1'}
                                                 </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-gray-600">
-                                                {prj.notes || '-'}
                                             </td>
                                             <td className="px-6 py-4">
                                                 <button
@@ -320,6 +335,7 @@ function AddJobsModal({
 }) {
 
     const [eligibleJobs, setEligibleJobs] = useState<any[]>([]);
+    const [jobQuantities, setJobQuantities] = useState<Record<string, { quantity: number; ups: number }>>({});
     const [selectedJobs, setSelectedJobs] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -356,6 +372,16 @@ function AddJobsModal({
             const eligible = (data || []).filter(j => !existingJobIds.has(j.id));
 
             setEligibleJobs(eligible);
+
+            // Initialize quantities with job's quantity if available
+            const initialQuantities: Record<string, { quantity: number; ups: number }> = {};
+            eligible.forEach(job => {
+                initialQuantities[job.id] = {
+                    quantity: job.quantity || 0,
+                    ups: 1
+                };
+            });
+            setJobQuantities(initialQuantities);
         } catch (error) {
             console.error('Error fetching eligible jobs:', error);
         } finally {
@@ -365,14 +391,29 @@ function AddJobsModal({
 
     const toggleJob = (jobId: string) => {
         setSelectedJobs(prev => {
-            const next = new Set(prev);
-            if (next.has(jobId)) {
-                next.delete(jobId);
+            const newSet = new Set(prev);
+            if (newSet.has(jobId)) {
+                newSet.delete(jobId);
             } else {
-                next.add(jobId);
+                newSet.add(jobId);
             }
-            return next;
+            return newSet;
         });
+    };
+
+    const updateJobQuantity = (jobId: string, field: 'quantity' | 'ups', value: number) => {
+        setJobQuantities(prev => ({
+            ...prev,
+            [jobId]: {
+                ...prev[jobId],
+                [field]: value
+            }
+        }));
+    };
+
+    const calculateSheets = (quantity: number, ups: number): number => {
+        if (ups <= 0) return 0;
+        return Math.ceil(quantity / ups);
     };
 
     const handleSubmit = async () => {
@@ -382,13 +423,18 @@ function AddJobsModal({
         try {
             const jobsToAdd = eligibleJobs
                 .filter(j => selectedJobs.has(j.id))
-                .map(j => ({
-                    print_run_id: printRunId,
-                    job_id: j.id,
-                    client_name: j.client?.name,
-                    item_name: j.project_name,
-                    file_version: j.file_version || 'v1'
-                }));
+                .map(j => {
+                    const quantities = jobQuantities[j.id] || { quantity: 0, ups: 1 };
+                    return {
+                        print_run_id: printRunId,
+                        job_id: j.id,
+                        client_name: j.client?.name,
+                        item_name: j.project_name,
+                        file_version: j.file_version || 'v1',
+                        quantity_needed: quantities.quantity,
+                        ups_in_sheet: quantities.ups
+                    };
+                });
 
             const { error } = await supabase
                 .from('print_run_jobs')
@@ -441,34 +487,85 @@ function AddJobsModal({
                         </div>
                     ) : (
                         <>
-                            <div className="space-y-2 mb-6">
-                                {eligibleJobs.map((job) => (
-                                    <label
-                                        key={job.id}
-                                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${selectedJobs.has(job.id)
-                                            ? 'bg-indigo-50 border-indigo-300'
-                                            : 'bg-white border-gray-200 hover:border-gray-300'
-                                            }`}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedJobs.has(job.id)}
-                                            onChange={() => toggleJob(job.id)}
-                                            className="h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500"
-                                        />
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3">
-                                                <span className="font-mono text-sm font-bold text-indigo-600">
-                                                    {job.job_number}
-                                                </span>
-                                                <span className="font-medium text-gray-900">{job.project_name}</span>
-                                            </div>
-                                            <div className="text-sm text-gray-600 mt-1">
-                                                Client: {job.client?.name} • Qty: {job.quantity} • Version: {job.file_version || 'v1'}
+                            <div className="space-y-3 mb-6">
+                                {eligibleJobs.map((job) => {
+                                    const isSelected = selectedJobs.has(job.id);
+                                    const quantities = jobQuantities[job.id] || { quantity: 0, ups: 1 };
+                                    const sheets = calculateSheets(quantities.quantity, quantities.ups);
+
+                                    return (
+                                        <div
+                                            key={job.id}
+                                            className={`p-4 rounded-xl border-2 transition-all ${isSelected
+                                                ? 'bg-indigo-50 border-indigo-300'
+                                                : 'bg-white border-gray-200'
+                                                }`}
+                                        >
+                                            <div className="flex items-start gap-4">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isSelected}
+                                                    onChange={() => toggleJob(job.id)}
+                                                    className="h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500 mt-1"
+                                                />
+
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-3 mb-2">
+                                                        <span className="font-mono text-sm font-bold text-indigo-600">
+                                                            {job.job_number}
+                                                        </span>
+                                                        <span className="font-medium text-gray-900">{job.project_name}</span>
+                                                    </div>
+
+                                                    <div className="text-sm text-gray-600 mb-3">
+                                                        Client: {job.client?.name} • Version: {job.file_version || 'v1'}
+                                                    </div>
+
+                                                    {isSelected && (
+                                                        <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-gray-200">
+                                                            <div>
+                                                                <label className="block text-xs font-bold text-gray-700 mb-1">
+                                                                    Quantity Needed
+                                                                </label>
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    value={quantities.quantity}
+                                                                    onChange={(e) => updateJobQuantity(job.id, 'quantity', parseInt(e.target.value) || 0)}
+                                                                    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 ring-indigo-500/20 focus:border-indigo-500"
+                                                                    placeholder="0"
+                                                                />
+                                                            </div>
+
+                                                            <div>
+                                                                <label className="block text-xs font-bold text-gray-700 mb-1">
+                                                                    Ups (per sheet)
+                                                                </label>
+                                                                <input
+                                                                    type="number"
+                                                                    min="1"
+                                                                    value={quantities.ups}
+                                                                    onChange={(e) => updateJobQuantity(job.id, 'ups', parseInt(e.target.value) || 1)}
+                                                                    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 ring-indigo-500/20 focus:border-indigo-500"
+                                                                    placeholder="1"
+                                                                />
+                                                            </div>
+
+                                                            <div>
+                                                                <label className="block text-xs font-bold text-gray-700 mb-1">
+                                                                    Sheets Required
+                                                                </label>
+                                                                <div className="w-full border-2 border-indigo-200 bg-indigo-50 rounded-lg px-3 py-2 text-sm font-bold text-indigo-700">
+                                                                    {sheets} sheets
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </label>
-                                ))}
+                                    );
+                                })}
                             </div>
 
                             <div className="flex gap-4 justify-end border-t-2 border-gray-100 pt-4">

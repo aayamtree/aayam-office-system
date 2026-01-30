@@ -5,6 +5,7 @@ import { Plus, Printer, Search, Filter, Eye, Edit2, CheckCircle } from 'lucide-r
 import { supabase } from '@/lib/supabase';
 import type { PrintRun, Machine, SheetSize, Material } from '@/types/database';
 import Link from 'next/link';
+import { QuickAddMachine, QuickAddSheetSize, QuickAddMaterial } from '@/components/print-planner/QuickAddModals';
 
 export default function PrintPlannerPage() {
     const [printRuns, setPrintRuns] = useState<PrintRun[]>([]);
@@ -251,6 +252,11 @@ function NewPrintRunModal({ onClose, onCreated }: { onClose: () => void; onCreat
     const [sheetSizes, setSheetSizes] = useState<SheetSize[]>([]);
     const [materials, setMaterials] = useState<Material[]>([]);
 
+    // Quick-add modal states
+    const [showMachineAdd, setShowMachineAdd] = useState(false);
+    const [showSheetSizeAdd, setShowSheetSizeAdd] = useState(false);
+    const [showMaterialAdd, setShowMaterialAdd] = useState(false);
+
     const [formData, setFormData] = useState({
         machine_id: '',
         sheet_size_id: '',
@@ -340,48 +346,78 @@ function NewPrintRunModal({ onClose, onCreated }: { onClose: () => void; onCreat
                             <label className="block text-sm font-bold text-gray-700 mb-2">
                                 Machine
                             </label>
-                            <select
-                                value={formData.machine_id}
-                                onChange={(e) => setFormData({ ...formData, machine_id: e.target.value })}
-                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                            >
-                                <option value="">Select Machine</option>
-                                {machines.map(m => (
-                                    <option key={m.id} value={m.id}>{m.name}</option>
-                                ))}
-                            </select>
+                            <div className="flex gap-2">
+                                <select
+                                    value={formData.machine_id}
+                                    onChange={(e) => setFormData({ ...formData, machine_id: e.target.value })}
+                                    className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                >
+                                    <option value="">Select Machine</option>
+                                    {machines.map(m => (
+                                        <option key={m.id} value={m.id}>{m.name}</option>
+                                    ))}
+                                </select>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowMachineAdd(true)}
+                                    className="px-3 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all flex items-center justify-center"
+                                    title="Add New Machine"
+                                >
+                                    <Plus size={20} />
+                                </button>
+                            </div>
                         </div>
 
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-2">
                                 Sheet Size
                             </label>
-                            <select
-                                value={formData.sheet_size_id}
-                                onChange={(e) => setFormData({ ...formData, sheet_size_id: e.target.value })}
-                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                            >
-                                <option value="">Select Size</option>
-                                {sheetSizes.map(s => (
-                                    <option key={s.id} value={s.id}>{s.size}</option>
-                                ))}
-                            </select>
+                            <div className="flex gap-2">
+                                <select
+                                    value={formData.sheet_size_id}
+                                    onChange={(e) => setFormData({ ...formData, sheet_size_id: e.target.value })}
+                                    className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                >
+                                    <option value="">Select Size</option>
+                                    {sheetSizes.map(s => (
+                                        <option key={s.id} value={s.id}>{s.size}</option>
+                                    ))}
+                                </select>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowSheetSizeAdd(true)}
+                                    className="px-3 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all flex items-center justify-center"
+                                    title="Add New Sheet Size"
+                                >
+                                    <Plus size={20} />
+                                </button>
+                            </div>
                         </div>
 
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-2">
                                 Material
                             </label>
-                            <select
-                                value={formData.material_id}
-                                onChange={(e) => setFormData({ ...formData, material_id: e.target.value })}
-                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                            >
-                                <option value="">Select Material</option>
-                                {materials.map(m => (
-                                    <option key={m.id} value={m.id}>{m.name}</option>
-                                ))}
-                            </select>
+                            <div className="flex gap-2">
+                                <select
+                                    value={formData.material_id}
+                                    onChange={(e) => setFormData({ ...formData, material_id: e.target.value })}
+                                    className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                >
+                                    <option value="">Select Material</option>
+                                    {materials.map(m => (
+                                        <option key={m.id} value={m.id}>{m.name}</option>
+                                    ))}
+                                </select>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowMaterialAdd(true)}
+                                    className="px-3 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all flex items-center justify-center"
+                                    title="Add New Material"
+                                >
+                                    <Plus size={20} />
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -415,6 +451,40 @@ function NewPrintRunModal({ onClose, onCreated }: { onClose: () => void; onCreat
                         </button>
                     </div>
                 </form>
+
+                {/* Quick-Add Modals */}
+                {showMachineAdd && (
+                    <QuickAddMachine
+                        onClose={() => setShowMachineAdd(false)}
+                        onAdded={(newMachine) => {
+                            setMachines([...machines, newMachine]);
+                            setFormData({ ...formData, machine_id: newMachine.id });
+                            setShowMachineAdd(false);
+                        }}
+                    />
+                )}
+
+                {showSheetSizeAdd && (
+                    <QuickAddSheetSize
+                        onClose={() => setShowSheetSizeAdd(false)}
+                        onAdded={(newSize) => {
+                            setSheetSizes([...sheetSizes, newSize]);
+                            setFormData({ ...formData, sheet_size_id: newSize.id });
+                            setShowSheetSizeAdd(false);
+                        }}
+                    />
+                )}
+
+                {showMaterialAdd && (
+                    <QuickAddMaterial
+                        onClose={() => setShowMaterialAdd(false)}
+                        onAdded={(newMaterial) => {
+                            setMaterials([...materials, newMaterial]);
+                            setFormData({ ...formData, material_id: newMaterial.id });
+                            setShowMaterialAdd(false);
+                        }}
+                    />
+                )}
             </div>
         </div>
     );

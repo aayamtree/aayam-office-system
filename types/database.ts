@@ -914,6 +914,8 @@ export interface PrintRunJob extends BaseEntity {
   client_name?: string;
   item_name?: string;
   qty_on_sheet?: number;
+  quantity_needed?: number;
+  ups_in_sheet?: number;
   file_version?: string;
   notes?: string;
   added_at: string;
