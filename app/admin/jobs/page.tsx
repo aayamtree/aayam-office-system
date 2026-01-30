@@ -234,6 +234,7 @@ export default function JobsPage() {
       client_id: job.client_id || '',
       job_type: job.job_type || 'Design + Print',
       product_category: job.product_category || 'Other',
+      product_type: job.job_type || 'STICKER',
       quantity: job.quantity,
       vendor_id: job.vendor_id || '',
       designer_id: job.designer_id || '',
