@@ -21,7 +21,8 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
         city: '',
         state: 'Gujarat',
         gstin: '',
-        address: ''
+        address: '',
+        brand_name: ''  // e.g. #tiger #cobra
     });
 
     if (!isOpen) return null;
@@ -58,7 +59,8 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                 city: '',
                 state: 'Gujarat',
                 gstin: '',
-                address: ''
+                address: '',
+                brand_name: ''
             });
         } catch (error: any) {
             console.error('Error adding client:', error);
@@ -173,6 +175,18 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                                 value={formData.gstin}
                                 onChange={e => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })}
                             />
+                        </div>
+
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium mb-1">Brand Name</label>
+                            <input
+                                type="text"
+                                className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-indigo-500/20 focus:border-indigo-500"
+                                placeholder="e.g., #tiger #cobra #premium"
+                                value={formData.brand_name}
+                                onChange={e => setFormData({ ...formData, brand_name: e.target.value })}
+                            />
+                            <p className="text-xs text-gray-500 mt-1">🔍 Searchable across entire system (hashtag format supported)</p>
                         </div>
 
                         <div className="col-span-2">

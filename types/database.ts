@@ -112,6 +112,7 @@ export interface Client extends BaseEntity {
   is_active: boolean;
   assigned_to?: string;  // Marketing person assigned to this client
   created_by?: string;
+  brand_name?: string;  // Searchable brand names (hashtag format: #tiger #cobra)
 }
 
 // Vendor

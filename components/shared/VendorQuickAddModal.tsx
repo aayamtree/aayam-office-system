@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Loader2, Building2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Loader2, Building2, Plus } from 'lucide-react';
 import { useVendors } from '@/lib/hooks';
+import { supabase } from '@/lib/supabase';
+import VendorCategoryQuickAdd from './VendorCategoryQuickAdd';
 
 interface VendorQuickAddModalProps {
     isOpen: boolean;
@@ -13,21 +15,39 @@ interface VendorQuickAddModalProps {
 export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: VendorQuickAddModalProps) {
     const { createVendor } = useVendors();
     const [saving, setSaving] = useState(false);
+    const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+    const [vendorCategories, setVendorCategories] = useState<any[]>([]);
     const [formData, setFormData] = useState({
         name: '',
         company: '',
         phone: '',
         email: '',
-        category: 'Paper',
+        category: '',
         city: '',
         state: 'Gujarat',
         gstin: '',
         payment_terms: 'Net 30'
     });
 
-    if (!isOpen) return null;
+    // Load vendor categories from database
+    useEffect(() => {
+        const loadCategories = async () => {
+            const { data } = await supabase
+                .from('vendor_categories')
+                .select('*')
+                .eq('is_active', true)
+                .order('name');
+            if (data) {
+                setVendorCategories(data);
+                if (data.length > 0 && !formData.category) {
+                    setFormData(prev => ({ ...prev, category: data[0].name }));
+                }
+            }
+        };
+        if (isOpen) loadCategories();
+    }, [isOpen]);
 
-    const vendorCategories = ['Paper', 'Printing', 'Binding', 'Packaging', 'Logistics', 'IT', 'Other'];
+    if (!isOpen) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -141,15 +161,21 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
 
                         <div>
                             <label className="block text-sm font-medium mb-1">Category</label>
-                            <select
-                                className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-green-500/20 focus:border-green-500"
-                                value={formData.category}
-                                onChange={e => setFormData({ ...formData, category: e.target.value })}
-                            >
-                                {vendorCategories.map(cat => (
-                                    <option key={cat} value={cat}>{cat}</option>
-                                ))}
-                            </select>
+                            <div className="flex gap-2">
+                                <select
+                                    className="flex-1 px-3 py-2 border rounded-xl focus:ring-2 ring-green-500/20 focus:border-green-500"
+                                    value={formData.category}
+                                    onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                >
+                                    {vendorCategories.map(cat => (
+                                        <option key={cat.id} value={cat.name}>{cat.name}</option>
+                                    ))}
+                                </select>
+                                <button type="button" onClick={() => setShowAddCategoryModal(true)}
+                                    className="px-3 py-2 bg-green-100 text-green-700 rounded-xl hover:bg-green-200 flex items-center gap-1">
+                                    <Plus size={16} /><span className="hidden sm:inline">Add</span>
+                                </button>
+                            </div>
                         </div>
 
                         <div>
@@ -221,6 +247,22 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                     </div>
                 </form>
             </div>
+
+            {/* Vendor Category Quick Add Modal */}
+            <VendorCategoryQuickAdd
+                isOpen={showAddCategoryModal}
+                onClose={() => setShowAddCategoryModal(false)}
+                onSuccess={async () => {
+                    // Reload categories after adding
+                    const { data } = await supabase
+                        .from('vendor_categories')
+                        .select('*')
+                        .eq('is_active', true)
+                        .order('name');
+                    if (data) setVendorCategories(data);
+                    setShowAddCategoryModal(false);
+                }}
+            />
         </div>
     );
 }
