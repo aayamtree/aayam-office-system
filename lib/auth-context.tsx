@@ -304,24 +304,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Sign out
   const signOut = async () => {
-    // Optimistic Logout: Clear state immediately
+    // Optimistic Logout: Clear ALL auth-related local storage
     localStorage.removeItem('aayam_fallback_profile');
     localStorage.removeItem('aayam_speed_role');
+    localStorage.removeItem('aayam_bypass_mode'); // CRITICAL: Clear bypass mode to prevent auto-login
     setSession(null);
     setUser(null);
     setProfile(null);
 
-    // Force Navigation
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login';
-    }
-
+    // Perform Supabase signout first
     if (isConfigured) {
       try {
         await supabase.auth.signOut();
       } catch (e) {
         console.error('SignOut API error:', e);
       }
+    }
+
+    // Force Navigation AFTER signout
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
     }
   };
 
