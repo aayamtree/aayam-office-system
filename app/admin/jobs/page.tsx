@@ -39,6 +39,9 @@ const jobTypes = ['Design Only', 'Print Only', 'Design + Print', 'Packaging', 'B
 // Product categories must match Settings > Production checklist types
 const productCategories = ['Banner', 'Book', 'Box', 'Brochure', 'Label', 'Poster', 'Other'];
 
+// Product types for print planning (job_type field)
+const productTypes = ['STICKER', 'POUCH', 'BOX', 'BANNER', 'FLEX', 'VINYL', 'LABEL', 'BOOK', 'BROCHURE', 'OTHER'];
+
 
 export default function JobsPage() {
   const { jobs, loading: jobsLoading, createJob, updateJob, deleteJob, updateJobStage } = useJobs();
@@ -75,7 +78,7 @@ export default function JobsPage() {
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
-    project_name: '', client_id: '', job_type: 'Design + Print', product_category: 'Other', quantity: 1, vendor_id: '',
+    project_name: '', client_id: '', job_type: 'Design + Print', product_category: 'Other', product_type: 'STICKER', quantity: 1, vendor_id: '',
     designer_id: '', client_deadline: '', priority: 'normal', quote_per_piece: 0, gst_rate: 18, current_stage: 'new'
   });
 
@@ -220,7 +223,7 @@ export default function JobsPage() {
 
   const resetForm = () => {
     setFormData({
-      project_name: '', client_id: '', job_type: 'Design + Print', product_category: 'Other', quantity: 1, vendor_id: '',
+      project_name: '', client_id: '', job_type: 'Design + Print', product_category: 'Other', product_type: 'STICKER', quantity: 1, vendor_id: '',
       designer_id: '', client_deadline: '', priority: 'normal', quote_per_piece: 0, gst_rate: 18, current_stage: 'new'
     });
   };
@@ -654,6 +657,14 @@ export default function JobsPage() {
                   <p className="text-xs text-gray-500 mt-1">Used for production checklists in EOD reports</p>
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium mb-1">Product Type (for Print Planner) *</label>
+                  <select value={formData.product_type} onChange={(e) => setFormData({ ...formData, product_type: e.target.value })} className="w-full px-3 py-2 border rounded-xl bg-purple-50">
+                    {productTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <p className="text-xs text-purple-600 mt-1">⚡ Jobs with same type can be batched together in print runs</p>
+                </div>
+
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">Quantity</label>
@@ -743,7 +754,7 @@ export default function JobsPage() {
                 </div>
               </form>
             </div>
-          </div>
+          </div >
         )
       }
 
