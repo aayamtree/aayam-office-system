@@ -84,7 +84,7 @@ export default function UnifiedJobForm({
                 priority: editingJob.priority || 'normal',
                 client_deadline: editingJob.client_deadline || '',
                 description: editingJob.description || '',
-                drive_link: editingJob.drive_link || '',
+                drive_link: (editingJob as any).drive_link || '',
                 quantity: editingJob.quantity || 1,
                 quote_per_piece: editingJob.quote_per_piece || 0,
                 gst_rate: editingJob.gst_rate || 18,
