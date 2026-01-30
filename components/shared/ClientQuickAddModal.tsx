@@ -44,7 +44,9 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
             });
 
             alert('✅ Client added successfully!');
-            onSuccess?.(newClient.id);
+            if (newClient?.data) {
+                onSuccess?.(newClient.data.id);
+            }
             onClose();
 
             // Reset form
