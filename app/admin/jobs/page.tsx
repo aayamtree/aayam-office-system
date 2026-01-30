@@ -18,33 +18,12 @@ import { supabase } from '@/lib/supabase';
 import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
 import VendorQuickAddModal from '@/components/shared/VendorQuickAddModal';
 import ProductCategoryQuickAdd from '@/components/shared/ProductCategoryQuickAdd';
+import JobTypeQuickAdd from '@/components/shared/JobTypeQuickAdd';
+import ProductTypeQuickAdd from '@/components/shared/ProductTypeQuickAdd';
+import PriorityQuickAdd from '@/components/shared/PriorityQuickAdd';
+import JobStageQuickAdd from '@/components/shared/JobStageQuickAdd';
 
-const stages = [
-  { id: 'new', name: 'New', color: 'bg-gray-500', bgLight: 'bg-gray-50', border: 'border-gray-200' },
-  { id: 'designing', name: 'Design', color: 'bg-purple-500', bgLight: 'bg-purple-50', border: 'border-purple-200' },
-  { id: 'approval', name: 'Approval', color: 'bg-yellow-500', bgLight: 'bg-yellow-50', border: 'border-yellow-200' },
-  { id: 'printing', name: 'Print', color: 'bg-blue-500', bgLight: 'bg-blue-50', border: 'border-blue-200' },
-  { id: 'finishing', name: 'Post Print', color: 'bg-cyan-500', bgLight: 'bg-cyan-50', border: 'border-cyan-200' },
-  { id: 'quality_check', name: 'QC Check', color: 'bg-emerald-500', bgLight: 'bg-emerald-50', border: 'border-emerald-200' },
-  { id: 'ready', name: 'Ready', color: 'bg-indigo-500', bgLight: 'bg-indigo-50', border: 'border-indigo-200' },
-  { id: 'dispatched', name: 'Dispatched', color: 'bg-orange-500', bgLight: 'bg-orange-50', border: 'border-orange-200' },
-  { id: 'delivered', name: 'Delivered', color: 'bg-green-500', bgLight: 'bg-green-50', border: 'border-green-200' },
-];
-
-const priorities = [
-  { id: 'low', name: 'Low', color: 'bg-gray-100 text-gray-600' },
-  { id: 'normal', name: 'Normal', color: 'bg-blue-100 text-blue-600' },
-  { id: 'high', name: 'High', color: 'bg-orange-100 text-orange-600' },
-  { id: 'urgent', name: 'Urgent', color: 'bg-red-100 text-red-600' },
-];
-
-const jobTypes = ['Design Only', 'Print Only', 'Design + Print', 'Packaging', 'Branding', 'Other'];
-
-// Product categories must match Settings > Production checklist types
-const productCategories = ['Banner', 'Book', 'Box', 'Brochure', 'Label', 'Poster', 'Other'];
-
-// Product types for print planning (job_type field)
-const productTypes = ['STICKER', 'POUCH', 'BOX', 'BANNER', 'FLEX', 'VINYL', 'LABEL', 'BOOK', 'BROCHURE', 'OTHER'];
+// ✅ ALL DROPDOWNS NOW DATABASE-DRIVEN - NO HARDCODED VALUES!
 
 
 export default function JobsPage() {
@@ -63,18 +42,34 @@ export default function JobsPage() {
     return () => clearTimeout(t);
   }, []);
 
-  // Load product categories from database
+  // Load ALL configuration tables from database
   useEffect(() => {
-    const loadCategories = async () => {
-      const { data } = await supabase
-        .from('product_categories')
-        .select('*')
-        .eq('is_active', true)
-        .order('name');
-      if (data) setProductCategories(data);
-    };
-    loadCategories();
+    loadAllConfig();
   }, []);
+
+  const loadAllConfig = async () => {
+    try {
+      const [categoriesRes, jobTypesRes, productTypesRes, prioritiesRes, stagesRes] = await Promise.all([
+        supabase.from('product_categories').select('*').eq('is_active', true).order('name'),
+        supabase.from('job_types').select('*').eq('is_active', true).order('name'),
+        supabase.from('product_types').select('*').eq('is_active', true).order('name'),
+        supabase.from('priorities').select('*').eq('is_active', true).order('order_index'),
+        supabase.from('job_stages').select('*').eq('is_active', true).order('order_index'),
+      ]);
+
+      if (categoriesRes.data) setProductCategories(categoriesRes.data);
+      if (jobTypesRes.data) setJobTypes(jobTypesRes.data);
+      if (productTypesRes.data) setProductTypes(productTypesRes.data);
+      if (prioritiesRes.data) setPriorities(prioritiesRes.data);
+      if (stagesRes.data) setStages(stagesRes.data);
+
+      // Set initial form defaults
+      if (jobTypesRes.data?.[0]) setFormData(prev => ({ ...prev, job_type: jobTypesRes.data[0].name }));
+      if (productTypesRes.data?.[0]) setFormData(prev => ({ ...prev, product_type: productTypesRes.data[0].name }));
+    } catch (error) {
+      console.error('Error loading configuration:', error);
+    }
+  };
 
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState('all');
@@ -87,7 +82,17 @@ export default function JobsPage() {
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [showAddVendorModal, setShowAddVendorModal] = useState(false);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [showAddJobTypeModal, setShowAddJobTypeModal] = useState(false);
+  const [showAddProductTypeModal, setShowAddProductTypeModal] = useState(false);
+  const [showAddPriorityModal, setShowAddPriorityModal] = useState(false);
+  const [showAddStageModal, setShowAddStageModal] = useState(false);
+
+  // Database-driven configuration state
   const [productCategories, setProductCategories] = useState<any[]>([]);
+  const [jobTypes, setJobTypes] = useState<any[]>([]);
+  const [productTypes, setProductTypes] = useState<any[]>([]);
+  const [priorities, setPriorities] = useState<any[]>([]);
+  const [stages, setStages] = useState<any[]>([]);
 
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -558,7 +563,7 @@ export default function JobsPage() {
                   {/* Cards List */}
                   <div className="p-3 space-y-3 overflow-y-auto">
                     {stageJobs.length > 0 ? (
-                      stageJobs.map(job => <JobCard key={job.id} job={job} />)
+                      stageJobs.map((job: Job) => <JobCard key={job.id} job={job} />)
                     ) : (
                       <div className="text-center py-6 text-gray-300 text-xs italic">
                         Empty
@@ -589,7 +594,7 @@ export default function JobsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {filteredJobs.map(job => (
+                  {filteredJobs.map((job: Job) => (
                     <tr key={job.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => handleViewDetail(job)}>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
@@ -664,9 +669,15 @@ export default function JobsPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-1">Job Type</label>
-                  <select value={formData.job_type} onChange={(e) => setFormData({ ...formData, job_type: e.target.value })} className="w-full px-3 py-2 border rounded-xl">
-                    {jobTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                  <div className="flex gap-2">
+                    <select value={formData.job_type} onChange={(e) => setFormData({ ...formData, job_type: e.target.value })} className="flex-1 px-3 py-2 border rounded-xl">
+                      {jobTypes.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
+                    </select>
+                    <button type="button" onClick={() => setShowAddJobTypeModal(true)}
+                      className="px-3 py-2 bg-purple-100 text-purple-700 rounded-xl hover:bg-purple-200 flex items-center gap-1">
+                      <Plus size={16} /><span className="hidden sm:inline">Add</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div>
@@ -685,10 +696,16 @@ export default function JobsPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-1">Product Type (for Print Planner) *</label>
-                  <select value={formData.product_type} onChange={(e) => setFormData({ ...formData, product_type: e.target.value })} className="w-full px-3 py-2 border rounded-xl bg-purple-50">
-                    {productTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                  <p className="text-xs text-purple-600 mt-1">⚡ Jobs with same type can be batched together in print runs</p>
+                  <div className="flex gap-2">
+                    <select value={formData.product_type} onChange={(e) => setFormData({ ...formData, product_type: e.target.value })} className="flex-1 px-3 py-2 border rounded-xl bg-orange-50">
+                      {productTypes.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
+                    </select>
+                    <button type="button" onClick={() => setShowAddProductTypeModal(true)}
+                      className="px-3 py-2 bg-orange-100 text-orange-700 rounded-xl hover:bg-orange-200 flex items-center gap-1">
+                      <Plus size={16} /><span className="hidden sm:inline">Add</span>
+                    </button>
+                  </div>
+                  <p className="text-xs text-orange-600 mt-1">⚡ Jobs with same type can be batched together in print runs</p>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
@@ -748,15 +765,27 @@ export default function JobsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">Priority</label>
-                    <select value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: e.target.value })} className="w-full px-3 py-2 border rounded-xl">
-                      {priorities.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
+                    <div className="flex gap-2">
+                      <select value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: e.target.value })} className="flex-1 px-3 py-2 border rounded-xl">
+                        {priorities.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      </select>
+                      <button type="button" onClick={() => setShowAddPriorityModal(true)}
+                        className="px-3 py-2 bg-yellow-100 text-yellow-700 rounded-xl hover:bg-yellow-200 flex items-center gap-1">
+                        <Plus size={16} />
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Current Stage</label>
-                    <select value={formData.current_stage} onChange={(e) => setFormData({ ...formData, current_stage: e.target.value })} className="w-full px-3 py-2 border rounded-xl">
-                      {stages.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                    </select>
+                    <div className="flex gap-2">
+                      <select value={formData.current_stage} onChange={(e) => setFormData({ ...formData, current_stage: e.target.value })} className="flex-1 px-3 py-2 border rounded-xl">
+                        {stages.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </select>
+                      <button type="button" onClick={() => setShowAddStageModal(true)}
+                        className="px-3 py-2 bg-teal-100 text-teal-700 rounded-xl hover:bg-teal-200 flex items-center gap-1">
+                        <Plus size={16} />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -866,6 +895,35 @@ export default function JobsPage() {
       />
 
 
+      {/* Job Type Quick Add */}
+      <JobTypeQuickAdd
+        isOpen={showAddJobTypeModal}
+        onClose={() => setShowAddJobTypeModal(false)}
+        onSuccess={loadAllConfig}
+      />
+
+      {/* Product Type Quick Add */}
+      <ProductTypeQuickAdd
+        isOpen={showAddProductTypeModal}
+        onClose={() => setShowAddProductTypeModal(false)}
+        onSuccess={loadAllConfig}
+      />
+
+      {/* Priority Quick Add */}
+      <PriorityQuickAdd
+        isOpen={showAddPriorityModal}
+        onClose={() => setShowAddPriorityModal(false)}
+        onSuccess={loadAllConfig}
+      />
+
+      {/* Job Stage Quick Add */}
+      <JobStageQuickAdd
+        isOpen={showAddStageModal}
+        onClose={() => setShowAddStageModal(false)}
+        onSuccess={loadAllConfig}
+      />
+
     </div >
   );
 }
+
