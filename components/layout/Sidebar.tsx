@@ -48,9 +48,14 @@ const menuItems: MenuItem[] = [
     allowedRoles: ['admin', 'finance'],
     submenu: [
       { name: 'Overview', href: '/admin/jobs' },
-      { name: 'Print Planner', href: '/admin/jobs/planner' },
       { name: 'Production Queue', href: '/admin/jobs/queue' },
     ]
+  },
+  {
+    name: 'Print Planner',
+    icon: Printer,
+    href: '/admin/print-planner',
+    allowedRoles: ['admin', 'finance', 'cmyk'],
   },
   {
     name: 'Design Studio',
