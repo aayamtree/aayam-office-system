@@ -14,6 +14,8 @@ import {
 } from '@/lib/hooks';
 import { formatDate } from '@/lib/utils';
 import { Job, Client, Vendor, Designer, JobStatus, PaymentMode } from '@/types/database';
+import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
+import VendorQuickAddModal from '@/components/shared/VendorQuickAddModal';
 
 const stages = [
   { id: 'new', name: 'New', color: 'bg-gray-500', bgLight: 'bg-gray-50', border: 'border-gray-200' },
@@ -806,44 +808,24 @@ export default function JobsPage() {
         )
       }
 
-      {/* Quick Add Modals (simplified versions) */}
-      {/* Client Quick Add */}
-      {
-        showAddClientModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-            <div className="bg-white rounded-2xl w-full max-w-sm animate-scale-in">
-              <div className="p-4 border-b flex justify-between items-center">
-                <h3 className="font-bold">Quick Add Client</h3>
-                <button onClick={() => setShowAddClientModal(false)}><X size={20} /></button>
-              </div>
-              <div className="p-4 space-y-3">
-                <input type="text" placeholder="Name" className="w-full px-3 py-2 border rounded-xl" value={newClient.name} onChange={e => setNewClient({ ...newClient, name: e.target.value })} />
-                <input type="text" placeholder="Phone" className="w-full px-3 py-2 border rounded-xl" value={newClient.phone} onChange={e => setNewClient({ ...newClient, phone: e.target.value.replace(/\D/g, '') })} />
-                <input type="text" placeholder="Company" className="w-full px-3 py-2 border rounded-xl" value={newClient.company} onChange={e => setNewClient({ ...newClient, company: e.target.value })} />
-                <button onClick={handleAddClient} className="w-full py-2 bg-indigo-600 text-white rounded-xl">Add Client</button>
-              </div>
-            </div>
-          </div>
-        )
-      }
+      {/* Centralized Client/Vendor Quick Add Modals */}
+      <ClientQuickAddModal
+        isOpen={showAddClientModal}
+        onClose={() => setShowAddClientModal(false)}
+        onSuccess={(clientId) => {
+          setFormData({ ...formData, client_id: clientId });
+          setShowAddClientModal(false);
+        }}
+      />
 
-      {
-        showAddVendorModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-            <div className="bg-white rounded-2xl w-full max-w-sm animate-scale-in">
-              <div className="p-4 border-b flex justify-between items-center">
-                <h3 className="font-bold">Quick Add Vendor</h3>
-                <button onClick={() => setShowAddVendorModal(false)}><X size={20} /></button>
-              </div>
-              <div className="p-4 space-y-3">
-                <input type="text" placeholder="Name" className="w-full px-3 py-2 border rounded-xl" value={newVendor.name} onChange={e => setNewVendor({ ...newVendor, name: e.target.value })} />
-                <input type="text" placeholder="Phone" className="w-full px-3 py-2 border rounded-xl" value={newVendor.phone} onChange={e => setNewVendor({ ...newVendor, phone: e.target.value.replace(/\D/g, '') })} />
-                <button onClick={handleAddVendor} className="w-full py-2 bg-indigo-600 text-white rounded-xl">Add Vendor</button>
-              </div>
-            </div>
-          </div>
-        )
-      }
+      <VendorQuickAddModal
+        isOpen={showAddVendorModal}
+        onClose={() => setShowAddVendorModal(false)}
+        onSuccess={(vendorId) => {
+          setFormData({ ...formData, vendor_id: vendorId });
+          setShowAddVendorModal(false);
+        }}
+      />
 
 
     </div >
