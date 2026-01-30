@@ -39,7 +39,8 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
             const newClient = await createClient({
                 ...formData,
                 is_active: true,
-                client_type: 'regular'
+                client_type: 'regular',
+                credit_limit: 0
             });
 
             alert('✅ Client added successfully!');
