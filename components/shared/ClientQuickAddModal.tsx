@@ -150,19 +150,51 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-1">State</label>
-                            <select
+                            <label className="block text-sm font-medium mb-1">State / Province</label>
+                            <input
+                                list="indian-states"
+                                type="text"
                                 className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-indigo-500/20 focus:border-indigo-500"
+                                placeholder="Select or type state/province"
                                 value={formData.state}
                                 onChange={e => setFormData({ ...formData, state: e.target.value })}
-                            >
-                                <option value="Gujarat">Gujarat</option>
-                                <option value="Maharashtra">Maharashtra</option>
-                                <option value="Rajasthan">Rajasthan</option>
-                                <option value="Delhi">Delhi</option>
-                                <option value="Karnataka">Karnataka</option>
-                                <option value="Tamil Nadu">Tamil Nadu</option>
-                            </select>
+                            />
+                            <datalist id="indian-states">
+                                <option value="Andhra Pradesh" />
+                                <option value="Arunachal Pradesh" />
+                                <option value="Assam" />
+                                <option value="Bihar" />
+                                <option value="Chhattisgarh" />
+                                <option value="Goa" />
+                                <option value="Gujarat" />
+                                <option value="Haryana" />
+                                <option value="Himachal Pradesh" />
+                                <option value="Jharkhand" />
+                                <option value="Karnataka" />
+                                <option value="Kerala" />
+                                <option value="Madhya Pradesh" />
+                                <option value="Maharashtra" />
+                                <option value="Manipur" />
+                                <option value="Meghalaya" />
+                                <option value="Mizoram" />
+                                <option value="Nagaland" />
+                                <option value="Odisha" />
+                                <option value="Punjab" />
+                                <option value="Rajasthan" />
+                                <option value="Sikkim" />
+                                <option value="Tamil Nadu" />
+                                <option value="Telangana" />
+                                <option value="Tripura" />
+                                <option value="Uttar Pradesh" />
+                                <option value="Uttarakhand" />
+                                <option value="West Bengal" />
+                                <option value="Delhi" />
+                                <option value="Jammu and Kashmir" />
+                                <option value="Ladakh" />
+                                <option value="Puducherry" />
+                                <option value="Chandigarh" />
+                            </datalist>
+                            <p className="text-xs text-gray-500 mt-1">💡 Select Indian state or type any international state/province</p>
                         </div>
 
                         <div className="col-span-2">

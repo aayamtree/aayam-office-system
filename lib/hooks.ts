@@ -98,11 +98,9 @@ export function useClients() {
     const payload = {
       ...client,
       assigned_to: user?.id,  // Auto-assign to creator
-      created_by: user?.id
+      created_by: user?.id,
+      outstanding_balance: 0  // Initialize at 0
     } as any;
-    delete payload.outstanding_balance;
-    delete payload.client_type;
-    delete payload.credit_limit;
 
     const { data, error } = await supabase
       .from('clients')
@@ -162,9 +160,10 @@ export function useVendors() {
   const createVendor = async (vendor: Omit<Vendor, 'id' | 'created_at' | 'updated_at' | 'outstanding_balance'>) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
-    const payload = { ...vendor } as any;
-    delete payload.outstanding_balance;
-    delete payload.payment_terms;
+    const payload = {
+      ...vendor,
+      outstanding_balance: 0  // Initialize at 0
+    } as any;
 
     const { data, error } = await supabase
       .from('vendors')

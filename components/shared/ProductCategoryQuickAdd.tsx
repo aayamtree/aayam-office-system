@@ -20,7 +20,7 @@ export default function ProductCategoryQuickAdd({ isOpen, onClose, onSuccess }: 
 
     if (!isOpen) return null;
 
-    const checklistTypes = ['Banner', 'Book', 'Box', 'Brochure', 'Label', 'Poster', 'Other'];
+    const checklistTypes = ['Banner', 'Book', 'Box', 'Brochure', 'Label', 'Poster'];
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
