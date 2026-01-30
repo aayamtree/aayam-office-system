@@ -905,6 +905,7 @@ export interface PrintRun extends BaseEntity {
   sheet_size?: SheetSize;
   material?: Material;
   jobs?: PrintRunJob[];
+  print_run_jobs?: PrintRunJob[]; // Alias for Supabase query
 }
 
 // Print Run Job (junction table)

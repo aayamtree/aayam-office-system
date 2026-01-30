@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Printer, Search, Filter, Eye, Edit2, CheckCircle } from 'lucide-react';
+import { Plus, Printer, Search, Filter, Eye, Edit2, CheckCircle, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { PrintRun, Machine, SheetSize, Material } from '@/types/database';
 import Link from 'next/link';
@@ -27,6 +27,7 @@ export default function PrintPlannerPage() {
           machine:machines(*),
           sheet_size:sheet_sizes(*),
           material:materials(*),
+          print_run_jobs(client_name, item_name, quantity_needed, ups_in_sheet),
           created_by_profile:profiles!print_runs_created_by_fkey(full_name)
         `)
                 .order('created_at', { ascending: false });
@@ -206,6 +207,43 @@ export default function PrintPlannerPage() {
                                                 <p className="text-gray-900 font-bold">{run.material?.name || 'Not set'}</p>
                                             </div>
                                         </div>
+
+                                        {/* Client Information */}
+                                        {run.print_run_jobs && run.print_run_jobs.length > 0 && (() => {
+                                            const uniqueClients = Array.from(new Set(run.print_run_jobs.map((j: any) => j.client_name).filter(Boolean)));
+                                            const isMultiClient = uniqueClients.length > 1;
+                                            const totalJobs = run.print_run_jobs.length;
+                                            const totalSheets = run.print_run_jobs.reduce((sum: number, j: any) => {
+                                                return sum + Math.ceil((j.quantity_needed || 0) / (j.ups_in_sheet || 1));
+                                            }, 0);
+
+                                            return (
+                                                <div className="mt-4 pt-4 border-t border-gray-100">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        {isMultiClient ? (
+                                                            <span className="px-3 py-1 bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300 text-purple-700 rounded-lg text-xs font-bold flex items-center gap-1.5">
+                                                                <Users size={14} />
+                                                                MULTI-CLIENT BATCH
+                                                            </span>
+                                                        ) : (
+                                                            <span className="px-3 py-1 bg-blue-100 border-2 border-blue-300 text-blue-700 rounded-lg text-xs font-bold">
+                                                                SINGLE CLIENT
+                                                            </span>
+                                                        )}
+                                                        <span className="text-xs text-gray-600 font-medium">
+                                                            {totalJobs} job{totalJobs !== 1 ? 's' : ''} • {totalSheets} sheets
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {uniqueClients.map((client, idx) => (
+                                                            <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium">
+                                                                👤 {client}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
 
                                         <div className="mt-3 flex items-center gap-4 text-xs text-gray-500">
                                             <span>Created: {new Date(run.created_at).toLocaleDateString()}</span>
