@@ -73,8 +73,7 @@ CREATE INDEX IF NOT EXISTS idx_print_run_jobs_job_type ON print_run_jobs(job_typ
 CREATE OR REPLACE VIEW pending_print_jobs AS
 SELECT 
     j.*,
-    c.name as client_name,
-    c.id as client_id
+    c.name as client_name
 FROM jobs j
 LEFT JOIN clients c ON j.client_id = c.id
 LEFT JOIN print_run_jobs prj ON j.id = prj.job_id
