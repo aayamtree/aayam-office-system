@@ -21,7 +21,8 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
         category: 'Paper',
         city: '',
         state: 'Gujarat',
-        gstin: ''
+        gstin: '',
+        payment_terms: 'Net 30'
     });
 
     if (!isOpen) return null;
@@ -40,11 +41,14 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
         try {
             const newVendor = await createVendor({
                 ...formData,
+                payment_terms: 30, // Convert from string to number
                 is_active: true
             });
 
             alert('✅ Vendor added successfully!');
-            onSuccess?.(newVendor.id);
+            if (newVendor?.data) {
+                onSuccess?.(newVendor.data.id);
+            }
             onClose();
 
             // Reset form
@@ -56,7 +60,8 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                 category: 'Paper',
                 city: '',
                 state: 'Gujarat',
-                gstin: ''
+                gstin: '',
+                payment_terms: 'Net 30'
             });
         } catch (error: any) {
             console.error('Error adding vendor:', error);
