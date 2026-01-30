@@ -376,31 +376,34 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                 </button>
             </form>
 
-            {/* QuickAdd Modals */}
-            <QuickAddMachine
-                isOpen={showMachineModal}
-                onClose={() => setShowMachineModal(false)}
-                onSuccess={() => {
-                    fetchDropdownData();
-                    setShowMachineModal(false);
-                }}
-            />
-            <QuickAddSheetSize
-                isOpen={showSheetModal}
-                onClose={() => setShowSheetModal(false)}
-                onSuccess={() => {
-                    fetchDropdownData();
-                    setShowSheetModal(false);
-                }}
-            />
-            <QuickAddMaterial
-                isOpen={showMaterialModal}
-                onClose={() => setShowMaterialModal(false)}
-                onSuccess={() => {
-                    fetchDropdownData();
-                    setShowMaterialModal(false);
-                }}
-            />
+            {/* QuickAdd Modals - Conditionally Rendered */}
+            {showMachineModal && (
+                <QuickAddMachine
+                    onClose={() => setShowMachineModal(false)}
+                    onAdded={() => {
+                        fetchDropdownData();
+                        setShowMachineModal(false);
+                    }}
+                />
+            )}
+            {showSheetModal && (
+                <QuickAddSheetSize
+                    onClose={() => setShowSheetModal(false)}
+                    onAdded={() => {
+                        fetchDropdownData();
+                        setShowSheetModal(false);
+                    }}
+                />
+            )}
+            {showMaterialModal && (
+                <QuickAddMaterial
+                    onClose={() => setShowMaterialModal(false)}
+                    onAdded={() => {
+                        fetchDropdownData();
+                        setShowMaterialModal(false);
+                    }}
+                />
+            )}
         </div>
     );
 }
