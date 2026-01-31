@@ -69,8 +69,8 @@ export default function VendorCategoryQuickAdd({ isOpen, onClose, onSuccess }: V
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-purple-50 to-pink-50">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                            <Tag size={24} className="text-purple-600" />
+                        <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg">
+                            <Tag size={24} className="text-oms-blue" />
                         </div>
                         <div>
                             <h3 className="text-xl font-bold text-gray-900">Add Product Category</h3>

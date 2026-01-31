@@ -109,7 +109,7 @@ export default function JobTypeQuickAdd({ isOpen, onClose, onSuccess }: JobTypeQ
                         <button
                             type="submit"
                             disabled={saving}
-                            className="px-8 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-medium hover:shadow-lg disabled:opacity-50 flex items-center gap-2"
+                            className="px-8 py-2 bg-gradient-to-r bg-oms-blue text-white rounded-xl font-medium hover:shadow-lg disabled:opacity-50 flex items-center gap-2"
                         >
                             {saving ? (
                                 <>

@@ -74,10 +74,10 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-indigo-50 to-purple-50">
+                <div className="flex items-center justify-between p-6 border-b bg-[rgba(0,0,255,0.05)]">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 rounded-lg">
-                            <UserPlus size={24} className="text-indigo-600" />
+                        <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg">
+                            <UserPlus size={24} className="text-oms-blue" />
                         </div>
                         <div>
                             <h3 className="text-xl font-bold text-gray-900">Quick Add Client</h3>
@@ -97,7 +97,7 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                             <input
                                 required
                                 type="text"
-                                className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-indigo-500/20 focus:border-indigo-500"
+                                className="form-input"
                                 placeholder="Full Name"
                                 value={formData.name}
                                 onChange={e => setFormData({ ...formData, name: e.target.value })}
@@ -108,7 +108,7 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                             <label className="block text-sm font-medium mb-1">Company</label>
                             <input
                                 type="text"
-                                className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-indigo-500/20 focus:border-indigo-500"
+                                className="form-input"
                                 placeholder="Company Name"
                                 value={formData.company}
                                 onChange={e => setFormData({ ...formData, company: e.target.value })}
@@ -120,7 +120,7 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                             <input
                                 required
                                 type="tel"
-                                className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-indigo-500/20 focus:border-indigo-500"
+                                className="form-input"
                                 placeholder="+91 98765 43210"
                                 value={formData.phone}
                                 onChange={e => setFormData({ ...formData, phone: e.target.value })}
@@ -131,7 +131,7 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                             <label className="block text-sm font-medium mb-1">Email</label>
                             <input
                                 type="email"
-                                className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-indigo-500/20 focus:border-indigo-500"
+                                className="form-input"
                                 placeholder="email@example.com"
                                 value={formData.email}
                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
@@ -142,7 +142,7 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                             <label className="block text-sm font-medium mb-1">City</label>
                             <input
                                 type="text"
-                                className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-indigo-500/20 focus:border-indigo-500"
+                                className="form-input"
                                 placeholder="City"
                                 value={formData.city}
                                 onChange={e => setFormData({ ...formData, city: e.target.value })}
@@ -154,7 +154,7 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                             <input
                                 list="indian-states"
                                 type="text"
-                                className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-indigo-500/20 focus:border-indigo-500"
+                                className="form-input"
                                 placeholder="Select or type state/province"
                                 value={formData.state}
                                 onChange={e => setFormData({ ...formData, state: e.target.value })}
@@ -201,7 +201,7 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                             <label className="block text-sm font-medium mb-1">GSTIN</label>
                             <input
                                 type="text"
-                                className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-indigo-500/20 focus:border-indigo-500"
+                                className="form-input"
                                 placeholder="22AAAAA0000A1Z5"
                                 value={formData.gstin}
                                 onChange={e => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })}
@@ -212,7 +212,7 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                             <label className="block text-sm font-medium mb-1">Brand Name</label>
                             <input
                                 type="text"
-                                className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-indigo-500/20 focus:border-indigo-500"
+                                className="form-input"
                                 placeholder="e.g., #tiger #cobra #premium"
                                 value={formData.brand_name}
                                 onChange={e => setFormData({ ...formData, brand_name: e.target.value })}
@@ -224,7 +224,7 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                             <label className="block text-sm font-medium mb-1">Address</label>
                             <textarea
                                 rows={2}
-                                className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-indigo-500/20 focus:border-indigo-500"
+                                className="form-input"
                                 placeholder="Full Address"
                                 value={formData.address}
                                 onChange={e => setFormData({ ...formData, address: e.target.value })}
@@ -244,7 +244,7 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                         <button
                             type="submit"
                             disabled={saving}
-                            className="px-8 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg disabled:opacity-50 flex items-center gap-2"
+                            className="btn-primary px-8 py-2"
                         >
                             {saving ? (
                                 <>
