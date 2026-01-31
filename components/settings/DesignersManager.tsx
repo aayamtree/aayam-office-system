@@ -249,7 +249,7 @@ export default function DesignersManager() {
         const badges: Record<string, string> = {
             'full-time': 'bg-green-100 text-green-700',
             'part-time': 'bg-blue-100 text-blue-700',
-            'freelance': 'bg-purple-100 text-purple-700'
+            'freelance': 'bg-[rgba(0,0,255,0.1)] text-oms-blue'
         };
         return badges[type] || 'bg-gray-100 text-gray-700';
     };
@@ -271,7 +271,7 @@ export default function DesignersManager() {
             {/* Stats - Mini */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="bg-white p-3 rounded-xl border flex items-center gap-3">
-                    <div className="p-2 bg-purple-100 rounded-lg text-purple-600"><Users size={18} /></div>
+                    <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg text-oms-blue"><Users size={18} /></div>
                     <div><p className="text-xs text-gray-500">Total</p><p className="text-lg font-bold">{totalDesigners}</p></div>
                 </div>
                 <div className="bg-white p-3 rounded-xl border flex items-center gap-3">
@@ -294,7 +294,7 @@ export default function DesignersManager() {
                     <div key={designer.id} className="bg-white rounded-xl border p-4 hover:shadow-md transition-shadow group">
                         <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold text-lg">
+                                <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center text-oms-blue font-bold text-lg">
                                     {designer.name?.charAt(0)}
                                 </div>
                                 <div>
@@ -319,7 +319,7 @@ export default function DesignersManager() {
 
                         <div className="pt-3 border-t flex justify-between items-center text-sm">
                             <span className="text-gray-500">Rate: <span className="text-gray-900 font-bold">{formatCurrency(designer.hourly_rate)}/hr</span></span>
-                            <button onClick={() => handleViewDetail(designer)} className="text-indigo-600 hover:text-indigo-700 font-medium text-xs flex items-center gap-1"><Eye size={12} /> View Profile</button>
+                            <button onClick={() => handleViewDetail(designer)} className="text-oms-blue hover:text-oms-blue font-medium text-xs flex items-center gap-1"><Eye size={12} /> View Profile</button>
                         </div>
                     </div>
                 ))}
@@ -367,7 +367,7 @@ export default function DesignersManager() {
                                 <div className="flex flex-wrap gap-2">
                                     {skillOptions.map(skill => (
                                         <button key={skill} type="button" onClick={() => toggleSkill(skill)}
-                                            className={`px-2 py-1 rounded text-xs transition-colors border ${formData.skills.includes(skill) ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+                                            className={`px-2 py-1 rounded text-xs transition-colors border ${formData.skills.includes(skill) ? 'bg-[rgba(0,0,255,0.1)] text-white border-[rgba(0,0,255,0.2)]-600' : 'bg-white text-gray-600 border-gray-200'}`}>
                                             {skill}
                                         </button>
                                     ))}
@@ -379,7 +379,7 @@ export default function DesignersManager() {
                                 <label className="text-xs font-bold text-gray-500 mb-1 block">Identity Document</label>
                                 <div className="flex items-center gap-2">
                                     <input type="file" onChange={handleFileUpload} className="text-xs w-full" disabled={uploadingDoc} />
-                                    {uploadingDoc && <Loader2 className="animate-spin text-purple-600" size={16} />}
+                                    {uploadingDoc && <Loader2 className="animate-spin text-oms-blue" size={16} />}
                                 </div>
                                 {formData.document_url && <a href={formData.document_url} target="_blank" className="text-xs text-blue-600 underline mt-1 block">View Uploaded Doc</a>}
                             </div>
@@ -399,7 +399,7 @@ export default function DesignersManager() {
                     <div className="bg-white rounded-2xl w-full max-w-md p-6 relative">
                         <button onClick={() => setShowDetailModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={20} /></button>
                         <div className="flex items-center gap-4 mb-6">
-                            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center text-2xl font-bold text-purple-600">{selectedDesigner.name.charAt(0)}</div>
+                            <div className="w-16 h-16 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center text-2xl font-bold text-oms-blue">{selectedDesigner.name.charAt(0)}</div>
                             <div>
                                 <h2 className="text-xl font-bold">{selectedDesigner.name}</h2>
                                 <p className="text-gray-500">{selectedDesigner.employment_type}</p>

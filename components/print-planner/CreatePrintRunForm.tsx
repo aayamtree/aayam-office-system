@@ -150,8 +150,8 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
             <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                            <Printer className="text-purple-600" size={20} />
+                        <div className="w-10 h-10 bg-[rgba(0,0,255,0.1)] rounded-xl flex items-center justify-center">
+                            <Printer className="text-oms-blue" size={20} />
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-gray-900">Create Print Run</h2>
@@ -171,14 +171,14 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                 {/* Job Type Lock Badge */}
                 {lockedJobType && (
                     <div className={`p-3 rounded-xl border-2 ${isMultiClient
-                        ? 'bg-gradient-to-r from-purple-50 to-pink-50 border-purple-300'
+                        ? 'bg-oms-blue border-[rgba(0,0,255,0.2)]-300'
                         : 'bg-blue-50 border-blue-300'
                         }`}>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 {isMultiClient ? (
                                     <>
-                                        <Users size={16} className="text-purple-600" />
+                                        <Users size={16} className="text-oms-blue" />
                                         <span className="text-sm font-bold text-purple-900">MULTI-CLIENT BATCH</span>
                                     </>
                                 ) : (
@@ -224,7 +224,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                             <button
                                 type="button"
                                 onClick={() => setShowMachineModal(true)}
-                                className="px-2 py-1 text-xs font-bold text-purple-600 hover:bg-purple-50 rounded flex items-center gap-1"
+                                className="px-2 py-1 text-xs font-bold text-oms-blue hover:bg-[rgba(0,0,255,0.1)] rounded flex items-center gap-1"
                             >
                                 <Plus size={14} /> Add
                             </button>
@@ -246,7 +246,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                             <button
                                 type="button"
                                 onClick={() => setShowSheetModal(true)}
-                                className="px-2 py-1 text-xs font-bold text-purple-600 hover:bg-purple-50 rounded flex items-center gap-1"
+                                className="px-2 py-1 text-xs font-bold text-oms-blue hover:bg-[rgba(0,0,255,0.1)] rounded flex items-center gap-1"
                             >
                                 <Plus size={14} /> Add
                             </button>
@@ -268,7 +268,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                             <button
                                 type="button"
                                 onClick={() => setShowMaterialModal(true)}
-                                className="px-2 py-1 text-xs font-bold text-purple-600 hover:bg-purple-50 rounded flex items-center gap-1"
+                                className="px-2 py-1 text-xs font-bold text-oms-blue hover:bg-[rgba(0,0,255,0.1)] rounded flex items-center gap-1"
                             >
                                 <Plus size={14} /> Add
                             </button>
@@ -360,7 +360,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                 <button
                     type="submit"
                     disabled={loading || selectedJobs.length === 0}
-                    className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-bold hover:from-purple-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full py-4 bg-oms-blue text-white rounded-xl font-bold hover:from-purple-700 hover:opacity-90-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                     {loading ? (
                         <>

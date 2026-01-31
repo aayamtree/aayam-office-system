@@ -60,7 +60,7 @@ export default function MarketingDashboard() {
       {/* Hero Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Today's Focus */}
-        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg shadow-indigo-200">
+        <div className="bg-oms-blue rounded-2xl p-6 text-white shadow-lg shadow-indigo-200">
           <div className="flex items-center gap-3 mb-2 opacity-90">
             <Calendar size={20} />
             <span className="font-medium">Today&apos;s Follow-ups</span>

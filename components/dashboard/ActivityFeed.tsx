@@ -41,7 +41,7 @@ export default function ActivityFeed({ variant = 'card' }: { variant?: 'card' | 
     return (
         <Container className={containerClasses}>
             <div className="flex items-center gap-2 mb-4">
-                <Activity size={20} className="text-indigo-600" />
+                <Activity size={20} className="text-oms-blue" />
                 <h2 className="text-lg font-bold text-gray-900">Activity Feed</h2>
             </div>
 
@@ -63,7 +63,7 @@ export default function ActivityFeed({ variant = 'card' }: { variant?: 'card' | 
                                 {isUpload ? (
                                     <Upload className="w-2.5 h-2.5 text-green-600" />
                                 ) : (
-                                    <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                                    <div className="w-2 h-2 bg-[rgba(0,0,255,0.1)] rounded-full"></div>
                                 )}
                             </div>
 

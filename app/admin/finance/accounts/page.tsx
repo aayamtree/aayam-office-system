@@ -35,7 +35,7 @@ export default function AccountsPage() {
             </div>
 
             {/* Total Balance Summary */}
-            <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl p-6 text-white shadow-lg">
+            <div className="bg-oms-blue rounded-2xl p-6 text-white shadow-lg">
                 <h2 className="text-sm font-medium opacity-90 mb-2">Total Available Balance</h2>
                 <p className="text-4xl font-bold">₹{grandTotal.toLocaleString()}</p>
                 <div className="mt-4 flex gap-6 text-sm">

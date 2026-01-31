@@ -256,7 +256,7 @@ export default function PaymentsPage() {
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-gray-500">{p.display_company}</p>
                     {p.attachment_url && (
-                      <a href={p.attachment_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-600 px-2 py-1 rounded-md font-medium">
+                      <a href={p.attachment_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[10px] bg-[rgba(0,0,255,0.1)] text-oms-blue px-2 py-1 rounded-md font-medium">
                         <FileText size={10} /> Proof
                       </a>
                     )}
@@ -312,7 +312,7 @@ export default function PaymentsPage() {
                     <td className="px-6 py-4">
                       <p className="font-medium text-gray-900">{p.display_name}</p>
                       {p.attachment_url && (
-                        <a href={p.attachment_url} target="_blank" rel="noreferrer" className="text-xs text-indigo-600 flex items-center gap-1 hover:underline mt-1">
+                        <a href={p.attachment_url} target="_blank" rel="noreferrer" className="text-xs text-oms-blue flex items-center gap-1 hover:underline mt-1">
                           <FileText size={12} /> View Proof
                         </a>
                       )}
@@ -503,7 +503,7 @@ export default function PaymentsPage() {
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
                   <div className="flex flex-col items-center gap-2 text-gray-500">
-                    {uploading ? <Loader2 className="animate-spin text-indigo-600" /> : <Upload size={24} />}
+                    {uploading ? <Loader2 className="animate-spin text-oms-blue" /> : <Upload size={24} />}
                     <span className="text-sm">
                       {uploading ? 'Uploading...' : formData.attachmentUrl ? 'File Attached (Click to Change)' : 'Tap to Upload'}
                     </span>
@@ -512,10 +512,10 @@ export default function PaymentsPage() {
                 {formData.attachmentUrl && (
                   <div className="mt-3 p-3 bg-gray-50 rounded-xl border flex items-center justify-between">
                     <div className="flex items-center gap-2 text-sm text-gray-700 truncate max-w-[200px]">
-                      <FileText size={16} className="text-indigo-600 shrink-0" />
+                      <FileText size={16} className="text-oms-blue shrink-0" />
                       <span className="truncate">Proof Attached</span>
                     </div>
-                    <a href={formData.attachmentUrl} target="_blank" rel="noreferrer" className="text-xs bg-white border px-2 py-1 rounded shadow-sm hover:bg-gray-50 text-indigo-600">
+                    <a href={formData.attachmentUrl} target="_blank" rel="noreferrer" className="text-xs bg-white border px-2 py-1 rounded shadow-sm hover:bg-gray-50 text-oms-blue">
                       View
                     </a>
                   </div>

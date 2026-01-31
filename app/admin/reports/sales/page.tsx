@@ -163,7 +163,7 @@ export default function SalesReportPage() {
           </div>
           <p className="text-2xl font-bold">{totalOrders}</p>
         </div>
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-4 text-white">
+        <div className="bg-oms-blue rounded-2xl p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp size={18} />
             <span className="text-sm opacity-90">Avg Order Value</span>

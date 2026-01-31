@@ -42,7 +42,7 @@ export function IdleWarningModal({ show, onStayLoggedIn, onLogout }: IdleWarning
                     </button>
                     <button
                         onClick={onStayLoggedIn}
-                        className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium transition-colors"
+                        className="flex-1 px-4 py-3 bg-[rgba(0,0,255,0.1)] text-white rounded-xl hover:bg-[rgba(0,0,255,0.1)] font-medium transition-colors"
                     >
                         Stay Logged In
                     </button>

@@ -95,7 +95,7 @@ export default function BroadcastPage() {
             {/* Header */}
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                    <Bell className="text-indigo-600" size={32} />
+                    <Bell className="text-oms-blue" size={32} />
                     Broadcast Notifications
                 </h1>
                 <p className="text-gray-600 mt-2">
@@ -184,7 +184,7 @@ export default function BroadcastPage() {
                     <button
                         type="submit"
                         disabled={sending || !message.trim()}
-                        className="w-full px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                        className="w-full px-6 py-3 bg-oms-blue text-white rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                     >
                         <Send size={20} />
                         {sending ? 'Sending...' : 'Send Broadcast'}

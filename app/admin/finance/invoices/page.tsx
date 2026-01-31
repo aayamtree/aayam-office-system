@@ -442,7 +442,7 @@ export default function InvoicesPage() {
       {/* Ready for Invoicing Alert (Data Flow: Jobs -> Finance) */}
       {
         pendingInvoicingJobs.length > 0 && (
-          <div className="bg-gradient-to-r from-indigo-50 to-white p-4 rounded-xl border border-[rgba(0,0,255,0.2)]-100">
+          <div className="bg-gradient-to-r bg-white p-4 rounded-xl border border-[rgba(0,0,255,0.2)]-100">
             <div className="flex items-center gap-2 mb-3">
               <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg">
                 <CheckCircle size={18} className="text-oms-blue" />

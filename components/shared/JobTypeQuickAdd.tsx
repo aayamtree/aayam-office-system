@@ -57,10 +57,10 @@ export default function JobTypeQuickAdd({ isOpen, onClose, onSuccess }: JobTypeQ
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-purple-50 to-indigo-50">
+                <div className="flex items-center justify-between p-6 border-b bg-oms-blue">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                            <Briefcase size={24} className="text-purple-600" />
+                        <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg">
+                            <Briefcase size={24} className="text-oms-blue" />
                         </div>
                         <div>
                             <h3 className="text-xl font-bold text-gray-900">Add Job Type</h3>

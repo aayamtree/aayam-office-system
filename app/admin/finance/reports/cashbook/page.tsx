@@ -222,9 +222,9 @@ export default function CashBookPage() {
                     <p className="text-xs text-red-700 mt-1 truncate">{transactions.filter(t => t.transaction_type === 'out').length} txns</p>
                 </div>
 
-                <div className={`bg-gradient-to-br rounded-xl p-3 md:p-4 border ${netCash >= 0 ? 'from-indigo-50 to-indigo-100 border-indigo-200' : 'from-orange-50 to-orange-100 border-orange-200'}`}>
+                <div className={`bg-gradient-to-br rounded-xl p-3 md:p-4 border ${netCash >= 0 ? 'bg-oms-blue border-[rgba(0,0,255,0.2)]-200' : 'from-orange-50 to-orange-100 border-orange-200'}`}>
                     <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
-                        <TrendingUp className={`flex-shrink-0 ${netCash >= 0 ? 'text-indigo-600' : 'text-orange-600'}`} size={16} />
+                        <TrendingUp className={`flex-shrink-0 ${netCash >= 0 ? 'text-oms-blue' : 'text-orange-600'}`} size={16} />
                         <p className={`text-xs md:text-sm font-medium truncate ${netCash >= 0 ? 'text-indigo-900' : 'text-orange-900'}`}>Net Change</p>
                     </div>
                     <p className={`text-lg md:text-2xl font-bold truncate ${netCash >= 0 ? 'text-indigo-900' : 'text-orange-900'}`}>

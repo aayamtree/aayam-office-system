@@ -70,7 +70,7 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
                 <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                     <div>
                         <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                            <CheckSquare className="text-indigo-600" size={24} />
+                            <CheckSquare className="text-oms-blue" size={24} />
                             Quality Checklist
                         </h2>
                         <p className="text-sm text-gray-500 mt-1">
@@ -86,7 +86,7 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
                 <div className="p-6 overflow-y-auto flex-1">
                     {loadingChecklists ? (
                         <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                            <Loader2 className="animate-spin mb-3 text-indigo-600" size={32} />
+                            <Loader2 className="animate-spin mb-3 text-oms-blue" size={32} />
                             <p>Loading checklist templates...</p>
                         </div>
                     ) : !matchedChecklist ? (
@@ -100,7 +100,7 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
                             {/* Progress Bar */}
                             <div className="bg-gray-100 rounded-full h-2.5 overflow-hidden">
                                 <div
-                                    className={`h-full transition-all duration-500 ${isComplete ? 'bg-green-500' : 'bg-indigo-600'}`}
+                                    className={`h-full transition-all duration-500 ${isComplete ? 'bg-green-500' : 'bg-[rgba(0,0,255,0.1)]'}`}
                                     style={{ width: `${(completedCount / totalCount) * 100}%` }}
                                 />
                             </div>
@@ -153,7 +153,7 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
                     <button
                         onClick={handleSave}
                         disabled={saving || loadingChecklists || !matchedChecklist}
-                        className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50 flex items-center gap-2"
+                        className="px-5 py-2.5 bg-[rgba(0,0,255,0.1)] text-white rounded-xl font-semibold hover:bg-[rgba(0,0,255,0.1)] transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50 flex items-center gap-2"
                     >
                         {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
                         {saving ? 'Saving...' : 'Save Progress'}

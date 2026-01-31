@@ -113,7 +113,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
           {isAdmin && (
             <Link
               href="/admin/sales/orders"
-              className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white px-3 lg:px-4 py-2 rounded-xl text-sm font-medium hover:from-indigo-700 hover:to-indigo-600 transition-all"
+              className="hidden sm:flex items-center gap-2 bg-gradient-to-r bg-oms-blue text-white px-3 lg:px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90-700 hover:opacity-90-600 transition-all"
             >
               <Plus size={16} />
               <span className="hidden md:inline">New Order</span>
@@ -178,7 +178,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-2 lg:gap-3 p-1.5 lg:p-2 hover:bg-gray-100 rounded-xl transition-colors"
             >
-              <div className="w-8 h-8 lg:w-9 lg:h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm overflow-hidden">
+              <div className="w-8 h-8 lg:w-9 lg:h-9 bg-oms-blue rounded-full flex items-center justify-center text-white font-semibold text-sm overflow-hidden">
                 {profile?.avatar_url ? (
                   <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                 ) : (

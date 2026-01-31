@@ -12,7 +12,7 @@ const colors = [
     { name: 'green', bg: 'bg-green-100', border: 'border-green-200' },
     { name: 'blue', bg: 'bg-blue-100', border: 'border-blue-200' },
     { name: 'pink', bg: 'bg-pink-100', border: 'border-pink-200' },
-    { name: 'purple', bg: 'bg-purple-100', border: 'border-purple-200' },
+    { name: 'purple', bg: 'bg-[rgba(0,0,255,0.1)]', border: 'border-purple-200' },
 ];
 
 export default function NotesWidget() {
@@ -160,7 +160,7 @@ export default function NotesWidget() {
                             {note.job && (
                                 <Link
                                     href={`/admin/jobs?search=${note.job.job_number}`}
-                                    className="inline-flex items-center gap-1.5 mt-2 px-2 py-1 bg-white/50 rounded-lg text-xs font-medium text-gray-600 hover:text-indigo-600 hover:bg-white transition-colors"
+                                    className="inline-flex items-center gap-1.5 mt-2 px-2 py-1 bg-white/50 rounded-lg text-xs font-medium text-gray-600 hover:text-oms-blue hover:bg-white transition-colors"
                                 >
                                     <LinkIcon size={10} />
                                     Job #{note.job.job_number}

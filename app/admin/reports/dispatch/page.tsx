@@ -188,7 +188,7 @@ export default function DispatchReportPage() {
           </div>
           <p className="text-2xl font-bold">{returned}</p>
         </div>
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-4 text-white">
+        <div className="bg-oms-blue rounded-2xl p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <Clock size={18} />
             <span className="text-sm opacity-90">Avg Days</span>
@@ -243,7 +243,7 @@ export default function DispatchReportPage() {
               {topDestinations.map(([city, count]) => (
                 <div key={city} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                   <span className="text-gray-700">{city}</span>
-                  <span className="font-semibold text-indigo-600">{count}</span>
+                  <span className="font-semibold text-oms-blue">{count}</span>
                 </div>
               ))}
             </div>
@@ -255,7 +255,7 @@ export default function DispatchReportPage() {
               {transporterData.map(([transporter, count]) => (
                 <div key={transporter} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                   <span className="text-gray-700 text-sm">{transporter}</span>
-                  <span className="font-semibold text-indigo-600">{count}</span>
+                  <span className="font-semibold text-oms-blue">{count}</span>
                 </div>
               ))}
             </div>

@@ -806,8 +806,8 @@ export default function DesignerWorkspace() {
                 {/* View Tabs - Color Blocks */}
                 <div className="grid grid-cols-4 gap-1 mt-4 px-1">
                   <button onClick={() => setView('my_tasks')} className={`py-2 rounded-lg text-[10px] font-bold border transition-all ${activeTab === 'my_tasks' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-500 border-gray-200'}`}>List</button>
-                  <button onClick={() => setView('board')} className={`py-2 rounded-lg text-[10px] font-bold border transition-all ${activeTab === 'board' ? 'bg-oms-blue text-white border-indigo-600' : 'bg-white text-gray-500 border-gray-200'}`}>Board</button>
-                  <button onClick={() => setView('timeline')} className={`py-2 rounded-lg text-[10px] font-bold border transition-all ${activeTab === 'timeline' ? 'bg-oms-blue text-white border-purple-600' : 'bg-white text-gray-500 border-gray-200'}`}>Timeline</button>
+                  <button onClick={() => setView('board')} className={`py-2 rounded-lg text-[10px] font-bold border transition-all ${activeTab === 'board' ? 'bg-oms-blue text-white border-[rgba(0,0,255,0.2)]-600' : 'bg-white text-gray-500 border-gray-200'}`}>Board</button>
+                  <button onClick={() => setView('timeline')} className={`py-2 rounded-lg text-[10px] font-bold border transition-all ${activeTab === 'timeline' ? 'bg-oms-blue text-white border-[rgba(0,0,255,0.2)]-600' : 'bg-white text-gray-500 border-gray-200'}`}>Timeline</button>
                   <button onClick={() => setView('notes')} className={`py-2 rounded-lg text-[10px] font-bold border transition-all ${activeTab === 'notes' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-500 border-gray-200'}`}>Notes</button>
                 </div>
               </div>
@@ -1131,9 +1131,9 @@ export default function DesignerWorkspace() {
                             </div>
                             <div className="flex gap-3 flex-row-reverse">
                               <div className="min-w-8 w-8 h-8 rounded-full bg-[rgba(0,0,255,0.1)] flex items-center justify-center text-xs font-bold text-oms-blue">Me</div>
-                              <div className="bg-oms-blue p-3 rounded-2xl rounded-tr-none border border-indigo-600 shadow-custom max-w-[80%] text-white">
+                              <div className="bg-oms-blue p-3 rounded-2xl rounded-tr-none border border-[rgba(0,0,255,0.2)]-600 shadow-custom max-w-[80%] text-white">
                                 <div className="flex justify-between items-center mb-1 gap-4">
-                                  <span className="text-[10px] font-bold text-indigo-100">You</span>
+                                  <span className="text-[10px] font-bold text-white/80">You</span>
                                 </div>
                                 <p className="text-xs text-indigo-50">Updated. V2 attached in drive.</p>
                               </div>
@@ -1148,7 +1148,7 @@ export default function DesignerWorkspace() {
                     </section>
 
                     {/* 4. Final Review & Checklist */}
-                    <section className="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-2xl border border-[rgba(0,0,255,0.1)] shadow-sm space-y-4">
+                    <section className="bg-gradient-to-br bg-white p-6 rounded-2xl border border-[rgba(0,0,255,0.1)] shadow-sm space-y-4">
                       <h4 className="text-xs font-bold text-oms-blue uppercase tracking-widest flex items-center gap-2">
                         <CheckCircle size={16} /> Pre-Print Checklist (Mandatory)
                       </h4>
@@ -1315,7 +1315,7 @@ export default function DesignerWorkspace() {
           <div className="fixed inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60 flex items-center justify-center z-50 p-4 animate-in fade-in zoom-in duration-300 backdrop-blur-sm">
             <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-gray-100">
               {/* Premium Gradient Header */}
-              <div className="relative p-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 overflow-hidden">
+              <div className="relative p-6 bg-oms-blue overflow-hidden">
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30"></div>
                 <div className="relative flex justify-between items-start">
                   <div className="flex items-start gap-4">
@@ -1324,7 +1324,7 @@ export default function DesignerWorkspace() {
                     </div>
                     <div>
                       <h3 className="font-bold text-white text-2xl mb-1">Create New Project</h3>
-                      <p className="text-indigo-100 text-sm">Initialize a new design or print job with all details</p>
+                      <p className="text-white/80 text-sm">Initialize a new design or print job with all details</p>
                     </div>
                   </div>
                   <button
@@ -1516,7 +1516,7 @@ export default function DesignerWorkspace() {
                   form="create-project-form"
                   type="submit"
                   disabled={creatingTask}
-                  className="px-8 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-xl font-bold hover:shadow-2xl hover:shadow-purple-300 disabled:opacity-50 transition-all transform hover:scale-105 text-sm flex items-center gap-2"
+                  className="px-8 py-3 bg-oms-blue text-white rounded-xl font-bold hover:shadow-2xl hover:shadow-blue-300 disabled:opacity-50 transition-all transform hover:scale-105 text-sm flex items-center gap-2"
                 >
                   {creatingTask ? <><Loader2 size={18} className="animate-spin" /> Creating...</> : <><CheckCircle size={18} /> Create Project</>}
                 </button>

@@ -56,13 +56,13 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
             <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
+                <div className="bg-oms-blue p-6 text-white">
                     <div className="flex items-start justify-between">
                         <div className="flex-1">
                             <h2 className="text-2xl font-bold mb-1">
                                 Good {getTimeOfDay()}, {profile?.full_name?.split(' ')[0] || 'User'}! 👋
                             </h2>
-                            <p className="text-indigo-100">
+                            <p className="text-white/80">
                                 {format(new Date(), 'EEEE, MMMM d, yyyy')}
                             </p>
                         </div>
@@ -78,15 +78,15 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                     <div className="grid grid-cols-3 gap-4 mt-6">
                         <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
                             <div className="text-3xl font-bold">{todayEvents.length}</div>
-                            <div className="text-xs text-indigo-100">Tasks Today</div>
+                            <div className="text-xs text-white/80">Tasks Today</div>
                         </div>
                         <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
                             <div className="text-3xl font-bold text-orange-200">{overdueEvents.length}</div>
-                            <div className="text-xs text-indigo-100">Overdue</div>
+                            <div className="text-xs text-white/80">Overdue</div>
                         </div>
                         <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
                             <div className="text-3xl font-bold text-red-200">{urgentEvents.length}</div>
-                            <div className="text-xs text-indigo-100">Urgent</div>
+                            <div className="text-xs text-white/80">Urgent</div>
                         </div>
                     </div>
                 </div>
@@ -124,7 +124,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                             {todayEvents.length > 0 && (
                                 <div>
                                     <div className="flex items-center gap-2 mb-3">
-                                        <Calendar className="w-5 h-5 text-indigo-600" />
+                                        <Calendar className="w-5 h-5 text-oms-blue" />
                                         <h3 className="font-bold text-gray-900">Today&apos;s Tasks ({todayEvents.length})</h3>
                                     </div>
                                     <div className="space-y-2">
@@ -166,7 +166,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                             onClose();
                             window.location.href = '/admin/calendar';
                         }}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                        className="px-4 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-lg hover:bg-[rgba(0,0,255,0.1)] transition-colors"
                     >
                         View Full Calendar →
                     </button>
@@ -193,7 +193,7 @@ function TaskCard({ event, isOverdue, isTagged }: { event: any; isOverdue?: bool
                 ? 'bg-red-50 border-l-red-500'
                 : isTagged
                     ? 'bg-blue-50 border-l-blue-500'
-                    : 'bg-gray-50 border-l-indigo-500'
+                    : 'bg-gray-50 border-l-oms-blue-500'
             }`}>
             <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">

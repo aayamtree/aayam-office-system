@@ -27,9 +27,9 @@ export default function PriorityQuickAdd({ isOpen, onClose, onSuccess }: Priorit
         { value: 'bg-yellow-100 text-yellow-600', label: 'Yellow', preview: 'bg-yellow-100' },
         { value: 'bg-orange-100 text-orange-600', label: 'Orange', preview: 'bg-orange-100' },
         { value: 'bg-red-100 text-red-600', label: 'Red', preview: 'bg-red-100' },
-        { value: 'bg-purple-100 text-purple-600', label: 'Purple', preview: 'bg-purple-100' },
+        { value: 'bg-[rgba(0,0,255,0.1)] text-oms-blue', label: 'Purple', preview: 'bg-[rgba(0,0,255,0.1)]' },
         { value: 'bg-pink-100 text-pink-600', label: 'Pink', preview: 'bg-pink-100' },
-        { value: 'bg-indigo-100 text-indigo-600', label: 'Indigo', preview: 'bg-indigo-100' },
+        { value: 'bg-[rgba(0,0,255,0.1)] text-oms-blue', label: 'Indigo', preview: 'bg-[rgba(0,0,255,0.1)]' },
         { value: 'bg-teal-100 text-teal-600', label: 'Teal', preview: 'bg-teal-100' },
     ];
 

@@ -79,7 +79,7 @@ export default function PrintPlannerPage() {
             </div>
 
             {/* Info Banner */}
-            <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-[rgba(0,0,255,0.2)]-200 rounded-xl">
+            <div className="mt-6 p-4 bg-oms-blue border-2 border-[rgba(0,0,255,0.2)]-200 rounded-xl">
                 <div className="flex items-start gap-3">
                     <div className="w-6 h-6 bg-[rgba(0,0,255,0.1)] rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                         <span className="text-white text-sm font-bold">ℹ</span>

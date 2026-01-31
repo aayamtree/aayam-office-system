@@ -67,7 +67,7 @@ export default function VendorCategoryQuickAdd({ isOpen, onClose, onSuccess }: V
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-purple-50 to-pink-50">
+                <div className="flex items-center justify-between p-6 border-b bg-oms-blue">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg">
                             <Tag size={24} className="text-oms-blue" />

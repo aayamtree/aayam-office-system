@@ -184,7 +184,7 @@ export default function PrintRunDetailPage() {
                             )}
                             <button
                                 onClick={() => setShowAddJobsModal(true)}
-                                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center gap-2"
+                                className="px-6 py-3 bg-oms-blue text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center gap-2"
                             >
                                 <Plus size={20} />
                                 Add Jobs
@@ -460,10 +460,10 @@ function AddJobsModal({
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
-                <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white flex items-center justify-between sticky top-0">
+                <div className="bg-oms-blue p-6 text-white flex items-center justify-between sticky top-0">
                     <div>
                         <h3 className="text-2xl font-bold">Add Jobs to Print Run</h3>
-                        <p className="text-indigo-100 text-sm mt-1">
+                        <p className="text-white/80 text-sm mt-1">
                             Select print-ready jobs below ({selectedJobs.size} selected)
                         </p>
                     </div>
@@ -578,7 +578,7 @@ function AddJobsModal({
                                 <button
                                     onClick={handleSubmit}
                                     disabled={selectedJobs.size === 0 || submitting}
-                                    className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-8 py-3 bg-oms-blue text-white rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {submitting ? 'Adding...' : `Add ${selectedJobs.size} Job${selectedJobs.size !== 1 ? 's' : ''}`}
                                 </button>

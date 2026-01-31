@@ -190,7 +190,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
             <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
                 <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
                     {/* Header */}
-                    <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white flex items-center justify-between">
+                    <div className="bg-oms-blue p-6 text-white flex items-center justify-between">
                         <div>
                             <h3 className="text-2xl font-bold flex items-center gap-3">
                                 <FolderOpen size={28} />
@@ -379,13 +379,13 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
 
                         {/* Section 4: Financial (ADMIN ONLY - HIDDEN FROM DESIGNERS) */}
                         {!isDesigner && (
-                            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border-2 border-indigo-200">
+                            <div className="bg-oms-blue rounded-2xl p-6 border-2 border-[rgba(0,0,255,0.2)]-200">
                                 <div className="flex items-center justify-between mb-4">
                                     <h4 className="font-bold text-indigo-900 text-lg flex items-center gap-2">
                                         <DollarSign size={20} />
                                         Financial Details (Admin Only)
                                     </h4>
-                                    <span className="text-xs bg-indigo-200 text-indigo-800 px-3 py-1 rounded-full font-bold">
+                                    <span className="text-xs bg-[rgba(0,0,255,0.1)] text-indigo-800 px-3 py-1 rounded-full font-bold">
                                         🔒 Hidden from Designers
                                     </span>
                                 </div>
@@ -521,7 +521,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-8 py-3 bg-oms-blue text-white rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? 'Saving...' : existingJob ? 'Update Project' : 'Create Project'}
                             </button>

@@ -77,7 +77,7 @@ export function QuickAddMachine({
                         <button
                             type="submit"
                             disabled={loading || !name.trim()}
-                            className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-6 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-xl font-bold hover:bg-[rgba(0,0,255,0.1)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? 'Adding...' : 'Add Machine'}
                         </button>
@@ -162,7 +162,7 @@ export function QuickAddSheetSize({
                         <button
                             type="submit"
                             disabled={loading || !size.trim()}
-                            className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-6 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-xl font-bold hover:bg-[rgba(0,0,255,0.1)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? 'Adding...' : 'Add Size'}
                         </button>
@@ -246,7 +246,7 @@ export function QuickAddMaterial({
                         <button
                             type="submit"
                             disabled={loading || !name.trim()}
-                            className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-6 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-xl font-bold hover:bg-[rgba(0,0,255,0.1)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? 'Adding...' : 'Add Material'}
                         </button>

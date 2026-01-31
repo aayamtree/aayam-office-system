@@ -397,7 +397,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                           >
                             <span>{sub.name}</span>
                             {showBadge && (
-                              <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${isSubActive(sub.href) ? 'bg-white text-indigo-600' : 'bg-white/10 text-gray-400 group-hover:bg-indigo-500 group-hover:text-white'}`}>
+                              <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${isSubActive(sub.href) ? 'bg-white text-oms-blue' : 'bg-white/10 text-gray-400 group-hover:bg-[rgba(0,0,255,0.1)] group-hover:text-white'}`}>
                                 {badge}
                               </span>
                             )}
@@ -416,14 +416,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* User Profile */}
       <div className="p-4 border-t border-white/10">
         <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
-          <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+          <div className="w-10 h-10 bg-oms-blue rounded-full flex items-center justify-center text-white font-semibold">
             {profile?.full_name?.charAt(0) || 'A'}
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-medium text-white text-sm truncate">{profile?.full_name}</p>
             <div className="flex items-center gap-2">
               <p className="text-xs text-gray-500 capitalize">{profile?.role}</p>
-              <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded">v1.7.0</span>
+              <span className="text-[10px] bg-[rgba(0,0,255,0.1)]/20 text-indigo-300 px-1.5 py-0.5 rounded">v1.7.0</span>
             </div>
             <button
               onClick={handleLogout}

@@ -200,7 +200,7 @@ export default function AdminMarketingDashboard() {
                 </div>
 
                 {/* Commission Overview */}
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border border-[rgba(0,0,255,0.2)]-100 shadow-sm">
+                <div className="bg-oms-blue rounded-2xl p-6 border border-[rgba(0,0,255,0.2)]-100 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                         <div>
                             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">

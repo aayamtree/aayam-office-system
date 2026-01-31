@@ -155,7 +155,7 @@ export default function NewProjectPage() {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Premium Gradient Header */}
-            <div className="relative bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 overflow-hidden">
+            <div className="relative bg-oms-blue overflow-hidden">
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30"></div>
                 <div className="relative max-w-5xl mx-auto p-6">
                     <Link
@@ -171,7 +171,7 @@ export default function NewProjectPage() {
                         </div>
                         <div>
                             <h1 className="font-bold text-white text-3xl mb-1">Create New Project</h1>
-                            <p className="text-indigo-100 text-sm">Initialize a new design or print job with all details</p>
+                            <p className="text-white/80 text-sm">Initialize a new design or print job with all details</p>
                         </div>
                     </div>
                 </div>
@@ -180,7 +180,7 @@ export default function NewProjectPage() {
             {/* Form Content */}
             <div className="max-w-5xl mx-auto p-6">
                 {/* Calendar Integration Notice */}
-                <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-[rgba(0,0,255,0.2)] rounded-xl">
+                <div className="mb-6 p-4 bg-gradient-to-br bg-white-50 border-2 border-[rgba(0,0,255,0.2)] rounded-xl">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <Calendar className="text-oms-blue" size={24} />
@@ -201,7 +201,7 @@ export default function NewProjectPage() {
                             <button
                                 type="button"
                                 onClick={() => signIn('google')}
-                                className="px-4 py-2 bg-white border-2 border-indigo-300 rounded-lg hover:bg-[rgba(0,0,255,0.05)] transition-colors font-semibold text-oms-blue flex items-center gap-2 text-sm"
+                                className="px-4 py-2 bg-white border-2 border-[rgba(0,0,255,0.2)]-300 rounded-lg hover:bg-[rgba(0,0,255,0.05)] transition-colors font-semibold text-oms-blue flex items-center gap-2 text-sm"
                             >
                                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -440,7 +440,7 @@ export default function NewProjectPage() {
                         <button
                             type="submit"
                             disabled={creating}
-                            className="px-10 py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-xl font-bold hover:shadow-2xl hover:shadow-purple-300 disabled:opacity-50 transition-all transform hover:scale-105 text-base flex items-center gap-2"
+                            className="px-10 py-4 bg-oms-blue text-white rounded-xl font-bold hover:shadow-2xl hover:shadow-blue-300 disabled:opacity-50 transition-all transform hover:scale-105 text-base flex items-center gap-2"
                         >
                             {creating ? <><Loader2 size={20} className="animate-spin" /> Creating...</> : <><CheckCircle size={20} /> Create Project</>}
                         </button>

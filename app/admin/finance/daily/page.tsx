@@ -83,7 +83,7 @@ export default function DailyFinancePage() {
             </div>
 
             {/* Total Balance Card */}
-            <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl p-6 text-white shadow-lg">
+            <div className="bg-oms-blue rounded-2xl p-6 text-white shadow-lg">
                 <div className="flex justify-between items-start mb-4">
                     <div>
                         <p className="text-sm opacity-90">Total Available Balance</p>

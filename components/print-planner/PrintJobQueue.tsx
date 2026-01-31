@@ -68,12 +68,12 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
 
     const getJobTypeColor = (type: string) => {
         const colors: Record<string, string> = {
-            STICKER: 'bg-purple-100 text-purple-700',
+            STICKER: 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
             POUCH: 'bg-green-100 text-green-700',
             BOX: 'bg-amber-100 text-amber-700',
             BANNER: 'bg-blue-100 text-blue-700',
             FLEX: 'bg-pink-100 text-pink-700',
-            VINYL: 'bg-indigo-100 text-indigo-700',
+            VINYL: 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
             LABEL: 'bg-cyan-100 text-cyan-700',
         };
         return colors[type] || 'bg-gray-100 text-gray-700';
@@ -90,8 +90,8 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
             {/* Header */}
             <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                        <Package className="text-indigo-600" size={20} />
+                    <div className="w-10 h-10 bg-[rgba(0,0,255,0.1)] rounded-xl flex items-center justify-center">
+                        <Package className="text-oms-blue" size={20} />
                     </div>
                     <div>
                         <h2 className="text-xl font-bold text-gray-900">Pending Print Jobs</h2>
@@ -117,7 +117,7 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                             key={type}
                             onClick={() => setFilter(type)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 whitespace-nowrap transition-all ${filter === type
-                                    ? 'bg-indigo-600 text-white border-indigo-600'
+                                    ? 'bg-[rgba(0,0,255,0.1)] text-white border-[rgba(0,0,255,0.2)]-600'
                                     : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'
                                 }`}
                         >
@@ -131,7 +131,7 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {loading ? (
                     <div className="text-center py-12">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[rgba(0,0,255,0.2)]-600"></div>
                     </div>
                 ) : filteredJobs.length === 0 ? (
                     <div className="text-center py-12">
@@ -153,7 +153,7 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <span className="font-mono text-sm font-bold text-indigo-600">
+                                            <span className="font-mono text-sm font-bold text-oms-blue">
                                                 {job.job_number}
                                             </span>
                                             {job.job_type && (
@@ -178,7 +178,7 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                                         disabled={disabled}
                                         className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${disabled
                                                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                                : 'bg-[rgba(0,0,255,0.1)] text-white hover:bg-[rgba(0,0,255,0.1)]'
                                             }`}
                                         title={disabled && selectedJobType ? `Only ${selectedJobType} jobs can be added` : ''}
                                     >
@@ -193,9 +193,9 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
 
             {/* Job Type Lock Warning */}
             {selectedJobType && (
-                <div className="p-4 border-t border-gray-200 bg-purple-50">
+                <div className="p-4 border-t border-gray-200 bg-[rgba(0,0,255,0.1)]">
                     <div className="flex items-center gap-2 text-sm">
-                        <Layers size={16} className="text-purple-600" />
+                        <Layers size={16} className="text-oms-blue" />
                         <span className="font-medium text-purple-900">
                             Locked to: <span className="font-bold">{selectedJobType}</span> jobs only
                         </span>

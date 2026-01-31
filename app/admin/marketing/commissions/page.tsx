@@ -87,7 +87,7 @@ export default function CommissionsPage() {
                         <p className="text-2xl font-bold text-green-600">₹0</p>
                         <p className="text-xs text-gray-400 mt-1">0 projects</p>
                     </div>
-                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border border-[rgba(0,0,255,0.2)]-100 shadow-sm">
+                    <div className="bg-oms-blue rounded-2xl p-6 border border-[rgba(0,0,255,0.2)]-100 shadow-sm">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-white rounded-lg">
                                 <DollarSign className="text-oms-blue" size={20} />
