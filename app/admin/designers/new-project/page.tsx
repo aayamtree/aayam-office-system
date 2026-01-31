@@ -227,7 +227,7 @@ export default function NewProjectPage() {
 
                     {/* 1. Project Basics */}
                     <div className="space-y-5 bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-                        <div className="flex items-center gap-3 pb-4 border-b-2 border-gradient-to-r from-indigo-500 to-purple-500">
+                        <div className="flex items-center gap-3 pb-4 border-b-2 border-oms-blue">
                             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-oms-blue text-white text-section shadow-lg shadow-indigo-200">
                                 1
                             </div>

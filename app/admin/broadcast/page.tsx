@@ -184,7 +184,7 @@ export default function BroadcastPage() {
                     <button
                         type="submit"
                         disabled={sending || !message.trim()}
-                        className="w-full px-6 py-3 bg-oms-blue text-white rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                        className="w-full px-6 py-3 bg-oms-blue text-white rounded-xl font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                     >
                         <Send size={20} />
                         {sending ? 'Sending...' : 'Send Broadcast'}

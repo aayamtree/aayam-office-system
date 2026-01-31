@@ -1342,7 +1342,7 @@ export default function DesignerWorkspace() {
 
                   {/* 1. Project Basics */}
                   <div className="space-y-5 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                    <div className="flex items-center gap-3 pb-3 border-b-2 border-gradient-to-r from-indigo-500 to-purple-500">
+                    <div className="flex items-center gap-3 pb-3 border-b-2 border-oms-blue">
                       <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-oms-blue text-white text-sm font-bold shadow-lg shadow-indigo-200">
                         1
                       </div>
