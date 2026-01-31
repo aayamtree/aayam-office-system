@@ -128,62 +128,80 @@ export default function ClientsPage() {
         <>
           {/* Mobile View: Cards */}
           <div className="lg:hidden space-y-4">
-            {filteredClients.map((client) => (
-              <div key={client.id} className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100 relative">
-                {/* Row 1: Name & Status */}
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-oms-blue rounded-full flex items-center justify-center shrink-0">
-                      <span className="text-oms-blue text-section">{client.name?.charAt(0)}</span>
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900 leading-tight mobile-card-title">{client.name}</h3>
-                      <p className="text-xs text-gray-500">{client.company || 'Individual'}</p>
-                    </div>
-                  </div>
-                  <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${client.is_active ? 'bg-white text-gray-900' : 'bg-gray-100 text-gray-500'}`}>
-                    <div className={`w-1.5 h-1.5 rounded-full ${client.is_active ? 'bg-white0' : 'bg-gray-400'}`}></div>
-                    {client.is_active ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
+            {filteredClients.map((client) => {
+              // Determine header color based on status
+              const headerBg = client.is_active
+                ? 'bg-gradient-to-r from-oms-blue to-blue-600'
+                : 'bg-gradient-to-r from-gray-400 to-gray-500';
 
-                {/* Row 2: Contact Info */}
-                <div className="mb-4 pl-[3.25rem]">
-                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                    <Phone size={14} className="text-gray-400" />
-                    <span>{client.phone}</span>
-                  </div>
-                  {client.city && (
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <MapPin size={12} className="text-gray-400" />
-                      <span>{client.city}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Row 3: Footer */}
-                <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
-                  {profile?.role === 'admin' && (
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${client.created_by ? 'bg-oms-blue text-white' : 'bg-gray-100 text-gray-600'}`}>
-                      {client.created_by ? 'Marketing' : 'Existing'}
+              return (
+                <div key={client.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
+                  {/* Colored Header Tab */}
+                  <div className={`${headerBg} px-5 py-3 flex items-center justify-between`}>
+                    <span className="text-white font-semibold text-sm md:text-base">
+                      {client.company || client.name}
                     </span>
-                  )}
-                  {!profile?.role && <span></span> /* Spacer if not admin */}
+                    <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-full font-medium">
+                      {client.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
 
-                  <div className="flex items-center gap-1 ml-auto">
-                    <button onClick={() => handleView(client)} className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg">
-                      <Eye size={16} />
-                    </button>
-                    <button onClick={() => handleEdit(client)} className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg">
-                      <Edit size={16} />
-                    </button>
-                    <button onClick={() => handleDelete(client.id)} className="p-2 hover:bg-red-50 text-red-500 rounded-lg">
-                      <Trash2 size={16} />
-                    </button>
+                  {/* White Card Body */}
+                  <div className="p-5">
+                    {/* Client Name/Subtitle */}
+                    <p className="text-gray-500 text-sm mb-1">
+                      {client.company ? client.name : 'Individual'}
+                    </p>
+
+                    {/* Contact Info */}
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center gap-2 text-gray-900">
+                        <Phone size={16} className="text-gray-400" />
+                        <span className="font-medium">{client.phone}</span>
+                      </div>
+                      {client.city && (
+                        <div className="flex items-center gap-2 text-gray-600 text-sm">
+                          <MapPin size={14} className="text-gray-400" />
+                          <span>{client.city}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Source Badge */}
+                    {profile?.role === 'admin' && (
+                      <div className="mb-4 pb-4 border-b border-gray-100">
+                        <span className={`px-3 py-1.5 text-xs font-semibold rounded-full ${client.created_by ? 'bg-blue-50 text-oms-blue' : 'bg-gray-100 text-gray-600'}`}>
+                          {client.created_by ? 'Marketing Team' : 'Existing Client'}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleView(client)}
+                        className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Eye size={18} />
+                        <span className="hidden sm:inline">View</span>
+                      </button>
+                      <button
+                        onClick={() => handleEdit(client)}
+                        className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                      >
+                        <Edit size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(client.id)}
+                        className="px-4 py-2.5 border-2 border-red-500 text-red-500 rounded-xl font-medium hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {filteredClients.length === 0 && (
               <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
                 <Building2 size={48} className="mx-auto text-gray-300 mb-4" />

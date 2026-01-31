@@ -293,62 +293,90 @@ export default function OrdersPage() {
           <>
             {/* Mobile View: Cards */}
             <div className="lg:hidden space-y-4">
-              {filteredJobs.map((job) => (
-                <div key={job.id} className="bg-white p-4 rounded-2xl border border-gray-100 relative">
-                  {/* Row 1: ID & Status */}
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="font-bold font-mono text-xs text-gray-700 bg-gray-100 px-2 py-1 rounded-md">
-                      {job.job_number}
-                    </span>
-                    <span className={`px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded-full ${getStatusColor(job.current_stage)}`}>
-                      {job.current_stage.replace('_', ' ')}
-                    </span>
-                  </div>
+              {filteredJobs.map((job) => {
+                // Determine header color based on status
+                const headerColors = {
+                  'new': 'bg-gradient-to-r from-blue-500 to-blue-600',
+                  'designing': 'bg-gradient-to-r from-oms-blue to-blue-600',
+                  'approval': 'bg-gradient-to-r from-yellow-400 to-yellow-500',
+                  'printing': 'bg-gradient-to-r from-purple-500 to-purple-600',
+                  'finishing': 'bg-gradient-to-r from-pink-500 to-pink-600',
+                  'quality_check': 'bg-gradient-to-r from-orange-500 to-orange-600',
+                  'ready': 'bg-gradient-to-r from-green-500 to-green-600',
+                  'dispatched': 'bg-gradient-to-r from-cyan-500 to-cyan-600',
+                  'delivered': 'bg-gradient-to-r from-gray-400 to-gray-500',
+                  'cancelled': 'bg-gradient-to-r from-red-500 to-red-600',
+                };
+                const headerBg = headerColors[job.current_stage as keyof typeof headerColors] || 'bg-gradient-to-r from-gray-400 to-gray-500';
+                const headerTextColor = job.current_stage === 'approval' ? 'text-gray-900' : 'text-white';
 
-                  {/* Row 2: Main Details (Split Left/Right) */}
-                  <div className="flex justify-between items-start gap-3 mb-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-900 leading-tight mb-1">{job.project_name}</h3>
-                      <div className="flex items-center gap-1 text-sm text-gray-600">
-                        <User size={12} className="text-gray-400" />
-                        <span className="truncate">{job.client?.company || job.client?.name || 'Unknown'}</span>
+                return (
+                  <div key={job.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
+                    {/* Colored Header Tab */}
+                    <div className={`${headerBg} px-5 py-3 flex items-center justify-between`}>
+                      <span className={`${headerTextColor} font-semibold text-sm md:text-base`}>
+                        {job.job_number}
+                      </span>
+                      <span className={`${headerTextColor}/90 text-xs px-3 py-1 bg-white/20 rounded-full font-medium capitalize`}>
+                        {job.current_stage.replace('_', ' ')}
+                      </span>
+                    </div>
+
+                    {/* White Card Body */}
+                    <div className="p-5">
+                      {/* Client/Subtitle */}
+                      <p className="text-gray-500 text-sm mb-1">
+                        {job.client?.company || job.client?.name || 'Unknown'}
+                      </p>
+
+                      {/* Project Name */}
+                      <h3 className="text-gray-900 font-bold text-lg mb-4">
+                        {job.project_name}
+                      </h3>
+
+                      {/* Details Row */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3 text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <Package size={16} className="text-gray-400" />
+                            <span>{job.quantity} pcs</span>
+                          </div>
+                        </div>
+                        <span className="text-gray-900 font-bold text-2xl md:text-3xl">
+                          {formatCurrency(job.total_amount)}
+                        </span>
                       </div>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="font-bold text-gray-900">{formatCurrency(job.total_amount)}</div>
-                      <div className="text-xs text-gray-500 font-medium">{job.quantity} pcs</div>
-                    </div>
-                  </div>
 
-                  {/* Row 3: Footer (Date & Actions) */}
-                  <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-md">
-                      <Calendar size={12} />
-                      <span>{job.client_deadline ? formatDate(job.client_deadline) : 'No Deadline'}</span>
-                    </div>
+                      {/* Deadline */}
+                      {job.client_deadline && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4 pb-4 border-b border-gray-100">
+                          <Calendar size={16} className="text-gray-400" />
+                          <span>Due: {formatDate(job.client_deadline)}</span>
+                        </div>
+                      )}
 
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => { setSelectedJob(job); setShowViewModal(true); }}
-                        className="p-2 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-lg"
-                      >
-                        <Eye size={16} />
-                      </button>
-                      {profile?.role !== 'marketing' && (
-                        <>
+                      {/* Action Buttons */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { setSelectedJob(job); setShowViewModal(true); }}
+                          className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                        >
+                          <Eye size={18} />
+                          <span className="hidden sm:inline">View</span>
+                        </button>
+                        {profile?.role !== 'marketing' && (
                           <button
                             onClick={() => handleEdit(job)}
-                            className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg"
+                            className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-xl font-medium hover:bg-gray-50 transition-colors"
                           >
-                            <Edit size={16} />
+                            <Edit size={18} />
                           </button>
-                          {/* Optional: Stick Delete in a menu or remove to save space if needed */}
-                        </>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Desktop View: Table */}
