@@ -263,7 +263,7 @@ export default function DesignersPage() {
     const badges: Record<string, string> = {
       'full-time': 'bg-green-100 text-green-700',
       'part-time': 'bg-blue-100 text-blue-700',
-      'freelance': 'bg-purple-100 text-purple-700'
+      'freelance': 'bg-[rgba(0,0,255,0.1)] text-oms-blue'
     };
     return badges[type] || 'bg-gray-100 text-gray-700';
   };
@@ -271,7 +271,7 @@ export default function DesignersPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-oms-blue" />
         <span className="ml-2">Loading designers...</span>
       </div>
     );
@@ -282,7 +282,7 @@ export default function DesignersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Designers</h1>
+          <h1 className="text-xl lg:text-page-title text-gray-900">Designers</h1>
           <p className="text-sm text-gray-500">{activeDesigners} active of {totalDesigners} total</p>
         </div>
         <button onClick={() => { resetForm(); setShowModal(true); }}
@@ -295,7 +295,7 @@ export default function DesignersPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white rounded-xl p-4 border">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg"><Users size={20} className="text-purple-600" /></div>
+            <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg"><Users size={20} className="text-oms-blue" /></div>
             <div><p className="text-xs text-gray-500">Total</p><p className="text-xl font-bold">{totalDesigners}</p></div>
           </div>
         </div>
@@ -346,7 +346,7 @@ export default function DesignersPage() {
           <Palette size={48} className="mx-auto text-gray-300 mb-4" />
           <h3 className="text-lg font-medium mb-2">No designers found</h3>
           <button onClick={() => setShowModal(true)}
-            className="inline-flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg">
+            className="inline-flex items-center gap-2 bg-oms-blue text-white px-4 py-2 rounded-lg">
             <Plus size={18} />Add Designer
           </button>
         </div>
@@ -358,8 +358,8 @@ export default function DesignersPage() {
           <div key={designer.id} className="bg-white rounded-xl border p-4 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                  <span className="text-purple-600 font-bold text-lg">{designer.name?.charAt(0)}</span>
+                <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center">
+                  <span className="text-oms-blue font-bold text-lg">{designer.name?.charAt(0)}</span>
                 </div>
                 <div>
                   <h3 className="font-semibold">{designer.name}</h3>
@@ -380,7 +380,7 @@ export default function DesignersPage() {
             {designer.skills && designer.skills.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-3">
                 {designer.skills.slice(0, 3).map((skill, i) => (
-                  <span key={i} className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded text-xs">{skill}</span>
+                  <span key={i} className="px-2 py-0.5 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded text-xs">{skill}</span>
                 ))}
                 {designer.skills.length > 3 && (
                   <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">+{designer.skills.length - 3}</span>
@@ -502,10 +502,10 @@ export default function DesignersPage() {
                       type="file"
                       accept="image/*,application/pdf"
                       onChange={handleFileUpload}
-                      className="w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                      className="w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[rgba(0,0,255,0.05)] file:text-oms-blue hover:file:bg-[rgba(0,0,255,0.1)]"
                       disabled={uploadingDoc}
                     />
-                    {uploadingDoc && <div className="absolute right-3 top-1/2 -translate-y-1/2"><Loader2 size={16} className="animate-spin text-purple-600" /></div>}
+                    {uploadingDoc && <div className="absolute right-3 top-1/2 -translate-y-1/2"><Loader2 size={16} className="animate-spin text-oms-blue" /></div>}
                   </div>
                   {formData.document_url && (
                     <a href={formData.document_url} target="_blank" rel="noopener noreferrer" className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100" title="View Document">
@@ -521,7 +521,7 @@ export default function DesignersPage() {
                   {skillOptions.map(skill => (
                     <button key={skill} type="button" onClick={() => toggleSkill(skill)}
                       className={`px-3 py-1 rounded-full text-sm transition-colors ${formData.skills.includes(skill)
-                        ? 'bg-purple-600 text-white'
+                        ? 'bg-oms-blue text-white'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}>
                       {skill}
@@ -552,8 +552,8 @@ export default function DesignersPage() {
               <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center">
-                      <span className="text-purple-600 font-bold text-xl">{selectedDesigner.name?.charAt(0)}</span>
+                    <div className="w-14 h-14 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center">
+                      <span className="text-oms-blue font-bold text-xl">{selectedDesigner.name?.charAt(0)}</span>
                     </div>
                     <div>
                       <h2 className="text-xl font-bold">{selectedDesigner.name}</h2>
@@ -579,9 +579,9 @@ export default function DesignersPage() {
 
                 {/* Rate */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-purple-50 rounded-xl p-4">
+                  <div className="bg-[rgba(0,0,255,0.05)] rounded-xl p-4">
                     <p className="text-xs text-gray-500 mb-1">Hourly Rate</p>
-                    <p className="text-xl font-bold text-purple-600">{formatCurrency(selectedDesigner.hourly_rate)}</p>
+                    <p className="text-xl font-bold text-oms-blue">{formatCurrency(selectedDesigner.hourly_rate)}</p>
                   </div>
                   <div className="bg-green-50 rounded-xl p-4">
                     <p className="text-xs text-gray-500 mb-1">Monthly Salary</p>
@@ -607,7 +607,7 @@ export default function DesignersPage() {
                     <h3 className="font-semibold text-gray-900 mb-3">Skills</h3>
                     <div className="flex flex-wrap gap-2">
                       {selectedDesigner.skills.map((skill, i) => (
-                        <span key={i} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">{skill}</span>
+                        <span key={i} className="px-3 py-1 bg-[rgba(0,0,255,0.1)] text-oms-blue rounded-full text-sm">{skill}</span>
                       ))}
                     </div>
                   </div>

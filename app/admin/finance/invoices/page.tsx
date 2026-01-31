@@ -442,10 +442,10 @@ export default function InvoicesPage() {
       {/* Ready for Invoicing Alert (Data Flow: Jobs -> Finance) */}
       {
         pendingInvoicingJobs.length > 0 && (
-          <div className="bg-gradient-to-r from-indigo-50 to-white p-4 rounded-xl border border-indigo-100">
+          <div className="bg-gradient-to-r from-indigo-50 to-white p-4 rounded-xl border border-[rgba(0,0,255,0.2)]-100">
             <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 bg-indigo-100 rounded-lg">
-                <CheckCircle size={18} className="text-indigo-600" />
+              <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg">
+                <CheckCircle size={18} className="text-oms-blue" />
               </div>
               <div>
                 <h3 className="font-bold text-gray-900">Completed Jobs Pending Invoice</h3>
@@ -458,14 +458,14 @@ export default function InvoicesPage() {
                   <div>
                     <div className="flex justify-between items-start mb-1">
                       <span className="text-xs font-mono text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded">{job.job_number}</span>
-                      <span className="text-xs font-bold text-indigo-600">₹{job.total_amount}</span>
+                      <span className="text-xs font-bold text-oms-blue">₹{job.total_amount}</span>
                     </div>
                     <p className="font-semibold text-gray-800 text-sm truncate" title={job.project_name}>{job.project_name}</p>
                     <p className="text-xs text-gray-500 truncate">{job.client?.company || 'Unknown Client'}</p>
                   </div>
                   <button
                     onClick={() => handleCreateFromJob(job)}
-                    className="mt-3 w-full py-2 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors flex items-center justify-center gap-1"
+                    className="mt-3 w-full py-2 text-xs font-bold text-oms-blue bg-[rgba(0,0,255,0.1)] hover:bg-[rgba(0,0,255,0.1)] rounded-lg transition-colors flex items-center justify-center gap-1"
                   >
                     <Plus size={14} /> Create Invoice
                   </button>
@@ -566,7 +566,7 @@ export default function InvoicesPage() {
                       <button onClick={() => handleWhatsAppShare(inv)} className="p-2 bg-green-50 text-green-600 rounded-lg">
                         <MessageCircle size={16} />
                       </button>
-                      <button onClick={() => handleDownloadPDF(inv)} className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                      <button onClick={() => handleDownloadPDF(inv)} className="p-2 bg-[rgba(0,0,255,0.1)] text-oms-blue rounded-lg">
                         <Download size={16} />
                       </button>
                       <button onClick={() => { setSelectedInvoice(inv); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg">
@@ -625,7 +625,7 @@ export default function InvoicesPage() {
                           <button onClick={() => handleWhatsAppShare(inv)} className="p-2 hover:bg-green-50 rounded-lg" title="Share on WhatsApp">
                             <MessageCircle size={18} className="text-green-500" />
                           </button>
-                          <button onClick={() => handleDownloadPDF(inv)} className="p-2 hover:bg-indigo-50 rounded-lg" title="Download PDF">
+                          <button onClick={() => handleDownloadPDF(inv)} className="p-2 hover:bg-[rgba(0,0,255,0.1)] rounded-lg" title="Download PDF">
                             <Download size={18} className="text-indigo-500" />
                           </button>
                           <button onClick={() => handleEdit(inv)} className="p-2 hover:bg-gray-100 rounded-lg" title="Edit">
@@ -707,7 +707,7 @@ export default function InvoicesPage() {
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <label className="block text-sm font-semibold text-gray-700">Items</label>
-                    <button type="button" onClick={addItem} className="text-sm font-medium text-indigo-600 hover:text-indigo-700">+ Add Item</button>
+                    <button type="button" onClick={addItem} className="text-sm font-medium text-oms-blue hover:text-oms-blue">+ Add Item</button>
                   </div>
                   <div className="space-y-4">
                     {formData.items.map((item, index) => (
@@ -786,7 +786,7 @@ export default function InvoicesPage() {
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Grand Total</label>
-                      <div className="font-bold text-indigo-700 text-lg">{formatCurrency(formData.totalAmount)}</div>
+                      <div className="font-bold text-oms-blue text-lg">{formatCurrency(formData.totalAmount)}</div>
                     </div>
                   </div>
 
@@ -828,7 +828,7 @@ export default function InvoicesPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="flex-1 px-6 py-3.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50"
+                    className="flex-1 px-6 py-3.5 bg-[rgba(0,0,255,0.1)] text-white font-semibold rounded-xl hover:bg-[rgba(0,0,255,0.1)] transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50"
                   >
                     {submitting ? 'Saving...' : (isEditing ? 'Update' : 'Create')}
                   </button>
@@ -862,8 +862,8 @@ export default function InvoicesPage() {
               <div className="p-6 space-y-6">
                 {/* Client Info */}
                 <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                    <User size={24} className="text-indigo-600" />
+                  <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center">
+                    <User size={24} className="text-oms-blue" />
                   </div>
                   <div>
                     <h3 className="font-bold text-gray-900">{selectedInvoice.client?.company}</h3>
@@ -888,7 +888,7 @@ export default function InvoicesPage() {
                 </div>
 
                 {/* Amount Details */}
-                <div className="bg-indigo-50/50 rounded-xl p-5 border border-indigo-100 space-y-3">
+                <div className="bg-[rgba(0,0,255,0.1)]/50 rounded-xl p-5 border border-[rgba(0,0,255,0.2)]-100 space-y-3">
                   <div className="flex justify-between text-gray-600">
                     <span>Subtotal</span>
                     <span>{formatCurrency(selectedInvoice.subtotal)}</span>
@@ -897,7 +897,7 @@ export default function InvoicesPage() {
                     <span>GST</span>
                     <span>{formatCurrency(selectedInvoice.total_tax)}</span>
                   </div>
-                  <div className="flex justify-between font-bold text-gray-900 pt-3 border-t border-indigo-100">
+                  <div className="flex justify-between font-bold text-gray-900 pt-3 border-t border-[rgba(0,0,255,0.2)]-100">
                     <span>Total Amount</span>
                     <span className="text-lg">{formatCurrency(selectedInvoice.total_amount)}</span>
                   </div>
@@ -907,7 +907,7 @@ export default function InvoicesPage() {
                         <span>Paid</span>
                         <span>- {formatCurrency(selectedInvoice.amount_paid)}</span>
                       </div>
-                      <div className="flex justify-between font-bold text-amber-700 pt-3 border-t border-indigo-100">
+                      <div className="flex justify-between font-bold text-amber-700 pt-3 border-t border-[rgba(0,0,255,0.2)]-100">
                         <span>Balance Due</span>
                         <span>{formatCurrency(selectedInvoice.total_amount - selectedInvoice.amount_paid)}</span>
                       </div>

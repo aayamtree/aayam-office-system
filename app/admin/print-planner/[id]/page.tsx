@@ -107,7 +107,7 @@ export default function PrintRunDetailPage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[rgba(0,0,255,0.2)]-600"></div>
             </div>
         );
     }
@@ -126,7 +126,7 @@ export default function PrintRunDetailPage() {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'planned': return 'bg-blue-100 text-blue-800 border-blue-200';
-            case 'printed': return 'bg-purple-100 text-purple-800 border-purple-200';
+            case 'printed': return 'bg-[rgba(0,0,255,0.1)] text-purple-800 border-[rgba(0,0,255,0.2)]-200';
             case 'delivered': return 'bg-green-100 text-green-800 border-green-200';
             default: return 'bg-gray-100 text-gray-800 border-gray-200';
         }
@@ -139,7 +139,7 @@ export default function PrintRunDetailPage() {
                 <div className="max-w-7xl mx-auto">
                     <Link
                         href="/admin/print-planner"
-                        className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium mb-4 transition-colors"
+                        className="inline-flex items-center gap-2 text-oms-blue hover:text-indigo-800 font-medium mb-4 transition-colors"
                     >
                         <ArrowLeft size={20} />
                         Back to Print Planner
@@ -149,7 +149,7 @@ export default function PrintRunDetailPage() {
                         <div>
                             <div className="flex items-center gap-4 mb-2">
                                 <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                                    <Printer className="text-indigo-600" size={32} />
+                                    <Printer className="text-oms-blue" size={32} />
                                     {printRun.print_run_number}
                                 </h1>
                                 <span className={`px-4 py-2 rounded-full text-sm font-bold border-2 ${getStatusColor(printRun.status)}`}>
@@ -167,7 +167,7 @@ export default function PrintRunDetailPage() {
                             {printRun.status === 'planned' && (
                                 <button
                                     onClick={() => updateStatus('printed')}
-                                    className="px-6 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-all flex items-center gap-2"
+                                    className="px-6 py-3 bg-[rgba(0,0,255,0.1)] text-white rounded-xl font-bold hover:bg-[rgba(0,0,255,0.1)] transition-all flex items-center gap-2"
                                 >
                                     <CheckCircle size={20} />
                                     Mark as Printed
@@ -202,11 +202,11 @@ export default function PrintRunDetailPage() {
                     <div className="grid grid-cols-5 gap-6">
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Total Jobs</p>
-                            <p className="text-2xl font-bold text-indigo-600">{printRunJobs.length}</p>
+                            <p className="text-2xl font-bold text-oms-blue">{printRunJobs.length}</p>
                         </div>
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Total Sheets</p>
-                            <p className="text-2xl font-bold text-purple-600">
+                            <p className="text-2xl font-bold text-oms-blue">
                                 {printRunJobs.reduce((sum, job) => {
                                     const sheets = Math.ceil((job.quantity_needed || 0) / (job.ups_in_sheet || 1));
                                     return sum + sheets;
@@ -263,7 +263,7 @@ export default function PrintRunDetailPage() {
                                             <td className="px-6 py-4">
                                                 <Link
                                                     href={`/admin/jobs/${prj.job_id}`}
-                                                    className="font-mono text-sm text-indigo-600 hover:text-indigo-800 font-bold"
+                                                    className="font-mono text-sm text-oms-blue hover:text-indigo-800 font-bold"
                                                 >
                                                     {(prj.job as any)?.job_number || 'N/A'}
                                                 </Link>
@@ -281,7 +281,7 @@ export default function PrintRunDetailPage() {
                                                 {prj.ups_in_sheet || 1}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-lg text-sm font-bold">
+                                                <span className="px-3 py-1 bg-[rgba(0,0,255,0.1)] text-indigo-800 rounded-lg text-sm font-bold">
                                                     {Math.ceil((prj.quantity_needed || 0) / (prj.ups_in_sheet || 1))} sheets
                                                 </span>
                                             </td>
@@ -475,7 +475,7 @@ function AddJobsModal({
                 <div className="p-6">
                     {loading ? (
                         <div className="text-center py-12">
-                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[rgba(0,0,255,0.2)]-600"></div>
                         </div>
                     ) : eligibleJobs.length === 0 ? (
                         <div className="text-center py-12">
@@ -497,7 +497,7 @@ function AddJobsModal({
                                         <div
                                             key={job.id}
                                             className={`p-4 rounded-xl border-2 transition-all ${isSelected
-                                                ? 'bg-indigo-50 border-indigo-300'
+                                                ? 'bg-[rgba(0,0,255,0.1)] border-[rgba(0,0,255,0.2)]-300'
                                                 : 'bg-white border-gray-200'
                                                 }`}
                                         >
@@ -506,12 +506,12 @@ function AddJobsModal({
                                                     type="checkbox"
                                                     checked={isSelected}
                                                     onChange={() => toggleJob(job.id)}
-                                                    className="h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500 mt-1"
+                                                    className="h-5 w-5 text-oms-blue rounded focus:ring-indigo-500 mt-1"
                                                 />
 
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-3 mb-2">
-                                                        <span className="font-mono text-sm font-bold text-indigo-600">
+                                                        <span className="font-mono text-sm font-bold text-oms-blue">
                                                             {job.job_number}
                                                         </span>
                                                         <span className="font-medium text-gray-900">{job.project_name}</span>
@@ -555,7 +555,7 @@ function AddJobsModal({
                                                                 <label className="block text-xs font-bold text-gray-700 mb-1">
                                                                     Sheets Required
                                                                 </label>
-                                                                <div className="w-full border-2 border-indigo-200 bg-indigo-50 rounded-lg px-3 py-2 text-sm font-bold text-indigo-700">
+                                                                <div className="w-full border-2 border-[rgba(0,0,255,0.2)]-200 bg-[rgba(0,0,255,0.1)] rounded-lg px-3 py-2 text-sm font-bold text-oms-blue">
                                                                     {sheets} sheets
                                                                 </div>
                                                             </div>

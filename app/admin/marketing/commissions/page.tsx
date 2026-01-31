@@ -69,8 +69,8 @@ export default function CommissionsPage() {
                     </div>
                     <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-purple-50 rounded-lg">
-                                <CheckCircle className="text-purple-600" size={20} />
+                            <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg">
+                                <CheckCircle className="text-oms-blue" size={20} />
                             </div>
                             <p className="text-sm text-gray-500 font-medium">Approved</p>
                         </div>
@@ -87,10 +87,10 @@ export default function CommissionsPage() {
                         <p className="text-2xl font-bold text-green-600">₹0</p>
                         <p className="text-xs text-gray-400 mt-1">0 projects</p>
                     </div>
-                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-100 shadow-sm">
+                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border border-[rgba(0,0,255,0.2)]-100 shadow-sm">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-white rounded-lg">
-                                <DollarSign className="text-indigo-600" size={20} />
+                                <DollarSign className="text-oms-blue" size={20} />
                             </div>
                             <p className="text-sm text-gray-600 font-medium">Total This Month</p>
                         </div>
@@ -108,9 +108,9 @@ export default function CommissionsPage() {
                                     key={f}
                                     onClick={() => setFilter(f)}
                                     className={`px-4 py-2 rounded-lg text-sm font-bold transition-all capitalize ${filter === f
-                                        ? f === 'all' ? 'bg-indigo-600 text-white'
+                                        ? f === 'all' ? 'bg-[rgba(0,0,255,0.1)] text-white'
                                             : f === 'pending' ? 'bg-blue-600 text-white'
-                                                : f === 'approved' ? 'bg-purple-600 text-white'
+                                                : f === 'approved' ? 'bg-[rgba(0,0,255,0.1)] text-white'
                                                     : 'bg-green-600 text-white'
                                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                         }`}
@@ -135,7 +135,7 @@ export default function CommissionsPage() {
                     <div className="p-6">
                         {loading ? (
                             <div className="text-center py-12">
-                                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[rgba(0,0,255,0.2)]-600"></div>
                             </div>
                         ) : commissions.length === 0 ? (
                             <div className="text-center py-12">

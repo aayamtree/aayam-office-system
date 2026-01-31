@@ -219,7 +219,7 @@ export default function ManualJournalPage() {
                         </tbody>
                     </table>
 
-                    <button onClick={addLine} className="mt-4 flex items-center gap-2 text-sm text-indigo-600 font-medium hover:text-indigo-800">
+                    <button onClick={addLine} className="mt-4 flex items-center gap-2 text-sm text-oms-blue font-medium hover:text-indigo-800">
                         <Plus size={16} /> Add Line
                     </button>
                 </div>
@@ -242,7 +242,7 @@ export default function ManualJournalPage() {
                     <button
                         onClick={handleSave}
                         disabled={!isBalanced || loading}
-                        className={`ml-4 px-6 py-3 rounded-xl font-bold text-white flex items-center gap-2 ${isBalanced ? 'bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200' : 'bg-gray-300 cursor-not-allowed'
+                        className={`ml-4 px-6 py-3 rounded-xl font-bold text-white flex items-center gap-2 ${isBalanced ? 'bg-[rgba(0,0,255,0.1)] hover:bg-[rgba(0,0,255,0.1)] shadow-lg shadow-indigo-200' : 'bg-gray-300 cursor-not-allowed'
                             }`}
                     >
                         {loading ? 'Saving...' : <><Save size={18} /> Save Journal</>}

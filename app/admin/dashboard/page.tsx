@@ -144,8 +144,8 @@ export default function AdminDashboard() {
   const getStatusColor = (stage: string) => {
     const map: any = {
       'new': 'bg-blue-100 text-blue-700',
-      'designing': 'bg-indigo-100 text-indigo-700',
-      'approval': 'bg-purple-100 text-purple-700',
+      'designing': 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
+      'approval': 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
       'printing': 'bg-amber-100 text-amber-700',
       'finishing': 'bg-orange-100 text-orange-700',
       'quality_check': 'bg-pink-100 text-pink-700',
@@ -159,19 +159,19 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in pb-6 md:pb-10 px-3 md:px-0">
       {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-[#1e1b4b] via-[#312e81] to-[#4338ca] rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 text-white shadow-lg">
+      <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 shadow-sm border border-gray-100">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4 mb-4 md:mb-8">
           <div>
-            <h1 className="text-xl md:text-3xl lg:text-4xl font-bold tracking-tight">
+            <h1 className="text-page-title text-gray-900">
               Welcome back, {profile?.full_name?.split(' ')[0] || 'Admin'}
             </h1>
-            <p className="text-indigo-200 text-sm md:text-base mt-1 md:mt-2">{dateStr}</p>
+            <p className="text-body text-gray-500 mt-1 md:mt-2">{dateStr}</p>
           </div>
           <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
             <DriveConnectionStatus />
-            <div className="flex items-center gap-1.5 md:gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 md:px-5 py-1.5 md:py-2.5 w-fit border border-white/10">
+            <div className="flex items-center gap-1.5 md:gap-2 bg-oms-blue/10 backdrop-blur-sm rounded-full px-3 md:px-5 py-1.5 md:py-2.5 w-fit border border-oms-blue/10">
               <span className="w-2 h-2 md:w-2.5 md:h-2.5 bg-green-400 rounded-full animate-pulse-soft"></span>
-              <span className="text-xs md:text-base font-medium">Live Dashboard</span>
+              <span className="text-xs md:text-base font-medium text-gray-900">Live Dashboard</span>
             </div>
           </div>
         </div>
@@ -181,17 +181,17 @@ export default function AdminDashboard() {
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-xl md:rounded-2xl p-3 md:p-5 hover:bg-white/15 transition-all duration-150 border border-white/5 shadow-inner">
+              <div key={stat.label} className="bg-oms-blue rounded-xl md:rounded-2xl p-3 md:p-5 hover:opacity-95 transition-all duration-150 shadow-sm">
                 <div className="flex items-start justify-between mb-2 md:mb-3">
-                  <p className="text-indigo-100 text-xs md:text-sm font-medium opacity-90">{stat.label}</p>
-                  <Icon size={16} className="text-indigo-300 md:hidden" />
-                  <Icon size={20} className="text-indigo-300 hidden md:block" />
+                  <p className="text-white/90 text-xs md:text-sm font-medium">{stat.label}</p>
+                  <Icon size={16} className="text-white/70 md:hidden" />
+                  <Icon size={20} className="text-white/70 hidden md:block" />
                 </div>
                 <p className="text-xl md:text-3xl lg:text-4xl font-bold tracking-tight text-white">
                   {statsLoading ? '...' : stat.value}
                 </p>
                 {stat.subtext && (
-                  <span className="text-xs text-indigo-300 mt-1 block opacity-80">
+                  <span className="text-xs text-white/70 mt-1 block">
                     {stat.subtext}
                   </span>
                 )}
@@ -260,12 +260,12 @@ export default function AdminDashboard() {
               </div>
 
               {/* Follow-ups */}
-              <Link href="/admin/marketing/follow-ups" className={`flex items-center gap-3 p-3 rounded-xl border transition-all hover:scale-105 ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-purple-50 border-purple-100 cursor-pointer' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-purple-100 text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
+              <Link href="/admin/marketing/follow-ups" className={`flex items-center gap-3 p-3 rounded-xl border transition-all hover:scale-105 ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)] cursor-pointer' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
                   <Phone size={16} />
                 </div>
                 <div>
-                  <div className={`text-section leading-none ${dashboardStats.alerts?.followUpsDue > 0 ? 'text-purple-700' : 'text-gray-500'}`}>{dashboardStats.alerts?.followUpsDue || 0}</div>
+                  <div className={`text-section leading-none ${dashboardStats.alerts?.followUpsDue > 0 ? 'text-oms-blue' : 'text-gray-500'}`}>{dashboardStats.alerts?.followUpsDue || 0}</div>
                   <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Follow-ups</div>
                 </div>
               </Link>
@@ -273,12 +273,12 @@ export default function AdminDashboard() {
               {/* --- VENDOR SNAPSHOT --- */}
 
               {/* Jobs At Vendor */}
-              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-indigo-50 border-indigo-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-indigo-100 text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
+              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
                   <Printer size={16} />
                 </div>
                 <div>
-                  <div className={`text-section leading-none ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'text-indigo-700' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.jobsAtVendor || 0}</div>
+                  <div className={`text-section leading-none ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'text-oms-blue' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.jobsAtVendor || 0}</div>
                   <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">At Process</div>
                 </div>
               </div>
@@ -379,7 +379,7 @@ export default function AdminDashboard() {
                 <p className="text-xs md:text-sm text-gray-500 mt-1">Monthly revenue overview</p>
               </div>
               <div className="flex items-center gap-2">
-                <button className="px-4 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-xl font-medium transition-colors hover:bg-indigo-100">Monthly</button>
+                <button className="px-4 py-2 text-sm bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-xl font-medium transition-colors hover:bg-[rgba(0,0,255,0.1)]">Monthly</button>
                 <button className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-xl transition-colors">Yearly</button>
               </div>
             </div>
@@ -397,7 +397,7 @@ export default function AdminDashboard() {
                     )}
                     <div
                       className={`w-full max-w-[40px] rounded-t-lg transition-all duration-300 ${item.active
-                        ? 'bg-gradient-to-t from-indigo-600 to-indigo-400 shadow-lg shadow-blue-200'
+                        ? 'bg-oms-blue shadow-lg shadow-blue-200'
                         : 'bg-gray-100 group-hover:bg-gray-200'
                         }`}
                       style={{
@@ -420,7 +420,7 @@ export default function AdminDashboard() {
                 <span className="text-4xl font-bold text-gray-900">{formatCurrency(dashboardStats.totalRevenue)}</span>
                 <span className="text-base text-gray-500 font-medium">YTD Revenue</span>
               </div>
-              <Link href="/admin/sales/orders" className="flex items-center gap-2 text-sm text-oms-blue hover:text-indigo-700 font-bold bg-indigo-50 px-4 py-2 rounded-xl transition-colors">
+              <Link href="/admin/sales/orders" className="flex items-center gap-2 text-sm text-oms-blue hover:opacity-80 font-bold bg-[rgba(0,0,255,0.05)] px-4 py-2 rounded-xl transition-colors">
                 View Report
                 <ArrowUpRight size={16} />
               </Link>
@@ -431,7 +431,7 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-4 md:mb-6">
               <h2 className="text-section text-gray-900">Recent Jobs</h2>
-              <Link href="/admin/sales/orders" className="flex items-center gap-1 text-sm text-oms-blue hover:text-indigo-700 font-bold">
+              <Link href="/admin/sales/orders" className="flex items-center gap-1 text-sm text-oms-blue hover:text-oms-blue font-bold">
                 View All
                 <ArrowUpRight size={16} />
               </Link>
@@ -478,7 +478,7 @@ export default function AdminDashboard() {
 
                     return (
                       <tr key={job.id} className={rowClass}>
-                        <td className="py-4 pl-4"><span className="font-bold text-indigo-900 bg-indigo-50 px-2 py-1 rounded-md text-xs">{job.job_number}</span></td>
+                        <td className="py-4 pl-4"><span className="font-bold text-indigo-900 bg-[rgba(0,0,255,0.1)] px-2 py-1 rounded-md text-xs">{job.job_number}</span></td>
                         <td className="py-4">
                           <div className="font-bold text-gray-800 text-sm">{job.project_name}</div>
                           <div className="text-xs text-gray-500">{job.client?.company || '-'}</div>
@@ -509,7 +509,7 @@ export default function AdminDashboard() {
               ) : recentJobs.map((job) => (
                 <div key={job.id} className="border border-gray-100 p-4 rounded-xl shadow-sm bg-gray-50/30">
                   <div className="flex justify-between items-start mb-3">
-                    <span className="font-bold text-indigo-900 bg-indigo-50 px-3 py-1 rounded-lg text-sm">{job.job_number}</span>
+                    <span className="font-bold text-indigo-900 bg-[rgba(0,0,255,0.1)] px-3 py-1 rounded-lg text-sm">{job.job_number}</span>
                     <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full ${getStatusColor(job.current_stage)}`}>
                       {job.current_stage}
                     </span>
@@ -538,13 +538,13 @@ export default function AdminDashboard() {
               <Link href="/admin/sales/orders" className="p-4 bg-gray-900 text-white rounded-xl text-center text-sm font-semibold hover:bg-gray-800 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5">
                 + New Order
               </Link>
-              <Link href="/admin/cmyk-print" className="p-4 bg-indigo-50 text-indigo-700 rounded-xl text-center text-sm font-semibold hover:bg-indigo-100 transition-all">
+              <Link href="/admin/cmyk-print" className="p-4 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-xl text-center text-sm font-semibold hover:bg-[rgba(0,0,255,0.1)] transition-all">
                 Print Job
               </Link>
               <Link href="/admin/dispatch" className="p-4 bg-green-50 text-green-700 rounded-xl text-center text-sm font-semibold hover:bg-green-100 transition-all">
                 QC Check
               </Link>
-              <Link href="/admin/crm/clients" className="p-4 bg-purple-50 text-purple-700 rounded-xl text-center text-sm font-semibold hover:bg-purple-100 transition-all">
+              <Link href="/admin/crm/clients" className="p-4 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-xl text-center text-sm font-semibold hover:bg-[rgba(0,0,255,0.1)] transition-all">
                 Clients
               </Link>
             </div>

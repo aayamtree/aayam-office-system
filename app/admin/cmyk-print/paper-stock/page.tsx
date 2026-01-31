@@ -203,12 +203,12 @@ export default function PaperStockPage() {
           </div>
           <p className="text-2xl font-bold text-red-700">{loading ? '...' : outOfStockCount}</p>
         </div>
-        <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3">
+        <div className="bg-[rgba(0,0,255,0.1)] border border-[rgba(0,0,255,0.2)]-200 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-1">
-            <TrendingUp size={16} className="text-indigo-600" />
-            <span className="text-xs text-indigo-600 font-medium">Stock Value</span>
+            <TrendingUp size={16} className="text-oms-blue" />
+            <span className="text-xs text-oms-blue font-medium">Stock Value</span>
           </div>
-          <p className="text-2xl font-bold text-indigo-700">
+          <p className="text-2xl font-bold text-oms-blue">
             {loading ? '...' : `₹${totalValue.toLocaleString()}`}
           </p>
         </div>

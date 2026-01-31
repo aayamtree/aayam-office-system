@@ -35,11 +35,11 @@ export default function ActivityPage() {
     const icons: Record<string, React.ReactNode> = {
       'Sales': <Package size={16} className="text-green-600" />,
       'CRM': <Users size={16} className="text-blue-600" />,
-      'Finance': <CreditCard size={16} className="text-purple-600" />,
+      'Finance': <CreditCard size={16} className="text-oms-blue" />,
       'Dispatch': <Truck size={16} className="text-amber-600" />,
       'CMYK': <Printer size={16} className="text-cyan-600" />,
       'Settings': <Settings size={16} className="text-gray-600" />,
-      'System': <FileText size={16} className="text-indigo-600" />,
+      'System': <FileText size={16} className="text-oms-blue" />,
     };
     return icons[module] || <FileText size={16} className="text-gray-600" />;
   };
@@ -48,11 +48,11 @@ export default function ActivityPage() {
     const colors: Record<string, string> = {
       'Sales': 'bg-green-100 text-green-700',
       'CRM': 'bg-blue-100 text-blue-700',
-      'Finance': 'bg-purple-100 text-purple-700',
+      'Finance': 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
       'Dispatch': 'bg-amber-100 text-amber-700',
       'CMYK': 'bg-cyan-100 text-cyan-700',
       'Settings': 'bg-gray-100 text-gray-700',
-      'System': 'bg-indigo-100 text-indigo-700',
+      'System': 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
     };
     return colors[module] || 'bg-gray-100 text-gray-700';
   };
@@ -61,7 +61,7 @@ export default function ActivityPage() {
     if (action.includes('Created') || action.includes('Added')) return 'text-green-600';
     if (action.includes('Updated') || action.includes('Completed')) return 'text-blue-600';
     if (action.includes('Deleted') || action.includes('Cancelled')) return 'text-red-600';
-    if (action.includes('Login') || action.includes('Logout')) return 'text-indigo-600';
+    if (action.includes('Login') || action.includes('Logout')) return 'text-oms-blue';
     return 'text-gray-700';
   };
 
@@ -75,7 +75,7 @@ export default function ActivityPage() {
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
-        <Loader2 className="animate-spin text-indigo-600" size={32} />
+        <Loader2 className="animate-spin text-oms-blue" size={32} />
         <span className="ml-3 text-gray-500 font-medium">Loading activity logs...</span>
       </div>
     );
@@ -85,7 +85,7 @@ export default function ActivityPage() {
     <div className="space-y-4 lg:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Activity Logs</h1>
+        <h1 className="text-xl lg:text-page-title text-gray-900">Activity Logs</h1>
         <p className="text-sm text-gray-500">Track all system activities (Last 100 entries)</p>
       </div>
 
@@ -93,31 +93,31 @@ export default function ActivityPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
-            <Clock size={18} className="text-indigo-600" />
+            <Clock size={18} className="text-oms-blue" />
             <span className="text-sm text-gray-500">Today&apos;s Activity</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{todayLogs}</p>
+          <p className="text-page-title text-gray-900">{todayLogs}</p>
         </div>
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
             <User size={18} className="text-blue-600" />
             <span className="text-sm text-gray-500">Active Users</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{uniqueUsersCount}</p>
+          <p className="text-page-title text-gray-900">{uniqueUsersCount}</p>
         </div>
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
             <Package size={18} className="text-green-600" />
             <span className="text-sm text-gray-500">Sales Actions</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{salesActions}</p>
+          <p className="text-page-title text-gray-900">{salesActions}</p>
         </div>
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
-            <CreditCard size={18} className="text-purple-600" />
+            <CreditCard size={18} className="text-oms-blue" />
             <span className="text-sm text-gray-500">Finance Actions</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{financeActions}</p>
+          <p className="text-page-title text-gray-900">{financeActions}</p>
         </div>
       </div>
 

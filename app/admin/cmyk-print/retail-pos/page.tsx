@@ -21,13 +21,13 @@ interface CartItem {
 
 const categoryColors = [
   'bg-blue-100 text-blue-700',
-  'bg-purple-100 text-purple-700',
+  'bg-[rgba(0,0,255,0.1)] text-oms-blue',
   'bg-green-100 text-green-700',
   'bg-amber-100 text-amber-700',
   'bg-pink-100 text-pink-700',
   'bg-cyan-100 text-cyan-700',
   'bg-red-100 text-red-700',
-  'bg-indigo-100 text-indigo-700',
+  'bg-[rgba(0,0,255,0.1)] text-oms-blue',
   'bg-orange-100 text-orange-700',
   'bg-teal-100 text-teal-700',
   'bg-lime-100 text-lime-700',
@@ -329,7 +329,7 @@ export default function RetailPOSPage() {
             ) : filteredProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-400">
                 <p>No products found in this category.</p>
-                <button onClick={() => setShowSettingsModal(true)} className="mt-2 text-indigo-600 font-medium">Add Products</button>
+                <button onClick={() => setShowSettingsModal(true)} className="mt-2 text-oms-blue font-medium">Add Products</button>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
@@ -340,7 +340,7 @@ export default function RetailPOSPage() {
                       <p className="font-medium text-gray-900 text-sm line-clamp-2">{product.name}</p>
                       <p className="text-xs text-gray-500 mt-1">{product.category?.name}</p>
                     </div>
-                    <p className="text-indigo-600 font-bold mt-2">{formatCurrency(product.price)}</p>
+                    <p className="text-oms-blue font-bold mt-2">{formatCurrency(product.price)}</p>
                   </button>
                 ))}
               </div>
@@ -353,7 +353,7 @@ export default function RetailPOSPage() {
           <div className="p-4 border-b bg-white">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <ShoppingCart size={20} className="text-indigo-600" />
+                <ShoppingCart size={20} className="text-oms-blue" />
                 <span className="font-semibold">Cart ({cart.length})</span>
               </div>
               {cart.length > 0 && (
@@ -390,7 +390,7 @@ export default function RetailPOSPage() {
                       <span className="w-8 text-center font-medium">{item.qty}</span>
                       <button onClick={() => updateQty(item.id, 1)} className="w-7 h-7 bg-gray-100 rounded flex items-center justify-center hover:bg-gray-200"><Plus size={14} /></button>
                     </div>
-                    <span className="font-bold text-indigo-600">{formatCurrency(item.total)}</span>
+                    <span className="font-bold text-oms-blue">{formatCurrency(item.total)}</span>
                   </div>
                 </div>
               ))
@@ -409,10 +409,10 @@ export default function RetailPOSPage() {
                 </div>
               </div>
               {discount > 0 && <div className="flex justify-between text-sm text-green-600"><span>Discount Amount</span><span>-{formatCurrency(discountAmount)}</span></div>}
-              <div className="flex justify-between font-bold text-lg pt-2 border-t"><span>Grand Total</span><span className="text-indigo-600">{formatCurrency(grandTotal)}</span></div>
+              <div className="flex justify-between font-bold text-lg pt-2 border-t"><span>Grand Total</span><span className="text-oms-blue">{formatCurrency(grandTotal)}</span></div>
             </div>
             <button onClick={() => setShowPaymentModal(true)} disabled={cart.length === 0}
-              className="w-full py-3 bg-indigo-600 text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-indigo-700 transition-colors">
+              className="w-full py-3 bg-[rgba(0,0,255,0.1)] text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[rgba(0,0,255,0.1)] transition-colors">
               Pay {formatCurrency(grandTotal)}
             </button>
           </div>
@@ -428,16 +428,16 @@ export default function RetailPOSPage() {
               <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <div className="p-5 space-y-4">
-              <div className="text-center bg-indigo-50 rounded-xl p-4">
+              <div className="text-center bg-[rgba(0,0,255,0.1)] rounded-xl p-4">
                 <p className="text-sm text-gray-600">Total Amount</p>
-                <p className="text-3xl font-bold text-indigo-600">{formatCurrency(grandTotal)}</p>
+                <p className="text-3xl font-bold text-oms-blue">{formatCurrency(grandTotal)}</p>
               </div>
               <div>
                 <p className="text-sm font-medium mb-2">Payment Method</p>
                 <div className="grid grid-cols-3 gap-2">
                   {[{ id: 'cash', label: 'Cash', icon: Banknote }, { id: 'card', label: 'Card', icon: CreditCard }, { id: 'upi', label: 'UPI', icon: Smartphone }].map(method => (
                     <button key={method.id} onClick={() => setPaymentMethod(method.id as any)}
-                      className={`p-3 rounded-lg border-2 flex flex-col items-center gap-1 transition-all ${paymentMethod === method.id ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                      className={`p-3 rounded-lg border-2 flex flex-col items-center gap-1 transition-all ${paymentMethod === method.id ? 'border-indigo-500 bg-[rgba(0,0,255,0.1)]' : 'border-gray-200 hover:border-gray-300'}`}>
                       <method.icon size={20} /><span className="text-sm">{method.label}</span>
                     </button>
                   ))}

@@ -198,7 +198,7 @@ export default function LeadsPage() {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Leads & Enquiries (Sales)</h1>
+          <h1 className="text-page-title text-gray-900">Leads & Enquiries (Sales)</h1>
           <p className="text-gray-500 text-sm">Manage potential clients and follow-ups</p>
         </div>
         <button
@@ -219,13 +219,13 @@ export default function LeadsPage() {
             placeholder="Search name, phone, company..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-gray-900 placeholder-gray-400"
+            className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-oms-blue/20 text-gray-900 placeholder-gray-400"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-indigo-500/20 font-medium text-gray-700 cursor-pointer"
+          className="px-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-oms-blue/20 font-medium text-gray-700 cursor-pointer"
         >
           <option value="all">All Status</option>
           <option value="new">New</option>
@@ -264,7 +264,7 @@ export default function LeadsPage() {
                     {lead.company && <p className="text-gray-500 text-sm font-medium">{lead.company}</p>}
                   </div>
                   <div className="flex gap-1">
-                    <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-400 hover:text-oms-blue hover:bg-indigo-50 rounded-lg transition-colors">
+                    <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-400 hover:text-oms-blue hover:bg-[rgba(0,0,255,0.05)] rounded-lg transition-colors">
                       <Eye size={18} />
                     </button>
                     <button onClick={() => handleEdit(lead)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
@@ -325,7 +325,7 @@ export default function LeadsPage() {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fade-in">
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="sticky top-0 bg-white p-5 border-b border-gray-100 flex justify-between items-center z-10">
-              <h2 className="text-xl font-bold text-gray-900">{isEditing ? 'Edit Lead' : 'New Lead Card'}</h2>
+              <h2 className="text-section text-gray-900">{isEditing ? 'Edit Lead' : 'New Lead Card'}</h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                 <X size={20} />
               </button>
@@ -336,18 +336,18 @@ export default function LeadsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-1.5">Lead Name *</label>
-                  <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-medium" />
+                  <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-oms-blue focus:border-indigo-500 transition-all font-medium" />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-1.5">Mobile Number *</label>
-                  <input required type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })} className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium font-mono" />
+                  <input required type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })} className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-oms-blue transition-all font-medium font-mono" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-sm font-semibold text-gray-600 mb-1.5">Source</label>
-                  <select value={formData.source} onChange={e => setFormData({ ...formData, source: e.target.value as any })} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                  <select value={formData.source} onChange={e => setFormData({ ...formData, source: e.target.value as any })} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-oms-blue">
                     <option value="website">Website</option>
                     <option value="walk_in">Walk-in</option>
                     <option value="referral">Referral</option>
@@ -358,7 +358,7 @@ export default function LeadsPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-600 mb-1.5">Service Req.</label>
-                  <select value={formData.leadType} onChange={e => setFormData({ ...formData, leadType: e.target.value as any })} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                  <select value={formData.leadType} onChange={e => setFormData({ ...formData, leadType: e.target.value as any })} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-oms-blue">
                     <option value="printing_only">Printing Only</option>
                     <option value="designing_only">Designing Only</option>
                     <option value="design_printing">Design + Printing</option>
@@ -402,12 +402,12 @@ export default function LeadsPage() {
                   </select>
                   <input type="number" placeholder="Expected Value (₹)" value={formData.value} onChange={e => setFormData({ ...formData, value: e.target.value })} className="border-b border-gray-200 py-2 focus:border-indigo-500 focus:outline-none bg-transparent placeholder-gray-400" />
                 </div>
-                <textarea placeholder="Requirement details / Notes..." rows={3} value={formData.requirement} onChange={e => setFormData({ ...formData, requirement: e.target.value })} className="w-full p-3 bg-gray-50 rounded-xl border-0 focus:ring-2 focus:ring-indigo-500/20 text-sm resize-none"></textarea>
+                <textarea placeholder="Requirement details / Notes..." rows={3} value={formData.requirement} onChange={e => setFormData({ ...formData, requirement: e.target.value })} className="w-full p-3 bg-gray-50 rounded-xl border-0 focus:ring-2 focus:ring-oms-blue/20 text-sm resize-none"></textarea>
               </div>
 
               <div className="sticky bottom-0 bg-white pt-4 border-t border-gray-100 flex gap-3">
                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 border border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 py-3 bg-oms-blue text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-blue-200 disabled:opacity-50 flex items-center justify-center gap-2">
+                <button type="submit" disabled={submitting} className="flex-1 py-3 bg-oms-blue text-white rounded-xl font-semibold hover:bg-oms-blue transition-colors shadow-lg shadow-blue-200 disabled:opacity-50 flex items-center justify-center gap-2">
                   {submitting && <Loader2 className="animate-spin" size={18} />}
                   {submitting ? 'Saving...' : 'Save Lead'}
                 </button>
@@ -422,7 +422,7 @@ export default function LeadsPage() {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-2xl w-full max-w-lg p-6 relative shadow-2xl">
             <button onClick={() => setShowViewModal(false)} className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full"><X size={18} /></button>
-            <h2 className="text-2xl font-bold text-gray-900 mb-1">{selectedLead.name}</h2>
+            <h2 className="text-page-title text-gray-900 mb-1">{selectedLead.name}</h2>
             <p className="text-gray-500 font-mono text-sm mb-6">{selectedLead.lead_number}</p>
 
             <div className="space-y-4">
@@ -436,7 +436,7 @@ export default function LeadsPage() {
               </div>
             </div>
 
-            <button onClick={() => { setShowViewModal(false); handleEdit(selectedLead); }} className="w-full mt-6 bg-oms-blue text-white py-3 rounded-xl font-bold hover:bg-indigo-700">Edit Details</button>
+            <button onClick={() => { setShowViewModal(false); handleEdit(selectedLead); }} className="w-full mt-6 bg-oms-blue text-white py-3 rounded-xl font-bold hover:bg-oms-blue">Edit Details</button>
           </div>
         </div>
       )}

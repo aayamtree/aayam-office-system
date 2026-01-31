@@ -62,7 +62,7 @@ export default function DispatchPage() {
     switch (status) {
       case 'delivered': return 'bg-green-100 text-green-700';
       case 'in_transit': return 'bg-blue-100 text-blue-700';
-      case 'dispatched': return 'bg-indigo-100 text-indigo-700';
+      case 'dispatched': return 'bg-[rgba(0,0,255,0.1)] text-oms-blue';
       case 'pending': return 'bg-gray-100 text-gray-700';
       default: return 'bg-gray-100 text-gray-700';
     }

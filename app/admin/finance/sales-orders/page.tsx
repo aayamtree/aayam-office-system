@@ -111,7 +111,7 @@ export default function SalesOrdersPage() {
     const getStatusColor = (status: string) => {
         if (status === 'draft') return 'bg-gray-100 text-gray-700';
         if (status === 'confirmed') return 'bg-blue-100 text-blue-700';
-        if (status === 'in_progress') return 'bg-purple-100 text-purple-700';
+        if (status === 'in_progress') return 'bg-[rgba(0,0,255,0.1)] text-oms-blue';
         if (status === 'ready_for_invoice') return 'bg-green-100 text-green-700';
         return 'bg-gray-100 text-gray-500';
     };
@@ -123,7 +123,7 @@ export default function SalesOrdersPage() {
                     <h1 className="text-2xl font-bold text-gray-900">Sales Orders</h1>
                     <p className="text-gray-500">Manage incoming orders and initiate workflows.</p>
                 </div>
-                <button onClick={handleAddNew} className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl hover:bg-indigo-700 transition-colors">
+                <button onClick={handleAddNew} className="flex items-center justify-center gap-2 bg-[rgba(0,0,255,0.1)] text-white px-4 py-2.5 rounded-xl hover:bg-[rgba(0,0,255,0.1)] transition-colors">
                     <Plus size={18} /> New Sales Order
                 </button>
             </div>
@@ -171,8 +171,8 @@ export default function SalesOrdersPage() {
                                     <td className="p-4">
                                         <p className="text-sm text-gray-900 font-medium">{so.project_name}</p>
                                         <div className="flex gap-2 mt-1">
-                                            {so.work_type === 'design_only' && <span className="inline-flex items-center gap-1 text-[10px] bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-100"><Palette size={10} /> Design</span>}
-                                            {so.work_type === 'print_only' && <span className="inline-flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-100"><Printer size={10} /> Print</span>}
+                                            {so.work_type === 'design_only' && <span className="inline-flex items-center gap-1 text-[10px] bg-[rgba(0,0,255,0.1)] text-oms-blue px-1.5 py-0.5 rounded border border-[rgba(0,0,255,0.2)]-100"><Palette size={10} /> Design</span>}
+                                            {so.work_type === 'print_only' && <span className="inline-flex items-center gap-1 text-[10px] bg-[rgba(0,0,255,0.1)] text-oms-blue px-1.5 py-0.5 rounded border border-[rgba(0,0,255,0.2)]-100"><Printer size={10} /> Print</span>}
                                             {so.work_type === 'design_and_print' && <span className="inline-flex items-center gap-1 text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100"><Layers size={10} /> Full</span>}
                                         </div>
                                     </td>
@@ -195,12 +195,12 @@ export default function SalesOrdersPage() {
                                             {(so.status !== 'draft') && (
                                                 <>
                                                     {so.work_type.includes('design') && (
-                                                        <Link href="/admin/designers" className="p-1.5 text-purple-600 hover:bg-purple-50 rounded-lg" title="View Design">
+                                                        <Link href="/admin/designers" className="p-1.5 text-oms-blue hover:bg-[rgba(0,0,255,0.1)] rounded-lg" title="View Design">
                                                             <Palette size={16} />
                                                         </Link>
                                                     )}
                                                     {(so.work_type === 'print_only' || so.status === 'completed') && (
-                                                        <Link href="/admin/jobs" className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg" title="View Job">
+                                                        <Link href="/admin/jobs" className="p-1.5 text-oms-blue hover:bg-[rgba(0,0,255,0.1)] rounded-lg" title="View Job">
                                                             <Printer size={16} />
                                                         </Link>
                                                     )}
@@ -250,7 +250,7 @@ export default function SalesOrdersPage() {
                                         type="button"
                                         onClick={() => setFormData({ ...formData, workType: type.id as any })}
                                         className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${formData.workType === type.id
-                                                ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                                                ? 'border-indigo-600 bg-[rgba(0,0,255,0.1)] text-oms-blue'
                                                 : 'border-gray-200 hover:border-indigo-200 text-gray-600'
                                             }`}
                                     >
@@ -291,7 +291,7 @@ export default function SalesOrdersPage() {
 
                             <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
                                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">Cancel</button>
-                                <button type="submit" disabled={submitting} className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50">
+                                <button type="submit" disabled={submitting} className="px-6 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-xl hover:bg-[rgba(0,0,255,0.1)] transition-colors shadow-sm disabled:opacity-50">
                                     {submitting ? 'Saving...' : 'Create Sales Order'}
                                 </button>
                             </div>

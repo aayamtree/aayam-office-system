@@ -112,7 +112,7 @@ export default function MarketingDashboard() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
           <div className="p-6 border-b border-gray-100 flex justify-between items-center">
             <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <Calendar size={18} className="text-indigo-600" /> Today&apos;s Calls
+              <Calendar size={18} className="text-oms-blue" /> Today&apos;s Calls
             </h2>
             <span className="text-sm text-gray-500">{today}</span>
           </div>
@@ -120,7 +120,7 @@ export default function MarketingDashboard() {
             {todayFollowUps.length === 0 ? (
               <div className="p-10 text-center text-gray-400">
                 <p>No follow-ups scheduled for today.</p>
-                <Link href="/admin/marketing/leads" className="text-indigo-600 text-sm font-medium mt-2 inline-block">
+                <Link href="/admin/marketing/leads" className="text-oms-blue text-sm font-medium mt-2 inline-block">
                   Browse All Leads
                 </Link>
               </div>
@@ -134,7 +134,7 @@ export default function MarketingDashboard() {
                       {lead.notes && <p className="text-xs text-gray-600 mt-1 line-clamp-1 italic">&quot;{lead.notes}&quot;</p>}
                     </div>
                     <div className="flex gap-2">
-                      <a href={`tel:${lead.phone}`} className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors">
+                      <a href={`tel:${lead.phone}`} className="p-2 bg-[rgba(0,0,255,0.1)] text-oms-blue rounded-lg hover:bg-[rgba(0,0,255,0.1)] transition-colors">
                         <Phone size={16} />
                       </a>
                       <Link href="/admin/marketing/leads" className="p-2 border text-gray-500 rounded-lg hover:bg-gray-100 transition-colors">

@@ -89,7 +89,7 @@ export default function FinanceReportPage() {
   };
 
   const getExpenseColor = (index: number) => {
-    const colors = ['bg-red-500', 'bg-amber-500', 'bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-pink-500'];
+    const colors = ['bg-red-500', 'bg-amber-500', 'bg-blue-500', 'bg-[rgba(0,0,255,0.1)]', 'bg-green-500', 'bg-pink-500'];
     return colors[index % colors.length];
   };
 

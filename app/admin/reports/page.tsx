@@ -23,7 +23,7 @@ export default function ReportsPage() {
           <button
             onClick={() => setActiveTab('client')}
             className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'client'
-              ? 'border-indigo-500 text-indigo-600'
+              ? 'border-indigo-500 text-oms-blue'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
           >
@@ -32,7 +32,7 @@ export default function ReportsPage() {
           <button
             onClick={() => setActiveTab('vendor')}
             className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'vendor'
-              ? 'border-indigo-500 text-indigo-600'
+              ? 'border-indigo-500 text-oms-blue'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
           >
@@ -41,7 +41,7 @@ export default function ReportsPage() {
           <button
             onClick={() => setActiveTab('cashflow')}
             className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'cashflow'
-              ? 'border-indigo-500 text-indigo-600'
+              ? 'border-indigo-500 text-oms-blue'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
           >
@@ -110,7 +110,7 @@ function ClientStatementGenerator() {
     <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm animate-scale-in">
       {/* ... Header UI ... */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
+        <div className="w-10 h-10 bg-[rgba(0,0,255,0.1)] rounded-xl flex items-center justify-center text-oms-blue">
           <FileText size={20} />
         </div>
         <div>
@@ -137,7 +137,7 @@ function ClientStatementGenerator() {
           <input type="date" className="w-full px-3 py-2 border rounded-xl" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
         </div>
       </div>
-      <button onClick={generateStatement} className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium w-full md:w-auto">
+      <button onClick={generateStatement} className="px-6 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-xl hover:bg-[rgba(0,0,255,0.1)] font-medium w-full md:w-auto">
         Generate Statement
       </button>
 
@@ -215,7 +215,7 @@ function VendorStatementGenerator() {
           <input type="date" className="w-full px-3 py-2 border rounded-xl" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
         </div>
       </div>
-      <button onClick={() => selectedVendorId && setShowStatement(true)} className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium w-full md:w-auto">
+      <button onClick={() => selectedVendorId && setShowStatement(true)} className="px-6 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-xl hover:bg-[rgba(0,0,255,0.1)] font-medium w-full md:w-auto">
         Generate Statement
       </button>
 
@@ -307,9 +307,9 @@ function CashFlowStatement() {
           <p className="text-sm text-red-600 font-medium">Total Outflow</p>
           <p className="text-2xl font-bold text-red-700">₹{totalOut.toLocaleString()}</p>
         </div>
-        <div className={`p-4 rounded-xl border ${netFlow >= 0 ? 'bg-indigo-50 border-indigo-100' : 'bg-amber-50 border-amber-100'}`}>
-          <p className={`text-sm font-medium ${netFlow >= 0 ? 'text-indigo-600' : 'text-amber-600'}`}>Net Cash Flow</p>
-          <p className={`text-2xl font-bold ${netFlow >= 0 ? 'text-indigo-700' : 'text-amber-700'}`}>
+        <div className={`p-4 rounded-xl border ${netFlow >= 0 ? 'bg-[rgba(0,0,255,0.1)] border-[rgba(0,0,255,0.2)]-100' : 'bg-amber-50 border-amber-100'}`}>
+          <p className={`text-sm font-medium ${netFlow >= 0 ? 'text-oms-blue' : 'text-amber-600'}`}>Net Cash Flow</p>
+          <p className={`text-2xl font-bold ${netFlow >= 0 ? 'text-oms-blue' : 'text-amber-700'}`}>
             {netFlow >= 0 ? '+' : ''}₹{netFlow.toLocaleString()}
           </p>
         </div>
@@ -424,7 +424,7 @@ function StatementModal({ title, entity, period, ledger, onClose, columns, rever
                   <td className={`py-3 text-right font-bold pr-2 ${reverseBalanceColor
                     ? (runningBalance < 0 ? 'text-red-600' : 'text-green-600') // Vendor: Negative is Payable (Red?) Wait. Payable = Bad (Red)? No Payable is standard. 
                     // Let's stick to: Negative balance = Credit Balance (Payable).
-                    : (runningBalance > 0 ? 'text-indigo-700' : 'text-red-700')
+                    : (runningBalance > 0 ? 'text-oms-blue' : 'text-red-700')
                     }`}>
                     {Math.abs(runningBalance).toLocaleString()} {runningBalance < 0 ? 'Cr' : 'Dr'}
                   </td>

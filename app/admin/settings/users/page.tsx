@@ -57,7 +57,7 @@ export default function UserManagementPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Team Management</h1>
+          <h1 className="text-page-title text-gray-900">Team Management</h1>
           <p className="text-gray-500">Assign roles and manage access for your employees.</p>
         </div>
         <div className="text-sm text-gray-500 bg-yellow-50 p-2 rounded border border-yellow-200">
@@ -82,7 +82,7 @@ export default function UserManagementPage() {
               <tr key={profile.id} className="hover:bg-gray-50 transition-colors">
                 <td className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold">
+                    <div className="w-10 h-10 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center text-oms-blue font-bold">
                       {profile.full_name?.charAt(0).toUpperCase() || '?'}
                     </div>
                     <div>
@@ -96,7 +96,7 @@ export default function UserManagementPage() {
                     value={profile.role}
                     disabled={updating === profile.id}
                     onChange={(e) => handleRoleChange(profile.id, e.target.value)}
-                    className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5"
+                    className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-oms-blue focus:border-indigo-500 block w-full p-2.5"
                   >
                     {roles.map(r => (
                       <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>

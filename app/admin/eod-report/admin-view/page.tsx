@@ -128,7 +128,7 @@ export default function AdminEODDashboard() {
 
                 <div className="bg-white rounded-xl p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-2">
-                        <Clock size={18} className="text-purple-600" />
+                        <Clock size={18} className="text-oms-blue" />
                         <span className="text-sm text-gray-500">Avg Work Hours</span>
                     </div>
                     <p className="text-2xl font-bold text-gray-900">{avgWorkHours}</p>
@@ -220,7 +220,7 @@ export default function AdminEODDashboard() {
 
                 {loading ? (
                     <div className="p-12 text-center">
-                        <Loader2 className="animate-spin text-indigo-600 mx-auto" size={32} />
+                        <Loader2 className="animate-spin text-oms-blue mx-auto" size={32} />
                         <p className="mt-3 text-gray-500">Loading reports...</p>
                     </div>
                 ) : reports.length === 0 ? (
@@ -322,7 +322,7 @@ export default function AdminEODDashboard() {
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <span className="text-xs font-medium text-gray-500">Tags:</span>
                                                 {report.tags.map((tag: string) => (
-                                                    <span key={tag} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full">
+                                                    <span key={tag} className="px-2 py-0.5 bg-[rgba(0,0,255,0.1)] text-oms-blue text-xs rounded-full">
                                                         {tag}
                                                     </span>
                                                 ))}

@@ -29,14 +29,14 @@ export default function SalesPage() {
   const stats = [
     { label: 'Total Jobs', value: dashboardStats.activeJobs.toString(), change: 'Active Now', icon: ShoppingCart, color: 'bg-blue-500' },
     { label: 'Active Leads', value: activeLeadsCount.toString(), change: `${leads.length} total`, icon: Users, color: 'bg-amber-500' },
-    { label: 'Pending Quotes', value: pendingQuotesCount.toString(), change: `${quotations.length} total`, icon: FileText, color: 'bg-purple-500' },
+    { label: 'Pending Quotes', value: pendingQuotesCount.toString(), change: `${quotations.length} total`, icon: FileText, color: 'bg-[rgba(0,0,255,0.05)]0' },
     { label: 'Total Revenue', value: formatCurrency(dashboardStats.totalRevenue), change: 'Lifetime', icon: IndianRupee, color: 'bg-green-500' },
   ];
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'new': 'bg-blue-100 text-blue-700',
-      'designing': 'bg-indigo-100 text-indigo-700',
+      'designing': 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
       'production': 'bg-amber-100 text-amber-700',
       'printing': 'bg-amber-100 text-amber-700',
       'finishing': 'bg-orange-100 text-orange-700',
@@ -55,7 +55,7 @@ export default function SalesPage() {
   const pipeline = [
     { stage: 'Design', count: (pipelineStats.designing || 0) + (pipelineStats.approval || 0), color: 'bg-amber-500' },
     { stage: 'Production', count: (pipelineStats.printing || 0) + (pipelineStats.finishing || 0), color: 'bg-blue-500' },
-    { stage: 'QC', count: pipelineStats.quality_check || 0, color: 'bg-purple-500' },
+    { stage: 'QC', count: pipelineStats.quality_check || 0, color: 'bg-[rgba(0,0,255,0.05)]0' },
     { stage: 'Ready', count: (pipelineStats.ready || 0) + (pipelineStats.packed || 0), color: 'bg-green-500' },
     { stage: 'Dispatched', count: (pipelineStats.dispatched || 0) + (pipelineStats.in_transit || 0), color: 'bg-gray-500' },
   ].map(p => ({
@@ -120,8 +120,8 @@ export default function SalesPage() {
 
         <Link href="/admin/sales/quotations" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <FileText size={28} className="text-purple-600" />
+            <div className="w-14 h-14 bg-[rgba(0,0,255,0.1)] rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <FileText size={28} className="text-oms-blue" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900">Quotations</h2>
@@ -154,7 +154,7 @@ export default function SalesPage() {
         {/* Order Pipeline */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-1 h-6 bg-indigo-500 rounded-full"></div>
+            <div className="w-1 h-6 bg-[rgba(0,0,255,0.05)]0 rounded-full"></div>
             <h2 className="text-lg font-bold text-gray-900">Order Pipeline</h2>
           </div>
           <div className="space-y-5">
@@ -179,7 +179,7 @@ export default function SalesPage() {
               <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
               <h2 className="text-lg font-bold text-gray-900">Recent Orders</h2>
             </div>
-            <Link href="/admin/sales/orders" className="text-sm font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors">
+            <Link href="/admin/sales/orders" className="text-sm font-medium text-oms-blue hover:text-oms-blue bg-[rgba(0,0,255,0.05)] px-3 py-1.5 rounded-lg transition-colors">
               View All
             </Link>
           </div>
@@ -223,13 +223,13 @@ export default function SalesPage() {
               <p className="text-sm font-medium text-amber-700 mt-0.5">{followUpsDue} due today</p>
             </div>
           </Link>
-          <Link href="/admin/sales/quotations" className="flex items-center gap-4 p-4 bg-purple-50/80 rounded-2xl border border-purple-100 transition-colors hover:bg-purple-100 cursor-pointer">
+          <Link href="/admin/sales/quotations" className="flex items-center gap-4 p-4 bg-[rgba(0,0,255,0.05)]/80 rounded-2xl border border-[rgba(0,0,255,0.1)] transition-colors hover:bg-[rgba(0,0,255,0.1)] cursor-pointer">
             <div className="bg-white p-3 rounded-xl shadow-sm">
-              <AlertCircle size={24} className="text-purple-600" />
+              <AlertCircle size={24} className="text-oms-blue" />
             </div>
             <div>
               <p className="font-bold text-gray-900">Quotations</p>
-              <p className="text-sm font-medium text-purple-700 mt-0.5">{pendingQuotesCount} pending review</p>
+              <p className="text-sm font-medium text-oms-blue mt-0.5">{pendingQuotesCount} pending review</p>
             </div>
           </Link>
           <Link href="/admin/dispatch" className="flex items-center gap-4 p-4 bg-green-50/80 rounded-2xl border border-green-100 transition-colors hover:bg-green-100 cursor-pointer">

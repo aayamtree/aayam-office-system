@@ -89,7 +89,7 @@ export default function ProductionQueuePage() {
         }
         switch (job.current_stage) {
             case 'designing':
-                return <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-bold">Designing</span>;
+                return <span className="px-3 py-1 bg-[rgba(0,0,255,0.1)] text-oms-blue text-xs rounded-full font-bold">Designing</span>;
             case 'printing':
             case 'finishing':
                 return <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-bold">In Production</span>;
@@ -106,7 +106,7 @@ export default function ProductionQueuePage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                                <TrendingUp className="text-indigo-600" size={32} />
+                                <TrendingUp className="text-oms-blue" size={32} />
                                 Production Queue
                             </h1>
                             <p className="text-gray-500 mt-1">Live overview of all active jobs • Updates every 30s</p>
@@ -125,15 +125,15 @@ export default function ProductionQueuePage() {
                     {/* Design Stage */}
                     <button
                         onClick={() => setFilter(filter === 'design_stage' ? null : 'design_stage')}
-                        className={`bg-white rounded-2xl p-6 border-2 transition-all hover:shadow-lg text-left ${filter === 'design_stage' ? 'border-purple-400 shadow-lg ring-4 ring-purple-100' : 'border-gray-100 hover:border-purple-200'
+                        className={`bg-white rounded-2xl p-6 border-2 transition-all hover:shadow-lg text-left ${filter === 'design_stage' ? 'border-purple-400 shadow-lg ring-4 ring-oms-blue' : 'border-gray-100 hover:border-[rgba(0,0,255,0.2)]'
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-purple-50 rounded-lg">
-                                <Palette className="text-purple-600" size={20} />
+                            <div className="p-2 bg-[rgba(0,0,255,0.05)] rounded-lg">
+                                <Palette className="text-oms-blue" size={20} />
                             </div>
                         </div>
-                        <p className="text-3xl font-bold text-purple-600">{summary.design_stage}</p>
+                        <p className="text-3xl font-bold text-oms-blue">{summary.design_stage}</p>
                         <p className="text-sm text-gray-600 font-medium mt-1">Design Stage</p>
                     </button>
 
@@ -208,12 +208,12 @@ export default function ProductionQueuePage() {
                     {/* Total Active */}
                     <button
                         onClick={() => setFilter(null)}
-                        className={`bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border-2 transition-all hover:shadow-lg text-left ${!filter ? 'border-indigo-400 shadow-lg ring-4 ring-indigo-100' : 'border-indigo-100 hover:border-indigo-200'
+                        className={`bg-oms-blue rounded-2xl p-6 border-2 transition-all hover:shadow-lg text-left ${!filter ? 'border-indigo-400 shadow-lg ring-4 ring-oms-blue' : 'border-[rgba(0,0,255,0.1)] hover:border-[rgba(0,0,255,0.2)]'
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
                             <div className="p-2 bg-white rounded-lg">
-                                <TrendingUp className="text-indigo-600" size={20} />
+                                <TrendingUp className="text-oms-blue" size={20} />
                             </div>
                         </div>
                         <p className="text-3xl font-bold text-indigo-900">{summary.total_active}</p>
@@ -289,7 +289,7 @@ export default function ProductionQueuePage() {
                                                 <td className="px-6 py-4">
                                                     <Link
                                                         href={`/admin/jobs/${job.id}`}
-                                                        className="font-mono text-sm text-indigo-600 hover:text-indigo-800 font-bold"
+                                                        className="font-mono text-sm text-oms-blue hover:text-oms-blue font-bold"
                                                     >
                                                         {job.job_number}
                                                     </Link>

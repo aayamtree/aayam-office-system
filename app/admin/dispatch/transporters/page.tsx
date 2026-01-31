@@ -142,7 +142,7 @@ export default function TransportersPage() {
 
   const uniqueStates = Array.from(new Set(transporters.map(t => t.state || 'Unknown'))).sort();
 
-  if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-indigo-600" /></div>;
+  if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-oms-blue" /></div>;
 
   return (
     <div className="space-y-4 lg:space-y-6 animate-fade-in">
@@ -153,7 +153,7 @@ export default function TransportersPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Transporters</h1>
+            <h1 className="text-xl lg:text-page-title text-gray-900">Transporters</h1>
             <p className="text-sm text-gray-500">{transporters.length} transporters registered</p>
           </div>
         </div>
@@ -195,9 +195,9 @@ export default function TransportersPage() {
         {Object.entries(groupedByState).sort((a, b) => a[0].localeCompare(b[0])).map(([state, stateTransporters]) => (
           <div key={state}>
             <div className="flex items-center gap-2 mb-3">
-              <MapPin size={16} className="text-indigo-600" />
-              <h2 className="text-lg font-semibold text-gray-900">{state}</h2>
-              <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full">
+              <MapPin size={16} className="text-oms-blue" />
+              <h2 className="text-section text-gray-900">{state}</h2>
+              <span className="px-2 py-0.5 bg-[rgba(0,0,255,0.1)] text-oms-blue text-xs rounded-full">
                 {stateTransporters.length}
               </span>
             </div>
@@ -207,8 +207,8 @@ export default function TransportersPage() {
                 <div key={t.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                        <Truck size={18} className="text-indigo-600" />
+                      <div className="w-10 h-10 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center">
+                        <Truck size={18} className="text-oms-blue" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900">{t.company || t.name}</h3>
@@ -223,7 +223,7 @@ export default function TransportersPage() {
                   <div className="space-y-1 text-sm mb-3">
                     <div className="flex items-center gap-2 text-gray-600">
                       <Phone size={14} />
-                      <a href={`tel:${t.phone}`} className="text-indigo-600">{t.phone}</a>
+                      <a href={`tel:${t.phone}`} className="text-oms-blue">{t.phone}</a>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
                       <MapPin size={14} />
@@ -260,7 +260,7 @@ export default function TransportersPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-section text-gray-900">
                 {isEditing ? 'Edit Transporter' : 'Add Transporter'}
               </h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
@@ -370,7 +370,7 @@ export default function TransportersPage() {
                   id="is_active"
                   checked={formData.is_active}
                   onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  className="w-5 h-5 rounded border-gray-300 text-oms-blue focus:ring-oms-blue"
                 />
                 <label htmlFor="is_active" className="text-sm text-gray-700">Active Transporter</label>
               </div>
@@ -393,16 +393,16 @@ export default function TransportersPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Transporter Details</h2>
+              <h2 className="text-section text-gray-900">Transporter Details</h2>
               <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
                 <X size={20} />
               </button>
             </div>
 
             <div className="p-4 space-y-4">
-              <div className="flex items-center gap-4 p-4 bg-indigo-50 rounded-xl">
-                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                  <Truck size={24} className="text-indigo-600" />
+              <div className="flex items-center gap-4 p-4 bg-[rgba(0,0,255,0.05)] rounded-xl">
+                <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center">
+                  <Truck size={24} className="text-oms-blue" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">{selectedTransporter.company || selectedTransporter.name}</h3>
@@ -417,7 +417,7 @@ export default function TransportersPage() {
                 </div>
                 <div className="flex justify-between p-3 bg-gray-50 rounded-xl">
                   <span className="text-gray-500">Phone</span>
-                  <a href={`tel:${selectedTransporter.phone}`} className="font-medium text-indigo-600">{selectedTransporter.phone}</a>
+                  <a href={`tel:${selectedTransporter.phone}`} className="font-medium text-oms-blue">{selectedTransporter.phone}</a>
                 </div>
                 {selectedTransporter.email && (
                   <div className="flex justify-between p-3 bg-gray-50 rounded-xl">

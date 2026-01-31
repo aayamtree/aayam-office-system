@@ -175,7 +175,7 @@ export default function VendorPurchasesPage() {
           </div>
         </div>
         <button onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 font-medium">
+          className="flex items-center gap-2 bg-[rgba(0,0,255,0.1)] text-white px-4 py-2.5 rounded-lg hover:bg-[rgba(0,0,255,0.1)] font-medium">
           <Plus size={18} />
           <span>Add Purchase</span>
         </button>
@@ -197,7 +197,7 @@ export default function VendorPurchasesPage() {
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Job-linked COGS</p>
-          <p className="text-lg sm:text-xl font-bold text-purple-600">{formatCurrency(totalCOGS)}</p>
+          <p className="text-lg sm:text-xl font-bold text-oms-blue">{formatCurrency(totalCOGS)}</p>
         </div>
       </div>
 
@@ -232,11 +232,11 @@ export default function VendorPurchasesPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <span className="font-mono text-sm text-indigo-600 font-medium">{purchase.bill_number}</span>
+                  <span className="font-mono text-sm text-oms-blue font-medium">{purchase.bill_number}</span>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusBadge(purchase.payment_status)}`}>
                     {purchase.payment_status}
                   </span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">{purchase.product_type}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-[rgba(0,0,255,0.1)] text-oms-blue">{purchase.product_type}</span>
                 </div>
                 <h3 className="font-semibold text-gray-900">{purchase.description}</h3>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mt-1">
@@ -366,7 +366,7 @@ export default function VendorPurchasesPage() {
                         setFormData({ ...formData, attachmentUrl: file.name });
                       }
                     }}
-                    className="w-full px-3 py-2 border rounded-lg text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                    className="w-full px-3 py-2 border rounded-lg text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[rgba(0,0,255,0.1)] file:text-oms-blue hover:file:bg-[rgba(0,0,255,0.1)]"
                   />
                   {formData.attachmentUrl && (
                     <p className="text-xs text-green-600 mt-1">✓ {formData.attachmentUrl}</p>
@@ -376,7 +376,7 @@ export default function VendorPurchasesPage() {
               </div>
 
               {/* Calculation Preview */}
-              <div className="bg-indigo-50 rounded-xl p-4 space-y-2">
+              <div className="bg-[rgba(0,0,255,0.1)] rounded-xl p-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal ({formData.quantity} × ₹{formData.rate})</span>
                   <span className="font-medium">{formatCurrency(totals.amount)}</span>
@@ -385,15 +385,15 @@ export default function VendorPurchasesPage() {
                   <span>GST ({formData.gstRate}%)</span>
                   <span className="font-medium">{formatCurrency(totals.gstAmount)}</span>
                 </div>
-                <div className="flex justify-between font-semibold pt-2 border-t border-indigo-200">
+                <div className="flex justify-between font-semibold pt-2 border-t border-[rgba(0,0,255,0.2)]-200">
                   <span>Total Amount</span>
-                  <span className="text-indigo-700">{formatCurrency(totals.totalAmount)}</span>
+                  <span className="text-oms-blue">{formatCurrency(totals.totalAmount)}</span>
                 </div>
               </div>
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-lg font-medium">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50">
+                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-[rgba(0,0,255,0.1)] text-white rounded-lg font-medium hover:bg-[rgba(0,0,255,0.1)] disabled:opacity-50">
                   {submitting ? 'Saving...' : (editingPurchase ? 'Update' : 'Add')} Purchase
                 </button>
               </div>
@@ -408,7 +408,7 @@ export default function VendorPurchasesPage() {
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
               <div>
-                <span className="font-mono text-indigo-600">{selectedPurchase.bill_number}</span>
+                <span className="font-mono text-oms-blue">{selectedPurchase.bill_number}</span>
                 <h2 className="text-xl font-bold">{selectedPurchase.description}</h2>
               </div>
               <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>

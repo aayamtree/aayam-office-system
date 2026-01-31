@@ -38,7 +38,7 @@ export default function JobQueuePage() {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'new': 'bg-gray-100 text-gray-700 border-gray-200',
-      'designing': 'bg-purple-100 text-purple-700 border-purple-200',
+      'designing': 'bg-[rgba(0,0,255,0.1)] text-oms-blue border-[rgba(0,0,255,0.2)]-200',
       'approval': 'bg-yellow-100 text-yellow-700 border-yellow-200',
       'printing': 'bg-blue-100 text-blue-700 border-blue-200',
       'finishing': 'bg-cyan-100 text-cyan-700 border-cyan-200',
@@ -96,7 +96,7 @@ export default function JobQueuePage() {
   };
 
   if (loading) {
-    return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-indigo-600" /></div>;
+    return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-oms-blue" /></div>;
   }
 
   return (
@@ -114,13 +114,13 @@ export default function JobQueuePage() {
 
       {/* Stats Cards - Updated Layout */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
-        <div className="bg-purple-50 border border-purple-200 rounded-lg md:rounded-xl p-2 md:p-3">
+        <div className="bg-[rgba(0,0,255,0.1)] border border-[rgba(0,0,255,0.2)]-200 rounded-lg md:rounded-xl p-2 md:p-3">
           <div className="flex items-center gap-1 md:gap-2 mb-1">
-            <Clock size={14} className="text-purple-600 md:hidden" />
-            <Clock size={16} className="text-purple-600 hidden md:block" />
-            <span className="text-[10px] md:text-xs text-purple-600 font-medium">Design Stage</span>
+            <Clock size={14} className="text-oms-blue md:hidden" />
+            <Clock size={16} className="text-oms-blue hidden md:block" />
+            <span className="text-[10px] md:text-xs text-oms-blue font-medium">Design Stage</span>
           </div>
-          <p className="text-xl md:text-2xl font-bold text-purple-700">{designCount}</p>
+          <p className="text-xl md:text-2xl font-bold text-oms-blue">{designCount}</p>
         </div>
         <div className="bg-blue-50 border border-blue-200 rounded-lg md:rounded-xl p-2 md:p-3">
           <div className="flex items-center gap-1 md:gap-2 mb-1">
@@ -194,7 +194,7 @@ export default function JobQueuePage() {
                 <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                   <span>Qty: {job.quantity}</span>
                   <span>Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : 'N/A'}</span>
-                  {job.designer?.name && <span className="text-indigo-600">🎨 {job.designer.name}</span>}
+                  {job.designer?.name && <span className="text-oms-blue">🎨 {job.designer.name}</span>}
                 </div>
               </div>
 
@@ -203,7 +203,7 @@ export default function JobQueuePage() {
                 {job.current_stage !== 'delivered' && job.current_stage !== 'cancelled' && (
                   <button
                     onClick={() => handleMoveToNext(job)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium ${job.current_stage === 'dispatched' ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium ${job.current_stage === 'dispatched' ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-[rgba(0,0,255,0.1)] text-white hover:bg-[rgba(0,0,255,0.1)]'}`}
                   >
                     {job.current_stage === 'new' && <Play size={14} />}
                     {job.current_stage !== 'new' && job.current_stage !== 'dispatched' && <ArrowRight size={14} />}
@@ -240,7 +240,7 @@ export default function JobQueuePage() {
                 <div className="flex justify-between p-3 bg-gray-50 rounded-xl"><span className="text-gray-500">Client</span><span className="font-medium text-gray-900">{selectedJob.client?.name}</span></div>
                 <div className="p-3 bg-gray-50 rounded-xl"><span className="text-gray-500 text-sm">Description</span><p className="font-medium text-gray-900 mt-1">{selectedJob.project_name}</p></div>
                 <div className="flex justify-between p-3 bg-gray-50 rounded-xl"><span className="text-gray-500">Quantity</span><span className="font-medium text-gray-900">{selectedJob.quantity}</span></div>
-                {selectedJob.designer?.name && <div className="flex justify-between p-3 bg-gray-50 rounded-xl"><span className="text-gray-500">Designer</span><span className="font-medium text-indigo-600">{selectedJob.designer.name}</span></div>}
+                {selectedJob.designer?.name && <div className="flex justify-between p-3 bg-gray-50 rounded-xl"><span className="text-gray-500">Designer</span><span className="font-medium text-oms-blue">{selectedJob.designer.name}</span></div>}
               </div>
 
               {/* Status Progress - Interactive */}
@@ -259,7 +259,7 @@ export default function JobQueuePage() {
                         onClick={() => handleStageSelect(status)}
                         title={`Move to ${status}`}
                       >
-                        <div className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap capitalize transition-all transform group-hover:scale-105 ${isCurrent ? 'bg-indigo-600 text-white shadow-md ring-2 ring-indigo-200' :
+                        <div className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap capitalize transition-all transform group-hover:scale-105 ${isCurrent ? 'bg-[rgba(0,0,255,0.1)] text-white shadow-md ring-2 ring-indigo-200' :
                           isCompleted ? 'bg-green-100 text-green-700 hover:bg-green-200' :
                             'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
                           }`}>

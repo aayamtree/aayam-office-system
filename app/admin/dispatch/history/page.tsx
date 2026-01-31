@@ -37,8 +37,8 @@ export default function DispatchHistoryPage() {
     const colors: Record<string, string> = {
       'pending': 'bg-gray-100 text-gray-700 border-gray-200',
       'packed': 'bg-amber-100 text-amber-700 border-amber-200',
-      'dispatched': 'bg-purple-100 text-purple-700 border-purple-200',
-      'in_transit': 'bg-indigo-100 text-indigo-700 border-indigo-200',
+      'dispatched': 'bg-[rgba(0,0,255,0.1)] text-oms-blue border-[rgba(0,0,255,0.2)]',
+      'in_transit': 'bg-[rgba(0,0,255,0.1)] text-oms-blue border-[rgba(0,0,255,0.2)]',
       'delivered': 'bg-green-100 text-green-700 border-green-200',
       'returned': 'bg-red-100 text-red-700 border-red-200',
     };
@@ -79,14 +79,14 @@ export default function DispatchHistoryPage() {
   const inTransitCount = dispatches.filter(d => ['dispatched', 'in_transit'].includes(d.status)).length;
   const deliveredCount = dispatches.filter(d => d.status === 'delivered').length;
 
-  if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-indigo-600" /></div>;
+  if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-oms-blue" /></div>;
 
   return (
     <div className="space-y-4 lg:space-y-6 animate-fade-in">
       <div className="flex items-center gap-3">
         <Link href="/admin/dispatch" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden"><ArrowLeft size={20} /></Link>
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Dispatch History</h1>
+          <h1 className="text-xl lg:text-page-title text-gray-900">Dispatch History</h1>
           <p className="text-sm text-gray-500">{filteredDispatches.length} records</p>
         </div>
       </div>
@@ -109,9 +109,9 @@ export default function DispatchHistoryPage() {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue" />
         </div>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue">
           <option value="all">All Status</option>
           <option value="dispatched">Dispatched</option>
           <option value="in_transit">In Transit</option>
@@ -135,7 +135,7 @@ export default function DispatchHistoryPage() {
                   <p className="text-sm text-gray-600">{dispatch.client?.company || dispatch.client?.name}</p>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  {dispatch.packages > 0 && <span className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg">📦 {dispatch.packages} Pkgs</span>}
+                  {dispatch.packages > 0 && <span className="px-2 py-1 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-lg">📦 {dispatch.packages} Pkgs</span>}
                 </div>
               </div>
 
@@ -174,7 +174,7 @@ export default function DispatchHistoryPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Dispatch Details</h2>
+              <h2 className="text-section text-gray-900">Dispatch Details</h2>
               <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <div className="p-4 space-y-4">
@@ -190,8 +190,8 @@ export default function DispatchHistoryPage() {
               </div>
 
               {selectedDispatch.transporter_name && (
-                <div className="p-3 bg-indigo-50 rounded-xl">
-                  <p className="text-sm text-indigo-600">Transporter</p>
+                <div className="p-3 bg-[rgba(0,0,255,0.05)] rounded-xl">
+                  <p className="text-sm text-oms-blue">Transporter</p>
                   <p className="font-medium text-indigo-900">{selectedDispatch.transporter_name}</p>
                 </div>
               )}
@@ -210,7 +210,7 @@ export default function DispatchHistoryPage() {
               {(selectedDispatch.vehicle_number || selectedDispatch.driver_name) && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 bg-gray-50 rounded-xl"><p className="text-xs text-gray-500">Vehicle</p><p className="font-medium">{selectedDispatch.vehicle_number || '-'}</p></div>
-                  <div className="p-3 bg-gray-50 rounded-xl"><p className="text-xs text-gray-500">Driver</p><p className="font-medium">{selectedDispatch.driver_name || '-'}</p><a href={`tel:${selectedDispatch.driver_phone}`} className="text-xs text-indigo-600">{selectedDispatch.driver_phone}</a></div>
+                  <div className="p-3 bg-gray-50 rounded-xl"><p className="text-xs text-gray-500">Driver</p><p className="font-medium">{selectedDispatch.driver_name || '-'}</p><a href={`tel:${selectedDispatch.driver_phone}`} className="text-xs text-oms-blue">{selectedDispatch.driver_phone}</a></div>
                 </div>
               )}
 

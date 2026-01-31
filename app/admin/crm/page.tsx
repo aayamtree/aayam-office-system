@@ -79,7 +79,7 @@ export default function CRMPage() {
             { action: 'Order placed by', name: 'Global Traders', time: '1 day ago', type: 'client' },
           ].map((item, index) => (
             <div key={index} className="flex items-center gap-4 p-4 bg-gray-50/80 rounded-xl hover:bg-gray-100 transition-colors border border-gray-100">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${item.type === 'client' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${item.type === 'client' ? 'bg-blue-100 text-blue-600' : 'bg-[rgba(0,0,255,0.1)] text-oms-blue'
                 }`}>
                 {item.type === 'client' ? (
                   <Users size={20} />

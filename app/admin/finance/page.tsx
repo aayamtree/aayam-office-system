@@ -54,13 +54,13 @@ export default function FinancePage() {
       {/* Quick Actions - Finance Tools */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Link href="/admin/finance/opening-balance"
-          className="flex items-center gap-4 bg-indigo-50 border border-indigo-100 rounded-2xl p-5 hover:bg-indigo-100 transition-colors group">
-          <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
-            <IndianRupee className="text-indigo-600" size={24} />
+          className="flex items-center gap-4 bg-[rgba(0,0,255,0.1)] border border-[rgba(0,0,255,0.2)]-100 rounded-2xl p-5 hover:bg-[rgba(0,0,255,0.1)] transition-colors group">
+          <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+            <IndianRupee className="text-oms-blue" size={24} />
           </div>
           <div>
             <p className="font-bold text-indigo-900 text-lg">Opening Balance</p>
-            <p className="text-sm font-medium text-indigo-600/80">FY opening entries</p>
+            <p className="text-sm font-medium text-oms-blue/80">FY opening entries</p>
           </div>
         </Link>
         <Link href="/admin/finance/banks"
@@ -94,13 +94,13 @@ export default function FinancePage() {
           </div>
         </Link>
         <Link href="/admin/finance/reports/cashbook"
-          className="flex items-center gap-4 bg-purple-50 border border-purple-100 rounded-2xl p-5 hover:bg-purple-100 transition-colors group">
-          <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
-            <FileText className="text-purple-600" size={24} />
+          className="flex items-center gap-4 bg-[rgba(0,0,255,0.1)] border border-[rgba(0,0,255,0.2)]-100 rounded-2xl p-5 hover:bg-[rgba(0,0,255,0.1)] transition-colors group">
+          <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+            <FileText className="text-oms-blue" size={24} />
           </div>
           <div>
             <p className="font-bold text-purple-900 text-lg">Cash Book</p>
-            <p className="text-sm font-medium text-purple-600/80">Cash report</p>
+            <p className="text-sm font-medium text-oms-blue/80">Cash report</p>
           </div>
         </Link>
       </div>
@@ -144,8 +144,8 @@ export default function FinancePage() {
 
         <Link href="/admin/finance/vendors" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <CreditCard size={28} className="text-purple-600" />
+            <div className="w-14 h-14 bg-[rgba(0,0,255,0.1)] rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <CreditCard size={28} className="text-oms-blue" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900">Purchases</h2>
@@ -153,7 +153,7 @@ export default function FinancePage() {
             </div>
           </div>
           <div className="flex items-center gap-3 text-xs font-medium">
-            <span className="text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full">34 Vendors</span>
+            <span className="text-oms-blue bg-[rgba(0,0,255,0.1)] px-2.5 py-1 rounded-full">34 Vendors</span>
             <span className="text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">Manage Bills</span>
           </div>
         </Link>
@@ -181,10 +181,10 @@ export default function FinancePage() {
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-1 h-6 bg-indigo-500 rounded-full"></div>
+              <div className="w-1 h-6 bg-[rgba(0,0,255,0.1)] rounded-full"></div>
               <h2 className="text-lg font-bold text-gray-900">Recent Transactions</h2>
             </div>
-            <Link href="/admin/finance/payments" className="text-sm font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors">
+            <Link href="/admin/finance/payments" className="text-sm font-medium text-oms-blue hover:text-oms-blue bg-[rgba(0,0,255,0.1)] px-3 py-1.5 rounded-lg transition-colors">
               View All
             </Link>
           </div>

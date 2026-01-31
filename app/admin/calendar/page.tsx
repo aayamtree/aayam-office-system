@@ -37,7 +37,7 @@ export default function CalendarPage() {
                     <GoogleConnectionStatus />
                     <button
                         onClick={() => setShowBriefing(true)}
-                        className="px-4 py-2 bg-oms-blue text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                        className="px-4 py-2 bg-oms-blue text-white rounded-lg hover:bg-oms-blue transition-colors"
                     >
                         📋 Daily Briefing
                     </button>
@@ -47,10 +47,10 @@ export default function CalendarPage() {
             {/* Week Planner */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-gray-900">This Week</h2>
+                    <h2 className="text-section text-gray-900">This Week</h2>
                     <button
                         onClick={() => setShowNewEvent(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-oms-blue text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-oms-blue text-white rounded-lg hover:bg-oms-blue transition-colors"
                     >
                         <Plus className="w-4 h-4" />
                         New Event
@@ -68,7 +68,7 @@ export default function CalendarPage() {
                         return (
                             <div
                                 key={dayOffset}
-                                className={`border rounded-lg p-3 ${isToday ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'
+                                className={`border rounded-lg p-3 ${isToday ? 'border-indigo-500 bg-[rgba(0,0,255,0.05)]' : 'border-gray-200'
                                     }`}
                             >
                                 <div className="text-center mb-2">
@@ -99,7 +99,7 @@ export default function CalendarPage() {
 
             {/* All Events List */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">All Events</h2>
+                <h2 className="text-section text-gray-900 mb-4">All Events</h2>
                 {loading ? (
                     <div className="text-center py-8 text-gray-500">Loading...</div>
                 ) : events.length === 0 ? (
@@ -250,7 +250,7 @@ function NewEventModal({ profile, onClose, onCreate }: {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-gray-900">New Event</h2>
+                    <h2 className="text-section text-gray-900">New Event</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
                         <X className="w-5 h-5" />
                     </button>
@@ -265,7 +265,7 @@ function NewEventModal({ profile, onClose, onCreate }: {
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oms-blue"
                             required
                         />
                     </div>
@@ -280,7 +280,7 @@ function NewEventModal({ profile, onClose, onCreate }: {
                                 setDescription(val);
                                 setTaggedUsers(users);
                             }}
-                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oms-blue"
                         />
                     </div>
 
@@ -293,7 +293,7 @@ function NewEventModal({ profile, onClose, onCreate }: {
                                 type="date"
                                 value={date}
                                 onChange={(e) => setDate(e.target.value)}
-                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oms-blue"
                                 required
                             />
                         </div>
@@ -305,7 +305,7 @@ function NewEventModal({ profile, onClose, onCreate }: {
                             <select
                                 value={priority}
                                 onChange={(e) => setPriority(e.target.value as any)}
-                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oms-blue"
                             >
                                 <option value="low">Low</option>
                                 <option value="normal">Normal</option>
@@ -331,7 +331,7 @@ function NewEventModal({ profile, onClose, onCreate }: {
                                 type="time"
                                 value={time}
                                 onChange={(e) => setTime(e.target.value)}
-                                className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oms-blue"
                             />
                         )}
                     </div>
@@ -346,7 +346,7 @@ function NewEventModal({ profile, onClose, onCreate }: {
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 px-4 py-2 bg-oms-blue text-white rounded-lg hover:bg-indigo-700"
+                            className="flex-1 px-4 py-2 bg-oms-blue text-white rounded-lg hover:bg-oms-blue"
                         >
                             Create Event
                         </button>

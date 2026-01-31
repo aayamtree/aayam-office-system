@@ -180,10 +180,10 @@ export default function NewProjectPage() {
             {/* Form Content */}
             <div className="max-w-5xl mx-auto p-6">
                 {/* Calendar Integration Notice */}
-                <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-xl">
+                <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-[rgba(0,0,255,0.2)] rounded-xl">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <Calendar className="text-indigo-600" size={24} />
+                            <Calendar className="text-oms-blue" size={24} />
                             <div>
                                 <h3 className="font-semibold text-gray-900">Google Calendar Integration</h3>
                                 <p className="text-sm text-gray-600 mt-1">
@@ -201,7 +201,7 @@ export default function NewProjectPage() {
                             <button
                                 type="button"
                                 onClick={() => signIn('google')}
-                                className="px-4 py-2 bg-white border-2 border-indigo-300 rounded-lg hover:bg-indigo-50 transition-colors font-semibold text-indigo-700 flex items-center gap-2 text-sm"
+                                className="px-4 py-2 bg-white border-2 border-indigo-300 rounded-lg hover:bg-[rgba(0,0,255,0.05)] transition-colors font-semibold text-oms-blue flex items-center gap-2 text-sm"
                             >
                                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -228,7 +228,7 @@ export default function NewProjectPage() {
                     {/* 1. Project Basics */}
                     <div className="space-y-5 bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
                         <div className="flex items-center gap-3 pb-4 border-b-2 border-gradient-to-r from-indigo-500 to-purple-500">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-lg font-bold shadow-lg shadow-indigo-200">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-oms-blue text-white text-lg font-bold shadow-lg shadow-indigo-200">
                                 1
                             </div>
                             <h4 className="text-base font-bold text-gray-800 uppercase tracking-wide">Project Basics</h4>
@@ -242,7 +242,7 @@ export default function NewProjectPage() {
                                 <input
                                     required
                                     type="text"
-                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium hover:border-gray-300"
+                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-oms-blue/20 focus:border-indigo-500 transition-all font-medium hover:border-gray-300"
                                     placeholder="e.g. Wedding Invitation - Sharma Family"
                                     value={formData.title}
                                     onChange={e => setFormData({ ...formData, title: e.target.value })}
@@ -255,7 +255,7 @@ export default function NewProjectPage() {
                                 </label>
                                 <select
                                     required
-                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white hover:border-gray-300"
+                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-oms-blue/20 focus:border-indigo-500 transition-all bg-white hover:border-gray-300"
                                     value={formData.clientId}
                                     onChange={e => setFormData({ ...formData, clientId: e.target.value })}
                                 >
@@ -269,7 +269,7 @@ export default function NewProjectPage() {
                                     🎨 Assign Designer
                                 </label>
                                 <select
-                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white hover:border-gray-300"
+                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-oms-blue/20 focus:border-indigo-500 transition-all bg-white hover:border-gray-300"
                                     value={formData.designerId}
                                     onChange={e => setFormData({ ...formData, designerId: e.target.value })}
                                 >

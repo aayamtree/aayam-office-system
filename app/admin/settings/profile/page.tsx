@@ -61,7 +61,7 @@ export default function ProfileSettingsPage() {
                     <ArrowLeft size={20} />
                 </Link>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
+                    <h1 className="text-page-title text-gray-900">Profile Settings</h1>
                     <p className="text-gray-500 text-sm">Manage your personal information</p>
                 </div>
             </div>
@@ -86,7 +86,7 @@ export default function ProfileSettingsPage() {
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     {/* Avatar Section */}
                     <div className="flex items-center gap-6">
-                        <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl overflow-hidden">
+                        <div className="w-20 h-20 bg-oms-blue rounded-full flex items-center justify-center text-white font-bold text-2xl overflow-hidden">
                             {formData.avatar_url ? (
                                 <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                             ) : (
@@ -100,7 +100,7 @@ export default function ProfileSettingsPage() {
                                 value={formData.avatar_url}
                                 onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
                                 placeholder="Paste Google Drive shareable link..."
-                                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue text-sm"
                             />
                             <p className="text-xs text-gray-400 mt-1">Upload photo to Google Drive, make it shareable, paste link here</p>
                         </div>
@@ -118,7 +118,7 @@ export default function ProfileSettingsPage() {
                             type="text"
                             value={formData.full_name}
                             onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
                             required
                         />
                     </div>
@@ -152,7 +152,7 @@ export default function ProfileSettingsPage() {
                             type="tel"
                             value={formData.phone}
                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
                             placeholder="+91 98765 43210"
                         />
                     </div>
@@ -182,7 +182,7 @@ export default function ProfileSettingsPage() {
                         <button
                             type="submit"
                             disabled={saving}
-                            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-oms-blue text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-oms-blue text-white font-semibold rounded-xl hover:bg-oms-blue transition-colors disabled:opacity-50"
                         >
                             <Save size={18} />
                             {saving ? 'Saving...' : 'Save Changes'}

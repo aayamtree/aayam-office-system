@@ -177,7 +177,7 @@ export default function UserManagementPage() {
           <div className="flex justify-end">
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-indigo-700 font-medium text-sm shadow-sm"
+              className="flex items-center gap-2 px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-oms-blue font-medium text-sm shadow-sm"
             >
               <Plus size={18} />
               Add User
@@ -203,7 +203,7 @@ export default function UserManagementPage() {
                     <tr key={profile.id} className="hover:bg-gray-50 transition-colors">
                       <td className="p-3 md:p-4">
                         <div className="flex items-center gap-2 md:gap-3">
-                          <div className="w-8 h-8 md:w-10 md:h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-sm flex-shrink-0">
+                          <div className="w-8 h-8 md:w-10 md:h-10 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center text-oms-blue font-bold text-sm flex-shrink-0">
                             {profile.full_name?.charAt(0).toUpperCase() || '?'}
                           </div>
                           <div className="min-w-0">
@@ -217,7 +217,7 @@ export default function UserManagementPage() {
                           value={profile.role}
                           disabled={updating === profile.id}
                           onChange={(e) => handleRoleChange(profile.id, e.target.value)}
-                          className="bg-white border border-gray-300 text-gray-900 text-xs md:text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2"
+                          className="bg-white border border-gray-300 text-gray-900 text-xs md:text-sm rounded-lg focus:ring-oms-blue focus:border-indigo-500 block w-full p-2"
                         >
                           {roles.map(r => (
                             <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
@@ -268,7 +268,7 @@ export default function UserManagementPage() {
                       required
                       value={newUser.fullName}
                       onChange={e => setNewUser({ ...newUser, fullName: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-oms-blue focus:border-indigo-500"
                       placeholder="e.g. Rahul Sharma"
                     />
                   </div>
@@ -281,7 +281,7 @@ export default function UserManagementPage() {
                         required
                         value={newUser.username}
                         onChange={e => setNewUser({ ...newUser, username: e.target.value })}
-                        className="w-full border border-gray-300 rounded-l-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full border border-gray-300 rounded-l-lg px-3 py-2 text-gray-900 focus:ring-oms-blue focus:border-indigo-500"
                         placeholder="e.g. rahul"
                       />
                       <span className="bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg px-3 py-2 text-gray-500 text-sm flex items-center">
@@ -299,7 +299,7 @@ export default function UserManagementPage() {
                       minLength={6}
                       value={newUser.password}
                       onChange={e => setNewUser({ ...newUser, password: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-oms-blue focus:border-indigo-500"
                       placeholder="Minimum 6 characters"
                     />
                   </div>
@@ -309,7 +309,7 @@ export default function UserManagementPage() {
                     <select
                       value={newUser.role}
                       onChange={e => setNewUser({ ...newUser, role: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-oms-blue focus:border-indigo-500"
                     >
                       {roles.map(r => (
                         <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
@@ -328,7 +328,7 @@ export default function UserManagementPage() {
                     <button
                       type="submit"
                       disabled={isCreating}
-                      className="flex-1 px-4 py-2 bg-oms-blue text-white rounded-lg hover:bg-indigo-700 font-medium disabled:opacity-50"
+                      className="flex-1 px-4 py-2 bg-oms-blue text-white rounded-lg hover:bg-oms-blue font-medium disabled:opacity-50"
                     >
                       {isCreating ? 'Creating...' : 'Create User'}
                     </button>

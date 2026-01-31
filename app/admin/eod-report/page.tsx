@@ -190,7 +190,7 @@ export default function EODReportPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-96">
-                <Loader2 className="animate-spin text-indigo-600" size={32} />
+                <Loader2 className="animate-spin text-oms-blue" size={32} />
                 <span className="ml-3 text-gray-600">Loading your tasks...</span>
             </div>
         );
@@ -345,7 +345,7 @@ export default function EODReportPage() {
                                                             type="checkbox"
                                                             checked={taskUpdates[task.id]?.client_approval_received || false}
                                                             onChange={(e) => handleTaskUpdate(task.id, 'client_approval_received', e.target.checked)}
-                                                            className="w-4 h-4 text-indigo-600 rounded"
+                                                            className="w-4 h-4 text-oms-blue rounded"
                                                         />
                                                         <span className="text-sm text-gray-700">Client Approval Received</span>
                                                     </label>
@@ -354,7 +354,7 @@ export default function EODReportPage() {
                                                             type="checkbox"
                                                             checked={taskUpdates[task.id]?.print_file_ready || false}
                                                             onChange={(e) => handleTaskUpdate(task.id, 'print_file_ready', e.target.checked)}
-                                                            className="w-4 h-4 text-indigo-600 rounded"
+                                                            className="w-4 h-4 text-oms-blue rounded"
                                                         />
                                                         <span className="text-sm text-gray-700">Print File Ready</span>
                                                     </label>
@@ -363,7 +363,7 @@ export default function EODReportPage() {
                                                             type="checkbox"
                                                             checked={taskUpdates[task.id]?.print_checklist_done || false}
                                                             onChange={(e) => handleTaskUpdate(task.id, 'print_checklist_done', e.target.checked)}
-                                                            className="w-4 h-4 text-indigo-600 rounded"
+                                                            className="w-4 h-4 text-oms-blue rounded"
                                                         />
                                                         <span className="text-sm text-gray-700">Pre-print Checklist Done</span>
                                                     </label>
@@ -449,7 +449,7 @@ export default function EODReportPage() {
                     <button
                         type="submit"
                         disabled={submitting}
-                        className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="px-6 py-3 bg-[rgba(0,0,255,0.1)] text-white rounded-xl font-medium hover:bg-[rgba(0,0,255,0.1)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                         {submitting ? (
                             <>

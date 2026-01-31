@@ -116,7 +116,7 @@ export default function MyNotes() {
                     <h1 className="text-2xl md:text-3xl font-bold text-gray-900">My Notes</h1>
                     <button
                         onClick={createNote}
-                        className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2.5 rounded-xl hover:bg-purple-700 text-sm font-medium w-full sm:w-auto justify-center"
+                        className="flex items-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-xl hover:bg-oms-blue text-sm font-medium w-full sm:w-auto justify-center"
                     >
                         <Plus size={18} />
                         New Note
@@ -143,7 +143,7 @@ export default function MyNotes() {
                         {allHashtags.length > 0 && (
                             <div className="bg-white rounded-lg p-3 border">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <Hash size={16} className="text-purple-600" />
+                                    <Hash size={16} className="text-oms-blue" />
                                     <span className="text-sm font-semibold text-gray-700">Popular Tags</span>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
@@ -151,7 +151,7 @@ export default function MyNotes() {
                                         <button
                                             key={tag}
                                             onClick={() => setSearchQuery(tag)}
-                                            className="px-2 py-1 bg-purple-50 text-purple-700 rounded text-xs hover:bg-purple-100"
+                                            className="px-2 py-1 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded text-xs hover:bg-[rgba(0,0,255,0.1)]"
                                         >
                                             {tag}
                                         </button>
@@ -172,7 +172,7 @@ export default function MyNotes() {
                                             setTitle(note.title || '');
                                             setContent(note.content || '');
                                         }}
-                                        className={`p-4 rounded-lg border cursor-pointer hover:shadow-md transition-shadow ${selectedNote?.id === note.id ? 'bg-purple-50 border-purple-300' : 'bg-white'
+                                        className={`p-4 rounded-lg border cursor-pointer hover:shadow-md transition-shadow ${selectedNote?.id === note.id ? 'bg-[rgba(0,0,255,0.05)] border-purple-300' : 'bg-white'
                                             }`}
                                     >
                                         <h3 className="font-semibold text-gray-900 mb-1 text-sm">{note.title || 'Untitled'}</h3>
@@ -180,7 +180,7 @@ export default function MyNotes() {
                                         {hashtags.length > 0 && (
                                             <div className="flex flex-wrap gap-1">
                                                 {hashtags.slice(0, 3).map((tag, idx) => (
-                                                    <span key={idx} className="text-xs text-purple-600 font-medium">
+                                                    <span key={idx} className="text-xs text-oms-blue font-medium">
                                                         {tag}
                                                     </span>
                                                 ))}
@@ -225,11 +225,11 @@ export default function MyNotes() {
                                         value={title}
                                         onChange={(e) => setTitle(e.target.value)}
                                         placeholder="Note title..."
-                                        className="text-lg md:text-xl font-bold text-gray-900 border-b-2 border-transparent hover:border-gray-200 focus:border-purple-500 outline-none flex-1 mr-2 md:mr-4"
+                                        className="text-lg md:text-section text-gray-900 border-b-2 border-transparent hover:border-gray-200 focus:border-purple-500 outline-none flex-1 mr-2 md:mr-4"
                                     />
                                     <button
                                         onClick={saveNote}
-                                        className="flex items-center gap-1.5 md:gap-2 bg-purple-600 text-white px-3 md:px-4 py-2 md:py-2.5 rounded-xl hover:bg-purple-700 text-sm font-medium flex-shrink-0"
+                                        className="flex items-center gap-1.5 md:gap-2 bg-oms-blue text-white px-3 md:px-4 py-2 md:py-2.5 rounded-xl hover:bg-oms-blue text-sm font-medium flex-shrink-0"
                                     >
                                         <Save size={16} />
                                         <span className="hidden sm:inline">Save</span>

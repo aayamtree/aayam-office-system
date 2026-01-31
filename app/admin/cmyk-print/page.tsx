@@ -52,7 +52,7 @@ export default function CMYKPrintPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'printing': return 'bg-blue-100 text-blue-700';
-      case 'finishing': return 'bg-purple-100 text-purple-700';
+      case 'finishing': return 'bg-[rgba(0,0,255,0.1)] text-oms-blue';
       case 'ready': return 'bg-green-100 text-green-700';
       default: return 'bg-gray-100 text-gray-700';
     }
@@ -127,7 +127,7 @@ export default function CMYKPrintPage() {
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Recent Sales</h2>
-            <Link href="/admin/cmyk-print/retail-pos" className="text-sm text-indigo-600 hover:underline">
+            <Link href="/admin/cmyk-print/retail-pos" className="text-sm text-oms-blue hover:underline">
               View All →
             </Link>
           </div>
@@ -153,7 +153,7 @@ export default function CMYKPrintPage() {
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Pending Jobs</h2>
-            <Link href="/admin/jobs/queue" className="text-sm text-indigo-600 hover:underline">
+            <Link href="/admin/jobs/queue" className="text-sm text-oms-blue hover:underline">
               View All →
             </Link>
           </div>

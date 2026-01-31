@@ -206,9 +206,9 @@ export default function OrdersPage() {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'new': 'bg-blue-100 text-blue-700',
-      'designing': 'bg-purple-100 text-purple-700',
+      'designing': 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
       'approval': 'bg-amber-100 text-amber-700',
-      'printing': 'bg-indigo-100 text-indigo-700',
+      'printing': 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
       'finishing': 'bg-pink-100 text-pink-700',
       'quality_check': 'bg-orange-100 text-orange-700',
       'ready': 'bg-green-100 text-green-700',
@@ -265,13 +265,13 @@ export default function OrdersPage() {
             placeholder="Search orders, clients..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-gray-900 placeholder-gray-400 transition-all font-medium"
+            className="w-full pl-12 pr-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-oms-blue/20 text-gray-900 placeholder-gray-400 transition-all font-medium"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-indigo-500/20 font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+          className="px-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-oms-blue/20 font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
         >
           <option value="all">All Status</option>
           <option value="new">New</option>
@@ -330,7 +330,7 @@ export default function OrdersPage() {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => { setSelectedJob(job); setShowViewModal(true); }}
-                        className="p-2 bg-indigo-50 text-oms-blue rounded-lg"
+                        className="p-2 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-lg"
                       >
                         <Eye size={16} />
                       </button>
@@ -448,7 +448,7 @@ export default function OrdersPage() {
                     placeholder="e.g. Wedding Invitation Cards, Corporate Brochure"
                     value={formData.projectName}
                     onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue shadow-sm"
                   />
                 </div>
 
@@ -458,7 +458,7 @@ export default function OrdersPage() {
                     required
                     value={formData.clientId}
                     onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue bg-white shadow-sm"
                   >
                     <option value="">Select Client</option>
                     {clients.map(c => (
@@ -473,7 +473,7 @@ export default function OrdersPage() {
                     type="date"
                     value={formData.clientDeadline}
                     onChange={(e) => setFormData({ ...formData, clientDeadline: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue shadow-sm"
                   />
                 </div>
 
@@ -484,7 +484,7 @@ export default function OrdersPage() {
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Paper type, size, finishing details, etc."
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm resize-none"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue shadow-sm resize-none"
                   />
                 </div>
 
@@ -497,7 +497,7 @@ export default function OrdersPage() {
                       required
                       value={formData.quantity}
                       onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-oms-blue"
                     />
                   </div>
                   <div>
@@ -509,7 +509,7 @@ export default function OrdersPage() {
                       required
                       value={formData.ratePerPiece}
                       onChange={(e) => handleRateChange(parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-oms-blue"
                     />
                   </div>
                   <div>
@@ -517,7 +517,7 @@ export default function OrdersPage() {
                     <select
                       value={formData.gstRate}
                       onChange={(e) => handleGstRateChange(parseInt(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-oms-blue bg-white"
                     >
                       <option value="0">0%</option>
                       <option value="5">5%</option>
@@ -539,7 +539,7 @@ export default function OrdersPage() {
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-oms-blue bg-white shadow-sm"
                   >
                     <option value="normal">Normal</option>
                     <option value="urgent">Urgent</option>
@@ -552,7 +552,7 @@ export default function OrdersPage() {
                   <select
                     value={formData.currentStage}
                     onChange={(e) => setFormData({ ...formData, currentStage: e.target.value as any })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-oms-blue bg-white shadow-sm"
                   >
                     <option value="new">New</option>
                     <option value="designing">Designing</option>
@@ -576,7 +576,7 @@ export default function OrdersPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 px-6 py-3.5 bg-oms-blue text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-blue-200 disabled:opacity-50"
+                  className="flex-1 px-6 py-3.5 bg-oms-blue text-white font-semibold rounded-xl hover:bg-oms-blue transition-colors shadow-lg shadow-blue-200 disabled:opacity-50"
                 >
                   {submitting ? 'Saving...' : (isEditing ? 'Update Order' : 'Create Order')}
                 </button>
@@ -604,7 +604,7 @@ export default function OrdersPage() {
 
             <div className="p-6 space-y-6">
               <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-oms-blue font-bold text-lg">
+                <div className="w-12 h-12 rounded-full bg-[rgba(0,0,255,0.1)] flex items-center justify-center text-oms-blue font-bold text-lg">
                   {selectedJob.client?.company?.charAt(0) || 'C'}
                 </div>
                 <div>
@@ -639,7 +639,7 @@ export default function OrdersPage() {
                 </p>
               </div>
 
-              <div className="p-4 bg-indigo-50/50 rounded-xl border border-indigo-100">
+              <div className="p-4 bg-[rgba(0,0,255,0.05)]/50 rounded-xl border border-[rgba(0,0,255,0.1)]">
                 <div className="flex justify-between mb-2 text-sm">
                   <span className="text-gray-600">Subtotal</span>
                   <span className="font-medium">{formatCurrency(selectedJob.subtotal)}</span>
@@ -648,14 +648,14 @@ export default function OrdersPage() {
                   <span className="text-gray-600">GST ({selectedJob.gst_rate}%)</span>
                   <span className="font-medium">{formatCurrency(selectedJob.gst_amount)}</span>
                 </div>
-                <div className="flex justify-between pt-2 border-t border-indigo-100 mt-2">
+                <div className="flex justify-between pt-2 border-t border-[rgba(0,0,255,0.1)] mt-2">
                   <span className="font-bold text-gray-900">Total</span>
-                  <span className="font-bold text-indigo-700 text-lg">{formatCurrency(selectedJob.total_amount)}</span>
+                  <span className="font-bold text-oms-blue text-lg">{formatCurrency(selectedJob.total_amount)}</span>
                 </div>
               </div>
 
               <div className="flex gap-3">
-                <button onClick={() => { setShowViewModal(false); handleEdit(selectedJob); }} className="flex-1 py-3 border border-indigo-200 text-indigo-700 font-semibold rounded-xl hover:bg-indigo-50 transition-colors">
+                <button onClick={() => { setShowViewModal(false); handleEdit(selectedJob); }} className="flex-1 py-3 border border-[rgba(0,0,255,0.2)] text-oms-blue font-semibold rounded-xl hover:bg-[rgba(0,0,255,0.05)] transition-colors">
                   Edit Order
                 </button>
                 <button onClick={() => setShowViewModal(false)} className="flex-1 py-3 bg-gray-900 text-white font-semibold rounded-xl hover:bg-black transition-colors">

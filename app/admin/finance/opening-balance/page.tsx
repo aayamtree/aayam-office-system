@@ -133,12 +133,12 @@ export default function OpeningBalancePage() {
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-4">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-              <IndianRupee className="text-indigo-600" size={20} />
+            <div className="w-10 h-10 bg-[rgba(0,0,255,0.1)] rounded-lg flex items-center justify-center">
+              <IndianRupee className="text-oms-blue" size={20} />
             </div>
             <span className="text-gray-600">Total Opening</span>
           </div>
-          <p className="text-2xl font-bold text-indigo-600">{formatCurrency(totalOpeningBalance)}</p>
+          <p className="text-2xl font-bold text-oms-blue">{formatCurrency(totalOpeningBalance)}</p>
         </div>
       </div>
 
@@ -171,7 +171,7 @@ export default function OpeningBalancePage() {
             </div>
             <h2 className="text-lg font-semibold text-gray-900">Bank Opening Balances</h2>
           </div>
-          <Link href="/admin/finance/banks" className="text-sm text-indigo-600 hover:underline">
+          <Link href="/admin/finance/banks" className="text-sm text-oms-blue hover:underline">
             Manage Bank Accounts →
           </Link>
         </div>

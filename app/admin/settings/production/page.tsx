@@ -134,7 +134,7 @@ export default function ProductionSettings() {
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                     <div>
-                        <h2 className="text-xl font-bold text-gray-900">Production Checklists</h2>
+                        <h2 className="text-section text-gray-900">Production Checklists</h2>
                         <p className="text-gray-500 text-sm mt-1">Configure standard quality checks for different job types.</p>
                     </div>
 
@@ -163,7 +163,7 @@ export default function ProductionSettings() {
 
                     <button
                         onClick={() => setIsAddingNew(true)}
-                        className={`text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors ${activeCategory === 'design' ? 'bg-oms-blue hover:bg-indigo-700' : 'bg-orange-600 hover:bg-orange-700'
+                        className={`text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors ${activeCategory === 'design' ? 'bg-oms-blue hover:bg-oms-blue' : 'bg-orange-600 hover:bg-orange-700'
                             }`}
                     >
                         <Plus size={18} /> Add {activeCategory === 'design' ? 'Design' : 'QC'} Checklist
@@ -183,7 +183,7 @@ export default function ProductionSettings() {
                                     placeholder="e.g. Wedding Card, Acrylic Board..."
                                     value={newJobType}
                                     onChange={e => setNewJobType(e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-oms-blue/20 focus:border-indigo-500"
                                     autoFocus
                                 />
                                 <p className="text-xs text-gray-500 mt-2 ml-1">
@@ -211,7 +211,7 @@ export default function ProductionSettings() {
 
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-3">
-                        <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                        <div className="w-8 h-8 border-4 border-[rgba(0,0,255,0.2)] border-t-indigo-600 rounded-full animate-spin"></div>
                         <p>Loading configurations...</p>
                     </div>
                 ) : checklists.length === 0 ? (
@@ -229,12 +229,12 @@ export default function ProductionSettings() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {checklists.map(checklist => (
-                            <div key={checklist.id} className={`bg-white rounded-xl border transition-all ${editingId === checklist.id ? 'border-indigo-500 ring-4 ring-indigo-500/10 shadow-lg relative z-10' : 'border-gray-200 hover:shadow-md hover:border-indigo-200'}`}>
+                            <div key={checklist.id} className={`bg-white rounded-xl border transition-all ${editingId === checklist.id ? 'border-indigo-500 ring-4 ring-oms-blue/10 shadow-lg relative z-10' : 'border-gray-200 hover:shadow-md hover:border-[rgba(0,0,255,0.2)]'}`}>
 
                                 {/* Header */}
-                                <div className={`p-4 border-b flex justify-between items-center rounded-t-xl ${editingId === checklist.id ? 'bg-indigo-50/50' : 'bg-gray-50/50'}`}>
+                                <div className={`p-4 border-b flex justify-between items-center rounded-t-xl ${editingId === checklist.id ? 'bg-[rgba(0,0,255,0.05)]/50' : 'bg-gray-50/50'}`}>
                                     <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-lg ${activeCategory === 'design' ? 'bg-indigo-100 text-oms-blue' : 'bg-orange-100 text-orange-600'}`}>
+                                        <div className={`p-2 rounded-lg ${activeCategory === 'design' ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-orange-100 text-orange-600'}`}>
                                             <Check size={16} strokeWidth={3} />
                                         </div>
                                         <h3 className="font-bold text-gray-800">{checklist.job_type}</h3>
@@ -247,7 +247,7 @@ export default function ProductionSettings() {
                                             </>
                                         ) : (
                                             <>
-                                                <button onClick={() => handleStartEdit(checklist)} className="p-2 bg-white border hover:bg-indigo-50 text-gray-600 hover:text-oms-blue rounded-lg transition-colors" title="Edit Items"><Edit2 size={16} /></button>
+                                                <button onClick={() => handleStartEdit(checklist)} className="p-2 bg-white border hover:bg-[rgba(0,0,255,0.05)] text-gray-600 hover:text-oms-blue rounded-lg transition-colors" title="Edit Items"><Edit2 size={16} /></button>
                                                 <button onClick={() => deleteChecklist(checklist.id)} className="p-2 bg-white border hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-lg transition-colors" title="Delete Checklist"><Trash2 size={16} /></button>
                                             </>
                                         )}
@@ -267,7 +267,7 @@ export default function ProductionSettings() {
                                                             type="text"
                                                             value={item}
                                                             onChange={e => updateEditItem(idx, e.target.value)}
-                                                            className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                                            className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:ring-2 focus:ring-oms-blue/20 focus:border-indigo-500"
                                                             autoFocus={idx === editItems.length - 1} // Auto focus new item
                                                             placeholder="e.g. Check spelling..."
                                                         />
@@ -275,7 +275,7 @@ export default function ProductionSettings() {
                                                     <button onClick={() => removeEditItem(idx)} className="text-gray-400 hover:text-red-500 p-2 hover:bg-red-50 rounded-lg"><X size={16} /></button>
                                                 </div>
                                             ))}
-                                            <button onClick={addItemToEdit} className="w-full py-2.5 border-2 border-dashed border-gray-200 rounded-lg text-sm font-bold text-gray-500 hover:border-indigo-300 hover:text-oms-blue hover:bg-indigo-50 flex items-center justify-center gap-2 transition-all mt-4">
+                                            <button onClick={addItemToEdit} className="w-full py-2.5 border-2 border-dashed border-gray-200 rounded-lg text-sm font-bold text-gray-500 hover:border-indigo-300 hover:text-oms-blue hover:bg-[rgba(0,0,255,0.05)] flex items-center justify-center gap-2 transition-all mt-4">
                                                 <Plus size={16} /> Add Another Item
                                             </button>
                                         </div>
@@ -285,7 +285,7 @@ export default function ProductionSettings() {
                                             <ul className="space-y-2.5">
                                                 {checklist.items && checklist.items.length > 0 ? checklist.items.map((item: string, idx: number) => (
                                                     <li key={idx} className="flex items-start gap-3 text-sm text-gray-600 group">
-                                                        <div className={`w-1.5 h-1.5 rounded-full mt-1.5 group-hover:scale-125 transition-transform ${activeCategory === 'design' ? 'bg-indigo-400' : 'bg-orange-400'}`}></div>
+                                                        <div className={`w-1.5 h-1.5 rounded-full mt-1.5 group-hover:scale-125 transition-transform ${activeCategory === 'design' ? 'bg-[rgba(0,0,255,0.1)]' : 'bg-orange-400'}`}></div>
                                                         <span className="leading-tight">{item}</span>
                                                     </li>
                                                 )) : (
