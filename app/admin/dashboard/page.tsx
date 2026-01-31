@@ -227,34 +227,34 @@ export default function AdminDashboard() {
               </div>
 
               {/* Jobs Delayed */}
-              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-orange-50 border-orange-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-orange-100 text-orange-600' : 'bg-gray-200 text-gray-500'}`}>
+              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-[rgba(255,102,0,0.08)] border-[rgba(255,102,0,0.15)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-[rgba(255,102,0,0.12)] text-oms-orange' : 'bg-gray-200 text-gray-500'}`}>
                   <Clock size={16} />
                 </div>
                 <div>
-                  <div className={`text-section leading-none ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'text-orange-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsDelayed || 0}</div>
+                  <div className={`text-section leading-none ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'text-oms-orange' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsDelayed || 0}</div>
                   <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Delayed</div>
                 </div>
               </div>
 
               {/* Jobs Completed */}
-              <div className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-green-50/50 border-green-100 hover:bg-green-50' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'}`}>
+              <div className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-gray-50 border-gray-200 hover:bg-gray-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-gray-200 text-gray-600' : 'bg-gray-200 text-gray-500'}`}>
                   <CheckCircle size={16} />
                 </div>
                 <div>
-                  <div className={`text-section leading-none ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'text-green-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsCompleted || 0}</div>
+                  <div className={`text-section leading-none ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'text-gray-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsCompleted || 0}</div>
                   <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Completed</div>
                 </div>
               </div>
 
               {/* Payments Due */}
-              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-blue-50 border-blue-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-500'}`}>
+              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
                   <Receipt size={16} />
                 </div>
                 <div>
-                  <div className={`text-section leading-none ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'text-blue-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.paymentsDue || 0}</div>
+                  <div className={`text-section leading-none ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'text-oms-blue' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.paymentsDue || 0}</div>
                   <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Payments</div>
                 </div>
               </div>
@@ -284,23 +284,23 @@ export default function AdminDashboard() {
               </div>
 
               {/* Return Today */}
-              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-cyan-50 border-cyan-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-cyan-100 text-cyan-600' : 'bg-gray-200 text-gray-500'}`}>
+              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
                   <Truck size={16} />
                 </div>
                 <div>
-                  <div className={`text-section leading-none ${dashboardStats.vendorStats?.dueToday > 0 ? 'text-cyan-700' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.dueToday || 0}</div>
+                  <div className={`text-section leading-none ${dashboardStats.vendorStats?.dueToday > 0 ? 'text-oms-blue' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.dueToday || 0}</div>
                   <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Return Today</div>
                 </div>
               </div>
 
               {/* Vendor Delayed */}
-              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.vendorStats?.delayed > 0 ? 'bg-rose-50 border-rose-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.delayed > 0 ? 'bg-rose-100 text-rose-600' : 'bg-gray-200 text-gray-500'}`}>
+              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.vendorStats?.delayed > 0 ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.delayed > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-200 text-gray-500'}`}>
                   <AlertCircle size={16} />
                 </div>
                 <div>
-                  <div className={`text-section leading-none ${dashboardStats.vendorStats?.delayed > 0 ? 'text-rose-700' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.delayed || 0}</div>
+                  <div className={`text-section leading-none ${dashboardStats.vendorStats?.delayed > 0 ? 'text-red-700' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.delayed || 0}</div>
                   <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Vendor Late</div>
                 </div>
               </div>
@@ -320,22 +320,22 @@ export default function AdminDashboard() {
         {/* Needs Attention */}
         <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 flex flex-col h-full">
           <div className="flex items-center gap-2.5 mb-6">
-            <AlertCircle size={20} className="text-amber-500" />
+            <AlertCircle size={20} className="text-oms-orange" />
             <h2 className="text-section text-gray-900">Needs Attention</h2>
           </div>
 
           <div className="space-y-4 flex-1 overflow-y-auto max-h-[400px] pr-1">
             {sortedAlerts.map((alert) => {
               const isSafe = alert.count === 0;
-              let colors = isSafe ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-700 border-gray-200';
-              let iconColors = isSafe ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500';
+              let colors = isSafe ? 'bg-gray-50 text-gray-700 border-gray-200' : 'bg-[rgba(255,102,0,0.05)] text-oms-orange border-[rgba(255,102,0,0.1)]';
+              let iconColors = isSafe ? 'bg-gray-200 text-gray-500' : 'bg-[rgba(255,102,0,0.1)] text-oms-orange';
 
               // Specific Alert Colors
               if (!isSafe) {
-                if (alert.id === 'blocked') { colors = 'bg-slate-50 text-slate-700 border-slate-200'; iconColors = 'bg-slate-100 text-slate-600'; }
+                if (alert.id === 'blocked') { colors = 'bg-[rgba(0,0,255,0.05)] text-oms-blue border-[rgba(0,0,255,0.1)]'; iconColors = 'bg-[rgba(0,0,255,0.1)] text-oms-blue'; }
                 if (alert.id === 'payments') { colors = 'bg-red-50 text-red-700 border-red-200'; iconColors = 'bg-red-100 text-red-600'; }
-                if (alert.id === 'stock') { colors = 'bg-orange-50 text-orange-800 border-orange-200'; iconColors = 'bg-orange-100 text-orange-600'; }
-                if (alert.id === 'followups') { colors = 'bg-amber-50 text-amber-800 border-amber-200'; iconColors = 'bg-amber-100 text-amber-600'; }
+                if (alert.id === 'stock') { colors = 'bg-[rgba(255,102,0,0.1)] text-oms-orange border-[rgba(255,102,0,0.2)]'; iconColors = 'bg-[rgba(255,102,0,0.15)] text-oms-orange'; }
+                if (alert.id === 'followups') { colors = 'bg-[rgba(255,102,0,0.08)] text-oms-orange border-[rgba(255,102,0,0.15)]'; iconColors = 'bg-[rgba(255,102,0,0.12)] text-oms-orange'; }
               }
 
               return (

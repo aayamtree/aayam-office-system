@@ -8,11 +8,11 @@ import { Plus, X, Pin, Trash2, Check, Loader2, Link as LinkIcon } from 'lucide-r
 import { Note } from '@/types/database';
 
 const colors = [
-    { name: 'yellow', bg: 'bg-yellow-100', border: 'border-yellow-200' },
-    { name: 'green', bg: 'bg-green-100', border: 'border-green-200' },
-    { name: 'blue', bg: 'bg-blue-100', border: 'border-blue-200' },
-    { name: 'pink', bg: 'bg-pink-100', border: 'border-pink-200' },
-    { name: 'purple', bg: 'bg-[rgba(0,0,255,0.1)]', border: 'border-purple-200' },
+    { name: 'blue', bg: 'bg-[rgba(0,0,255,0.05)]', border: 'border-[rgba(0,0,255,0.1)]' },
+    { name: 'sky', bg: 'bg-[rgba(0,0,255,0.1)]', border: 'border-[rgba(0,0,255,0.2)]' },
+    { name: 'navy', bg: 'bg-[rgba(0,0,255,0.15)]', border: 'border-[rgba(0,0,255,0.25)]' },
+    { name: 'orange', bg: 'bg-[rgba(255,102,0,0.1)]', border: 'border-[rgba(255,102,0,0.2)]' },
+    { name: 'gray', bg: 'bg-gray-50', border: 'border-gray-200' },
 ];
 
 export default function NotesWidget() {
@@ -20,7 +20,7 @@ export default function NotesWidget() {
     const [isAdding, setIsAdding] = useState(false);
     const [newNoteContent, setNewNoteContent] = useState('');
     const [jobNumber, setJobNumber] = useState('');
-    const [selectedColor, setSelectedColor] = useState('yellow');
+    const [selectedColor, setSelectedColor] = useState('blue');
     const [saving, setSaving] = useState(false);
 
     const handleAdd = async () => {
