@@ -16,7 +16,7 @@ export default function AccountsPage() {
     const grandTotal = totalBankBalance + totalCashBalance;
 
     return (
-        <div className="space-y-3 md:space-y-6 animate-fade-in pb-16 md:pb-20">
+        <div className="space-y-3 md:space-y-6 px-2 animate-fade-in px-2 pb-16 md:pb-20">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
                 <div>

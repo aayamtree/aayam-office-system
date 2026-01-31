@@ -417,7 +417,7 @@ export default function InvoicesPage() {
     .reduce((sum, i) => sum + (i.total_amount - i.amount_paid), 0);
 
   return (
-    <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 px-3 md:px-0">
+    <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
         <div className="flex items-center gap-2 md:gap-3">

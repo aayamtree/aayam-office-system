@@ -206,7 +206,7 @@ export default function BankingPage() {
     // RENDER
     // ------------------------------------------------------------------
     return (
-        <div className="space-y-3 md:space-y-6 animate-fade-in pb-16 md:pb-20">
+        <div className="space-y-3 md:space-y-6 px-2 animate-fade-in px-2 pb-16 md:pb-20">
             {/* Header - Responsive */}
             <div className="flex flex-col gap-3 md:gap-4">
                 <div>

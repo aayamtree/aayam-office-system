@@ -145,7 +145,7 @@ export default function TransportersPage() {
   if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-oms-blue" /></div>;
 
   return (
-    <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 animate-fade-in">
+    <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 px-2 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div className="flex items-center gap-3">

@@ -10,7 +10,7 @@ export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState<'client' | 'vendor' | 'cashflow'>('client');
 
   return (
-    <div className="space-y-3 md:space-y-6 animate-fade-in pb-16 md:pb-20">
+    <div className="space-y-3 md:space-y-6 px-2 animate-fade-in px-2 pb-16 md:pb-20">
       {/* Header */}
       <div>
         <h1 className="text-page-title text-gray-900">Reports Center</h1>

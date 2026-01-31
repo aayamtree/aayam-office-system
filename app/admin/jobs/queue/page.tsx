@@ -100,7 +100,7 @@ export default function JobQueuePage() {
   }
 
   return (
-    <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 animate-fade-in px-3 md:px-0">
+    <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 px-2 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-2 md:gap-3">
         <Link href="/admin/jobs" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">

@@ -118,7 +118,7 @@ export default function DispatchPage() {
   };
 
   return (
-    <div className="space-y-2 md:space-y-6 animate-fade-in px-3 md:px-0">
+    <div className="space-y-2 md:space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
         <div>

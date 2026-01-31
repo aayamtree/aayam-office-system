@@ -108,7 +108,7 @@ export default function ClientsPage() {
   if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-oms-blue" /><span className="ml-2">Loading...</span></div>;
 
   return (
-    <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 animate-fade-in px-3 md:px-0">
+    <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 px-2 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/crm" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden"><ArrowLeft size={20} /></Link>

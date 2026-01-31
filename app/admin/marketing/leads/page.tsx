@@ -241,7 +241,7 @@ export default function LeadsPage() {
     }
 
     return (
-        <div className="space-y-2 md:space-y-6 pb-12 md:pb-20 animate-fade-in text-sm lg:text-base px-3 md:px-0">
+        <div className="space-y-2 md:space-y-6 px-2 pb-12 md:pb-20 animate-fade-in text-sm lg:text-base">
 
             {/* HEADER */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 md:gap-4">

@@ -176,7 +176,7 @@ export default function QuickExpensePage() {
     const accounts = formData.payment_mode === 'cash' ? cashAccounts : bankAccounts;
 
     return (
-        <div className="space-y-2 md:space-y-6 pb-16 md:pb-20">
+        <div className="space-y-2 md:space-y-6 px-2 pb-16 md:pb-20">
             {/* Header */}
             <div className="flex items-center gap-3 md:gap-4">
                 <button

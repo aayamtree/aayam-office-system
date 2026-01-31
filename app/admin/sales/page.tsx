@@ -67,7 +67,7 @@ export default function SalesPage() {
   const readyToDispatch = (pipelineStats?.ready || 0) + (pipelineStats?.packed || 0);
 
   return (
-    <div className="space-y-3 md:space-y-6 lg:space-y-8 animate-fade-in pb-10">
+    <div className="space-y-3 md:space-y-6 lg:space-y-8 animate-fade-in px-2 pb-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div>
