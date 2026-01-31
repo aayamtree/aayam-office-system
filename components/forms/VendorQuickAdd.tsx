@@ -75,7 +75,7 @@ export default function VendorQuickAdd({ onVendorCreated, onClose }: VendorQuick
                 {/* Header */}
                 <div className="bg-gradient-to-r from-orange-600 to-amber-600 p-6 text-white flex items-center justify-between">
                     <div>
-                        <h3 className="text-2xl font-bold flex items-center gap-3">
+                        <h3 className="text-page-title flex items-center gap-3">
                             <Truck size={28} />
                             Quick Add Vendor
                         </h3>

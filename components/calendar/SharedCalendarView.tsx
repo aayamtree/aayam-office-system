@@ -66,9 +66,9 @@ export default function SharedCalendarView({ events, loading }: SharedCalendarVi
                 <div className="flex flex-col md:flex-row md:items-center gap-3">
                     {/* Title */}
                     <div className="flex-1">
-                        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <h2 className="text-section text-gray-900 flex items-center gap-2">
                             📅 Shared Calendar
-                            <span className="text-xs font-normal text-gray-500">
+                            <span className="text-label text-gray-500">
                                 ({filteredEvents.length} events)
                             </span>
                         </h2>
@@ -212,7 +212,7 @@ function EventCard({ event, currentUser }: { event: any; currentUser: string }) 
                 <div className="flex-1">
                     {/* User Badge & Date */}
                     <div className="flex items-center gap-2 mb-2">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${isMyEvent
+                        <span className={`px-2 py-1 rounded text-label ${isMyEvent
                                 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue'
                                 : 'bg-gray-200 text-gray-700'
                             }`}>

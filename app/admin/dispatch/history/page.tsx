@@ -93,15 +93,15 @@ export default function DispatchHistoryPage() {
 
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
-          <p className="text-2xl font-bold text-amber-700">{qcPassedCount}</p>
+          <p className="text-page-title text-amber-700">{qcPassedCount}</p>
           <p className="text-xs text-amber-600 font-medium">Pending / Packed</p>
         </div>
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
-          <p className="text-2xl font-bold text-blue-700">{inTransitCount}</p>
+          <p className="text-page-title text-blue-700">{inTransitCount}</p>
           <p className="text-xs text-blue-600 font-medium">In Transit</p>
         </div>
         <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
-          <p className="text-2xl font-bold text-green-700">{deliveredCount}</p>
+          <p className="text-page-title text-green-700">{deliveredCount}</p>
           <p className="text-xs text-green-600 font-medium">Delivered</p>
         </div>
       </div>
@@ -180,7 +180,7 @@ export default function DispatchHistoryPage() {
             <div className="p-4 space-y-4">
               <div className={`p-4 rounded-xl text-center ${selectedDispatch.status === 'delivered' ? 'bg-green-50' : 'bg-blue-50'}`}>
                 {selectedDispatch.status === 'delivered' ? <CheckCircle size={32} className="mx-auto mb-2 text-green-600" /> : <Truck size={32} className="mx-auto mb-2 text-blue-600" />}
-                <p className="font-semibold text-lg">{getStatusLabel(selectedDispatch.status)}</p>
+                <p className="text-section">{getStatusLabel(selectedDispatch.status)}</p>
               </div>
 
               <div className="space-y-2">

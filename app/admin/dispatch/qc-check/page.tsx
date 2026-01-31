@@ -112,7 +112,7 @@ export default function QCCheckPage() {
           <ArrowLeft size={20} />
         </Link>
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">QC Check</h1>
+          <h1 className="text-xl lg:text-page-title text-gray-900">QC Check</h1>
           <p className="text-sm text-gray-500">{filteredJobs.length} orders for quality check</p>
         </div>
       </div>
@@ -120,15 +120,15 @@ export default function QCCheckPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
-          <p className="text-2xl font-bold text-amber-700">{jobs.filter(j => j.current_stage === 'finishing').length}</p>
+          <p className="text-page-title text-amber-700">{jobs.filter(j => j.current_stage === 'finishing').length}</p>
           <p className="text-xs text-amber-600 font-medium">Pending (Finishing)</p>
         </div>
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
-          <p className="text-2xl font-bold text-blue-700">{jobs.filter(j => j.current_stage === 'quality_check').length}</p>
+          <p className="text-page-title text-blue-700">{jobs.filter(j => j.current_stage === 'quality_check').length}</p>
           <p className="text-xs text-blue-600 font-medium">In Progress</p>
         </div>
         <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
-          <p className="text-2xl font-bold text-green-700">{jobs.filter(j => j.current_stage === 'ready').length}</p>
+          <p className="text-page-title text-green-700">{jobs.filter(j => j.current_stage === 'ready').length}</p>
           <p className="text-xs text-green-600 font-medium">Passed (Ready)</p>
         </div>
       </div>
@@ -215,7 +215,7 @@ export default function QCCheckPage() {
             {/* Header */}
             <div className="p-4 border-b border-gray-100 flex justify-between items-center">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">{selectedJob.job_number}</h2>
+                <h2 className="text-section text-gray-900">{selectedJob.job_number}</h2>
                 <p className="text-sm text-gray-500">{selectedJob.project_name}</p>
               </div>
               <button onClick={() => setShowQCModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">

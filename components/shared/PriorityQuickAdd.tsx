@@ -90,7 +90,7 @@ export default function PriorityQuickAdd({ isOpen, onClose, onSuccess }: Priorit
                             <AlertCircle size={24} className="text-yellow-600" />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-gray-900">Add Priority Level</h3>
+                            <h3 className="text-page-title text-gray-900">Add Priority Level</h3>
                             <p className="text-sm text-gray-600">Create new priority level</p>
                         </div>
                     </div>

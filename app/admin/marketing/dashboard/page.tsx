@@ -117,7 +117,7 @@ export default function AdminMarketingDashboard() {
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-                    <h2 className="text-xl font-bold text-gray-900">Access Denied</h2>
+                    <h2 className="text-page-title text-gray-900">Access Denied</h2>
                     <p className="text-gray-500 mt-2">This page is only accessible to admins.</p>
                 </div>
             </div>
@@ -129,7 +129,7 @@ export default function AdminMarketingDashboard() {
             {/* Header */}
             <div className="bg-white border-b border-gray-200 px-6 py-6">
                 <div className="max-w-7xl mx-auto">
-                    <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                    <h1 className="text-page-title text-gray-900 flex items-center gap-3">
                         <Activity className="text-oms-blue" size={32} />
                         Marketing Team Overview
                     </h1>
@@ -153,7 +153,7 @@ export default function AdminMarketingDashboard() {
                                 <ArrowRight className="text-gray-400 group-hover:text-oms-blue transition-colors" size={20} />
                             </div>
                             <h3 className="text-gray-500 text-sm font-medium mb-1">{stat.title}</h3>
-                            <p className="text-3xl font-bold text-gray-900">{loading ? '...' : stat.value}</p>
+                            <p className="text-page-title text-gray-900">{loading ? '...' : stat.value}</p>
                         </button>
                     ))}
                 </div>
@@ -162,7 +162,7 @@ export default function AdminMarketingDashboard() {
                 <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                            <h2 className="text-page-title text-gray-900 flex items-center gap-2">
                                 <Users className="text-oms-blue" size={24} />
                                 Team Activity
                             </h2>
@@ -191,7 +191,7 @@ export default function AdminMarketingDashboard() {
                                     </div>
                                     <div className="text-right">
                                         <p className="text-sm text-gray-500">Commission Est.</p>
-                                        <p className="text-lg font-bold text-gray-900">₹{member.commission.toLocaleString()}</p>
+                                        <p className="text-section text-gray-900">₹{member.commission.toLocaleString()}</p>
                                     </div>
                                 </div>
                             ))}
@@ -203,7 +203,7 @@ export default function AdminMarketingDashboard() {
                 <div className="bg-oms-blue rounded-2xl p-6 border border-[rgba(0,0,255,0.2)]-100 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                            <h2 className="text-page-title text-gray-900 flex items-center gap-2">
                                 <DollarSign className="text-oms-blue" size={24} />
                                 Commission Overview
                             </h2>
@@ -220,17 +220,17 @@ export default function AdminMarketingDashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="bg-white rounded-xl p-4 border border-[rgba(0,0,255,0.2)]-100">
                             <p className="text-sm text-gray-500 mb-1">Total This Month</p>
-                            <p className="text-2xl font-bold text-gray-900">₹0</p>
+                            <p className="text-page-title text-gray-900">₹0</p>
                             <p className="text-xs text-gray-400 mt-1">0 eligible projects</p>
                         </div>
                         <div className="bg-white rounded-xl p-4 border border-green-100">
                             <p className="text-sm text-gray-500 mb-1">Paid Out</p>
-                            <p className="text-2xl font-bold text-green-600">₹0</p>
+                            <p className="text-page-title text-green-600">₹0</p>
                             <p className="text-xs text-gray-400 mt-1">Last month</p>
                         </div>
                         <div className="bg-white rounded-xl p-4 border border-amber-100">
                             <p className="text-sm text-gray-500 mb-1">Pending</p>
-                            <p className="text-2xl font-bold text-amber-600">₹0</p>
+                            <p className="text-page-title text-amber-600">₹0</p>
                             <p className="text-xs text-gray-400 mt-1">Awaiting payment</p>
                         </div>
                     </div>

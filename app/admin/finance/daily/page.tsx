@@ -69,7 +69,7 @@ export default function DailyFinancePage() {
             {/* Header */}
             <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Daily Finance Summary</h1>
+                    <h1 className="text-page-title text-gray-900">Daily Finance Summary</h1>
                     <p className="text-gray-500">Real-time financial position</p>
                 </div>
                 <button
@@ -87,7 +87,7 @@ export default function DailyFinancePage() {
                 <div className="flex justify-between items-start mb-4">
                     <div>
                         <p className="text-sm opacity-90">Total Available Balance</p>
-                        <p className="text-4xl font-bold mt-2">₹{grandTotal.toLocaleString()}</p>
+                        <p className="text-page-title mt-2">₹{grandTotal.toLocaleString()}</p>
                     </div>
                     <Link
                         href="/admin/finance/accounts"
@@ -103,7 +103,7 @@ export default function DailyFinancePage() {
                             <Building2 size={18} />
                             <p className="text-sm opacity-90">Bank Accounts</p>
                         </div>
-                        <p className="text-2xl font-bold">₹{totalBanks.toLocaleString()}</p>
+                        <p className="text-page-title">₹{totalBanks.toLocaleString()}</p>
                         <p className="text-xs opacity-75 mt-1">{bankAccounts.length} accounts</p>
                     </div>
 
@@ -112,7 +112,7 @@ export default function DailyFinancePage() {
                             <Wallet size={18} />
                             <p className="text-sm opacity-90">Cash</p>
                         </div>
-                        <p className="text-2xl font-bold">₹{totalCash.toLocaleString()}</p>
+                        <p className="text-page-title">₹{totalCash.toLocaleString()}</p>
                         <p className="text-xs opacity-75 mt-1">{cashAccounts.length} registers</p>
                     </div>
                 </div>
@@ -120,7 +120,7 @@ export default function DailyFinancePage() {
 
             {/* Today's Activity */}
             <div className="bg-white rounded-2xl border p-6 shadow-sm">
-                <h2 className="text-lg font-bold mb-4">Today&apos;s Activity</h2>
+                <h2 className="text-section mb-4">Today&apos;s Activity</h2>
 
                 <div className="grid grid-cols-3 gap-4">
                     <div className="bg-green-50 rounded-xl p-4">
@@ -128,7 +128,7 @@ export default function DailyFinancePage() {
                             <ArrowDownRight size={20} />
                             <p className="text-sm font-medium">Money IN</p>
                         </div>
-                        <p className="text-2xl font-bold text-green-700">₹{todayIncome.toLocaleString()}</p>
+                        <p className="text-page-title text-green-700">₹{todayIncome.toLocaleString()}</p>
                         <p className="text-xs text-green-600 mt-1">{todayPayments.length} payments received</p>
                     </div>
 
@@ -137,7 +137,7 @@ export default function DailyFinancePage() {
                             <ArrowUpRight size={20} />
                             <p className="text-sm font-medium">Money OUT</p>
                         </div>
-                        <p className="text-2xl font-bold text-red-700">₹{todayExpense.toLocaleString()}</p>
+                        <p className="text-page-title text-red-700">₹{todayExpense.toLocaleString()}</p>
                         <p className="text-xs text-red-600 mt-1">{todayExpenses.length} payments made</p>
                     </div>
 
@@ -146,7 +146,7 @@ export default function DailyFinancePage() {
                             <TrendingUp size={20} />
                             <p className="text-sm font-medium">Net Change</p>
                         </div>
-                        <p className={`text-2xl font-bold ${netChange >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
+                        <p className={`text-page-title ${netChange >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
                             {netChange >= 0 ? '+' : ''}₹{netChange.toLocaleString()}
                         </p>
                         <p className={`text-xs mt-1 ${netChange >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>

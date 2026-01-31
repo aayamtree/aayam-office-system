@@ -106,7 +106,7 @@ export default function VendorPaymentsPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Vendor Payments</h1>
+            <h1 className="text-page-title text-gray-900">Vendor Payments</h1>
             <p className="text-gray-500">Payment out to vendors</p>
           </div>
         </div>
@@ -121,19 +121,19 @@ export default function VendorPaymentsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Paid</p>
-          <p className="text-lg sm:text-xl font-bold text-green-600">{formatCurrency(totalPaid)}</p>
+          <p className="text-lg sm:text-page-title text-green-600">{formatCurrency(totalPaid)}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Cash Payments</p>
-          <p className="text-lg sm:text-xl font-bold text-emerald-600">{formatCurrency(cashPayments)}</p>
+          <p className="text-lg sm:text-page-title text-emerald-600">{formatCurrency(cashPayments)}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Bank Payments</p>
-          <p className="text-lg sm:text-xl font-bold text-blue-600">{formatCurrency(bankPayments)}</p>
+          <p className="text-lg sm:text-page-title text-blue-600">{formatCurrency(bankPayments)}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Outstanding</p>
-          <p className="text-lg sm:text-xl font-bold text-red-600">{formatCurrency(totalOutstanding)}</p>
+          <p className="text-lg sm:text-page-title text-red-600">{formatCurrency(totalOutstanding)}</p>
         </div>
       </div>
 
@@ -144,7 +144,7 @@ export default function VendorPaymentsPage() {
           {vendors.filter(v => v.outstanding > 0).map(vendor => (
             <div key={vendor.id} className="bg-red-50 rounded-lg p-3">
               <p className="text-sm font-medium text-gray-900">{vendor.name}</p>
-              <p className="text-lg font-bold text-red-600">{formatCurrency(vendor.outstanding)}</p>
+              <p className="text-section text-red-600">{formatCurrency(vendor.outstanding)}</p>
             </div>
           ))}
           {vendors.every(v => v.outstanding === 0) && (
@@ -225,7 +225,7 @@ export default function VendorPaymentsPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md">
             <div className="p-5 border-b flex items-center justify-between">
-              <h2 className="text-xl font-bold">Record Payment</h2>
+              <h2 className="text-page-title">Record Payment</h2>
               <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
@@ -300,14 +300,14 @@ export default function VendorPaymentsPage() {
             <div className="p-5 border-b flex items-center justify-between">
               <div>
                 <span className="font-mono text-green-600">{selectedPayment.paymentNo}</span>
-                <h2 className="text-xl font-bold">Payment Details</h2>
+                <h2 className="text-page-title">Payment Details</h2>
               </div>
               <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <div className="p-5 space-y-4">
               <div className="text-center bg-green-50 rounded-xl p-4">
                 <p className="text-sm text-gray-600">Amount Paid</p>
-                <p className="text-3xl font-bold text-green-600">{formatCurrency(selectedPayment.amount)}</p>
+                <p className="text-page-title text-green-600">{formatCurrency(selectedPayment.amount)}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

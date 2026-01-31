@@ -20,7 +20,7 @@ export default function MarketingDispatchPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">My Dispatched Orders</h1>
+      <h1 className="text-page-title text-gray-900">My Dispatched Orders</h1>
       <p className="text-gray-500">Track delivery status and commissions for your orders.</p>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

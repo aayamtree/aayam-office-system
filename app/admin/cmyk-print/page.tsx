@@ -63,7 +63,7 @@ export default function CMYKPrintPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">CMYK Print Station</h1>
+          <h1 className="text-page-title text-gray-900">CMYK Print Station</h1>
           <p className="text-gray-500">Welcome, {profile?.full_name || 'Operator'} | Ready for Production</p>
         </div>
         <DriveConnectionStatus />
@@ -78,7 +78,7 @@ export default function CMYKPrintPage() {
                 <stat.icon size={20} className="text-white" />
               </div>
             </div>
-            <p className="text-2xl lg:text-3xl font-bold text-gray-900">
+            <p className="text-2xl lg:text-page-title text-gray-900">
               {loading ? '...' : stat.value}
             </p>
             <p className="text-xs lg:text-sm text-gray-500 mt-1">{stat.label}</p>
@@ -96,7 +96,7 @@ export default function CMYKPrintPage() {
               <ShoppingCart size={24} className="text-green-600" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Retail POS</h2>
+              <h2 className="text-section text-gray-900">Retail POS</h2>
               <p className="text-sm text-gray-500">Quick billing</p>
             </div>
           </div>
@@ -109,7 +109,7 @@ export default function CMYKPrintPage() {
               <Package size={24} className="text-blue-600" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Paper Stock</h2>
+              <h2 className="text-section text-gray-900">Paper Stock</h2>
               <p className="text-sm text-gray-500">Inventory</p>
             </div>
           </div>
@@ -126,7 +126,7 @@ export default function CMYKPrintPage() {
         {/* Recent Sales */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Sales</h2>
+            <h2 className="text-section text-gray-900">Recent Sales</h2>
             <Link href="/admin/cmyk-print/retail-pos" className="text-sm text-oms-blue hover:underline">
               View All →
             </Link>
@@ -152,7 +152,7 @@ export default function CMYKPrintPage() {
         {/* Pending Jobs */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Pending Jobs</h2>
+            <h2 className="text-section text-gray-900">Pending Jobs</h2>
             <Link href="/admin/jobs/queue" className="text-sm text-oms-blue hover:underline">
               View All →
             </Link>
@@ -190,7 +190,7 @@ export default function CMYKPrintPage() {
               <Package size={20} className={lowStockItems.length > 0 ? 'text-red-600' : 'text-green-600'} />
             </div>
             <div>
-              <h2 className={`text-base sm:text-lg font-semibold ${lowStockItems.length > 0 ? 'text-red-900' : 'text-green-900'}`}>
+              <h2 className={`text-base sm:text-section ${lowStockItems.length > 0 ? 'text-red-900' : 'text-green-900'}`}>
                 {lowStockItems.length > 0 ? 'Low Stock Alert' : 'Stock Levels Good'}
               </h2>
               <p className={`text-sm ${lowStockItems.length > 0 ? 'text-red-600' : 'text-green-600'}`}>

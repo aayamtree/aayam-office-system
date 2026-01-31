@@ -112,7 +112,7 @@ export default function ClientsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/crm" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden"><ArrowLeft size={20} /></Link>
-          <div><h1 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900">Clients</h1><p className="text-xs md:text-sm text-gray-500">{filteredClients.length} clients</p></div>
+          <div><h1 className="text-lg md:text-xl lg:text-page-title text-gray-900">Clients</h1><p className="text-xs md:text-sm text-gray-500">{filteredClients.length} clients</p></div>
         </div>
         {profile?.role !== 'marketing' && (
           <button onClick={handleAddNew} className="flex items-center justify-center gap-2 bg-gray-900 text-white px-3 md:px-4 py-2 md:py-2.5 rounded-xl hover:bg-gray-800 transition-colors shadow-lg shadow-gray-900/20 text-sm md:text-base"><Plus size={16} className="md:hidden" /><Plus size={18} className="hidden md:block" /><span>Add Client</span></button>
@@ -134,7 +134,7 @@ export default function ClientsPage() {
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center shrink-0">
-                      <span className="text-oms-blue font-bold text-lg">{client.name?.charAt(0)}</span>
+                      <span className="text-oms-blue text-section">{client.name?.charAt(0)}</span>
                     </div>
                     <div>
                       <h3 className="font-bold text-gray-900 leading-tight mobile-card-title">{client.name}</h3>
@@ -273,7 +273,7 @@ export default function ClientsPage() {
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
-            <div className="flex items-center justify-between p-4 border-b"><h2 className="text-lg font-semibold text-gray-900">{isEditing ? 'Edit Client' : 'Add Client'}</h2><button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button></div>
+            <div className="flex items-center justify-between p-4 border-b"><h2 className="text-section text-gray-900">{isEditing ? 'Edit Client' : 'Add Client'}</h2><button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button></div>
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-1 text-gray-700">Name *</label><input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" /></div><div><label className="block text-sm font-medium mb-1 text-gray-700">Company</label><input type="text" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} className="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" /></div></div>
               <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-1 text-gray-700">Phone *</label><input type="tel" required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })} className="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" /></div><div><label className="block text-sm font-medium mb-1 text-gray-700">Email</label><input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" /></div></div>
@@ -289,9 +289,9 @@ export default function ClientsPage() {
       {showViewModal && selectedClient && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg animate-scale-in">
-            <div className="flex items-center justify-between p-4 border-b"><h2 className="text-lg font-semibold text-gray-900">Client Details</h2><button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button></div>
+            <div className="flex items-center justify-between p-4 border-b"><h2 className="text-section text-gray-900">Client Details</h2><button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button></div>
             <div className="p-4 space-y-4">
-              <div className="flex items-center gap-4"><div className="w-16 h-16 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center"><span className="text-oms-blue font-bold text-2xl">{selectedClient.name?.charAt(0)}</span></div><div><h3 className="text-xl font-semibold text-gray-900">{selectedClient.name}</h3><p className="text-gray-500">{selectedClient.company}</p></div></div>
+              <div className="flex items-center gap-4"><div className="w-16 h-16 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center"><span className="text-oms-blue font-bold text-2xl">{selectedClient.name?.charAt(0)}</span></div><div><h3 className="text-section text-gray-900">{selectedClient.name}</h3><p className="text-gray-500">{selectedClient.company}</p></div></div>
               <div className="space-y-3 p-4 bg-gray-50 rounded-xl"><div className="flex items-center gap-3"><Phone size={16} className="text-gray-400" /><span className="text-gray-700">{selectedClient.phone}</span></div>{selectedClient.email && <div className="flex items-center gap-3"><Mail size={16} className="text-gray-400" /><span className="text-gray-700">{selectedClient.email}</span></div>}{selectedClient.address && <div className="flex items-center gap-3"><MapPin size={16} className="text-gray-400" /><span className="text-gray-700">{selectedClient.address}, {selectedClient.city}</span></div>}{selectedClient.gstin && <div className="flex items-center gap-3"><Building2 size={16} className="text-gray-400" /><span className="text-gray-700">GSTIN: {selectedClient.gstin}</span></div>}</div>
               <div className="flex gap-3"><button onClick={() => { setShowViewModal(false); handleEdit(selectedClient); }} className="flex-1 px-4 py-2.5 border rounded-xl hover:bg-gray-50 transition-colors">Edit</button><button onClick={() => setShowViewModal(false)} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors">Close</button></div>
             </div>

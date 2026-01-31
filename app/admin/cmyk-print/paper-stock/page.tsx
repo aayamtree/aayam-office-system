@@ -165,7 +165,7 @@ export default function PaperStockPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Paper Stock</h1>
+            <h1 className="text-xl lg:text-page-title text-gray-900">Paper Stock</h1>
             <p className="text-sm text-gray-500">{stock.length} items in inventory</p>
           </div>
         </div>
@@ -185,7 +185,7 @@ export default function PaperStockPage() {
             <Package size={16} className="text-green-600" />
             <span className="text-xs text-green-600 font-medium">In Stock</span>
           </div>
-          <p className="text-2xl font-bold text-green-700">
+          <p className="text-page-title text-green-700">
             {loading ? '...' : stock.length - lowStockCount - outOfStockCount}
           </p>
         </div>
@@ -194,21 +194,21 @@ export default function PaperStockPage() {
             <TrendingDown size={16} className="text-amber-600" />
             <span className="text-xs text-amber-600 font-medium">Low Stock</span>
           </div>
-          <p className="text-2xl font-bold text-amber-700">{loading ? '...' : lowStockCount}</p>
+          <p className="text-page-title text-amber-700">{loading ? '...' : lowStockCount}</p>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-1">
             <AlertTriangle size={16} className="text-red-600" />
             <span className="text-xs text-red-600 font-medium">Out of Stock</span>
           </div>
-          <p className="text-2xl font-bold text-red-700">{loading ? '...' : outOfStockCount}</p>
+          <p className="text-page-title text-red-700">{loading ? '...' : outOfStockCount}</p>
         </div>
         <div className="bg-[rgba(0,0,255,0.1)] border border-[rgba(0,0,255,0.2)]-200 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-1">
             <TrendingUp size={16} className="text-oms-blue" />
             <span className="text-xs text-oms-blue font-medium">Stock Value</span>
           </div>
-          <p className="text-2xl font-bold text-oms-blue">
+          <p className="text-page-title text-oms-blue">
             {loading ? '...' : `₹${totalValue.toLocaleString()}`}
           </p>
         </div>
@@ -308,7 +308,7 @@ export default function PaperStockPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-section text-gray-900">
                 {isEditing ? 'Edit Item' : 'Add New Item'}
               </h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
@@ -432,7 +432,7 @@ export default function PaperStockPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Restock Item</h2>
+              <h2 className="text-section text-gray-900">Restock Item</h2>
               <button onClick={() => setShowRestockModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
                 <X size={20} />
               </button>
@@ -450,7 +450,7 @@ export default function PaperStockPage() {
                   type="number"
                   value={restockQty}
                   onChange={(e) => setRestockQty(e.target.value)}
-                  className="w-full px-4 py-3 text-xl font-bold border border-gray-200 rounded-xl text-center focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 text-page-title border border-gray-200 rounded-xl text-center focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="0"
                   autoFocus
                 />

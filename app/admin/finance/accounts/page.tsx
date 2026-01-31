@@ -20,7 +20,7 @@ export default function AccountsPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Accounts</h1>
+                    <h1 className="text-page-title text-gray-900">Accounts</h1>
                     <p className="text-gray-500">Manage bank accounts and cash registers</p>
                 </div>
                 <div className="flex gap-3">
@@ -37,15 +37,15 @@ export default function AccountsPage() {
             {/* Total Balance Summary */}
             <div className="bg-oms-blue rounded-2xl p-6 text-white shadow-lg">
                 <h2 className="text-sm font-medium opacity-90 mb-2">Total Available Balance</h2>
-                <p className="text-4xl font-bold">₹{grandTotal.toLocaleString()}</p>
+                <p className="text-page-title">₹{grandTotal.toLocaleString()}</p>
                 <div className="mt-4 flex gap-6 text-sm">
                     <div>
                         <p className="opacity-75">Bank Accounts</p>
-                        <p className="text-xl font-bold">₹{totalBankBalance.toLocaleString()}</p>
+                        <p className="text-page-title">₹{totalBankBalance.toLocaleString()}</p>
                     </div>
                     <div>
                         <p className="opacity-75">Cash</p>
-                        <p className="text-xl font-bold">₹{totalCashBalance.toLocaleString()}</p>
+                        <p className="text-page-title">₹{totalCashBalance.toLocaleString()}</p>
                     </div>
                 </div>
             </div>
@@ -58,7 +58,7 @@ export default function AccountsPage() {
                             <Building2 className="text-blue-600" size={20} />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-gray-900">Bank Accounts</h2>
+                            <h2 className="text-section text-gray-900">Bank Accounts</h2>
                             <p className="text-sm text-gray-500">{bankAccounts.length} accounts</p>
                         </div>
                     </div>
@@ -86,12 +86,12 @@ export default function AccountsPage() {
                                         <div className="flex items-center gap-2 mb-1">
                                             <h3 className="font-bold text-gray-900">{account.name}</h3>
                                             {account.is_default && (
-                                                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                                                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-label rounded-full">
                                                     Default
                                                 </span>
                                             )}
                                             {!account.is_active && (
-                                                <span className="px-2 py-0.5 bg-gray-200 text-gray-600 text-xs font-medium rounded-full">
+                                                <span className="px-2 py-0.5 bg-gray-200 text-gray-600 text-label rounded-full">
                                                     Inactive
                                                 </span>
                                             )}
@@ -106,7 +106,7 @@ export default function AccountsPage() {
                                         )}
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-2xl font-bold text-gray-900">
+                                        <p className="text-page-title text-gray-900">
                                             ₹{(account.current_balance || 0).toLocaleString()}
                                         </p>
                                         <a
@@ -131,7 +131,7 @@ export default function AccountsPage() {
                             <Wallet className="text-green-600" size={20} />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-gray-900">Cash Accounts</h2>
+                            <h2 className="text-section text-gray-900">Cash Accounts</h2>
                             <p className="text-sm text-gray-500">{cashAccounts.length} cash registers</p>
                         </div>
                     </div>
@@ -162,7 +162,7 @@ export default function AccountsPage() {
                                         )}
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-2xl font-bold text-gray-900">
+                                        <p className="text-page-title text-gray-900">
                                             ₹{(account.current_balance || 0).toLocaleString()}
                                         </p>
                                         <div className="flex gap-2 mt-2">
@@ -249,7 +249,7 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
                 <div className="p-5 border-b flex justify-between items-center">
-                    <h2 className="text-xl font-bold">Add Bank Account</h2>
+                    <h2 className="text-page-title">Add Bank Account</h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-black">✕</button>
                 </div>
 
@@ -389,7 +389,7 @@ function AddCashAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
                 <div className="p-5 border-b flex justify-between items-center">
-                    <h2 className="text-xl font-bold">Add Cash Account</h2>
+                    <h2 className="text-page-title">Add Cash Account</h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-black">✕</button>
                 </div>
 

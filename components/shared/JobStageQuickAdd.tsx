@@ -102,7 +102,7 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
                             <Layers size={24} className="text-teal-600" />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-gray-900">Add Job Stage</h3>
+                            <h3 className="text-page-title text-gray-900">Add Job Stage</h3>
                             <p className="text-sm text-gray-600">Create new workflow stage</p>
                         </div>
                     </div>

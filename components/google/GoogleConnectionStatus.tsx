@@ -42,11 +42,11 @@ export default function GoogleConnectionStatus() {
         return (
             <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
                 <XCircle className="w-4 h-4 text-amber-600" />
-                <span className="text-xs font-medium text-amber-900">Google: Disconnected</span>
+                <span className="text-label text-amber-900">Google: Disconnected</span>
                 {isAdmin ? (
                     <button
                         onClick={() => signIn('google', { callbackUrl: window.location.href })}
-                        className="ml-auto px-3 py-1 bg-amber-600 text-white text-xs font-medium rounded hover:bg-amber-700 transition-colors flex items-center gap-1"
+                        className="ml-auto px-3 py-1 bg-amber-600 text-white text-label rounded hover:bg-amber-700 transition-colors flex items-center gap-1"
                     >
                         <Shield className="w-3 h-3" />
                         Connect
@@ -69,13 +69,13 @@ export default function GoogleConnectionStatus() {
         return (
             <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
                 <XCircle className="w-4 h-4 text-amber-600" />
-                <span className="text-xs font-medium text-amber-900">
+                <span className="text-label text-amber-900">
                     {missing.join(' & ')}: Disconnected
                 </span>
                 {isAdmin ? (
                     <button
                         onClick={() => signIn('google', { callbackUrl: window.location.href })}
-                        className="ml-auto px-3 py-1 bg-amber-600 text-white text-xs font-medium rounded hover:bg-amber-700 transition-colors flex items-center gap-1"
+                        className="ml-auto px-3 py-1 bg-amber-600 text-white text-label rounded hover:bg-amber-700 transition-colors flex items-center gap-1"
                     >
                         <Shield className="w-3 h-3" />
                         Reconnect
@@ -93,7 +93,7 @@ export default function GoogleConnectionStatus() {
     return (
         <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
             <CheckCircle className="w-4 h-4 text-green-600" />
-            <div className="flex items-center gap-1.5 text-xs font-medium text-green-900">
+            <div className="flex items-center gap-1.5 text-label text-green-900">
                 <span>Google:</span>
                 <span className="opacity-75">📅 Cal</span>
                 <span className="opacity-75">📁 Drive</span>

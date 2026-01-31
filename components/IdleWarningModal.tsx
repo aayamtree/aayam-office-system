@@ -23,7 +23,7 @@ export function IdleWarningModal({ show, onStayLoggedIn, onLogout }: IdleWarning
                 </div>
 
                 {/* Title */}
-                <h2 className="text-xl font-bold text-gray-900 text-center mb-2">
+                <h2 className="text-page-title text-gray-900 text-center mb-2">
                     Still there?
                 </h2>
 

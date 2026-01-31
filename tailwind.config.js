@@ -25,7 +25,7 @@ module.exports = {
 
       // Typography - Design System
       fontFamily: {
-        sans: ['Inter', 'Roboto', 'Arial', 'sans-serif'],
+        sans: ['"Google Sans"', '"Product Sans"', 'Roboto', 'Arial', 'sans-serif'],
       },
       fontSize: {
         // Design System Typography

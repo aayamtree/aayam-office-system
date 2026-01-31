@@ -28,7 +28,7 @@ export default function EmergencyLogin() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-red-50">
             <div className="text-center p-8 bg-white rounded-xl shadow-xl">
-                <h1 className="text-2xl font-bold text-red-600 mb-4">Emergency Access Mode</h1>
+                <h1 className="text-page-title text-red-600 mb-4">Emergency Access Mode</h1>
                 <p className="text-gray-600 mb-4">Injecting admin session...</p>
                 <div className="animate-spin w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full mx-auto"></div>
             </div>

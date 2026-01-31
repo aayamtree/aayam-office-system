@@ -101,7 +101,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                             <Building2 size={24} className="text-green-600" />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-gray-900">Quick Add Vendor</h3>
+                            <h3 className="text-page-title text-gray-900">Quick Add Vendor</h3>
                             <p className="text-sm text-gray-600">Add a new vendor to the system</p>
                         </div>
                     </div>

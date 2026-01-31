@@ -102,7 +102,7 @@ export default function FinanceReportPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Finance Report</h1>
+            <h1 className="text-xl lg:text-page-title text-gray-900">Finance Report</h1>
             <p className="text-sm text-gray-500">Income, expenses & profit analysis</p>
           </div>
         </div>
@@ -165,28 +165,28 @@ export default function FinanceReportPage() {
             <TrendingUp size={18} />
             <span className="text-sm opacity-90">Total Income</span>
           </div>
-          <p className="text-2xl font-bold">₹{(totalIncome / 1000).toFixed(1)}K</p>
+          <p className="text-page-title">₹{(totalIncome / 1000).toFixed(1)}K</p>
         </div>
         <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <TrendingDown size={18} />
             <span className="text-sm opacity-90">Total Expense</span>
           </div>
-          <p className="text-2xl font-bold">₹{(totalExpense / 1000).toFixed(1)}K</p>
+          <p className="text-page-title">₹{(totalExpense / 1000).toFixed(1)}K</p>
         </div>
         <div className={`bg-gradient-to-br ${netProfit >= 0 ? 'from-blue-500 to-blue-600' : 'from-orange-500 to-orange-600'} rounded-2xl p-4 text-white`}>
           <div className="flex items-center gap-2 mb-2">
             <IndianRupee size={18} />
             <span className="text-sm opacity-90">Net Profit</span>
           </div>
-          <p className="text-2xl font-bold">₹{(netProfit / 1000).toFixed(1)}K</p>
+          <p className="text-page-title">₹{(netProfit / 1000).toFixed(1)}K</p>
         </div>
         <div className="bg-oms-blue rounded-2xl p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <PieChart size={18} />
             <span className="text-sm opacity-90">Profit Margin</span>
           </div>
-          <p className="text-2xl font-bold">{profitMargin}%</p>
+          <p className="text-page-title">{profitMargin}%</p>
         </div>
       </div>
 
@@ -200,11 +200,11 @@ export default function FinanceReportPage() {
             <table className="w-full">
               <thead className="bg-gray-50 sticky top-0">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Category</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Description</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">Amount</th>
+                  <th className="px-4 py-3 text-left text-label text-gray-500">Date</th>
+                  <th className="px-4 py-3 text-left text-label text-gray-500">Type</th>
+                  <th className="px-4 py-3 text-left text-label text-gray-500">Category</th>
+                  <th className="px-4 py-3 text-left text-label text-gray-500">Description</th>
+                  <th className="px-4 py-3 text-right text-label text-gray-500">Amount</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">

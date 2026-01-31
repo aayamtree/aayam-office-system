@@ -74,7 +74,7 @@ export default function MarketingPaymentsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Payment Status</h1>
+          <h1 className="text-page-title text-gray-900">Payment Status</h1>
           <p className="text-gray-500">Track payment status for your orders</p>
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-2 rounded-lg">
@@ -87,19 +87,19 @@ export default function MarketingPaymentsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl shadow-sm border p-4">
           <p className="text-sm text-gray-500">Total Orders</p>
-          <p className="text-2xl font-bold text-gray-900">{totalOrders}</p>
+          <p className="text-page-title text-gray-900">{totalOrders}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-4">
           <p className="text-sm text-gray-500">Total Amount</p>
-          <p className="text-2xl font-bold text-indigo-600">{formatCurrency(totalAmount)}</p>
+          <p className="text-page-title text-indigo-600">{formatCurrency(totalAmount)}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-4">
           <p className="text-sm text-gray-500">Received</p>
-          <p className="text-2xl font-bold text-green-600">{formatCurrency(totalPaid)}</p>
+          <p className="text-page-title text-green-600">{formatCurrency(totalPaid)}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-4">
           <p className="text-sm text-gray-500">Pending</p>
-          <p className="text-2xl font-bold text-amber-600">{formatCurrency(totalPending)}</p>
+          <p className="text-page-title text-amber-600">{formatCurrency(totalPending)}</p>
         </div>
       </div>
 
@@ -143,7 +143,7 @@ export default function MarketingPaymentsPage() {
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-right">
-                    <p className="font-bold text-lg text-gray-900">{formatCurrency(payment.totalAmount)}</p>
+                    <p className="text-section text-gray-900">{formatCurrency(payment.totalAmount)}</p>
                     <p className="text-xs text-gray-500">
                       Paid: <span className="text-green-600 font-medium">{formatCurrency(payment.paidAmount)}</span>
                     </p>
@@ -190,7 +190,7 @@ export default function MarketingPaymentsPage() {
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
               <div>
                 <span className="font-mono text-indigo-600">{selectedPayment.orderId}</span>
-                <h2 className="text-xl font-bold">{selectedPayment.subject}</h2>
+                <h2 className="text-page-title">{selectedPayment.subject}</h2>
               </div>
               <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
@@ -202,7 +202,7 @@ export default function MarketingPaymentsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Status</p>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(selectedPayment.status)}`}>
+                  <span className={`px-2 py-0.5 rounded-full text-label ${getStatusBadge(selectedPayment.status)}`}>
                     {getStatusName(selectedPayment.status)}
                   </span>
                 </div>

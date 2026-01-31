@@ -196,7 +196,7 @@ export default function PaymentsPage() {
         <div className="flex items-center gap-3">
           <Link href="/admin/finance" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden"><ArrowLeft size={20} /></Link>
           <div>
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Payments</h1>
+            <h1 className="text-xl lg:text-page-title text-gray-900">Payments</h1>
             <p className="text-sm text-gray-500">{filteredPayments.length} transactions</p>
           </div>
         </div>
@@ -210,13 +210,13 @@ export default function PaymentsPage() {
           <div className="flex items-center gap-2 mb-2 text-green-700 font-medium">
             <ArrowDownRight size={20} /> Total Received
           </div>
-          <p className="text-2xl font-bold text-green-700">{formatCurrency(totalReceived)}</p>
+          <p className="text-page-title text-green-700">{formatCurrency(totalReceived)}</p>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2 text-red-700 font-medium">
             <ArrowUpRight size={20} /> Total Paid
           </div>
-          <p className="text-2xl font-bold text-red-700">{formatCurrency(totalPaid)}</p>
+          <p className="text-page-title text-red-700">{formatCurrency(totalPaid)}</p>
         </div>
       </div>
 
@@ -245,7 +245,7 @@ export default function PaymentsPage() {
                     {p.type === 'received' ? <ArrowDownRight size={14} /> : <ArrowUpRight size={14} />}
                     {p.type === 'received' ? 'Received' : 'Paid'}
                   </span>
-                  <div className={`text-lg font-bold ${p.type === 'received' ? 'text-green-700' : 'text-red-700'}`}>
+                  <div className={`text-section ${p.type === 'received' ? 'text-green-700' : 'text-red-700'}`}>
                     {formatCurrency(p.amount)}
                   </div>
                 </div>
@@ -292,12 +292,12 @@ export default function PaymentsPage() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Type</th>
-                  <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Party</th>
-                  <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Amount</th>
-                  <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Mode</th>
-                  <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Date</th>
-                  <th className="text-right px-6 py-4 text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Type</th>
+                  <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Party</th>
+                  <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Amount</th>
+                  <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Mode</th>
+                  <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Date</th>
+                  <th className="text-right px-6 py-4 text-label text-gray-500 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -336,7 +336,7 @@ export default function PaymentsPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-lg font-semibold">Record Payment</h2>
+              <h2 className="text-section">Record Payment</h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-4 space-y-4">

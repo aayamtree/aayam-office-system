@@ -69,7 +69,7 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
                 {/* Header */}
                 <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                     <div>
-                        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                        <h2 className="text-page-title text-gray-900 flex items-center gap-2">
                             <CheckSquare className="text-oms-blue" size={24} />
                             Quality Checklist
                         </h2>

@@ -425,7 +425,7 @@ export default function InvoicesPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900">Invoices</h1>
+            <h1 className="text-lg md:text-xl lg:text-page-title text-gray-900">Invoices</h1>
             <p className="text-xs md:text-sm text-gray-500">{filteredInvoices.length} invoices • Outstanding: {formatCurrency(totalOutstanding)}</p>
           </div>
         </div>
@@ -485,8 +485,8 @@ export default function InvoicesPage() {
           { status: 'overdue', label: 'Overdue', bg: 'bg-red-100 border-red-200', text: 'text-red-700' },
         ].map((item) => (
           <div key={item.status} className={`rounded-lg md:rounded-xl p-2 md:p-3 text-center border ${item.bg}`}>
-            <p className={`text-lg md:text-xl font-bold ${item.text}`}>{invoices.filter(i => i.payment_status === item.status).length}</p>
-            <p className={`text-[10px] md:text-xs font-medium ${item.text}`}>{item.label}</p>
+            <p className={`text-lg md:text-page-title ${item.text}`}>{invoices.filter(i => i.payment_status === item.status).length}</p>
+            <p className={`text-[10px] md:text-label ${item.text}`}>{item.label}</p>
           </div>
         ))}
       </div>
@@ -586,12 +586,12 @@ export default function InvoicesPage() {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Invoice</th>
-                    <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Client</th>
-                    <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Amount</th>
-                    <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Due Date</th>
-                    <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="text-right px-6 py-4 text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Invoice</th>
+                    <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Client</th>
+                    <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Amount</th>
+                    <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Due Date</th>
+                    <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Status</th>
+                    <th className="text-right px-6 py-4 text-label text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -648,7 +648,7 @@ export default function InvoicesPage() {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between p-5 border-b border-gray-100 sticky top-0 bg-white z-10">
-                <h2 className="text-xl font-bold text-gray-900">
+                <h2 className="text-page-title text-gray-900">
                   {isEditing ? 'Edit Invoice' : 'New Invoice'}
                 </h2>
                 <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
@@ -846,7 +846,7 @@ export default function InvoicesPage() {
             <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between p-6 border-b border-gray-100">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">{selectedInvoice.invoice_number}</h2>
+                  <h2 className="text-page-title text-gray-900">{selectedInvoice.invoice_number}</h2>
                   <div className="flex items-center gap-2 mt-1">
                     <p className="text-sm text-gray-500">{new Date(selectedInvoice.invoice_date).toLocaleDateString()}</p>
                     {selectedInvoice.payment_status === 'overdue' && (

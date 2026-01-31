@@ -86,7 +86,7 @@ export default function AdminEODDashboard() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Team EOD Reports</h1>
+                    <h1 className="text-page-title text-gray-900">Team EOD Reports</h1>
                     <p className="text-sm text-gray-500 mt-1">Monitor daily work status and accountability</p>
                 </div>
                 <Link
@@ -104,7 +104,7 @@ export default function AdminEODDashboard() {
                         <CheckCircle size={18} className="text-green-600" />
                         <span className="text-sm text-gray-500">Today Submitted</span>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900">{todaySubmitted}</p>
+                    <p className="text-page-title text-gray-900">{todaySubmitted}</p>
                     <p className="text-xs text-gray-400 mt-1">of {submissionStatus.length} total</p>
                 </div>
 
@@ -113,7 +113,7 @@ export default function AdminEODDashboard() {
                         <AlertCircle size={18} className="text-amber-600" />
                         <span className="text-sm text-gray-500">Pending Today</span>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900">{todayPending}</p>
+                    <p className="text-page-title text-gray-900">{todayPending}</p>
                     <p className="text-xs text-gray-400 mt-1">waiting for EOD</p>
                 </div>
 
@@ -122,7 +122,7 @@ export default function AdminEODDashboard() {
                         <TrendingUp size={18} className="text-blue-600" />
                         <span className="text-sm text-gray-500">Total Submissions</span>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900">{totalSubmissions}</p>
+                    <p className="text-page-title text-gray-900">{totalSubmissions}</p>
                     <p className="text-xs text-gray-400 mt-1">in selected period</p>
                 </div>
 
@@ -131,14 +131,14 @@ export default function AdminEODDashboard() {
                         <Clock size={18} className="text-oms-blue" />
                         <span className="text-sm text-gray-500">Avg Work Hours</span>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900">{avgWorkHours}</p>
+                    <p className="text-page-title text-gray-900">{avgWorkHours}</p>
                     <p className="text-xs text-gray-400 mt-1">per day</p>
                 </div>
             </div>
 
             {/* Today's Submission Status */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Today&apos;s Status</h2>
+                <h2 className="text-section text-gray-900 mb-4">Today&apos;s Status</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {submissionStatus.map(status => (
                         <div
@@ -320,7 +320,7 @@ export default function AdminEODDashboard() {
                                         {/* Hashtags */}
                                         {report.tags && report.tags.length > 0 && (
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="text-xs font-medium text-gray-500">Tags:</span>
+                                                <span className="text-label text-gray-500">Tags:</span>
                                                 {report.tags.map((tag: string) => (
                                                     <span key={tag} className="px-2 py-0.5 bg-[rgba(0,0,255,0.1)] text-oms-blue text-xs rounded-full">
                                                         {tag}

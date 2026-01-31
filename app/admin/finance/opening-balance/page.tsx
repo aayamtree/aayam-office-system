@@ -70,7 +70,7 @@ export default function OpeningBalancePage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Opening Balance</h1>
+            <h1 className="text-page-title text-gray-900">Opening Balance</h1>
             <p className="text-gray-500">FY {openingBalance.financialYear}</p>
           </div>
         </div>
@@ -120,7 +120,7 @@ export default function OpeningBalancePage() {
             </div>
             <span className="text-gray-600">Cash Opening</span>
           </div>
-          <p className="text-2xl font-bold text-green-600">{formatCurrency(openingBalance.cash)}</p>
+          <p className="text-page-title text-green-600">{formatCurrency(openingBalance.cash)}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-4">
           <div className="flex items-center gap-3 mb-2">
@@ -129,7 +129,7 @@ export default function OpeningBalancePage() {
             </div>
             <span className="text-gray-600">Bank Opening</span>
           </div>
-          <p className="text-2xl font-bold text-blue-600">{formatCurrency(totalBankBalance)}</p>
+          <p className="text-page-title text-blue-600">{formatCurrency(totalBankBalance)}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-4">
           <div className="flex items-center gap-3 mb-2">
@@ -138,7 +138,7 @@ export default function OpeningBalancePage() {
             </div>
             <span className="text-gray-600">Total Opening</span>
           </div>
-          <p className="text-2xl font-bold text-oms-blue">{formatCurrency(totalOpeningBalance)}</p>
+          <p className="text-page-title text-oms-blue">{formatCurrency(totalOpeningBalance)}</p>
         </div>
       </div>
 
@@ -148,17 +148,17 @@ export default function OpeningBalancePage() {
           <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
             <Wallet className="text-green-600" size={20} />
           </div>
-          <h2 className="text-lg font-semibold text-gray-900">Cash Opening Balance</h2>
+          <h2 className="text-section text-gray-900">Cash Opening Balance</h2>
         </div>
         {isEditing ? (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Opening Cash Balance (₹)</label>
             <input type="number" value={editData.cash}
               onChange={(e) => setEditData({ ...editData, cash: parseFloat(e.target.value) || 0 })}
-              className="w-full px-4 py-3 border rounded-lg text-lg font-semibold focus:ring-2 focus:ring-green-500" />
+              className="w-full px-4 py-3 border rounded-lg text-section focus:ring-2 focus:ring-green-500" />
           </div>
         ) : (
-          <div className="text-3xl font-bold text-green-600">{formatCurrency(openingBalance.cash)}</div>
+          <div className="text-page-title text-green-600">{formatCurrency(openingBalance.cash)}</div>
         )}
       </div>
 
@@ -169,7 +169,7 @@ export default function OpeningBalancePage() {
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
               <Building className="text-blue-600" size={20} />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">Bank Opening Balances</h2>
+            <h2 className="text-section text-gray-900">Bank Opening Balances</h2>
           </div>
           <Link href="/admin/finance/banks" className="text-sm text-oms-blue hover:underline">
             Manage Bank Accounts →
@@ -188,7 +188,7 @@ export default function OpeningBalancePage() {
                   onChange={(e) => handleBankBalanceChange(bank.id, parseFloat(e.target.value) || 0)}
                   className="w-40 px-3 py-2 border rounded-lg text-right font-semibold focus:ring-2 focus:ring-blue-500" />
               ) : (
-                <span className="text-lg font-bold text-blue-600">{formatCurrency(bank.balance)}</span>
+                <span className="text-section text-blue-600">{formatCurrency(bank.balance)}</span>
               )}
             </div>
           ))}
@@ -196,7 +196,7 @@ export default function OpeningBalancePage() {
         
         <div className="mt-4 pt-4 border-t flex justify-between">
           <span className="font-semibold text-gray-700">Total Bank Balance</span>
-          <span className="text-xl font-bold text-blue-600">
+          <span className="text-page-title text-blue-600">
             {formatCurrency(isEditing 
               ? editData.banks.reduce((sum, b) => sum + b.balance, 0) 
               : totalBankBalance)}

@@ -29,7 +29,7 @@ export default function CalendarPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">📅 My Calendar</h1>
+                    <h1 className="text-page-title text-gray-900">📅 My Calendar</h1>
                     <p className="text-gray-600 mt-1">Manage your personal schedule and tasks</p>
                 </div>
 
@@ -73,7 +73,7 @@ export default function CalendarPage() {
                             >
                                 <div className="text-center mb-2">
                                     <div className="text-xs text-gray-500">{format(day, 'EEE')}</div>
-                                    <div className={`text-lg font-bold ${isToday ? 'text-oms-blue' : 'text-gray-900'}`}>
+                                    <div className={`text-section ${isToday ? 'text-oms-blue' : 'text-gray-900'}`}>
                                         {format(day, 'd')}
                                     </div>
                                 </div>
@@ -174,7 +174,7 @@ function EventCard({ event, showDate, onToggle, onDelete }: {
                             {event.title}
                         </h3>
                         {!isCompleted && (
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${priorityColors[event.priority]
+                            <span className={`px-2 py-0.5 rounded text-label whitespace-nowrap ${priorityColors[event.priority]
                                 }`}>
                                 {event.priority}
                             </span>

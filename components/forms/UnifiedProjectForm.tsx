@@ -192,7 +192,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                     {/* Header */}
                     <div className="bg-oms-blue p-6 text-white flex items-center justify-between">
                         <div>
-                            <h3 className="text-2xl font-bold flex items-center gap-3">
+                            <h3 className="text-page-title flex items-center gap-3">
                                 <FolderOpen size={28} />
                                 {existingJob ? 'Edit Project' : 'Create New Project'}
                             </h3>

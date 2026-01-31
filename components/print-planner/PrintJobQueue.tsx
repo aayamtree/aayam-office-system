@@ -94,7 +94,7 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                         <Package className="text-oms-blue" size={20} />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold text-gray-900">Pending Print Jobs</h2>
+                        <h2 className="text-page-title text-gray-900">Pending Print Jobs</h2>
                         <p className="text-sm text-gray-500">Ready for print assignment</p>
                     </div>
                 </div>

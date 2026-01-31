@@ -456,7 +456,7 @@ export default function QuotationsPage() {
           { status: 'expired', bg: 'bg-amber-100 border-amber-200', text: 'text-amber-700' },
         ].map((item) => (
           <div key={item.status} className={`rounded-xl p-3 text-center border ${item.bg}`}>
-            <p className={`text-2xl font-bold ${item.text}`}>{quotations.filter(q => q.status === item.status).length}</p>
+            <p className={`text-page-title ${item.text}`}>{quotations.filter(q => q.status === item.status).length}</p>
             <p className={`text-xs capitalize font-medium ${item.text}`}>{item.status}</p>
           </div>
         ))}
@@ -574,13 +574,13 @@ export default function QuotationsPage() {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Quotation</th>
-                    <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Client</th>
-                    <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Items</th>
-                    <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Amount</th>
-                    <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Valid Until</th>
-                    <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="text-right px-6 py-4 text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Quotation</th>
+                    <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Client</th>
+                    <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Items</th>
+                    <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Amount</th>
+                    <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Valid Until</th>
+                    <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Status</th>
+                    <th className="text-right px-6 py-4 text-label text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">

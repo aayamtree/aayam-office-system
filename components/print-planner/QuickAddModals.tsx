@@ -42,7 +42,7 @@ export function QuickAddMachine({
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
             <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6">
-                <h4 className="text-lg font-bold text-gray-900 mb-4">Add New Machine</h4>
+                <h4 className="text-section text-gray-900 mb-4">Add New Machine</h4>
 
                 {error && (
                     <div className="bg-red-50 border-2 border-red-200 rounded-xl p-3 text-red-700 mb-4 text-sm">
@@ -126,7 +126,7 @@ export function QuickAddSheetSize({
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
             <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6">
-                <h4 className="text-lg font-bold text-gray-900 mb-4">Add New Sheet Size</h4>
+                <h4 className="text-section text-gray-900 mb-4">Add New Sheet Size</h4>
 
                 {error && (
                     <div className="bg-red-50 border-2 border-red-200 rounded-xl p-3 text-red-700 mb-4 text-sm">
@@ -211,7 +211,7 @@ export function QuickAddMaterial({
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
             <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6">
-                <h4 className="text-lg font-bold text-gray-900 mb-4">Add New Material</h4>
+                <h4 className="text-section text-gray-900 mb-4">Add New Material</h4>
 
                 {error && (
                     <div className="bg-red-50 border-2 border-red-200 rounded-xl p-3 text-red-700 mb-4 text-sm">

@@ -51,7 +51,7 @@ export default function MarketingDashboard() {
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Marketing Dashboard</h1>
+          <h1 className="text-2xl lg:text-page-title text-gray-900">Marketing Dashboard</h1>
           <p className="text-gray-500 mt-1">Welcome back, {profile?.full_name || 'Marketer'}. Here is your daily focus.</p>
         </div>
         <DriveConnectionStatus />
@@ -65,7 +65,7 @@ export default function MarketingDashboard() {
             <Calendar size={20} />
             <span className="font-medium">Today&apos;s Follow-ups</span>
           </div>
-          <div className="text-4xl font-bold">{todayFollowUps.length}</div>
+          <div className="text-page-title">{todayFollowUps.length}</div>
           <div className="mt-4 text-sm bg-white/20 inline-block px-3 py-1 rounded-full backdrop-blur-sm">
             Action Required
           </div>
@@ -82,7 +82,7 @@ export default function MarketingDashboard() {
             <Clock size={20} />
             <span className="font-medium">Overdue Tasks</span>
           </div>
-          <div className="text-4xl font-bold text-gray-900">{overdueFollowUps.length}</div>
+          <div className="text-page-title text-gray-900">{overdueFollowUps.length}</div>
           <p className="mt-2 text-sm text-gray-500">Missed follow-ups</p>
         </div>
 
@@ -92,7 +92,7 @@ export default function MarketingDashboard() {
             <Users size={20} />
             <span className="font-medium">New Leads</span>
           </div>
-          <div className="text-4xl font-bold text-gray-900">{newLeads.length}</div>
+          <div className="text-page-title text-gray-900">{newLeads.length}</div>
           <p className="mt-2 text-sm text-gray-500">Waiting for contact</p>
         </div>
 
@@ -102,7 +102,7 @@ export default function MarketingDashboard() {
             <TrendingUp size={20} />
             <span className="font-medium">Converted</span>
           </div>
-          <div className="text-4xl font-bold text-gray-900">{convertedLeads.length}</div>
+          <div className="text-page-title text-gray-900">{convertedLeads.length}</div>
           <p className="mt-2 text-sm text-gray-500">Successful deals</p>
         </div>
       </div>
@@ -111,7 +111,7 @@ export default function MarketingDashboard() {
         {/* Action List: Today's Follow-ups */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
           <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <h2 className="text-section text-gray-900 flex items-center gap-2">
               <Calendar size={18} className="text-oms-blue" /> Today&apos;s Calls
             </h2>
             <span className="text-sm text-gray-500">{today}</span>
@@ -151,7 +151,7 @@ export default function MarketingDashboard() {
         {/* Action List: Overdue (Urgent) */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
           <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-red-50/50">
-            <h2 className="text-lg font-bold text-red-700 flex items-center gap-2">
+            <h2 className="text-section text-red-700 flex items-center gap-2">
               <AlertCircle size={18} /> Overdue ({overdueFollowUps.length})
             </h2>
           </div>

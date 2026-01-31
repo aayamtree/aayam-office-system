@@ -186,7 +186,7 @@ export default function QuickExpensePage() {
                     <ArrowLeft size={20} />
                 </button>
                 <div className="min-w-0">
-                    <h1 className="text-xl md:text-2xl font-bold truncate">Quick Expense Entry</h1>
+                    <h1 className="text-xl md:text-page-title truncate">Quick Expense Entry</h1>
                     <p className="text-sm md:text-base text-gray-500 line-clamp-1">Record expenses quickly without full vendor flow</p>
                 </div>
             </div>
@@ -196,7 +196,7 @@ export default function QuickExpensePage() {
                 {/* Main Form */}
                 <div className="lg:col-span-2">
                     <div className="bg-white rounded-xl border p-4 md:p-6 shadow-sm">
-                        <h2 className="text-lg font-bold mb-4">Add New Expense</h2>
+                        <h2 className="text-section mb-4">Add New Expense</h2>
 
                         {success && (
                             <div className="mb-4 p-3 md:p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-sm md:text-base text-green-800">

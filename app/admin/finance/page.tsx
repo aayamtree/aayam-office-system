@@ -30,7 +30,7 @@ export default function FinancePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">Finance</h1>
+          <h1 className="text-2xl lg:text-page-title text-gray-900 tracking-tight">Finance</h1>
           <p className="text-gray-500 mt-1">Manage invoices, payments & transactions</p>
         </div>
         <div className="flex gap-3">
@@ -114,7 +114,7 @@ export default function FinancePage() {
                 <stat.icon size={22} className="text-white" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+            <p className="text-page-title text-gray-900">{stat.value}</p>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-1">{stat.label}</p>
             <p className={`text-xs mt-2 font-bold px-2 py-1 rounded-full w-fit ${stat.trend === 'up' ? 'text-green-700 bg-green-50' :
               stat.trend === 'warning' ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50'
@@ -131,11 +131,11 @@ export default function FinancePage() {
               <FileText size={28} className="text-blue-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Invoices</h2>
+              <h2 className="text-section text-gray-900">Invoices</h2>
               <p className="text-sm font-medium text-gray-500">156 total invoices</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-xs font-medium">
+          <div className="flex items-center gap-3 text-label">
             <span className="text-green-700 bg-green-50 px-2.5 py-1 rounded-full">132 Paid</span>
             <span className="text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full">12 Pending</span>
             <span className="text-red-700 bg-red-50 px-2.5 py-1 rounded-full">12 Overdue</span>
@@ -148,11 +148,11 @@ export default function FinancePage() {
               <CreditCard size={28} className="text-oms-blue" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Purchases</h2>
+              <h2 className="text-section text-gray-900">Purchases</h2>
               <p className="text-sm font-medium text-gray-500">Vendors & Bills</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-xs font-medium">
+          <div className="flex items-center gap-3 text-label">
             <span className="text-oms-blue bg-[rgba(0,0,255,0.1)] px-2.5 py-1 rounded-full">34 Vendors</span>
             <span className="text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">Manage Bills</span>
           </div>
@@ -164,11 +164,11 @@ export default function FinancePage() {
               <CreditCard size={28} className="text-green-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Payments</h2>
+              <h2 className="text-section text-gray-900">Payments</h2>
               <p className="text-sm font-medium text-gray-500">Track all transactions</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-xs font-medium">
+          <div className="flex items-center gap-3 text-label">
             <span className="text-green-700 bg-green-50 px-2.5 py-1 rounded-full">₹4.5L Received</span>
             <span className="text-red-700 bg-red-50 px-2.5 py-1 rounded-full">₹95K Paid</span>
           </div>
@@ -182,7 +182,7 @@ export default function FinancePage() {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="w-1 h-6 bg-[rgba(0,0,255,0.1)] rounded-full"></div>
-              <h2 className="text-lg font-bold text-gray-900">Recent Transactions</h2>
+              <h2 className="text-section text-gray-900">Recent Transactions</h2>
             </div>
             <Link href="/admin/finance/payments" className="text-sm font-medium text-oms-blue hover:text-oms-blue bg-[rgba(0,0,255,0.1)] px-3 py-1.5 rounded-lg transition-colors">
               View All
@@ -202,7 +202,7 @@ export default function FinancePage() {
                   </div>
                   <div>
                     <p className="font-bold text-gray-900">{tx.client}</p>
-                    <p className="text-xs font-medium text-gray-500">{tx.method} • {tx.date}</p>
+                    <p className="text-label text-gray-500">{tx.method} • {tx.date}</p>
                   </div>
                 </div>
                 <span className={`font-bold ${tx.type === 'received' ? 'text-green-600' : 'text-red-600'
@@ -219,7 +219,7 @@ export default function FinancePage() {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="w-1 h-6 bg-red-500 rounded-full"></div>
-              <h2 className="text-lg font-bold text-gray-900">Overdue Invoices</h2>
+              <h2 className="text-section text-gray-900">Overdue Invoices</h2>
             </div>
             <span className="px-3 py-1 bg-red-100 text-red-700 text-xs rounded-full font-bold uppercase tracking-wider">
               {overdueInvoices.length} overdue
@@ -235,7 +235,7 @@ export default function FinancePage() {
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-gray-900 text-lg">{inv.amount}</p>
-                  <p className="text-xs font-medium text-gray-500">Due: {inv.dueDate}</p>
+                  <p className="text-label text-gray-500">Due: {inv.dueDate}</p>
                 </div>
               </div>
             ))}
@@ -253,24 +253,24 @@ export default function FinancePage() {
       <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-gray-100">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-1 h-6 bg-gray-900 rounded-full"></div>
-          <h2 className="text-lg font-bold text-gray-900">Monthly Summary</h2>
+          <h2 className="text-section text-gray-900">Monthly Summary</h2>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-4 bg-green-50 border border-green-100 rounded-2xl hover:shadow-sm transition-shadow">
             <p className="text-xs sm:text-sm font-semibold text-green-600 mb-1 uppercase tracking-wider">Total Invoiced</p>
-            <p className="text-xl sm:text-2xl font-bold text-green-700">₹5,25,000</p>
+            <p className="text-xl sm:text-page-title text-green-700">₹5,25,000</p>
           </div>
           <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl hover:shadow-sm transition-shadow">
             <p className="text-xs sm:text-sm font-semibold text-blue-600 mb-1 uppercase tracking-wider">Collected</p>
-            <p className="text-xl sm:text-2xl font-bold text-blue-700">₹4,50,000</p>
+            <p className="text-xl sm:text-page-title text-blue-700">₹4,50,000</p>
           </div>
           <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl hover:shadow-sm transition-shadow">
             <p className="text-xs sm:text-sm font-semibold text-amber-600 mb-1 uppercase tracking-wider">Pending</p>
-            <p className="text-xl sm:text-2xl font-bold text-amber-700">₹75,000</p>
+            <p className="text-xl sm:text-page-title text-amber-700">₹75,000</p>
           </div>
           <div className="p-4 bg-red-50 border border-red-100 rounded-2xl hover:shadow-sm transition-shadow">
             <p className="text-xs sm:text-sm font-semibold text-red-600 mb-1 uppercase tracking-wider">Expenses</p>
-            <p className="text-xl sm:text-2xl font-bold text-red-700">₹1,85,000</p>
+            <p className="text-xl sm:text-page-title text-red-700">₹1,85,000</p>
           </div>
         </div>
       </div>

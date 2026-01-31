@@ -113,7 +113,7 @@ export default function MyNotes() {
             <div className="max-w-7xl mx-auto p-6">
                 {/* Header - Responsive */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900">My Notes</h1>
+                    <h1 className="text-2xl md:text-page-title text-gray-900">My Notes</h1>
                     <button
                         onClick={createNote}
                         className="flex items-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-xl hover:bg-oms-blue text-sm font-medium w-full sm:w-auto justify-center"

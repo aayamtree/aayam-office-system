@@ -94,7 +94,7 @@ export default function BroadcastPage() {
         <div className="p-6 max-w-6xl mx-auto">
             {/* Header */}
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <h1 className="text-page-title text-gray-900 flex items-center gap-3">
                     <Bell className="text-oms-blue" size={32} />
                     Broadcast Notifications
                 </h1>
@@ -105,7 +105,7 @@ export default function BroadcastPage() {
 
             {/* Send Form */}
             <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Send Broadcast</h2>
+                <h2 className="text-page-title text-gray-900 mb-4">Send Broadcast</h2>
 
                 <form onSubmit={handleSend} className="space-y-4">
                     {/* Message */}
@@ -194,7 +194,7 @@ export default function BroadcastPage() {
 
             {/* Notification History */}
             <div className="bg-white rounded-xl shadow-lg p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <h2 className="text-page-title text-gray-900 mb-4 flex items-center gap-2">
                     <Clock size={20} />
                     Recent Broadcasts
                 </h2>

@@ -150,7 +150,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
                     <div>
-                        <h2 className="text-xl font-bold text-gray-900">Categorize Transaction</h2>
+                        <h2 className="text-page-title text-gray-900">Categorize Transaction</h2>
                         <p className="text-sm text-gray-500 mt-1">Verify and assign category</p>
                     </div>
                     <button
@@ -172,7 +172,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                         </div>
                         <div>
                             <p className="text-xs text-gray-500 uppercase tracking-wide">Amount</p>
-                            <p className={`font-bold text-lg ${(transaction as any).transaction_type === 'inflow' ? 'text-green-600' : 'text-red-600'}`}>
+                            <p className={`text-section ${(transaction as any).transaction_type === 'inflow' ? 'text-green-600' : 'text-red-600'}`}>
                                 {(transaction as any).transaction_type === 'inflow' ? '+' : '-'}₹{transaction.amount.toLocaleString('en-IN')}
                             </p>
                         </div>

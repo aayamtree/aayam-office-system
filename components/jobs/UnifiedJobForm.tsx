@@ -229,7 +229,7 @@ export default function UnifiedJobForm({
                 <div className="flex items-center justify-between mb-6 pb-4 border-b">
                     <div className="flex items-center gap-3">
                         <Briefcase className="text-oms-blue" size={24} />
-                        <h2 className="text-2xl font-bold text-gray-900">
+                        <h2 className="text-page-title text-gray-900">
                             {editingJob ? 'Edit Job' : 'New Job'}
                         </h2>
                     </div>
@@ -242,7 +242,7 @@ export default function UnifiedJobForm({
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* SECTION 1: Project Basics - ALL ROLES */}
                 <div className="space-y-4 bg-oms-blue rounded-xl p-6 border-2 border-[rgba(0,0,255,0.2)]-200">
-                    <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">
+                    <h3 className="text-section text-gray-900 flex items-center gap-2">
                         <span className="bg-[rgba(0,0,255,0.1)] text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">1</span>
                         Project Basics
                     </h3>
@@ -302,7 +302,7 @@ export default function UnifiedJobForm({
 
                 {/* SECTION 2: Project Parameters - ALL ROLES */}
                 <div className="space-y-4 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-6 border-2 border-orange-200">
-                    <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">
+                    <h3 className="text-section text-gray-900 flex items-center gap-2">
                         <span className="bg-orange-600 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">2</span>
                         Project Parameters
                     </h3>
@@ -369,7 +369,7 @@ export default function UnifiedJobForm({
                 {/* SECTION 3: Financial Details - ADMIN ONLY */}
                 {isAdmin && (
                     <div className="space-y-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-200">
-                        <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">
+                        <h3 className="text-section text-gray-900 flex items-center gap-2">
                             <span className="bg-green-600 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">3</span>
                             Financial Details
                             <span className="ml-auto text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full">Admin Only</span>
@@ -472,7 +472,7 @@ export default function UnifiedJobForm({
 
                 {/* SECTION 4: Assets & Description - ALL ROLES */}
                 <div className="space-y-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border-2 border-blue-200">
-                    <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">
+                    <h3 className="text-section text-gray-900 flex items-center gap-2">
                         <span className="bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">{isAdmin ? '4' : '3'}</span>
                         Assets & Brief
                     </h3>

@@ -210,7 +210,7 @@ export default function BankingPage() {
             {/* Header - Responsive */}
             <div className="flex flex-col gap-3 md:gap-4">
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold text-gray-900">Bank Reconciliation</h1>
+                    <h1 className="text-xl md:text-page-title text-gray-900">Bank Reconciliation</h1>
                     <p className="text-sm md:text-base text-gray-500">Sync HDFC Bank with Aayam System</p>
                     {loadingTxns && <span className="text-xs text-indigo-500 ml-2">Loading Txns...</span>}
                     {loadingAccounts && <span className="text-xs text-indigo-500 ml-2">Loading Accounts...</span>}
@@ -309,17 +309,17 @@ export default function BankingPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
                 <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm">
                     <p className="text-xs md:text-sm text-gray-500">Bank Balance (System)</p>
-                    <p className="text-xl md:text-2xl font-bold text-gray-900 truncate">₹{(bankAccounts.find(b => b.id === selectedAccountId)?.current_balance || 0).toLocaleString()}</p>
+                    <p className="text-xl md:text-page-title text-gray-900 truncate">₹{(bankAccounts.find(b => b.id === selectedAccountId)?.current_balance || 0).toLocaleString()}</p>
                 </div>
                 <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm">
                     <p className="text-xs md:text-sm text-gray-500">Need Categorization</p>
-                    <p className="text-xl md:text-2xl font-bold text-orange-600">
+                    <p className="text-xl md:text-page-title text-orange-600">
                         {reconciledData.filter(r => !r.is_verified && r.status === 'unmatched_bank').length}
                     </p>
                 </div>
                 <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm">
                     <p className="text-xs md:text-sm text-gray-500">Verified</p>
-                    <p className="text-xl md:text-2xl font-bold text-green-600">
+                    <p className="text-xl md:text-page-title text-green-600">
                         {reconciledData.filter(r => r.is_verified).length}
                     </p>
                 </div>
@@ -355,7 +355,7 @@ export default function BankingPage() {
                                     <td className="px-4 py-3 text-center">
                                         {txn.is_verified ? (
                                             <div className="flex flex-col items-center gap-1">
-                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-label">
                                                     <CheckCircle size={12} /> Verified
                                                 </span>
                                                 {getCategoryName(txn) && (
@@ -365,15 +365,15 @@ export default function BankingPage() {
                                                 )}
                                             </div>
                                         ) : txn.status === 'matched' ? (
-                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-label">
                                                 <CheckCircle size={12} /> Matched
                                             </span>
                                         ) : txn.status === 'ignored' ? (
-                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-200 text-gray-600 rounded-full text-xs font-medium">
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-200 text-gray-600 rounded-full text-label">
                                                 <EyeOff size={12} /> Ignored
                                             </span>
                                         ) : (
-                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-full text-label">
                                                 <AlertTriangle size={12} /> Missing
                                             </span>
                                         )}
@@ -458,7 +458,7 @@ export default function BankingPage() {
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl animate-scale-in">
                         <div className="p-5 border-b flex justify-between">
-                            <h2 className="text-lg font-bold">Import HDFC Statement</h2>
+                            <h2 className="text-section">Import HDFC Statement</h2>
                             <button onClick={() => setShowImportModal(false)} className="text-gray-500 hover:text-black">✕</button>
                         </div>
                         <div className="p-5">

@@ -240,7 +240,7 @@ export default function OrdersPage() {
             <ArrowLeft size={20} className="text-gray-600" />
           </Link>
           <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">Orders</h1>
+            <h1 className="text-2xl lg:text-page-title text-gray-900 tracking-tight">Orders</h1>
             <p className="text-sm text-gray-500 mt-1">{filteredJobs.length} orders found</p>
           </div>
         </div>
@@ -384,7 +384,7 @@ export default function OrdersPage() {
                       <td className="px-6 py-4 align-top">
                         <div className="font-bold text-gray-900">{formatCurrency(job.total_amount)}</div>
                         {job.payment_status !== 'paid' && (
-                          <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full mt-1 inline-block">
+                          <span className="text-label text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full mt-1 inline-block">
                             Due: {formatCurrency(job.total_amount - job.amount_received)}
                           </span>
                         )}
@@ -604,7 +604,7 @@ export default function OrdersPage() {
 
             <div className="p-6 space-y-6">
               <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div className="w-12 h-12 rounded-full bg-[rgba(0,0,255,0.1)] flex items-center justify-center text-oms-blue font-bold text-lg">
+                <div className="w-12 h-12 rounded-full bg-[rgba(0,0,255,0.1)] flex items-center justify-center text-oms-blue text-section">
                   {selectedJob.client?.company?.charAt(0) || 'C'}
                 </div>
                 <div>

@@ -42,7 +42,7 @@ export default function ActivityFeed({ variant = 'card' }: { variant?: 'card' | 
         <Container className={containerClasses}>
             <div className="flex items-center gap-2 mb-4">
                 <Activity size={20} className="text-oms-blue" />
-                <h2 className="text-lg font-bold text-gray-900">Activity Feed</h2>
+                <h2 className="text-section text-gray-900">Activity Feed</h2>
             </div>
 
             <div className="space-y-6 relative pl-2">

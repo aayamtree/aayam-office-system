@@ -99,7 +99,7 @@ export default function VendorsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/finance" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden"><ArrowLeft size={20} /></Link>
-          <div><h1 className="text-xl lg:text-2xl font-bold text-gray-900">Vendors</h1><p className="text-sm text-gray-500">{filteredVendors.length} vendors</p></div>
+          <div><h1 className="text-xl lg:text-page-title text-gray-900">Vendors</h1><p className="text-sm text-gray-500">{filteredVendors.length} vendors</p></div>
         </div>
         <div className="flex gap-2">
           <Link href="/admin/finance/vendors/purchases" className="flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-200 px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-colors">
@@ -129,7 +129,7 @@ export default function VendorsPage() {
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center shrink-0">
-                      <span className="text-orange-600 font-bold text-lg">{vendor.name?.charAt(0)}</span>
+                      <span className="text-orange-600 text-section">{vendor.name?.charAt(0)}</span>
                     </div>
                     <div>
                       <h3 className="font-bold text-gray-900 leading-tight mobile-card-title">{vendor.name}</h3>
@@ -265,7 +265,7 @@ export default function VendorsPage() {
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b"><h2 className="text-lg font-semibold">{isEditing ? 'Edit Vendor' : 'Add Vendor'}</h2><button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button></div>
+            <div className="flex items-center justify-between p-4 border-b"><h2 className="text-section">{isEditing ? 'Edit Vendor' : 'Add Vendor'}</h2><button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button></div>
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-1">Name *</label><input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border rounded-xl" /></div><div><label className="block text-sm font-medium mb-1">Company</label><input type="text" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} className="w-full px-3 py-2 border rounded-xl" /></div></div>
               <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-1">Phone *</label><input type="tel" required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })} className="w-full px-3 py-2 border rounded-xl" /></div><div><label className="block text-sm font-medium mb-1">Email</label><input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border rounded-xl" /></div></div>
@@ -281,9 +281,9 @@ export default function VendorsPage() {
       {showViewModal && selectedVendor && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg">
-            <div className="flex items-center justify-between p-4 border-b"><h2 className="text-lg font-semibold">Vendor Details</h2><button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button></div>
+            <div className="flex items-center justify-between p-4 border-b"><h2 className="text-section">Vendor Details</h2><button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button></div>
             <div className="p-4 space-y-4">
-              <div className="flex items-center gap-4"><div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center"><span className="text-orange-600 font-bold text-2xl">{selectedVendor.name?.charAt(0)}</span></div><div><h3 className="text-xl font-semibold">{selectedVendor.name}</h3><p className="text-gray-500">{selectedVendor.company}</p><span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${getCategoryColor(selectedVendor.category || 'Paper')}`}>{selectedVendor.category}</span></div></div>
+              <div className="flex items-center gap-4"><div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center"><span className="text-orange-600 font-bold text-2xl">{selectedVendor.name?.charAt(0)}</span></div><div><h3 className="text-section">{selectedVendor.name}</h3><p className="text-gray-500">{selectedVendor.company}</p><span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${getCategoryColor(selectedVendor.category || 'Paper')}`}>{selectedVendor.category}</span></div></div>
               <div className="space-y-3 p-4 bg-gray-50 rounded-xl"><div className="flex items-center gap-3"><Phone size={16} className="text-gray-400" /><span>{selectedVendor.phone}</span></div>{selectedVendor.email && <div className="flex items-center gap-3"><Mail size={16} className="text-gray-400" /><span>{selectedVendor.email}</span></div>}{selectedVendor.address && <div className="flex items-center gap-3"><MapPin size={16} className="text-gray-400" /><span>{selectedVendor.address}, {selectedVendor.city}</span></div>}{selectedVendor.gstin && <div className="flex items-center gap-3"><Building2 size={16} className="text-gray-400" /><span>GSTIN: {selectedVendor.gstin}</span></div>}</div>
               <div className="flex gap-3">
                 <Link href="/admin/finance/vendors/purchases" className="flex-1 px-4 py-2.5 bg-[rgba(0,0,255,0.1)] text-oms-blue rounded-xl font-medium text-center hover:bg-[rgba(0,0,255,0.1)] flex items-center justify-center gap-2">

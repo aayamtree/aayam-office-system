@@ -120,7 +120,7 @@ export default function SalesOrdersPage() {
         <div className="space-y-6 animate-fade-in">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Sales Orders</h1>
+                    <h1 className="text-page-title text-gray-900">Sales Orders</h1>
                     <p className="text-gray-500">Manage incoming orders and initiate workflows.</p>
                 </div>
                 <button onClick={handleAddNew} className="flex items-center justify-center gap-2 bg-[rgba(0,0,255,0.1)] text-white px-4 py-2.5 rounded-xl hover:bg-[rgba(0,0,255,0.1)] transition-colors">
@@ -178,7 +178,7 @@ export default function SalesOrdersPage() {
                                     </td>
                                     <td className="p-4 font-medium text-gray-900">₹{so.total_amount}</td>
                                     <td className="p-4">
-                                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(so.status)}`}>
+                                        <span className={`px-2.5 py-1 rounded-full text-label ${getStatusColor(so.status)}`}>
                                             {so.status.replace(/_/g, ' ').toUpperCase()}
                                         </span>
                                     </td>
@@ -220,7 +220,7 @@ export default function SalesOrdersPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden animate-scale-in">
                         <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50">
-                            <h3 className="text-lg font-semibold text-gray-900">
+                            <h3 className="text-section text-gray-900">
                                 {isEditing ? 'Edit Order' : 'New Sales Order'}
                             </h3>
                             <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -255,7 +255,7 @@ export default function SalesOrdersPage() {
                                             }`}
                                     >
                                         <type.icon size={20} className="mb-1" />
-                                        <span className="text-xs font-medium">{type.label}</span>
+                                        <span className="text-label">{type.label}</span>
                                     </button>
                                 ))}
                             </div>

@@ -107,7 +107,7 @@ export default function JobQueuePage() {
           <ArrowLeft size={20} />
         </Link>
         <div>
-          <h1 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900">Job Queue</h1>
+          <h1 className="text-lg md:text-xl lg:text-page-title text-gray-900">Job Queue</h1>
           <p className="text-xs md:text-sm text-gray-500">{filteredJobs.length} jobs in system</p>
         </div>
       </div>
@@ -120,7 +120,7 @@ export default function JobQueuePage() {
             <Clock size={16} className="text-oms-blue hidden md:block" />
             <span className="text-[10px] md:text-xs text-oms-blue font-medium">Design Stage</span>
           </div>
-          <p className="text-xl md:text-2xl font-bold text-oms-blue">{designCount}</p>
+          <p className="text-xl md:text-page-title text-oms-blue">{designCount}</p>
         </div>
         <div className="bg-blue-50 border border-blue-200 rounded-lg md:rounded-xl p-2 md:p-3">
           <div className="flex items-center gap-1 md:gap-2 mb-1">
@@ -128,7 +128,7 @@ export default function JobQueuePage() {
             <Printer size={16} className="text-blue-600 hidden md:block" />
             <span className="text-[10px] md:text-xs text-blue-600 font-medium">In Production</span>
           </div>
-          <p className="text-xl md:text-2xl font-bold text-blue-700">{productionCount}</p>
+          <p className="text-xl md:text-page-title text-blue-700">{productionCount}</p>
         </div>
         <div className="bg-green-50 border border-green-200 rounded-lg md:rounded-xl p-2 md:p-3">
           <div className="flex items-center gap-1 md:gap-2 mb-1">
@@ -136,7 +136,7 @@ export default function JobQueuePage() {
             <CheckCircle size={16} className="text-green-600 hidden md:block" />
             <span className="text-[10px] md:text-xs text-green-600 font-medium">Dispatched</span>
           </div>
-          <p className="text-xl md:text-2xl font-bold text-green-700">{dispatchedCount}</p>
+          <p className="text-xl md:text-page-title text-green-700">{dispatchedCount}</p>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-lg md:rounded-xl p-2 md:p-3">
           <div className="flex items-center gap-1 md:gap-2 mb-1">
@@ -144,7 +144,7 @@ export default function JobQueuePage() {
             <AlertTriangle size={16} className="text-red-600 hidden md:block" />
             <span className="text-[10px] md:text-xs text-red-600 font-medium">High Priority</span>
           </div>
-          <p className="text-xl md:text-2xl font-bold text-red-700">{urgentCount}</p>
+          <p className="text-xl md:text-page-title text-red-700">{urgentCount}</p>
         </div>
       </div>
 
@@ -224,7 +224,7 @@ export default function JobQueuePage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Job Details</h2>
+              <h2 className="text-section text-gray-900">Job Details</h2>
               <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
                 <X size={20} />
               </button>
@@ -232,7 +232,7 @@ export default function JobQueuePage() {
 
             <div className="p-4 space-y-4">
               <div className={`p-4 rounded-xl text-center capitalize ${selectedJob.current_stage === 'delivered' ? 'bg-green-50 text-green-700' : selectedJob.current_stage === 'dispatched' ? 'bg-orange-50 text-orange-700' : 'bg-blue-50 text-blue-700'}`}>
-                <p className="text-lg font-semibold">{selectedJob.current_stage}</p>
+                <p className="text-section">{selectedJob.current_stage}</p>
               </div>
 
               <div className="space-y-2">
@@ -259,7 +259,7 @@ export default function JobQueuePage() {
                         onClick={() => handleStageSelect(status)}
                         title={`Move to ${status}`}
                       >
-                        <div className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap capitalize transition-all transform group-hover:scale-105 ${isCurrent ? 'bg-[rgba(0,0,255,0.1)] text-white shadow-md ring-2 ring-indigo-200' :
+                        <div className={`px-3 py-1.5 rounded-lg text-label whitespace-nowrap capitalize transition-all transform group-hover:scale-105 ${isCurrent ? 'bg-[rgba(0,0,255,0.1)] text-white shadow-md ring-2 ring-indigo-200' :
                           isCompleted ? 'bg-green-100 text-green-700 hover:bg-green-200' :
                             'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
                           }`}>

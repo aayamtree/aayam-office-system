@@ -71,7 +71,7 @@ export default function SalesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">Sales Overview</h1>
+          <h1 className="text-2xl lg:text-page-title text-gray-900 tracking-tight">Sales Overview</h1>
           <p className="text-gray-500 mt-1">Manage leads, quotations, and orders</p>
         </div>
         <Link
@@ -92,11 +92,11 @@ export default function SalesPage() {
                 <stat.icon size={22} className="text-white" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-gray-900">
+            <p className="text-page-title text-gray-900">
               {loading ? '...' : stat.value}
             </p>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-1">{stat.label}</p>
-            <p className="text-xs font-medium text-gray-500 mt-2 bg-gray-100 w-fit px-2 py-1 rounded-full">{stat.change}</p>
+            <p className="text-label text-gray-500 mt-2 bg-gray-100 w-fit px-2 py-1 rounded-full">{stat.change}</p>
           </div>
         ))}
       </div>
@@ -109,11 +109,11 @@ export default function SalesPage() {
               <Users size={28} className="text-amber-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Leads</h2>
+              <h2 className="text-section text-gray-900">Leads</h2>
               <p className="text-sm font-medium text-gray-500">{activeLeadsCount} active leads</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-xs font-medium text-gray-500">
+          <div className="flex items-center gap-3 text-label text-gray-500">
             <span>View all leads &rarr;</span>
           </div>
         </Link>
@@ -124,11 +124,11 @@ export default function SalesPage() {
               <FileText size={28} className="text-oms-blue" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Quotations</h2>
+              <h2 className="text-section text-gray-900">Quotations</h2>
               <p className="text-sm font-medium text-gray-500">{pendingQuotesCount} pending</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-xs font-medium text-gray-500">
+          <div className="flex items-center gap-3 text-label text-gray-500">
             <span>View all quotations &rarr;</span>
           </div>
         </Link>
@@ -139,11 +139,11 @@ export default function SalesPage() {
               <ShoppingCart size={28} className="text-blue-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Orders</h2>
+              <h2 className="text-section text-gray-900">Orders</h2>
               <p className="text-sm font-medium text-gray-500">{dashboardStats.activeJobs} active orders</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-xs font-medium text-gray-500">
+          <div className="flex items-center gap-3 text-label text-gray-500">
             <span>View all orders &rarr;</span>
           </div>
         </Link>
@@ -155,7 +155,7 @@ export default function SalesPage() {
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-1 h-6 bg-[rgba(0,0,255,0.05)]0 rounded-full"></div>
-            <h2 className="text-lg font-bold text-gray-900">Order Pipeline</h2>
+            <h2 className="text-section text-gray-900">Order Pipeline</h2>
           </div>
           <div className="space-y-5">
             {pipeline.map((item) => (
@@ -177,7 +177,7 @@ export default function SalesPage() {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
-              <h2 className="text-lg font-bold text-gray-900">Recent Orders</h2>
+              <h2 className="text-section text-gray-900">Recent Orders</h2>
             </div>
             <Link href="/admin/sales/orders" className="text-sm font-medium text-oms-blue hover:text-oms-blue bg-[rgba(0,0,255,0.05)] px-3 py-1.5 rounded-lg transition-colors">
               View All
@@ -192,7 +192,7 @@ export default function SalesPage() {
                   </div>
                   <div>
                     <p className="font-bold text-gray-900 text-sm">{order.job_number}</p>
-                    <p className="text-xs font-medium text-gray-500">{order.client?.company}</p>
+                    <p className="text-label text-gray-500">{order.client?.company}</p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -211,7 +211,7 @@ export default function SalesPage() {
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-1 h-6 bg-amber-500 rounded-full"></div>
-          <h2 className="text-lg font-bold text-gray-900">Pending Actions</h2>
+          <h2 className="text-section text-gray-900">Pending Actions</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link href="/admin/sales/leads" className="flex items-center gap-4 p-4 bg-amber-50/80 rounded-2xl border border-amber-100 transition-colors hover:bg-amber-100 cursor-pointer">

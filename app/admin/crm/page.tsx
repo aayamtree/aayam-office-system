@@ -15,7 +15,7 @@ export default function CRMPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">CRM</h1>
+          <h1 className="text-2xl lg:text-page-title text-gray-900 tracking-tight">CRM</h1>
           <p className="text-gray-500 mt-1">Manage your clients</p>
         </div>
         <Link
@@ -36,9 +36,9 @@ export default function CRMPage() {
                 <stat.icon size={22} className="text-white" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+            <p className="text-page-title text-gray-900">{stat.value}</p>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-1">{stat.label}</p>
-            <p className="text-xs font-medium text-green-600 mt-2 bg-green-50 w-fit px-2 py-1 rounded-full">{stat.change}</p>
+            <p className="text-label text-green-600 mt-2 bg-green-50 w-fit px-2 py-1 rounded-full">{stat.change}</p>
           </div>
         ))}
       </div>
@@ -52,14 +52,14 @@ export default function CRMPage() {
               <Users size={28} className="text-blue-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Clients</h2>
+              <h2 className="text-section text-gray-900">Clients</h2>
               <p className="text-sm font-medium text-gray-500">156 total clients</p>
             </div>
           </div>
           <p className="text-gray-600 text-sm mb-4 leading-relaxed">
             Manage your client database, view contact details, and track order history.
           </p>
-          <div className="flex items-center gap-3 text-xs font-medium">
+          <div className="flex items-center gap-3 text-label">
             <span className="text-green-700 bg-green-50 px-2.5 py-1 rounded-full">142 Active</span>
             <span className="text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">14 Inactive</span>
           </div>
@@ -70,7 +70,7 @@ export default function CRMPage() {
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
-          <h2 className="text-lg font-bold text-gray-900">Recent Activity</h2>
+          <h2 className="text-section text-gray-900">Recent Activity</h2>
         </div>
         <div className="space-y-3">
           {[
@@ -89,9 +89,9 @@ export default function CRMPage() {
               </div>
               <div className="flex-1">
                 <p className="text-sm font-bold text-gray-900">{item.action}</p>
-                <p className="text-xs font-medium text-gray-500 mt-0.5">{item.name}</p>
+                <p className="text-label text-gray-500 mt-0.5">{item.name}</p>
               </div>
-              <span className="text-xs font-medium text-gray-400 bg-white px-2 py-1 rounded-md border border-gray-100 shadow-sm">{item.time}</span>
+              <span className="text-label text-gray-400 bg-white px-2 py-1 rounded-md border border-gray-100 shadow-sm">{item.time}</span>
             </div>
           ))}
         </div>

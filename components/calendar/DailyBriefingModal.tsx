@@ -59,7 +59,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                 <div className="bg-oms-blue p-6 text-white">
                     <div className="flex items-start justify-between">
                         <div className="flex-1">
-                            <h2 className="text-2xl font-bold mb-1">
+                            <h2 className="text-page-title mb-1">
                                 Good {getTimeOfDay()}, {profile?.full_name?.split(' ')[0] || 'User'}! 👋
                             </h2>
                             <p className="text-white/80">
@@ -77,15 +77,15 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                     {/* Quick Stats */}
                     <div className="grid grid-cols-3 gap-4 mt-6">
                         <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-                            <div className="text-3xl font-bold">{todayEvents.length}</div>
+                            <div className="text-page-title">{todayEvents.length}</div>
                             <div className="text-xs text-white/80">Tasks Today</div>
                         </div>
                         <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-                            <div className="text-3xl font-bold text-orange-200">{overdueEvents.length}</div>
+                            <div className="text-page-title text-orange-200">{overdueEvents.length}</div>
                             <div className="text-xs text-white/80">Overdue</div>
                         </div>
                         <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-                            <div className="text-3xl font-bold text-red-200">{urgentEvents.length}</div>
+                            <div className="text-page-title text-red-200">{urgentEvents.length}</div>
                             <div className="text-xs text-white/80">Urgent</div>
                         </div>
                     </div>
@@ -96,7 +96,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                     {totalPending === 0 ? (
                         <div className="text-center py-12">
                             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                            <h3 className="text-section text-gray-900 mb-2">
                                 All Caught Up! 🎉
                             </h3>
                             <p className="text-gray-600">
@@ -206,13 +206,13 @@ function TaskCard({ event, isOverdue, isTagged }: { event: any; isOverdue?: bool
                             {event.title}
                         </h4>
                         {!isCompleted && (
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${priorityColors[event.priority as keyof typeof priorityColors] || priorityColors.normal
+                            <span className={`px-2 py-0.5 rounded text-label whitespace-nowrap ${priorityColors[event.priority as keyof typeof priorityColors] || priorityColors.normal
                                 }`}>
                                 {event.priority}
                             </span>
                         )}
                         {isCompleted && (
-                            <span className="px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap bg-green-100 text-green-700">
+                            <span className="px-2 py-0.5 rounded text-label whitespace-nowrap bg-green-100 text-green-700">
                                 ✓ Done
                             </span>
                         )}

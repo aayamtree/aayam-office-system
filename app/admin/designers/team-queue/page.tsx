@@ -62,7 +62,7 @@ export default function TeamQueue() {
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="mb-4 md:mb-6">
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 md:mb-2">Team Queue</h1>
+                    <h1 className="text-2xl md:text-page-title text-gray-900 mb-1 md:mb-2">Team Queue</h1>
                     <p className="text-sm md:text-base text-gray-600">{filteredTasks.length} active tasks</p>
                 </div>
 
@@ -70,7 +70,7 @@ export default function TeamQueue() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
                     {designerCounts.map(d => (
                         <div key={d.id} className="bg-white p-4 rounded-xl border text-center">
-                            <div className="text-2xl font-bold text-oms-blue">{d.count}</div>
+                            <div className="text-page-title text-oms-blue">{d.count}</div>
                             <div className="text-sm text-gray-600 mt-1">{d.name}</div>
                         </div>
                     ))}
@@ -204,7 +204,7 @@ export default function TeamQueue() {
                                                 </div>
                                             </td>
                                             <td className="p-4">
-                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
+                                                <span className={`px-3 py-1 rounded-full text-label ${task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
                                                     task.priority === 'high' ? 'bg-orange-100 text-orange-700' :
                                                         'bg-gray-100 text-gray-700'
                                                     }`}>

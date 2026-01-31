@@ -90,7 +90,7 @@ export default function DispatchReportPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Dispatch Report</h1>
+            <h1 className="text-xl lg:text-page-title text-gray-900">Dispatch Report</h1>
             <p className="text-sm text-gray-500">Delivery & logistics tracking</p>
           </div>
         </div>
@@ -165,35 +165,35 @@ export default function DispatchReportPage() {
             <Truck size={18} />
             <span className="text-sm opacity-90">Total</span>
           </div>
-          <p className="text-2xl font-bold">{totalDispatched}</p>
+          <p className="text-page-title">{totalDispatched}</p>
         </div>
         <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle size={18} />
             <span className="text-sm opacity-90">Delivered</span>
           </div>
-          <p className="text-2xl font-bold">{delivered}</p>
+          <p className="text-page-title">{delivered}</p>
         </div>
         <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <Package size={18} />
             <span className="text-sm opacity-90">In Transit</span>
           </div>
-          <p className="text-2xl font-bold">{inTransit}</p>
+          <p className="text-page-title">{inTransit}</p>
         </div>
         <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <Package size={18} />
             <span className="text-sm opacity-90">Returned</span>
           </div>
-          <p className="text-2xl font-bold">{returned}</p>
+          <p className="text-page-title">{returned}</p>
         </div>
         <div className="bg-oms-blue rounded-2xl p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <Clock size={18} />
             <span className="text-sm opacity-90">Avg Days</span>
           </div>
-          <p className="text-2xl font-bold">{avgDeliveryDays}</p>
+          <p className="text-page-title">{avgDeliveryDays}</p>
         </div>
       </div>
 
@@ -207,12 +207,12 @@ export default function DispatchReportPage() {
             <table className="w-full">
               <thead className="bg-gray-50 sticky top-0">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Order</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Client</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Destination</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Transporter</th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500">Status</th>
+                  <th className="px-4 py-3 text-left text-label text-gray-500">Date</th>
+                  <th className="px-4 py-3 text-left text-label text-gray-500">Order</th>
+                  <th className="px-4 py-3 text-left text-label text-gray-500">Client</th>
+                  <th className="px-4 py-3 text-left text-label text-gray-500">Destination</th>
+                  <th className="px-4 py-3 text-left text-label text-gray-500">Transporter</th>
+                  <th className="px-4 py-3 text-center text-label text-gray-500">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">

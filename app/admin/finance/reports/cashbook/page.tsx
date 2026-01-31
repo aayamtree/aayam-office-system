@@ -163,7 +163,7 @@ export default function CashBookPage() {
                         <ArrowLeft size={20} />
                     </button>
                     <div className="min-w-0">
-                        <h1 className="text-xl md:text-2xl font-bold truncate">Cash Book Report</h1>
+                        <h1 className="text-xl md:text-page-title truncate">Cash Book Report</h1>
                         <p className="text-sm md:text-base text-gray-500 line-clamp-1">All cash movements across accounts</p>
                     </div>
                 </div>
@@ -201,7 +201,7 @@ export default function CashBookPage() {
                         <Wallet className="text-blue-600 flex-shrink-0" size={16} />
                         <p className="text-xs md:text-sm font-medium text-blue-900 truncate">Current Balance</p>
                     </div>
-                    <p className="text-lg md:text-2xl font-bold text-blue-900 truncate">₹{currentCashBalance.toLocaleString()}</p>
+                    <p className="text-lg md:text-page-title text-blue-900 truncate">₹{currentCashBalance.toLocaleString()}</p>
                 </div>
 
                 <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-3 md:p-4 border border-green-200">
@@ -209,7 +209,7 @@ export default function CashBookPage() {
                         <TrendingDown className="text-green-600 flex-shrink-0" size={16} />
                         <p className="text-xs md:text-sm font-medium text-green-900 truncate">Total Cash In</p>
                     </div>
-                    <p className="text-lg md:text-2xl font-bold text-green-900 truncate">₹{totalCashIn.toLocaleString()}</p>
+                    <p className="text-lg md:text-page-title text-green-900 truncate">₹{totalCashIn.toLocaleString()}</p>
                     <p className="text-xs text-green-700 mt-1 truncate">{transactions.filter(t => t.transaction_type === 'in').length} txns</p>
                 </div>
 
@@ -218,7 +218,7 @@ export default function CashBookPage() {
                         <TrendingUp className="text-red-600 flex-shrink-0" size={16} />
                         <p className="text-xs md:text-sm font-medium text-red-900 truncate">Total Cash Out</p>
                     </div>
-                    <p className="text-lg md:text-2xl font-bold text-red-900 truncate">₹{totalCashOut.toLocaleString()}</p>
+                    <p className="text-lg md:text-page-title text-red-900 truncate">₹{totalCashOut.toLocaleString()}</p>
                     <p className="text-xs text-red-700 mt-1 truncate">{transactions.filter(t => t.transaction_type === 'out').length} txns</p>
                 </div>
 
@@ -227,7 +227,7 @@ export default function CashBookPage() {
                         <TrendingUp className={`flex-shrink-0 ${netCash >= 0 ? 'text-oms-blue' : 'text-orange-600'}`} size={16} />
                         <p className={`text-xs md:text-sm font-medium truncate ${netCash >= 0 ? 'text-indigo-900' : 'text-orange-900'}`}>Net Change</p>
                     </div>
-                    <p className={`text-lg md:text-2xl font-bold truncate ${netCash >= 0 ? 'text-indigo-900' : 'text-orange-900'}`}>
+                    <p className={`text-lg md:text-page-title truncate ${netCash >= 0 ? 'text-indigo-900' : 'text-orange-900'}`}>
                         {netCash >= 0 ? '+' : ''}₹{netCash.toLocaleString()}
                     </p>
                 </div>
@@ -302,7 +302,7 @@ export default function CashBookPage() {
             {/* Cash Book Table - Horizontal scroll on mobile */}
             <div className="bg-white rounded-xl border shadow-sm print:shadow-none overflow-hidden">
                 <div className="p-4 md:p-6 border-b print:text-center">
-                    <h2 className="text-lg md:text-xl font-bold">Cash Book</h2>
+                    <h2 className="text-lg md:text-page-title">Cash Book</h2>
                     {(startDate || endDate) && (
                         <p className="text-xs md:text-sm text-gray-600 mt-1">
                             Period: {startDate || 'Beginning'} to {endDate || 'Now'}

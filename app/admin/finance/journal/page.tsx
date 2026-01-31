@@ -112,7 +112,7 @@ export default function ManualJournalPage() {
                     <ArrowLeft />
                 </Link>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Manual Journal Entry</h1>
+                    <h1 className="text-page-title text-gray-900">Manual Journal Entry</h1>
                     <p className="text-gray-500">General Ledger Adjustments</p>
                 </div>
             </div>

@@ -23,7 +23,7 @@ export default function CommissionsPage() {
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-                    <h2 className="text-xl font-bold text-gray-900">Access Denied</h2>
+                    <h2 className="text-page-title text-gray-900">Access Denied</h2>
                     <p className="text-gray-500 mt-2">This page is only accessible to admins.</p>
                 </div>
             </div>
@@ -37,7 +37,7 @@ export default function CommissionsPage() {
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                            <h1 className="text-page-title text-gray-900 flex items-center gap-3">
                                 <DollarSign className="text-green-600" size={32} />
                                 Commission Management
                             </h1>
@@ -64,7 +64,7 @@ export default function CommissionsPage() {
                             </div>
                             <p className="text-sm text-gray-500 font-medium">Pending</p>
                         </div>
-                        <p className="text-2xl font-bold text-gray-900">₹0</p>
+                        <p className="text-page-title text-gray-900">₹0</p>
                         <p className="text-xs text-gray-400 mt-1">0 projects</p>
                     </div>
                     <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
@@ -74,7 +74,7 @@ export default function CommissionsPage() {
                             </div>
                             <p className="text-sm text-gray-500 font-medium">Approved</p>
                         </div>
-                        <p className="text-2xl font-bold text-gray-900">₹0</p>
+                        <p className="text-page-title text-gray-900">₹0</p>
                         <p className="text-xs text-gray-400 mt-1">0 projects</p>
                     </div>
                     <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
@@ -84,7 +84,7 @@ export default function CommissionsPage() {
                             </div>
                             <p className="text-sm text-gray-500 font-medium">Paid</p>
                         </div>
-                        <p className="text-2xl font-bold text-green-600">₹0</p>
+                        <p className="text-page-title text-green-600">₹0</p>
                         <p className="text-xs text-gray-400 mt-1">0 projects</p>
                     </div>
                     <div className="bg-oms-blue rounded-2xl p-6 border border-[rgba(0,0,255,0.2)]-100 shadow-sm">
@@ -94,7 +94,7 @@ export default function CommissionsPage() {
                             </div>
                             <p className="text-sm text-gray-600 font-medium">Total This Month</p>
                         </div>
-                        <p className="text-2xl font-bold text-indigo-900">₹0</p>
+                        <p className="text-page-title text-indigo-900">₹0</p>
                         <p className="text-xs text-gray-500 mt-1">Eligible commissions</p>
                     </div>
                 </div>
@@ -129,7 +129,7 @@ export default function CommissionsPage() {
                 {/* Commissions List */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
                     <div className="p-6 border-b border-gray-100">
-                        <h2 className="text-xl font-bold text-gray-900">Commission Records</h2>
+                        <h2 className="text-page-title text-gray-900">Commission Records</h2>
                         <p className="text-sm text-gray-500 mt-1">All commission calculations with GST breakdown</p>
                     </div>
                     <div className="p-6">
@@ -197,7 +197,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
             <div className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
                 {/* Header */}
                 <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-6 text-white">
-                    <h3 className="text-2xl font-bold flex items-center gap-3">
+                    <h3 className="text-page-title flex items-center gap-3">
                         <Calculator size={28} />
                         Add Commission with GST Calculator
                     </h3>
@@ -231,7 +231,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                     setFormData({ ...formData, projectTotal: e.target.value });
                                     setTimeout(handleCalculate, 100);
                                 }}
-                                className="w-full border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-lg font-bold focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
+                                className="w-full border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-section focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
                                 placeholder="56000"
                             />
                         </div>
@@ -270,7 +270,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                     setFormData({ ...formData, gstPercentage: e.target.value });
                                     setTimeout(handleCalculate, 100);
                                 }}
-                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg font-bold focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
+                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-section focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
                                 placeholder="18"
                             />
                             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">%</span>
@@ -306,7 +306,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                     setFormData({ ...formData, commissionValue: e.target.value });
                                     setTimeout(handleCalculate, 100);
                                 }}
-                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg font-bold focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
+                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-section focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
                                 placeholder="5"
                             />
                         </div>
@@ -342,7 +342,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                 <div className="border-t-2 border-green-300 pt-3 mt-3"></div>
                                 <div className="flex justify-between items-center bg-green-600 text-white rounded-xl p-3">
                                     <span className="font-bold">Final Commission</span>
-                                    <span className="text-2xl font-bold">{formatCurrency(calculationResult.commissionAmount)}</span>
+                                    <span className="text-page-title">{formatCurrency(calculationResult.commissionAmount)}</span>
                                 </div>
                             </div>
                             <p className="text-xs text-gray-600 mt-3 italic">{calculationResult.breakdown}</p>

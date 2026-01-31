@@ -80,7 +80,7 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                             <UserPlus size={24} className="text-oms-blue" />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-gray-900">Quick Add Client</h3>
+                            <h3 className="text-page-title text-gray-900">Quick Add Client</h3>
                             <p className="text-sm text-gray-600">Add a new client to the system</p>
                         </div>
                     </div>

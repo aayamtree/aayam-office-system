@@ -170,7 +170,7 @@ export default function NewProjectPage() {
                             <Briefcase size={32} className="text-white" />
                         </div>
                         <div>
-                            <h1 className="font-bold text-white text-3xl mb-1">Create New Project</h1>
+                            <h1 className="font-bold text-white text-page-title mb-1">Create New Project</h1>
                             <p className="text-white/80 text-sm">Initialize a new design or print job with all details</p>
                         </div>
                     </div>
@@ -228,7 +228,7 @@ export default function NewProjectPage() {
                     {/* 1. Project Basics */}
                     <div className="space-y-5 bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
                         <div className="flex items-center gap-3 pb-4 border-b-2 border-gradient-to-r from-indigo-500 to-purple-500">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-oms-blue text-white text-lg font-bold shadow-lg shadow-indigo-200">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-oms-blue text-white text-section shadow-lg shadow-indigo-200">
                                 1
                             </div>
                             <h4 className="text-base font-bold text-gray-800 uppercase tracking-wide">Project Basics</h4>
@@ -285,7 +285,7 @@ export default function NewProjectPage() {
                     {/* 2. Parameters */}
                     <div className="space-y-5 bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
                         <div className="flex items-center gap-3 pb-4 border-b-2 border-gradient-to-r from-orange-500 to-red-500">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 text-white text-lg font-bold shadow-lg shadow-orange-200">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 text-white text-section shadow-lg shadow-orange-200">
                                 2
                             </div>
                             <h4 className="text-base font-bold text-gray-800 uppercase tracking-wide">Project Parameters</h4>
@@ -339,7 +339,7 @@ export default function NewProjectPage() {
                     {/* 3. Assets & Brief */}
                     <div className="space-y-5 bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
                         <div className="flex items-center gap-3 pb-4 border-b-2 border-gradient-to-r from-blue-500 to-cyan-500">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white text-lg font-bold shadow-lg shadow-blue-200">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white text-section shadow-lg shadow-blue-200">
                                 3
                             </div>
                             <h4 className="text-base font-bold text-gray-800 uppercase tracking-wide">Assets & Brief</h4>

@@ -246,7 +246,7 @@ export default function LeadsPage() {
             {/* HEADER */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 md:gap-4">
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold text-gray-900">Leads & Enquiries (Marketing)</h1>
+                    <h1 className="text-xl md:text-page-title text-gray-900">Leads & Enquiries (Marketing)</h1>
                     <p className="text-gray-500 text-xs md:text-sm">Manage potential clients and follow-ups</p>
                 </div>
                 <button
@@ -422,7 +422,7 @@ export default function LeadsPage() {
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fade-in">
                     <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
                         <div className="sticky top-0 bg-white p-5 border-b border-gray-100 flex justify-between items-center z-10">
-                            <h2 className="text-xl font-bold text-gray-900">{isEditing ? 'Edit Lead' : 'New Lead Card'}</h2>
+                            <h2 className="text-page-title text-gray-900">{isEditing ? 'Edit Lead' : 'New Lead Card'}</h2>
                             <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                                 <X size={20} />
                             </button>
@@ -533,7 +533,7 @@ export default function LeadsPage() {
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl w-full max-w-lg p-6 relative shadow-2xl">
                         <button onClick={() => setShowViewModal(false)} className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full"><X size={18} /></button>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-1">{selectedLead.name}</h2>
+                        <h2 className="text-page-title text-gray-900 mb-1">{selectedLead.name}</h2>
                         <p className="text-gray-500 font-mono text-sm mb-6">{selectedLead.lead_number}</p>
 
                         <div className="space-y-4">

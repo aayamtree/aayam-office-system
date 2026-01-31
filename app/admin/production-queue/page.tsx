@@ -105,7 +105,7 @@ export default function ProductionQueuePage() {
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                            <h1 className="text-page-title text-gray-900 flex items-center gap-3">
                                 <TrendingUp className="text-oms-blue" size={32} />
                                 Production Queue
                             </h1>
@@ -133,7 +133,7 @@ export default function ProductionQueuePage() {
                                 <Palette className="text-oms-blue" size={20} />
                             </div>
                         </div>
-                        <p className="text-3xl font-bold text-oms-blue">{summary.design_stage}</p>
+                        <p className="text-page-title text-oms-blue">{summary.design_stage}</p>
                         <p className="text-sm text-gray-600 font-medium mt-1">Design Stage</p>
                     </button>
 
@@ -151,7 +151,7 @@ export default function ProductionQueuePage() {
                                 <CheckCircle2 className="text-green-600" size={20} />
                             </div>
                         </div>
-                        <p className="text-3xl font-bold text-green-600">{summary.print_ready}</p>
+                        <p className="text-page-title text-green-600">{summary.print_ready}</p>
                         <p className="text-sm text-gray-600 font-medium mt-1">Print Ready</p>
                     </button>
 
@@ -166,7 +166,7 @@ export default function ProductionQueuePage() {
                                 <Clock className="text-amber-600" size={20} />
                             </div>
                         </div>
-                        <p className="text-3xl font-bold text-amber-600">{summary.awaiting_approval}</p>
+                        <p className="text-page-title text-amber-600">{summary.awaiting_approval}</p>
                         <p className="text-sm text-gray-600 font-medium mt-1">Awaiting Approval</p>
                     </button>
 
@@ -186,7 +186,7 @@ export default function ProductionQueuePage() {
                                 <AlertCircle className="text-red-600" size={20} />
                             </div>
                         </div>
-                        <p className="text-3xl font-bold text-red-600">{summary.high_priority}</p>
+                        <p className="text-page-title text-red-600">{summary.high_priority}</p>
                         <p className="text-sm text-gray-600 font-medium mt-1">High Priority</p>
                     </button>
 
@@ -201,7 +201,7 @@ export default function ProductionQueuePage() {
                                 <Printer className="text-blue-600" size={20} />
                             </div>
                         </div>
-                        <p className="text-3xl font-bold text-blue-600">{summary.in_production}</p>
+                        <p className="text-page-title text-blue-600">{summary.in_production}</p>
                         <p className="text-sm text-gray-600 font-medium mt-1">In Production</p>
                     </button>
 
@@ -216,7 +216,7 @@ export default function ProductionQueuePage() {
                                 <TrendingUp className="text-oms-blue" size={20} />
                             </div>
                         </div>
-                        <p className="text-3xl font-bold text-indigo-900">{summary.total_active}</p>
+                        <p className="text-page-title text-indigo-900">{summary.total_active}</p>
                         <p className="text-sm text-gray-700 font-medium mt-1">Total Active</p>
                     </button>
                 </div>
@@ -245,7 +245,7 @@ export default function ProductionQueuePage() {
                 {/* Jobs Table */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-gray-100">
-                        <h2 className="text-lg font-bold text-gray-900">
+                        <h2 className="text-section text-gray-900">
                             {filter ? `Filtered Jobs (${filteredJobs.length})` : `All Active Jobs (${jobs.length})`}
                         </h2>
                     </div>

@@ -160,7 +160,7 @@ export default function NotesWidget() {
                             {note.job && (
                                 <Link
                                     href={`/admin/jobs?search=${note.job.job_number}`}
-                                    className="inline-flex items-center gap-1.5 mt-2 px-2 py-1 bg-white/50 rounded-lg text-xs font-medium text-gray-600 hover:text-oms-blue hover:bg-white transition-colors"
+                                    className="inline-flex items-center gap-1.5 mt-2 px-2 py-1 bg-white/50 rounded-lg text-label text-gray-600 hover:text-oms-blue hover:bg-white transition-colors"
                                 >
                                     <LinkIcon size={10} />
                                     Job #{note.job.job_number}

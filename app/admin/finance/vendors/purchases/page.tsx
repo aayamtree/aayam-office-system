@@ -170,7 +170,7 @@ export default function VendorPurchasesPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Purchase Bills</h1>
+            <h1 className="text-page-title text-gray-900">Purchase Bills</h1>
             <p className="text-gray-500">Track vendor purchases & COGS</p>
           </div>
         </div>
@@ -185,19 +185,19 @@ export default function VendorPurchasesPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Purchases</p>
-          <p className="text-lg sm:text-xl font-bold text-gray-900">{formatCurrency(totalPurchases)}</p>
+          <p className="text-lg sm:text-page-title text-gray-900">{formatCurrency(totalPurchases)}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Paid to Vendors</p>
-          <p className="text-lg sm:text-xl font-bold text-green-600">{formatCurrency(totalPaid)}</p>
+          <p className="text-lg sm:text-page-title text-green-600">{formatCurrency(totalPaid)}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Pending Payments</p>
-          <p className="text-lg sm:text-xl font-bold text-red-600">{formatCurrency(totalPending)}</p>
+          <p className="text-lg sm:text-page-title text-red-600">{formatCurrency(totalPending)}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Job-linked COGS</p>
-          <p className="text-lg sm:text-xl font-bold text-oms-blue">{formatCurrency(totalCOGS)}</p>
+          <p className="text-lg sm:text-page-title text-oms-blue">{formatCurrency(totalCOGS)}</p>
         </div>
       </div>
 
@@ -247,7 +247,7 @@ export default function VendorPurchasesPage() {
               </div>
               <div className="flex items-center gap-4">
                 <div className="text-right">
-                  <p className="font-bold text-lg text-gray-900">{formatCurrency(purchase.total_amount)}</p>
+                  <p className="text-section text-gray-900">{formatCurrency(purchase.total_amount)}</p>
                   <p className="text-xs text-gray-500">
                     Paid: <span className="text-green-600 font-medium">{formatCurrency(purchase.amount_paid)}</span>
                   </p>
@@ -279,7 +279,7 @@ export default function VendorPurchasesPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
-              <h2 className="text-xl font-bold">{editingPurchase ? 'Edit Purchase' : 'Add Purchase Bill'}</h2>
+              <h2 className="text-page-title">{editingPurchase ? 'Edit Purchase' : 'Add Purchase Bill'}</h2>
               <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
@@ -409,7 +409,7 @@ export default function VendorPurchasesPage() {
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
               <div>
                 <span className="font-mono text-oms-blue">{selectedPurchase.bill_number}</span>
-                <h2 className="text-xl font-bold">{selectedPurchase.description}</h2>
+                <h2 className="text-page-title">{selectedPurchase.description}</h2>
               </div>
               <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
@@ -429,7 +429,7 @@ export default function VendorPurchasesPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Payment Status</p>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(selectedPurchase.payment_status)}`}>
+                  <span className={`px-2 py-0.5 rounded-full text-label ${getStatusBadge(selectedPurchase.payment_status)}`}>
                     {selectedPurchase.payment_status}
                   </span>
                 </div>

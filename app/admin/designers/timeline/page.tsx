@@ -31,7 +31,7 @@ export default function Timeline() {
     return (
         <div className="min-h-screen bg-gray-50 p-6">
             <div className="max-w-4xl mx-auto">
-                <h1 className="text-3xl font-bold text-gray-900 mb-6">Production Timeline</h1>
+                <h1 className="text-page-title text-gray-900 mb-6">Production Timeline</h1>
 
                 <div className="space-y-4">
                     {activeTasks.map((task, index) => {
@@ -44,7 +44,7 @@ export default function Timeline() {
                             }}>
                                 <div className="flex justify-between items-start mb-3">
                                     <div>
-                                        <h3 className="text-lg font-bold text-gray-900">{task.title}</h3>
+                                        <h3 className="text-section text-gray-900">{task.title}</h3>
                                         <p className="text-sm text-gray-600">{task.client}</p>
                                     </div>
                                     <div className="text-right">

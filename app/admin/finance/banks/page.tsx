@@ -131,7 +131,7 @@ export default function BankAccountsPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Bank Accounts</h1>
+            <h1 className="text-page-title text-gray-900">Bank Accounts</h1>
             <p className="text-gray-500">Manage multiple bank accounts</p>
           </div>
         </div>
@@ -149,20 +149,20 @@ export default function BankAccountsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Balance</p>
-          <p className="text-lg sm:text-xl font-bold text-oms-blue">{formatCurrency(totalBalance)}</p>
+          <p className="text-lg sm:text-page-title text-oms-blue">{formatCurrency(totalBalance)}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Active Accounts</p>
-          <p className="text-lg sm:text-xl font-bold text-gray-900">{activeAccounts}</p>
+          <p className="text-lg sm:text-page-title text-gray-900">{activeAccounts}</p>
         </div>
         {/* Placeholder stats */}
         <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4 opacity-50">
           <p className="text-xs sm:text-sm text-gray-500">Total Inflow</p>
-          <p className="text-lg sm:text-xl font-bold text-green-600">--</p>
+          <p className="text-lg sm:text-page-title text-green-600">--</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4 opacity-50">
           <p className="text-xs sm:text-sm text-gray-500">Total Outflow</p>
-          <p className="text-lg sm:text-xl font-bold text-red-600">--</p>
+          <p className="text-lg sm:text-page-title text-red-600">--</p>
         </div>
       </div>
 
@@ -252,7 +252,7 @@ export default function BankAccountsPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md animate-scale-in">
             <div className="p-5 border-b flex items-center justify-between">
-              <h2 className="text-xl font-bold">{editingBank ? 'Edit Bank Account' : 'Add Bank Account'}</h2>
+              <h2 className="text-page-title">{editingBank ? 'Edit Bank Account' : 'Add Bank Account'}</h2>
               <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
@@ -315,13 +315,13 @@ export default function BankAccountsPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md animate-scale-in">
             <div className="p-5 border-b flex items-center justify-between">
-              <h2 className="text-xl font-bold">{selectedBank.name}</h2>
+              <h2 className="text-page-title">{selectedBank.name}</h2>
               <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <div className="p-5 space-y-4">
               <div className="text-center bg-[rgba(0,0,255,0.1)] rounded-xl p-4">
                 <p className="text-sm text-gray-600">Current Balance</p>
-                <p className="text-3xl font-bold text-oms-blue">{formatCurrency(selectedBank.current_balance)}</p>
+                <p className="text-page-title text-oms-blue">{formatCurrency(selectedBank.current_balance)}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -346,7 +346,7 @@ export default function BankAccountsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Status</p>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${selectedBank.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                  <span className={`px-2 py-0.5 rounded-full text-label ${selectedBank.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                     {selectedBank.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </div>

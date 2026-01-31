@@ -213,15 +213,15 @@ export default function DesignerProjectsPage() {
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">In Progress</p>
-          <p className="text-xl sm:text-2xl font-bold text-blue-600">{inProgress}</p>
+          <p className="text-xl sm:text-page-title text-blue-600">{inProgress}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Completed</p>
-          <p className="text-xl sm:text-2xl font-bold text-green-600">{completed}</p>
+          <p className="text-xl sm:text-page-title text-green-600">{completed}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">On Hold</p>
-          <p className="text-xl sm:text-2xl font-bold text-orange-600">{onHold}</p>
+          <p className="text-xl sm:text-page-title text-orange-600">{onHold}</p>
         </div>
       </div>
 
@@ -339,7 +339,7 @@ export default function DesignerProjectsPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
-              <h2 className="text-xl font-bold">{editingProject ? 'Edit Project' : 'Create Project'}</h2>
+              <h2 className="text-page-title">{editingProject ? 'Edit Project' : 'Create Project'}</h2>
               <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
@@ -416,7 +416,7 @@ export default function DesignerProjectsPage() {
           {/* Same Modal UI using selectedProject data */}
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
-              <h2 className="text-xl font-bold">{selectedProject.name}</h2>
+              <h2 className="text-page-title">{selectedProject.name}</h2>
               <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <div className="p-5 space-y-4">
@@ -435,7 +435,7 @@ export default function DesignerProjectsPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between z-10">
-              <h2 className="text-xl font-bold">Gantt Chart View</h2>
+              <h2 className="text-page-title">Gantt Chart View</h2>
               <button onClick={() => setShowGanttModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <div className="p-5">

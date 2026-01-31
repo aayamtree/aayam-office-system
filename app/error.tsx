@@ -16,7 +16,7 @@ export default function Error({
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
             <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Something went wrong!</h2>
+                <h2 className="text-page-title text-gray-900 mb-4">Something went wrong!</h2>
                 <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6 max-w-md mx-auto text-sm">
                     {error.message || 'Unknown application error'}
                 </div>

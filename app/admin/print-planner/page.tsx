@@ -55,7 +55,7 @@ export default function PrintPlannerPage() {
         <div className="min-h-screen bg-gray-50 p-6">
             {/* Header */}
             <div className="mb-6">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Print Planner</h1>
+                <h1 className="text-page-title text-gray-900 mb-2">Print Planner</h1>
                 <p className="text-gray-600">Batch print jobs with same job type for efficient printing</p>
             </div>
 

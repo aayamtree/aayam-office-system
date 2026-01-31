@@ -200,7 +200,7 @@ export default function AccountStatementPage() {
                         <ArrowLeft size={20} />
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold">{account.name}</h1>
+                        <h1 className="text-page-title">{account.name}</h1>
                         <p className="text-gray-500">Account Statement</p>
                     </div>
                 </div>
@@ -270,7 +270,7 @@ export default function AccountStatementPage() {
                 {/* Statement Header - Shows on print */}
                 <div className="p-6 border-b">
                     <div className="text-center mb-4">
-                        <h2 className="text-xl font-bold">{account.name} - Statement</h2>
+                        <h2 className="text-page-title">{account.name} - Statement</h2>
                         {accountType === 'bank' && account.account_number && (
                             <p className="text-sm text-gray-600">Account: {account.account_number}</p>
                         )}

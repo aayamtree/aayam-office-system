@@ -40,13 +40,13 @@ export default function DriveConnectionStatus() {
         return (
             <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
                 <XCircle className="w-4 h-4 text-amber-600" />
-                <span className="text-xs font-medium text-amber-900">
+                <span className="text-label text-amber-900">
                     Drive: {status?.isExpired ? 'Expired' : 'Not Connected'}
                 </span>
                 {profile?.role === 'admin' && (
                     <Link
                         href="/admin/settings"
-                        className="ml-auto px-3 py-1 bg-amber-600 text-white text-xs font-medium rounded hover:bg-amber-700 transition-colors"
+                        className="ml-auto px-3 py-1 bg-amber-600 text-white text-label rounded hover:bg-amber-700 transition-colors"
                     >
                         Configure
                     </Link>
@@ -59,7 +59,7 @@ export default function DriveConnectionStatus() {
     return (
         <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
             <CheckCircle className="w-4 h-4 text-green-600" />
-            <span className="text-xs font-medium text-green-900">Drive: Connected</span>
+            <span className="text-label text-green-900">Drive: Connected</span>
         </div>
     );
 }

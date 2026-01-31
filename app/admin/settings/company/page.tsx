@@ -53,7 +53,7 @@ export default function CompanyPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Company Settings</h1>
+            <h1 className="text-xl lg:text-page-title text-gray-900">Company Settings</h1>
             <p className="text-sm text-gray-500">Manage your business details</p>
           </div>
         </div>
@@ -70,7 +70,7 @@ export default function CompanyPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Logo Section */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Company Logo</h2>
+          <h2 className="text-section text-gray-900 mb-4">Company Logo</h2>
           <div className="flex flex-col items-center">
             <label className="w-32 h-32 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 overflow-hidden">
               {logo ? (
@@ -91,7 +91,7 @@ export default function CompanyPage() {
 
         {/* Basic Info */}
         <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
+          <h2 className="text-section text-gray-900 mb-4">Basic Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Company Name *</label>
@@ -152,7 +152,7 @@ export default function CompanyPage() {
 
         {/* Tax Info */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Tax Information</h2>
+          <h2 className="text-section text-gray-900 mb-4">Tax Information</h2>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">GST Number</label>
@@ -179,7 +179,7 @@ export default function CompanyPage() {
 
         {/* Address */}
         <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Address</h2>
+          <h2 className="text-section text-gray-900 mb-4">Address</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Street Address *</label>
@@ -222,7 +222,7 @@ export default function CompanyPage() {
 
         {/* Bank Details */}
         <div className="lg:col-span-3 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Bank Details</h2>
+          <h2 className="text-section text-gray-900 mb-4">Bank Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>

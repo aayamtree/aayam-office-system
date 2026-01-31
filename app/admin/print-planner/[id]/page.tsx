@@ -148,7 +148,7 @@ export default function PrintRunDetailPage() {
                     <div className="flex items-start justify-between">
                         <div>
                             <div className="flex items-center gap-4 mb-2">
-                                <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                                <h1 className="text-page-title text-gray-900 flex items-center gap-3">
                                     <Printer className="text-oms-blue" size={32} />
                                     {printRun.print_run_number}
                                 </h1>
@@ -198,15 +198,15 @@ export default function PrintRunDetailPage() {
             <div className="max-w-7xl mx-auto p-6 space-y-6">
                 {/* Summary */}
                 <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                    <h2 className="text-lg font-bold text-gray-900 mb-4">Print Run Summary</h2>
+                    <h2 className="text-section text-gray-900 mb-4">Print Run Summary</h2>
                     <div className="grid grid-cols-5 gap-6">
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Total Jobs</p>
-                            <p className="text-2xl font-bold text-oms-blue">{printRunJobs.length}</p>
+                            <p className="text-page-title text-oms-blue">{printRunJobs.length}</p>
                         </div>
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Total Sheets</p>
-                            <p className="text-2xl font-bold text-oms-blue">
+                            <p className="text-page-title text-oms-blue">
                                 {printRunJobs.reduce((sum, job) => {
                                     const sheets = Math.ceil((job.quantity_needed || 0) / (job.ups_in_sheet || 1));
                                     return sum + sheets;
@@ -215,13 +215,13 @@ export default function PrintRunDetailPage() {
                         </div>
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Created Date</p>
-                            <p className="text-lg font-bold text-gray-900">
+                            <p className="text-section text-gray-900">
                                 {new Date(printRun.created_at).toLocaleDateString()}
                             </p>
                         </div>
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Status</p>
-                            <p className="text-lg font-bold text-gray-900 capitalize">{printRun.status}</p>
+                            <p className="text-section text-gray-900 capitalize">{printRun.status}</p>
                         </div>
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Notes</p>
@@ -233,7 +233,7 @@ export default function PrintRunDetailPage() {
                 {/* Jobs Table */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-gray-100">
-                        <h2 className="text-lg font-bold text-gray-900">Jobs in This Print Run</h2>
+                        <h2 className="text-section text-gray-900">Jobs in This Print Run</h2>
                     </div>
 
                     {printRunJobs.length === 0 ? (
@@ -462,7 +462,7 @@ function AddJobsModal({
             <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
                 <div className="bg-oms-blue p-6 text-white flex items-center justify-between sticky top-0">
                     <div>
-                        <h3 className="text-2xl font-bold">Add Jobs to Print Run</h3>
+                        <h3 className="text-page-title">Add Jobs to Print Run</h3>
                         <p className="text-white/80 text-sm mt-1">
                             Select print-ready jobs below ({selectedJobs.size} selected)
                         </p>

@@ -208,7 +208,7 @@ export default function MarketingFollowUpsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Follow-ups</h1>
+          <h1 className="text-xl md:text-page-title text-gray-900">Follow-ups</h1>
           <p className="text-sm md:text-base text-gray-500">Track and manage your client follow-ups</p>
         </div>
         <button onClick={() => setShowModal(true)}
@@ -223,15 +223,15 @@ export default function MarketingFollowUpsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
         <div className="bg-white rounded-lg md:rounded-xl shadow-sm border p-3 md:p-4">
           <p className="text-xs md:text-sm text-gray-500">Today</p>
-          <p className="text-xl md:text-2xl font-bold text-blue-600">{todayFollowUps.length}</p>
+          <p className="text-xl md:text-page-title text-blue-600">{todayFollowUps.length}</p>
         </div>
         <div className="bg-white rounded-lg md:rounded-xl shadow-sm border p-3 md:p-4">
           <p className="text-xs md:text-sm text-gray-500">Upcoming</p>
-          <p className="text-xl md:text-2xl font-bold text-green-600">{upcomingFollowUps.length}</p>
+          <p className="text-xl md:text-page-title text-green-600">{upcomingFollowUps.length}</p>
         </div>
         <div className="bg-white rounded-lg md:rounded-xl shadow-sm border p-3 md:p-4">
           <p className="text-xs md:text-sm text-gray-500">Overdue</p>
-          <p className="text-xl md:text-2xl font-bold text-red-600">{overdueFollowUps.length}</p>
+          <p className="text-xl md:text-page-title text-red-600">{overdueFollowUps.length}</p>
         </div>
       </div>
 
@@ -291,7 +291,7 @@ export default function MarketingFollowUpsPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md">
             <div className="p-5 border-b flex items-center justify-between">
-              <h2 className="text-xl font-bold">{editingFollowUp ? 'Edit Follow-up' : 'Add Follow-up'}</h2>
+              <h2 className="text-page-title">{editingFollowUp ? 'Edit Follow-up' : 'Add Follow-up'}</h2>
               <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">

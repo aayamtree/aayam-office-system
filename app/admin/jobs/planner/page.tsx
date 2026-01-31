@@ -129,7 +129,7 @@ export default function PrintPlannerPage() {
                         <ArrowLeft size={20} className="text-gray-600" />
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <h1 className="text-page-title text-gray-900 flex items-center gap-2">
                             <Layers className="text-oms-blue" />
                             Print Planner
                         </h1>
@@ -172,7 +172,7 @@ export default function PrintPlannerPage() {
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <label className="text-xs font-bold text-oms-blue uppercase tracking-wider">New Batch Configuration</label>
-                                <h2 className="text-xl font-bold text-gray-900 mt-1">Untitled Batch #{Math.floor(Math.random() * 1000)}</h2>
+                                <h2 className="text-page-title text-gray-900 mt-1">Untitled Batch #{Math.floor(Math.random() * 1000)}</h2>
                             </div>
                             <select
                                 value={selectedWorkflow}

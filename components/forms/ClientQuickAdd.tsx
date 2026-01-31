@@ -80,7 +80,7 @@ export default function ClientQuickAdd({ onClientCreated, onClose }: ClientQuick
                 {/* Header */}
                 <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-6 text-white flex items-center justify-between">
                     <div>
-                        <h3 className="text-2xl font-bold flex items-center gap-3">
+                        <h3 className="text-page-title flex items-center gap-3">
                             <User size={28} />
                             Quick Add Client
                         </h3>

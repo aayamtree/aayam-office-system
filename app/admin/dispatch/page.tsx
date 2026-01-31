@@ -145,7 +145,7 @@ export default function DispatchPage() {
                 <stat.icon size={20} className="text-white hidden md:block" />
               </div>
             </div>
-            <p className="text-2xl lg:text-3xl font-bold text-gray-900">
+            <p className="text-2xl lg:text-page-title text-gray-900">
               {loading ? '...' : stat.value}
             </p>
             <p className="text-xs lg:text-sm text-gray-500 mt-1">{stat.label}</p>

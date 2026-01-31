@@ -39,7 +39,7 @@ export default function NotificationSettings() {
 
     return (
         <div className="p-6 max-w-2xl mx-auto">
-            <h1 className="text-2xl font-bold mb-6">Notification Settings</h1>
+            <h1 className="text-page-title mb-6">Notification Settings</h1>
 
             <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <div className="flex items-start gap-4">
@@ -47,7 +47,7 @@ export default function NotificationSettings() {
                         <Bell className="text-oms-blue" size={24} />
                     </div>
                     <div className="flex-1">
-                        <h2 className="font-bold text-lg mb-2">Push Notifications</h2>
+                        <h2 className="text-section mb-2">Push Notifications</h2>
                         <p className="text-gray-600 text-sm mb-4">
                             Get instant alerts for job updates, payments, and important events.
                         </p>

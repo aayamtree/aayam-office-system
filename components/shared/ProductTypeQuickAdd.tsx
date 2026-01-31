@@ -63,7 +63,7 @@ export default function ProductTypeQuickAdd({ isOpen, onClose, onSuccess }: Prod
                             <Package size={24} className="text-orange-600" />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-gray-900">Add Product Type</h3>
+                            <h3 className="text-page-title text-gray-900">Add Product Type</h3>
                             <p className="text-sm text-gray-600">For print planner job batching</p>
                         </div>
                     </div>

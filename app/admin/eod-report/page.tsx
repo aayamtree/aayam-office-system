@@ -201,7 +201,7 @@ export default function EODReportPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">End of Day Report</h1>
+                    <h1 className="text-page-title text-gray-900">End of Day Report</h1>
                     <p className="text-sm text-gray-500 mt-1">
                         {todayReport ? '✅ Submitted Today' : '⏰ Pending Submission'} | {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
@@ -230,7 +230,7 @@ export default function EODReportPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Tasks Section */}
                 <div className="bg-white rounded-2xl border border-gray-200 p-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Today&apos;s Tasks ({todayTasks.length})</h2>
+                    <h2 className="text-section text-gray-900 mb-4">Today&apos;s Tasks ({todayTasks.length})</h2>
 
                     {todayTasks.length === 0 ? (
                         <div className="text-center py-8 text-gray-500">
@@ -391,7 +391,7 @@ export default function EODReportPage() {
 
                 {/* Overall Summary */}
                 <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-                    <h2 className="text-lg font-semibold text-gray-900">Overall Summary</h2>
+                    <h2 className="text-section text-gray-900">Overall Summary</h2>
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Overall Notes</label>
@@ -469,7 +469,7 @@ export default function EODReportPage() {
             {/* Past Reports */}
             {pastReports.length > 0 && (
                 <div className="bg-white rounded-2xl border border-gray-200 p-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Past Reports</h2>
+                    <h2 className="text-section text-gray-900 mb-4">Past Reports</h2>
                     <div className="space-y-2">
                         {pastReports.slice(0, 5).map(report => (
                             <div key={report.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">

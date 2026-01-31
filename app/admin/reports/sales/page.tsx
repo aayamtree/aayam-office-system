@@ -80,7 +80,7 @@ export default function SalesReportPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Sales Report</h1>
+            <h1 className="text-xl lg:text-page-title text-gray-900">Sales Report</h1>
             <p className="text-sm text-gray-500">Revenue & order analytics</p>
           </div>
         </div>
@@ -154,28 +154,28 @@ export default function SalesReportPage() {
             <IndianRupee size={18} />
             <span className="text-sm opacity-90">Total Revenue</span>
           </div>
-          <p className="text-2xl font-bold">₹{(totalRevenue / 1000).toFixed(1)}K</p>
+          <p className="text-page-title">₹{(totalRevenue / 1000).toFixed(1)}K</p>
         </div>
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <Package size={18} />
             <span className="text-sm opacity-90">Total Orders</span>
           </div>
-          <p className="text-2xl font-bold">{totalOrders}</p>
+          <p className="text-page-title">{totalOrders}</p>
         </div>
         <div className="bg-oms-blue rounded-2xl p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp size={18} />
             <span className="text-sm opacity-90">Avg Order Value</span>
           </div>
-          <p className="text-2xl font-bold">₹{(avgOrderValue / 1000).toFixed(1)}K</p>
+          <p className="text-page-title">₹{(avgOrderValue / 1000).toFixed(1)}K</p>
         </div>
         <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <Users size={18} />
             <span className="text-sm opacity-90">Unique Clients</span>
           </div>
-          <p className="text-2xl font-bold">{uniqueClients.length}</p>
+          <p className="text-page-title">{uniqueClients.length}</p>
         </div>
       </div>
 
@@ -189,12 +189,12 @@ export default function SalesReportPage() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Order</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Client</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Items</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">Amount</th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500">Status</th>
+                  <th className="px-4 py-3 text-left text-label text-gray-500">Date</th>
+                  <th className="px-4 py-3 text-left text-label text-gray-500">Order</th>
+                  <th className="px-4 py-3 text-left text-label text-gray-500">Client</th>
+                  <th className="px-4 py-3 text-left text-label text-gray-500">Items</th>
+                  <th className="px-4 py-3 text-right text-label text-gray-500">Amount</th>
+                  <th className="px-4 py-3 text-center text-label text-gray-500">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">

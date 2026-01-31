@@ -154,7 +154,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                             <Printer className="text-oms-blue" size={20} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900">Create Print Run</h2>
+                            <h2 className="text-page-title text-gray-900">Create Print Run</h2>
                             <p className="text-sm text-gray-500">Batch jobs for printing</p>
                         </div>
                     </div>

@@ -73,7 +73,7 @@ export default function ProductCategoryQuickAdd({ isOpen, onClose, onSuccess }: 
                             <Tag size={24} className="text-oms-blue" />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-gray-900">Add Product Category</h3>
+                            <h3 className="text-page-title text-gray-900">Add Product Category</h3>
                             <p className="text-sm text-gray-600">Create new category for jobs</p>
                         </div>
                     </div>

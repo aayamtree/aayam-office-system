@@ -51,7 +51,7 @@ export default function PreferencesPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Preferences</h1>
+            <h1 className="text-xl lg:text-page-title text-gray-900">Preferences</h1>
             <p className="text-sm text-gray-500">App settings & configurations</p>
           </div>
         </div>
@@ -68,7 +68,7 @@ export default function PreferencesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Invoice Settings */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Invoice Settings</h2>
+          <h2 className="text-section text-gray-900 mb-4">Invoice Settings</h2>
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-4">
               <div>
@@ -127,7 +127,7 @@ export default function PreferencesPage() {
 
         {/* Notification Settings */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Notifications</h2>
+          <h2 className="text-section text-gray-900 mb-4">Notifications</h2>
           <div className="space-y-4">
             {[
               { key: 'emailNotifications', label: 'Email Notifications', desc: 'Receive emails for important updates' },
@@ -158,7 +158,7 @@ export default function PreferencesPage() {
 
         {/* Display Settings */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Display Settings</h2>
+          <h2 className="text-section text-gray-900 mb-4">Display Settings</h2>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
@@ -202,7 +202,7 @@ export default function PreferencesPage() {
 
         {/* Print Settings */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Print Settings</h2>
+          <h2 className="text-section text-gray-900 mb-4">Print Settings</h2>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Paper Size</label>

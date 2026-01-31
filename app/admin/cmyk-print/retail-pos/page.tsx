@@ -283,7 +283,7 @@ export default function RetailPOSPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Retail POS</h1>
+            <h1 className="text-page-title text-gray-900">Retail POS</h1>
             <p className="text-sm text-gray-500">Quick billing system</p>
           </div>
         </div>
@@ -409,7 +409,7 @@ export default function RetailPOSPage() {
                 </div>
               </div>
               {discount > 0 && <div className="flex justify-between text-sm text-green-600"><span>Discount Amount</span><span>-{formatCurrency(discountAmount)}</span></div>}
-              <div className="flex justify-between font-bold text-lg pt-2 border-t"><span>Grand Total</span><span className="text-oms-blue">{formatCurrency(grandTotal)}</span></div>
+              <div className="flex justify-between text-section pt-2 border-t"><span>Grand Total</span><span className="text-oms-blue">{formatCurrency(grandTotal)}</span></div>
             </div>
             <button onClick={() => setShowPaymentModal(true)} disabled={cart.length === 0}
               className="w-full py-3 bg-[rgba(0,0,255,0.1)] text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[rgba(0,0,255,0.1)] transition-colors">
@@ -424,13 +424,13 @@ export default function RetailPOSPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md animate-scale-in">
             <div className="p-5 border-b flex items-center justify-between">
-              <h2 className="text-xl font-bold">Payment</h2>
+              <h2 className="text-page-title">Payment</h2>
               <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <div className="p-5 space-y-4">
               <div className="text-center bg-[rgba(0,0,255,0.1)] rounded-xl p-4">
                 <p className="text-sm text-gray-600">Total Amount</p>
-                <p className="text-3xl font-bold text-oms-blue">{formatCurrency(grandTotal)}</p>
+                <p className="text-page-title text-oms-blue">{formatCurrency(grandTotal)}</p>
               </div>
               <div>
                 <p className="text-sm font-medium mb-2">Payment Method</p>
@@ -474,7 +474,7 @@ export default function RetailPOSPage() {
           <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
             <div className="p-5 border-b bg-white flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <h2 className="text-xl font-bold">Manage Items</h2>
+                <h2 className="text-page-title">Manage Items</h2>
                 <div className="flex bg-gray-100 p-1 rounded-lg">
                   <button onClick={() => setActiveTab('products')} className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${activeTab === 'products' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'}`}>Products</button>
                   <button onClick={() => setActiveTab('categories')} className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${activeTab === 'categories' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'}`}>Categories</button>

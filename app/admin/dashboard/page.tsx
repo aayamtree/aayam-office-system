@@ -187,7 +187,7 @@ export default function AdminDashboard() {
                   <Icon size={16} className="text-white/70 md:hidden" />
                   <Icon size={20} className="text-white/70 hidden md:block" />
                 </div>
-                <p className="text-xl md:text-3xl lg:text-4xl font-bold tracking-tight text-white">
+                <p className="text-xl md:text-3xl lg:text-page-title tracking-tight text-white">
                   {statsLoading ? '...' : stat.value}
                 </p>
                 {stat.subtext && (
@@ -417,7 +417,7 @@ export default function AdminDashboard() {
 
             <div className="flex items-center justify-between pt-6 border-t border-gray-100">
               <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-bold text-gray-900">{formatCurrency(dashboardStats.totalRevenue)}</span>
+                <span className="text-page-title text-gray-900">{formatCurrency(dashboardStats.totalRevenue)}</span>
                 <span className="text-base text-gray-500 font-medium">YTD Revenue</span>
               </div>
               <Link href="/admin/sales/orders" className="flex items-center gap-2 text-sm text-oms-blue hover:opacity-80 font-bold bg-[rgba(0,0,255,0.05)] px-4 py-2 rounded-xl transition-colors">

@@ -50,7 +50,7 @@ export default function MyQueue() {
             <div className="max-w-6xl mx-auto">
                 {/* Header */}
                 <div className="mb-4 md:mb-6">
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 md:mb-2">My Queue</h1>
+                    <h1 className="text-2xl md:text-page-title text-gray-900 mb-1 md:mb-2">My Queue</h1>
                     <p className="text-sm md:text-base text-gray-600">{filteredTasks.length} active tasks</p>
                 </div>
 
@@ -73,7 +73,7 @@ export default function MyQueue() {
                         <div>
                             <div className="flex items-center gap-2 mb-3 md:mb-4">
                                 <AlertCircle className="text-red-600" size={20} />
-                                <h2 className="text-lg md:text-xl font-bold text-red-600">Urgent ({urgentTasks.length})</h2>
+                                <h2 className="text-lg md:text-page-title text-red-600">Urgent ({urgentTasks.length})</h2>
                             </div>
                             <div className="grid gap-3 md:gap-4">
                                 {urgentTasks.map(task => (
@@ -81,7 +81,7 @@ export default function MyQueue() {
                                         <div className="bg-white p-4 md:p-6 rounded-lg md:rounded-xl border-2 border-red-200 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
                                             <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2 md:gap-0 mb-2 md:mb-3">
                                                 <div className="flex-1">
-                                                    <h3 className="text-base md:text-lg font-bold text-gray-900 line-clamp-2">{task.title}</h3>
+                                                    <h3 className="text-base md:text-section text-gray-900 line-clamp-2">{task.title}</h3>
                                                     <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600 mt-1">
                                                         <User size={14} className="md:hidden" />
                                                         <User size={16} className="hidden md:block" />
@@ -113,7 +113,7 @@ export default function MyQueue() {
                         <div>
                             <div className="flex items-center gap-2 mb-3 md:mb-4">
                                 <AlertCircle className="text-orange-600" size={20} />
-                                <h2 className="text-lg md:text-xl font-bold text-orange-600">High Priority ({highTasks.length})</h2>
+                                <h2 className="text-lg md:text-page-title text-orange-600">High Priority ({highTasks.length})</h2>
                             </div>
                             <div className="grid gap-3 md:gap-4">
                                 {highTasks.map(task => (
@@ -121,7 +121,7 @@ export default function MyQueue() {
                                         <div className="bg-white p-4 md:p-6 rounded-lg md:rounded-xl border-2 border-orange-200 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
                                             <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2 md:gap-0 mb-2 md:mb-3">
                                                 <div className="flex-1">
-                                                    <h3 className="text-base md:text-lg font-bold text-gray-900 line-clamp-2">{task.title}</h3>
+                                                    <h3 className="text-base md:text-section text-gray-900 line-clamp-2">{task.title}</h3>
                                                     <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600 mt-1">
                                                         <User size={14} className="md:hidden" />
                                                         <User size={16} className="hidden md:block" />
@@ -152,7 +152,7 @@ export default function MyQueue() {
                         <div>
                             <div className="flex items-center gap-2 mb-3 md:mb-4">
                                 <Calendar className="text-blue-600" size={20} />
-                                <h2 className="text-lg md:text-xl font-bold text-blue-600">All Tasks ({normalTasks.length})</h2>
+                                <h2 className="text-lg md:text-page-title text-blue-600">All Tasks ({normalTasks.length})</h2>
                             </div>
                             <div className="grid gap-3 md:gap-4">
                                 {normalTasks.map(task => (
@@ -160,7 +160,7 @@ export default function MyQueue() {
                                         <div className="bg-white p-6 rounded-xl border shadow-sm hover:shadow-md transition-shadow cursor-pointer">
                                             <div className="flex justify-between items-start mb-3">
                                                 <div>
-                                                    <h3 className="text-lg font-bold text-gray-900">{task.title}</h3>
+                                                    <h3 className="text-section text-gray-900">{task.title}</h3>
                                                     <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
                                                         <User size={16} />
                                                         <span>{task.client}</span>

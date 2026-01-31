@@ -13,7 +13,7 @@ export default function ReportsPage() {
     <div className="space-y-6 animate-fade-in pb-20">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Reports Center</h1>
+        <h1 className="text-page-title text-gray-900">Reports Center</h1>
         <p className="text-gray-500">Financial statements, sales analytics, and cash flow</p>
       </div>
 
@@ -57,7 +57,7 @@ export default function ReportsPage() {
       {/* Manual Journal Link */}
       <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-6 text-white flex justify-between items-center shadow-lg">
         <div>
-          <h3 className="text-lg font-bold mb-1">Manual Journal Entry</h3>
+          <h3 className="text-section mb-1">Manual Journal Entry</h3>
           <p className="text-gray-300 text-sm">Record accounting adjustments and non-cash transactions</p>
         </div>
         <Link href="/admin/finance/journal" className="px-6 py-3 bg-white text-gray-900 rounded-xl font-bold hover:bg-gray-100 transition-colors">
@@ -114,7 +114,7 @@ function ClientStatementGenerator() {
           <FileText size={20} />
         </div>
         <div>
-          <h2 className="text-lg font-bold text-gray-900">Generate Client Statement</h2>
+          <h2 className="text-section text-gray-900">Generate Client Statement</h2>
           <p className="text-sm text-gray-500">Debtor Ledger (Receivables)</p>
         </div>
       </div>
@@ -194,7 +194,7 @@ function VendorStatementGenerator() {
           <Truck size={20} />
         </div>
         <div>
-          <h2 className="text-lg font-bold text-gray-900">Generate Vendor Statement</h2>
+          <h2 className="text-section text-gray-900">Generate Vendor Statement</h2>
           <p className="text-sm text-gray-500">Creditor Ledger (Payables)</p>
         </div>
       </div>
@@ -281,7 +281,7 @@ function CashFlowStatement() {
           <ArrowRightLeft size={20} />
         </div>
         <div>
-          <h2 className="text-lg font-bold text-gray-900">Cash Flow Statement</h2>
+          <h2 className="text-section text-gray-900">Cash Flow Statement</h2>
           <p className="text-sm text-gray-500">Inflow vs Outflow Analysis</p>
         </div>
       </div>
@@ -301,15 +301,15 @@ function CashFlowStatement() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-green-50 p-4 rounded-xl border border-green-100">
           <p className="text-sm text-green-600 font-medium">Total Inflow</p>
-          <p className="text-2xl font-bold text-green-700">₹{totalIn.toLocaleString()}</p>
+          <p className="text-page-title text-green-700">₹{totalIn.toLocaleString()}</p>
         </div>
         <div className="bg-red-50 p-4 rounded-xl border border-red-100">
           <p className="text-sm text-red-600 font-medium">Total Outflow</p>
-          <p className="text-2xl font-bold text-red-700">₹{totalOut.toLocaleString()}</p>
+          <p className="text-page-title text-red-700">₹{totalOut.toLocaleString()}</p>
         </div>
         <div className={`p-4 rounded-xl border ${netFlow >= 0 ? 'bg-[rgba(0,0,255,0.1)] border-[rgba(0,0,255,0.2)]-100' : 'bg-amber-50 border-amber-100'}`}>
           <p className={`text-sm font-medium ${netFlow >= 0 ? 'text-oms-blue' : 'text-amber-600'}`}>Net Cash Flow</p>
-          <p className={`text-2xl font-bold ${netFlow >= 0 ? 'text-oms-blue' : 'text-amber-700'}`}>
+          <p className={`text-page-title ${netFlow >= 0 ? 'text-oms-blue' : 'text-amber-700'}`}>
             {netFlow >= 0 ? '+' : ''}₹{netFlow.toLocaleString()}
           </p>
         </div>
@@ -370,7 +370,7 @@ function StatementModal({ title, entity, period, ledger, onClose, columns, rever
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-start mb-8 border-b pb-4">
           <div>
-            <h1 className="text-2xl font-bold uppercase tracking-widest text-gray-900">{title}</h1>
+            <h1 className="text-page-title uppercase tracking-widest text-gray-900">{title}</h1>
             <p className="text-gray-500 mt-1">Aayam Office System</p>
           </div>
           <div className="text-right flex gap-2 print:hidden">
@@ -384,7 +384,7 @@ function StatementModal({ title, entity, period, ledger, onClose, columns, rever
         <div className="flex justify-between mb-8">
           <div>
             <p className="text-xs text-gray-400 uppercase font-bold">To</p>
-            <h3 className="text-xl font-bold">{entity.name}</h3>
+            <h3 className="text-page-title">{entity.name}</h3>
             <p>{entity.company}</p>
             <p className="text-gray-500">{entity.phone}</p>
           </div>

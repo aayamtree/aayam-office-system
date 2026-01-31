@@ -296,25 +296,25 @@ export default function DesignersPage() {
         <div className="bg-white rounded-xl p-4 border">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg"><Users size={20} className="text-oms-blue" /></div>
-            <div><p className="text-xs text-gray-500">Total</p><p className="text-xl font-bold">{totalDesigners}</p></div>
+            <div><p className="text-xs text-gray-500">Total</p><p className="text-page-title">{totalDesigners}</p></div>
           </div>
         </div>
         <div className="bg-white rounded-xl p-4 border">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-100 rounded-lg"><CheckCircle size={20} className="text-green-600" /></div>
-            <div><p className="text-xs text-gray-500">Active</p><p className="text-xl font-bold text-green-600">{activeDesigners}</p></div>
+            <div><p className="text-xs text-gray-500">Active</p><p className="text-page-title text-green-600">{activeDesigners}</p></div>
           </div>
         </div>
         <div className="bg-white rounded-xl p-4 border">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-lg"><Briefcase size={20} className="text-blue-600" /></div>
-            <div><p className="text-xs text-gray-500">Full-time</p><p className="text-xl font-bold text-blue-600">{designers.filter(d => d.employment_type === 'full-time').length}</p></div>
+            <div><p className="text-xs text-gray-500">Full-time</p><p className="text-page-title text-blue-600">{designers.filter(d => d.employment_type === 'full-time').length}</p></div>
           </div>
         </div>
         <div className="bg-white rounded-xl p-4 border">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-orange-100 rounded-lg"><Palette size={20} className="text-orange-600" /></div>
-            <div><p className="text-xs text-gray-500">Freelance</p><p className="text-xl font-bold text-orange-600">{designers.filter(d => d.employment_type === 'freelance').length}</p></div>
+            <div><p className="text-xs text-gray-500">Freelance</p><p className="text-page-title text-orange-600">{designers.filter(d => d.employment_type === 'freelance').length}</p></div>
           </div>
         </div>
       </div>
@@ -359,7 +359,7 @@ export default function DesignersPage() {
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center">
-                  <span className="text-oms-blue font-bold text-lg">{designer.name?.charAt(0)}</span>
+                  <span className="text-oms-blue text-section">{designer.name?.charAt(0)}</span>
                 </div>
                 <div>
                   <h3 className="font-semibold">{designer.name}</h3>
@@ -414,7 +414,7 @@ export default function DesignersPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
-              <h2 className="text-lg font-bold">{editingDesigner ? 'Edit Designer' : 'Add Designer'}</h2>
+              <h2 className="text-section">{editingDesigner ? 'Edit Designer' : 'Add Designer'}</h2>
               <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
@@ -556,7 +556,7 @@ export default function DesignersPage() {
                       <span className="text-oms-blue font-bold text-xl">{selectedDesigner.name?.charAt(0)}</span>
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold">{selectedDesigner.name}</h2>
+                      <h2 className="text-page-title">{selectedDesigner.name}</h2>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${getEmploymentBadge(selectedDesigner.employment_type)}`}>
                         {selectedDesigner.employment_type}
                       </span>
@@ -581,11 +581,11 @@ export default function DesignersPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-[rgba(0,0,255,0.05)] rounded-xl p-4">
                     <p className="text-xs text-gray-500 mb-1">Hourly Rate</p>
-                    <p className="text-xl font-bold text-oms-blue">{formatCurrency(selectedDesigner.hourly_rate)}</p>
+                    <p className="text-page-title text-oms-blue">{formatCurrency(selectedDesigner.hourly_rate)}</p>
                   </div>
                   <div className="bg-green-50 rounded-xl p-4">
                     <p className="text-xs text-gray-500 mb-1">Monthly Salary</p>
-                    <p className="text-xl font-bold text-green-600">{formatCurrency(selectedDesigner.monthly_salary)}</p>
+                    <p className="text-page-title text-green-600">{formatCurrency(selectedDesigner.monthly_salary)}</p>
                   </div>
                 </div>
 

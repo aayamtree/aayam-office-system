@@ -52,7 +52,7 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-gray-100">
         <div className="bg-oms-blue p-6 text-white">
-          <h2 className="text-xl font-bold flex items-center gap-2">
+          <h2 className="text-page-title flex items-center gap-2">
             <Monitor size={24} /> Good Morning, {userName || 'Designer'}!
           </h2>
           <p className="text-white/80 text-sm mt-1">Here is your focus for today.</p>
@@ -795,11 +795,11 @@ export default function DesignerWorkspace() {
                 <div className="grid grid-cols-2 gap-2">
                   <div className="bg-white p-2 rounded-lg border border-[rgba(0,0,255,0.1)] shadow-sm">
                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">This Month</p>
-                    <p className="text-lg font-bold text-oms-blue">{thisMonthCount} <span className="text-[10px] text-gray-400 font-normal">Tasks</span></p>
+                    <p className="text-section text-oms-blue">{thisMonthCount} <span className="text-[10px] text-gray-400 font-normal">Tasks</span></p>
                   </div>
                   <div className="bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Last Month</p>
-                    <p className="text-lg font-bold text-gray-600">{lastMonthCount} <span className="text-[10px] text-gray-400 font-normal">Tasks</span></p>
+                    <p className="text-section text-gray-600">{lastMonthCount} <span className="text-[10px] text-gray-400 font-normal">Tasks</span></p>
                   </div>
                 </div>
 
@@ -1204,7 +1204,7 @@ export default function DesignerWorkspace() {
                   <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 shadow-sm border border-gray-100">
                     <Briefcase size={40} className="text-gray-300" />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-700 mb-2">Ready to work?</h3>
+                  <h3 className="text-section text-gray-700 mb-2">Ready to work?</h3>
                   <p className="text-sm text-gray-500 max-w-xs text-center leading-relaxed">Select a task or switch to Board view.</p>
                 </div>
               )}
@@ -1247,7 +1247,7 @@ export default function DesignerWorkspace() {
                       const hasTasks = tasksOnDay.length > 0;
 
                       return (
-                        <div key={day} className={`h-8 flex flex-col items-center justify-center relative rounded-lg text-xs font-medium cursor-pointer transition-colors hover:bg-gray-50
+                        <div key={day} className={`h-8 flex flex-col items-center justify-center relative rounded-lg text-label cursor-pointer transition-colors hover:bg-gray-50
                     ${isToday ? 'bg-oms-blue text-white hover:bg-oms-blue' : 'text-gray-700'}`}>
                           {day}
                           {hasTasks && (
@@ -1323,7 +1323,7 @@ export default function DesignerWorkspace() {
                       <Briefcase size={28} className="text-white" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-white text-2xl mb-1">Create New Project</h3>
+                      <h3 className="font-bold text-white text-page-title mb-1">Create New Project</h3>
                       <p className="text-white/80 text-sm">Initialize a new design or print job with all details</p>
                     </div>
                   </div>

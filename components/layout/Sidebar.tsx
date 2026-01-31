@@ -257,7 +257,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           onClick={handleLinkClick}
         >
           <div className="w-10 h-10 bg-oms-blue rounded-xl flex items-center justify-center">
-            <span className="text-white font-bold text-lg">A</span>
+            <span className="text-white text-section">A</span>
           </div>
           <span className="font-bold text-white text-xl">Aayam</span>
         </Link>

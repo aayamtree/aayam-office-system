@@ -111,7 +111,7 @@ export default function PaymentsPageNew() {
         <div className="p-6 max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold">Payments (New)</h1>
+                    <h1 className="text-page-title">Payments (New)</h1>
                     <p className="text-gray-500">{payments.length} transactions</p>
                 </div>
                 <button
@@ -176,7 +176,7 @@ export default function PaymentsPageNew() {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg w-full max-w-md p-6">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold">Record Payment</h2>
+                            <h2 className="text-page-title">Record Payment</h2>
                             <button onClick={() => setShowModal(false)}>
                                 <X size={20} />
                             </button>
