@@ -181,7 +181,7 @@ export default function AdminMarketingDashboard() {
                             {teamMembers.map((member: any, idx: number) => (
                                 <div key={idx} className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-oms-blue/20 transition-colors">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-oms-blue flex items-center justify-center font-bold text-oms-blue">
+                                        <div className="w-10 h-10 rounded-full bg-oms-blue flex items-center justify-center font-bold text-white">
                                             {member.name.charAt(0)}
                                         </div>
                                         <div>

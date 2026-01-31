@@ -295,7 +295,7 @@ export default function DesignersPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white rounded-xl p-4 border">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-oms-blue rounded-lg"><Users size={20} className="text-oms-blue" /></div>
+            <div className="p-2 bg-oms-blue rounded-lg"><Users size={20} className="text-white" /></div>
             <div><p className="text-xs text-gray-500">Total</p><p className="text-page-title">{totalDesigners}</p></div>
           </div>
         </div>
@@ -359,7 +359,7 @@ export default function DesignersPage() {
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-oms-blue rounded-full flex items-center justify-center">
-                  <span className="text-oms-blue text-section">{designer.name?.charAt(0)}</span>
+                  <span className="text-white text-section">{designer.name?.charAt(0)}</span>
                 </div>
                 <div>
                   <h3 className="font-semibold">{designer.name}</h3>
@@ -553,7 +553,7 @@ export default function DesignersPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 md:gap-4">
                     <div className="w-14 h-14 bg-oms-blue rounded-full flex items-center justify-center">
-                      <span className="text-oms-blue font-bold text-xl">{selectedDesigner.name?.charAt(0)}</span>
+                      <span className="text-white font-bold text-xl">{selectedDesigner.name?.charAt(0)}</span>
                     </div>
                     <div>
                       <h2 className="text-page-title">{selectedDesigner.name}</h2>

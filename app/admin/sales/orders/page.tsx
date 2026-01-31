@@ -632,7 +632,7 @@ export default function OrdersPage() {
 
             <div className="p-6 space-y-6">
               <div className="flex items-center gap-2 md:gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div className="w-12 h-12 rounded-full bg-oms-blue flex items-center justify-center text-oms-blue text-section">
+                <div className="w-12 h-12 rounded-full bg-oms-blue flex items-center justify-center text-white text-section">
                   {selectedJob.client?.company?.charAt(0) || 'C'}
                 </div>
                 <div>

@@ -281,7 +281,7 @@ export default function PrintRunDetailPage() {
                                                 {prj.ups_in_sheet || 1}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="px-3 py-1 bg-oms-blue text-indigo-800 rounded-lg text-sm font-bold">
+                                                <span className="px-3 py-1 bg-oms-blue text-white rounded-lg text-sm font-bold">
                                                     {Math.ceil((prj.quantity_needed || 0) / (prj.ups_in_sheet || 1))} sheets
                                                 </span>
                                             </td>

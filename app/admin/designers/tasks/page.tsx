@@ -1130,7 +1130,7 @@ export default function DesignerWorkspace() {
                               </div>
                             </div>
                             <div className="flex gap-3 flex-row-reverse">
-                              <div className="min-w-8 w-8 h-8 rounded-full bg-oms-blue flex items-center justify-center text-xs font-bold text-oms-blue">Me</div>
+                              <div className="min-w-8 w-8 h-8 rounded-full bg-oms-blue flex items-center justify-center text-xs font-bold text-white">Me</div>
                               <div className="bg-oms-blue p-3 rounded-2xl rounded-tr-none border border-[rgba(0,0,255,0.2)]-600  max-w-[80%] text-white">
                                 <div className="flex justify-between items-center mb-1 gap-2 md:gap-4">
                                   <span className="text-[10px] font-bold text-white/80">You</span>

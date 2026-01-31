@@ -353,7 +353,7 @@ export default function JobsPage() {
         <div className={`px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide ${getPriorityBadge(job.priority)}`}>
           {job.priority.toUpperCase()}
         </div>
-        <span className="font-mono text-xs text-oms-blue font-medium bg-oms-blue px-2 py-1 rounded-md">
+        <span className="font-mono text-xs text-white font-medium bg-oms-blue px-2 py-1 rounded-md">
           {job.job_number}
         </span>
       </div>
@@ -446,7 +446,7 @@ export default function JobsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
         <Link href="/admin/print-planner" className="flex items-center gap-2 md:gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-oms-blue/20 transition-all group">
           <div className="w-12 h-12 bg-oms-blue rounded-xl flex items-center justify-center transition-colors">
-            <Layers size={24} className="text-oms-blue" />
+            <Layers size={24} className="text-white" />
           </div>
           <div>
             <h3 className="font-bold text-gray-900">Print Planner</h3>
@@ -456,7 +456,7 @@ export default function JobsPage() {
         </Link>
         <Link href="/admin/production-queue" className="flex items-center gap-2 md:gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-oms-blue/20 transition-all group">
           <div className="w-12 h-12 bg-oms-blue rounded-xl flex items-center justify-center transition-colors">
-            <Printer size={24} className="text-oms-blue" />
+            <Printer size={24} className="text-white" />
           </div>
           <div>
             <h3 className="font-bold text-gray-900">Production Queue</h3>

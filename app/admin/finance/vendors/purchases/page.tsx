@@ -366,7 +366,7 @@ export default function VendorPurchasesPage() {
                         setFormData({ ...formData, attachmentUrl: file.name });
                       }
                     }}
-                    className="w-full px-3 py-2 border rounded-lg text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-oms-blue file:text-oms-blue hover:file:bg-oms-blue"
+                    className="w-full px-3 py-2 border rounded-lg text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-oms-blue file:text-white hover:file:bg-oms-blue"
                   />
                   {formData.attachmentUrl && (
                     <p className="text-xs text-gray-900 mt-1">✓ {formData.attachmentUrl}</p>
