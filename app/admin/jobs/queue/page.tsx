@@ -114,13 +114,13 @@ export default function JobQueuePage() {
 
       {/* Stats Cards - Updated Layout */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
-        <div className="bg-oms-blue border border-[rgba(0,0,255,0.2)]-200 rounded-lg md:rounded-xl p-2 md:p-3">
+        <div className="bg-oms-blue border border-blue-200 rounded-lg md:rounded-xl p-2 md:p-3">
           <div className="flex items-center gap-1 md:gap-2 mb-1">
-            <Clock size={14} className="text-oms-blue md:hidden" />
-            <Clock size={16} className="text-oms-blue hidden md:block" />
-            <span className="text-[10px] md:text-xs text-oms-blue font-medium">Design Stage</span>
+            <Clock size={14} className="text-white md:hidden" />
+            <Clock size={16} className="text-white hidden md:block" />
+            <span className="text-[10px] md:text-xs text-white font-medium">Design Stage</span>
           </div>
-          <p className="text-xl md:text-page-title text-oms-blue">{designCount}</p>
+          <p className="text-xl md:text-page-title text-white">{designCount}</p>
         </div>
         <div className="bg-blue-50 border border-blue-200 rounded-lg md:rounded-xl p-2 md:p-3">
           <div className="flex items-center gap-1 md:gap-2 mb-1">
@@ -250,8 +250,8 @@ export default function JobQueuePage() {
                     <button
                       onClick={() => handleMoveToNext(job)}
                       className={`px-4 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2 ${job.current_stage === 'dispatched'
-                          ? 'bg-green-600 text-white hover:bg-green-700'
-                          : 'bg-oms-blue text-white hover:bg-blue-700'
+                        ? 'bg-green-600 text-white hover:bg-green-700'
+                        : 'bg-oms-blue text-white hover:bg-blue-700'
                         }`}
                     >
                       {job.current_stage === 'new' && <Play size={18} />}

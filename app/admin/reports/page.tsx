@@ -110,7 +110,7 @@ function ClientStatementGenerator() {
     <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100 animate-scale-in">
       {/* ... Header UI ... */}
       <div className="flex items-center gap-3 mb-3 md:mb-6">
-        <div className="w-10 h-10 bg-oms-blue rounded-xl flex items-center justify-center text-oms-blue">
+        <div className="w-10 h-10 bg-oms-blue rounded-xl flex items-center justify-center text-white">
           <FileText size={20} />
         </div>
         <div>

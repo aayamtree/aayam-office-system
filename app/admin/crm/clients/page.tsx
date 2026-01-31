@@ -234,7 +234,7 @@ export default function ClientsPage() {
                   <tr key={client.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-oms-blue rounded-full flex items-center justify-center text-oms-blue font-bold">
+                        <div className="w-10 h-10 bg-oms-blue rounded-full flex items-center justify-center text-white font-bold">
                           {client.name?.charAt(0)}
                         </div>
                         <div>
@@ -309,7 +309,7 @@ export default function ClientsPage() {
           <div className="bg-white rounded-2xl w-full max-w-lg animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b"><h2 className="text-section text-gray-900">Client Details</h2><button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button></div>
             <div className="p-4 space-y-4">
-              <div className="flex items-center gap-2 md:gap-4"><div className="w-16 h-16 bg-oms-blue rounded-full flex items-center justify-center"><span className="text-oms-blue font-bold text-2xl">{selectedClient.name?.charAt(0)}</span></div><div><h3 className="text-section text-gray-900">{selectedClient.name}</h3><p className="text-gray-500">{selectedClient.company}</p></div></div>
+              <div className="flex items-center gap-2 md:gap-4"><div className="w-16 h-16 bg-oms-blue rounded-full flex items-center justify-center"><span className="text-white font-bold text-2xl">{selectedClient.name?.charAt(0)}</span></div><div><h3 className="text-section text-gray-900">{selectedClient.name}</h3><p className="text-gray-500">{selectedClient.company}</p></div></div>
               <div className="space-y-3 p-4 bg-gray-50 rounded-xl"><div className="flex items-center gap-3"><Phone size={16} className="text-gray-400" /><span className="text-gray-700">{selectedClient.phone}</span></div>{selectedClient.email && <div className="flex items-center gap-3"><Mail size={16} className="text-gray-400" /><span className="text-gray-700">{selectedClient.email}</span></div>}{selectedClient.address && <div className="flex items-center gap-3"><MapPin size={16} className="text-gray-400" /><span className="text-gray-700">{selectedClient.address}, {selectedClient.city}</span></div>}{selectedClient.gstin && <div className="flex items-center gap-3"><Building2 size={16} className="text-gray-400" /><span className="text-gray-700">GSTIN: {selectedClient.gstin}</span></div>}</div>
               <div className="flex gap-3"><button onClick={() => { setShowViewModal(false); handleEdit(selectedClient); }} className="flex-1 px-4 py-2.5 border rounded-xl hover:bg-gray-50 transition-colors">Edit</button><button onClick={() => setShowViewModal(false)} className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-blue-600 transition-colors">Close</button></div>
             </div>
