@@ -78,8 +78,8 @@ export default function PrintPlannerPage() {
                 />
             </div>
 
-            {/* Info Banner */}
-            <div className="mt-6 p-4 bg-[rgba(0,0,255,0.05)] border-2 border-[rgba(0,0,255,0.2)] rounded-xl">
+            {/* Info Banner - Spacer to prevent overlap */}
+            <div className="mt-12 p-4 bg-[rgba(0,0,255,0.05)] border-2 border-[rgba(0,0,255,0.2)] rounded-xl">
                 <div className="flex items-start gap-3">
                     <div className="w-6 h-6 bg-oms-blue rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                         <span className="text-white text-sm font-bold">ℹ</span>

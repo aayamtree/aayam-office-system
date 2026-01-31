@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Printer, Users, X, Calendar, DollarSign, CheckCircle, Plus } from 'lucide-react';
+import { Printer, Users, X, Calendar, IndianRupee, CheckCircle, Plus } from 'lucide-react';
 import { QuickAddMachine, QuickAddSheetSize, QuickAddMaterial } from '@/components/print-planner/QuickAddModals';
 
 interface PendingJob {
@@ -302,7 +302,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                     </div>
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">
-                            <DollarSign size={14} className="inline mr-1" />
+                            <IndianRupee size={14} className="inline mr-1" />
                             Total Amount
                         </label>
                         <input
