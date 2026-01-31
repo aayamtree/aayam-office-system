@@ -54,6 +54,18 @@ module.exports = {
         '4': '32px',
         '5': '40px',
       },
+
+      // DESIGN SYSTEM: No drop shadows - use borders instead
+      boxShadow: {
+        'sm': 'none',
+        'DEFAULT': 'none',
+        'md': 'none',
+        'lg': 'none',
+        'xl': 'none',
+        '2xl': 'none',
+        'inner': 'none',
+        'none': 'none',
+      },
     },
   },
   plugins: [],

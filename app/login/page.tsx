@@ -34,6 +34,22 @@ export default function LoginPage() {
     }
   }, [profile, loading, router]);
 
+  // Keyboard shortcut for quick login (localhost only)
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'L') {
+        if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+          e.preventDefault();
+          console.log('🚀 BYPASS LOGIN - Keyboard Shortcut (Ctrl+Shift+L)');
+          bypassLogin();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [bypassLogin]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -186,6 +202,22 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
+
+        {/* Localhost Quick Login - Only visible on localhost */}
+        {typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
+          <div className="text-center mt-4">
+            <button
+              onClick={() => {
+                console.log('🚀 BYPASS LOGIN - Localhost Testing Mode');
+                bypassLogin();
+              }}
+              className="px-4 py-2 bg-oms-orange text-white rounded-lg text-sm font-semibold hover:bg-oms-orange/90 transition-colors"
+            >
+              ⚡ Quick Login (Localhost Only)
+            </button>
+            <p className="text-xs text-gray-400 mt-2">Or press Ctrl+Shift+L</p>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="text-center mt-6">

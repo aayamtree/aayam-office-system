@@ -181,17 +181,17 @@ export default function AdminDashboard() {
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <div key={stat.label} className="bg-oms-blue rounded-xl md:rounded-2xl p-3 md:p-5 hover:opacity-95 transition-all duration-150 shadow-sm">
+              <div key={stat.label} className="bg-white rounded-xl md:rounded-2xl p-3 md:p-5 border-2 border-gray-100 hover:border-oms-blue/20 transition-all duration-150">
                 <div className="flex items-start justify-between mb-2 md:mb-3">
-                  <p className="text-white/90 text-xs md:text-sm font-medium">{stat.label}</p>
-                  <Icon size={16} className="text-white/70 md:hidden" />
-                  <Icon size={20} className="text-white/70 hidden md:block" />
+                  <p className="text-gray-600 text-xs md:text-sm font-medium">{stat.label}</p>
+                  <Icon size={16} className="text-oms-blue md:hidden" />
+                  <Icon size={20} className="text-oms-blue hidden md:block" />
                 </div>
-                <p className="text-xl md:text-3xl lg:text-page-title tracking-tight text-white">
+                <p className="text-xl md:text-3xl lg:text-page-title tracking-tight text-gray-900 font-semibold">
                   {statsLoading ? '...' : stat.value}
                 </p>
                 {stat.subtext && (
-                  <span className="text-xs text-white/70 mt-1 block">
+                  <span className="text-xs text-gray-500 mt-1 block">
                     {stat.subtext}
                   </span>
                 )}

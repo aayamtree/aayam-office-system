@@ -38,15 +38,14 @@ export default function CommissionsPage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-page-title text-gray-900 flex items-center gap-3">
-                                <DollarSign className="text-green-600" size={32} />
+                                <DollarSign className="text-oms-blue" size={32} />
                                 Commission Management
                             </h1>
                             <p className="text-gray-500 mt-1">Track and manage marketing commissions with flexible GST</p>
                         </div>
                         <button
                             onClick={() => setShowAddModal(true)}
-                            className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center gap-2"
-                        >
+                            className="px-6 py-3 bg-oms-blue text-white rounded-xl font-semibold hover:bg-oms-blue/90 transition-all flex items-center gap-2">
                             <Plus size={20} />
                             Add Commission
                         </button>
@@ -87,15 +86,15 @@ export default function CommissionsPage() {
                         <p className="text-page-title text-green-600">₹0</p>
                         <p className="text-xs text-gray-400 mt-1">0 projects</p>
                     </div>
-                    <div className="bg-oms-blue rounded-2xl p-6 border border-[rgba(0,0,255,0.2)]-100 shadow-sm">
+                    <div className="bg-white rounded-2xl p-6 border-2 border-gray-100">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-white rounded-lg">
+                            <div className="p-2 bg-[rgba(0,0,255,0.05)] rounded-lg">
                                 <DollarSign className="text-oms-blue" size={20} />
                             </div>
-                            <p className="text-sm text-gray-600 font-medium">Total This Month</p>
+                            <p className="text-sm text-gray-500 font-medium">Total This Month</p>
                         </div>
-                        <p className="text-page-title text-indigo-900">₹0</p>
-                        <p className="text-xs text-gray-500 mt-1">Eligible commissions</p>
+                        <p className="text-page-title text-gray-900 font-semibold">₹0</p>
+                        <p className="text-xs text-gray-400 mt-1">Eligible commissions</p>
                     </div>
                 </div>
 
@@ -107,14 +106,10 @@ export default function CommissionsPage() {
                                 <button
                                     key={f}
                                     onClick={() => setFilter(f)}
-                                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all capitalize ${filter === f
-                                        ? f === 'all' ? 'bg-[rgba(0,0,255,0.1)] text-white'
-                                            : f === 'pending' ? 'bg-blue-600 text-white'
-                                                : f === 'approved' ? 'bg-[rgba(0,0,255,0.1)] text-white'
-                                                    : 'bg-green-600 text-white'
+                                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all capitalize ${filter === f
+                                        ? 'bg-oms-blue text-white'
                                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                        }`}
-                                >
+                                        }`}>
                                     {f}
                                 </button>
                             ))}
@@ -196,12 +191,12 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <div className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-6 text-white">
+                <div className="bg-oms-blue p-6 text-white">
                     <h3 className="text-page-title flex items-center gap-3">
                         <Calculator size={28} />
                         Add Commission with GST Calculator
                     </h3>
-                    <p className="text-green-100 text-sm mt-1">User-configurable GST rates for all printing materials</p>
+                    <p className="text-white/80 text-sm mt-1">User-configurable GST rates for all printing materials</p>
                 </div>
 
                 <div className="p-6 space-y-6">
@@ -252,8 +247,8 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                             setTimeout(handleCalculate, 100);
                                         }
                                     }}
-                                    className={`px-3 py-2 rounded-lg text-sm font-bold transition-all ${formData.gstPercentage === rate.value.toString()
-                                        ? 'bg-green-600 text-white'
+                                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${formData.gstPercentage === rate.value.toString()
+                                        ? 'bg-oms-blue text-white'
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                         }`}
                                 >
@@ -363,8 +358,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                             alert('Commission saving feature coming soon - database table creation needed!');
                             onClose();
                         }}
-                        className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold hover:shadow-lg transition-all"
-                    >
+                        className="px-8 py-3 bg-oms-blue text-white rounded-xl font-semibold hover:bg-oms-blue/90 transition-all">
                         Save Commission
                     </button>
                 </div>

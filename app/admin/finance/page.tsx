@@ -54,53 +54,53 @@ export default function FinancePage() {
       {/* Quick Actions - Finance Tools */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Link href="/admin/finance/opening-balance"
-          className="flex items-center gap-4 bg-[rgba(0,0,255,0.1)] border border-[rgba(0,0,255,0.2)]-100 rounded-2xl p-5 hover:bg-[rgba(0,0,255,0.1)] transition-colors group">
-          <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+          className="flex items-center gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
+          <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
             <IndianRupee className="text-oms-blue" size={24} />
           </div>
           <div>
-            <p className="font-bold text-indigo-900 text-lg">Opening Balance</p>
-            <p className="text-sm font-medium text-oms-blue/80">FY opening entries</p>
+            <p className="font-semibold text-gray-900 text-base">Opening Balance</p>
+            <p className="text-sm text-gray-500">FY opening entries</p>
           </div>
         </Link>
         <Link href="/admin/finance/banks"
-          className="flex items-center gap-4 bg-blue-50 border border-blue-100 rounded-2xl p-5 hover:bg-blue-100 transition-colors group">
-          <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
-            <CreditCard className="text-blue-600" size={24} />
+          className="flex items-center gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
+          <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <CreditCard className="text-oms-blue" size={24} />
           </div>
           <div>
-            <p className="font-bold text-blue-900 text-lg">Bank Accounts</p>
-            <p className="text-sm font-medium text-blue-600/80">Multi-bank ledger</p>
+            <p className="font-semibold text-gray-900 text-base">Bank Accounts</p>
+            <p className="text-sm text-gray-500">Multi-bank ledger</p>
           </div>
         </Link>
         <Link href="/admin/finance/banking"
-          className="flex items-center gap-4 bg-emerald-50 border border-emerald-100 rounded-2xl p-5 hover:bg-emerald-100 transition-colors group">
-          <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
-            <RefreshCw className="text-emerald-600" size={24} />
+          className="flex items-center gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
+          <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <RefreshCw className="text-oms-blue" size={24} />
           </div>
           <div>
-            <p className="font-bold text-emerald-900 text-lg">Reconciliation</p>
-            <p className="text-sm font-medium text-emerald-600/80">Match statements</p>
+            <p className="font-semibold text-gray-900 text-base">Reconciliation</p>
+            <p className="text-sm text-gray-500">Match statements</p>
           </div>
         </Link>
         <Link href="/admin/finance/expenses/quick"
-          className="flex items-center gap-4 bg-orange-50 border border-orange-100 rounded-2xl p-5 hover:bg-orange-100 transition-colors group">
-          <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
-            <TrendingDown className="text-orange-600" size={24} />
+          className="flex items-center gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
+          <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <TrendingDown className="text-oms-blue" size={24} />
           </div>
           <div>
-            <p className="font-bold text-orange-900 text-lg">Quick Expense</p>
-            <p className="text-sm font-medium text-orange-600/80">Fast entry</p>
+            <p className="font-semibold text-gray-900 text-base">Quick Expense</p>
+            <p className="text-sm text-gray-500">Fast entry</p>
           </div>
         </Link>
         <Link href="/admin/finance/reports/cashbook"
-          className="flex items-center gap-4 bg-[rgba(0,0,255,0.1)] border border-[rgba(0,0,255,0.2)]-100 rounded-2xl p-5 hover:bg-[rgba(0,0,255,0.1)] transition-colors group">
-          <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+          className="flex items-center gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
+          <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
             <FileText className="text-oms-blue" size={24} />
           </div>
           <div>
-            <p className="font-bold text-purple-900 text-lg">Cash Book</p>
-            <p className="text-sm font-medium text-oms-blue/80">Cash report</p>
+            <p className="font-semibold text-gray-900 text-base">Cash Book</p>
+            <p className="text-sm text-gray-500">Cash report</p>
           </div>
         </Link>
       </div>
@@ -242,8 +242,7 @@ export default function FinancePage() {
           </div>
           <Link
             href="/admin/finance/invoices?status=overdue"
-            className="block w-full mt-5 text-center py-3 bg-red-100 text-red-700 rounded-xl text-sm font-bold hover:bg-red-200 transition-colors shadow-sm"
-          >
+            className="block w-full mt-5 text-center py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl text-sm font-semibold hover:border-oms-blue hover:text-oms-blue transition-colors">
             Send Payment Reminders
           </Link>
         </div>
@@ -256,21 +255,21 @@ export default function FinancePage() {
           <h2 className="text-section text-gray-900">Monthly Summary</h2>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-green-50 border border-green-100 rounded-2xl hover:shadow-sm transition-shadow">
-            <p className="text-xs sm:text-sm font-semibold text-green-600 mb-1 uppercase tracking-wider">Total Invoiced</p>
-            <p className="text-xl sm:text-page-title text-green-700">₹5,25,000</p>
+          <div className="p-4 bg-white border-2 border-gray-100 rounded-2xl hover:border-gray-200 transition-colors">
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wider">Total Invoiced</p>
+            <p className="text-xl sm:text-page-title text-gray-900 font-semibold">₹5,25,000</p>
           </div>
-          <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl hover:shadow-sm transition-shadow">
-            <p className="text-xs sm:text-sm font-semibold text-blue-600 mb-1 uppercase tracking-wider">Collected</p>
-            <p className="text-xl sm:text-page-title text-blue-700">₹4,50,000</p>
+          <div className="p-4 bg-white border-2 border-gray-100 rounded-2xl hover:border-gray-200 transition-colors">
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wider">Collected</p>
+            <p className="text-xl sm:text-page-title text-gray-900 font-semibold">₹4,50,000</p>
           </div>
-          <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl hover:shadow-sm transition-shadow">
-            <p className="text-xs sm:text-sm font-semibold text-amber-600 mb-1 uppercase tracking-wider">Pending</p>
-            <p className="text-xl sm:text-page-title text-amber-700">₹75,000</p>
+          <div className="p-4 bg-white border-2 border-gray-100 rounded-2xl hover:border-gray-200 transition-colors">
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wider">Pending</p>
+            <p className="text-xl sm:text-page-title text-oms-orange font-semibold">₹75,000</p>
           </div>
-          <div className="p-4 bg-red-50 border border-red-100 rounded-2xl hover:shadow-sm transition-shadow">
-            <p className="text-xs sm:text-sm font-semibold text-red-600 mb-1 uppercase tracking-wider">Expenses</p>
-            <p className="text-xl sm:text-page-title text-red-700">₹1,85,000</p>
+          <div className="p-4 bg-white border-2 border-gray-100 rounded-2xl hover:border-gray-200 transition-colors">
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wider">Expenses</p>
+            <p className="text-xl sm:text-page-title text-gray-900 font-semibold">₹1,85,000</p>
           </div>
         </div>
       </div>
