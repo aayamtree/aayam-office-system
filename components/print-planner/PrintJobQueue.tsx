@@ -110,13 +110,13 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
             </div>
 
             {/* Job Type Filters */}
-            <div className="px-4 py-3 border-b border-gray-100 overflow-x-auto">
-                <div className="flex gap-2 flex-nowrap">
+            <div className="px-4 py-3 border-b border-gray-100">
+                <div className="flex gap-2 flex-wrap">
                     {JOB_TYPES.map(type => (
                         <button
                             key={type}
                             onClick={() => setFilter(type)}
-                            className={`px-4 py-1.5 rounded-lg text-xs font-bold border-2 whitespace-nowrap transition-all flex-shrink-0 ${filter === type
+                            className={`px-4 py-1.5 rounded-lg text-xs font-bold border-2 whitespace-nowrap transition-all ${filter === type
                                 ? 'bg-[rgba(0,0,255,0.1)] text-white border-[rgba(0,0,255,0.2)]-600'
                                 : 'bg-white text-gray-600 border-gray-200 hover:border-oms-blue-300'
                                 }`}
