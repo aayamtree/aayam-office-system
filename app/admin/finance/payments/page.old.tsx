@@ -200,17 +200,17 @@ export default function PaymentsPage() {
             <p className="text-sm text-gray-500">{filteredPayments.length} transactions</p>
           </div>
         </div>
-        <button onClick={handleAddNew} className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800">
+        <button onClick={handleAddNew} className="flex items-center justify-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-xl hover:bg-blue-600">
           <Plus size={18} /> Record Payment
         </button>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2 text-green-700 font-medium">
+        <div className="bg-white border border-green-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2 text-gray-900 font-medium">
             <ArrowDownRight size={20} /> Total Received
           </div>
-          <p className="text-page-title text-green-700">{formatCurrency(totalReceived)}</p>
+          <p className="text-page-title text-gray-900">{formatCurrency(totalReceived)}</p>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2 text-red-700 font-medium">
@@ -238,14 +238,14 @@ export default function PaymentsPage() {
           {/* Mobile View: Cards */}
           <div className="lg:hidden space-y-4">
             {filteredPayments.map((p) => (
-              <div key={p.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 relative">
+              <div key={p.id} className="bg-white p-4 rounded-2xl border border-gray-100 relative">
                 {/* Row 1: Type & Amount */}
                 <div className="flex justify-between items-start mb-3">
-                  <span className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-full uppercase tracking-wide border ${p.type === 'received' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                  <span className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-full uppercase tracking-wide border ${p.type === 'received' ? 'bg-white text-gray-900 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
                     {p.type === 'received' ? <ArrowDownRight size={14} /> : <ArrowUpRight size={14} />}
                     {p.type === 'received' ? 'Received' : 'Paid'}
                   </span>
-                  <div className={`text-section ${p.type === 'received' ? 'text-green-700' : 'text-red-700'}`}>
+                  <div className={`text-section ${p.type === 'received' ? 'text-gray-900' : 'text-red-700'}`}>
                     {formatCurrency(p.amount)}
                   </div>
                 </div>
@@ -288,7 +288,7 @@ export default function PaymentsPage() {
           </div>
 
           {/* Desktop View: Table */}
-          <div className="hidden lg:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="hidden lg:block bg-white rounded-2xl border border-gray-100 overflow-hidden">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
@@ -304,7 +304,7 @@ export default function PaymentsPage() {
                 {filteredPayments.map((p) => (
                   <tr key={p.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
-                      <span className={`flex items-center gap-2 font-medium ${p.type === 'received' ? 'text-green-600' : 'text-red-600'}`}>
+                      <span className={`flex items-center gap-2 font-medium ${p.type === 'received' ? 'text-gray-900' : 'text-red-600'}`}>
                         {p.type === 'received' ? <ArrowDownRight size={16} /> : <ArrowUpRight size={16} />}
                         {p.type === 'received' ? 'Received' : 'Paid'}
                       </span>
@@ -342,7 +342,7 @@ export default function PaymentsPage() {
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <button type="button" onClick={() => setFormData({ ...formData, type: 'received' })}
-                  className={`p-3 rounded-xl border-2 flex flex-col items-center gap-1 ${formData.type === 'received' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200'}`}>
+                  className={`p-3 rounded-xl border-2 flex flex-col items-center gap-1 ${formData.type === 'received' ? 'border-green-500 bg-white text-gray-900' : 'border-gray-200'}`}>
                   <ArrowDownRight size={20} /> <span className="font-medium">Received</span>
                 </button>
                 <button type="button" onClick={() => setFormData({ ...formData, type: 'paid' })}
@@ -515,7 +515,7 @@ export default function PaymentsPage() {
                       <FileText size={16} className="text-oms-blue shrink-0" />
                       <span className="truncate">Proof Attached</span>
                     </div>
-                    <a href={formData.attachmentUrl} target="_blank" rel="noreferrer" className="text-xs bg-white border px-2 py-1 rounded shadow-sm hover:bg-gray-50 text-oms-blue">
+                    <a href={formData.attachmentUrl} target="_blank" rel="noreferrer" className="text-xs bg-white border px-2 py-1 rounded hover:bg-gray-50 text-oms-blue">
                       View
                     </a>
                   </div>
@@ -524,7 +524,7 @@ export default function PaymentsPage() {
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2 border rounded-xl">Cancel</button>
-                <button type="submit" disabled={submitting || uploading} className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-xl">
+                <button type="submit" disabled={submitting || uploading} className="flex-1 px-4 py-2 bg-oms-blue text-white rounded-xl">
                   {submitting ? 'Saving...' : 'Record'}
                 </button>
               </div>

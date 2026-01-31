@@ -147,39 +147,39 @@ export default function BankAccountsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
+        <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Balance</p>
           <p className="text-lg sm:text-page-title text-oms-blue">{formatCurrency(totalBalance)}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
+        <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Active Accounts</p>
           <p className="text-lg sm:text-page-title text-gray-900">{activeAccounts}</p>
         </div>
         {/* Placeholder stats */}
-        <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4 opacity-50">
+        <div className="bg-white rounded-xl border p-3 sm:p-4 opacity-50">
           <p className="text-xs sm:text-sm text-gray-500">Total Inflow</p>
-          <p className="text-lg sm:text-page-title text-green-600">--</p>
+          <p className="text-lg sm:text-page-title text-gray-900">--</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4 opacity-50">
+        <div className="bg-white rounded-xl border p-3 sm:p-4 opacity-50">
           <p className="text-xs sm:text-sm text-gray-500">Total Outflow</p>
           <p className="text-lg sm:text-page-title text-red-600">--</p>
         </div>
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl shadow-sm border p-4">
+      <div className="bg-white rounded-xl border p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
           <input type="text" placeholder="Search by bank name or account number..." value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500" />
+            className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue" />
         </div>
       </div>
 
       {/* Bank Accounts List */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {filteredBanks.map(bank => (
-          <div key={bank.id} className={`bg-white rounded-xl shadow-sm border p-4 hover:shadow-md transition-shadow ${!bank.is_active ? 'opacity-60' : ''} ${bank.is_default ? 'ring-2 ring-indigo-500' : ''}`}>
+          <div key={bank.id} className={`bg-white rounded-xl border p-4  transition-shadow ${!bank.is_active ? 'opacity-60' : ''} ${bank.is_default ? 'ring-2 ring-oms-blue' : ''}`}>
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -216,7 +216,7 @@ export default function BankAccountsPage() {
               </div>
               <div>
                 <p className="text-xs text-gray-500">Change</p>
-                <p className={`font-semibold ${bank.current_balance >= bank.opening_balance ? 'text-green-600' : 'text-red-600'}`}>
+                <p className={`font-semibold ${bank.current_balance >= bank.opening_balance ? 'text-gray-900' : 'text-red-600'}`}>
                   {bank.current_balance >= bank.opening_balance ? '+' : ''}{formatCurrency(bank.current_balance - bank.opening_balance)}
                 </p>
               </div>
@@ -346,7 +346,7 @@ export default function BankAccountsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Status</p>
-                  <span className={`px-2 py-0.5 rounded-full text-label ${selectedBank.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                  <span className={`px-2 py-0.5 rounded-full text-label ${selectedBank.is_active ? 'bg-gray-100 text-gray-900' : 'bg-gray-100 text-gray-600'}`}>
                     {selectedBank.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </div>

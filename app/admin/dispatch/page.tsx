@@ -52,15 +52,15 @@ export default function DispatchPage() {
   }).length;
 
   const stats = [
-    { label: 'Pending QC', value: pendingQC.length.toString(), change: 'Need checking', icon: ClipboardCheck, color: 'bg-amber-500' },
+    { label: 'Pending QC', value: pendingQC.length.toString(), change: 'Need checking', icon: ClipboardCheck, color: 'bg-white0' },
     { label: 'Ready to Dispatch', value: readyToDispatch.length.toString(), change: 'Awaiting pickup', icon: Package, color: 'bg-blue-500' },
-    { label: 'Dispatched Total', value: dispatches.length.toString(), change: 'All time', icon: Truck, color: 'bg-green-500' },
+    { label: 'Dispatched Total', value: dispatches.length.toString(), change: 'All time', icon: Truck, color: 'bg-white0' },
     { label: 'Delayed', value: delayedCount.toString(), change: 'Needs attention', icon: AlertTriangle, color: 'bg-red-500' },
   ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'delivered': return 'bg-green-100 text-green-700';
+      case 'delivered': return 'bg-gray-100 text-gray-900';
       case 'in_transit': return 'bg-blue-100 text-blue-700';
       case 'dispatched': return 'bg-[rgba(0,0,255,0.1)] text-oms-blue';
       case 'pending': return 'bg-gray-100 text-gray-700';
@@ -127,7 +127,7 @@ export default function DispatchPage() {
         </div>
         <Link
           href="/admin/dispatch/qc-check"
-          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-3 md:px-4 py-2 md:py-2.5 rounded-xl hover:bg-gray-800 transition-colors text-sm md:text-base"
+          className="flex items-center justify-center gap-2 bg-oms-blue text-white px-3 md:px-4 py-2 md:py-2.5 rounded-xl hover:bg-blue-600 transition-colors text-sm md:text-base"
         >
           <ClipboardCheck size={16} className="md:hidden" />
           <ClipboardCheck size={18} className="hidden md:block" />
@@ -138,7 +138,7 @@ export default function DispatchPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-6 shadow-sm border border-gray-100">
+          <div key={stat.label} className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-6 border border-gray-100">
             <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
               <div className={`w-8 h-8 md:w-10 md:h-10 ${stat.color} rounded-lg md:rounded-xl flex items-center justify-center`}>
                 <stat.icon size={16} className="text-white md:hidden" />
@@ -157,7 +157,7 @@ export default function DispatchPage() {
       {/* QC & Ready Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pending QC */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-section text-gray-900">Pending QC</h2>
             <Link href="/admin/dispatch/qc-check" className="text-sm text-oms-blue hover:underline">
@@ -168,7 +168,7 @@ export default function DispatchPage() {
             {pendingQC.length === 0 ? (
               <div className="text-center text-gray-400 py-4">No jobs pending QC.</div>
             ) : pendingQC.slice(0, 5).map((job) => (
-              <div key={job.id} className="flex items-center justify-between p-3 bg-amber-50 border border-amber-100 rounded-xl">
+              <div key={job.id} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl">
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-gray-900">{job.job_number}</p>
@@ -187,10 +187,10 @@ export default function DispatchPage() {
         </div>
 
         {/* Ready to Dispatch - NOW WITH ACTION */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-section text-gray-900">Ready to Dispatch</h2>
-            <span className="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+            <span className="px-3 py-1 bg-gray-100 text-gray-900 text-xs rounded-full font-medium">
               {readyToDispatch.length} ready
             </span>
           </div>
@@ -198,7 +198,7 @@ export default function DispatchPage() {
             {readyToDispatch.length === 0 ? (
               <div className="text-center text-gray-400 py-4">No jobs ready for dispatch.</div>
             ) : readyToDispatch.map((job) => (
-              <div key={job.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-green-50 border border-green-100 rounded-xl gap-3">
+              <div key={job.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-white border border-green-100 rounded-xl gap-3">
                 <div>
                   <p className="font-medium text-gray-900">{job.job_number}</p>
                   <p className="text-sm text-gray-600">{job.client?.company || job.client?.name}</p>
@@ -215,7 +215,7 @@ export default function DispatchPage() {
                       <button
                         disabled={!hasInvoice}
                         onClick={() => handleOpenDispatch(job)}
-                        className={`px-4 py-2 text-white text-sm font-medium rounded-lg shadow-sm whitespace-nowrap ${hasInvoice ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'
+                        className={`px-4 py-2 text-white text-sm font-medium rounded-lg whitespace-nowrap ${hasInvoice ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'
                           }`}
                         title={hasInvoice ? 'Proceed to Dispatch' : 'Strict Rule: Cannot Dispatch without Invoice'}
                       >
@@ -231,7 +231,7 @@ export default function DispatchPage() {
       </div>
 
       {/* Recent Dispatches */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div className="bg-white rounded-2xl p-6 border border-gray-100">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-section text-gray-900">Recent Dispatches</h2>
           <Link href="/admin/dispatch/history" className="text-sm text-oms-blue hover:underline">
@@ -341,7 +341,7 @@ export default function DispatchPage() {
                   className="w-full px-3 py-2 border rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
                 />
                 {dispatchForm.attachmentUrl && (
-                  <p className="text-xs text-green-600 mt-1">✓ {dispatchForm.attachmentUrl}</p>
+                  <p className="text-xs text-gray-900 mt-1">✓ {dispatchForm.attachmentUrl}</p>
                 )}
                 <p className="text-xs text-gray-500 mt-1">Upload slip/photo from gallery or camera</p>
               </div>
@@ -353,7 +353,7 @@ export default function DispatchPage() {
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowDispatchModal(false)} className="flex-1 px-4 py-2 border rounded-xl">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-xl">
+                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2 bg-oms-blue text-white rounded-xl">
                   {submitting ? 'Creating...' : 'Create Dispatch'}
                 </button>
               </div>

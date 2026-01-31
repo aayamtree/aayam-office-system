@@ -35,7 +35,7 @@ export default function AccountsPage() {
             </div>
 
             {/* Total Balance Summary */}
-            <div className="bg-oms-blue rounded-2xl p-6 text-white shadow-lg">
+            <div className="bg-oms-blue rounded-2xl p-6 text-white">
                 <h2 className="text-sm font-medium opacity-90 mb-2">Total Available Balance</h2>
                 <p className="text-page-title">₹{grandTotal.toLocaleString()}</p>
                 <div className="mt-4 flex gap-6 text-sm">
@@ -51,7 +51,7 @@ export default function AccountsPage() {
             </div>
 
             {/* Bank Accounts */}
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+            <div className="bg-white rounded-2xl border border-gray-200">
                 <div className="p-5 border-b flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -124,11 +124,11 @@ export default function AccountsPage() {
             </div>
 
             {/* Cash Accounts */}
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+            <div className="bg-white rounded-2xl border border-gray-200">
                 <div className="p-5 border-b flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                            <Wallet className="text-green-600" size={20} />
+                        <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                            <Wallet className="text-gray-900" size={20} />
                         </div>
                         <div>
                             <h2 className="text-section text-gray-900">Cash Accounts</h2>
@@ -168,7 +168,7 @@ export default function AccountsPage() {
                                         <div className="flex gap-2 mt-2">
                                             <a
                                                 href={`/admin/finance/cash/statement/${account.id}`}
-                                                className="text-sm text-green-600 hover:text-green-700 font-medium"
+                                                className="text-sm text-gray-900 hover:text-gray-900 font-medium"
                                             >
                                                 Statement →
                                             </a>
@@ -247,7 +247,7 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="bg-white rounded-2xl w-full max-w-md ">
                 <div className="p-5 border-b flex justify-between items-center">
                     <h2 className="text-page-title">Add Bank Account</h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-black">✕</button>
@@ -387,7 +387,7 @@ function AddCashAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="bg-white rounded-2xl w-full max-w-md ">
                 <div className="p-5 border-b flex justify-between items-center">
                     <h2 className="text-page-title">Add Cash Account</h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-black">✕</button>

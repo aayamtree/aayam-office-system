@@ -53,7 +53,7 @@ export default function TeamQueue() {
 
     if (loading) {
         return <div className="min-h-screen flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-oms-blue"></div>
         </div>;
     }
 
@@ -136,7 +136,7 @@ export default function TeamQueue() {
                                     <div className="space-y-3">
                                         {tasksInStatus.map(task => (
                                             <Link key={task.id} href="/admin/designers/tasks">
-                                                <div className="bg-gray-50 rounded-lg p-3 border hover:shadow-md transition-shadow cursor-pointer">
+                                                <div className="bg-gray-50 rounded-lg p-3 border  transition-shadow cursor-pointer">
                                                     <h4 className="font-semibold text-sm text-gray-900 mb-2">{task.title}</h4>
                                                     <div className="text-xs text-gray-600 mb-2">{task.client}</div>
 

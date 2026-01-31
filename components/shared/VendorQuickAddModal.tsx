@@ -93,7 +93,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-2xl  w-full max-w-lg max-h-[90vh] overflow-y-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-green-50 to-emerald-50">
                     <div className="flex items-center gap-3">
@@ -261,7 +261,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                         <button
                             type="submit"
                             disabled={saving}
-                            className="px-8 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium hover:shadow-lg disabled:opacity-50 flex items-center gap-2"
+                            className="px-8 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium  disabled:opacity-50 flex items-center gap-2"
                         >
                             {saving ? (
                                 <>

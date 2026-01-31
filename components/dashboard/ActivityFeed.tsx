@@ -35,7 +35,7 @@ export default function ActivityFeed({ variant = 'card' }: { variant?: 'card' | 
 
     const Container = variant === 'card' ? 'div' : 'div';
     const containerClasses = variant === 'card'
-        ? "bg-white rounded-2xl p-6 shadow-sm border border-gray-100 h-full"
+        ? "bg-white rounded-2xl p-6 border border-gray-100 h-full"
         : "h-full";
 
     return (
@@ -58,7 +58,7 @@ export default function ActivityFeed({ variant = 'card' }: { variant?: 'card' | 
                     return (
                         <div key={log.id} className="relative pl-8 group">
                             {/* Timeline Dot */}
-                            <div className={`absolute left-0 top-1.5 w-5 h-5 bg-white border-2 rounded-full flex items-center justify-center group-hover:border-indigo-500 transition-colors z-10 ${isUpload ? 'border-green-400' : 'border-indigo-100'
+                            <div className={`absolute left-0 top-1.5 w-5 h-5 bg-white border-2 rounded-full flex items-center justify-center group-hover:border-oms-blue transition-colors z-10 ${isUpload ? 'border-green-400' : 'border-oms-blue-100'
                                 }`}>
                                 {isUpload ? (
                                     <Upload className="w-2.5 h-2.5 text-green-600" />

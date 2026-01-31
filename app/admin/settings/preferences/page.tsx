@@ -58,7 +58,7 @@ export default function PreferencesPage() {
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800 disabled:bg-gray-400"
+          className="flex items-center justify-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-xl hover:bg-blue-600 disabled:bg-gray-400"
         >
           <Save size={18} />
           <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
@@ -67,7 +67,7 @@ export default function PreferencesPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Invoice Settings */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Invoice Settings</h2>
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-4">
@@ -126,7 +126,7 @@ export default function PreferencesPage() {
         </div>
 
         {/* Notification Settings */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Notifications</h2>
           <div className="space-y-4">
             {[
@@ -144,7 +144,7 @@ export default function PreferencesPage() {
                 <button
                   onClick={() => handleToggle(item.key as keyof typeof preferences)}
                   className={`w-12 h-6 rounded-full transition-colors ${
-                    preferences[item.key as keyof typeof preferences] ? 'bg-green-500' : 'bg-gray-300'
+                    preferences[item.key as keyof typeof preferences] ? 'bg-white0' : 'bg-gray-300'
                   }`}
                 >
                   <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
@@ -157,7 +157,7 @@ export default function PreferencesPage() {
         </div>
 
         {/* Display Settings */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Display Settings</h2>
           <div className="space-y-4">
             <div>
@@ -201,7 +201,7 @@ export default function PreferencesPage() {
         </div>
 
         {/* Print Settings */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Print Settings</h2>
           <div className="space-y-4">
             <div>
@@ -229,7 +229,7 @@ export default function PreferencesPage() {
                 <button
                   onClick={() => handleToggle(item.key as keyof typeof preferences)}
                   className={`w-12 h-6 rounded-full transition-colors ${
-                    preferences[item.key as keyof typeof preferences] ? 'bg-green-500' : 'bg-gray-300'
+                    preferences[item.key as keyof typeof preferences] ? 'bg-white0' : 'bg-gray-300'
                   }`}
                 >
                   <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${

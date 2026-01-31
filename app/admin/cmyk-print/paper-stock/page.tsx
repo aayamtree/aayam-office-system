@@ -58,8 +58,8 @@ export default function PaperStockPage() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      'in_stock': 'bg-green-100 text-green-700 border-green-200',
-      'low_stock': 'bg-amber-100 text-amber-700 border-amber-200',
+      'in_stock': 'bg-gray-100 text-gray-900 border-green-200',
+      'low_stock': 'bg-amber-100 text-amber-700 border-gray-200',
       'out_of_stock': 'bg-red-100 text-red-700 border-red-200',
     };
     return colors[status] || 'bg-gray-100 text-gray-700';
@@ -171,7 +171,7 @@ export default function PaperStockPage() {
         </div>
         <button
           onClick={handleAddNew}
-          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-colors"
+          className="flex items-center justify-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-xl hover:bg-blue-600 transition-colors"
         >
           <Plus size={18} />
           <span>Add Item</span>
@@ -180,19 +180,19 @@ export default function PaperStockPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-green-50 border border-green-200 rounded-xl p-3">
+        <div className="bg-white border border-green-200 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-1">
-            <Package size={16} className="text-green-600" />
-            <span className="text-xs text-green-600 font-medium">In Stock</span>
+            <Package size={16} className="text-gray-900" />
+            <span className="text-xs text-gray-900 font-medium">In Stock</span>
           </div>
-          <p className="text-page-title text-green-700">
+          <p className="text-page-title text-gray-900">
             {loading ? '...' : stock.length - lowStockCount - outOfStockCount}
           </p>
         </div>
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+        <div className="bg-white border border-gray-200 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-1">
-            <TrendingDown size={16} className="text-amber-600" />
-            <span className="text-xs text-amber-600 font-medium">Low Stock</span>
+            <TrendingDown size={16} className="text-oms-orange" />
+            <span className="text-xs text-oms-orange font-medium">Low Stock</span>
           </div>
           <p className="text-page-title text-amber-700">{loading ? '...' : lowStockCount}</p>
         </div>
@@ -223,13 +223,13 @@ export default function PaperStockPage() {
             placeholder="Search items..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
           />
         </div>
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
         >
           {categories.map(cat => (
             <option key={cat} value={cat}>{cat}</option>
@@ -238,7 +238,7 @@ export default function PaperStockPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
         >
           <option value="all">All Status</option>
           <option value="in_stock">In Stock</option>
@@ -256,8 +256,8 @@ export default function PaperStockPage() {
         ) : filteredStock.map((item) => {
           const status = getStatus(item);
           return (
-            <div key={item.id} className={`bg-white rounded-xl p-4 shadow-sm border ${status === 'out_of_stock' ? 'border-red-200' :
-                status === 'low_stock' ? 'border-amber-200' : 'border-gray-100'
+            <div key={item.id} className={`bg-white rounded-xl p-4 border ${status === 'out_of_stock' ? 'border-red-200' :
+                status === 'low_stock' ? 'border-gray-200' : 'border-gray-100'
               }`}>
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div className="flex-1">
@@ -280,7 +280,7 @@ export default function PaperStockPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleRestock(item)}
-                    className="flex items-center gap-1 px-3 py-2 bg-green-100 text-green-700 rounded-xl hover:bg-green-200 text-sm font-medium transition-colors"
+                    className="flex items-center gap-1 px-3 py-2 bg-gray-100 text-gray-900 rounded-xl hover:bg-green-200 text-sm font-medium transition-colors"
                   >
                     <Plus size={14} /> Restock
                   </button>
@@ -324,7 +324,7 @@ export default function PaperStockPage() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
                 />
               </div>
 
@@ -336,7 +336,7 @@ export default function PaperStockPage() {
                     placeholder="e.g. A4"
                     value={formData.size}
                     onChange={(e) => setFormData({ ...formData, size: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
                   />
                 </div>
                 <div>
@@ -345,7 +345,7 @@ export default function PaperStockPage() {
                     type="number"
                     value={formData.gsm}
                     onChange={(e) => setFormData({ ...formData, gsm: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
                   />
                 </div>
               </div>
@@ -356,7 +356,7 @@ export default function PaperStockPage() {
                   <select
                     value={formData.unit}
                     onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
                   >
                     <option value="pcs">pcs</option>
                     <option value="reams">reams</option>
@@ -373,7 +373,7 @@ export default function PaperStockPage() {
                     step="0.01"
                     value={formData.cost_per_unit}
                     onChange={(e) => setFormData({ ...formData, cost_per_unit: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
                   />
                 </div>
               </div>
@@ -385,7 +385,7 @@ export default function PaperStockPage() {
                     type="number"
                     value={formData.quantity}
                     onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
                   />
                 </div>
                 <div>
@@ -394,7 +394,7 @@ export default function PaperStockPage() {
                     type="number"
                     value={formData.reorder_level}
                     onChange={(e) => setFormData({ ...formData, reorder_level: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
                   />
                 </div>
               </div>
@@ -405,7 +405,7 @@ export default function PaperStockPage() {
                   type="text"
                   value={formData.supplier}
                   onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
                 />
               </div>
 
@@ -416,7 +416,7 @@ export default function PaperStockPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {submitting && <Loader2 size={16} className="animate-spin" />}
                   {isEditing ? 'Update' : 'Add Item'}
@@ -457,7 +457,7 @@ export default function PaperStockPage() {
               </div>
 
               {restockQty && (
-                <p className="text-center text-green-600 font-medium">
+                <p className="text-center text-gray-900 font-medium">
                   New Stock: {selectedItem.quantity + parseInt(restockQty || '0')} {selectedItem.unit}
                 </p>
               )}

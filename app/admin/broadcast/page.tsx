@@ -104,7 +104,7 @@ export default function BroadcastPage() {
             </div>
 
             {/* Send Form */}
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <div className="bg-white rounded-xl p-6 mb-8">
                 <h2 className="text-page-title text-gray-900 mb-4">Send Broadcast</h2>
 
                 <form onSubmit={handleSend} className="space-y-4">
@@ -116,7 +116,7 @@ export default function BroadcastPage() {
                         <textarea
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-oms-blue focus:border-oms-blue"
                             rows={4}
                             placeholder="Type your announcement here..."
                             required
@@ -170,7 +170,7 @@ export default function BroadcastPage() {
                         <select
                             value={targetAudience}
                             onChange={(e) => setTargetAudience(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-oms-blue focus:border-oms-blue"
                         >
                             {audiences.map((aud) => (
                                 <option key={aud.value} value={aud.value}>
@@ -193,7 +193,7 @@ export default function BroadcastPage() {
             </div>
 
             {/* Notification History */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="bg-white rounded-xl p-6">
                 <h2 className="text-page-title text-gray-900 mb-4 flex items-center gap-2">
                     <Clock size={20} />
                     Recent Broadcasts

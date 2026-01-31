@@ -23,7 +23,7 @@ export default function ReportsPage() {
           <button
             onClick={() => setActiveTab('client')}
             className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'client'
-              ? 'border-indigo-500 text-oms-blue'
+              ? 'border-oms-blue text-oms-blue'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
           >
@@ -32,7 +32,7 @@ export default function ReportsPage() {
           <button
             onClick={() => setActiveTab('vendor')}
             className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'vendor'
-              ? 'border-indigo-500 text-oms-blue'
+              ? 'border-oms-blue text-oms-blue'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
           >
@@ -41,7 +41,7 @@ export default function ReportsPage() {
           <button
             onClick={() => setActiveTab('cashflow')}
             className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'cashflow'
-              ? 'border-indigo-500 text-oms-blue'
+              ? 'border-oms-blue text-oms-blue'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
           >
@@ -55,7 +55,7 @@ export default function ReportsPage() {
       {activeTab === 'cashflow' && <CashFlowStatement />}
 
       {/* Manual Journal Link */}
-      <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-6 text-white flex justify-between items-center shadow-lg">
+      <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-6 text-white flex justify-between items-center">
         <div>
           <h3 className="text-section mb-1">Manual Journal Entry</h3>
           <p className="text-gray-300 text-sm">Record accounting adjustments and non-cash transactions</p>
@@ -107,7 +107,7 @@ function ClientStatementGenerator() {
   });
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm animate-scale-in">
+    <div className="bg-white rounded-2xl p-6 border border-gray-100 animate-scale-in">
       {/* ... Header UI ... */}
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 bg-[rgba(0,0,255,0.1)] rounded-xl flex items-center justify-center text-oms-blue">
@@ -188,9 +188,9 @@ function VendorStatementGenerator() {
   });
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm animate-scale-in">
+    <div className="bg-white rounded-2xl p-6 border border-gray-100 animate-scale-in">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600">
+        <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-oms-orange">
           <Truck size={20} />
         </div>
         <div>
@@ -275,9 +275,9 @@ function CashFlowStatement() {
   const netFlow = totalIn - totalOut;
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm animate-scale-in">
+    <div className="bg-white rounded-2xl p-6 border border-gray-100 animate-scale-in">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center text-green-600">
+        <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-900">
           <ArrowRightLeft size={20} />
         </div>
         <div>
@@ -299,16 +299,16 @@ function CashFlowStatement() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-green-50 p-4 rounded-xl border border-green-100">
-          <p className="text-sm text-green-600 font-medium">Total Inflow</p>
-          <p className="text-page-title text-green-700">₹{totalIn.toLocaleString()}</p>
+        <div className="bg-white p-4 rounded-xl border border-green-100">
+          <p className="text-sm text-gray-900 font-medium">Total Inflow</p>
+          <p className="text-page-title text-gray-900">₹{totalIn.toLocaleString()}</p>
         </div>
         <div className="bg-red-50 p-4 rounded-xl border border-red-100">
           <p className="text-sm text-red-600 font-medium">Total Outflow</p>
           <p className="text-page-title text-red-700">₹{totalOut.toLocaleString()}</p>
         </div>
-        <div className={`p-4 rounded-xl border ${netFlow >= 0 ? 'bg-[rgba(0,0,255,0.1)] border-[rgba(0,0,255,0.2)]-100' : 'bg-amber-50 border-amber-100'}`}>
-          <p className={`text-sm font-medium ${netFlow >= 0 ? 'text-oms-blue' : 'text-amber-600'}`}>Net Cash Flow</p>
+        <div className={`p-4 rounded-xl border ${netFlow >= 0 ? 'bg-[rgba(0,0,255,0.1)] border-[rgba(0,0,255,0.2)]-100' : 'bg-white border-gray-100'}`}>
+          <p className={`text-sm font-medium ${netFlow >= 0 ? 'text-oms-blue' : 'text-oms-orange'}`}>Net Cash Flow</p>
           <p className={`text-page-title ${netFlow >= 0 ? 'text-oms-blue' : 'text-amber-700'}`}>
             {netFlow >= 0 ? '+' : ''}₹{netFlow.toLocaleString()}
           </p>
@@ -341,10 +341,10 @@ function CashFlowStatement() {
                 <td className="py-3 px-4 text-gray-500">{new Date(flow.date).toLocaleDateString()}</td>
                 <td className="py-3 px-4 font-medium">{flow.desc} <span className="text-xs text-gray-400">({flow.ref})</span></td>
                 <td className="py-3 px-4">
-                  <span className={`px-2 py-0.5 rounded textxs font-bold uppercase text-[10px] ${flow.type === 'INFLOW' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  <span className={`px-2 py-0.5 rounded textxs font-bold uppercase text-[10px] ${flow.type === 'INFLOW' ? 'bg-gray-100 text-gray-900' : 'bg-red-100 text-red-700'
                     }`}>{flow.type}</span>
                 </td>
-                <td className={`py-3 px-4 text-right font-mono font-medium ${flow.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <td className={`py-3 px-4 text-right font-mono font-medium ${flow.amount > 0 ? 'text-gray-900' : 'text-red-600'}`}>
                   {flow.amount > 0 ? '+' : ''}{flow.amount.toLocaleString()}
                 </td>
               </tr>
@@ -374,7 +374,7 @@ function StatementModal({ title, entity, period, ledger, onClose, columns, rever
             <p className="text-gray-500 mt-1">Aayam Office System</p>
           </div>
           <div className="text-right flex gap-2 print:hidden">
-            <button onClick={() => window.print()} className="px-4 py-2 bg-gray-900 text-white rounded-lg flex items-center gap-2 hover:bg-black">
+            <button onClick={() => window.print()} className="px-4 py-2 bg-oms-blue text-white rounded-lg flex items-center gap-2 hover:bg-blue-600">
               <Printer size={16} /> Print
             </button>
             <button onClick={onClose} className="px-4 py-2 text-gray-500 hover:text-red-500 border rounded-lg">Close</button>
@@ -422,7 +422,7 @@ function StatementModal({ title, entity, period, ledger, onClose, columns, rever
                   <td className="py-3 text-right text-gray-600">{row.debit > 0 ? row.debit.toLocaleString() : '-'}</td>
                   <td className="py-3 text-right text-gray-600">{row.credit > 0 ? row.credit.toLocaleString() : '-'}</td>
                   <td className={`py-3 text-right font-bold pr-2 ${reverseBalanceColor
-                    ? (runningBalance < 0 ? 'text-red-600' : 'text-green-600') // Vendor: Negative is Payable (Red?) Wait. Payable = Bad (Red)? No Payable is standard. 
+                    ? (runningBalance < 0 ? 'text-red-600' : 'text-gray-900') // Vendor: Negative is Payable (Red?) Wait. Payable = Bad (Red)? No Payable is standard. 
                     // Let's stick to: Negative balance = Credit Balance (Payable).
                     : (runningBalance > 0 ? 'text-oms-blue' : 'text-red-700')
                     }`}>

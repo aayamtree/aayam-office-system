@@ -209,7 +209,7 @@ export default function EODReportPage() {
                 {profile?.role === 'admin' && (
                     <Link
                         href="/admin/eod-report/admin-view"
-                        className="px-4 py-2 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-800 transition-colors"
+                        className="px-4 py-2 bg-oms-blue text-white rounded-xl text-sm font-medium hover:bg-blue-600 transition-colors"
                     >
                         Admin Dashboard →
                     </Link>
@@ -218,11 +218,11 @@ export default function EODReportPage() {
 
             {/* Status Banner */}
             {todayReport && (
-                <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
-                    <CheckCircle className="text-green-600" size={24} />
+                <div className="bg-white border border-green-200 rounded-xl p-4 flex items-center gap-3">
+                    <CheckCircle className="text-gray-900" size={24} />
                     <div>
                         <p className="font-medium text-green-900">Report submitted at {new Date(todayReport.submitted_at).toLocaleTimeString()}</p>
-                        <p className="text-sm text-green-700">You can update it anytime before midnight</p>
+                        <p className="text-sm text-gray-900">You can update it anytime before midnight</p>
                     </div>
                 </div>
             )}
@@ -274,7 +274,7 @@ export default function EODReportPage() {
                                                 <select
                                                     value={taskUpdates[task.id]?.task_status || 'START WORK'}
                                                     onChange={(e) => handleStatusChange(task.id, e.target.value as any)}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium"
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oms-blue focus:border-transparent font-medium"
                                                 >
                                                     <option value="NOT START">❌ Not Started</option>
                                                     <option value="START WORK">🔄 Start Work / Pending</option>
@@ -292,7 +292,7 @@ export default function EODReportPage() {
                                                     value={taskUpdates[task.id]?.status_update || ''}
                                                     onChange={(e) => handleTaskUpdate(task.id, 'status_update', e.target.value)}
                                                     placeholder="What did you work on today? Use #hashtags for easy search (e.g., #ClientApproved, #Revision2)"
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oms-blue focus:border-transparent"
                                                 />
                                                 <p className="text-xs text-gray-500 mt-1">Tip: Add hashtags like #approved #pending #blocked for better tracking</p>
                                             </div>

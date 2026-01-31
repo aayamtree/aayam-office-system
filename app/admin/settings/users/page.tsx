@@ -65,7 +65,7 @@ export default function UserManagementPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <table className="w-full text-left">
           <thead className="bg-gray-50 border-b border-gray-100">
             <tr>
@@ -96,7 +96,7 @@ export default function UserManagementPage() {
                     value={profile.role}
                     disabled={updating === profile.id}
                     onChange={(e) => handleRoleChange(profile.id, e.target.value)}
-                    className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-oms-blue focus:border-indigo-500 block w-full p-2.5"
+                    className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-oms-blue focus:border-oms-blue block w-full p-2.5"
                   >
                     {roles.map(r => (
                       <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
@@ -105,7 +105,7 @@ export default function UserManagementPage() {
                 </td>
                 <td className="p-4">
                   <span className={`px-2 py-1 rounded-full text-xs font-bold 
-                    ${profile.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    ${profile.is_active ? 'bg-gray-100 text-gray-900' : 'bg-red-100 text-red-700'}`}>
                     {profile.is_active ? 'Active' : 'Suspended'}
                   </span>
                 </td>

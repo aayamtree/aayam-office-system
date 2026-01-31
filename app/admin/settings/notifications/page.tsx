@@ -53,7 +53,7 @@ export default function NotificationSettings() {
                         </p>
 
                         {permission === 'granted' ? (
-                            <div className="flex items-center gap-2 text-green-600">
+                            <div className="flex items-center gap-2 text-gray-900">
                                 <CheckCircle size={20} />
                                 <span className="font-medium">Notifications Enabled</span>
                             </div>

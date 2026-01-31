@@ -43,7 +43,7 @@ export default function JobQueuePage() {
       'printing': 'bg-blue-100 text-blue-700 border-blue-200',
       'finishing': 'bg-cyan-100 text-cyan-700 border-cyan-200',
       'dispatched': 'bg-orange-100 text-orange-700 border-orange-200',
-      'delivered': 'bg-green-100 text-green-700 border-green-200',
+      'delivered': 'bg-gray-100 text-gray-900 border-green-200',
       'cancelled': 'bg-red-50 text-red-700 border-red-200',
       'on_hold': 'bg-gray-200 text-gray-800 border-gray-300'
     };
@@ -130,13 +130,13 @@ export default function JobQueuePage() {
           </div>
           <p className="text-xl md:text-page-title text-blue-700">{productionCount}</p>
         </div>
-        <div className="bg-green-50 border border-green-200 rounded-lg md:rounded-xl p-2 md:p-3">
+        <div className="bg-white border border-green-200 rounded-lg md:rounded-xl p-2 md:p-3">
           <div className="flex items-center gap-1 md:gap-2 mb-1">
-            <CheckCircle size={14} className="text-green-600 md:hidden" />
-            <CheckCircle size={16} className="text-green-600 hidden md:block" />
-            <span className="text-[10px] md:text-xs text-green-600 font-medium">Dispatched</span>
+            <CheckCircle size={14} className="text-gray-900 md:hidden" />
+            <CheckCircle size={16} className="text-gray-900 hidden md:block" />
+            <span className="text-[10px] md:text-xs text-gray-900 font-medium">Dispatched</span>
           </div>
-          <p className="text-xl md:text-page-title text-green-700">{dispatchedCount}</p>
+          <p className="text-xl md:text-page-title text-gray-900">{dispatchedCount}</p>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-lg md:rounded-xl p-2 md:p-3">
           <div className="flex items-center gap-1 md:gap-2 mb-1">
@@ -158,13 +158,13 @@ export default function JobQueuePage() {
             placeholder="Search jobs..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
         >
           <option value="all">All Status</option>
           {statusFlow.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
@@ -175,7 +175,7 @@ export default function JobQueuePage() {
       <div className="space-y-3">
         {filteredJobs.length === 0 && <div className="text-center py-10 text-gray-500">No jobs found matching criteria.</div>}
         {filteredJobs.map((job) => (
-          <div key={job.id} className={`bg-white rounded-xl p-4 shadow-sm border ${['high', 'urgent'].includes(job.priority) ? 'border-red-200' : 'border-gray-100'}`}>
+          <div key={job.id} className={`bg-white rounded-xl p-4 border ${['high', 'urgent'].includes(job.priority) ? 'border-red-200' : 'border-gray-100'}`}>
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -231,7 +231,7 @@ export default function JobQueuePage() {
             </div>
 
             <div className="p-4 space-y-4">
-              <div className={`p-4 rounded-xl text-center capitalize ${selectedJob.current_stage === 'delivered' ? 'bg-green-50 text-green-700' : selectedJob.current_stage === 'dispatched' ? 'bg-orange-50 text-orange-700' : 'bg-blue-50 text-blue-700'}`}>
+              <div className={`p-4 rounded-xl text-center capitalize ${selectedJob.current_stage === 'delivered' ? 'bg-white text-gray-900' : selectedJob.current_stage === 'dispatched' ? 'bg-orange-50 text-orange-700' : 'bg-blue-50 text-blue-700'}`}>
                 <p className="text-section">{selectedJob.current_stage}</p>
               </div>
 
@@ -259,8 +259,8 @@ export default function JobQueuePage() {
                         onClick={() => handleStageSelect(status)}
                         title={`Move to ${status}`}
                       >
-                        <div className={`px-3 py-1.5 rounded-lg text-label whitespace-nowrap capitalize transition-all transform group-hover:scale-105 ${isCurrent ? 'bg-[rgba(0,0,255,0.1)] text-white shadow-md ring-2 ring-indigo-200' :
-                          isCompleted ? 'bg-green-100 text-green-700 hover:bg-green-200' :
+                        <div className={`px-3 py-1.5 rounded-lg text-label whitespace-nowrap capitalize transition-all transform group-hover:scale-105 ${isCurrent ? 'bg-[rgba(0,0,255,0.1)] text-white ring-2 ring-oms-blue/20' :
+                          isCompleted ? 'bg-gray-100 text-gray-900 hover:bg-green-200' :
                             'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
                           }`}>
                           {status}
@@ -274,7 +274,7 @@ export default function JobQueuePage() {
                 </div>
               </div>
 
-              <button onClick={() => setShowViewModal(false)} className="w-full px-4 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800">Close</button>
+              <button onClick={() => setShowViewModal(false)} className="w-full px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-blue-600">Close</button>
             </div>
           </div>
         </div>

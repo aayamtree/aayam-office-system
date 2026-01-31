@@ -126,13 +126,13 @@ export default function MentionInput({ value, onChange, placeholder, className }
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder || 'Type @ to mention team members...'}
-                className={className || 'w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'}
+                className={className || 'w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oms-blue focus:border-transparent'}
                 rows={3}
             />
 
             {/* Mention Suggestions Dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute z-50 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                <div className="absolute z-50 mt-1 w-64 bg-white border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
                     {suggestions.slice(0, 10).map((user, index) => (
                         <button
                             key={user.id}

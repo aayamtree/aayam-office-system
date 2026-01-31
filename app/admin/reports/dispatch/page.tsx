@@ -75,7 +75,7 @@ export default function DispatchReportPage() {
     const colors: Record<string, string> = {
       'dispatched': 'bg-blue-100 text-blue-700',
       'in_transit': 'bg-amber-100 text-amber-700',
-      'delivered': 'bg-green-100 text-green-700',
+      'delivered': 'bg-gray-100 text-gray-900',
       'returned': 'bg-red-100 text-red-700',
     };
     return colors[status] || 'bg-gray-100 text-gray-700';
@@ -99,7 +99,7 @@ export default function DispatchReportPage() {
             <Download size={16} />
             <span>PDF</span>
           </button>
-          <button onClick={() => handleExport('excel')} className="flex items-center gap-2 px-3 py-2 bg-green-50 text-green-700 rounded-xl hover:bg-green-100">
+          <button onClick={() => handleExport('excel')} className="flex items-center gap-2 px-3 py-2 bg-white text-gray-900 rounded-xl hover:bg-gray-100">
             <Download size={16} />
             <span>Excel</span>
           </button>
@@ -107,7 +107,7 @@ export default function DispatchReportPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+      <div className="bg-white rounded-2xl p-4 border border-gray-100">
         <div className="flex items-center gap-2 mb-3">
           <Filter size={16} className="text-gray-500" />
           <span className="font-medium text-gray-700">Filters</span>
@@ -199,7 +199,7 @@ export default function DispatchReportPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Dispatch Table */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="p-4 border-b border-gray-100">
             <h2 className="font-semibold text-gray-900">Dispatch Details</h2>
           </div>
@@ -237,7 +237,7 @@ export default function DispatchReportPage() {
 
         {/* Breakdown */}
         <div className="space-y-4">
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-2xl p-4 border border-gray-100">
             <h2 className="font-semibold text-gray-900 mb-4">Top Destinations</h2>
             <div className="space-y-3">
               {topDestinations.map(([city, count]) => (
@@ -249,7 +249,7 @@ export default function DispatchReportPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-2xl p-4 border border-gray-100">
             <h2 className="font-semibold text-gray-900 mb-4">By Transporter</h2>
             <div className="space-y-3">
               {transporterData.map(([transporter, count]) => (

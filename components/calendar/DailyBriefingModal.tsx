@@ -54,7 +54,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+            <div className="bg-white rounded-2xl  max-w-3xl w-full max-h-[90vh] overflow-hidden">
                 {/* Header */}
                 <div className="bg-oms-blue p-6 text-white">
                     <div className="flex items-start justify-between">

@@ -40,7 +40,7 @@ export default function MyQueue() {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-oms-blue"></div>
             </div>
         );
     }
@@ -78,7 +78,7 @@ export default function MyQueue() {
                             <div className="grid gap-3 md:gap-4">
                                 {urgentTasks.map(task => (
                                     <Link key={task.id} href="/admin/designers/tasks">
-                                        <div className="bg-white p-4 md:p-6 rounded-lg md:rounded-xl border-2 border-red-200 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
+                                        <div className="bg-white p-4 md:p-6 rounded-lg md:rounded-xl border-2 border-red-200  transition-shadow cursor-pointer">
                                             <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2 md:gap-0 mb-2 md:mb-3">
                                                 <div className="flex-1">
                                                     <h3 className="text-base md:text-section text-gray-900 line-clamp-2">{task.title}</h3>
@@ -118,7 +118,7 @@ export default function MyQueue() {
                             <div className="grid gap-3 md:gap-4">
                                 {highTasks.map(task => (
                                     <Link key={task.id} href="/admin/designers/tasks">
-                                        <div className="bg-white p-4 md:p-6 rounded-lg md:rounded-xl border-2 border-orange-200 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
+                                        <div className="bg-white p-4 md:p-6 rounded-lg md:rounded-xl border-2 border-orange-200  transition-shadow cursor-pointer">
                                             <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2 md:gap-0 mb-2 md:mb-3">
                                                 <div className="flex-1">
                                                     <h3 className="text-base md:text-section text-gray-900 line-clamp-2">{task.title}</h3>
@@ -157,7 +157,7 @@ export default function MyQueue() {
                             <div className="grid gap-3 md:gap-4">
                                 {normalTasks.map(task => (
                                     <Link key={task.id} href="/admin/designers/tasks">
-                                        <div className="bg-white p-6 rounded-xl border shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                                        <div className="bg-white p-6 rounded-xl border  transition-shadow cursor-pointer">
                                             <div className="flex justify-between items-start mb-3">
                                                 <div>
                                                     <h3 className="text-section text-gray-900">{task.title}</h3>

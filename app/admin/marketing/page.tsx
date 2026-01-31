@@ -60,7 +60,7 @@ export default function MarketingDashboard() {
       {/* Hero Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Today's Focus */}
-        <div className="bg-oms-blue rounded-2xl p-6 text-white shadow-lg shadow-indigo-200">
+        <div className="bg-oms-blue rounded-2xl p-6 text-white -200">
           <div className="flex items-center gap-3 mb-2 opacity-90">
             <Calendar size={20} />
             <span className="font-medium">Today&apos;s Follow-ups</span>
@@ -72,7 +72,7 @@ export default function MarketingDashboard() {
         </div>
 
         {/* Overdue Warning */}
-        <div className="bg-white rounded-2xl p-6 border border-red-100 shadow-sm relative overflow-hidden">
+        <div className="bg-white rounded-2xl p-6 border border-red-100 relative overflow-hidden">
           {overdueFollowUps.length > 0 && (
             <div className="absolute top-0 right-0 p-4 opacity-10">
               <AlertCircle size={80} className="text-red-500" />
@@ -87,7 +87,7 @@ export default function MarketingDashboard() {
         </div>
 
         {/* New Leads */}
-        <div className="bg-white rounded-2xl p-6 border border-blue-100 shadow-sm">
+        <div className="bg-white rounded-2xl p-6 border border-blue-100">
           <div className="flex items-center gap-3 mb-2 text-blue-600">
             <Users size={20} />
             <span className="font-medium">New Leads</span>
@@ -97,8 +97,8 @@ export default function MarketingDashboard() {
         </div>
 
         {/* Performance */}
-        <div className="bg-white rounded-2xl p-6 border border-green-100 shadow-sm">
-          <div className="flex items-center gap-3 mb-2 text-green-600">
+        <div className="bg-white rounded-2xl p-6 border border-green-100">
+          <div className="flex items-center gap-3 mb-2 text-gray-900">
             <TrendingUp size={20} />
             <span className="font-medium">Converted</span>
           </div>
@@ -109,7 +109,7 @@ export default function MarketingDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Action List: Today's Follow-ups */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col">
           <div className="p-6 border-b border-gray-100 flex justify-between items-center">
             <h2 className="text-section text-gray-900 flex items-center gap-2">
               <Calendar size={18} className="text-oms-blue" /> Today&apos;s Calls
@@ -149,7 +149,7 @@ export default function MarketingDashboard() {
         </div>
 
         {/* Action List: Overdue (Urgent) */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col">
           <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-red-50/50">
             <h2 className="text-section text-red-700 flex items-center gap-2">
               <AlertCircle size={18} /> Overdue ({overdueFollowUps.length})

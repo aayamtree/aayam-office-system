@@ -212,8 +212,8 @@ export default function BankingPage() {
                 <div>
                     <h1 className="text-xl md:text-page-title text-gray-900">Bank Reconciliation</h1>
                     <p className="text-sm md:text-base text-gray-500">Sync HDFC Bank with Aayam System</p>
-                    {loadingTxns && <span className="text-xs text-indigo-500 ml-2">Loading Txns...</span>}
-                    {loadingAccounts && <span className="text-xs text-indigo-500 ml-2">Loading Accounts...</span>}
+                    {loadingTxns && <span className="text-xs text-oms-blue ml-2">Loading Txns...</span>}
+                    {loadingAccounts && <span className="text-xs text-oms-blue ml-2">Loading Accounts...</span>}
                     {errorAccounts && <div className="text-red-500 text-sm mt-1">Error: {errorAccounts}</div>}
                 </div>
 
@@ -244,14 +244,14 @@ export default function BankingPage() {
 
             {/* Success Message */}
             {successMessage && (
-                <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between">
+                <div className="bg-white border border-green-200 rounded-xl p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <CheckCircle size={24} className="text-green-600" />
+                        <CheckCircle size={24} className="text-gray-900" />
                         <p className="text-green-800 font-medium">{successMessage}</p>
                     </div>
                     <button
                         onClick={() => setSuccessMessage('')}
-                        className="text-green-600 hover:text-green-800 text-xl"
+                        className="text-gray-900 hover:text-green-800 text-xl"
                     >
                         ✕
                     </button>
@@ -280,7 +280,7 @@ export default function BankingPage() {
                     onClick={() => setStatusFilter('all')}
                     className={`px-4 py-2 rounded-xl font-medium text-sm whitespace-nowrap transition-colors ${statusFilter === 'all'
                         ? 'bg-[rgba(0,0,255,0.1)] text-white'
-                        : 'bg-white border border-gray-200 text-gray-600 hover:border-indigo-300'
+                        : 'bg-white border border-gray-200 text-gray-600 hover:border-oms-blue/30'
                         }`}
                 >
                     All ({reconciledData.length})
@@ -307,26 +307,26 @@ export default function BankingPage() {
 
             {/* Main Stats - Better mobile layout */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-                <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm">
+                <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-100">
                     <p className="text-xs md:text-sm text-gray-500">Bank Balance (System)</p>
                     <p className="text-xl md:text-page-title text-gray-900 truncate">₹{(bankAccounts.find(b => b.id === selectedAccountId)?.current_balance || 0).toLocaleString()}</p>
                 </div>
-                <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm">
+                <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-100">
                     <p className="text-xs md:text-sm text-gray-500">Need Categorization</p>
                     <p className="text-xl md:text-page-title text-orange-600">
                         {reconciledData.filter(r => !r.is_verified && r.status === 'unmatched_bank').length}
                     </p>
                 </div>
-                <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-100 shadow-sm">
+                <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-100">
                     <p className="text-xs md:text-sm text-gray-500">Verified</p>
-                    <p className="text-xl md:text-page-title text-green-600">
+                    <p className="text-xl md:text-page-title text-gray-900">
                         {reconciledData.filter(r => r.is_verified).length}
                     </p>
                 </div>
             </div>
 
             {/* Reconciliation Grid - Responsive table */}
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-xs md:text-sm min-w-[800px]">
                         <thead className="bg-gray-50 border-b">
@@ -349,13 +349,13 @@ export default function BankingPage() {
                                         <div className="text-xs md:text-sm font-medium text-gray-900 break-words">{txn.description}</div>
                                         <div className="text-xs text-gray-400 mt-0.5">{txn.reference_number}</div>
                                     </td>
-                                    <td className={`px-4 py-3 text-right font-bold ${txn.transaction_type === 'inflow' ? 'text-green-600' : 'text-red-600'}`}>
+                                    <td className={`px-4 py-3 text-right font-bold ${txn.transaction_type === 'inflow' ? 'text-gray-900' : 'text-red-600'}`}>
                                         {txn.transaction_type === 'inflow' ? '+' : '-'} ₹{txn.amount.toLocaleString()}
                                     </td>
                                     <td className="px-4 py-3 text-center">
                                         {txn.is_verified ? (
                                             <div className="flex flex-col items-center gap-1">
-                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-label">
+                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-900 rounded-full text-label">
                                                     <CheckCircle size={12} /> Verified
                                                 </span>
                                                 {getCategoryName(txn) && (
@@ -456,7 +456,7 @@ export default function BankingPage() {
             {/* Import Modal */}
             {showImportModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl animate-scale-in">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl  animate-scale-in">
                         <div className="p-5 border-b flex justify-between">
                             <h2 className="text-section">Import HDFC Statement</h2>
                             <button onClick={() => setShowImportModal(false)} className="text-gray-500 hover:text-black">✕</button>
@@ -482,7 +482,7 @@ export default function BankingPage() {
                                 </button>
                             </div>
                             <textarea
-                                className="w-full h-60 p-4 border rounded-xl font-mono text-xs bg-gray-50 focus:ring-2 ring-indigo-500 outline-none"
+                                className="w-full h-60 p-4 border rounded-xl font-mono text-xs bg-gray-50 focus:ring-2 ring-oms-blue outline-none"
                                 placeholder={`Paste Excel Content here...\nExample:\n17/10/25\tMBALAL KUNDHANI...\t0000529...\t17/10/25\t0\t30,356.00\t188,201.00`}
                                 value={importText}
                                 onChange={e => setImportText(e.target.value)}

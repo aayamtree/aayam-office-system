@@ -105,7 +105,7 @@ export default function QuotationsPage() {
       'draft': 'bg-gray-100 text-gray-700',
       'sent': 'bg-blue-100 text-blue-700',
       'viewed': 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
-      'accepted': 'bg-green-100 text-green-700',
+      'accepted': 'bg-gray-100 text-gray-900',
       'rejected': 'bg-red-100 text-red-700',
       'expired': 'bg-amber-100 text-amber-700',
     };
@@ -114,9 +114,9 @@ export default function QuotationsPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'accepted': return <CheckCircle size={14} className="text-green-600" />;
+      case 'accepted': return <CheckCircle size={14} className="text-gray-900" />;
       case 'rejected': return <XCircle size={14} className="text-red-600" />;
-      case 'expired': return <Clock size={14} className="text-amber-600" />;
+      case 'expired': return <Clock size={14} className="text-oms-orange" />;
       default: return null;
     }
   };
@@ -439,7 +439,7 @@ export default function QuotationsPage() {
         </div>
         <button
           onClick={handleAddNew}
-          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-colors"
+          className="flex items-center justify-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-xl hover:bg-blue-600 transition-colors"
         >
           <Plus size={18} />
           <span>New Quotation</span>
@@ -451,9 +451,9 @@ export default function QuotationsPage() {
         {[
           { status: 'draft', bg: 'bg-gray-200 border-gray-300', text: 'text-gray-700' },
           { status: 'sent', bg: 'bg-blue-100 border-blue-200', text: 'text-blue-700' },
-          { status: 'accepted', bg: 'bg-green-100 border-green-200', text: 'text-green-700' },
+          { status: 'accepted', bg: 'bg-gray-100 border-green-200', text: 'text-gray-900' },
           { status: 'rejected', bg: 'bg-red-100 border-red-200', text: 'text-red-700' },
-          { status: 'expired', bg: 'bg-amber-100 border-amber-200', text: 'text-amber-700' },
+          { status: 'expired', bg: 'bg-amber-100 border-gray-200', text: 'text-amber-700' },
         ].map((item) => (
           <div key={item.status} className={`rounded-xl p-3 text-center border ${item.bg}`}>
             <p className={`text-page-title ${item.text}`}>{quotations.filter(q => q.status === item.status).length}</p>
@@ -501,7 +501,7 @@ export default function QuotationsPage() {
             {/* Mobile View: Cards */}
             <div className="lg:hidden space-y-4">
               {filteredQuotations.map((q) => (
-                <div key={q.id} className={`bg-white p-4 rounded-2xl shadow-sm border border-gray-100 relative ${q.status === 'accepted' || q.status === 'rejected' ? 'bg-gray-50/50' : ''}`}>
+                <div key={q.id} className={`bg-white p-4 rounded-2xl border border-gray-100 relative ${q.status === 'accepted' || q.status === 'rejected' ? 'bg-gray-50/50' : ''}`}>
                   {/* Row 1: ID & Status */}
                   <div className="flex justify-between items-start mb-3">
                     <div>
@@ -544,7 +544,7 @@ export default function QuotationsPage() {
                       {q.status === 'accepted' && (
                         <button
                           onClick={() => handleConvertToOrder(q)}
-                          className="px-2 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-bold uppercase tracking-wide"
+                          className="px-2 py-1.5 bg-gray-100 text-gray-900 rounded-lg text-xs font-bold uppercase tracking-wide"
                         >
                           → Order
                         </button>
@@ -570,7 +570,7 @@ export default function QuotationsPage() {
             </div>
 
             {/* Desktop View: Table */}
-            <div className="hidden lg:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="hidden lg:block bg-white rounded-2xl border border-gray-100 overflow-hidden">
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
@@ -608,7 +608,7 @@ export default function QuotationsPage() {
                           {q.status === 'accepted' && (
                             <button
                               onClick={() => handleConvertToOrder(q)}
-                              className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200"
+                              className="px-3 py-1.5 bg-gray-100 text-gray-900 rounded-lg text-sm font-medium hover:bg-green-200"
                             >
                               → Order
                             </button>
@@ -695,7 +695,7 @@ export default function QuotationsPage() {
                     type="date"
                     value={formData.validUntil}
                     onChange={(e) => setFormData({ ...formData, validUntil: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-oms-blue focus:border-indigo-500 transition-all"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-oms-blue focus:border-oms-blue transition-all"
                   />
                 </div>
 
@@ -705,7 +705,7 @@ export default function QuotationsPage() {
                     required
                     value={formData.orderType}
                     onChange={(e) => setFormData({ ...formData, orderType: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-oms-blue focus:border-indigo-500 transition-all"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-oms-blue focus:border-oms-blue transition-all"
                   >
                     <option value="print">Print Only</option>
                     <option value="design">Design Only</option>
@@ -725,7 +725,7 @@ export default function QuotationsPage() {
                       required
                       value={formData.productCategory}
                       onChange={(e) => setFormData({ ...formData, productCategory: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-oms-blue focus:border-indigo-500 transition-all"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-oms-blue focus:border-oms-blue transition-all"
                     >
                       <option value="">Select Product</option>
                       <option value="box">Box / Packaging</option>
@@ -874,7 +874,7 @@ export default function QuotationsPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800 disabled:opacity-50"
+                  className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-blue-600 disabled:opacity-50"
                 >
                   {submitting ? 'Saving...' : (isEditing ? 'Update' : 'Create')}
                 </button>

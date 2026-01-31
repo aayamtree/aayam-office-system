@@ -86,7 +86,7 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
     };
 
     return (
-        <div className="h-full flex flex-col bg-white rounded-2xl border border-gray-200 shadow-sm">
+        <div className="h-full flex flex-col bg-white rounded-2xl border border-gray-200">
             {/* Header */}
             <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center gap-3 mb-4">
@@ -105,7 +105,7 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                     placeholder="Search jobs or clients..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:ring-4 ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
                 />
             </div>
 
@@ -118,7 +118,7 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                             onClick={() => setFilter(type)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 whitespace-nowrap transition-all ${filter === type
                                     ? 'bg-[rgba(0,0,255,0.1)] text-white border-[rgba(0,0,255,0.2)]-600'
-                                    : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:border-oms-blue-300'
                                 }`}
                         >
                             {type}
@@ -147,7 +147,7 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                                 key={job.id}
                                 className={`p-4 rounded-xl border-2 transition-all ${disabled
                                         ? 'bg-gray-50 border-gray-200 opacity-50'
-                                        : 'bg-white border-gray-200 hover:border-indigo-300 hover:shadow-sm'
+                                        : 'bg-white border-gray-200 hover:border-oms-blue-300 '
                                     }`}
                             >
                                 <div className="flex items-start justify-between gap-3">

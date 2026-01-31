@@ -278,7 +278,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <input
             type="text"
             placeholder="Search..."
-            className="w-full pl-9 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+            className="w-full pl-9 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-oms-blue"
           />
         </div>
       </div>
@@ -347,7 +347,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                           : 'text-white/70 hover:bg-white/5 hover:text-white'
                         }`}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         <Icon size={18} />
                         <span className="text-body font-medium">{item.name}</span>
                       </div>
@@ -360,7 +360,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     <Link
                       href={item.href}
                       onClick={handleLinkClick}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all
+                      className={`flex items-center gap-2 px-4 py-3 rounded-xl transition-all
                       ${active
                           ? 'bg-[rgba(0,0,255,0.15)] border-l-4 border-oms-blue text-white'
                           : 'text-white/70 hover:bg-white/5 hover:text-white'
@@ -414,13 +414,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       </nav>
 
       {/* User Profile */}
-      <div className="p-4 border-t border-white/10">
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
-          <div className="w-10 h-10 bg-oms-blue rounded-full flex items-center justify-center text-white font-semibold">
+      <div className="p-3 border-t border-white/10">
+        <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5">
+          <div className="w-8 h-8 bg-oms-blue rounded-full flex items-center justify-center text-white font-semibold text-sm">
             {profile?.full_name?.charAt(0) || 'A'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-white text-sm truncate">{profile?.full_name}</p>
+            <p className="font-medium text-white text-xs truncate">{profile?.full_name}</p>
             <div className="flex items-center gap-2">
               <p className="text-xs text-gray-500 capitalize">{profile?.role}</p>
               <span className="text-[10px] bg-[rgba(0,0,255,0.1)]/20 text-indigo-300 px-1.5 py-0.5 rounded">v1.7.0</span>

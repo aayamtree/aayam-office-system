@@ -121,7 +121,7 @@ export default function UserManagementPage() {
   return (
     <div className="space-y-6">
       {/* Header Card - Stack on mobile, row on desktop */}
-      <div className="bg-white p-4 md:p-6 rounded-xl border shadow-sm space-y-4">
+      <div className="bg-white p-4 md:p-6 rounded-xl border space-y-4">
         {/* Title Section */}
         <div>
           <h1 className="text-xl md:text-page-title text-gray-900">Settings & Team</h1>
@@ -134,7 +134,7 @@ export default function UserManagementPage() {
             <button
               onClick={() => setActiveTab('users')}
               className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'users'
-                ? 'bg-white text-oms-blue shadow-sm'
+                ? 'bg-white text-oms-blue'
                 : 'text-gray-500 hover:text-gray-700'
                 }`}
             >
@@ -143,7 +143,7 @@ export default function UserManagementPage() {
             <button
               onClick={() => setActiveTab('designers')}
               className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'designers'
-                ? 'bg-white text-oms-blue shadow-sm'
+                ? 'bg-white text-oms-blue'
                 : 'text-gray-500 hover:text-gray-700'
                 }`}
             >
@@ -152,7 +152,7 @@ export default function UserManagementPage() {
             <button
               onClick={() => setActiveTab('production')}
               className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'production'
-                ? 'bg-white text-orange-600 shadow-sm'
+                ? 'bg-white text-orange-600'
                 : 'text-gray-500 hover:text-gray-700'
                 }`}
             >
@@ -161,7 +161,7 @@ export default function UserManagementPage() {
             <button
               onClick={() => setActiveTab('drive')}
               className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'drive'
-                ? 'bg-white text-blue-600 shadow-sm'
+                ? 'bg-white text-blue-600'
                 : 'text-gray-500 hover:text-gray-700'
                 }`}
             >
@@ -177,7 +177,7 @@ export default function UserManagementPage() {
           <div className="flex justify-end">
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-oms-blue font-medium text-sm shadow-sm"
+              className="flex items-center gap-2 px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-oms-blue font-medium text-sm"
             >
               <Plus size={18} />
               Add User
@@ -185,7 +185,7 @@ export default function UserManagementPage() {
           </div>
 
           {/* Users Table - Horizontal scroll on mobile */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left min-w-[640px]">
                 <thead className="bg-gray-50 border-b border-gray-100">
@@ -217,7 +217,7 @@ export default function UserManagementPage() {
                           value={profile.role}
                           disabled={updating === profile.id}
                           onChange={(e) => handleRoleChange(profile.id, e.target.value)}
-                          className="bg-white border border-gray-300 text-gray-900 text-xs md:text-sm rounded-lg focus:ring-oms-blue focus:border-indigo-500 block w-full p-2"
+                          className="bg-white border border-gray-300 text-gray-900 text-xs md:text-sm rounded-lg focus:ring-oms-blue focus:border-oms-blue block w-full p-2"
                         >
                           {roles.map(r => (
                             <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
@@ -226,7 +226,7 @@ export default function UserManagementPage() {
                       </td>
                       <td className="p-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-bold 
-                        ${profile.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        ${profile.is_active ? 'bg-gray-100 text-gray-900' : 'bg-red-100 text-red-700'}`}>
                           {profile.is_active ? 'Active' : 'Suspended'}
                         </span>
                       </td>
@@ -243,7 +243,7 @@ export default function UserManagementPage() {
           {/* ADD USER MODAL */}
           {showAddModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-              <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+              <div className="bg-white rounded-xl  w-full max-w-md overflow-hidden">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center">
                   <h2 className="text-section text-gray-900">Add New Team Member</h2>
                   <button
@@ -268,7 +268,7 @@ export default function UserManagementPage() {
                       required
                       value={newUser.fullName}
                       onChange={e => setNewUser({ ...newUser, fullName: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-oms-blue focus:border-indigo-500"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-oms-blue focus:border-oms-blue"
                       placeholder="e.g. Rahul Sharma"
                     />
                   </div>
@@ -281,7 +281,7 @@ export default function UserManagementPage() {
                         required
                         value={newUser.username}
                         onChange={e => setNewUser({ ...newUser, username: e.target.value })}
-                        className="w-full border border-gray-300 rounded-l-lg px-3 py-2 text-gray-900 focus:ring-oms-blue focus:border-indigo-500"
+                        className="w-full border border-gray-300 rounded-l-lg px-3 py-2 text-gray-900 focus:ring-oms-blue focus:border-oms-blue"
                         placeholder="e.g. rahul"
                       />
                       <span className="bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg px-3 py-2 text-gray-500 text-sm flex items-center">
@@ -299,7 +299,7 @@ export default function UserManagementPage() {
                       minLength={6}
                       value={newUser.password}
                       onChange={e => setNewUser({ ...newUser, password: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-oms-blue focus:border-indigo-500"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-oms-blue focus:border-oms-blue"
                       placeholder="Minimum 6 characters"
                     />
                   </div>
@@ -309,7 +309,7 @@ export default function UserManagementPage() {
                     <select
                       value={newUser.role}
                       onChange={e => setNewUser({ ...newUser, role: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-oms-blue focus:border-indigo-500"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-oms-blue focus:border-oms-blue"
                     >
                       {roles.map(r => (
                         <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>

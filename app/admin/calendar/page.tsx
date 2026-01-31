@@ -45,7 +45,7 @@ export default function CalendarPage() {
             </div>
 
             {/* Week Planner */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="bg-white rounded-2xl border border-gray-100 p-6">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-section text-gray-900">This Week</h2>
                     <button
@@ -68,7 +68,7 @@ export default function CalendarPage() {
                         return (
                             <div
                                 key={dayOffset}
-                                className={`border rounded-lg p-3 ${isToday ? 'border-indigo-500 bg-[rgba(0,0,255,0.05)]' : 'border-gray-200'
+                                className={`border rounded-lg p-3 ${isToday ? 'border-oms-blue bg-[rgba(0,0,255,0.05)]' : 'border-gray-200'
                                     }`}
                             >
                                 <div className="text-center mb-2">
@@ -98,7 +98,7 @@ export default function CalendarPage() {
             </div>
 
             {/* All Events List */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="bg-white rounded-2xl border border-gray-100 p-6">
                 <h2 className="text-section text-gray-900 mb-4">All Events</h2>
                 {loading ? (
                     <div className="text-center py-8 text-gray-500">Loading...</div>
@@ -154,14 +154,14 @@ function EventCard({ event, showDate, onToggle, onDelete }: {
     };
 
     return (
-        <div className={`p-3 rounded-lg border-l-4 ${isCompleted ? 'bg-green-50 border-l-green-500 opacity-60' : 'bg-gray-50 border-l-indigo-500'
+        <div className={`p-3 rounded-lg border-l-4 ${isCompleted ? 'bg-white border-l-green-500 opacity-60' : 'bg-gray-50 border-l-oms-blue'
             }`}>
             <div className="flex items-start gap-2">
                 <button
                     onClick={onToggle}
                     className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${isCompleted
-                        ? 'bg-green-500 border-green-500'
-                        : 'border-gray-300 hover:border-indigo-500'
+                        ? 'bg-white0 border-green-500'
+                        : 'border-gray-300 hover:border-oms-blue'
                         }`}
                 >
                     {isCompleted && <CheckCircle className="w-4 h-4 text-white" />}
@@ -248,7 +248,7 @@ function NewEventModal({ profile, onClose, onCreate }: {
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="bg-white rounded-2xl  max-w-md w-full p-6">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-section text-gray-900">New Event</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600">

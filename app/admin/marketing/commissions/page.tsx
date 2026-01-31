@@ -56,7 +56,7 @@ export default function CommissionsPage() {
             <div className="max-w-7xl mx-auto p-6 space-y-6">
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                    <div className="bg-white rounded-2xl p-6 border border-gray-100">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-blue-50 rounded-lg">
                                 <Clock className="text-blue-600" size={20} />
@@ -66,7 +66,7 @@ export default function CommissionsPage() {
                         <p className="text-page-title text-gray-900">₹0</p>
                         <p className="text-xs text-gray-400 mt-1">0 projects</p>
                     </div>
-                    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                    <div className="bg-white rounded-2xl p-6 border border-gray-100">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg">
                                 <CheckCircle className="text-oms-blue" size={20} />
@@ -76,14 +76,14 @@ export default function CommissionsPage() {
                         <p className="text-page-title text-gray-900">₹0</p>
                         <p className="text-xs text-gray-400 mt-1">0 projects</p>
                     </div>
-                    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                    <div className="bg-white rounded-2xl p-6 border border-gray-100">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-green-50 rounded-lg">
-                                <TrendingUp className="text-green-600" size={20} />
+                            <div className="p-2 bg-white rounded-lg">
+                                <TrendingUp className="text-gray-900" size={20} />
                             </div>
                             <p className="text-sm text-gray-500 font-medium">Paid</p>
                         </div>
-                        <p className="text-page-title text-green-600">₹0</p>
+                        <p className="text-page-title text-gray-900">₹0</p>
                         <p className="text-xs text-gray-400 mt-1">0 projects</p>
                     </div>
                     <div className="bg-white rounded-2xl p-6 border-2 border-gray-100">
@@ -99,7 +99,7 @@ export default function CommissionsPage() {
                 </div>
 
                 {/* Filters */}
-                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                <div className="bg-white rounded-2xl p-4 border border-gray-100">
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
                             {(['all', 'pending', 'approved', 'paid'] as const).map((f) => (
@@ -122,7 +122,7 @@ export default function CommissionsPage() {
                 </div>
 
                 {/* Commissions List */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+                <div className="bg-white rounded-2xl border border-gray-100">
                     <div className="p-6 border-b border-gray-100">
                         <h2 className="text-page-title text-gray-900">Commission Records</h2>
                         <p className="text-sm text-gray-500 mt-1">All commission calculations with GST breakdown</p>
@@ -141,7 +141,7 @@ export default function CommissionsPage() {
                         ) : (
                             <div className="space-y-4">
                                 {commissions.map((commission) => (
-                                    <div key={commission.id} className="border border-gray-100 rounded-xl p-4 hover:border-indigo-200 transition-all">
+                                    <div key={commission.id} className="border border-gray-100 rounded-xl p-4 hover:border-oms-blue/20 transition-all">
                                         {/* Commission card content */}
                                     </div>
                                 ))}
@@ -189,7 +189,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-3xl w-full max-w-3xl  overflow-hidden max-h-[90vh] overflow-y-auto">
                 {/* Header */}
                 <div className="bg-oms-blue p-6 text-white">
                     <h3 className="text-page-title flex items-center gap-3">

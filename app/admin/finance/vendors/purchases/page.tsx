@@ -144,7 +144,7 @@ export default function VendorPurchasesPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'paid': return 'bg-green-100 text-green-700';
+      case 'paid': return 'bg-gray-100 text-gray-900';
       case 'partial': return 'bg-orange-100 text-orange-700';
       case 'pending': return 'bg-red-100 text-red-700';
       default: return 'bg-gray-100 text-gray-700';
@@ -183,40 +183,40 @@ export default function VendorPurchasesPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
+        <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Purchases</p>
           <p className="text-lg sm:text-page-title text-gray-900">{formatCurrency(totalPurchases)}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
+        <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Paid to Vendors</p>
-          <p className="text-lg sm:text-page-title text-green-600">{formatCurrency(totalPaid)}</p>
+          <p className="text-lg sm:text-page-title text-gray-900">{formatCurrency(totalPaid)}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
+        <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Pending Payments</p>
           <p className="text-lg sm:text-page-title text-red-600">{formatCurrency(totalPending)}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
+        <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Job-linked COGS</p>
           <p className="text-lg sm:text-page-title text-oms-blue">{formatCurrency(totalCOGS)}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border p-4">
+      <div className="bg-white rounded-xl border p-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <input type="text" placeholder="Search bills..." value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500" />
+              className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue" />
           </div>
           <select value={vendorFilter} onChange={(e) => setVendorFilter(e.target.value)}
-            className="px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+            className="px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue">
             <option value="all">All Vendors</option>
             {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
           </select>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+            className="px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue">
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
             <option value="partial">Partial</option>
@@ -228,7 +228,7 @@ export default function VendorPurchasesPage() {
       {/* Purchase List */}
       <div className="space-y-3">
         {filteredPurchases.map(purchase => (
-          <div key={purchase.id} className={`bg-white rounded-xl shadow-sm border p-4 hover:shadow-md transition-shadow ${purchase.payment_status === 'pending' && new Date(purchase.due_date || '') < new Date() ? 'border-l-4 border-l-red-500' : ''}`}>
+          <div key={purchase.id} className={`bg-white rounded-xl border p-4  transition-shadow ${purchase.payment_status === 'pending' && new Date(purchase.due_date || '') < new Date() ? 'border-l-4 border-l-red-500' : ''}`}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -249,7 +249,7 @@ export default function VendorPurchasesPage() {
                 <div className="text-right">
                   <p className="text-section text-gray-900">{formatCurrency(purchase.total_amount)}</p>
                   <p className="text-xs text-gray-500">
-                    Paid: <span className="text-green-600 font-medium">{formatCurrency(purchase.amount_paid)}</span>
+                    Paid: <span className="text-gray-900 font-medium">{formatCurrency(purchase.amount_paid)}</span>
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
@@ -369,7 +369,7 @@ export default function VendorPurchasesPage() {
                     className="w-full px-3 py-2 border rounded-lg text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[rgba(0,0,255,0.1)] file:text-oms-blue hover:file:bg-[rgba(0,0,255,0.1)]"
                   />
                   {formData.attachmentUrl && (
-                    <p className="text-xs text-green-600 mt-1">✓ {formData.attachmentUrl}</p>
+                    <p className="text-xs text-gray-900 mt-1">✓ {formData.attachmentUrl}</p>
                   )}
                   <p className="text-xs text-gray-500 mt-1">Choose from gallery or take photo</p>
                 </div>
@@ -462,7 +462,7 @@ export default function VendorPurchasesPage() {
                 </div>
                 <div className="flex justify-between text-sm pt-2 border-t">
                   <span>Paid</span>
-                  <span className="text-green-600 font-medium">{formatCurrency(selectedPurchase.amount_paid)}</span>
+                  <span className="text-gray-900 font-medium">{formatCurrency(selectedPurchase.amount_paid)}</span>
                 </div>
                 <div className="flex justify-between font-semibold">
                   <span>Balance Due</span>

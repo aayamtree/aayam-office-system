@@ -36,10 +36,10 @@ export default function DispatchHistoryPage() {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'pending': 'bg-gray-100 text-gray-700 border-gray-200',
-      'packed': 'bg-amber-100 text-amber-700 border-amber-200',
+      'packed': 'bg-amber-100 text-amber-700 border-gray-200',
       'dispatched': 'bg-[rgba(0,0,255,0.1)] text-oms-blue border-[rgba(0,0,255,0.2)]',
       'in_transit': 'bg-[rgba(0,0,255,0.1)] text-oms-blue border-[rgba(0,0,255,0.2)]',
-      'delivered': 'bg-green-100 text-green-700 border-green-200',
+      'delivered': 'bg-gray-100 text-gray-900 border-green-200',
       'returned': 'bg-red-100 text-red-700 border-red-200',
     };
     return colors[status] || 'bg-gray-100 text-gray-700';
@@ -92,17 +92,17 @@ export default function DispatchHistoryPage() {
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
+        <div className="bg-white border border-gray-200 rounded-xl p-3 text-center">
           <p className="text-page-title text-amber-700">{qcPassedCount}</p>
-          <p className="text-xs text-amber-600 font-medium">Pending / Packed</p>
+          <p className="text-xs text-oms-orange font-medium">Pending / Packed</p>
         </div>
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
           <p className="text-page-title text-blue-700">{inTransitCount}</p>
           <p className="text-xs text-blue-600 font-medium">In Transit</p>
         </div>
-        <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
-          <p className="text-page-title text-green-700">{deliveredCount}</p>
-          <p className="text-xs text-green-600 font-medium">Delivered</p>
+        <div className="bg-white border border-green-200 rounded-xl p-3 text-center">
+          <p className="text-page-title text-gray-900">{deliveredCount}</p>
+          <p className="text-xs text-gray-900 font-medium">Delivered</p>
         </div>
       </div>
 
@@ -123,7 +123,7 @@ export default function DispatchHistoryPage() {
       <div className="space-y-3">
         {filteredDispatches.length === 0 && <div className="text-center py-12 text-gray-500">No dispatch history found.</div>}
         {filteredDispatches.map((dispatch) => (
-          <div key={dispatch.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div key={dispatch.id} className="bg-white rounded-xl p-4 border border-gray-100">
             <div className="flex flex-col gap-3">
               <div className="flex items-start justify-between">
                 <div>
@@ -142,7 +142,7 @@ export default function DispatchHistoryPage() {
               {dispatch.transporter_name && (
                 <div className="p-3 bg-gray-50 rounded-xl text-sm grid grid-cols-2 gap-2">
                   <div><span className="text-gray-500">Transporter:</span> <span className="font-medium">{dispatch.transporter_name || '-'}</span></div>
-                  {dispatch.tracking_number && <div><span className="text-gray-500">LR/Track:</span> <span className="font-medium text-green-600">{dispatch.tracking_number}</span></div>}
+                  {dispatch.tracking_number && <div><span className="text-gray-500">LR/Track:</span> <span className="font-medium text-gray-900">{dispatch.tracking_number}</span></div>}
                   {dispatch.vehicle_number && <div><span className="text-gray-500">Vehicle:</span> <span className="font-medium">{dispatch.vehicle_number}</span></div>}
                 </div>
               )}
@@ -150,10 +150,10 @@ export default function DispatchHistoryPage() {
               <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                 <div className="text-sm text-gray-500">
                   {dispatch.dispatch_date && <span>Dispatched: {new Date(dispatch.dispatch_date).toLocaleDateString()}</span>}
-                  {dispatch.actual_delivery && <span className="ml-3 text-green-600">Delivered: {new Date(dispatch.actual_delivery).toLocaleDateString()}</span>}
+                  {dispatch.actual_delivery && <span className="ml-3 text-gray-900">Delivered: {new Date(dispatch.actual_delivery).toLocaleDateString()}</span>}
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => handleWhatsAppShare(dispatch)} className="px-3 py-1.5 text-sm text-green-600 hover:bg-green-50 rounded-lg flex items-center gap-1"><MessageCircle size={14} /> WhatsApp</button>
+                  <button onClick={() => handleWhatsAppShare(dispatch)} className="px-3 py-1.5 text-sm text-gray-900 hover:bg-white rounded-lg flex items-center gap-1"><MessageCircle size={14} /> WhatsApp</button>
 
                   {dispatch.status === 'dispatched' || dispatch.status === 'in_transit' ? (
                     <>
@@ -178,8 +178,8 @@ export default function DispatchHistoryPage() {
               <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <div className="p-4 space-y-4">
-              <div className={`p-4 rounded-xl text-center ${selectedDispatch.status === 'delivered' ? 'bg-green-50' : 'bg-blue-50'}`}>
-                {selectedDispatch.status === 'delivered' ? <CheckCircle size={32} className="mx-auto mb-2 text-green-600" /> : <Truck size={32} className="mx-auto mb-2 text-blue-600" />}
+              <div className={`p-4 rounded-xl text-center ${selectedDispatch.status === 'delivered' ? 'bg-white' : 'bg-blue-50'}`}>
+                {selectedDispatch.status === 'delivered' ? <CheckCircle size={32} className="mx-auto mb-2 text-gray-900" /> : <Truck size={32} className="mx-auto mb-2 text-blue-600" />}
                 <p className="text-section">{getStatusLabel(selectedDispatch.status)}</p>
               </div>
 
@@ -197,7 +197,7 @@ export default function DispatchHistoryPage() {
               )}
 
               <div className="grid grid-cols-2 gap-3">
-                {selectedDispatch.tracking_number && <div className="p-3 bg-gray-50 rounded-xl"><p className="text-xs text-gray-500">Tracking Info</p><p className="font-medium text-green-600">{selectedDispatch.tracking_number}</p></div>}
+                {selectedDispatch.tracking_number && <div className="p-3 bg-gray-50 rounded-xl"><p className="text-xs text-gray-500">Tracking Info</p><p className="font-medium text-gray-900">{selectedDispatch.tracking_number}</p></div>}
               </div>
 
               {selectedDispatch.proof_of_delivery_url && (
@@ -216,10 +216,10 @@ export default function DispatchHistoryPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 {selectedDispatch.dispatch_date && <div className="p-3 bg-gray-50 rounded-xl"><p className="text-xs text-gray-500">Dispatched</p><p className="font-medium">{new Date(selectedDispatch.dispatch_date).toLocaleDateString()}</p></div>}
-                {selectedDispatch.actual_delivery && <div className="p-3 bg-green-50 rounded-xl"><p className="text-xs text-green-600">Delivered</p><p className="font-medium text-green-700">{new Date(selectedDispatch.actual_delivery).toLocaleDateString()}</p></div>}
+                {selectedDispatch.actual_delivery && <div className="p-3 bg-white rounded-xl"><p className="text-xs text-gray-900">Delivered</p><p className="font-medium text-gray-900">{new Date(selectedDispatch.actual_delivery).toLocaleDateString()}</p></div>}
               </div>
 
-              <button onClick={() => setShowViewModal(false)} className="w-full px-4 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800">Close</button>
+              <button onClick={() => setShowViewModal(false)} className="w-full px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-blue-600">Close</button>
             </div>
           </div>
         </div>

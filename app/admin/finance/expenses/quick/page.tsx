@@ -195,11 +195,11 @@ export default function QuickExpensePage() {
             <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4 md:gap-6">
                 {/* Main Form */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white rounded-xl border p-4 md:p-6 shadow-sm">
+                    <div className="bg-white rounded-xl border p-4 md:p-6">
                         <h2 className="text-section mb-4">Add New Expense</h2>
 
                         {success && (
-                            <div className="mb-4 p-3 md:p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-sm md:text-base text-green-800">
+                            <div className="mb-4 p-3 md:p-4 bg-white border border-green-200 rounded-lg flex items-center gap-2 text-sm md:text-base text-green-800">
                                 <Check size={18} className="flex-shrink-0" />
                                 <span>Expense recorded successfully!</span>
                             </div>
@@ -223,7 +223,7 @@ export default function QuickExpensePage() {
                                     <select
                                         value={formData.category}
                                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue text-sm"
                                         required
                                     >
                                         <option value="">Select category</option>
@@ -243,7 +243,7 @@ export default function QuickExpensePage() {
                                         value={formData.amount}
                                         onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                                         placeholder="0.00"
-                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue text-sm"
                                         required
                                         min="0"
                                         step="0.01"
@@ -260,7 +260,7 @@ export default function QuickExpensePage() {
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     placeholder="Enter expense details..."
-                                    className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                                    className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue text-sm"
                                     rows={3}
                                     required
                                 />
@@ -276,7 +276,7 @@ export default function QuickExpensePage() {
                                     <select
                                         value={formData.payment_mode}
                                         onChange={(e) => handlePaymentModeChange(e.target.value)}
-                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue text-sm"
                                         required
                                     >
                                         <option value="cash">Cash</option>
@@ -294,7 +294,7 @@ export default function QuickExpensePage() {
                                     <select
                                         value={formData.account_id}
                                         onChange={(e) => setFormData({ ...formData, account_id: e.target.value })}
-                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue text-sm"
                                         required
                                     >
                                         <option value="">Select account</option>
@@ -317,7 +317,7 @@ export default function QuickExpensePage() {
                                     <select
                                         value={formData.vendor_id}
                                         onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })}
-                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue text-sm"
                                     >
                                         <option value="">None (Petty Expense)</option>
                                         {vendors.map((vendor) => (
@@ -337,7 +337,7 @@ export default function QuickExpensePage() {
                                         type="date"
                                         value={formData.payment_date}
                                         onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })}
-                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue text-sm"
                                         required
                                     />
                                 </div>
@@ -353,7 +353,7 @@ export default function QuickExpensePage() {
                                     value={formData.reference_number}
                                     onChange={(e) => setFormData({ ...formData, reference_number: e.target.value })}
                                     placeholder="Invoice/Receipt number..."
-                                    className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                                    className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue text-sm"
                                 />
                             </div>
 
@@ -387,7 +387,7 @@ export default function QuickExpensePage() {
 
                 {/* Recent Expenses Sidebar */}
                 <div className="lg:col-span-1">
-                    <div className="bg-white rounded-xl border p-4 md:p-5 shadow-sm">
+                    <div className="bg-white rounded-xl border p-4 md:p-5">
                         <h3 className="font-bold mb-4">Recent Expenses</h3>
                         <div className="space-y-3">
                             {recentExpenses.length === 0 ? (

@@ -22,7 +22,7 @@ interface CartItem {
 const categoryColors = [
   'bg-blue-100 text-blue-700',
   'bg-[rgba(0,0,255,0.1)] text-oms-blue',
-  'bg-green-100 text-green-700',
+  'bg-gray-100 text-gray-900',
   'bg-amber-100 text-amber-700',
   'bg-pink-100 text-pink-700',
   'bg-cyan-100 text-cyan-700',
@@ -303,18 +303,18 @@ export default function RetailPOSPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <input type="text" placeholder="Search products..." value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-oms-blue" />
           </div>
 
           {/* Categories */}
           <div className="flex flex-wrap gap-2 mb-4">
             <button onClick={() => setSelectedCategory('all')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${selectedCategory === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${selectedCategory === 'all' ? 'bg-oms-blue text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
               All
             </button>
             {categories?.map(cat => (
               <button key={cat.id} onClick={() => setSelectedCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${selectedCategory === cat.id ? 'bg-gray-900 text-white' : `${cat.color} hover:opacity-80`}`}>
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${selectedCategory === cat.id ? 'bg-oms-blue text-white' : `${cat.color} hover:opacity-80`}`}>
                 {cat.name}
               </button>
             ))}
@@ -335,7 +335,7 @@ export default function RetailPOSPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                 {filteredProducts.map(product => (
                   <button key={product.id} onClick={() => addToCart(product)}
-                    className="p-3 bg-white border rounded-lg hover:shadow-md hover:border-indigo-300 transition-all text-left flex flex-col justify-between h-full">
+                    className="p-3 bg-white border rounded-lg  hover:border-oms-blue/30 transition-all text-left flex flex-col justify-between h-full">
                     <div>
                       <p className="font-medium text-gray-900 text-sm line-clamp-2">{product.name}</p>
                       <p className="text-xs text-gray-500 mt-1">{product.category?.name}</p>
@@ -363,10 +363,10 @@ export default function RetailPOSPage() {
             <div className="grid grid-cols-2 gap-2">
               <input type="text" placeholder="Customer Name" value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-oms-blue" />
               <input type="tel" placeholder="Phone" value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
-                className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-oms-blue" />
             </div>
           </div>
 
@@ -405,10 +405,10 @@ export default function RetailPOSPage() {
                 <span>Discount</span>
                 <div className="flex items-center gap-2">
                   <input type="number" value={discount || ''} onChange={(e) => setDiscount(Math.min(100, parseFloat(e.target.value) || 0))}
-                    className="w-16 px-2 py-1 border rounded text-right text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" /><span>%</span>
+                    className="w-16 px-2 py-1 border rounded text-right text-sm focus:outline-none focus:ring-2 focus:ring-oms-blue" /><span>%</span>
                 </div>
               </div>
-              {discount > 0 && <div className="flex justify-between text-sm text-green-600"><span>Discount Amount</span><span>-{formatCurrency(discountAmount)}</span></div>}
+              {discount > 0 && <div className="flex justify-between text-sm text-gray-900"><span>Discount Amount</span><span>-{formatCurrency(discountAmount)}</span></div>}
               <div className="flex justify-between text-section pt-2 border-t"><span>Grand Total</span><span className="text-oms-blue">{formatCurrency(grandTotal)}</span></div>
             </div>
             <button onClick={() => setShowPaymentModal(true)} disabled={cart.length === 0}
@@ -437,7 +437,7 @@ export default function RetailPOSPage() {
                 <div className="grid grid-cols-3 gap-2">
                   {[{ id: 'cash', label: 'Cash', icon: Banknote }, { id: 'card', label: 'Card', icon: CreditCard }, { id: 'upi', label: 'UPI', icon: Smartphone }].map(method => (
                     <button key={method.id} onClick={() => setPaymentMethod(method.id as any)}
-                      className={`p-3 rounded-lg border-2 flex flex-col items-center gap-1 transition-all ${paymentMethod === method.id ? 'border-indigo-500 bg-[rgba(0,0,255,0.1)]' : 'border-gray-200 hover:border-gray-300'}`}>
+                      className={`p-3 rounded-lg border-2 flex flex-col items-center gap-1 transition-all ${paymentMethod === method.id ? 'border-oms-blue bg-[rgba(0,0,255,0.1)]' : 'border-gray-200 hover:border-gray-300'}`}>
                       <method.icon size={20} /><span className="text-sm">{method.label}</span>
                     </button>
                   ))}
@@ -447,8 +447,8 @@ export default function RetailPOSPage() {
                 <div>
                   <label className="text-sm font-medium">Amount Received</label>
                   <input type="number" value={amountReceived} onChange={(e) => setAmountReceived(e.target.value)}
-                    className="w-full mt-1 px-4 py-2.5 border rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter amount" />
-                  {changeAmount >= 0 && amountReceived && <p className="mt-2 text-green-600 font-medium">Change: {formatCurrency(changeAmount)}</p>}
+                    className="w-full mt-1 px-4 py-2.5 border rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-oms-blue" placeholder="Enter amount" />
+                  {changeAmount >= 0 && amountReceived && <p className="mt-2 text-gray-900 font-medium">Change: {formatCurrency(changeAmount)}</p>}
                 </div>
               )}
               <div className="flex gap-3">
@@ -476,8 +476,8 @@ export default function RetailPOSPage() {
               <div className="flex items-center gap-4">
                 <h2 className="text-page-title">Manage Items</h2>
                 <div className="flex bg-gray-100 p-1 rounded-lg">
-                  <button onClick={() => setActiveTab('products')} className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${activeTab === 'products' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'}`}>Products</button>
-                  <button onClick={() => setActiveTab('categories')} className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${activeTab === 'categories' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'}`}>Categories</button>
+                  <button onClick={() => setActiveTab('products')} className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${activeTab === 'products' ? 'bg-white text-gray-900' : 'text-gray-500'}`}>Products</button>
+                  <button onClick={() => setActiveTab('categories')} className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${activeTab === 'categories' ? 'bg-white text-gray-900' : 'text-gray-500'}`}>Categories</button>
                 </div>
               </div>
               <button onClick={() => setShowSettingsModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
@@ -488,7 +488,7 @@ export default function RetailPOSPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Product List */}
                   <div className="lg:col-span-2 space-y-4">
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
                       <table className="w-full">
                         <thead className="bg-gray-50 border-b border-gray-100">
                           <tr>
@@ -519,27 +519,27 @@ export default function RetailPOSPage() {
                   </div>
 
                   {/* Add/Edit Product Form */}
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 h-fit">
+                  <div className="bg-white rounded-xl border border-gray-100 p-5 h-fit">
                     <h3 className="font-bold text-gray-900 mb-4">{isEditingProduct ? 'Edit Product' : 'Add New Product'}</h3>
                     <form onSubmit={handleSaveProduct} className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                        <input type="text" required value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        <input type="text" required value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-oms-blue" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-                        <input type="number" required min="0" value={productForm.price} onChange={e => setProductForm({ ...productForm, price: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        <input type="number" required min="0" value={productForm.price} onChange={e => setProductForm({ ...productForm, price: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-oms-blue" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                        <select required value={productForm.category_id} onChange={e => setProductForm({ ...productForm, category_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <select required value={productForm.category_id} onChange={e => setProductForm({ ...productForm, category_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-oms-blue">
                           <option value="">Select Category</option>
                           {categories?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                       </div>
                       <div className="flex gap-2 pt-2">
                         {isEditingProduct && <button type="button" onClick={() => { setIsEditingProduct(false); setProductForm({ id: '', name: '', price: 0, category_id: '' }) }} className="flex-1 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>}
-                        <button type="submit" className="flex-1 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800">{isEditingProduct ? 'Update' : 'Add Product'}</button>
+                        <button type="submit" className="flex-1 py-2 bg-oms-blue text-white rounded-lg hover:bg-blue-600">{isEditingProduct ? 'Update' : 'Add Product'}</button>
                       </div>
                     </form>
                   </div>
@@ -559,12 +559,12 @@ export default function RetailPOSPage() {
                   </div>
 
                   {/* Add Category Form */}
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 h-fit">
+                  <div className="bg-white rounded-xl border border-gray-100 p-5 h-fit">
                     <h3 className="font-bold text-gray-900 mb-4">Add New Category</h3>
                     <form onSubmit={handleSaveCategory} className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                        <input type="text" required value={categoryForm.name} onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        <input type="text" required value={categoryForm.name} onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-oms-blue" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Color Theme</label>
@@ -575,7 +575,7 @@ export default function RetailPOSPage() {
                           ))}
                         </div>
                       </div>
-                      <button type="submit" className="w-full py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 mt-2">Add Category</button>
+                      <button type="submit" className="w-full py-2 bg-oms-blue text-white rounded-lg hover:bg-blue-600 mt-2">Add Category</button>
                     </form>
                   </div>
                 </div>

@@ -116,7 +116,7 @@ export default function PaymentsPageNew() {
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
-                    className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800"
+                    className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-blue-600"
                 >
                     <Plus size={20} />
                     Record Payment
@@ -151,7 +151,7 @@ export default function PaymentsPageNew() {
                             payments.map((payment) => (
                                 <tr key={payment.id} className="hover:bg-gray-50">
                                     <td className="p-4">
-                                        <span className={`flex items-center gap-2 ${payment.type === 'received' ? 'text-green-600' : 'text-red-600'}`}>
+                                        <span className={`flex items-center gap-2 ${payment.type === 'received' ? 'text-gray-900' : 'text-red-600'}`}>
                                             {payment.type === 'received' ? <ArrowDownRight size={16} /> : <ArrowUpRight size={16} />}
                                             {payment.type === 'received' ? 'Received' : 'Paid'}
                                         </span>

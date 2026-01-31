@@ -89,7 +89,7 @@ export default function FinanceReportPage() {
   };
 
   const getExpenseColor = (index: number) => {
-    const colors = ['bg-red-500', 'bg-amber-500', 'bg-blue-500', 'bg-[rgba(0,0,255,0.1)]', 'bg-green-500', 'bg-pink-500'];
+    const colors = ['bg-red-500', 'bg-white0', 'bg-blue-500', 'bg-[rgba(0,0,255,0.1)]', 'bg-white0', 'bg-pink-500'];
     return colors[index % colors.length];
   };
 
@@ -111,7 +111,7 @@ export default function FinanceReportPage() {
             <Download size={16} />
             <span>PDF</span>
           </button>
-          <button onClick={() => handleExport('excel')} className="flex items-center gap-2 px-3 py-2 bg-green-50 text-green-700 rounded-xl hover:bg-green-100">
+          <button onClick={() => handleExport('excel')} className="flex items-center gap-2 px-3 py-2 bg-white text-gray-900 rounded-xl hover:bg-gray-100">
             <Download size={16} />
             <span>Excel</span>
           </button>
@@ -119,7 +119,7 @@ export default function FinanceReportPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+      <div className="bg-white rounded-2xl p-4 border border-gray-100">
         <div className="flex items-center gap-2 mb-3">
           <Filter size={16} className="text-gray-500" />
           <span className="font-medium text-gray-700">Filters</span>
@@ -192,7 +192,7 @@ export default function FinanceReportPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Transactions Table */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="p-4 border-b border-gray-100">
             <h2 className="font-semibold text-gray-900">Transactions</h2>
           </div>
@@ -212,14 +212,14 @@ export default function FinanceReportPage() {
                   <tr key={t.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm text-gray-600">{t.date}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 text-xs rounded-full ${t.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                      <span className={`px-2 py-1 text-xs rounded-full ${t.type === 'income' ? 'bg-gray-100 text-gray-900' : 'bg-red-100 text-red-700'
                         }`}>
                         {t.type}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">{t.category}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{t.description}</td>
-                    <td className={`px-4 py-3 text-sm font-medium text-right ${t.type === 'income' ? 'text-green-600' : 'text-red-600'
+                    <td className={`px-4 py-3 text-sm font-medium text-right ${t.type === 'income' ? 'text-gray-900' : 'text-red-600'
                       }`}>
                       {t.type === 'income' ? '+' : '-'}₹{t.amount.toLocaleString()}
                     </td>
@@ -232,7 +232,7 @@ export default function FinanceReportPage() {
 
         {/* Expense Breakdown */}
         <div className="space-y-4">
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-2xl p-4 border border-gray-100">
             <h2 className="font-semibold text-gray-900 mb-4">Expense Breakdown</h2>
             <div className="space-y-3">
               {expenseData.map(([category, amount], index) => (
@@ -252,13 +252,13 @@ export default function FinanceReportPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-2xl p-4 border border-gray-100">
             <h2 className="font-semibold text-gray-900 mb-4">Payment Modes</h2>
             <div className="space-y-3">
               {Object.entries(paymentBreakdown).map(([mode, amount]) => (
                 <div key={mode} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                   <span className="text-gray-600">{mode}</span>
-                  <span className="font-semibold text-green-600">₹{amount.toLocaleString()}</span>
+                  <span className="font-semibold text-gray-900">₹{amount.toLocaleString()}</span>
                 </div>
               ))}
             </div>

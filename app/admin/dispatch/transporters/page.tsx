@@ -159,7 +159,7 @@ export default function TransportersPage() {
         </div>
         <button
           onClick={handleAddNew}
-          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800"
+          className="flex items-center justify-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-xl hover:bg-blue-600"
         >
           <Plus size={18} />
           <span>Add Transporter</span>
@@ -204,7 +204,7 @@ export default function TransportersPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {stateTransporters.map((t) => (
-                <div key={t.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div key={t.id} className="bg-white rounded-xl p-4 border border-gray-100">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center">
@@ -215,7 +215,7 @@ export default function TransportersPage() {
                         <p className="text-sm text-gray-500">{t.name}</p> {/* Contact Person */}
                       </div>
                     </div>
-                    <span className={`px-2 py-0.5 text-xs rounded-full ${t.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-500'}`}>
+                    <span className={`px-2 py-0.5 text-xs rounded-full ${t.is_active ? 'bg-gray-100 text-gray-900' : 'bg-red-100 text-red-500'}`}>
                       {t.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </div>
@@ -379,7 +379,7 @@ export default function TransportersPage() {
                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50">
                   Cancel
                 </button>
-                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800 disabled:opacity-50">
+                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-blue-600 disabled:opacity-50">
                   {submitting ? 'Saving...' : (isEditing ? 'Update' : 'Add')}
                 </button>
               </div>
@@ -440,7 +440,7 @@ export default function TransportersPage() {
 
               <button
                 onClick={() => setShowViewModal(false)}
-                className="w-full px-4 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800"
+                className="w-full px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-blue-600"
               >
                 Close
               </button>

@@ -556,7 +556,7 @@ export default function UnifiedJobForm({
                     <button
                         type="submit"
                         disabled={saving}
-                        className="px-8 py-2 bg-oms-blue text-white rounded-xl font-medium hover:shadow-lg disabled:opacity-50 flex items-center gap-2"
+                        className="px-8 py-2 bg-oms-blue text-white rounded-xl font-medium  disabled:opacity-50 flex items-center gap-2"
                     >
                         {saving ? (
                             <>

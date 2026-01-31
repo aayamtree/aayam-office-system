@@ -16,7 +16,7 @@ export function IdleWarningModal({ show, onStayLoggedIn, onLogout }: IdleWarning
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6">
+            <div className="bg-white rounded-2xl  max-w-md w-full mx-4 p-6">
                 {/* Icon */}
                 <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <AlertCircle className="text-yellow-600" size={32} />

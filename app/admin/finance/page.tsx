@@ -5,8 +5,8 @@ import { IndianRupee, FileText, CreditCard, AlertTriangle, TrendingUp, TrendingD
 
 export default function FinancePage() {
   const stats = [
-    { label: 'Total Revenue', value: '₹12,45,000', change: '+18%', trend: 'up', icon: TrendingUp, color: 'bg-green-500' },
-    { label: 'Outstanding', value: '₹2,85,000', change: '12 invoices', trend: 'warning', icon: AlertTriangle, color: 'bg-amber-500' },
+    { label: 'Total Revenue', value: '₹12,45,000', change: '+18%', trend: 'up', icon: TrendingUp, color: 'bg-white0' },
+    { label: 'Outstanding', value: '₹2,85,000', change: '12 invoices', trend: 'warning', icon: AlertTriangle, color: 'bg-white0' },
     { label: 'Received This Month', value: '₹4,50,000', change: '+12%', trend: 'up', icon: ArrowDownRight, color: 'bg-blue-500' },
     { label: 'Pending Payments', value: '₹95,000', change: '5 vendors', trend: 'down', icon: ArrowUpRight, color: 'bg-red-500' },
   ];
@@ -36,14 +36,14 @@ export default function FinancePage() {
         <div className="flex gap-3">
           <Link
             href="/admin/finance/payments?new=true"
-            className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 px-5 py-3 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium shadow-sm"
+            className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 px-5 py-3 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium"
           >
             <CreditCard size={20} />
             <span>Record Payment</span>
           </Link>
           <Link
             href="/admin/finance/invoices?new=true"
-            className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white px-5 py-3 rounded-xl shadow-lg shadow-gray-900/20 transition-all hover:scale-105 active:scale-95 font-medium"
+            className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-blue-600 text-white px-5 py-3 rounded-xl -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
           >
             <FileText size={20} />
             <span>New Invoice</span>
@@ -108,16 +108,16 @@ export default function FinancePage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 transition-shadow hover:shadow-md group">
+          <div key={stat.label} className="bg-white rounded-2xl p-5 border border-gray-100 transition-shadow  group">
             <div className="flex items-center gap-3 mb-3">
-              <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform`}>
+              <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
                 <stat.icon size={22} className="text-white" />
               </div>
             </div>
             <p className="text-page-title text-gray-900">{stat.value}</p>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-1">{stat.label}</p>
-            <p className={`text-xs mt-2 font-bold px-2 py-1 rounded-full w-fit ${stat.trend === 'up' ? 'text-green-700 bg-green-50' :
-              stat.trend === 'warning' ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50'
+            <p className={`text-xs mt-2 font-bold px-2 py-1 rounded-full w-fit ${stat.trend === 'up' ? 'text-gray-900 bg-white' :
+              stat.trend === 'warning' ? 'text-amber-700 bg-white' : 'text-red-700 bg-red-50'
               }`}>{stat.change}</p>
           </div>
         ))}
@@ -125,7 +125,7 @@ export default function FinancePage() {
 
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link href="/admin/finance/invoices" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+        <Link href="/admin/finance/invoices" className="bg-white rounded-2xl p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <FileText size={28} className="text-blue-600" />
@@ -136,13 +136,13 @@ export default function FinancePage() {
             </div>
           </div>
           <div className="flex items-center gap-3 text-label">
-            <span className="text-green-700 bg-green-50 px-2.5 py-1 rounded-full">132 Paid</span>
-            <span className="text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full">12 Pending</span>
+            <span className="text-gray-900 bg-white px-2.5 py-1 rounded-full">132 Paid</span>
+            <span className="text-amber-700 bg-white px-2.5 py-1 rounded-full">12 Pending</span>
             <span className="text-red-700 bg-red-50 px-2.5 py-1 rounded-full">12 Overdue</span>
           </div>
         </Link>
 
-        <Link href="/admin/finance/vendors" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+        <Link href="/admin/finance/vendors" className="bg-white rounded-2xl p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-14 h-14 bg-[rgba(0,0,255,0.1)] rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <CreditCard size={28} className="text-oms-blue" />
@@ -158,10 +158,10 @@ export default function FinancePage() {
           </div>
         </Link>
 
-        <Link href="/admin/finance/payments" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+        <Link href="/admin/finance/payments" className="bg-white rounded-2xl p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <CreditCard size={28} className="text-green-600" />
+            <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <CreditCard size={28} className="text-gray-900" />
             </div>
             <div>
               <h2 className="text-section text-gray-900">Payments</h2>
@@ -169,7 +169,7 @@ export default function FinancePage() {
             </div>
           </div>
           <div className="flex items-center gap-3 text-label">
-            <span className="text-green-700 bg-green-50 px-2.5 py-1 rounded-full">₹4.5L Received</span>
+            <span className="text-gray-900 bg-white px-2.5 py-1 rounded-full">₹4.5L Received</span>
             <span className="text-red-700 bg-red-50 px-2.5 py-1 rounded-full">₹95K Paid</span>
           </div>
         </Link>
@@ -178,7 +178,7 @@ export default function FinancePage() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Transactions */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="w-1 h-6 bg-[rgba(0,0,255,0.1)] rounded-full"></div>
@@ -192,10 +192,10 @@ export default function FinancePage() {
             {recentTransactions.map((tx) => (
               <div key={tx.id} className="flex items-center justify-between p-3.5 bg-gray-50/80 rounded-xl hover:bg-gray-100 transition-colors border border-gray-100">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${tx.type === 'received' ? 'bg-green-100' : 'bg-red-100'
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === 'received' ? 'bg-gray-100' : 'bg-red-100'
                     }`}>
                     {tx.type === 'received' ? (
-                      <ArrowDownRight size={18} className="text-green-600" />
+                      <ArrowDownRight size={18} className="text-gray-900" />
                     ) : (
                       <ArrowUpRight size={18} className="text-red-600" />
                     )}
@@ -205,7 +205,7 @@ export default function FinancePage() {
                     <p className="text-label text-gray-500">{tx.method} • {tx.date}</p>
                   </div>
                 </div>
-                <span className={`font-bold ${tx.type === 'received' ? 'text-green-600' : 'text-red-600'
+                <span className={`font-bold ${tx.type === 'received' ? 'text-gray-900' : 'text-red-600'
                   }`}>
                   {tx.type === 'received' ? '+' : '-'}{tx.amount}
                 </span>
@@ -215,7 +215,7 @@ export default function FinancePage() {
         </div>
 
         {/* Overdue Invoices */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="w-1 h-6 bg-red-500 rounded-full"></div>
@@ -249,9 +249,9 @@ export default function FinancePage() {
       </div>
 
       {/* Monthly Summary */}
-      <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-gray-100">
+      <div className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-1 h-6 bg-gray-900 rounded-full"></div>
+          <div className="w-1 h-6 bg-oms-blue rounded-full"></div>
           <h2 className="text-section text-gray-900">Monthly Summary</h2>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

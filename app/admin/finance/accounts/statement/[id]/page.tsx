@@ -266,7 +266,7 @@ export default function AccountStatementPage() {
             </div>
 
             {/* Statement */}
-            <div className="bg-white rounded-xl border shadow-sm print:shadow-none">
+            <div className="bg-white rounded-xl border print:">
                 {/* Statement Header - Shows on print */}
                 <div className="p-6 border-b">
                     <div className="text-center mb-4">
@@ -332,7 +332,7 @@ export default function AccountStatementPage() {
                                             <td className="p-3 text-sm text-right text-red-600 font-medium">
                                                 {isDebit ? `₹${txn.amount?.toLocaleString()}` : '-'}
                                             </td>
-                                            <td className="p-3 text-sm text-right text-green-600 font-medium">
+                                            <td className="p-3 text-sm text-right text-gray-900 font-medium">
                                                 {!isDebit ? `₹${txn.amount?.toLocaleString()}` : '-'}
                                             </td>
                                             <td className="p-3 text-sm text-right font-bold">
@@ -350,7 +350,7 @@ export default function AccountStatementPage() {
                                     <td className="p-3 text-sm text-right font-bold text-red-600">
                                         ₹{totalDebit.toLocaleString()}
                                     </td>
-                                    <td className="p-3 text-sm text-right font-bold text-green-600">
+                                    <td className="p-3 text-sm text-right font-bold text-gray-900">
                                         ₹{totalCredit.toLocaleString()}
                                     </td>
                                     <td className="p-3 text-sm text-right font-bold">

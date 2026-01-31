@@ -82,7 +82,7 @@ export default function ProductionQueuePage() {
 
     const getStageBadge = (job: Job) => {
         if (job.print_ready && job.client_approval) {
-            return <span className="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full font-bold">Print Ready</span>;
+            return <span className="px-3 py-1 bg-gray-100 text-gray-900 text-xs rounded-full font-bold">Print Ready</span>;
         }
         if (!job.client_approval) {
             return <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs rounded-full font-bold">Awaiting Approval</span>;
@@ -112,7 +112,7 @@ export default function ProductionQueuePage() {
                             <p className="text-gray-500 mt-1">Live overview of all active jobs • Updates every 30s</p>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                            <div className="w-3 h-3 bg-white0 rounded-full animate-pulse"></div>
                             Live Updates Active
                         </div>
                     </div>
@@ -125,7 +125,7 @@ export default function ProductionQueuePage() {
                     {/* Design Stage */}
                     <button
                         onClick={() => setFilter(filter === 'design_stage' ? null : 'design_stage')}
-                        className={`bg-white rounded-2xl p-6 border-2 transition-all hover:shadow-lg text-left ${filter === 'design_stage' ? 'border-purple-400 shadow-lg ring-4 ring-oms-blue' : 'border-gray-100 hover:border-[rgba(0,0,255,0.2)]'
+                        className={`bg-white rounded-2xl p-6 border-2 transition-all  text-left ${filter === 'design_stage' ? 'border-purple-400 ring-4 ring-oms-blue' : 'border-gray-100 hover:border-[rgba(0,0,255,0.2)]'
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
@@ -140,40 +140,40 @@ export default function ProductionQueuePage() {
                     {/* Print Ready */}
                     <button
                         onClick={() => setFilter(filter === 'print_ready' ? null : 'print_ready')}
-                        className={`bg-white rounded-2xl p-6 border-2 transition-all hover:shadow-lg text-left relative ${filter === 'print_ready' ? 'border-green-400 shadow-lg ring-4 ring-green-100' : 'border-gray-100 hover:border-green-200'
+                        className={`bg-white rounded-2xl p-6 border-2 transition-all  text-left relative ${filter === 'print_ready' ? 'border-green-400 ring-4 ring-green-100' : 'border-gray-100 hover:border-green-200'
                             }`}
                     >
                         {summary.print_ready > 0 && (
-                            <div className="absolute top-4 right-4 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                            <div className="absolute top-4 right-4 w-3 h-3 bg-white0 rounded-full animate-pulse"></div>
                         )}
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-green-50 rounded-lg">
-                                <CheckCircle2 className="text-green-600" size={20} />
+                            <div className="p-2 bg-white rounded-lg">
+                                <CheckCircle2 className="text-gray-900" size={20} />
                             </div>
                         </div>
-                        <p className="text-page-title text-green-600">{summary.print_ready}</p>
+                        <p className="text-page-title text-gray-900">{summary.print_ready}</p>
                         <p className="text-sm text-gray-600 font-medium mt-1">Print Ready</p>
                     </button>
 
                     {/* Awaiting Approval */}
                     <button
                         onClick={() => setFilter(filter === 'awaiting_approval' ? null : 'awaiting_approval')}
-                        className={`bg-white rounded-2xl p-6 border-2 transition-all hover:shadow-lg text-left ${filter === 'awaiting_approval' ? 'border-amber-400 shadow-lg ring-4 ring-amber-100' : 'border-gray-100 hover:border-amber-200'
+                        className={`bg-white rounded-2xl p-6 border-2 transition-all  text-left ${filter === 'awaiting_approval' ? 'border-gray-400 ring-4 ring-amber-100' : 'border-gray-100 hover:border-gray-200'
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-amber-50 rounded-lg">
-                                <Clock className="text-amber-600" size={20} />
+                            <div className="p-2 bg-white rounded-lg">
+                                <Clock className="text-oms-orange" size={20} />
                             </div>
                         </div>
-                        <p className="text-page-title text-amber-600">{summary.awaiting_approval}</p>
+                        <p className="text-page-title text-oms-orange">{summary.awaiting_approval}</p>
                         <p className="text-sm text-gray-600 font-medium mt-1">Awaiting Approval</p>
                     </button>
 
                     {/* High Priority */}
                     <button
                         onClick={() => setFilter(filter === 'high_priority' ? null : 'high_priority')}
-                        className={`bg-white rounded-2xl p-6 border-2 transition-all hover:shadow-lg text-left relative ${filter === 'high_priority' ? 'border-red-400 shadow-lg ring-4 ring-red-100' : 'border-gray-100 hover:border-red-200'
+                        className={`bg-white rounded-2xl p-6 border-2 transition-all  text-left relative ${filter === 'high_priority' ? 'border-red-400 ring-4 ring-red-100' : 'border-gray-100 hover:border-red-200'
                             }`}
                     >
                         {summary.high_priority > 0 && (
@@ -193,7 +193,7 @@ export default function ProductionQueuePage() {
                     {/* In Production */}
                     <button
                         onClick={() => setFilter(filter === 'in_production' ? null : 'in_production')}
-                        className={`bg-white rounded-2xl p-6 border-2 transition-all hover:shadow-lg text-left ${filter === 'in_production' ? 'border-blue-400 shadow-lg ring-4 ring-blue-100' : 'border-gray-100 hover:border-blue-200'
+                        className={`bg-white rounded-2xl p-6 border-2 transition-all  text-left ${filter === 'in_production' ? 'border-blue-400 ring-4 ring-blue-100' : 'border-gray-100 hover:border-blue-200'
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
@@ -208,7 +208,7 @@ export default function ProductionQueuePage() {
                     {/* Total Active */}
                     <button
                         onClick={() => setFilter(null)}
-                        className={`bg-oms-blue rounded-2xl p-6 border-2 transition-all hover:shadow-lg text-left ${!filter ? 'border-indigo-400 shadow-lg ring-4 ring-oms-blue' : 'border-[rgba(0,0,255,0.1)] hover:border-[rgba(0,0,255,0.2)]'
+                        className={`bg-oms-blue rounded-2xl p-6 border-2 transition-all  text-left ${!filter ? 'border-oms-blue-400 ring-4 ring-oms-blue' : 'border-[rgba(0,0,255,0.1)] hover:border-[rgba(0,0,255,0.2)]'
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
@@ -243,7 +243,7 @@ export default function ProductionQueuePage() {
                 )}
 
                 {/* Jobs Table */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                     <div className="p-6 border-b border-gray-100">
                         <h2 className="text-section text-gray-900">
                             {filter ? `Filtered Jobs (${filteredJobs.length})` : `All Active Jobs (${jobs.length})`}
@@ -252,7 +252,7 @@ export default function ProductionQueuePage() {
 
                     {loading ? (
                         <div className="p-12 text-center">
-                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-oms-blue"></div>
                         </div>
                     ) : filteredJobs.length === 0 ? (
                         <div className="p-12 text-center">

@@ -33,7 +33,7 @@ const taskStatuses = [
   { id: 'in_progress', name: 'Designing', color: 'bg-blue-100 text-blue-700' },
   { id: 'review', name: 'Review', color: 'bg-[rgba(0,0,255,0.1)] text-oms-blue' },
   { id: 'waiting', name: 'Waiting Client', color: 'bg-amber-100 text-amber-700' },
-  { id: 'completed', name: 'Done', color: 'bg-green-100 text-green-700' },
+  { id: 'completed', name: 'Done', color: 'bg-gray-100 text-gray-900' },
 ];
 
 const priorities = [
@@ -50,7 +50,7 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-gray-100">
+      <div className="bg-white rounded-2xl  w-full max-w-lg overflow-hidden border border-gray-100">
         <div className="bg-oms-blue p-6 text-white">
           <h2 className="text-page-title flex items-center gap-2">
             <Monitor size={24} /> Good Morning, {userName || 'Designer'}!
@@ -98,7 +98,7 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
         <div className="p-4 bg-gray-50 border-t flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-gray-900 text-white rounded-lg font-bold text-sm hover:bg-black transition-colors"
+            className="px-6 py-2 bg-oms-blue text-white rounded-lg font-bold text-sm hover:bg-blue-600 transition-colors"
           >
             Let&apos;s Start Working
           </button>
@@ -240,9 +240,9 @@ export default function DesignerWorkspace() {
   const kanbanColumns = [
     { id: 'pending', title: 'To Do', color: 'bg-gray-100 text-gray-600', border: 'border-gray-400' },
     { id: 'in_progress', title: 'Designing', color: 'bg-blue-50 text-blue-600', border: 'border-blue-500' },
-    { id: 'review', title: 'Review', color: 'bg-[rgba(0,0,255,0.05)] text-oms-blue', border: 'border-purple-500' },
-    { id: 'waiting', title: 'Waiting', color: 'bg-amber-50 text-amber-600', border: 'border-amber-500' },
-    { id: 'completed', title: 'Done', color: 'bg-green-50 text-green-600', border: 'border-green-500' }
+    { id: 'review', title: 'Review', color: 'bg-[rgba(0,0,255,0.05)] text-oms-blue', border: 'border-oms-blue' },
+    { id: 'waiting', title: 'Waiting', color: 'bg-white text-oms-orange', border: 'border-gray-500' },
+    { id: 'completed', title: 'Done', color: 'bg-white text-gray-900', border: 'border-green-500' }
   ];
 
   // Notes State
@@ -634,12 +634,12 @@ export default function DesignerWorkspace() {
 
         {activeTab === 'board' ? (
           <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-gray-50">
-            <div className="flex bg-white p-4 rounded-xl shadow-sm mb-4 justify-between items-center sticky left-0 min-w-[768px]">
+            <div className="flex bg-white p-4 rounded-xl mb-4 justify-between items-center sticky left-0 min-w-[768px]">
               <div className="flex items-center gap-4">
                 <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2"><Layout size={20} /> Kanban Team Board</h2>
                 <div className="flex bg-gray-100 p-1 rounded-lg">
                   <button onClick={() => setView('my_tasks')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">List</button>
-                  <button onClick={() => setView('board')} className="px-3 py-1 text-xs font-bold bg-white text-oms-blue rounded shadow-sm">Board</button>
+                  <button onClick={() => setView('board')} className="px-3 py-1 text-xs font-bold bg-white text-oms-blue rounded">Board</button>
                   <button onClick={() => setView('timeline')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Timeline</button>
                   <button onClick={() => setView('notes')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Notes</button>
                 </div>
@@ -677,7 +677,7 @@ export default function DesignerWorkspace() {
                         return (
                           <div key={task.id}
                             onClick={() => { setView('my_tasks'); setSelectedTaskId(task.id); }}
-                            className={`bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer group relative ${borderClass}`}
+                            className={`bg-white p-4 rounded-xl border border-gray-100  transition-shadow cursor-pointer group relative ${borderClass}`}
                           >
                             {/* Revision Badge (Mocked based on description or random) */}
                             <div className="absolute top-4 right-4 text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border">Rev {(task.id % 3) + 1}</div>
@@ -730,7 +730,7 @@ export default function DesignerWorkspace() {
                 <div className="flex bg-gray-100 p-1 rounded-lg">
                   <button onClick={() => setView('my_tasks')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">List</button>
                   <button onClick={() => setView('board')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Board</button>
-                  <button className="px-3 py-1 text-xs font-bold bg-white text-oms-blue rounded shadow-sm">Timeline</button>
+                  <button className="px-3 py-1 text-xs font-bold bg-white text-oms-blue rounded">Timeline</button>
                   <button onClick={() => setView('notes')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Notes</button>
                 </div>
               </div>
@@ -740,7 +740,7 @@ export default function DesignerWorkspace() {
             {/* Gantt Chart Body */}
             {/* Gantt Chart Body */}
             <div className="flex-1 overflow-x-auto overflow-y-auto p-2 md:p-6 bg-gray-50">
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-w-[800px]">
+              <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden min-w-[800px]">
                 {/* Header Row */}
                 <div className="grid grid-cols-12 bg-gray-50 border-b text-[10px] font-bold text-gray-500 uppercase tracking-wider h-10 items-center px-4">
                   <div className="col-span-3">Task / Designer</div>
@@ -787,17 +787,17 @@ export default function DesignerWorkspace() {
             {/* =================================================================================
           COLUMN 1: TASK QUEUE (List)
          ================================================================================= */}
-            <div className="w-full md:w-80 bg-white border-r flex flex-col h-full z-10 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+            <div className="w-full md:w-80 bg-white border-r flex flex-col h-full z-10 [4px_0_24px_rgba(0,0,0,0.02)]">
 
               {/* Stats & Toggle Header */}
               <div className="p-4 pb-0 bg-gray-50/50 space-y-3">
                 {/* Work Summary Widget */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-white p-2 rounded-lg border border-[rgba(0,0,255,0.1)] shadow-sm">
+                  <div className="bg-white p-2 rounded-lg border border-[rgba(0,0,255,0.1)]">
                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">This Month</p>
                     <p className="text-section text-oms-blue">{thisMonthCount} <span className="text-[10px] text-gray-400 font-normal">Tasks</span></p>
                   </div>
-                  <div className="bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
+                  <div className="bg-white p-2 rounded-lg border border-gray-100">
                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Last Month</p>
                     <p className="text-section text-gray-600">{lastMonthCount} <span className="text-[10px] text-gray-400 font-normal">Tasks</span></p>
                   </div>
@@ -835,7 +835,7 @@ export default function DesignerWorkspace() {
                   </div>
                   <button
                     onClick={() => setIsNewTaskModalOpen(true)}
-                    className="p-2 bg-oms-blue text-white rounded-lg hover:bg-oms-blue transition-all shadow-sm flex items-center gap-1 text-xs font-bold px-3"
+                    className="p-2 bg-oms-blue text-white rounded-lg hover:bg-oms-blue transition-all flex items-center gap-1 text-xs font-bold px-3"
                   >
                     <Plus size={14} /> New Project
                   </button>
@@ -847,7 +847,7 @@ export default function DesignerWorkspace() {
                     placeholder="Search project, date..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-oms-blue bg-white shadow-sm"
+                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-oms-blue bg-white"
                   />
                 </div>
               </div>
@@ -882,7 +882,7 @@ export default function DesignerWorkspace() {
                       const isOverdue = now > end && task.status !== 'completed' && task.status !== 'delivered';
 
                       return (
-                        <div key={task.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div key={task.id} className="bg-white p-4 rounded-xl border border-gray-100  transition-shadow">
                           <div className="flex justify-between items-center mb-3">
                             <div className="flex items-center gap-3">
                               <div className={`p-2 rounded-lg ${isOverdue ? 'bg-red-100 text-red-600' : 'bg-[rgba(0,0,255,0.05)] text-oms-blue'}`}>
@@ -916,7 +916,7 @@ export default function DesignerWorkspace() {
                 ) : activeTab === 'notes' ? (
                   <div className="space-y-4">
                     {currentDate && (
-                      <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                      <div className="bg-white p-4 rounded-xl border border-gray-100">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Calendar size={14} /> Calendar</h3>
                         <div className="grid grid-cols-7 gap-1 text-center mb-1">
                           {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <span key={d} className="text-[10px] text-gray-400 font-bold">{d}</span>)}
@@ -940,7 +940,7 @@ export default function DesignerWorkspace() {
                     <button onClick={handleCreateNote} className="w-full py-2 bg-oms-blue text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:bg-oms-blue"><Plus size={16} /> New Note</button>
 
                     {(notes || []).length === 0 ? <p className="text-center text-gray-400 text-xs py-4">No notes created.</p> : (notes || []).map((note, i) => (
-                      <div key={note?.id || `note-${i}`} onClick={() => selectNoteForEdit(note)} className={`p-3 rounded-xl border cursor-pointer hover:shadow-md transition-all bg-white ${selectedNote?.id === note?.id ? 'border-indigo-500 ring-1 ring-oms-blue' : 'border-gray-100'}`}>
+                      <div key={note?.id || `note-${i}`} onClick={() => selectNoteForEdit(note)} className={`p-3 rounded-xl border cursor-pointer  transition-all bg-white ${selectedNote?.id === note?.id ? 'border-oms-blue ring-1 ring-oms-blue' : 'border-gray-100'}`}>
                         <div className="flex justify-between items-start mb-1"><h4 className="font-bold text-sm text-gray-800 line-clamp-1">{note?.title || 'Untitled'}</h4><span className="text-[10px] text-gray-400">{note?.note_date || ''}</span></div>
                         <p className="text-xs text-gray-500 line-clamp-2">{note?.content || ''}</p>
                       </div>
@@ -950,7 +950,7 @@ export default function DesignerWorkspace() {
                   <div
                     key={task.id}
                     onClick={() => setSelectedTaskId(task.id)}
-                    className={`p-4 rounded-xl border cursor-pointer transition-all hover:shadow-md group relative overflow-hidden
+                    className={`p-4 rounded-xl border cursor-pointer transition-all  group relative overflow-hidden
                 ${selectedTaskId === task.id ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.2)] ring-1 ring-oms-blue' : 'bg-white border-gray-100 hover:border-gray-300'}`}
                   >
                     {selectedTaskId === task.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[rgba(0,0,255,0.05)]0"></div>}
@@ -982,7 +982,7 @@ export default function DesignerWorkspace() {
                         {taskStatuses.find(s => s.id === task.status)?.name}
                       </span>
                       {task.priority !== 'normal' && (
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full border shadow-sm ${priorities.find(p => p.id === task.priority)?.color}`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${priorities.find(p => p.id === task.priority)?.color}`}>
                           {task.priority}
                         </span>
                       )}
@@ -1066,9 +1066,9 @@ export default function DesignerWorkspace() {
                   <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-gray-50/30">
 
                     {/* 1. Brief / Description */}
-                    <section className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                    <section className="bg-white p-6 rounded-2xl border border-gray-100">
                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <FileText size={16} className="text-indigo-500" /> Design Brief & Instructions
+                        <FileText size={16} className="text-oms-blue" /> Design Brief & Instructions
                       </h4>
                       <div className="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap font-sans">
                         {selectedTask.description}
@@ -1076,7 +1076,7 @@ export default function DesignerWorkspace() {
                     </section>
 
                     {/* 2. Assets & Assignment */}
-                    <section className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
+                    <section className="bg-white p-6 rounded-2xl border border-gray-100 space-y-6">
                       {/* Google Drive Link */}
                       <div>
                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -1114,14 +1114,14 @@ export default function DesignerWorkspace() {
                           <MessageSquare size={16} className="text-orange-500" /> Feedback & Corrections
                         </h4>
                       </div>
-                      <div className="bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden shadow-sm h-[320px]">
+                      <div className="bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden h-[320px]">
                         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/30">
                           {/* Simulated Threaded Comments */}
                           {/* In a real app, map through 'remarks' joined to task */}
                           <div className="space-y-4">
                             <div className="flex gap-3">
                               <div className="min-w-8 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600">M</div>
-                              <div className="bg-white p-3 rounded-2xl rounded-tl-none border shadow-sm max-w-[80%]">
+                              <div className="bg-white p-3 rounded-2xl rounded-tl-none border max-w-[80%]">
                                 <div className="flex justify-between items-center mb-1 gap-4">
                                   <span className="text-[10px] font-bold text-gray-900">Manager</span>
                                   <span className="text-[9px] font-bold bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded">Correction ❌</span>
@@ -1131,7 +1131,7 @@ export default function DesignerWorkspace() {
                             </div>
                             <div className="flex gap-3 flex-row-reverse">
                               <div className="min-w-8 w-8 h-8 rounded-full bg-[rgba(0,0,255,0.1)] flex items-center justify-center text-xs font-bold text-oms-blue">Me</div>
-                              <div className="bg-oms-blue p-3 rounded-2xl rounded-tr-none border border-[rgba(0,0,255,0.2)]-600 shadow-custom max-w-[80%] text-white">
+                              <div className="bg-oms-blue p-3 rounded-2xl rounded-tr-none border border-[rgba(0,0,255,0.2)]-600  max-w-[80%] text-white">
                                 <div className="flex justify-between items-center mb-1 gap-4">
                                   <span className="text-[10px] font-bold text-white/80">You</span>
                                 </div>
@@ -1148,7 +1148,7 @@ export default function DesignerWorkspace() {
                     </section>
 
                     {/* 4. Final Review & Checklist */}
-                    <section className="bg-gradient-to-br bg-white p-6 rounded-2xl border border-[rgba(0,0,255,0.1)] shadow-sm space-y-4">
+                    <section className="bg-gradient-to-br bg-white p-6 rounded-2xl border border-[rgba(0,0,255,0.1)] space-y-4">
                       <h4 className="text-xs font-bold text-oms-blue uppercase tracking-widest flex items-center gap-2">
                         <CheckCircle size={16} /> Pre-Print Checklist (Mandatory)
                       </h4>
@@ -1187,8 +1187,8 @@ export default function DesignerWorkspace() {
                                   updateStatus(selectedTask.realId, 'completed');
                                 }
                               }}
-                              className="w-full py-4 rounded-xl font-bold text-white shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition-all
-                             disabled:bg-gray-300 disabled:shadow-none disabled:cursor-not-allowed bg-oms-blue hover:bg-oms-blue hover:scale-[1.01]"
+                              className="w-full py-4 rounded-xl font-bold text-white -200 flex items-center justify-center gap-2 transition-all
+                             disabled:bg-gray-300 disabled: disabled:cursor-not-allowed bg-oms-blue hover:bg-oms-blue hover:scale-[1.01]"
                             >
                               {isComplete ? <><Printer size={20} /> Client Approved - Ready for Print</> : 'Complete Checklist to Finish'}
                             </button>
@@ -1201,7 +1201,7 @@ export default function DesignerWorkspace() {
                 </>
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-gray-400 bg-gray-50/30">
-                  <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 shadow-sm border border-gray-100">
+                  <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 border border-gray-100">
                     <Briefcase size={40} className="text-gray-300" />
                   </div>
                   <h3 className="text-section text-gray-700 mb-2">Ready to work?</h3>
@@ -1213,7 +1213,7 @@ export default function DesignerWorkspace() {
             {/* =================================================================================
           COLUMN 3: PRODUCTIVITY BAR
          ================================================================================= */}
-            <div className="w-full md:w-80 bg-white border-l h-full flex flex-col z-10 shadow-[-4px_0_24px_rgba(0,0,0,0.02)]">
+            <div className="w-full md:w-80 bg-white border-l h-full flex flex-col z-10 [-4px_0_24px_rgba(0,0,0,0.02)]">
 
               {/* Full Month Calendar Widget */}
               <div className="p-6 border-b bg-gradient-to-br from-white to-gray-50">
@@ -1224,13 +1224,13 @@ export default function DesignerWorkspace() {
                     </div>
                     <h2>{monthName}</h2>
                   </div>
-                  <div className="flex bg-white rounded-lg shadow-sm border border-gray-200">
+                  <div className="flex bg-white rounded-lg border border-gray-200">
                     <button onClick={prevMonth} className="p-1 hover:bg-gray-50 text-gray-500"><ChevronLeft size={16} /></button>
                     <button onClick={nextMonth} className="p-1 hover:bg-gray-50 text-gray-500"><ChevronRight size={16} /></button>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                <div className="bg-white rounded-2xl p-4 border border-gray-100">
                   <div className="grid grid-cols-7 mb-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">
                     <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
                   </div>
@@ -1280,9 +1280,9 @@ export default function DesignerWorkspace() {
                   <div className="relative border-l-2 border-gray-100 ml-3.5 space-y-8 pb-4">
                     {logs.map(log => (
                       <div key={log.id} className="relative pl-6 group">
-                        <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-white border-2 border-gray-300 ring-4 ring-white group-hover:border-indigo-500 transition-colors z-10"></div>
+                        <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-white border-2 border-gray-300 ring-4 ring-white group-hover:border-oms-blue transition-colors z-10"></div>
                         <span className="text-[10px] font-mono text-gray-400 block mb-1 font-medium">{log.time}</span>
-                        <p className="text-xs text-gray-700 font-medium leading-relaxed bg-gray-50 p-2 rounded-lg border border-transparent group-hover:border-gray-100 group-hover:shadow-sm transition-all">{log.text}</p>
+                        <p className="text-xs text-gray-700 font-medium leading-relaxed bg-gray-50 p-2 rounded-lg border border-transparent group-hover:border-gray-100 group- transition-all">{log.text}</p>
                       </div>
                     ))}
                   </div>
@@ -1295,10 +1295,10 @@ export default function DesignerWorkspace() {
                       type="text"
                       value={newLog}
                       onChange={(e) => setNewLog(e.target.value)}
-                      className="flex-1 text-xs border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-oms-blue bg-white shadow-sm"
+                      className="flex-1 text-xs border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-oms-blue bg-white"
                       placeholder="Finished logo design..."
                     />
-                    <button type="submit" disabled={!newLog.trim()} className="p-3 bg-gray-900 text-white rounded-xl hover:bg-black disabled:opacity-50 shadow-md transition-all hover:-translate-y-0.5">
+                    <button type="submit" disabled={!newLog.trim()} className="p-3 bg-oms-blue text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 transition-all hover:-translate-y-0.5">
                       <ArrowRight size={14} />
                     </button>
                   </form>
@@ -1313,13 +1313,13 @@ export default function DesignerWorkspace() {
       {
         isNewTaskModalOpen && (
           <div className="fixed inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60 flex items-center justify-center z-50 p-4 animate-in fade-in zoom-in duration-300 backdrop-blur-sm">
-            <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-gray-100">
+            <div className="bg-white rounded-3xl w-full max-w-4xl  overflow-hidden flex flex-col max-h-[90vh] border border-gray-100">
               {/* Premium Gradient Header */}
               <div className="relative p-6 bg-oms-blue overflow-hidden">
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30"></div>
                 <div className="relative flex justify-between items-start">
                   <div className="flex items-start gap-4">
-                    <div className="p-3 bg-white/20 backdrop-blur-lg rounded-2xl shadow-lg">
+                    <div className="p-3 bg-white/20 backdrop-blur-lg rounded-2xl">
                       <Briefcase size={28} className="text-white" />
                     </div>
                     <div>
@@ -1341,9 +1341,9 @@ export default function DesignerWorkspace() {
                 <form id="create-project-form" onSubmit={handleCreateTask} className="space-y-8">
 
                   {/* 1. Project Basics */}
-                  <div className="space-y-5 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                  <div className="space-y-5 bg-white rounded-2xl p-6 border border-gray-100">
                     <div className="flex items-center gap-3 pb-3 border-b-2 border-oms-blue">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-oms-blue text-white text-sm font-bold shadow-lg shadow-indigo-200">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-oms-blue text-white text-sm font-bold -200">
                         1
                       </div>
                       <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Project Basics</h4>
@@ -1357,7 +1357,7 @@ export default function DesignerWorkspace() {
                         <input
                           required
                           type="text"
-                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-oms-blue/20 focus:border-indigo-500 transition-all font-medium hover:border-gray-300"
+                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all font-medium hover:border-gray-300"
                           placeholder="e.g. Wedding Invitation - Sharma Family"
                           value={newTaskData.title}
                           onChange={e => setNewTaskData({ ...newTaskData, title: e.target.value })}
@@ -1370,7 +1370,7 @@ export default function DesignerWorkspace() {
                         </label>
                         <select
                           required
-                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-oms-blue/20 focus:border-indigo-500 transition-all bg-white hover:border-gray-300"
+                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all bg-white hover:border-gray-300"
                           value={newTaskData.clientId}
                           onChange={e => setNewTaskData({ ...newTaskData, clientId: e.target.value })}
                         >
@@ -1384,7 +1384,7 @@ export default function DesignerWorkspace() {
                           🎨 Assign Designer
                         </label>
                         <select
-                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-oms-blue/20 focus:border-indigo-500 transition-all bg-white hover:border-gray-300"
+                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all bg-white hover:border-gray-300"
                           value={newTaskData.designerId}
                           onChange={e => setNewTaskData({ ...newTaskData, designerId: e.target.value })}
                         >
@@ -1398,9 +1398,9 @@ export default function DesignerWorkspace() {
                   </div>
 
                   {/* 2. Parameters */}
-                  <div className="space-y-5 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                  <div className="space-y-5 bg-white rounded-2xl p-6 border border-gray-100">
                     <div className="flex items-center gap-3 pb-3 border-b-2 border-gradient-to-r from-orange-500 to-red-500">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 text-white text-sm font-bold shadow-lg shadow-orange-200">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 text-white text-sm font-bold -200">
                         2
                       </div>
                       <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Project Parameters</h4>
@@ -1452,9 +1452,9 @@ export default function DesignerWorkspace() {
                   </div>
 
                   {/* 3. Assets & Brief */}
-                  <div className="space-y-5 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                  <div className="space-y-5 bg-white rounded-2xl p-6 border border-gray-100">
                     <div className="flex items-center gap-3 pb-3 border-b-2 border-gradient-to-r from-blue-500 to-cyan-500">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white text-sm font-bold shadow-lg shadow-blue-200">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white text-sm font-bold -200">
                         3
                       </div>
                       <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Assets & Brief</h4>
@@ -1481,7 +1481,7 @@ export default function DesignerWorkspace() {
                               setNewTaskData({ ...newTaskData, file: e.target.files[0] });
                             }
                           }}
-                          className="text-xs text-gray-600 file:mr-3 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-500 file:text-white hover:file:bg-blue-600 file:shadow-lg file:shadow-blue-200 file:transition-all"
+                          className="text-xs text-gray-600 file:mr-3 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-500 file:text-white hover:file:bg-blue-600 file: file:-200 file:transition-all"
                         />
                       </div>
                     </div>
@@ -1516,7 +1516,7 @@ export default function DesignerWorkspace() {
                   form="create-project-form"
                   type="submit"
                   disabled={creatingTask}
-                  className="px-8 py-3 bg-oms-blue text-white rounded-xl font-bold hover:shadow-2xl hover:shadow-blue-300 disabled:opacity-50 transition-all transform hover:scale-105 text-sm flex items-center gap-2"
+                  className="px-8 py-3 bg-oms-blue text-white rounded-xl font-bold 2xl -300 disabled:opacity-50 transition-all transform hover:scale-105 text-sm flex items-center gap-2"
                 >
                   {creatingTask ? <><Loader2 size={18} className="animate-spin" /> Creating...</> : <><CheckCircle size={18} /> Create Project</>}
                 </button>

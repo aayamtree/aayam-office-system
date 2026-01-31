@@ -65,7 +65,7 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-white rounded-2xl w-full max-w-lg  overflow-hidden flex flex-col max-h-[90vh]">
                 {/* Header */}
                 <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                     <div>
@@ -118,8 +118,8 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
                                         className={`
                       flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer group select-none
                       ${progress[item]
-                                                ? 'bg-green-50 border-green-200 shadow-sm'
-                                                : 'bg-white border-gray-200 hover:border-indigo-200 hover:bg-gray-50'
+                                                ? 'bg-green-50 border-green-200'
+                                                : 'bg-white border-gray-200 hover:border-oms-blue/20 hover:bg-gray-50'
                                             }
                     `}
                                     >
@@ -127,7 +127,7 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
                       w-6 h-6 rounded-md flex items-center justify-center border transition-colors shrink-0
                       ${progress[item]
                                                 ? 'bg-green-500 border-green-500 text-white'
-                                                : 'bg-white border-gray-300 text-transparent group-hover:border-indigo-400'
+                                                : 'bg-white border-gray-300 text-transparent group-hover:border-oms-blue-400'
                                             }
                     `}>
                                             <CheckSquare size={16} />
@@ -153,7 +153,7 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
                     <button
                         onClick={handleSave}
                         disabled={saving || loadingChecklists || !matchedChecklist}
-                        className="px-5 py-2.5 bg-[rgba(0,0,255,0.1)] text-white rounded-xl font-semibold hover:bg-[rgba(0,0,255,0.1)] transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50 flex items-center gap-2"
+                        className="px-5 py-2.5 bg-[rgba(0,0,255,0.1)] text-white rounded-xl font-semibold hover:bg-[rgba(0,0,255,0.1)] transition-colors -200 disabled:opacity-50 flex items-center gap-2"
                     >
                         {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
                         {saving ? 'Saving...' : 'Save Progress'}

@@ -118,7 +118,7 @@ export default function ManualJournalPage() {
             </div>
 
             {/* Form */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                 {/* Top Info */}
                 <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 border-b bg-gray-50">
                     <div>
@@ -170,7 +170,7 @@ export default function ManualJournalPage() {
                                     <td className="py-2 pr-2">
                                         <input
                                             list="accounts"
-                                            className="w-full p-2 border rounded hover:border-indigo-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-colors"
+                                            className="w-full p-2 border rounded hover:border-oms-blue-400 focus:border-oms-blue focus:ring-1 focus:ring-oms-blue outline-none transition-colors"
                                             placeholder="Select Account"
                                             value={line.account}
                                             onChange={e => updateLine(line.id, 'account', e.target.value)}
@@ -234,7 +234,7 @@ export default function ManualJournalPage() {
                         <p className="text-gray-500 text-xs uppercase font-bold">Total Credit</p>
                         <p className="text-xl font-mono text-gray-900">{totalCredit.toFixed(2)}</p>
                     </div>
-                    <div className={`text-right px-4 py-2 rounded-lg border ${isBalanced ? 'bg-green-50 border-green-100 text-green-700' : 'bg-red-50 border-red-100 text-red-700'}`}>
+                    <div className={`text-right px-4 py-2 rounded-lg border ${isBalanced ? 'bg-white border-green-100 text-gray-900' : 'bg-red-50 border-red-100 text-red-700'}`}>
                         <p className="text-xs uppercase font-bold">Difference</p>
                         <p className="text-xl font-mono">{Math.abs(totalDebit - totalCredit).toFixed(2)}</p>
                     </div>
@@ -242,7 +242,7 @@ export default function ManualJournalPage() {
                     <button
                         onClick={handleSave}
                         disabled={!isBalanced || loading}
-                        className={`ml-4 px-6 py-3 rounded-xl font-bold text-white flex items-center gap-2 ${isBalanced ? 'bg-[rgba(0,0,255,0.1)] hover:bg-[rgba(0,0,255,0.1)] shadow-lg shadow-indigo-200' : 'bg-gray-300 cursor-not-allowed'
+                        className={`ml-4 px-6 py-3 rounded-xl font-bold text-white flex items-center gap-2 ${isBalanced ? 'bg-[rgba(0,0,255,0.1)] hover:bg-[rgba(0,0,255,0.1)] -200' : 'bg-gray-300 cursor-not-allowed'
                             }`}
                     >
                         {loading ? 'Saving...' : <><Save size={18} /> Save Journal</>}
@@ -290,7 +290,7 @@ export default function ManualJournalPage() {
             )}
 
             {success && (
-                <div className="bg-green-50 border border-green-200 text-green-700 p-4 rounded-xl">
+                <div className="bg-white border border-green-200 text-gray-900 p-4 rounded-xl">
                     <h3 className="font-bold">Success!</h3>
                     <p>Journal Entry saved successfully.</p>
                 </div>

@@ -211,7 +211,7 @@ export default function OrdersPage() {
       'printing': 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
       'finishing': 'bg-pink-100 text-pink-700',
       'quality_check': 'bg-orange-100 text-orange-700',
-      'ready': 'bg-green-100 text-green-700',
+      'ready': 'bg-gray-100 text-gray-900',
       'dispatched': 'bg-cyan-100 text-cyan-700',
       'delivered': 'bg-gray-100 text-gray-700',
       'cancelled': 'bg-red-100 text-red-700',
@@ -236,7 +236,7 @@ export default function OrdersPage() {
     <div className="space-y-6 lg:space-y-8 pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin/sales" className="p-2 hover:bg-white rounded-xl shadow-sm border border-gray-100 lg:hidden bg-gray-50 transition-colors">
+          <Link href="/admin/sales" className="p-2 hover:bg-white rounded-xl border border-gray-100 lg:hidden bg-gray-50 transition-colors">
             <ArrowLeft size={20} className="text-gray-600" />
           </Link>
           <div>
@@ -248,7 +248,7 @@ export default function OrdersPage() {
           {profile?.role !== 'marketing' && (
             <button
               onClick={handleAddNew}
-              className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white px-5 py-3 rounded-xl shadow-lg shadow-gray-900/20 transition-all hover:scale-105 active:scale-95 font-medium"
+              className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-blue-600 text-white px-5 py-3 rounded-xl -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
             >
               <Plus size={20} />
               <span>New Order</span>
@@ -257,7 +257,7 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-gray-100">
+      <div className="flex flex-col sm:flex-row gap-3 bg-white p-3 sm:p-4 rounded-2xl border border-gray-100">
         <div className="relative flex-1">
           <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -294,7 +294,7 @@ export default function OrdersPage() {
             {/* Mobile View: Cards */}
             <div className="lg:hidden space-y-4">
               {filteredJobs.map((job) => (
-                <div key={job.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 relative">
+                <div key={job.id} className="bg-white p-4 rounded-2xl border border-gray-100 relative">
                   {/* Row 1: ID & Status */}
                   <div className="flex justify-between items-start mb-3">
                     <span className="font-bold font-mono text-xs text-gray-700 bg-gray-100 px-2 py-1 rounded-md">
@@ -352,7 +352,7 @@ export default function OrdersPage() {
             </div>
 
             {/* Desktop View: Table */}
-            <div className="hidden lg:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="hidden lg:block bg-white rounded-2xl border border-gray-100 overflow-hidden">
               <table className="w-full">
                 <thead className="bg-gray-50/50 border-b border-gray-100">
                   <tr>
@@ -370,7 +370,7 @@ export default function OrdersPage() {
                       <td className="px-6 py-4 align-top">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-bold text-gray-900 font-mono text-sm bg-gray-100 px-2 py-1 rounded-md">{job.job_number}</span>
-                          {job.priority === 'urgent' && <span className="text-[10px] font-bold uppercase text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Urgent</span>}
+                          {job.priority === 'urgent' && <span className="text-[10px] font-bold uppercase text-oms-orange bg-white px-2 py-0.5 rounded-full">Urgent</span>}
                         </div>
                         <div className="font-semibold text-gray-800">{job.project_name}</div>
                         <div className="text-xs text-gray-500 mt-1">{job.quantity} items</div>
@@ -384,7 +384,7 @@ export default function OrdersPage() {
                       <td className="px-6 py-4 align-top">
                         <div className="font-bold text-gray-900">{formatCurrency(job.total_amount)}</div>
                         {job.payment_status !== 'paid' && (
-                          <span className="text-label text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full mt-1 inline-block">
+                          <span className="text-label text-oms-orange bg-white px-2 py-0.5 rounded-full mt-1 inline-block">
                             Due: {formatCurrency(job.total_amount - job.amount_received)}
                           </span>
                         )}
@@ -448,7 +448,7 @@ export default function OrdersPage() {
                     placeholder="e.g. Wedding Invitation Cards, Corporate Brochure"
                     value={formData.projectName}
                     onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue shadow-sm"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
                   />
                 </div>
 
@@ -458,7 +458,7 @@ export default function OrdersPage() {
                     required
                     value={formData.clientId}
                     onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue bg-white shadow-sm"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue bg-white"
                   >
                     <option value="">Select Client</option>
                     {clients.map(c => (
@@ -473,7 +473,7 @@ export default function OrdersPage() {
                     type="date"
                     value={formData.clientDeadline}
                     onChange={(e) => setFormData({ ...formData, clientDeadline: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue shadow-sm"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
                   />
                 </div>
 
@@ -484,7 +484,7 @@ export default function OrdersPage() {
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Paper type, size, finishing details, etc."
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue shadow-sm resize-none"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue resize-none"
                   />
                 </div>
 
@@ -539,7 +539,7 @@ export default function OrdersPage() {
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-oms-blue bg-white shadow-sm"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-oms-blue bg-white"
                   >
                     <option value="normal">Normal</option>
                     <option value="urgent">Urgent</option>
@@ -552,7 +552,7 @@ export default function OrdersPage() {
                   <select
                     value={formData.currentStage}
                     onChange={(e) => setFormData({ ...formData, currentStage: e.target.value as any })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-oms-blue bg-white shadow-sm"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-oms-blue bg-white"
                   >
                     <option value="new">New</option>
                     <option value="designing">Designing</option>
@@ -576,7 +576,7 @@ export default function OrdersPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 px-6 py-3.5 bg-oms-blue text-white font-semibold rounded-xl hover:bg-oms-blue transition-colors shadow-lg shadow-blue-200 disabled:opacity-50"
+                  className="flex-1 px-6 py-3.5 bg-oms-blue text-white font-semibold rounded-xl hover:bg-oms-blue transition-colors -200 disabled:opacity-50"
                 >
                   {submitting ? 'Saving...' : (isEditing ? 'Update Order' : 'Create Order')}
                 </button>
@@ -658,7 +658,7 @@ export default function OrdersPage() {
                 <button onClick={() => { setShowViewModal(false); handleEdit(selectedJob); }} className="flex-1 py-3 border border-[rgba(0,0,255,0.2)] text-oms-blue font-semibold rounded-xl hover:bg-[rgba(0,0,255,0.05)] transition-colors">
                   Edit Order
                 </button>
-                <button onClick={() => setShowViewModal(false)} className="flex-1 py-3 bg-gray-900 text-white font-semibold rounded-xl hover:bg-black transition-colors">
+                <button onClick={() => setShowViewModal(false)} className="flex-1 py-3 bg-oms-blue text-white font-semibold rounded-xl hover:bg-blue-600 transition-colors">
                   Close
                 </button>
               </div>

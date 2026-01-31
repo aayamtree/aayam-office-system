@@ -206,11 +206,11 @@ export default function CashBookPage() {
 
                 <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-3 md:p-4 border border-green-200">
                     <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
-                        <TrendingDown className="text-green-600 flex-shrink-0" size={16} />
+                        <TrendingDown className="text-gray-900 flex-shrink-0" size={16} />
                         <p className="text-xs md:text-sm font-medium text-green-900 truncate">Total Cash In</p>
                     </div>
                     <p className="text-lg md:text-page-title text-green-900 truncate">₹{totalCashIn.toLocaleString()}</p>
-                    <p className="text-xs text-green-700 mt-1 truncate">{transactions.filter(t => t.transaction_type === 'in').length} txns</p>
+                    <p className="text-xs text-gray-900 mt-1 truncate">{transactions.filter(t => t.transaction_type === 'in').length} txns</p>
                 </div>
 
                 <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-3 md:p-4 border border-red-200">
@@ -300,7 +300,7 @@ export default function CashBookPage() {
             </div>
 
             {/* Cash Book Table - Horizontal scroll on mobile */}
-            <div className="bg-white rounded-xl border shadow-sm print:shadow-none overflow-hidden">
+            <div className="bg-white rounded-xl border print: overflow-hidden">
                 <div className="p-4 md:p-6 border-b print:text-center">
                     <h2 className="text-lg md:text-page-title">Cash Book</h2>
                     {(startDate || endDate) && (
@@ -353,7 +353,7 @@ export default function CashBookPage() {
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="p-3 text-sm text-right text-green-600 font-medium">
+                                        <td className="p-3 text-sm text-right text-gray-900 font-medium">
                                             {txn.transaction_type === 'in' ? `₹${txn.amount?.toLocaleString()}` : '-'}
                                         </td>
                                         <td className="p-3 text-sm text-right text-red-600 font-medium">
@@ -370,7 +370,7 @@ export default function CashBookPage() {
                             <tfoot className="bg-gray-50 border-t-2">
                                 <tr>
                                     <td colSpan={5} className="p-3 text-sm font-bold">TOTALS</td>
-                                    <td className="p-3 text-sm text-right font-bold text-green-600">
+                                    <td className="p-3 text-sm text-right font-bold text-gray-900">
                                         ₹{totalCashIn.toLocaleString()}
                                     </td>
                                     <td className="p-3 text-sm text-right font-bold text-red-600">

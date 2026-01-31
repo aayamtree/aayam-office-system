@@ -6,8 +6,8 @@ import { Users, Building2, UserPlus, TrendingUp } from 'lucide-react';
 export default function CRMPage() {
   const stats = [
     { label: 'Total Clients', value: '156', change: '+12 this month', icon: Users, color: 'bg-blue-500' },
-    { label: 'New This Month', value: '15', change: '↑ 25%', icon: UserPlus, color: 'bg-green-500' },
-    { label: 'Active Orders', value: '23', change: 'From 45 clients', icon: TrendingUp, color: 'bg-amber-500' },
+    { label: 'New This Month', value: '15', change: '↑ 25%', icon: UserPlus, color: 'bg-white0' },
+    { label: 'Active Orders', value: '23', change: 'From 45 clients', icon: TrendingUp, color: 'bg-white0' },
   ];
 
   return (
@@ -20,7 +20,7 @@ export default function CRMPage() {
         </div>
         <Link
           href="/admin/crm/clients?new=true"
-          className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white px-5 py-3 rounded-xl shadow-lg shadow-gray-900/20 transition-all hover:scale-105 active:scale-95 font-medium"
+          className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-blue-600 text-white px-5 py-3 rounded-xl -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
         >
           <UserPlus size={20} />
           <span>Add Client</span>
@@ -30,15 +30,15 @@ export default function CRMPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 transition-shadow hover:shadow-md group">
+          <div key={stat.label} className="bg-white rounded-2xl p-5 border border-gray-100 transition-shadow  group">
             <div className="flex items-center gap-3 mb-3">
-              <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform`}>
+              <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
                 <stat.icon size={22} className="text-white" />
               </div>
             </div>
             <p className="text-page-title text-gray-900">{stat.value}</p>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-1">{stat.label}</p>
-            <p className="text-label text-green-600 mt-2 bg-green-50 w-fit px-2 py-1 rounded-full">{stat.change}</p>
+            <p className="text-label text-gray-900 mt-2 bg-white w-fit px-2 py-1 rounded-full">{stat.change}</p>
           </div>
         ))}
       </div>
@@ -46,7 +46,7 @@ export default function CRMPage() {
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Clients Card */}
-        <Link href="/admin/crm/clients" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+        <Link href="/admin/crm/clients" className="bg-white rounded-2xl p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <Users size={28} className="text-blue-600" />
@@ -60,14 +60,14 @@ export default function CRMPage() {
             Manage your client database, view contact details, and track order history.
           </p>
           <div className="flex items-center gap-3 text-label">
-            <span className="text-green-700 bg-green-50 px-2.5 py-1 rounded-full">142 Active</span>
+            <span className="text-gray-900 bg-white px-2.5 py-1 rounded-full">142 Active</span>
             <span className="text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">14 Inactive</span>
           </div>
         </Link>
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div className="bg-white rounded-2xl p-6 border border-gray-100">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
           <h2 className="text-section text-gray-900">Recent Activity</h2>
@@ -91,7 +91,7 @@ export default function CRMPage() {
                 <p className="text-sm font-bold text-gray-900">{item.action}</p>
                 <p className="text-label text-gray-500 mt-0.5">{item.name}</p>
               </div>
-              <span className="text-label text-gray-400 bg-white px-2 py-1 rounded-md border border-gray-100 shadow-sm">{item.time}</span>
+              <span className="text-label text-gray-400 bg-white px-2 py-1 rounded-md border border-gray-100">{item.time}</span>
             </div>
           ))}
         </div>

@@ -88,7 +88,7 @@ export default function VendorsPage() {
   };
 
   const getCategoryColor = (cat: string) => {
-    const colors: Record<string, string> = { 'Paper': 'bg-blue-100 text-blue-700', 'Ink & Toner': 'bg-[rgba(0,0,255,0.1)] text-oms-blue', 'Binding': 'bg-amber-100 text-amber-700', 'Lamination': 'bg-green-100 text-green-700', 'Machinery': 'bg-red-100 text-red-700', 'Packaging': 'bg-[rgba(0,0,255,0.1)] text-oms-blue' };
+    const colors: Record<string, string> = { 'Paper': 'bg-blue-100 text-blue-700', 'Ink & Toner': 'bg-[rgba(0,0,255,0.1)] text-oms-blue', 'Binding': 'bg-amber-100 text-amber-700', 'Lamination': 'bg-gray-100 text-gray-900', 'Machinery': 'bg-red-100 text-red-700', 'Packaging': 'bg-[rgba(0,0,255,0.1)] text-oms-blue' };
     return colors[cat] || 'bg-gray-100 text-gray-700';
   };
 
@@ -106,7 +106,7 @@ export default function VendorsPage() {
             <Package size={18} />
             <span className="hidden sm:inline">Purchases & Bills</span>
           </Link>
-          <button onClick={handleAddNew} className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800">
+          <button onClick={handleAddNew} className="flex items-center justify-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-xl hover:bg-blue-600">
             <Plus size={18} />
             <span>Add Vendor</span>
           </button>
@@ -124,7 +124,7 @@ export default function VendorsPage() {
           {/* Mobile View: Cards */}
           <div className="lg:hidden space-y-4">
             {filteredVendors.map((vendor) => (
-              <div key={vendor.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 relative">
+              <div key={vendor.id} className="bg-white rounded-2xl p-4 border border-gray-100 relative">
                 {/* Row 1: Name & Category */}
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-3">
@@ -157,8 +157,8 @@ export default function VendorsPage() {
 
                 {/* Row 3: Footer */}
                 <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
-                  <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${vendor.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                    <div className={`w-1.5 h-1.5 rounded-full ${vendor.is_active ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                  <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${vendor.is_active ? 'bg-white text-gray-900' : 'bg-gray-100 text-gray-500'}`}>
+                    <div className={`w-1.5 h-1.5 rounded-full ${vendor.is_active ? 'bg-white0' : 'bg-gray-400'}`}></div>
                     {vendor.is_active ? 'Active' : 'Inactive'}
                   </span>
 
@@ -184,7 +184,7 @@ export default function VendorsPage() {
                 <Package size={48} className="mx-auto text-gray-300 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-1">No vendors found</h3>
                 <p className="text-sm text-gray-500 mb-4">Try adjusting your filters</p>
-                <button onClick={handleAddNew} className="inline-flex items-center gap-2 bg-[rgba(0,0,255,0.1)] text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm">
+                <button onClick={handleAddNew} className="inline-flex items-center gap-2 bg-[rgba(0,0,255,0.1)] text-white px-4 py-2 rounded-xl text-sm font-bold">
                   <Plus size={16} /> Add Vendor
                 </button>
               </div>
@@ -192,7 +192,7 @@ export default function VendorsPage() {
           </div>
 
           {/* Desktop View: Table */}
-          <div className="hidden lg:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="hidden lg:block bg-white rounded-2xl border border-gray-100 overflow-hidden">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
@@ -227,7 +227,7 @@ export default function VendorsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 text-xs font-bold rounded-full uppercase tracking-wide ${vendor.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                      <span className={`px-2.5 py-1 text-xs font-bold rounded-full uppercase tracking-wide ${vendor.is_active ? 'bg-gray-100 text-gray-900' : 'bg-gray-100 text-gray-600'}`}>
                         {vendor.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
@@ -272,7 +272,7 @@ export default function VendorsPage() {
               <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-1">Category</label><select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full px-3 py-2 border rounded-xl">{categories.map(c => <option key={c} value={c}>{c}</option>)}</select></div><div><label className="block text-sm font-medium mb-1">GSTIN</label><input type="text" value={formData.gstin} onChange={(e) => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })} className="w-full px-3 py-2 border rounded-xl" maxLength={15} /></div></div>
               <div><label className="block text-sm font-medium mb-1">Address</label><textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full px-3 py-2 border rounded-xl" rows={2} /></div>
               <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-1">City</label><input type="text" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="w-full px-3 py-2 border rounded-xl" /></div><div><label className="block text-sm font-medium mb-1">Status</label><select value={formData.is_active ? 'active' : 'inactive'} onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'active' })} className="w-full px-3 py-2 border rounded-xl"><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div>
-              <div className="flex gap-3 pt-4"><button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 border rounded-xl">Cancel</button><button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl flex items-center justify-center gap-2">{saving && <Loader2 size={18} className="animate-spin" />}{isEditing ? 'Update' : 'Add'}</button></div>
+              <div className="flex gap-3 pt-4"><button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 border rounded-xl">Cancel</button><button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-xl flex items-center justify-center gap-2">{saving && <Loader2 size={18} className="animate-spin" />}{isEditing ? 'Update' : 'Add'}</button></div>
             </form>
           </div>
         </div>
@@ -290,7 +290,7 @@ export default function VendorsPage() {
                   <Package size={18} /> Record Bill
                 </Link>
                 <button onClick={() => { setShowViewModal(false); handleEdit(selectedVendor); }} className="flex-1 px-4 py-2.5 border rounded-xl font-medium">Edit</button>
-                <button onClick={() => setShowViewModal(false)} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium">Close</button>
+                <button onClick={() => setShowViewModal(false)} className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-xl font-medium">Close</button>
               </div>
             </div>
           </div>

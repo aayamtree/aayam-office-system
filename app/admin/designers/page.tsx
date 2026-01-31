@@ -261,7 +261,7 @@ export default function DesignersPage() {
 
   const getEmploymentBadge = (type: string) => {
     const badges: Record<string, string> = {
-      'full-time': 'bg-green-100 text-green-700',
+      'full-time': 'bg-gray-100 text-gray-900',
       'part-time': 'bg-blue-100 text-blue-700',
       'freelance': 'bg-[rgba(0,0,255,0.1)] text-oms-blue'
     };
@@ -286,7 +286,7 @@ export default function DesignersPage() {
           <p className="text-sm text-gray-500">{activeDesigners} active of {totalDesigners} total</p>
         </div>
         <button onClick={() => { resetForm(); setShowModal(true); }}
-          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800">
+          className="flex items-center justify-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-xl hover:bg-blue-600">
           <Plus size={18} /><span>Add Designer</span>
         </button>
       </div>
@@ -301,8 +301,8 @@ export default function DesignersPage() {
         </div>
         <div className="bg-white rounded-xl p-4 border">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg"><CheckCircle size={20} className="text-green-600" /></div>
-            <div><p className="text-xs text-gray-500">Active</p><p className="text-page-title text-green-600">{activeDesigners}</p></div>
+            <div className="p-2 bg-gray-100 rounded-lg"><CheckCircle size={20} className="text-gray-900" /></div>
+            <div><p className="text-xs text-gray-500">Active</p><p className="text-page-title text-gray-900">{activeDesigners}</p></div>
           </div>
         </div>
         <div className="bg-white rounded-xl p-4 border">
@@ -355,7 +355,7 @@ export default function DesignersPage() {
       {/* Designer Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredDesigners.map(designer => (
-          <div key={designer.id} className="bg-white rounded-xl border p-4 hover:shadow-md transition-shadow">
+          <div key={designer.id} className="bg-white rounded-xl border p-4  transition-shadow">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center">
@@ -368,7 +368,7 @@ export default function DesignersPage() {
                   </span>
                 </div>
               </div>
-              <span className={`w-2 h-2 rounded-full ${designer.is_active ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+              <span className={`w-2 h-2 rounded-full ${designer.is_active ? 'bg-white0' : 'bg-gray-300'}`}></span>
             </div>
 
             <div className="space-y-2 text-sm text-gray-600 mb-3">
@@ -508,7 +508,7 @@ export default function DesignersPage() {
                     {uploadingDoc && <div className="absolute right-3 top-1/2 -translate-y-1/2"><Loader2 size={16} className="animate-spin text-oms-blue" /></div>}
                   </div>
                   {formData.document_url && (
-                    <a href={formData.document_url} target="_blank" rel="noopener noreferrer" className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100" title="View Document">
+                    <a href={formData.document_url} target="_blank" rel="noopener noreferrer" className="p-2 bg-white text-gray-900 rounded-lg hover:bg-gray-100" title="View Document">
                       <Eye size={20} />
                     </a>
                   )}
@@ -533,7 +533,7 @@ export default function DesignersPage() {
               <div className="flex gap-3 pt-4">
                 <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-xl font-medium">Cancel</button>
                 <button type="submit" disabled={saving}
-                  className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium flex items-center justify-center gap-2">
+                  className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-xl font-medium flex items-center justify-center gap-2">
                   {saving && <Loader2 size={18} className="animate-spin" />}
                   {editingDesigner ? 'Update' : 'Add'}
                 </button>
@@ -583,9 +583,9 @@ export default function DesignersPage() {
                     <p className="text-xs text-gray-500 mb-1">Hourly Rate</p>
                     <p className="text-page-title text-oms-blue">{formatCurrency(selectedDesigner.hourly_rate)}</p>
                   </div>
-                  <div className="bg-green-50 rounded-xl p-4">
+                  <div className="bg-white rounded-xl p-4">
                     <p className="text-xs text-gray-500 mb-1">Monthly Salary</p>
-                    <p className="text-page-title text-green-600">{formatCurrency(selectedDesigner.monthly_salary)}</p>
+                    <p className="text-page-title text-gray-900">{formatCurrency(selectedDesigner.monthly_salary)}</p>
                   </div>
                 </div>
 
@@ -618,7 +618,7 @@ export default function DesignersPage() {
                   <button onClick={() => { setShowDetailModal(false); handleEdit(selectedDesigner); }}
                     className="flex-1 px-4 py-2.5 border rounded-xl font-medium">Edit</button>
                   <button onClick={() => setShowDetailModal(false)}
-                    className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium">Close</button>
+                    className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-xl font-medium">Close</button>
                 </div>
               </div>
             </div>

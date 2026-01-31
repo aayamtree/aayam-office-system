@@ -103,7 +103,7 @@ export default function MyNotes() {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-oms-blue"></div>
             </div>
         );
     }
@@ -172,7 +172,7 @@ export default function MyNotes() {
                                             setTitle(note.title || '');
                                             setContent(note.content || '');
                                         }}
-                                        className={`p-4 rounded-lg border cursor-pointer hover:shadow-md transition-shadow ${selectedNote?.id === note.id ? 'bg-[rgba(0,0,255,0.05)] border-purple-300' : 'bg-white'
+                                        className={`p-4 rounded-lg border cursor-pointer  transition-shadow ${selectedNote?.id === note.id ? 'bg-[rgba(0,0,255,0.05)] border-purple-300' : 'bg-white'
                                             }`}
                                     >
                                         <h3 className="font-semibold text-gray-900 mb-1 text-sm">{note.title || 'Untitled'}</h3>
@@ -225,7 +225,7 @@ export default function MyNotes() {
                                         value={title}
                                         onChange={(e) => setTitle(e.target.value)}
                                         placeholder="Note title..."
-                                        className="text-lg md:text-section text-gray-900 border-b-2 border-transparent hover:border-gray-200 focus:border-purple-500 outline-none flex-1 mr-2 md:mr-4"
+                                        className="text-lg md:text-section text-gray-900 border-b-2 border-transparent hover:border-gray-200 focus:border-oms-blue outline-none flex-1 mr-2 md:mr-4"
                                     />
                                     <button
                                         onClick={saveNote}

@@ -28,9 +28,9 @@ export default function SalesPage() {
 
   const stats = [
     { label: 'Total Jobs', value: dashboardStats.activeJobs.toString(), change: 'Active Now', icon: ShoppingCart, color: 'bg-blue-500' },
-    { label: 'Active Leads', value: activeLeadsCount.toString(), change: `${leads.length} total`, icon: Users, color: 'bg-amber-500' },
+    { label: 'Active Leads', value: activeLeadsCount.toString(), change: `${leads.length} total`, icon: Users, color: 'bg-white0' },
     { label: 'Pending Quotes', value: pendingQuotesCount.toString(), change: `${quotations.length} total`, icon: FileText, color: 'bg-[rgba(0,0,255,0.05)]0' },
-    { label: 'Total Revenue', value: formatCurrency(dashboardStats.totalRevenue), change: 'Lifetime', icon: IndianRupee, color: 'bg-green-500' },
+    { label: 'Total Revenue', value: formatCurrency(dashboardStats.totalRevenue), change: 'Lifetime', icon: IndianRupee, color: 'bg-white0' },
   ];
 
   const getStatusColor = (status: string) => {
@@ -41,8 +41,8 @@ export default function SalesPage() {
       'printing': 'bg-amber-100 text-amber-700',
       'finishing': 'bg-orange-100 text-orange-700',
       'qc': 'bg-pink-100 text-pink-700',
-      'ready': 'bg-green-100 text-green-700',
-      'completed': 'bg-green-100 text-green-700',
+      'ready': 'bg-gray-100 text-gray-900',
+      'completed': 'bg-gray-100 text-gray-900',
       'delivered': 'bg-gray-100 text-gray-700'
     }
     return colors[status] || 'bg-gray-100 text-gray-700';
@@ -53,10 +53,10 @@ export default function SalesPage() {
   const totalInPipeline = Object.values(pipelineStats).reduce((a, b) => a + b, 0) || 1; // avoid divide by zero
 
   const pipeline = [
-    { stage: 'Design', count: (pipelineStats.designing || 0) + (pipelineStats.approval || 0), color: 'bg-amber-500' },
+    { stage: 'Design', count: (pipelineStats.designing || 0) + (pipelineStats.approval || 0), color: 'bg-white0' },
     { stage: 'Production', count: (pipelineStats.printing || 0) + (pipelineStats.finishing || 0), color: 'bg-blue-500' },
     { stage: 'QC', count: pipelineStats.quality_check || 0, color: 'bg-[rgba(0,0,255,0.05)]0' },
-    { stage: 'Ready', count: (pipelineStats.ready || 0) + (pipelineStats.packed || 0), color: 'bg-green-500' },
+    { stage: 'Ready', count: (pipelineStats.ready || 0) + (pipelineStats.packed || 0), color: 'bg-white0' },
     { stage: 'Dispatched', count: (pipelineStats.dispatched || 0) + (pipelineStats.in_transit || 0), color: 'bg-gray-500' },
   ].map(p => ({
     ...p,
@@ -76,7 +76,7 @@ export default function SalesPage() {
         </div>
         <Link
           href="/admin/sales/orders?new=true"
-          className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white px-5 py-3 rounded-xl shadow-lg shadow-gray-900/20 transition-all hover:scale-105 active:scale-95 font-medium"
+          className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-blue-600 text-white px-5 py-3 rounded-xl -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
         >
           <ShoppingCart size={20} />
           <span>New Order</span>
@@ -86,9 +86,9 @@ export default function SalesPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 transition-shadow hover:shadow-md group">
+          <div key={stat.label} className="bg-white rounded-2xl p-5 border border-gray-100 transition-shadow  group">
             <div className="flex items-center gap-3 mb-3">
-              <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform`}>
+              <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
                 <stat.icon size={22} className="text-white" />
               </div>
             </div>
@@ -103,10 +103,10 @@ export default function SalesPage() {
 
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link href="/admin/sales/leads" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+        <Link href="/admin/sales/leads" className="bg-white rounded-2xl p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Users size={28} className="text-amber-600" />
+              <Users size={28} className="text-oms-orange" />
             </div>
             <div>
               <h2 className="text-section text-gray-900">Leads</h2>
@@ -118,7 +118,7 @@ export default function SalesPage() {
           </div>
         </Link>
 
-        <Link href="/admin/sales/quotations" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+        <Link href="/admin/sales/quotations" className="bg-white rounded-2xl p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-14 h-14 bg-[rgba(0,0,255,0.1)] rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <FileText size={28} className="text-oms-blue" />
@@ -133,7 +133,7 @@ export default function SalesPage() {
           </div>
         </Link>
 
-        <Link href="/admin/sales/orders" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+        <Link href="/admin/sales/orders" className="bg-white rounded-2xl p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <ShoppingCart size={28} className="text-blue-600" />
@@ -152,7 +152,7 @@ export default function SalesPage() {
       {/* Order Pipeline & Recent Orders */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Order Pipeline */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-1 h-6 bg-[rgba(0,0,255,0.05)]0 rounded-full"></div>
             <h2 className="text-section text-gray-900">Order Pipeline</h2>
@@ -173,7 +173,7 @@ export default function SalesPage() {
         </div>
 
         {/* Recent Orders */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
@@ -208,15 +208,15 @@ export default function SalesPage() {
       </div>
 
       {/* Pending Actions */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div className="bg-white rounded-2xl p-6 border border-gray-100">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-1 h-6 bg-amber-500 rounded-full"></div>
+          <div className="w-1 h-6 bg-white0 rounded-full"></div>
           <h2 className="text-section text-gray-900">Pending Actions</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link href="/admin/sales/leads" className="flex items-center gap-4 p-4 bg-amber-50/80 rounded-2xl border border-amber-100 transition-colors hover:bg-amber-100 cursor-pointer">
-            <div className="bg-white p-3 rounded-xl shadow-sm">
-              <Clock size={24} className="text-amber-600" />
+          <Link href="/admin/sales/leads" className="flex items-center gap-4 p-4 bg-white/80 rounded-2xl border border-gray-100 transition-colors hover:bg-amber-100 cursor-pointer">
+            <div className="bg-white p-3 rounded-xl">
+              <Clock size={24} className="text-oms-orange" />
             </div>
             <div>
               <p className="font-bold text-gray-900">Follow-ups</p>
@@ -224,7 +224,7 @@ export default function SalesPage() {
             </div>
           </Link>
           <Link href="/admin/sales/quotations" className="flex items-center gap-4 p-4 bg-[rgba(0,0,255,0.05)]/80 rounded-2xl border border-[rgba(0,0,255,0.1)] transition-colors hover:bg-[rgba(0,0,255,0.1)] cursor-pointer">
-            <div className="bg-white p-3 rounded-xl shadow-sm">
+            <div className="bg-white p-3 rounded-xl">
               <AlertCircle size={24} className="text-oms-blue" />
             </div>
             <div>
@@ -232,13 +232,13 @@ export default function SalesPage() {
               <p className="text-sm font-medium text-oms-blue mt-0.5">{pendingQuotesCount} pending review</p>
             </div>
           </Link>
-          <Link href="/admin/dispatch" className="flex items-center gap-4 p-4 bg-green-50/80 rounded-2xl border border-green-100 transition-colors hover:bg-green-100 cursor-pointer">
-            <div className="bg-white p-3 rounded-xl shadow-sm">
-              <CheckCircle size={24} className="text-green-600" />
+          <Link href="/admin/dispatch" className="flex items-center gap-4 p-4 bg-white/80 rounded-2xl border border-green-100 transition-colors hover:bg-gray-100 cursor-pointer">
+            <div className="bg-white p-3 rounded-xl">
+              <CheckCircle size={24} className="text-gray-900" />
             </div>
             <div>
               <p className="font-bold text-gray-900">Ready</p>
-              <p className="text-sm font-medium text-green-700 mt-0.5">{readyToDispatch} to dispatch</p>
+              <p className="text-sm font-medium text-gray-900 mt-0.5">{readyToDispatch} to dispatch</p>
             </div>
           </Link>
         </div>

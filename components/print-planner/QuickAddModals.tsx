@@ -41,7 +41,7 @@ export function QuickAddMachine({
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
-            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6">
+            <div className="bg-white rounded-2xl w-full max-w-md  p-6">
                 <h4 className="text-section text-gray-900 mb-4">Add New Machine</h4>
 
                 {error && (
@@ -60,7 +60,7 @@ export function QuickAddMachine({
                             required
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
                             placeholder="e.g., Offset Printer, Digital Press"
                             autoFocus
                         />
@@ -125,7 +125,7 @@ export function QuickAddSheetSize({
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
-            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6">
+            <div className="bg-white rounded-2xl w-full max-w-md  p-6">
                 <h4 className="text-section text-gray-900 mb-4">Add New Sheet Size</h4>
 
                 {error && (
@@ -144,7 +144,7 @@ export function QuickAddSheetSize({
                             required
                             value={size}
                             onChange={(e) => setSize(e.target.value)}
-                            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
                             placeholder="e.g., 18x24, 20x30, Custom"
                             autoFocus
                         />
@@ -210,7 +210,7 @@ export function QuickAddMaterial({
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
-            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6">
+            <div className="bg-white rounded-2xl w-full max-w-md  p-6">
                 <h4 className="text-section text-gray-900 mb-4">Add New Material</h4>
 
                 {error && (
@@ -229,7 +229,7 @@ export function QuickAddMaterial({
                             required
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
                             placeholder="e.g., Vinyl, Paper, Canvas, Sticker"
                             autoFocus
                         />

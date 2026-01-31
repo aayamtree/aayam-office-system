@@ -14,7 +14,7 @@ const projectStatuses = [
   { id: 'in_progress', name: 'In Progress', color: 'bg-blue-100 text-blue-700' },
   { id: 'review', name: 'Review', color: 'bg-[rgba(0,0,255,0.1)] text-oms-blue' },
   { id: 'on_hold', name: 'On Hold', color: 'bg-orange-100 text-orange-700' },
-  { id: 'completed', name: 'Completed', color: 'bg-green-100 text-green-700' },
+  { id: 'completed', name: 'Completed', color: 'bg-gray-100 text-gray-900' },
 ];
 
 export default function DesignerProjectsPage() {
@@ -207,26 +207,26 @@ export default function DesignerProjectsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
+        <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Projects</p>
           <p className="text-xl sm:text-page-title text-gray-900">{totalProjects}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
+        <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">In Progress</p>
           <p className="text-xl sm:text-page-title text-blue-600">{inProgress}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
+        <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Completed</p>
-          <p className="text-xl sm:text-page-title text-green-600">{completed}</p>
+          <p className="text-xl sm:text-page-title text-gray-900">{completed}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
+        <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">On Hold</p>
           <p className="text-xl sm:text-page-title text-orange-600">{onHold}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border p-4">
+      <div className="bg-white rounded-xl border p-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
@@ -247,7 +247,7 @@ export default function DesignerProjectsPage() {
         {filteredProjects.map((project: any) => {
           const daysRemaining = getDaysRemaining(project.endDate);
           return (
-            <div key={project.id} className={`bg-white rounded-xl shadow-sm border p-4 hover:shadow-md transition-shadow ${daysRemaining < 0 && project.status !== 'completed' ? 'border-l-4 border-l-red-500' :
+            <div key={project.id} className={`bg-white rounded-xl border p-4  transition-shadow ${daysRemaining < 0 && project.status !== 'completed' ? 'border-l-4 border-l-red-500' :
                 daysRemaining <= 3 && project.status !== 'completed' ? 'border-l-4 border-l-orange-400' : ''}`}>
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div className="flex-1 min-w-0">
@@ -288,7 +288,7 @@ export default function DesignerProjectsPage() {
                       <span className="font-medium">{project.progress}%</span>
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${project.progress >= 100 ? 'bg-green-500' :
+                      <div className={`h-full rounded-full ${project.progress >= 100 ? 'bg-white0' :
                           project.progress >= 50 ? 'bg-blue-500' : 'bg-orange-500'}`}
                         style={{ width: `${project.progress}%` }} />
                     </div>
@@ -311,7 +311,7 @@ export default function DesignerProjectsPage() {
                   <p className="text-sm font-medium text-gray-700 mb-2">Tasks ({project.tasks.length})</p>
                   <div className="flex flex-wrap gap-2">
                     {project.tasks.map((task: any) => (
-                      <span key={task.id} className={`text-xs px-2 py-1 rounded-lg ${task.status === 'completed' ? 'bg-green-100 text-green-700' :
+                      <span key={task.id} className={`text-xs px-2 py-1 rounded-lg ${task.status === 'completed' ? 'bg-gray-100 text-gray-900' :
                           task.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
                             task.status === 'review' ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' :
                               'bg-gray-100 text-gray-600'}`}>

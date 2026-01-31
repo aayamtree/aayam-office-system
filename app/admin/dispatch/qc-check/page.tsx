@@ -56,7 +56,7 @@ export default function QCCheckPage() {
     switch (status) {
       case 'finishing': return 'bg-gray-100 text-gray-700 border-gray-200'; // Pending QC start
       case 'quality_check': return 'bg-blue-100 text-blue-700 border-blue-200'; // In Progress
-      case 'ready': return 'bg-green-100 text-green-700 border-green-200'; // Passed
+      case 'ready': return 'bg-gray-100 text-gray-900 border-green-200'; // Passed
       default: return 'bg-gray-100 text-gray-700';
     }
   };
@@ -119,17 +119,17 @@ export default function QCCheckPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
+        <div className="bg-white border border-gray-200 rounded-xl p-3 text-center">
           <p className="text-page-title text-amber-700">{jobs.filter(j => j.current_stage === 'finishing').length}</p>
-          <p className="text-xs text-amber-600 font-medium">Pending (Finishing)</p>
+          <p className="text-xs text-oms-orange font-medium">Pending (Finishing)</p>
         </div>
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
           <p className="text-page-title text-blue-700">{jobs.filter(j => j.current_stage === 'quality_check').length}</p>
           <p className="text-xs text-blue-600 font-medium">In Progress</p>
         </div>
-        <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
-          <p className="text-page-title text-green-700">{jobs.filter(j => j.current_stage === 'ready').length}</p>
-          <p className="text-xs text-green-600 font-medium">Passed (Ready)</p>
+        <div className="bg-white border border-green-200 rounded-xl p-3 text-center">
+          <p className="text-page-title text-gray-900">{jobs.filter(j => j.current_stage === 'ready').length}</p>
+          <p className="text-xs text-gray-900 font-medium">Passed (Ready)</p>
         </div>
       </div>
 
@@ -142,13 +142,13 @@ export default function QCCheckPage() {
             placeholder="Search orders..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
         >
           <option value="all">All Status</option>
           <option value="pending">Pending</option>
@@ -161,7 +161,7 @@ export default function QCCheckPage() {
       <div className="space-y-3">
         {filteredJobs.length === 0 && <div className="text-center py-10 text-gray-500">No jobs found.</div>}
         {filteredJobs.map((job) => (
-          <div key={job.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div key={job.id} className="bg-white rounded-xl p-4 border border-gray-100">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -188,14 +188,14 @@ export default function QCCheckPage() {
                 </div>
 
                 {job.current_stage === 'ready' ? (
-                  <div className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-xl">
+                  <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-900 rounded-xl">
                     <CheckCircle size={16} />
                     <span className="hidden sm:inline">Passed</span>
                   </div>
                 ) : (
                   <button
                     onClick={() => handleStartQC(job)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-white ${job.current_stage === 'quality_check' ? 'bg-oms-blue hover:opacity-90' : 'bg-gray-900 hover:bg-black'
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-white ${job.current_stage === 'quality_check' ? 'bg-oms-blue hover:opacity-90' : 'bg-oms-blue hover:bg-blue-600'
                       }`}
                   >
                     <ClipboardCheck size={16} />
@@ -227,13 +227,13 @@ export default function QCCheckPage() {
             <div className="flex border-b border-gray-200">
               <button
                 onClick={() => setActiveTab('checklist')}
-                className={`flex-1 py-3 text-sm font-medium border-b-2 ${activeTab === 'checklist' ? 'text-oms-blue border-indigo-600' : 'text-gray-500 border-transparent'}`}
+                className={`flex-1 py-3 text-sm font-medium border-b-2 ${activeTab === 'checklist' ? 'text-oms-blue border-oms-blue' : 'text-gray-500 border-transparent'}`}
               >
                 Checklist
               </button>
               <button
                 onClick={() => setActiveTab('notes')}
-                className={`flex-1 py-3 text-sm font-medium border-b-2 ${activeTab === 'notes' ? 'text-oms-blue border-indigo-600' : 'text-gray-500 border-transparent'}`}
+                className={`flex-1 py-3 text-sm font-medium border-b-2 ${activeTab === 'notes' ? 'text-oms-blue border-oms-blue' : 'text-gray-500 border-transparent'}`}
               >
                 Notes
               </button>
@@ -244,14 +244,14 @@ export default function QCCheckPage() {
               {activeTab === 'checklist' && (
                 <div className="space-y-3">
                   {qcCheckpoints.map((cp) => (
-                    <div key={cp.id} className={`p-4 rounded-xl border ${checkpoints[cp.id]?.checked ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                    <div key={cp.id} className={`p-4 rounded-xl border ${checkpoints[cp.id]?.checked ? 'bg-white border-green-200' : 'bg-gray-50 border-gray-200'
                       }`}>
                       <label className="flex items-start gap-3 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={checkpoints[cp.id]?.checked || false}
                           onChange={(e) => updateCheckpoint(cp.id, 'checked', e.target.checked)}
-                          className="w-5 h-5 mt-0.5 rounded border-gray-300 text-green-600"
+                          className="w-5 h-5 mt-0.5 rounded border-gray-300 text-gray-900"
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
@@ -260,7 +260,7 @@ export default function QCCheckPage() {
                           </div>
                           <p className="text-xs text-gray-500">{cp.desc}</p>
                         </div>
-                        {checkpoints[cp.id]?.checked && <CheckCircle size={18} className="text-green-600" />}
+                        {checkpoints[cp.id]?.checked && <CheckCircle size={18} className="text-gray-900" />}
                       </label>
                     </div>
                   ))}
@@ -291,7 +291,7 @@ export default function QCCheckPage() {
               </button>
               <button
                 onClick={() => handleQCSubmit('passed')}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors shadow-lg shadow-green-200"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors -200"
               >
                 <CheckCircle size={16} /> Pass
               </button>

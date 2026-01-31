@@ -91,18 +91,18 @@ export default function OpeningBalancePage() {
 
       {/* Status Banner */}
       <div className={`rounded-xl p-4 flex items-center gap-3 ${
-        openingBalance.isLocked ? 'bg-green-50 border border-green-200' : 'bg-amber-50 border border-amber-200'}`}>
+        openingBalance.isLocked ? 'bg-white border border-green-200' : 'bg-white border border-gray-200'}`}>
         {openingBalance.isLocked ? (
           <>
-            <CheckCircle className="text-green-600 flex-shrink-0" size={20} />
+            <CheckCircle className="text-gray-900 flex-shrink-0" size={20} />
             <div>
               <p className="font-medium text-green-900">Opening Balance Locked</p>
-              <p className="text-sm text-green-700">As of {new Date(openingBalance.asOfDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+              <p className="text-sm text-gray-900">As of {new Date(openingBalance.asOfDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
             </div>
           </>
         ) : (
           <>
-            <AlertCircle className="text-amber-600 flex-shrink-0" size={20} />
+            <AlertCircle className="text-oms-orange flex-shrink-0" size={20} />
             <div>
               <p className="font-medium text-amber-900">Editing Mode</p>
               <p className="text-sm text-amber-700">Make changes and save to lock the balances</p>
@@ -113,16 +113,16 @@ export default function OpeningBalancePage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border p-4">
+        <div className="bg-white rounded-xl border p-4">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <Wallet className="text-green-600" size={20} />
+            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+              <Wallet className="text-gray-900" size={20} />
             </div>
             <span className="text-gray-600">Cash Opening</span>
           </div>
-          <p className="text-page-title text-green-600">{formatCurrency(openingBalance.cash)}</p>
+          <p className="text-page-title text-gray-900">{formatCurrency(openingBalance.cash)}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-4">
+        <div className="bg-white rounded-xl border p-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
               <Building className="text-blue-600" size={20} />
@@ -131,7 +131,7 @@ export default function OpeningBalancePage() {
           </div>
           <p className="text-page-title text-blue-600">{formatCurrency(totalBankBalance)}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-4">
+        <div className="bg-white rounded-xl border p-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-[rgba(0,0,255,0.1)] rounded-lg flex items-center justify-center">
               <IndianRupee className="text-oms-blue" size={20} />
@@ -143,10 +143,10 @@ export default function OpeningBalancePage() {
       </div>
 
       {/* Cash Opening Balance */}
-      <div className="bg-white rounded-xl shadow-sm border p-5">
+      <div className="bg-white rounded-xl border p-5">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-            <Wallet className="text-green-600" size={20} />
+          <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+            <Wallet className="text-gray-900" size={20} />
           </div>
           <h2 className="text-section text-gray-900">Cash Opening Balance</h2>
         </div>
@@ -158,12 +158,12 @@ export default function OpeningBalancePage() {
               className="w-full px-4 py-3 border rounded-lg text-section focus:ring-2 focus:ring-green-500" />
           </div>
         ) : (
-          <div className="text-page-title text-green-600">{formatCurrency(openingBalance.cash)}</div>
+          <div className="text-page-title text-gray-900">{formatCurrency(openingBalance.cash)}</div>
         )}
       </div>
 
       {/* Bank Opening Balances */}
-      <div className="bg-white rounded-xl shadow-sm border p-5">
+      <div className="bg-white rounded-xl border p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">

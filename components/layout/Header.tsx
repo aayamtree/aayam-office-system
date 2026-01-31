@@ -137,7 +137,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
                   className="fixed inset-0 z-10"
                   onClick={() => setShowNotifications(false)}
                 />
-                <div className="absolute right-0 top-12 w-72 lg:w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-20">
+                <div className="absolute right-0 top-12 w-72 lg:w-80 bg-white rounded-2xl  border border-gray-100 overflow-hidden z-20">
                   <div className="p-4 border-b border-gray-100">
                     <h3 className="font-semibold text-gray-900">Notifications</h3>
                   </div>
@@ -199,7 +199,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
                   className="fixed inset-0 z-10"
                   onClick={() => setShowUserMenu(false)}
                 />
-                <div className="absolute right-0 top-12 lg:top-14 w-48 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-20">
+                <div className="absolute right-0 top-12 lg:top-14 w-48 bg-white rounded-xl  border border-gray-100 overflow-hidden z-20">
                   <div className="p-2">
                     {isAdmin && (
                       <Link

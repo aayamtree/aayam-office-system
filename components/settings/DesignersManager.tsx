@@ -291,7 +291,7 @@ export default function DesignersManager() {
             {/* Cards Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                 {filteredDesigners.map(designer => (
-                    <div key={designer.id} className="bg-white rounded-xl border p-4 hover:shadow-md transition-shadow group">
+                    <div key={designer.id} className="bg-white rounded-xl border p-4  transition-shadow group">
                         <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center text-oms-blue text-section">

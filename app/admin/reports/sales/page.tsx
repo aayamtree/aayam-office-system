@@ -89,7 +89,7 @@ export default function SalesReportPage() {
             <Download size={16} />
             <span>PDF</span>
           </button>
-          <button onClick={() => handleExport('excel')} className="flex items-center gap-2 px-3 py-2 bg-green-50 text-green-700 rounded-xl hover:bg-green-100">
+          <button onClick={() => handleExport('excel')} className="flex items-center gap-2 px-3 py-2 bg-white text-gray-900 rounded-xl hover:bg-gray-100">
             <Download size={16} />
             <span>Excel</span>
           </button>
@@ -97,7 +97,7 @@ export default function SalesReportPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+      <div className="bg-white rounded-2xl p-4 border border-gray-100">
         <div className="flex items-center gap-2 mb-3">
           <Filter size={16} className="text-gray-500" />
           <span className="font-medium text-gray-700">Filters</span>
@@ -181,7 +181,7 @@ export default function SalesReportPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sales Table */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="p-4 border-b border-gray-100">
             <h2 className="font-semibold text-gray-900">Sales Details</h2>
           </div>
@@ -206,7 +206,7 @@ export default function SalesReportPage() {
                     <td className="px-4 py-3 text-sm text-gray-600">{sale.items}</td>
                     <td className="px-4 py-3 text-sm font-medium text-gray-900 text-right">₹{sale.amount.toLocaleString()}</td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`px-2 py-1 text-xs rounded-full ${sale.status === 'completed' ? 'bg-green-100 text-green-700' :
+                      <span className={`px-2 py-1 text-xs rounded-full ${sale.status === 'completed' ? 'bg-gray-100 text-gray-900' :
                         sale.status === 'pending' ? 'bg-amber-100 text-amber-700' :
                           'bg-red-100 text-red-700'
                         }`}>
@@ -221,12 +221,12 @@ export default function SalesReportPage() {
         </div>
 
         {/* Top Clients */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-4 border border-gray-100">
           <h2 className="font-semibold text-gray-900 mb-4">Top Clients</h2>
           <div className="space-y-3">
             {topClients.map(([client, revenue], index) => (
               <div key={client} className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${index === 0 ? 'bg-amber-500' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-amber-700' : 'bg-gray-300'
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${index === 0 ? 'bg-white0' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-amber-700' : 'bg-gray-300'
                   }`}>
                   {index + 1}
                 </div>

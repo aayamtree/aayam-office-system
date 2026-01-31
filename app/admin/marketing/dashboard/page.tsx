@@ -52,9 +52,9 @@ export default function AdminMarketingDashboard() {
             title: 'New Leads (7d)',
             value: stats.newLeads,
             icon: TrendingUp,
-            color: 'bg-green-500',
-            textColor: 'text-green-600',
-            bgColor: 'bg-green-50',
+            color: 'bg-white0',
+            textColor: 'text-gray-900',
+            bgColor: 'bg-white',
             link: '/admin/marketing/leads?filter=new'
         },
         {
@@ -70,9 +70,9 @@ export default function AdminMarketingDashboard() {
             title: 'Leads Waiting',
             value: stats.leadsWaiting,
             icon: Clock,
-            color: 'bg-amber-500',
-            textColor: 'text-amber-600',
-            bgColor: 'bg-amber-50',
+            color: 'bg-white0',
+            textColor: 'text-oms-orange',
+            bgColor: 'bg-white',
             link: '/admin/marketing/leads?filter=waiting'
         },
         {
@@ -144,7 +144,7 @@ export default function AdminMarketingDashboard() {
                         <button
                             key={stat.title}
                             onClick={() => router.push(stat.link)}
-                            className="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all hover:scale-105 text-left group"
+                            className="bg-white rounded-2xl p-6 border border-gray-100  transition-all hover:scale-105 text-left group"
                         >
                             <div className="flex items-start justify-between mb-4">
                                 <div className={`p-3 rounded-xl ${stat.bgColor}`}>
@@ -159,7 +159,7 @@ export default function AdminMarketingDashboard() {
                 </div>
 
                 {/* Team Activity Section */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                <div className="bg-white rounded-2xl p-6 border border-gray-100">
                     <div className="flex items-center justify-between mb-6">
                         <div>
                             <h2 className="text-page-title text-gray-900 flex items-center gap-2">
@@ -179,7 +179,7 @@ export default function AdminMarketingDashboard() {
                     ) : (
                         <div className="space-y-4">
                             {teamMembers.map((member: any, idx: number) => (
-                                <div key={idx} className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-indigo-200 transition-colors">
+                                <div key={idx} className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-oms-blue/20 transition-colors">
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 rounded-full bg-[rgba(0,0,255,0.1)] flex items-center justify-center font-bold text-oms-blue">
                                             {member.name.charAt(0)}
@@ -200,7 +200,7 @@ export default function AdminMarketingDashboard() {
                 </div>
 
                 {/* Commission Overview */}
-                <div className="bg-oms-blue rounded-2xl p-6 border border-[rgba(0,0,255,0.2)]-100 shadow-sm">
+                <div className="bg-oms-blue rounded-2xl p-6 border border-[rgba(0,0,255,0.2)]-100">
                     <div className="flex items-center justify-between mb-6">
                         <div>
                             <h2 className="text-page-title text-gray-900 flex items-center gap-2">
@@ -225,12 +225,12 @@ export default function AdminMarketingDashboard() {
                         </div>
                         <div className="bg-white rounded-xl p-4 border border-green-100">
                             <p className="text-sm text-gray-500 mb-1">Paid Out</p>
-                            <p className="text-page-title text-green-600">₹0</p>
+                            <p className="text-page-title text-gray-900">₹0</p>
                             <p className="text-xs text-gray-400 mt-1">Last month</p>
                         </div>
-                        <div className="bg-white rounded-xl p-4 border border-amber-100">
+                        <div className="bg-white rounded-xl p-4 border border-gray-100">
                             <p className="text-sm text-gray-500 mb-1">Pending</p>
-                            <p className="text-page-title text-amber-600">₹0</p>
+                            <p className="text-page-title text-oms-orange">₹0</p>
                             <p className="text-xs text-gray-400 mt-1">Awaiting payment</p>
                         </div>
                     </div>

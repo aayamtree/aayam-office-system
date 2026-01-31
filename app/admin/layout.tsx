@@ -38,7 +38,7 @@ export default function AdminLayout({
     return (
       <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mx-auto"></div>
+          <div className="w-12 h-12 border-4 border-oms-blue-100 border-t-oms-blue rounded-full animate-spin mx-auto"></div>
           <p className="mt-4 text-gray-500">Loading...</p>
         </div>
       </div>

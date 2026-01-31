@@ -112,7 +112,7 @@ export default function SalesOrdersPage() {
         if (status === 'draft') return 'bg-gray-100 text-gray-700';
         if (status === 'confirmed') return 'bg-blue-100 text-blue-700';
         if (status === 'in_progress') return 'bg-[rgba(0,0,255,0.1)] text-oms-blue';
-        if (status === 'ready_for_invoice') return 'bg-green-100 text-green-700';
+        if (status === 'ready_for_invoice') return 'bg-gray-100 text-gray-900';
         return 'bg-gray-100 text-gray-500';
     };
 
@@ -137,13 +137,13 @@ export default function SalesOrdersPage() {
                         placeholder="Search orders..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                        className="w-full pl-10 pr-4 py-2 border rounded-xl focus:ring-2 focus:ring-oms-blue focus:outline-none"
                     />
                 </div>
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
@@ -185,7 +185,7 @@ export default function SalesOrdersPage() {
                                     <td className="p-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             {so.status === 'draft' && (
-                                                <button onClick={() => handleConfirmOrder(so)} className="text-xs bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 shadow-sm flex items-center gap-1">
+                                                <button onClick={() => handleConfirmOrder(so)} className="text-xs bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 flex items-center gap-1">
                                                     Confirm <ArrowRight size={12} />
                                                 </button>
                                             )}
@@ -218,7 +218,7 @@ export default function SalesOrdersPage() {
             {/* Modal - Create/Edit */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden animate-scale-in">
+                    <div className="bg-white rounded-2xl w-full max-w-lg  overflow-hidden animate-scale-in">
                         <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50">
                             <h3 className="text-section text-gray-900">
                                 {isEditing ? 'Edit Order' : 'New Sales Order'}
@@ -232,7 +232,7 @@ export default function SalesOrdersPage() {
                             {/* Client Selection */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Client</label>
-                                <select required value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })} className="w-full px-3 py-2 border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500">
+                                <select required value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })} className="w-full px-3 py-2 border rounded-xl bg-white focus:ring-2 focus:ring-oms-blue">
                                     <option value="">Select Client</option>
                                     {clients.map(c => <option key={c.id} value={c.id}>{c.company || c.name}</option>)}
                                 </select>
@@ -250,8 +250,8 @@ export default function SalesOrdersPage() {
                                         type="button"
                                         onClick={() => setFormData({ ...formData, workType: type.id as any })}
                                         className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${formData.workType === type.id
-                                                ? 'border-indigo-600 bg-[rgba(0,0,255,0.1)] text-oms-blue'
-                                                : 'border-gray-200 hover:border-indigo-200 text-gray-600'
+                                                ? 'border-oms-blue bg-[rgba(0,0,255,0.1)] text-oms-blue'
+                                                : 'border-gray-200 hover:border-oms-blue/20 text-gray-600'
                                             }`}
                                     >
                                         <type.icon size={20} className="mb-1" />
@@ -291,7 +291,7 @@ export default function SalesOrdersPage() {
 
                             <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
                                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">Cancel</button>
-                                <button type="submit" disabled={submitting} className="px-6 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-xl hover:bg-[rgba(0,0,255,0.1)] transition-colors shadow-sm disabled:opacity-50">
+                                <button type="submit" disabled={submitting} className="px-6 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-xl hover:bg-[rgba(0,0,255,0.1)] transition-colors disabled:opacity-50">
                                     {submitting ? 'Saving...' : 'Create Sales Order'}
                                 </button>
                             </div>

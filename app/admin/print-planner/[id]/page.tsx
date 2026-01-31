@@ -126,8 +126,8 @@ export default function PrintRunDetailPage() {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'planned': return 'bg-blue-100 text-blue-800 border-blue-200';
-            case 'printed': return 'bg-[rgba(0,0,255,0.1)] text-purple-800 border-[rgba(0,0,255,0.2)]-200';
-            case 'delivered': return 'bg-green-100 text-green-800 border-green-200';
+            case 'printed': return 'bg-[rgba(0,0,255,0.1)] text-oms-blue-800 border-[rgba(0,0,255,0.2)]-200';
+            case 'delivered': return 'bg-gray-100 text-green-800 border-green-200';
             default: return 'bg-gray-100 text-gray-800 border-gray-200';
         }
     };
@@ -184,7 +184,7 @@ export default function PrintRunDetailPage() {
                             )}
                             <button
                                 onClick={() => setShowAddJobsModal(true)}
-                                className="px-6 py-3 bg-oms-blue text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center gap-2"
+                                className="px-6 py-3 bg-oms-blue text-white rounded-xl font-bold  transition-all flex items-center gap-2"
                             >
                                 <Plus size={20} />
                                 Add Jobs
@@ -197,7 +197,7 @@ export default function PrintRunDetailPage() {
             {/* Content */}
             <div className="max-w-7xl mx-auto p-6 space-y-6">
                 {/* Summary */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                <div className="bg-white rounded-2xl p-6 border border-gray-100">
                     <h2 className="text-section text-gray-900 mb-4">Print Run Summary</h2>
                     <div className="grid grid-cols-5 gap-6">
                         <div>
@@ -231,7 +231,7 @@ export default function PrintRunDetailPage() {
                 </div>
 
                 {/* Jobs Table */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                     <div className="p-6 border-b border-gray-100">
                         <h2 className="text-section text-gray-900">Jobs in This Print Run</h2>
                     </div>
@@ -459,7 +459,7 @@ function AddJobsModal({
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-3xl w-full max-w-4xl  overflow-hidden max-h-[90vh] overflow-y-auto">
                 <div className="bg-oms-blue p-6 text-white flex items-center justify-between sticky top-0">
                     <div>
                         <h3 className="text-page-title">Add Jobs to Print Run</h3>
@@ -506,7 +506,7 @@ function AddJobsModal({
                                                     type="checkbox"
                                                     checked={isSelected}
                                                     onChange={() => toggleJob(job.id)}
-                                                    className="h-5 w-5 text-oms-blue rounded focus:ring-indigo-500 mt-1"
+                                                    className="h-5 w-5 text-oms-blue rounded focus:ring-oms-blue mt-1"
                                                 />
 
                                                 <div className="flex-1">
@@ -532,7 +532,7 @@ function AddJobsModal({
                                                                     min="0"
                                                                     value={quantities.quantity}
                                                                     onChange={(e) => updateJobQuantity(job.id, 'quantity', parseInt(e.target.value) || 0)}
-                                                                    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 ring-indigo-500/20 focus:border-indigo-500"
+                                                                    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 ring-oms-blue/20 focus:border-oms-blue"
                                                                     placeholder="0"
                                                                 />
                                                             </div>
@@ -546,7 +546,7 @@ function AddJobsModal({
                                                                     min="1"
                                                                     value={quantities.ups}
                                                                     onChange={(e) => updateJobQuantity(job.id, 'ups', parseInt(e.target.value) || 1)}
-                                                                    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 ring-indigo-500/20 focus:border-indigo-500"
+                                                                    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 ring-oms-blue/20 focus:border-oms-blue"
                                                                     placeholder="1"
                                                                 />
                                                             </div>
@@ -578,7 +578,7 @@ function AddJobsModal({
                                 <button
                                     onClick={handleSubmit}
                                     disabled={selectedJobs.size === 0 || submitting}
-                                    className="px-8 py-3 bg-oms-blue text-white rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-8 py-3 bg-oms-blue text-white rounded-xl font-bold  transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {submitting ? 'Adding...' : `Add ${selectedJobs.size} Job${selectedJobs.size !== 1 ? 's' : ''}`}
                                 </button>

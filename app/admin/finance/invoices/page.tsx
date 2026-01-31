@@ -353,8 +353,8 @@ export default function InvoicesPage() {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'pending': 'bg-gray-100 text-gray-700 border-gray-200',
-      'partial': 'bg-amber-100 text-amber-700 border-amber-200',
-      'paid': 'bg-green-100 text-green-700 border-green-200',
+      'partial': 'bg-amber-100 text-amber-700 border-gray-200',
+      'paid': 'bg-gray-100 text-gray-900 border-green-200',
       'overdue': 'bg-red-100 text-red-700 border-red-200',
     };
     return colors[status] || 'bg-gray-100 text-gray-700';
@@ -431,7 +431,7 @@ export default function InvoicesPage() {
         </div>
         <button
           onClick={handleAddNew}
-          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-3 md:px-4 py-2 md:py-2.5 rounded-xl hover:bg-gray-800 transition-colors text-sm md:text-base"
+          className="flex items-center justify-center gap-2 bg-oms-blue text-white px-3 md:px-4 py-2 md:py-2.5 rounded-xl hover:bg-blue-600 transition-colors text-sm md:text-base"
         >
           <Plus size={16} className="md:hidden" />
           <Plus size={18} className="hidden md:block" />
@@ -454,7 +454,7 @@ export default function InvoicesPage() {
             </div>
             <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
               {pendingInvoicingJobs.map((job: any) => (
-                <div key={job.id} className="min-w-[280px] bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                <div key={job.id} className="min-w-[280px] bg-white p-3 rounded-xl border border-gray-200 flex flex-col justify-between  transition-shadow">
                   <div>
                     <div className="flex justify-between items-start mb-1">
                       <span className="text-xs font-mono text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded">{job.job_number}</span>
@@ -480,8 +480,8 @@ export default function InvoicesPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-3">
         {[
           { status: 'pending', label: 'Pending', bg: 'bg-gray-100 border-gray-200', text: 'text-gray-700' },
-          { status: 'partial', label: 'Partial', bg: 'bg-amber-100 border-amber-200', text: 'text-amber-700' },
-          { status: 'paid', label: 'Paid', bg: 'bg-green-100 border-green-200', text: 'text-green-700' },
+          { status: 'partial', label: 'Partial', bg: 'bg-amber-100 border-gray-200', text: 'text-amber-700' },
+          { status: 'paid', label: 'Paid', bg: 'bg-gray-100 border-green-200', text: 'text-gray-900' },
           { status: 'overdue', label: 'Overdue', bg: 'bg-red-100 border-red-200', text: 'text-red-700' },
         ].map((item) => (
           <div key={item.status} className={`rounded-lg md:rounded-xl p-2 md:p-3 text-center border ${item.bg}`}>
@@ -500,13 +500,13 @@ export default function InvoicesPage() {
             placeholder="Search invoices by number, client..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
         >
           <option value="all">All Status</option>
           <option value="pending">Pending</option>
@@ -529,7 +529,7 @@ export default function InvoicesPage() {
             {/* Mobile View: Cards */}
             <div className="lg:hidden space-y-4">
               {filteredInvoices.map((inv) => (
-                <div key={inv.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 relative">
+                <div key={inv.id} className="bg-white p-4 rounded-2xl border border-gray-100 relative">
                   {/* Row 1: Invoice # & Status */}
                   <div className="flex justify-between items-start mb-3">
                     <div>
@@ -550,7 +550,7 @@ export default function InvoicesPage() {
                     <div className="text-right flex-shrink-0">
                       <div className="font-bold text-gray-900 text-lg">{formatCurrency(inv.total_amount)}</div>
                       {inv.amount_paid > 0 && inv.amount_paid < inv.total_amount && (
-                        <div className="text-xs text-amber-600 font-medium">Paid: {formatCurrency(inv.amount_paid)}</div>
+                        <div className="text-xs text-oms-orange font-medium">Paid: {formatCurrency(inv.amount_paid)}</div>
                       )}
                     </div>
                   </div>
@@ -563,7 +563,7 @@ export default function InvoicesPage() {
                     </div>
 
                     <div className="flex items-center gap-1">
-                      <button onClick={() => handleWhatsAppShare(inv)} className="p-2 bg-green-50 text-green-600 rounded-lg">
+                      <button onClick={() => handleWhatsAppShare(inv)} className="p-2 bg-white text-gray-900 rounded-lg">
                         <MessageCircle size={16} />
                       </button>
                       <button onClick={() => handleDownloadPDF(inv)} className="p-2 bg-[rgba(0,0,255,0.1)] text-oms-blue rounded-lg">
@@ -582,7 +582,7 @@ export default function InvoicesPage() {
             </div>
 
             {/* Desktop View: Table */}
-            <div className="hidden lg:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="hidden lg:block bg-white rounded-2xl border border-gray-100 overflow-hidden">
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
@@ -608,7 +608,7 @@ export default function InvoicesPage() {
                       <td className="px-6 py-4">
                         <p className="font-semibold text-gray-900">{formatCurrency(inv.total_amount)}</p>
                         {inv.amount_paid > 0 && inv.amount_paid < inv.total_amount && (
-                          <p className="text-xs text-amber-600">Paid: {formatCurrency(inv.amount_paid)}</p>
+                          <p className="text-xs text-oms-orange">Paid: {formatCurrency(inv.amount_paid)}</p>
                         )}
                       </td>
                       <td className="px-6 py-4 text-gray-600">{inv.due_date ? formatDate(inv.due_date) : '-'}</td>
@@ -622,11 +622,11 @@ export default function InvoicesPage() {
                           <button onClick={() => { setSelectedInvoice(inv); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-lg" title="View">
                             <Eye size={18} className="text-gray-500" />
                           </button>
-                          <button onClick={() => handleWhatsAppShare(inv)} className="p-2 hover:bg-green-50 rounded-lg" title="Share on WhatsApp">
+                          <button onClick={() => handleWhatsAppShare(inv)} className="p-2 hover:bg-white rounded-lg" title="Share on WhatsApp">
                             <MessageCircle size={18} className="text-green-500" />
                           </button>
                           <button onClick={() => handleDownloadPDF(inv)} className="p-2 hover:bg-[rgba(0,0,255,0.1)] rounded-lg" title="Download PDF">
-                            <Download size={18} className="text-indigo-500" />
+                            <Download size={18} className="text-oms-blue" />
                           </button>
                           <button onClick={() => handleEdit(inv)} className="p-2 hover:bg-gray-100 rounded-lg" title="Edit">
                             <Edit size={18} className="text-gray-500" />
@@ -664,7 +664,7 @@ export default function InvoicesPage() {
                       required
                       value={formData.clientId}
                       onChange={(e) => setFormData({ ...formData, clientId: e.target.value, jobId: '' })}
-                      className="w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm text-sm md:text-base"
+                      className="w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue bg-white text-sm md:text-base"
                     >
                       <option value="">Select Client</option>
                       {clients.map(c => (
@@ -679,7 +679,7 @@ export default function InvoicesPage() {
                       value={formData.jobId}
                       onChange={(e) => setFormData({ ...formData, jobId: e.target.value })}
                       disabled={!formData.clientId}
-                      className="w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm disabled:bg-gray-100 disabled:text-gray-400 text-sm md:text-base"
+                      className="w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue bg-white disabled:bg-gray-100 disabled:text-gray-400 text-sm md:text-base"
                     >
                       <option value="">Select Job (Optional)</option>
                       {jobs
@@ -698,7 +698,7 @@ export default function InvoicesPage() {
                       value={formData.dueDate}
                       onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                       style={{ boxSizing: 'border-box', minWidth: 0 }}
-                      className="w-full max-w-[200px] sm:max-w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm text-sm md:text-base"
+                      className="w-full max-w-[200px] sm:max-w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue text-sm md:text-base"
                     />
                   </div>
                 </div>
@@ -797,7 +797,7 @@ export default function InvoicesPage() {
                         type="number"
                         value={formData.paidAmount}
                         onChange={(e) => setFormData({ ...formData, paidAmount: parseFloat(e.target.value) || 0 })}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
                       />
                     </div>
                     <div>
@@ -805,7 +805,7 @@ export default function InvoicesPage() {
                       <select
                         value={formData.status}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
                       >
                         <option value="pending">Pending</option>
                         <option value="partial">Partial</option>
@@ -828,7 +828,7 @@ export default function InvoicesPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="flex-1 px-6 py-3.5 bg-[rgba(0,0,255,0.1)] text-white font-semibold rounded-xl hover:bg-[rgba(0,0,255,0.1)] transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50"
+                    className="flex-1 px-6 py-3.5 bg-[rgba(0,0,255,0.1)] text-white font-semibold rounded-xl hover:bg-[rgba(0,0,255,0.1)] transition-colors -200 disabled:opacity-50"
                   >
                     {submitting ? 'Saving...' : (isEditing ? 'Update' : 'Create')}
                   </button>
@@ -903,7 +903,7 @@ export default function InvoicesPage() {
                   </div>
                   {selectedInvoice.amount_paid > 0 && (
                     <>
-                      <div className="flex justify-between text-green-600 font-medium">
+                      <div className="flex justify-between text-gray-900 font-medium">
                         <span>Paid</span>
                         <span>- {formatCurrency(selectedInvoice.amount_paid)}</span>
                       </div>
@@ -942,14 +942,14 @@ export default function InvoicesPage() {
                   <button
                     onClick={() => handleDownloadPDF(selectedInvoice)}
                     disabled={pdfLoading}
-                    className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white font-semibold rounded-xl hover:bg-black disabled:opacity-50 transition-colors"
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-oms-blue text-white font-semibold rounded-xl hover:bg-blue-600 disabled:opacity-50 transition-colors"
                   >
                     {pdfLoading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
                     Download PDF
                   </button>
                   <button
                     onClick={() => handleWhatsAppShare(selectedInvoice)}
-                    className="col-span-2 flex items-center justify-center gap-2 px-4 py-3 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition-colors"
+                    className="col-span-2 flex items-center justify-center gap-2 px-4 py-3 bg-white0 text-white font-semibold rounded-xl hover:bg-green-600 transition-colors"
                   >
                     <MessageCircle size={18} />
                     Share on WhatsApp
@@ -960,7 +960,7 @@ export default function InvoicesPage() {
                 {selectedInvoice.amount_paid < selectedInvoice.total_amount && (
                   <button
                     onClick={() => handlePaymentReminder(selectedInvoice)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-500 text-white font-semibold rounded-xl hover:bg-amber-600 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white0 text-white font-semibold rounded-xl hover:bg-oms-orange transition-colors"
                   >
                     <MessageCircle size={18} />
                     Send Payment Reminder

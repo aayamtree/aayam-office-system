@@ -145,7 +145,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
     };
 
     return (
-        <div className="h-full flex flex-col bg-white rounded-2xl border border-gray-200 shadow-sm">
+        <div className="h-full flex flex-col bg-white rounded-2xl border border-gray-200">
             {/* Header */}
             <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-4">
@@ -207,7 +207,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                         required
                         value={vendorId}
                         onChange={(e) => setVendorId(e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 ring-purple-500/20 focus:border-purple-500 transition-all"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
                     >
                         <option value="">Select vendor...</option>
                         {vendors.map(v => (
@@ -232,7 +232,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                         <select
                             value={machineId}
                             onChange={(e) => setMachineId(e.target.value)}
-                            className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl focus:ring-4 ring-purple-500/20 focus:border-purple-500"
+                            className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl focus:ring-4 ring-oms-blue/20 focus:border-oms-blue"
                         >
                             <option value="">Select...</option>
                             {machines.map(m => (
@@ -254,7 +254,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                         <select
                             value={sheetSizeId}
                             onChange={(e) => setSheetSizeId(e.target.value)}
-                            className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl focus:ring-4 ring-purple-500/20 focus:border-purple-500"
+                            className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl focus:ring-4 ring-oms-blue/20 focus:border-oms-blue"
                         >
                             <option value="">Select...</option>
                             {sheetSizes.map(s => (
@@ -276,7 +276,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                         <select
                             value={materialId}
                             onChange={(e) => setMaterialId(e.target.value)}
-                            className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl focus:ring-4 ring-purple-500/20 focus:border-purple-500"
+                            className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl focus:ring-4 ring-oms-blue/20 focus:border-oms-blue"
                         >
                             <option value="">Select...</option>
                             {materials.map(m => (
@@ -297,7 +297,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                             type="date"
                             value={deadline}
                             onChange={(e) => setDeadline(e.target.value)}
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 ring-purple-500/20 focus:border-purple-500"
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 ring-oms-blue/20 focus:border-oms-blue"
                         />
                     </div>
                     <div>
@@ -311,7 +311,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                             value={totalAmount}
                             onChange={(e) => setTotalAmount(e.target.value)}
                             placeholder="0.00"
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 ring-purple-500/20 focus:border-purple-500"
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 ring-oms-blue/20 focus:border-oms-blue"
                         />
                     </div>
                 </div>
@@ -324,7 +324,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                         onChange={(e) => setNotes(e.target.value)}
                         rows={3}
                         placeholder="Special instructions..."
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 ring-purple-500/20 focus:border-purple-500 resize-none"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 ring-oms-blue/20 focus:border-oms-blue resize-none"
                     />
                 </div>
 

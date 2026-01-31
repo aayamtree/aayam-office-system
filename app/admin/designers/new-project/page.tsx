@@ -166,7 +166,7 @@ export default function NewProjectPage() {
                         Back to My Queue
                     </Link>
                     <div className="flex items-start gap-4">
-                        <div className="p-3 bg-white/20 backdrop-blur-lg rounded-2xl shadow-lg">
+                        <div className="p-3 bg-white/20 backdrop-blur-lg rounded-2xl">
                             <Briefcase size={32} className="text-white" />
                         </div>
                         <div>
@@ -188,7 +188,7 @@ export default function NewProjectPage() {
                                 <h3 className="font-semibold text-gray-900">Google Calendar Integration</h3>
                                 <p className="text-sm text-gray-600 mt-1">
                                     {session?.user ? (
-                                        <span className="text-green-600 font-semibold">
+                                        <span className="text-gray-900 font-semibold">
                                             ✅ Connected as {session.user.email}
                                         </span>
                                     ) : (
@@ -226,9 +226,9 @@ export default function NewProjectPage() {
                 <form onSubmit={handleSubmit} className="space-y-6">
 
                     {/* 1. Project Basics */}
-                    <div className="space-y-5 bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                    <div className="space-y-5 bg-white rounded-2xl p-8 border border-gray-100">
                         <div className="flex items-center gap-3 pb-4 border-b-2 border-oms-blue">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-oms-blue text-white text-section shadow-lg shadow-indigo-200">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-oms-blue text-white text-section -200">
                                 1
                             </div>
                             <h4 className="text-base font-bold text-gray-800 uppercase tracking-wide">Project Basics</h4>
@@ -242,7 +242,7 @@ export default function NewProjectPage() {
                                 <input
                                     required
                                     type="text"
-                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-oms-blue/20 focus:border-indigo-500 transition-all font-medium hover:border-gray-300"
+                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all font-medium hover:border-gray-300"
                                     placeholder="e.g. Wedding Invitation - Sharma Family"
                                     value={formData.title}
                                     onChange={e => setFormData({ ...formData, title: e.target.value })}
@@ -255,7 +255,7 @@ export default function NewProjectPage() {
                                 </label>
                                 <select
                                     required
-                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-oms-blue/20 focus:border-indigo-500 transition-all bg-white hover:border-gray-300"
+                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all bg-white hover:border-gray-300"
                                     value={formData.clientId}
                                     onChange={e => setFormData({ ...formData, clientId: e.target.value })}
                                 >
@@ -269,7 +269,7 @@ export default function NewProjectPage() {
                                     🎨 Assign Designer
                                 </label>
                                 <select
-                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-oms-blue/20 focus:border-indigo-500 transition-all bg-white hover:border-gray-300"
+                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all bg-white hover:border-gray-300"
                                     value={formData.designerId}
                                     onChange={e => setFormData({ ...formData, designerId: e.target.value })}
                                 >
@@ -283,9 +283,9 @@ export default function NewProjectPage() {
                     </div>
 
                     {/* 2. Parameters */}
-                    <div className="space-y-5 bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                    <div className="space-y-5 bg-white rounded-2xl p-8 border border-gray-100">
                         <div className="flex items-center gap-3 pb-4 border-b-2 border-gradient-to-r from-orange-500 to-red-500">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 text-white text-section shadow-lg shadow-orange-200">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 text-white text-section -200">
                                 2
                             </div>
                             <h4 className="text-base font-bold text-gray-800 uppercase tracking-wide">Project Parameters</h4>
@@ -337,9 +337,9 @@ export default function NewProjectPage() {
                     </div>
 
                     {/* 3. Assets & Brief */}
-                    <div className="space-y-5 bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                    <div className="space-y-5 bg-white rounded-2xl p-8 border border-gray-100">
                         <div className="flex items-center gap-3 pb-4 border-b-2 border-gradient-to-r from-blue-500 to-cyan-500">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white text-section shadow-lg shadow-blue-200">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white text-section -200">
                                 3
                             </div>
                             <h4 className="text-base font-bold text-gray-800 uppercase tracking-wide">Assets & Brief</h4>
@@ -367,12 +367,12 @@ export default function NewProjectPage() {
                             )}
 
                             {driveFileStatus === 'verified' && driveFileInfo && (
-                                <div className="bg-white p-4 rounded-xl border-2 border-green-200 shadow-sm">
+                                <div className="bg-white p-4 rounded-xl border-2 border-green-200">
                                     <div className="flex items-start gap-3">
                                         <span className="text-3xl">{getFileIcon(driveFileInfo.mimeType)}</span>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-green-600 font-bold">✅ Verified</span>
+                                                <span className="text-gray-900 font-bold">✅ Verified</span>
                                             </div>
                                             <p className="font-semibold text-gray-900 truncate">{driveFileInfo.name}</p>
                                             <p className="text-xs text-gray-500 mt-1">
@@ -410,7 +410,7 @@ export default function NewProjectPage() {
                                             setFormData({ ...formData, file: e.target.files[0] });
                                         }
                                     }}
-                                    className="text-sm text-gray-600 file:mr-3 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-blue-500 file:text-white hover:file:bg-blue-600 file:shadow-lg file:shadow-blue-200 file:transition-all"
+                                    className="text-sm text-gray-600 file:mr-3 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-blue-500 file:text-white hover:file:bg-blue-600 file: file:-200 file:transition-all"
                                 />
                             </div>
                         </div>
@@ -430,7 +430,7 @@ export default function NewProjectPage() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-4 items-center justify-end bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky bottom-4">
+                    <div className="flex gap-4 items-center justify-end bg-white rounded-2xl p-6 border border-gray-100 sticky bottom-4">
                         <Link
                             href="/admin/designers/my-queue"
                             className="px-8 py-4 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all text-base"
@@ -440,7 +440,7 @@ export default function NewProjectPage() {
                         <button
                             type="submit"
                             disabled={creating}
-                            className="px-10 py-4 bg-oms-blue text-white rounded-xl font-bold hover:shadow-2xl hover:shadow-blue-300 disabled:opacity-50 transition-all transform hover:scale-105 text-base flex items-center gap-2"
+                            className="px-10 py-4 bg-oms-blue text-white rounded-xl font-bold 2xl -300 disabled:opacity-50 transition-all transform hover:scale-105 text-base flex items-center gap-2"
                         >
                             {creating ? <><Loader2 size={20} className="animate-spin" /> Creating...</> : <><CheckCircle size={20} /> Create Project</>}
                         </button>

@@ -33,10 +33,10 @@ export default function ActivityPage() {
     if (!module) return <FileText size={16} className="text-gray-600" />;
 
     const icons: Record<string, React.ReactNode> = {
-      'Sales': <Package size={16} className="text-green-600" />,
+      'Sales': <Package size={16} className="text-gray-900" />,
       'CRM': <Users size={16} className="text-blue-600" />,
       'Finance': <CreditCard size={16} className="text-oms-blue" />,
-      'Dispatch': <Truck size={16} className="text-amber-600" />,
+      'Dispatch': <Truck size={16} className="text-oms-orange" />,
       'CMYK': <Printer size={16} className="text-cyan-600" />,
       'Settings': <Settings size={16} className="text-gray-600" />,
       'System': <FileText size={16} className="text-oms-blue" />,
@@ -46,7 +46,7 @@ export default function ActivityPage() {
 
   const getModuleColor = (module: string) => {
     const colors: Record<string, string> = {
-      'Sales': 'bg-green-100 text-green-700',
+      'Sales': 'bg-gray-100 text-gray-900',
       'CRM': 'bg-blue-100 text-blue-700',
       'Finance': 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
       'Dispatch': 'bg-amber-100 text-amber-700',
@@ -58,7 +58,7 @@ export default function ActivityPage() {
   };
 
   const getActionColor = (action: string) => {
-    if (action.includes('Created') || action.includes('Added')) return 'text-green-600';
+    if (action.includes('Created') || action.includes('Added')) return 'text-gray-900';
     if (action.includes('Updated') || action.includes('Completed')) return 'text-blue-600';
     if (action.includes('Deleted') || action.includes('Cancelled')) return 'text-red-600';
     if (action.includes('Login') || action.includes('Logout')) return 'text-oms-blue';
@@ -91,28 +91,28 @@ export default function ActivityPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-4 border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
             <Clock size={18} className="text-oms-blue" />
             <span className="text-sm text-gray-500">Today&apos;s Activity</span>
           </div>
           <p className="text-page-title text-gray-900">{todayLogs}</p>
         </div>
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-4 border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
             <User size={18} className="text-blue-600" />
             <span className="text-sm text-gray-500">Active Users</span>
           </div>
           <p className="text-page-title text-gray-900">{uniqueUsersCount}</p>
         </div>
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-4 border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
-            <Package size={18} className="text-green-600" />
+            <Package size={18} className="text-gray-900" />
             <span className="text-sm text-gray-500">Sales Actions</span>
           </div>
           <p className="text-page-title text-gray-900">{salesActions}</p>
         </div>
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-4 border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
             <CreditCard size={18} className="text-oms-blue" />
             <span className="text-sm text-gray-500">Finance Actions</span>
@@ -122,7 +122,7 @@ export default function ActivityPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+      <div className="bg-white rounded-2xl p-4 border border-gray-100">
         <div className="flex items-center gap-2 mb-3">
           <Filter size={16} className="text-gray-500" />
           <span className="font-medium text-gray-700">Filters</span>
@@ -166,7 +166,7 @@ export default function ActivityPage() {
       </div>
 
       {/* Activity List */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <h2 className="font-semibold text-gray-900">Recent Activity</h2>
           <span className="text-sm text-gray-500">{filteredLogs.length} entries</span>

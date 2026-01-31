@@ -54,14 +54,14 @@ export default function DesignTasksPage() {
                     <h1 className="text-page-title text-gray-900">Design Queue</h1>
                     <p className="text-gray-500">Manage design tasks and approvals</p>
                 </div>
-                <div className="bg-white px-4 py-2 rounded-lg border shadow-sm">
+                <div className="bg-white px-4 py-2 rounded-lg border">
                     <span className="font-bold text-oms-blue">{designJobs.length}</span> Pending Tasks
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {designJobs.map(job => (
-                    <div key={job.id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col">
+                    <div key={job.id} className="bg-white rounded-xl border border-gray-200  transition-shadow p-5 flex flex-col">
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <span className="bg-gray-100 text-gray-600 text-xs font-mono px-2 py-1 rounded">{job.job_number}</span>
@@ -94,7 +94,7 @@ export default function DesignTasksPage() {
                                         </div>
                                         <div className="bg-gray-100 rounded-full h-1.5 overflow-hidden">
                                             <div
-                                                className={`h-full ${progress.percentage === 100 ? 'bg-green-500' : 'bg-[rgba(0,0,255,0.1)]'}`}
+                                                className={`h-full ${progress.percentage === 100 ? 'bg-white0' : 'bg-[rgba(0,0,255,0.1)]'}`}
                                                 style={{ width: `${progress.percentage}%` }}
                                             ></div>
                                         </div>

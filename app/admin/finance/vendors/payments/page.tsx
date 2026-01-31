@@ -85,8 +85,8 @@ export default function VendorPaymentsPage() {
 
   const getModeIcon = (mode: string) => {
     switch(mode) {
-      case 'Cash': return <Wallet size={16} className="text-green-600" />;
-      case 'UPI': return <CreditCard size={16} className="text-purple-600" />;
+      case 'Cash': return <Wallet size={16} className="text-gray-900" />;
+      case 'UPI': return <CreditCard size={16} className="text-oms-blue" />;
       default: return <Building size={16} className="text-blue-600" />;
     }
   };
@@ -119,26 +119,26 @@ export default function VendorPaymentsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
+        <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Paid</p>
-          <p className="text-lg sm:text-page-title text-green-600">{formatCurrency(totalPaid)}</p>
+          <p className="text-lg sm:text-page-title text-gray-900">{formatCurrency(totalPaid)}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
+        <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Cash Payments</p>
           <p className="text-lg sm:text-page-title text-emerald-600">{formatCurrency(cashPayments)}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
+        <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Bank Payments</p>
           <p className="text-lg sm:text-page-title text-blue-600">{formatCurrency(bankPayments)}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
+        <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Outstanding</p>
           <p className="text-lg sm:text-page-title text-red-600">{formatCurrency(totalOutstanding)}</p>
         </div>
       </div>
 
       {/* Vendor Outstanding Summary */}
-      <div className="bg-white rounded-xl shadow-sm border p-4">
+      <div className="bg-white rounded-xl border p-4">
         <h3 className="font-semibold text-gray-900 mb-3">Vendor Outstanding</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {vendors.filter(v => v.outstanding > 0).map(vendor => (
@@ -154,16 +154,16 @@ export default function VendorPaymentsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border p-4">
+      <div className="bg-white rounded-xl border p-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <input type="text" placeholder="Search payments..." value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500" />
+              className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue" />
           </div>
           <select value={vendorFilter} onChange={(e) => setVendorFilter(e.target.value)}
-            className="px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+            className="px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue">
             <option value="all">All Vendors</option>
             {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
           </select>
@@ -173,15 +173,15 @@ export default function VendorPaymentsPage() {
       {/* Payments List */}
       <div className="space-y-3">
         {filteredPayments.map(payment => (
-          <div key={payment.id} className="bg-white rounded-xl shadow-sm border p-4 hover:shadow-md transition-shadow">
+          <div key={payment.id} className="bg-white rounded-xl border p-4  transition-shadow">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <ArrowUpRight className="text-green-600" size={20} />
+                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <ArrowUpRight className="text-gray-900" size={20} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className="font-mono text-sm text-green-600 font-medium">{payment.paymentNo}</span>
+                    <span className="font-mono text-sm text-gray-900 font-medium">{payment.paymentNo}</span>
                     <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gray-100">
                       {getModeIcon(payment.paymentMode)}
                       {payment.paymentMode}
@@ -197,7 +197,7 @@ export default function VendorPaymentsPage() {
               </div>
               <div className="flex items-center gap-4">
                 <div className="text-right">
-                  <p className="font-bold text-xl text-green-600">{formatCurrency(payment.amount)}</p>
+                  <p className="font-bold text-xl text-gray-900">{formatCurrency(payment.amount)}</p>
                   <p className="text-xs text-gray-500">Ref: {payment.reference}</p>
                 </div>
                 <div className="flex items-center gap-1">
@@ -299,15 +299,15 @@ export default function VendorPaymentsPage() {
           <div className="bg-white rounded-2xl w-full max-w-md">
             <div className="p-5 border-b flex items-center justify-between">
               <div>
-                <span className="font-mono text-green-600">{selectedPayment.paymentNo}</span>
+                <span className="font-mono text-gray-900">{selectedPayment.paymentNo}</span>
                 <h2 className="text-page-title">Payment Details</h2>
               </div>
               <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <div className="p-5 space-y-4">
-              <div className="text-center bg-green-50 rounded-xl p-4">
+              <div className="text-center bg-white rounded-xl p-4">
                 <p className="text-sm text-gray-600">Amount Paid</p>
-                <p className="text-page-title text-green-600">{formatCurrency(selectedPayment.amount)}</p>
+                <p className="text-page-title text-gray-900">{formatCurrency(selectedPayment.amount)}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

@@ -83,7 +83,7 @@ export default function NotesWidget() {
     });
 
     return (
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-full flex flex-col">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 h-full flex flex-col">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-900">Notes</h3>
                 <button
@@ -154,7 +154,7 @@ export default function NotesWidget() {
                 {sortedNotes.map(note => {
                     const style = getStyle(note.color);
                     return (
-                        <div key={note.id} className={`group relative p-4 rounded-xl ${style.bg} border ${style.border} transition-all hover:shadow-md`}>
+                        <div key={note.id} className={`group relative p-4 rounded-xl ${style.bg} border ${style.border} transition-all `}>
                             <p className="text-sm text-gray-800 whitespace-pre-wrap">{note.content}</p>
 
                             {note.job && (
@@ -183,7 +183,7 @@ export default function NotesWidget() {
                             </div>
                             {note.is_pinned && (
                                 <div className="absolute -top-2 -left-2">
-                                    <span className="bg-oms-blue shadow-sm border border-oms-blue/20 p-1 rounded-full block">
+                                    <span className="bg-oms-blue border border-oms-blue/20 p-1 rounded-full block">
                                         <Pin size={10} className="fill-current text-white" />
                                     </span>
                                 </div>

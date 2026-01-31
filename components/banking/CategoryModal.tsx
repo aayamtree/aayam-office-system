@@ -225,7 +225,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                             required
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue bg-white"
                         >
                             <option value="">Select category...</option>
                             {parentCategories.map((cat) => (
@@ -255,7 +255,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                                         value={newCategoryName}
                                         onChange={(e) => setNewCategoryName(e.target.value)}
                                         placeholder="New category name..."
-                                        className="flex-1 px-3 py-2 border border-[rgba(0,0,255,0.2)]-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="flex-1 px-3 py-2 border border-[rgba(0,0,255,0.2)]-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-oms-blue"
                                     />
                                     <button
                                         type="button"
@@ -289,7 +289,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                             <select
                                 value={selectedSubcategory}
                                 onChange={(e) => setSelectedSubcategory(e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue bg-white"
                             >
                                 <option value="">None (use main category)</option>
                                 {subcategories.map((cat) => (
@@ -312,7 +312,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                                     type="button"
                                     onClick={() => setExpenseType('goods')}
                                     className={`flex-1 px-4 py-2.5 rounded-xl border-2 font-medium transition-all ${expenseType === 'goods'
-                                        ? 'border-indigo-500 bg-[rgba(0,0,255,0.1)] text-oms-blue'
+                                        ? 'border-oms-blue bg-[rgba(0,0,255,0.1)] text-oms-blue'
                                         : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                                         }`}
                                 >
@@ -322,7 +322,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                                     type="button"
                                     onClick={() => setExpenseType('services')}
                                     className={`flex-1 px-4 py-2.5 rounded-xl border-2 font-medium transition-all ${expenseType === 'services'
-                                        ? 'border-indigo-500 bg-[rgba(0,0,255,0.1)] text-oms-blue'
+                                        ? 'border-oms-blue bg-[rgba(0,0,255,0.1)] text-oms-blue'
                                         : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                                         }`}
                                 >
@@ -340,7 +340,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                         <select
                             value={paymentMethod}
                             onChange={(e) => setPaymentMethod(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue bg-white"
                         >
                             <option value="bank_transfer">Bank Transfer</option>
                             <option value="cash">Cash</option>
@@ -359,7 +359,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                             type="date"
                             value={transactionDate}
                             onChange={(e) => setTransactionDate(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
                         />
                     </div>
 
@@ -373,7 +373,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                             onChange={(e) => setNotes(e.target.value)}
                             rows={3}
                             placeholder="Add any additional details..."
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue resize-none"
                         />
                     </div>
 

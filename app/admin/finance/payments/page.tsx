@@ -148,7 +148,7 @@ export default function PaymentsPageNew() {
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
-                    className="flex items-center gap-2 bg-black text-white px-4 py-2.5 rounded-xl hover:bg-gray-800 w-full sm:w-auto justify-center text-sm font-medium"
+                    className="flex items-center gap-2 bg-black text-white px-4 py-2.5 rounded-xl hover:bg-blue-600 w-full sm:w-auto justify-center text-sm font-medium"
                 >
                     <Plus size={18} />
                     Record Payment
@@ -185,7 +185,7 @@ export default function PaymentsPageNew() {
                                 payments.map((payment) => (
                                     <tr key={payment.id} className="hover:bg-gray-50">
                                         <td className="p-3 md:p-4">
-                                            <span className={`flex items-center gap-1.5 md:gap-2 text-xs md:text-sm ${payment.type === 'received' ? 'text-green-600' : 'text-red-600'}`}>
+                                            <span className={`flex items-center gap-1.5 md:gap-2 text-xs md:text-sm ${payment.type === 'received' ? 'text-gray-900' : 'text-red-600'}`}>
                                                 {payment.type === 'received' ? <ArrowDownRight size={14} /> : <ArrowUpRight size={14} />}
                                                 {payment.type === 'received' ? 'Received' : 'Paid'}
                                             </span>

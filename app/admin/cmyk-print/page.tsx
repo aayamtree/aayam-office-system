@@ -43,8 +43,8 @@ export default function CMYKPrintPage() {
   };
 
   const stats = [
-    { label: 'Recent POS Sales', value: formatCurrency(todaysSalesTotal), change: 'Last 10 sales', icon: TrendingUp, color: 'bg-green-500' },
-    { label: 'Pending Jobs', value: pendingJobs.length.toString(), change: 'In Queue', icon: Clock, color: 'bg-amber-500' },
+    { label: 'Recent POS Sales', value: formatCurrency(todaysSalesTotal), change: 'Last 10 sales', icon: TrendingUp, color: 'bg-white0' },
+    { label: 'Pending Jobs', value: pendingJobs.length.toString(), change: 'In Queue', icon: Clock, color: 'bg-white0' },
     { label: 'Completed Recently', value: completedTodayJobs.length.toString(), change: 'Jobs done', icon: CheckCircle, color: 'bg-blue-500' },
     { label: 'Stock Alerts', value: lowStockItems.length.toString(), change: 'Items low', icon: Package, color: 'bg-red-500' },
   ];
@@ -53,7 +53,7 @@ export default function CMYKPrintPage() {
     switch (status) {
       case 'printing': return 'bg-blue-100 text-blue-700';
       case 'finishing': return 'bg-[rgba(0,0,255,0.1)] text-oms-blue';
-      case 'ready': return 'bg-green-100 text-green-700';
+      case 'ready': return 'bg-gray-100 text-gray-900';
       default: return 'bg-gray-100 text-gray-700';
     }
   };
@@ -72,7 +72,7 @@ export default function CMYKPrintPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-2xl p-4 lg:p-6 shadow-sm border border-gray-100">
+          <div key={stat.label} className="bg-white rounded-2xl p-4 lg:p-6 border border-gray-100">
             <div className="flex items-center gap-3 mb-3">
               <div className={`w-10 h-10 ${stat.color} rounded-xl flex items-center justify-center`}>
                 <stat.icon size={20} className="text-white" />
@@ -90,20 +90,20 @@ export default function CMYKPrintPage() {
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-        <Link href="/admin/cmyk-print/retail-pos" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
+        <Link href="/admin/cmyk-print/retail-pos" className="bg-white rounded-2xl p-6 border border-gray-100  transition-shadow group">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <ShoppingCart size={24} className="text-green-600" />
+            <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <ShoppingCart size={24} className="text-gray-900" />
             </div>
             <div>
               <h2 className="text-section text-gray-900">Retail POS</h2>
               <p className="text-sm text-gray-500">Quick billing</p>
             </div>
           </div>
-          <div className="text-sm text-green-600">● Open Counter →</div>
+          <div className="text-sm text-gray-900">● Open Counter →</div>
         </Link>
 
-        <Link href="/admin/cmyk-print/paper-stock" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
+        <Link href="/admin/cmyk-print/paper-stock" className="bg-white rounded-2xl p-6 border border-gray-100  transition-shadow group">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <Package size={24} className="text-blue-600" />
@@ -124,7 +124,7 @@ export default function CMYKPrintPage() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Sales */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-section text-gray-900">Recent Sales</h2>
             <Link href="/admin/cmyk-print/retail-pos" className="text-sm text-oms-blue hover:underline">
@@ -143,14 +143,14 @@ export default function CMYKPrintPage() {
                   </div>
                   <p className="text-sm text-gray-600">{sale.customer_name || 'Walk-in'}</p>
                 </div>
-                <p className="font-semibold text-green-600">{formatCurrency(sale.total_amount)}</p>
+                <p className="font-semibold text-gray-900">{formatCurrency(sale.total_amount)}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Pending Jobs */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-section text-gray-900">Pending Jobs</h2>
             <Link href="/admin/jobs/queue" className="text-sm text-oms-blue hover:underline">
@@ -183,29 +183,29 @@ export default function CMYKPrintPage() {
       </div>
 
       {/* Low Stock Alert */}
-      <div className={`rounded-2xl p-4 sm:p-6 border ${lowStockItems.length > 0 ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
+      <div className={`rounded-2xl p-4 sm:p-6 border ${lowStockItems.length > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-green-200'}`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${lowStockItems.length > 0 ? 'bg-red-100' : 'bg-green-100'}`}>
-              <Package size={20} className={lowStockItems.length > 0 ? 'text-red-600' : 'text-green-600'} />
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${lowStockItems.length > 0 ? 'bg-red-100' : 'bg-gray-100'}`}>
+              <Package size={20} className={lowStockItems.length > 0 ? 'text-red-600' : 'text-gray-900'} />
             </div>
             <div>
               <h2 className={`text-base sm:text-section ${lowStockItems.length > 0 ? 'text-red-900' : 'text-green-900'}`}>
                 {lowStockItems.length > 0 ? 'Low Stock Alert' : 'Stock Levels Good'}
               </h2>
-              <p className={`text-sm ${lowStockItems.length > 0 ? 'text-red-600' : 'text-green-600'}`}>
+              <p className={`text-sm ${lowStockItems.length > 0 ? 'text-red-600' : 'text-gray-900'}`}>
                 {lowStockItems.length > 0 ? `${lowStockItems.length} items need restock` : 'All items are sufficiently stocked'}
               </p>
             </div>
           </div>
-          <Link href="/admin/cmyk-print/paper-stock" className={`text-sm hover:underline font-medium ${lowStockItems.length > 0 ? 'text-red-700' : 'text-green-700'}`}>
+          <Link href="/admin/cmyk-print/paper-stock" className={`text-sm hover:underline font-medium ${lowStockItems.length > 0 ? 'text-red-700' : 'text-gray-900'}`}>
             Manage Stock →
           </Link>
         </div>
         {lowStockItems.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {lowStockItems.map((item, idx) => (
-              <div key={idx} className="p-3 bg-white rounded-xl shadow-sm">
+              <div key={idx} className="p-3 bg-white rounded-xl">
                 <p className="font-medium text-gray-900">{item.name}</p>
                 <p className="text-sm text-red-600">
                   {item.quantity} {item.unit} left

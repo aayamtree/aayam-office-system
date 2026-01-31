@@ -101,7 +101,7 @@ export default function AdminEODDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-white rounded-xl p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle size={18} className="text-green-600" />
+                        <CheckCircle size={18} className="text-gray-900" />
                         <span className="text-sm text-gray-500">Today Submitted</span>
                     </div>
                     <p className="text-page-title text-gray-900">{todaySubmitted}</p>
@@ -110,7 +110,7 @@ export default function AdminEODDashboard() {
 
                 <div className="bg-white rounded-xl p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-2">
-                        <AlertCircle size={18} className="text-amber-600" />
+                        <AlertCircle size={18} className="text-oms-orange" />
                         <span className="text-sm text-gray-500">Pending Today</span>
                     </div>
                     <p className="text-page-title text-gray-900">{todayPending}</p>
@@ -144,14 +144,14 @@ export default function AdminEODDashboard() {
                         <div
                             key={status.user_id}
                             className={`p-3 rounded-lg border ${status.submitted
-                                ? 'bg-green-50 border-green-200'
+                                ? 'bg-white border-green-200'
                                 : 'bg-red-50 border-red-200'
                                 }`}
                         >
                             <div className="flex items-center justify-between">
                                 <span className="font-medium text-gray-900 text-sm">{status.user_name}</span>
                                 {status.submitted ? (
-                                    <CheckCircle size={16} className="text-green-600" />
+                                    <CheckCircle size={16} className="text-gray-900" />
                                 ) : (
                                     <X size={16} className="text-red-600" />
                                 )}
@@ -281,7 +281,7 @@ export default function AdminEODDashboard() {
                                                             <div className="flex items-center gap-4 text-xs text-gray-600">
                                                                 <span>Progress: {update.completion_percentage}%</span>
                                                                 <span>Time: {update.time_spent}h</span>
-                                                                {update.client_approval_received && <span className="text-green-600 font-medium">✓ Client Approved</span>}
+                                                                {update.client_approval_received && <span className="text-gray-900 font-medium">✓ Client Approved</span>}
                                                                 {update.print_file_ready && <span className="text-blue-600 font-medium">✓ Print Ready</span>}
                                                             </div>
                                                             {update.client_comments && (

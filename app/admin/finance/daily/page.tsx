@@ -83,7 +83,7 @@ export default function DailyFinancePage() {
             </div>
 
             {/* Total Balance Card */}
-            <div className="bg-oms-blue rounded-2xl p-6 text-white shadow-lg">
+            <div className="bg-oms-blue rounded-2xl p-6 text-white">
                 <div className="flex justify-between items-start mb-4">
                     <div>
                         <p className="text-sm opacity-90">Total Available Balance</p>
@@ -119,17 +119,17 @@ export default function DailyFinancePage() {
             </div>
 
             {/* Today's Activity */}
-            <div className="bg-white rounded-2xl border p-6 shadow-sm">
+            <div className="bg-white rounded-2xl border p-6">
                 <h2 className="text-section mb-4">Today&apos;s Activity</h2>
 
                 <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-green-50 rounded-xl p-4">
-                        <div className="flex items-center gap-2 text-green-600 mb-2">
+                    <div className="bg-white rounded-xl p-4">
+                        <div className="flex items-center gap-2 text-gray-900 mb-2">
                             <ArrowDownRight size={20} />
                             <p className="text-sm font-medium">Money IN</p>
                         </div>
-                        <p className="text-page-title text-green-700">₹{todayIncome.toLocaleString()}</p>
-                        <p className="text-xs text-green-600 mt-1">{todayPayments.length} payments received</p>
+                        <p className="text-page-title text-gray-900">₹{todayIncome.toLocaleString()}</p>
+                        <p className="text-xs text-gray-900 mt-1">{todayPayments.length} payments received</p>
                     </div>
 
                     <div className="bg-red-50 rounded-xl p-4">
@@ -159,7 +159,7 @@ export default function DailyFinancePage() {
             {/* Account Breakdown */}
             <div className="grid grid-cols-2 gap-6">
                 {/* Bank Accounts */}
-                <div className="bg-white rounded-2xl border p-5 shadow-sm">
+                <div className="bg-white rounded-2xl border p-5">
                     <h3 className="font-bold mb-4 flex items-center gap-2">
                         <Building2 size={18} className="text-blue-600" />
                         Bank Accounts
@@ -181,9 +181,9 @@ export default function DailyFinancePage() {
                 </div>
 
                 {/* Cash Accounts */}
-                <div className="bg-white rounded-2xl border p-5 shadow-sm">
+                <div className="bg-white rounded-2xl border p-5">
                     <h3 className="font-bold mb-4 flex items-center gap-2">
-                        <Wallet size={18} className="text-green-600" />
+                        <Wallet size={18} className="text-gray-900" />
                         Cash Registers
                     </h3>
                     <div className="space-y-3">
@@ -204,20 +204,20 @@ export default function DailyFinancePage() {
             </div>
 
             {/* Today's Transactions */}
-            <div className="bg-white rounded-2xl border p-5 shadow-sm">
+            <div className="bg-white rounded-2xl border p-5">
                 <h3 className="font-bold mb-4">Today&apos;s Transactions</h3>
 
                 <div className="space-y-2">
                     {todayPayments.map((payment) => (
-                        <div key={payment.id} className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                        <div key={payment.id} className="flex justify-between items-center p-3 bg-white rounded-lg">
                             <div className="flex items-center gap-3">
-                                <ArrowDownRight className="text-green-600" size={18} />
+                                <ArrowDownRight className="text-gray-900" size={18} />
                                 <div>
                                     <p className="font-medium text-sm">{payment.clients?.name}</p>
                                     <p className="text-xs text-gray-500">{payment.payment_mode}</p>
                                 </div>
                             </div>
-                            <p className="font-bold text-green-600">+₹{payment.amount?.toLocaleString()}</p>
+                            <p className="font-bold text-gray-900">+₹{payment.amount?.toLocaleString()}</p>
                         </div>
                     ))}
 

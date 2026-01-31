@@ -69,7 +69,7 @@ export default function ProfileSettingsPage() {
             {/* Messages */}
             {message && (
                 <div className={`rounded-xl p-4 ${message.type === 'success'
-                    ? 'bg-green-50 border border-green-200 text-green-800'
+                    ? 'bg-white border border-green-200 text-green-800'
                     : 'bg-red-50 border border-red-200 text-red-800'
                     }`}>
                     <p className="font-medium">{message.text}</p>
@@ -77,7 +77,7 @@ export default function ProfileSettingsPage() {
             )}
 
             {/* Main Form */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <div className="bg-white rounded-2xl border border-gray-100">
                 <div className="p-6 border-b border-gray-100">
                     <h2 className="text-section text-gray-900">Personal Information</h2>
                     <p className="text-sm text-gray-500 mt-1">Update your personal details</p>

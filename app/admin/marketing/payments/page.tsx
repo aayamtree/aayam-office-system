@@ -12,7 +12,7 @@ const currentUser = { id: 1, name: 'Marketing User' };
 const paymentStatuses = [
   { id: 'pending', name: 'Pending', color: 'bg-yellow-100 text-yellow-700' },
   { id: 'partial', name: 'Partial', color: 'bg-orange-100 text-orange-700' },
-  { id: 'paid', name: 'Paid', color: 'bg-green-100 text-green-700' },
+  { id: 'paid', name: 'Paid', color: 'bg-gray-100 text-gray-900' },
   { id: 'overdue', name: 'Overdue', color: 'bg-red-100 text-red-700' },
 ];
 
@@ -85,35 +85,35 @@ export default function MarketingPaymentsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border p-4">
+        <div className="bg-white rounded-xl border p-4">
           <p className="text-sm text-gray-500">Total Orders</p>
           <p className="text-page-title text-gray-900">{totalOrders}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-4">
+        <div className="bg-white rounded-xl border p-4">
           <p className="text-sm text-gray-500">Total Amount</p>
-          <p className="text-page-title text-indigo-600">{formatCurrency(totalAmount)}</p>
+          <p className="text-page-title text-oms-blue">{formatCurrency(totalAmount)}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-4">
+        <div className="bg-white rounded-xl border p-4">
           <p className="text-sm text-gray-500">Received</p>
-          <p className="text-page-title text-green-600">{formatCurrency(totalPaid)}</p>
+          <p className="text-page-title text-gray-900">{formatCurrency(totalPaid)}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border p-4">
+        <div className="bg-white rounded-xl border p-4">
           <p className="text-sm text-gray-500">Pending</p>
-          <p className="text-page-title text-amber-600">{formatCurrency(totalPending)}</p>
+          <p className="text-page-title text-oms-orange">{formatCurrency(totalPending)}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border p-4">
+      <div className="bg-white rounded-xl border p-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <input type="text" placeholder="Search by order ID, client..." value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500" />
+              className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue" />
           </div>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+            className="px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue">
             <option value="all">All Status</option>
             {paymentStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
@@ -125,12 +125,12 @@ export default function MarketingPaymentsPage() {
         {filteredPayments.map(payment => {
           const progress = (payment.paidAmount / payment.totalAmount) * 100;
           return (
-            <div key={payment.id} className={`bg-white rounded-xl shadow-sm border p-4 hover:shadow-md transition-shadow ${payment.status === 'overdue' ? 'border-l-4 border-l-red-500' :
+            <div key={payment.id} className={`bg-white rounded-xl border p-4  transition-shadow ${payment.status === 'overdue' ? 'border-l-4 border-l-red-500' :
               payment.status === 'pending' ? 'border-l-4 border-l-yellow-500' : ''}`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className="font-mono text-sm text-indigo-600 font-medium">{payment.orderId}</span>
+                    <span className="font-mono text-sm text-oms-blue font-medium">{payment.orderId}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusBadge(payment.status)}`}>
                       {getStatusName(payment.status)}
                     </span>
@@ -145,7 +145,7 @@ export default function MarketingPaymentsPage() {
                   <div className="text-right">
                     <p className="text-section text-gray-900">{formatCurrency(payment.totalAmount)}</p>
                     <p className="text-xs text-gray-500">
-                      Paid: <span className="text-green-600 font-medium">{formatCurrency(payment.paidAmount)}</span>
+                      Paid: <span className="text-gray-900 font-medium">{formatCurrency(payment.paidAmount)}</span>
                     </p>
                   </div>
                   <button onClick={() => { setSelectedPayment(payment); setShowDetailModal(true); }}
@@ -162,12 +162,12 @@ export default function MarketingPaymentsPage() {
                   <span className="font-medium">{progress.toFixed(0)}%</span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full transition-all duration-300 ${progress >= 100 ? 'bg-green-500' : progress > 0 ? 'bg-orange-500' : 'bg-gray-300'
+                  <div className={`h-full rounded-full transition-all duration-300 ${progress >= 100 ? 'bg-white0' : progress > 0 ? 'bg-orange-500' : 'bg-gray-300'
                     }`} style={{ width: `${progress}%` }} />
                 </div>
                 <div className="flex justify-between text-xs mt-1">
-                  <span className="text-green-600">Paid: {formatCurrency(payment.paidAmount)}</span>
-                  <span className="text-amber-600">Pending: {formatCurrency(payment.pendingAmount)}</span>
+                  <span className="text-gray-900">Paid: {formatCurrency(payment.paidAmount)}</span>
+                  <span className="text-oms-orange">Pending: {formatCurrency(payment.pendingAmount)}</span>
                 </div>
               </div>
             </div>
@@ -189,7 +189,7 @@ export default function MarketingPaymentsPage() {
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
               <div>
-                <span className="font-mono text-indigo-600">{selectedPayment.orderId}</span>
+                <span className="font-mono text-oms-blue">{selectedPayment.orderId}</span>
                 <h2 className="text-page-title">{selectedPayment.subject}</h2>
               </div>
               <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
@@ -228,11 +228,11 @@ export default function MarketingPaymentsPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Paid Amount</span>
-                  <span className="font-semibold text-green-600">{formatCurrency(selectedPayment.paidAmount)}</span>
+                  <span className="font-semibold text-gray-900">{formatCurrency(selectedPayment.paidAmount)}</span>
                 </div>
                 <div className="flex justify-between pt-2 border-t">
                   <span className="font-medium">Pending Amount</span>
-                  <span className="font-bold text-amber-600">{formatCurrency(selectedPayment.pendingAmount)}</span>
+                  <span className="font-bold text-oms-orange">{formatCurrency(selectedPayment.pendingAmount)}</span>
                 </div>
               </div>
 
@@ -242,10 +242,10 @@ export default function MarketingPaymentsPage() {
                 {selectedPayment.payments.length > 0 ? (
                   <div className="space-y-2">
                     {selectedPayment.payments.map((p: any, index: number) => (
-                      <div key={index} className="flex items-center justify-between bg-green-50 rounded-lg p-3">
+                      <div key={index} className="flex items-center justify-between bg-white rounded-lg p-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                            <CheckCircle size={16} className="text-green-600" />
+                          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                            <CheckCircle size={16} className="text-gray-900" />
                           </div>
                           <div>
                             <p className="font-medium text-sm">{formatCurrency(p.amount)}</p>

@@ -11,7 +11,7 @@ import { formatDate } from '@/lib/utils';
 
 // Type Definitions
 const followUpTypes = [
-  { id: 'call', name: 'Call', icon: Phone, color: 'bg-green-100 text-green-700' },
+  { id: 'call', name: 'Call', icon: Phone, color: 'bg-gray-100 text-gray-900' },
   { id: 'email', name: 'Email', icon: Mail, color: 'bg-blue-100 text-blue-700' },
   { id: 'meeting', name: 'Meeting', icon: Users, color: 'bg-[rgba(0,0,255,0.1)] text-oms-blue' },
   { id: 'video_call', name: 'Video Call', icon: Video, color: 'bg-orange-100 text-orange-700' },
@@ -150,7 +150,7 @@ export default function MarketingFollowUpsPage() {
     const isOverdue = followUp.date < today;
 
     return (
-      <div className={`bg-white rounded-xl shadow-sm border p-4 ${isOverdue ? 'border-l-4 border-l-red-500' : ''}`}>
+      <div className={`bg-white rounded-xl border p-4 ${isOverdue ? 'border-l-4 border-l-red-500' : ''}`}>
         <div className="flex items-start gap-3">
           <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${typeInfo.color}`}>
             <TypeIcon size={20} />
@@ -184,7 +184,7 @@ export default function MarketingFollowUpsPage() {
           {followUp.quotation ? (
             <button
               onClick={() => handleViewQuote(followUp)}
-              className="text-xs font-bold text-green-600 hover:bg-green-50 px-2 py-1 rounded-lg transition-colors flex items-center gap-1"
+              className="text-xs font-bold text-gray-900 hover:bg-white px-2 py-1 rounded-lg transition-colors flex items-center gap-1"
             >
               <CheckCircle size={14} /> View Quote {followUp.quotationNumber}
             </button>
@@ -221,31 +221,31 @@ export default function MarketingFollowUpsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-        <div className="bg-white rounded-lg md:rounded-xl shadow-sm border p-3 md:p-4">
+        <div className="bg-white rounded-lg md:rounded-xl border p-3 md:p-4">
           <p className="text-xs md:text-sm text-gray-500">Today</p>
           <p className="text-xl md:text-page-title text-blue-600">{todayFollowUps.length}</p>
         </div>
-        <div className="bg-white rounded-lg md:rounded-xl shadow-sm border p-3 md:p-4">
+        <div className="bg-white rounded-lg md:rounded-xl border p-3 md:p-4">
           <p className="text-xs md:text-sm text-gray-500">Upcoming</p>
-          <p className="text-xl md:text-page-title text-green-600">{upcomingFollowUps.length}</p>
+          <p className="text-xl md:text-page-title text-gray-900">{upcomingFollowUps.length}</p>
         </div>
-        <div className="bg-white rounded-lg md:rounded-xl shadow-sm border p-3 md:p-4">
+        <div className="bg-white rounded-lg md:rounded-xl border p-3 md:p-4">
           <p className="text-xs md:text-sm text-gray-500">Overdue</p>
           <p className="text-xl md:text-page-title text-red-600">{overdueFollowUps.length}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border p-4">
+      <div className="bg-white rounded-xl border p-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <input type="text" placeholder="Search follow-ups..." value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500" />
+              className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue" />
           </div>
           <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+            className="px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue">
             <option value="all">All Types</option>
             {followUpTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>

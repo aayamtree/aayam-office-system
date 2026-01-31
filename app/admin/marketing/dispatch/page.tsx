@@ -23,7 +23,7 @@ export default function MarketingDispatchPage() {
       <h1 className="text-page-title text-gray-900">My Dispatched Orders</h1>
       <p className="text-gray-500">Track delivery status and commissions for your orders.</p>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <table className="w-full text-left">
           <thead className="bg-gray-50 border-b border-gray-100">
             <tr>
@@ -43,12 +43,12 @@ export default function MarketingDispatchPage() {
                 <td className="p-4">{job.project_name}</td>
                 <td className="p-4">
                   <span className={`px-2 py-1 rounded-full text-xs font-bold capitalize 
-                    ${job.current_stage === 'delivered' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                    ${job.current_stage === 'delivered' ? 'bg-gray-100 text-gray-900' : 'bg-blue-100 text-blue-700'}`}>
                     {job.current_stage.replace('_', ' ')}
                   </span>
                 </td>
                 <td className="p-4 text-right font-mono">₹{job.total_amount}</td>
-                <td className="p-4 text-right font-mono text-green-600 font-bold">
+                <td className="p-4 text-right font-mono text-gray-900 font-bold">
                   ₹{(job.total_amount * 0.02).toFixed(2)}
                 </td>
               </tr>

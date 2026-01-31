@@ -17,7 +17,8 @@ import {
   CheckCircle,
   Receipt,
   Phone,
-  Ban
+  Ban,
+  IndianRupee
 } from 'lucide-react';
 import { useDashboardStats, useJobs } from '@/lib/hooks';
 import NotesWidget from '@/components/dashboard/NotesWidget';
@@ -80,9 +81,9 @@ export default function AdminDashboard() {
   // Pipeline Data - Dynamic
   const pipeline = [
     { label: 'In Design', count: (dashboardStats.pipeline?.designing || 0) + (dashboardStats.pipeline?.approval || 0), color: 'bg-oms-blue', href: '/admin/designers/tasks?view=team_tasks', thresh: 10 },
-    { label: 'Production', count: (dashboardStats.pipeline?.printing || 0) + (dashboardStats.pipeline?.finishing || 0), color: 'bg-amber-500', href: '/admin/jobs/queue', thresh: 15 },
+    { label: 'Production', count: (dashboardStats.pipeline?.printing || 0) + (dashboardStats.pipeline?.finishing || 0), color: 'bg-white0', href: '/admin/jobs/queue', thresh: 15 },
     { label: 'QC Check', count: dashboardStats.pipeline?.quality_check || 0, color: 'bg-oms-blue', href: '/admin/jobs?status=quality_check', thresh: 5 },
-    { label: 'Ready/Packed', count: (dashboardStats.pipeline?.ready || 0) + (dashboardStats.pipeline?.packed || 0), color: 'bg-green-500', href: '/admin/dispatch', thresh: 20 },
+    { label: 'Ready/Packed', count: (dashboardStats.pipeline?.ready || 0) + (dashboardStats.pipeline?.packed || 0), color: 'bg-white0', href: '/admin/dispatch', thresh: 20 },
     { label: 'Dispatched', count: (dashboardStats.pipeline?.dispatched || 0) + (dashboardStats.pipeline?.in_transit || 0), color: 'bg-blue-500', href: '/admin/dispatch/history', thresh: 999 },
   ];
 
@@ -149,7 +150,7 @@ export default function AdminDashboard() {
       'printing': 'bg-amber-100 text-amber-700',
       'finishing': 'bg-orange-100 text-orange-700',
       'quality_check': 'bg-pink-100 text-pink-700',
-      'ready': 'bg-green-100 text-green-700',
+      'ready': 'bg-gray-100 text-gray-900',
       'dispatched': 'bg-cyan-100 text-cyan-700',
       'delivered': 'bg-gray-100 text-gray-700'
     };
@@ -159,7 +160,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in pb-6 md:pb-10 px-3 md:px-0">
       {/* Welcome Header */}
-      <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 shadow-sm border border-gray-100">
+      <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 border border-gray-100">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4 mb-4 md:mb-8">
           <div>
             <h1 className="text-page-title text-gray-900">
@@ -202,7 +203,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Daily Briefing Panel (Focus + Activity) */}
-      <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 animate-fade-in-up">
+      <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 border border-gray-100 animate-fade-in-up">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
           {/* Left: Today's Focus Stats */}
           <div className="lg:col-span- 2 space-y-4 md:space-y-5">
@@ -214,94 +215,94 @@ export default function AdminDashboard() {
               <p className="text-xs text-gray-400 pl-4 mt-1">Daily Focus</p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3 lg:gap-4 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 w-full">
               {/* Jobs Due */}
-              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-200 text-gray-500'}`}>
-                  <AlertCircle size={16} />
+              <div className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-200 text-gray-500'}`}>
+                  <AlertCircle size={20} />
                 </div>
-                <div>
-                  <div className={`text-section leading-none ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'text-red-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsDue || 0}</div>
-                  <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Jobs Due</div>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold leading-none mb-1 ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'text-red-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsDue || 0}</div>
+                  <div className="text-[11px] text-gray-600 font-medium whitespace-nowrap">Jobs Due</div>
                 </div>
               </div>
 
               {/* Jobs Delayed */}
-              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-[rgba(255,102,0,0.08)] border-[rgba(255,102,0,0.15)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-[rgba(255,102,0,0.12)] text-oms-orange' : 'bg-gray-200 text-gray-500'}`}>
-                  <Clock size={16} />
+              <div className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-[rgba(255,102,0,0.08)] border-[rgba(255,102,0,0.15)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-[rgba(255,102,0,0.12)] text-oms-orange' : 'bg-gray-200 text-gray-500'}`}>
+                  <Clock size={20} />
                 </div>
-                <div>
-                  <div className={`text-section leading-none ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'text-oms-orange' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsDelayed || 0}</div>
-                  <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Delayed</div>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold leading-none mb-1 ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'text-oms-orange' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsDelayed || 0}</div>
+                  <div className="text-[11px] text-gray-600 font-medium whitespace-nowrap">Delayed</div>
                 </div>
               </div>
 
               {/* Jobs Completed */}
-              <div className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-gray-50 border-gray-200 hover:bg-gray-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-gray-200 text-gray-600' : 'bg-gray-200 text-gray-500'}`}>
-                  <CheckCircle size={16} />
+              <div className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border transition-colors ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-gray-50 border-gray-200 hover:bg-gray-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-gray-200 text-gray-600' : 'bg-gray-200 text-gray-500'}`}>
+                  <CheckCircle size={20} />
                 </div>
-                <div>
-                  <div className={`text-section leading-none ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'text-gray-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsCompleted || 0}</div>
-                  <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Completed</div>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold leading-none mb-1 ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'text-gray-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsCompleted || 0}</div>
+                  <div className="text-[11px] text-gray-600 font-medium whitespace-nowrap">Completed</div>
                 </div>
               </div>
 
               {/* Payments Due */}
-              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
-                  <Receipt size={16} />
+              <div className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
+                  <IndianRupee size={20} />
                 </div>
-                <div>
-                  <div className={`text-section leading-none ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'text-oms-blue' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.paymentsDue || 0}</div>
-                  <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Payments</div>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold leading-none mb-1 ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'text-oms-blue' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.paymentsDue || 0}</div>
+                  <div className="text-[11px] text-gray-600 font-medium whitespace-nowrap">Payments</div>
                 </div>
               </div>
 
               {/* Follow-ups */}
-              <Link href="/admin/marketing/follow-ups" className={`flex items-center gap-3 p-3 rounded-xl border transition-all hover:scale-105 ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)] cursor-pointer' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
-                  <Phone size={16} />
+              <Link href="/admin/marketing/follow-ups" className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border transition-all hover:scale-105 ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)] cursor-pointer' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
+                  <Phone size={20} />
                 </div>
-                <div>
-                  <div className={`text-section leading-none ${dashboardStats.alerts?.followUpsDue > 0 ? 'text-oms-blue' : 'text-gray-500'}`}>{dashboardStats.alerts?.followUpsDue || 0}</div>
-                  <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Follow-ups</div>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold leading-none mb-1 ${dashboardStats.alerts?.followUpsDue > 0 ? 'text-oms-blue' : 'text-gray-500'}`}>{dashboardStats.alerts?.followUpsDue || 0}</div>
+                  <div className="text-[11px] text-gray-600 font-medium whitespace-nowrap">Follow-ups</div>
                 </div>
               </Link>
 
               {/* --- VENDOR SNAPSHOT --- */}
 
               {/* Jobs At Vendor */}
-              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
-                  <Printer size={16} />
+              <div className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
+                  <Printer size={20} />
                 </div>
-                <div>
-                  <div className={`text-section leading-none ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'text-oms-blue' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.jobsAtVendor || 0}</div>
-                  <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">At Process</div>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold leading-none mb-1 ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'text-oms-blue' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.jobsAtVendor || 0}</div>
+                  <div className="text-[11px] text-gray-600 font-medium whitespace-nowrap">At Process</div>
                 </div>
               </div>
 
               {/* Return Today */}
-              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
-                  <Truck size={16} />
+              <div className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
+                  <Truck size={20} />
                 </div>
-                <div>
-                  <div className={`text-section leading-none ${dashboardStats.vendorStats?.dueToday > 0 ? 'text-oms-blue' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.dueToday || 0}</div>
-                  <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Return Today</div>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold leading-none mb-1 ${dashboardStats.vendorStats?.dueToday > 0 ? 'text-oms-blue' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.dueToday || 0}</div>
+                  <div className="text-[11px] text-gray-600 font-medium whitespace-nowrap">Return Today</div>
                 </div>
               </div>
 
               {/* Vendor Delayed */}
-              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.vendorStats?.delayed > 0 ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.delayed > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-200 text-gray-500'}`}>
-                  <AlertCircle size={16} />
+              <div className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border ${dashboardStats.vendorStats?.delayed > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-transparent opacity-60'}`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.delayed > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-200 text-gray-500'}`}>
+                  <AlertCircle size={20} />
                 </div>
-                <div>
-                  <div className={`text-section leading-none ${dashboardStats.vendorStats?.delayed > 0 ? 'text-red-700' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.delayed || 0}</div>
-                  <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Vendor Late</div>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold leading-none mb-1 ${dashboardStats.vendorStats?.delayed > 0 ? 'text-red-700' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.delayed || 0}</div>
+                  <div className="text-[11px] text-gray-600 font-medium whitespace-nowrap">Vendor Late</div>
                 </div>
               </div>
             </div>
@@ -318,7 +319,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
 
         {/* Needs Attention */}
-        <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 flex flex-col h-full">
+        <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 border border-gray-100 flex flex-col h-full">
           <div className="flex items-center gap-2.5 mb-6">
             <AlertCircle size={20} className="text-oms-orange" />
             <h2 className="text-section text-gray-900">Needs Attention</h2>
@@ -339,9 +340,9 @@ export default function AdminDashboard() {
               }
 
               return (
-                <Link key={alert.label} href={alert.href} className={`flex items-center justify-between p-4 rounded-xl border transition-all hover:shadow-md ${colors}`}>
+                <Link key={alert.label} href={alert.href} className={`flex items-center justify-between p-4 rounded-xl border transition-all  ${colors}`}>
                   <div className="flex items-center gap-4">
-                    <span className={`w-10 h-10 ${iconColors} rounded-lg flex items-center justify-center text-section shadow-sm`}>
+                    <span className={`w-10 h-10 ${iconColors} rounded-lg flex items-center justify-center text-section`}>
                       {isSafe ? <Check size={20} /> : alert.icon}
                     </span>
                     <div>
@@ -372,7 +373,7 @@ export default function AdminDashboard() {
         <div className="lg:col-span-2 space-y-6 lg:space-y-8">
 
           {/* Sales Performance */}
-          <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 border border-gray-100">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0 mb-6 md:mb-8">
               <div>
                 <h2 className="text-lg md:text-section text-gray-900">Sales Performance</h2>
@@ -390,14 +391,14 @@ export default function AdminDashboard() {
                 <div key={item.month} className="flex flex-col items-center flex-1 group h-full justify-end">
                   <div className="relative w-full flex items-end justify-center h-full">
                     {item.active && (
-                      <div className="absolute -top-10 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transform transition-all z-10 shadow-lg">
+                      <div className="absolute -top-10 bg-oms-blue text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transform transition-all z-10">
                         {formatCurrency(item.value)}
-                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-oms-blue rotate-45"></div>
                       </div>
                     )}
                     <div
                       className={`w-full max-w-[40px] rounded-t-lg transition-all duration-300 ${item.active
-                        ? 'bg-oms-blue shadow-lg shadow-blue-200'
+                        ? 'bg-oms-blue -200'
                         : 'bg-gray-100 group-hover:bg-gray-200'
                         }`}
                       style={{
@@ -428,7 +429,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Recent Jobs */}
-          <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 border border-gray-100">
             <div className="flex items-center justify-between mb-4 md:mb-6">
               <h2 className="text-section text-gray-900">Recent Jobs</h2>
               <Link href="/admin/sales/orders" className="flex items-center gap-1 text-sm text-oms-blue hover:text-oms-blue font-bold">
@@ -491,7 +492,7 @@ export default function AdminDashboard() {
                         </td>
                         <td className="py-4 text-right font-bold text-gray-900 text-sm">{formatCurrency(job.total_amount)}</td>
                         <td className="py-4 text-right pr-4">
-                          <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full ${getStatusColor(job.current_stage)} shadow-sm`}>
+                          <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full ${getStatusColor(job.current_stage)}`}>
                             {job.current_stage.replace(/_/g, ' ')}
                           </span>
                         </td>
@@ -507,7 +508,7 @@ export default function AdminDashboard() {
               {recentJobs.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">No recent jobs found</div>
               ) : recentJobs.map((job) => (
-                <div key={job.id} className="border border-gray-100 p-4 rounded-xl shadow-sm bg-gray-50/30">
+                <div key={job.id} className="border border-gray-100 p-4 rounded-xl bg-gray-50/30">
                   <div className="flex justify-between items-start mb-3">
                     <span className="font-bold text-indigo-900 bg-[rgba(0,0,255,0.1)] px-3 py-1 rounded-lg text-sm">{job.job_number}</span>
                     <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full ${getStatusColor(job.current_stage)}`}>
@@ -532,16 +533,16 @@ export default function AdminDashboard() {
         <div className="lg:col-span-1 space-y-6 lg:space-y-8">
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 border border-gray-100">
             <h2 className="text-base md:text-section text-gray-900 mb-4 md:mb-5">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-3 md:gap-4">
-              <Link href="/admin/sales/orders" className="p-4 bg-gray-900 text-white rounded-xl text-center text-sm font-semibold hover:bg-gray-800 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5">
+              <Link href="/admin/sales/orders" className="p-4 bg-oms-blue text-white rounded-xl text-center text-sm font-semibold hover:bg-blue-600 transition-all  hover:-translate-y-0.5">
                 + New Order
               </Link>
               <Link href="/admin/cmyk-print" className="p-4 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-xl text-center text-sm font-semibold hover:bg-[rgba(0,0,255,0.1)] transition-all">
                 Print Job
               </Link>
-              <Link href="/admin/dispatch" className="p-4 bg-green-50 text-green-700 rounded-xl text-center text-sm font-semibold hover:bg-green-100 transition-all">
+              <Link href="/admin/dispatch" className="p-4 bg-white text-gray-900 rounded-xl text-center text-sm font-semibold hover:bg-gray-100 transition-all">
                 QC Check
               </Link>
               <Link href="/admin/crm/clients" className="p-4 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-xl text-center text-sm font-semibold hover:bg-[rgba(0,0,255,0.1)] transition-all">
@@ -551,11 +552,11 @@ export default function AdminDashboard() {
           </div>
 
           {/* Work Pipeline */}
-          <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 border border-gray-100">
             <h2 className="text-base md:text-section text-gray-900 mb-4 md:mb-6">Work Pipeline</h2>
 
             <div className="relative w-48 h-48 mx-auto mb-8">
-              <svg viewBox="0 0 120 120" className="w-full h-full transform -rotate-90 drop-shadow-md">
+              <svg viewBox="0 0 120 120" className="w-full h-full transform -rotate-90 drop-">
                 <circle cx="60" cy="60" r="45" fill="none" stroke="#f3f4f6" strokeWidth="10" />
                 <circle cx="60" cy="60" r="45" fill="none" stroke="#4f46e5" strokeWidth="10"
                   strokeDasharray={`${(dashboardStats.activeJobs > 0 ? 283 : 0)} 283`} strokeDashoffset="0" strokeLinecap="round" className="transition-all duration-1000 ease-out" />
@@ -587,7 +588,7 @@ export default function AdminDashboard() {
                   `}>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className={`w-2 h-2 rounded-full ${item.color.split(' ')[0]} shadow-sm`}></span>
+                          <span className={`w-2 h-2 rounded-full ${item.color.split(' ')[0]}`}></span>
                           <span className={`text-sm font-bold ${isBottleneck || overdueCount > 0 ? 'text-gray-900' : 'text-gray-700'}`}>{item.label}</span>
                         </div>
 
@@ -596,9 +597,9 @@ export default function AdminDashboard() {
                           {overdueCount > 0 ? (
                             <span className="text-red-600 flex items-center gap-1">⚠️ {overdueCount} overdue</span>
                           ) : isBottleneck ? (
-                            <span className="text-amber-600 flex items-center gap-1">🟡 High Load</span>
+                            <span className="text-oms-orange flex items-center gap-1">🟡 High Load</span>
                           ) : (
-                            <span className="text-green-600 flex items-center gap-1">✅ On Track</span>
+                            <span className="text-gray-900 flex items-center gap-1">✅ On Track</span>
                           )}
                         </div>
 

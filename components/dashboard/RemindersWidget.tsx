@@ -56,7 +56,7 @@ export default function RemindersWidget() {
     const completedReminders = reminders.filter(r => r.is_completed);
 
     return (
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-full flex flex-col">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 h-full flex flex-col">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-900">Reminders</h3>
                 <button
@@ -110,7 +110,7 @@ export default function RemindersWidget() {
                         <div key={reminder.id} className="group flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
                             <button
                                 onClick={() => toggleComplete(reminder)}
-                                className="text-gray-400 hover:text-indigo-600 transition-colors"
+                                className="text-gray-400 hover:text-oms-blue transition-colors"
                             >
                                 <Circle size={18} />
                             </button>
@@ -140,7 +140,7 @@ export default function RemindersWidget() {
                                     <div key={reminder.id} className="group flex items-center gap-3 p-2 rounded-lg">
                                         <button
                                             onClick={() => toggleComplete(reminder)}
-                                            className="text-gray-400 hover:text-indigo-600 transition-colors"
+                                            className="text-gray-400 hover:text-oms-blue transition-colors"
                                         >
                                             <CheckCircle2 size={18} className="text-green-500" />
                                         </button>

@@ -31,7 +31,7 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
         { main: 'bg-red-500', light: 'bg-red-50', border: 'border-red-200', name: 'Red' },
         { main: 'bg-[rgba(0,0,255,0.1)]', light: 'bg-[rgba(0,0,255,0.1)]', border: 'border-purple-200', name: 'Purple' },
         { main: 'bg-pink-500', light: 'bg-pink-50', border: 'border-pink-200', name: 'Pink' },
-        { main: 'bg-[rgba(0,0,255,0.1)]', light: 'bg-[rgba(0,0,255,0.1)]', border: 'border-indigo-200', name: 'Indigo' },
+        { main: 'bg-[rgba(0,0,255,0.1)]', light: 'bg-[rgba(0,0,255,0.1)]', border: 'border-oms-blue/20', name: 'Indigo' },
         { main: 'bg-teal-500', light: 'bg-teal-50', border: 'border-teal-200', name: 'Teal' },
         { main: 'bg-cyan-500', light: 'bg-cyan-50', border: 'border-cyan-200', name: 'Cyan' },
         { main: 'bg-emerald-500', light: 'bg-emerald-50', border: 'border-emerald-200', name: 'Emerald' },
@@ -94,7 +94,7 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-2xl  w-full max-w-md max-h-[90vh] overflow-y-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-teal-50 to-cyan-50 sticky top-0">
                     <div className="flex items-center gap-3">
@@ -152,7 +152,7 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
                                         border: colorSet.border
                                     })}
                                     className={`h-12 rounded-lg border-2 transition-all ${formData.color === colorSet.main
-                                            ? 'border-teal-500 scale-105 shadow-lg'
+                                            ? 'border-teal-500 scale-105'
                                             : 'border-gray-200 hover:border-teal-300'
                                         } ${colorSet.light}`}
                                     title={colorSet.name}
@@ -191,7 +191,7 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
                         <button
                             type="submit"
                             disabled={saving}
-                            className="px-8 py-2 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-xl font-medium hover:shadow-lg disabled:opacity-50 flex items-center gap-2"
+                            className="px-8 py-2 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-xl font-medium  disabled:opacity-50 flex items-center gap-2"
                         >
                             {saving ? (
                                 <>
