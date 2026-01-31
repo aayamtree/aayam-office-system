@@ -424,7 +424,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
           <button
             onClick={handleLogout}
-            className="p-1.5 bg-oms-blue hover:bg-blue-600 rounded-lg transition-colors"
+            className="p-1.5 bg-oms-orange hover:bg-orange-600 rounded-lg transition-colors"
             title="Logout"
           >
             <LogOut size={14} className="text-white" />
