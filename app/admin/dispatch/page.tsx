@@ -160,7 +160,7 @@ export default function DispatchPage() {
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Pending QC</h2>
-            <Link href="/admin/dispatch/qc-check" className="text-sm text-indigo-600 hover:underline">
+            <Link href="/admin/dispatch/qc-check" className="text-sm text-oms-blue hover:underline">
               View All →
             </Link>
           </div>
@@ -234,7 +234,7 @@ export default function DispatchPage() {
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Recent Dispatches</h2>
-          <Link href="/admin/dispatch/history" className="text-sm text-indigo-600 hover:underline">
+          <Link href="/admin/dispatch/history" className="text-sm text-oms-blue hover:underline">
             View All →
           </Link>
         </div>

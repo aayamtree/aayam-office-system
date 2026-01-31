@@ -330,7 +330,7 @@ export default function OrdersPage() {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => { setSelectedJob(job); setShowViewModal(true); }}
-                        className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"
+                        className="p-2 bg-indigo-50 text-oms-blue rounded-lg"
                       >
                         <Eye size={16} />
                       </button>
@@ -402,12 +402,12 @@ export default function OrdersPage() {
                       </td>
                       <td className="px-6 py-4 align-middle text-right">
                         <div className="flex items-center justify-end gap-2 text-gray-500">
-                          <button onClick={() => { setSelectedJob(job); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-lg hover:text-indigo-600 transition-colors">
+                          <button onClick={() => { setSelectedJob(job); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-lg hover:text-oms-blue transition-colors">
                             <Eye size={18} />
                           </button>
                           {profile?.role !== 'marketing' && (
                             <>
-                              <button onClick={() => handleEdit(job)} className="p-2 hover:bg-gray-100 rounded-lg hover:text-indigo-600 transition-colors">
+                              <button onClick={() => handleEdit(job)} className="p-2 hover:bg-gray-100 rounded-lg hover:text-oms-blue transition-colors">
                                 <Edit size={18} />
                               </button>
                               <button onClick={(e) => handleDelete(job.id, e)} className="p-2 hover:bg-red-50 rounded-lg hover:text-red-500 transition-colors">
@@ -576,7 +576,7 @@ export default function OrdersPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 px-6 py-3.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50"
+                  className="flex-1 px-6 py-3.5 bg-oms-blue text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-blue-200 disabled:opacity-50"
                 >
                   {submitting ? 'Saving...' : (isEditing ? 'Update Order' : 'Create Order')}
                 </button>
@@ -604,7 +604,7 @@ export default function OrdersPage() {
 
             <div className="p-6 space-y-6">
               <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg">
+                <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-oms-blue font-bold text-lg">
                   {selectedJob.client?.company?.charAt(0) || 'C'}
                 </div>
                 <div>

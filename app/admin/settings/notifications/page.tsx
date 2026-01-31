@@ -44,7 +44,7 @@ export default function NotificationSettings() {
             <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <div className="flex items-start gap-4">
                     <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <Bell className="text-indigo-600" size={24} />
+                        <Bell className="text-oms-blue" size={24} />
                     </div>
                     <div className="flex-1">
                         <h2 className="font-bold text-lg mb-2">Push Notifications</h2>
@@ -70,7 +70,7 @@ export default function NotificationSettings() {
                         ) : (
                             <button
                                 onClick={requestPermission}
-                                className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors"
+                                className="px-6 py-3 bg-oms-blue text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors"
                             >
                                 Enable Notifications
                             </button>

@@ -134,7 +134,7 @@ export default function UserManagementPage() {
             <button
               onClick={() => setActiveTab('users')}
               className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'users'
-                ? 'bg-white text-indigo-600 shadow-sm'
+                ? 'bg-white text-oms-blue shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
                 }`}
             >
@@ -143,7 +143,7 @@ export default function UserManagementPage() {
             <button
               onClick={() => setActiveTab('designers')}
               className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'designers'
-                ? 'bg-white text-purple-600 shadow-sm'
+                ? 'bg-white text-oms-blue shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
                 }`}
             >
@@ -177,7 +177,7 @@ export default function UserManagementPage() {
           <div className="flex justify-end">
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium text-sm shadow-sm"
+              className="flex items-center gap-2 px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-indigo-700 font-medium text-sm shadow-sm"
             >
               <Plus size={18} />
               Add User
@@ -328,7 +328,7 @@ export default function UserManagementPage() {
                     <button
                       type="submit"
                       disabled={isCreating}
-                      className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium disabled:opacity-50"
+                      className="flex-1 px-4 py-2 bg-oms-blue text-white rounded-lg hover:bg-indigo-700 font-medium disabled:opacity-50"
                     >
                       {isCreating ? 'Creating...' : 'Create User'}
                     </button>

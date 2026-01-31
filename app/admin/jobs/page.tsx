@@ -534,7 +534,7 @@ export default function JobsPage() {
             </p>
             <button
               onClick={handleAddNew}
-              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-medium transition-colors shadow-lg shadow-indigo-200"
+              className="inline-flex items-center gap-2 bg-oms-blue hover:opacity-90 text-white px-6 py-3 rounded-xl font-medium transition-colors shadow-lg shadow-blue-200"
             >
               <Plus size={20} />
               <span>Create New Job</span>
@@ -852,7 +852,7 @@ export default function JobsPage() {
                 </div>
                 <div className="flex gap-3">
                   <button onClick={() => setShowPaymentModal(false)} className="flex-1 px-4 py-2 text-gray-600 border rounded-xl">Cancel</button>
-                  <button onClick={submitPayment} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-xl">Confirm</button>
+                  <button onClick={submitPayment} className="flex-1 px-4 py-2 btn-primary">Confirm</button>
                 </div>
               </div>
             </div>

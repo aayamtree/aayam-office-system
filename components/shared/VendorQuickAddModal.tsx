@@ -97,7 +97,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-green-50 to-emerald-50">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-100 rounded-lg">
+                        <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg">
                             <Building2 size={24} className="text-green-600" />
                         </div>
                         <div>
@@ -172,7 +172,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                                     ))}
                                 </select>
                                 <button type="button" onClick={() => setShowAddCategoryModal(true)}
-                                    className="px-3 py-2 bg-green-100 text-green-700 rounded-xl hover:bg-green-200 flex items-center gap-1">
+                                    className="px-3 py-2 bg-green-100 text-oms-blue rounded-xl hover:bg-[rgba(0,0,255,0.2)] flex items-center gap-1">
                                     <Plus size={16} /><span className="hidden sm:inline">Add</span>
                                 </button>
                             </div>

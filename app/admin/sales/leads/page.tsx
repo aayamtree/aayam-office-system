@@ -186,7 +186,7 @@ export default function LeadsPage() {
   if (leadsLoading) {
     return (
       <div className="flex h-96 items-center justify-center">
-        <Loader2 className="animate-spin text-indigo-600" size={32} />
+        <Loader2 className="animate-spin text-oms-blue" size={32} />
         <span className="ml-3 text-gray-500 font-medium">Loading leads...</span>
       </div>
     );
@@ -203,7 +203,7 @@ export default function LeadsPage() {
         </div>
         <button
           onClick={handleAddNew}
-          className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-indigo-200 transition-all hover:scale-105 active:scale-95"
+          className="flex items-center justify-center gap-2 bg-oms-blue hover:opacity-90 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-blue-200 transition-all hover:scale-105 active:scale-95"
         >
           <Plus size={18} />
           <span>New Lead</span>
@@ -251,7 +251,7 @@ export default function LeadsPage() {
               <div className={`absolute top-0 left-0 w-1.5 h-full 
                  ${lead.status === 'new' ? 'bg-blue-500' :
                   lead.status === 'converted' ? 'bg-green-500' :
-                    lead.status === 'lost' ? 'bg-red-400' : 'bg-indigo-500'}`}
+                    lead.status === 'lost' ? 'bg-red-400' : 'bg-oms-blue'}`}
               />
 
               <div className="pl-3">
@@ -264,7 +264,7 @@ export default function LeadsPage() {
                     {lead.company && <p className="text-gray-500 text-sm font-medium">{lead.company}</p>}
                   </div>
                   <div className="flex gap-1">
-                    <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                    <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-400 hover:text-oms-blue hover:bg-indigo-50 rounded-lg transition-colors">
                       <Eye size={18} />
                     </button>
                     <button onClick={() => handleEdit(lead)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
@@ -308,7 +308,7 @@ export default function LeadsPage() {
                   {lead.status !== 'converted' && (
                     <button
                       onClick={() => handleConvertToClient(lead)}
-                      className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
+                      className="text-xs font-bold text-oms-blue hover:underline flex items-center gap-1"
                     >
                       <CheckCircle size={14} /> Convert
                     </button>
@@ -407,7 +407,7 @@ export default function LeadsPage() {
 
               <div className="sticky bottom-0 bg-white pt-4 border-t border-gray-100 flex gap-3">
                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 border border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50 flex items-center justify-center gap-2">
+                <button type="submit" disabled={submitting} className="flex-1 py-3 bg-oms-blue text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-blue-200 disabled:opacity-50 flex items-center justify-center gap-2">
                   {submitting && <Loader2 className="animate-spin" size={18} />}
                   {submitting ? 'Saving...' : 'Save Lead'}
                 </button>
@@ -428,7 +428,7 @@ export default function LeadsPage() {
             <div className="space-y-4">
               <div className="flex justify-between border-b pb-2"><span className="text-gray-500">Phone</span> <span className="font-medium font-mono">{selectedLead.phone}</span></div>
               <div className="flex justify-between border-b pb-2"><span className="text-gray-500">Company</span> <span className="font-medium">{selectedLead.company || '-'}</span></div>
-              <div className="flex justify-between border-b pb-2"><span className="text-gray-500">Status</span> <span className="font-bold capitalize text-indigo-600">{selectedLead.status}</span></div>
+              <div className="flex justify-between border-b pb-2"><span className="text-gray-500">Status</span> <span className="font-bold capitalize text-oms-blue">{selectedLead.status}</span></div>
 
               <div className="bg-gray-50 p-4 rounded-xl mt-4">
                 <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">Requirement</h4>
@@ -436,7 +436,7 @@ export default function LeadsPage() {
               </div>
             </div>
 
-            <button onClick={() => { setShowViewModal(false); handleEdit(selectedLead); }} className="w-full mt-6 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700">Edit Details</button>
+            <button onClick={() => { setShowViewModal(false); handleEdit(selectedLead); }} className="w-full mt-6 bg-oms-blue text-white py-3 rounded-xl font-bold hover:bg-indigo-700">Edit Details</button>
           </div>
         </div>
       )}

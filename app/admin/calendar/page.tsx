@@ -37,7 +37,7 @@ export default function CalendarPage() {
                     <GoogleConnectionStatus />
                     <button
                         onClick={() => setShowBriefing(true)}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                        className="px-4 py-2 bg-oms-blue text-white rounded-lg hover:bg-indigo-700 transition-colors"
                     >
                         📋 Daily Briefing
                     </button>
@@ -50,7 +50,7 @@ export default function CalendarPage() {
                     <h2 className="text-xl font-bold text-gray-900">This Week</h2>
                     <button
                         onClick={() => setShowNewEvent(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-oms-blue text-white rounded-lg hover:bg-indigo-700 transition-colors"
                     >
                         <Plus className="w-4 h-4" />
                         New Event
@@ -73,7 +73,7 @@ export default function CalendarPage() {
                             >
                                 <div className="text-center mb-2">
                                     <div className="text-xs text-gray-500">{format(day, 'EEE')}</div>
-                                    <div className={`text-lg font-bold ${isToday ? 'text-indigo-600' : 'text-gray-900'}`}>
+                                    <div className={`text-lg font-bold ${isToday ? 'text-oms-blue' : 'text-gray-900'}`}>
                                         {format(day, 'd')}
                                     </div>
                                 </div>
@@ -346,7 +346,7 @@ function NewEventModal({ profile, onClose, onCreate }: {
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                            className="flex-1 px-4 py-2 bg-oms-blue text-white rounded-lg hover:bg-indigo-700"
                         >
                             Create Event
                         </button>

@@ -79,9 +79,9 @@ export default function AdminDashboard() {
 
   // Pipeline Data - Dynamic
   const pipeline = [
-    { label: 'In Design', count: (dashboardStats.pipeline?.designing || 0) + (dashboardStats.pipeline?.approval || 0), color: 'bg-indigo-500', href: '/admin/designers/tasks?view=team_tasks', thresh: 10 },
+    { label: 'In Design', count: (dashboardStats.pipeline?.designing || 0) + (dashboardStats.pipeline?.approval || 0), color: 'bg-oms-blue', href: '/admin/designers/tasks?view=team_tasks', thresh: 10 },
     { label: 'Production', count: (dashboardStats.pipeline?.printing || 0) + (dashboardStats.pipeline?.finishing || 0), color: 'bg-amber-500', href: '/admin/jobs/queue', thresh: 15 },
-    { label: 'QC Check', count: dashboardStats.pipeline?.quality_check || 0, color: 'bg-purple-500', href: '/admin/jobs?status=quality_check', thresh: 5 },
+    { label: 'QC Check', count: dashboardStats.pipeline?.quality_check || 0, color: 'bg-oms-blue', href: '/admin/jobs?status=quality_check', thresh: 5 },
     { label: 'Ready/Packed', count: (dashboardStats.pipeline?.ready || 0) + (dashboardStats.pipeline?.packed || 0), color: 'bg-green-500', href: '/admin/dispatch', thresh: 20 },
     { label: 'Dispatched', count: (dashboardStats.pipeline?.dispatched || 0) + (dashboardStats.pipeline?.in_transit || 0), color: 'bg-blue-500', href: '/admin/dispatch/history', thresh: 999 },
   ];
@@ -208,7 +208,7 @@ export default function AdminDashboard() {
           <div className="lg:col-span- 2 space-y-4 md:space-y-5">
             <div className="min-w-[120px]">
               <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <span className="w-2 h-8 bg-indigo-600 rounded-full"></span>
+                <span className="w-2 h-8 bg-oms-blue rounded-full"></span>
                 Today
               </h2>
               <p className="text-xs text-gray-400 pl-4 mt-1">Daily Focus</p>
@@ -261,7 +261,7 @@ export default function AdminDashboard() {
 
               {/* Follow-ups */}
               <Link href="/admin/marketing/follow-ups" className={`flex items-center gap-3 p-3 rounded-xl border transition-all hover:scale-105 ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-purple-50 border-purple-100 cursor-pointer' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-purple-100 text-purple-600' : 'bg-gray-200 text-gray-500'}`}>
+                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-purple-100 text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
                   <Phone size={16} />
                 </div>
                 <div>
@@ -274,7 +274,7 @@ export default function AdminDashboard() {
 
               {/* Jobs At Vendor */}
               <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-indigo-50 border-indigo-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-200 text-gray-500'}`}>
+                <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-indigo-100 text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
                   <Printer size={16} />
                 </div>
                 <div>
@@ -397,7 +397,7 @@ export default function AdminDashboard() {
                     )}
                     <div
                       className={`w-full max-w-[40px] rounded-t-lg transition-all duration-300 ${item.active
-                        ? 'bg-gradient-to-t from-indigo-600 to-indigo-400 shadow-lg shadow-indigo-200'
+                        ? 'bg-gradient-to-t from-indigo-600 to-indigo-400 shadow-lg shadow-blue-200'
                         : 'bg-gray-100 group-hover:bg-gray-200'
                         }`}
                       style={{
@@ -420,7 +420,7 @@ export default function AdminDashboard() {
                 <span className="text-4xl font-bold text-gray-900">{formatCurrency(dashboardStats.totalRevenue)}</span>
                 <span className="text-base text-gray-500 font-medium">YTD Revenue</span>
               </div>
-              <Link href="/admin/sales/orders" className="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-700 font-bold bg-indigo-50 px-4 py-2 rounded-xl transition-colors">
+              <Link href="/admin/sales/orders" className="flex items-center gap-2 text-sm text-oms-blue hover:text-indigo-700 font-bold bg-indigo-50 px-4 py-2 rounded-xl transition-colors">
                 View Report
                 <ArrowUpRight size={16} />
               </Link>
@@ -431,7 +431,7 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-4 md:mb-6">
               <h2 className="text-xl font-bold text-gray-900">Recent Jobs</h2>
-              <Link href="/admin/sales/orders" className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700 font-bold">
+              <Link href="/admin/sales/orders" className="flex items-center gap-1 text-sm text-oms-blue hover:text-indigo-700 font-bold">
                 View All
                 <ArrowUpRight size={16} />
               </Link>
@@ -468,7 +468,7 @@ export default function AdminDashboard() {
                     if (diffDays !== null) {
                       if (diffDays < 0) { slaText = `${Math.abs(diffDays)}d Overdue`; slaColor = 'text-red-600 font-bold'; }
                       else if (diffDays === 0) { slaText = 'Due Today'; slaColor = 'text-orange-600 font-bold'; }
-                      else { slaText = `⏳ ${diffDays} days left`; slaColor = 'text-indigo-600 font-medium'; }
+                      else { slaText = `⏳ ${diffDays} days left`; slaColor = 'text-oms-blue font-medium'; }
                     }
 
                     // Row Class
@@ -609,7 +609,7 @@ export default function AdminDashboard() {
                       </div>
 
                       <div className="ml-4 text-right">
-                        <span className={`text-lg font-bold ${isBottleneck || overdueCount > 0 ? 'text-red-600' : 'text-gray-900 group-hover:text-indigo-600'}`}>{item.count}</span>
+                        <span className={`text-lg font-bold ${isBottleneck || overdueCount > 0 ? 'text-red-600' : 'text-gray-900 group-hover:text-oms-blue'}`}>{item.count}</span>
                         <p className="text-[10px] text-gray-400 font-medium">{percent}%</p>
                       </div>
                     </div>

@@ -102,7 +102,7 @@ export default function QCCheckPage() {
     setShowQCModal(false);
   };
 
-  if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-indigo-600" /></div>;
+  if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-oms-blue" /></div>;
 
   return (
     <div className="space-y-4 lg:space-y-6 animate-fade-in">
@@ -195,7 +195,7 @@ export default function QCCheckPage() {
                 ) : (
                   <button
                     onClick={() => handleStartQC(job)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-white ${job.current_stage === 'quality_check' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-900 hover:bg-black'
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-white ${job.current_stage === 'quality_check' ? 'bg-oms-blue hover:opacity-90' : 'bg-gray-900 hover:bg-black'
                       }`}
                   >
                     <ClipboardCheck size={16} />
@@ -227,13 +227,13 @@ export default function QCCheckPage() {
             <div className="flex border-b border-gray-200">
               <button
                 onClick={() => setActiveTab('checklist')}
-                className={`flex-1 py-3 text-sm font-medium border-b-2 ${activeTab === 'checklist' ? 'text-indigo-600 border-indigo-600' : 'text-gray-500 border-transparent'}`}
+                className={`flex-1 py-3 text-sm font-medium border-b-2 ${activeTab === 'checklist' ? 'text-oms-blue border-indigo-600' : 'text-gray-500 border-transparent'}`}
               >
                 Checklist
               </button>
               <button
                 onClick={() => setActiveTab('notes')}
-                className={`flex-1 py-3 text-sm font-medium border-b-2 ${activeTab === 'notes' ? 'text-indigo-600 border-indigo-600' : 'text-gray-500 border-transparent'}`}
+                className={`flex-1 py-3 text-sm font-medium border-b-2 ${activeTab === 'notes' ? 'text-oms-blue border-indigo-600' : 'text-gray-500 border-transparent'}`}
               >
                 Notes
               </button>

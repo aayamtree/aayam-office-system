@@ -182,7 +182,7 @@ export default function ProfileSettingsPage() {
                         <button
                             type="submit"
                             disabled={saving}
-                            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-oms-blue text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50"
                         >
                             <Save size={18} />
                             {saving ? 'Saving...' : 'Save Changes'}
