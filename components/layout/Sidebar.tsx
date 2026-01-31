@@ -284,7 +284,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3">
+      <nav className="flex-1 overflow-y-auto py-4 px-3 scrollbar-minimal">
         <div className="space-y-1">
           {!profile ? (
             // Loading skeleton while profile loads
@@ -413,26 +413,22 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
       </nav>
 
-      {/* User Profile */}
-      <div className="p-3 border-t border-white/10">
-        <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5">
-          <div className="w-8 h-8 bg-oms-blue rounded-full flex items-center justify-center text-white font-semibold text-sm">
+      {/* User Profile - Compact */}
+      <div className="px-3 py-2 border-t border-white/10">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-oms-blue rounded-full flex items-center justify-center text-white font-semibold text-xs">
             {profile?.full_name?.charAt(0) || 'A'}
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-medium text-white text-xs truncate">{profile?.full_name}</p>
-            <div className="flex items-center gap-2">
-              <p className="text-xs text-gray-500 capitalize">{profile?.role}</p>
-              <span className="text-[10px] bg-[rgba(0,0,255,0.1)]/20 text-indigo-300 px-1.5 py-0.5 rounded">v1.7.0</span>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-              title="Logout"
-            >
-              <LogOut size={16} className="text-gray-500" />
-            </button>
           </div>
+          <button
+            onClick={handleLogout}
+            className="p-1.5 bg-oms-blue hover:bg-blue-600 rounded-lg transition-colors"
+            title="Logout"
+          >
+            <LogOut size={14} className="text-white" />
+          </button>
         </div>
       </div>
     </aside>
