@@ -201,8 +201,8 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Daily Briefing Panel (Focus + Activity) - WITH PARTITION LINE */}
-      <div className="bg-white rounded-xl md:rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 border-b-2 animate-fade-in-up">
+      {/* Daily Briefing Panel (Focus + Activity) */}
+      <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 animate-fade-in-up">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
           {/* Left: Today's Focus Stats */}
           <div className="lg:col-span- 2 space-y-4 md:space-y-5">
@@ -214,9 +214,9 @@ export default function AdminDashboard() {
               <p className="text-xs text-gray-400 pl-4 mt-1">Daily Focus</p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 w-full">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3 lg:gap-4 w-full">
               {/* Jobs Due */}
-              <div className={`flex items-center gap-3 p-4 rounded-xl border ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-200 text-gray-500'}`}>
                   <AlertCircle size={16} />
                 </div>
@@ -227,7 +227,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Jobs Delayed */}
-              <div className={`flex items-center gap-3 p-4 rounded-xl border ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-[rgba(255,102,0,0.08)] border-[rgba(255,102,0,0.15)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-[rgba(255,102,0,0.08)] border-[rgba(255,102,0,0.15)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-[rgba(255,102,0,0.12)] text-oms-orange' : 'bg-gray-200 text-gray-500'}`}>
                   <Clock size={16} />
                 </div>
@@ -238,7 +238,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Jobs Completed */}
-              <div className={`flex items-center gap-3 p-4 rounded-xl border transition-colors ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-gray-50 border-gray-200 hover:bg-gray-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-gray-50 border-gray-200 hover:bg-gray-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-gray-200 text-gray-600' : 'bg-gray-200 text-gray-500'}`}>
                   <CheckCircle size={16} />
                 </div>
@@ -249,7 +249,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Payments Due */}
-              <div className={`flex items-center gap-3 p-4 rounded-xl border ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
                   <Receipt size={16} />
                 </div>
@@ -260,7 +260,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Follow-ups */}
-              <Link href="/admin/marketing/follow-ups" className={`flex items-center gap-3 p-4 rounded-xl border transition-all hover:scale-105 ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)] cursor-pointer' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <Link href="/admin/marketing/follow-ups" className={`flex items-center gap-3 p-3 rounded-xl border transition-all hover:scale-105 ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)] cursor-pointer' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
                   <Phone size={16} />
                 </div>
@@ -273,7 +273,7 @@ export default function AdminDashboard() {
               {/* --- VENDOR SNAPSHOT --- */}
 
               {/* Jobs At Vendor */}
-              <div className={`flex items-center gap-3 p-4 rounded-xl border ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
                   <Printer size={16} />
                 </div>
@@ -284,7 +284,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Return Today */}
-              <div className={`flex items-center gap-3 p-4 rounded-xl border ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
                   <Truck size={16} />
                 </div>
@@ -295,7 +295,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Vendor Delayed */}
-              <div className={`flex items-center gap-3 p-4 rounded-xl border ${dashboardStats.vendorStats?.delayed > 0 ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex items-center gap-3 p-3 rounded-xl border ${dashboardStats.vendorStats?.delayed > 0 ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <div className={`min-w-[32px] h-8 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.delayed > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-200 text-gray-500'}`}>
                   <AlertCircle size={16} />
                 </div>

@@ -425,14 +425,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               <p className="text-xs text-gray-500 capitalize">{profile?.role}</p>
               <span className="text-[10px] bg-[rgba(0,0,255,0.1)]/20 text-indigo-300 px-1.5 py-0.5 rounded">v1.7.0</span>
             </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              title="Logout"
+            >
+              <LogOut size={16} className="text-gray-500" />
+            </button>
           </div>
-          <button
-            onClick={handleLogout}
-            className="p-1.5 hover:bg-white/10 rounded-lg transition-colors group"
-            title="Logout"
-          >
-            <LogOut size={14} className="text-gray-500 group-hover:text-red-400 transition-colors" />
-          </button>
         </div>
       </div>
     </aside>
