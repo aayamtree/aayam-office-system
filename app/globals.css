@@ -382,3 +382,188 @@ td {
     padding-top: max(1rem, env(safe-area-inset-top));
   }
 }
+/* =============================================
+   DESIGN SYSTEM - Aayam Office Management System
+   Official UI/UX Guidelines Implementation
+   ============================================= */
+
+/* Design System Colors */
+:root {
+  --oms-blue: #0000FF;         /* Primary Blue */
+  --oms-orange: #FF6600;       /* Accent Orange */
+  --oms-dark: #3A3F4F;         /* Dark Grey (structure) */
+  --oms-light: #D5D5D6;        /* Light Grey (disabled) */
+  --oms-white: #FFFFFF;        /* White */
+  
+  --oms-text-primary: #3A3F4F;     /* Primary text */
+  --oms-text-secondary: #6B6F7A;   /* Secondary text */
+  --oms-text-disabled: #9AA0A6;    /* Disabled text */
+}
+
+/* =============================================
+   BUTTON STYLES - Design System
+   ============================================= */
+
+/* Primary Button */
+.btn-primary {
+  @apply bg-oms-blue text-white px-4 py-2 rounded-xl font-medium transition-opacity duration-150;
+}
+
+.btn-primary:hover:not(:disabled) {
+  @apply opacity-90;
+}
+
+/* Secondary Button */
+.btn-secondary {
+  @apply border-2 border-oms-blue text-oms-blue px-4 py-2 rounded-xl font-medium transition-colors duration-150;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  @apply bg-oms-blue text-white;
+}
+
+/* Attention Button (Delete/Urgent) */
+.btn-attention {
+  @apply bg-oms-orange text-white px-4 py-2 rounded-xl font-medium transition-opacity duration-150;
+}
+
+.btn-attention:hover:not(:disabled) {
+  @apply opacity-90;
+}
+
+/* =============================================
+   STATUS BADGES - Design System
+   ============================================= */
+
+/* Approved/Completed Badge */
+.badge-approved {
+  @apply px-3 py-1 rounded-full bg-oms-blue text-white text-xs font-medium inline-flex items-center gap-1;
+}
+
+/* Action Needed/On Hold Badge */
+.badge-action {
+  @apply px-3 py-1 rounded-full bg-oms-orange text-white text-xs font-medium inline-flex items-center gap-1;
+}
+
+/* Draft/Neutral Badge */
+.badge-draft {
+  @apply px-3 py-1 rounded-full bg-oms-light text-oms-dark text-xs font-medium inline-flex items-center gap-1;
+}
+
+/* =============================================
+   TABLE STYLES - Design System
+   ============================================= */
+
+/* Table Header */
+.table-header {
+  @apply bg-oms-light text-oms-text-primary text-sm font-semibold px-4 py-3;
+}
+
+/* Table Row */
+.table-row {
+  @apply hover:bg-[#F2F2F3] border-l-4 border-transparent transition-colors;
+}
+
+/* Table Row Selected State */
+.table-row-selected {
+  @apply border-l-oms-blue bg-[rgba(0,0,255,0.08)];
+}
+
+/* Hover effect for table rows */
+.table-row:hover {
+  @apply bg-[#F2F2F3];
+}
+
+/* =============================================
+   SIDEBAR & NAVIGATION - Design System
+   ============================================= */
+
+/* Sidebar Background */
+.sidebar-bg {
+  @apply bg-oms-dark;
+}
+
+/* Sidebar Item */
+.sidebar-item {
+  @apply text-white/70 hover:text-white hover:bg-white/10 px-4 py-2 rounded-lg transition-colors cursor-pointer;
+}
+
+/* Sidebar Active Item */
+.sidebar-item-active {
+  @apply bg-[rgba(0,0,255,0.15)] text-white border-l-4 border-oms-blue;
+}
+
+/* =============================================
+   CARD STYLES - Design System
+   ============================================= */
+
+/* Primary Card */
+.card-primary {
+  @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6;
+}
+
+/* Card Header */
+.card-header {
+  @apply text-page-title text-oms-text-primary mb-4 font-semibold;
+}
+
+/* Card Content */
+.card-content {
+  @apply text-body text-oms-text-secondary;
+}
+
+/* =============================================
+   TEXT UTILITIES - Design System
+   ============================================= */
+
+/* Primary Text (Headlines, Labels) */
+.text-oms-primary {
+  @apply text-[#3A3F4F];
+}
+
+/* Secondary Text (Descriptions, Hints) */
+.text-oms-secondary {
+  @apply text-[#6B6F7A];
+}
+
+/* Disabled Text */
+.text-oms-disabled {
+  @apply text-[#9AA0A6];
+}
+
+/* Text on Dark Surfaces */
+.text-oms-on-dark {
+  @apply text-white;
+}
+
+/* =============================================
+   FORM STYLES - Design System
+   ============================================= */
+
+/* Form Input */
+.form-input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-xl text-body text-oms-text-primary;
+  @apply focus:outline-none focus:ring-2 focus:ring-oms-blue/20 focus:border-oms-blue;
+}
+
+/* Form Label */
+.form-label {
+  @apply block text-label font-medium text-oms-text-primary mb-1;
+}
+
+/* Form Select */
+.form-select {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-xl text-body text-oms-text-primary bg-white;
+  @apply focus:outline-none focus:ring-2 focus:ring-oms-blue/20 focus:border-oms-blue;
+}
+
+/* =============================================
+   DESIGN SYSTEM SPACING HELPERS
+   ============================================= */
+
+/* Gap utilities for 8px grid */
+.gap-oms-1 { gap: 8px; }
+.gap-oms-2 { gap: 16px; }
+.gap-oms-3 { gap: 24px; }
+.gap-oms-4 { gap: 32px; }
+.gap-oms-5 { gap: 40px; }
