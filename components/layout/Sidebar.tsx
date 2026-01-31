@@ -244,7 +244,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <aside className={`
-      fixed left-0 top-0 h-screen w-64 bg-[#0f0f1a] flex flex-col z-40
+      fixed left-0 top-0 h-screen w-64 bg-oms-dark flex flex-col z-40
       transform transition-transform duration-300 ease-in-out
       ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       lg:translate-x-0
@@ -256,7 +256,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           className="flex items-center gap-3"
           onClick={handleLinkClick}
         >
-          <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-oms-blue rounded-xl flex items-center justify-center">
             <span className="text-white font-bold text-lg">A</span>
           </div>
           <span className="font-bold text-white text-xl">Aayam</span>
@@ -341,15 +341,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   {hasSubmenu && item.name !== 'Design Studio' ? (
                     <button
                       onClick={() => toggleExpanded(item.name)}
-                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all
+                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all text-body
                       ${active
-                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white'
-                          : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                          ? 'bg-[rgba(0,0,255,0.15)] text-white border-l-4 border-oms-blue'
+                          : 'text-white/70 hover:bg-white/5 hover:text-white'
                         }`}
                     >
                       <div className="flex items-center gap-3">
                         <Icon size={18} />
-                        <span className="text-sm font-medium">{item.name}</span>
+                        <span className="text-body font-medium">{item.name}</span>
                       </div>
                       <ChevronDown
                         size={14}
@@ -362,12 +362,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       onClick={handleLinkClick}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all
                       ${active
-                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white'
-                          : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                          ? 'bg-[rgba(0,0,255,0.15)] border-l-4 border-oms-blue text-white'
+                          : 'text-white/70 hover:bg-white/5 hover:text-white'
                         }`}
                     >
                       <Icon size={18} />
-                      <span className="text-sm font-medium">{item.name}</span>
+                      <span className="text-body font-medium">{item.name}</span>
                     </Link>
                   )}
 

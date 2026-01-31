@@ -331,7 +331,7 @@ export default function JobsPage() {
   if (loading && !forceShow) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-oms-blue" />
         <span className="ml-2">Loading jobs...</span>
       </div>
     );
@@ -358,7 +358,7 @@ export default function JobsPage() {
         </span>
       </div>
 
-      <h4 className="font-semibold text-gray-900 mb-1 line-clamp-2 leading-snug group-hover:text-indigo-600 transition-colors">
+      <h4 className="font-semibold text-gray-900 mb-1 line-clamp-2 leading-snug group-hover:text-oms-blue transition-colors">
         {job.project_name}
       </h4>
 
@@ -404,7 +404,7 @@ export default function JobsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">Jobs</h1>
+          <h1 className="text-page-title text-gray-900 tracking-tight">Jobs</h1>
           <p className="text-sm text-gray-500 mt-1">{activeJobs} active of {totalJobs} total jobs</p>
         </div>
         <button
@@ -421,21 +421,21 @@ export default function JobsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <div className="bg-white rounded-xl md:rounded-2xl p-3 md:p-5 border border-gray-100 shadow-sm">
           <p className="text-[10px] md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Total Jobs</p>
-          <p className="text-2xl md:text-3xl font-bold text-gray-900">{totalJobs}</p>
+          <p className="text-2xl md:text-page-title text-gray-900">{totalJobs}</p>
         </div>
         <div className="bg-white rounded-xl md:rounded-2xl p-3 md:p-5 border border-gray-100 shadow-sm">
           <p className="text-[10px] md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Active</p>
-          <p className="text-2xl md:text-3xl font-bold text-indigo-600">{activeJobs}</p>
+          <p className="text-2xl md:text-page-title text-oms-blue">{activeJobs}</p>
         </div>
         <div className="bg-white rounded-xl md:rounded-2xl p-3 md:p-5 border border-gray-100 shadow-sm">
           <p className="text-[10px] md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Revenue</p>
-          <p className="text-xl md:text-2xl font-bold text-green-600 truncate" title={formatCurrency(totalRevenue)}>
+          <p className="text-xl md:text-page-title text-green-600 truncate" title={formatCurrency(totalRevenue)}>
             {formatCurrency(totalRevenue)}
           </p>
         </div>
         <div className="bg-white rounded-xl md:rounded-2xl p-3 md:p-5 border border-gray-100 shadow-sm">
           <p className="text-[10px] md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Pending</p>
-          <p className="text-xl md:text-2xl font-bold text-amber-600 truncate" title={formatCurrency(pendingPayments)}>
+          <p className="text-xl md:text-page-title text-amber-600 truncate" title={formatCurrency(pendingPayments)}>
             {formatCurrency(pendingPayments)}
           </p>
         </div>
@@ -446,13 +446,13 @@ export default function JobsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link href="/admin/print-planner" className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-indigo-200 hover:shadow-md transition-all group">
           <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
-            <Layers size={24} className="text-indigo-600" />
+            <Layers size={24} className="text-oms-blue" />
           </div>
           <div>
             <h3 className="font-bold text-gray-900">Print Planner</h3>
             <p className="text-sm text-gray-500">Create production batches</p>
           </div>
-          <ArrowRight size={20} className="ml-auto text-gray-300 group-hover:text-indigo-600" />
+          <ArrowRight size={20} className="ml-auto text-gray-300 group-hover:text-oms-blue" />
         </Link>
         <Link href="/admin/production-queue" className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-amber-200 hover:shadow-md transition-all group">
           <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center group-hover:bg-amber-100 transition-colors">
@@ -503,7 +503,7 @@ export default function JobsPage() {
           <div className="flex gap-1 bg-gray-100 p-1 rounded-lg md:rounded-xl sm:ml-auto">
             <button
               onClick={() => setViewMode('kanban')}
-              className={`p-2 md:p-2.5 rounded-md md:rounded-lg transition-all ${viewMode === 'kanban' ? 'bg-white shadow text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`p-2 md:p-2.5 rounded-md md:rounded-lg transition-all ${viewMode === 'kanban' ? 'bg-white shadow text-oms-blue' : 'text-gray-500 hover:text-gray-700'}`}
               title="Board View"
             >
               <LayoutGrid size={18} className="md:hidden" />
@@ -511,7 +511,7 @@ export default function JobsPage() {
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 md:p-2.5 rounded-md md:rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`p-2 md:p-2.5 rounded-md md:rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow text-oms-blue' : 'text-gray-500 hover:text-gray-700'}`}
               title="List View"
             >
               <List size={18} className="md:hidden" />
@@ -528,7 +528,7 @@ export default function JobsPage() {
             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <Briefcase size={32} className="text-gray-400" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">No jobs found</h3>
+            <h3 className="text-section text-gray-900 mb-2">No jobs found</h3>
             <p className="text-gray-500 mb-6 max-w-sm mx-auto">
               {searchTerm ? 'Try adjusting your search terms or filters.' : 'Get started by creating your first job.'}
             </p>
@@ -598,7 +598,7 @@ export default function JobsPage() {
                     <tr key={job.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => handleViewDetail(job)}>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-sm text-indigo-600">{job.job_number}</span>
+                          <span className="font-mono text-sm text-oms-blue">{job.job_number}</span>
                           <span className={`text-xs px-2 py-0.5 rounded-full ${getPriorityBadge(job.priority)}`}>{job.priority}</span>
                         </div>
                         <p className="text-sm font-medium">{job.project_name}</p>
@@ -642,7 +642,7 @@ export default function JobsPage() {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto animate-scale-in">
               <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white rounded-t-2xl z-10">
-                <h2 className="text-lg font-bold">{editingJob ? 'Edit Job' : 'New Job'}</h2>
+                <h2 className="text-section">{editingJob ? 'Edit Job' : 'New Job'}</h2>
                 <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
               </div>
               <form onSubmit={handleSubmit} className="p-4 space-y-4">
@@ -735,7 +735,7 @@ export default function JobsPage() {
                 <div className="bg-gray-50 rounded-xl p-4 grid grid-cols-3 gap-4 text-center">
                   <div><p className="text-xs text-gray-500">Subtotal</p><p className="font-semibold">{formatCurrency(formData.quantity * formData.quote_per_piece)}</p></div>
                   <div><p className="text-xs text-gray-500">GST ({formData.gst_rate}%)</p><p className="font-semibold text-blue-600">{formatCurrency(formData.quantity * formData.quote_per_piece * formData.gst_rate / 100)}</p></div>
-                  <div><p className="text-xs text-gray-500">Total</p><p className="font-bold text-indigo-600">{formatCurrency(formData.quantity * formData.quote_per_piece * (1 + formData.gst_rate / 100))}</p></div>
+                  <div><p className="text-xs text-gray-500">Total</p><p className="font-bold text-oms-blue">{formatCurrency(formData.quantity * formData.quote_per_piece * (1 + formData.gst_rate / 100))}</p></div>
                 </div>
 
                 {/* Designer Selection */}
@@ -831,7 +831,7 @@ export default function JobsPage() {
                       autoFocus
                       value={paymentAmount}
                       onChange={e => setPaymentAmount(parseFloat(e.target.value) || 0)}
-                      className="flex-1 px-4 py-3 text-xl font-bold border rounded-xl focus:ring-2 focus:ring-green-500"
+                      className="flex-1 px-4 py-3 text-section border rounded-xl focus:ring-2 focus:ring-green-500"
                     />
                     <select
                       value={paymentMode}

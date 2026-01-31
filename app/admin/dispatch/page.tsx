@@ -122,7 +122,7 @@ export default function DispatchPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Dispatch Command Center</h1>
+          <h1 className="text-xl md:text-page-title text-gray-900">Dispatch Command Center</h1>
           <p className="text-sm md:text-base text-gray-500">Welcome, {profile?.full_name || 'Dispatcher'} | QC & Logistics</p>
         </div>
         <Link
@@ -159,7 +159,7 @@ export default function DispatchPage() {
         {/* Pending QC */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Pending QC</h2>
+            <h2 className="text-section text-gray-900">Pending QC</h2>
             <Link href="/admin/dispatch/qc-check" className="text-sm text-oms-blue hover:underline">
               View All →
             </Link>
@@ -189,7 +189,7 @@ export default function DispatchPage() {
         {/* Ready to Dispatch - NOW WITH ACTION */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Ready to Dispatch</h2>
+            <h2 className="text-section text-gray-900">Ready to Dispatch</h2>
             <span className="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
               {readyToDispatch.length} ready
             </span>
@@ -233,7 +233,7 @@ export default function DispatchPage() {
       {/* Recent Dispatches */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Dispatches</h2>
+          <h2 className="text-section text-gray-900">Recent Dispatches</h2>
           <Link href="/admin/dispatch/history" className="text-sm text-oms-blue hover:underline">
             View All →
           </Link>
@@ -266,7 +266,7 @@ export default function DispatchPage() {
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b">
               <div>
-                <h2 className="text-lg font-semibold">Create Dispatch</h2>
+                <h2 className="text-section">Create Dispatch</h2>
                 <p className="text-sm text-gray-500">Order #{selectedJob.job_number}</p>
               </div>
               <button onClick={() => setShowDispatchModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>

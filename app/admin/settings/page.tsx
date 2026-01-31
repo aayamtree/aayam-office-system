@@ -124,7 +124,7 @@ export default function UserManagementPage() {
       <div className="bg-white p-4 md:p-6 rounded-xl border shadow-sm space-y-4">
         {/* Title Section */}
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Settings & Team</h1>
+          <h1 className="text-xl md:text-page-title text-gray-900">Settings & Team</h1>
           <p className="text-gray-500 text-sm mt-1">Manage users, roles, and designer directory.</p>
         </div>
 
@@ -245,7 +245,7 @@ export default function UserManagementPage() {
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
               <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                  <h2 className="text-xl font-bold text-gray-900">Add New Team Member</h2>
+                  <h2 className="text-section text-gray-900">Add New Team Member</h2>
                   <button
                     onClick={() => setShowAddModal(false)}
                     className="text-gray-400 hover:text-gray-600"

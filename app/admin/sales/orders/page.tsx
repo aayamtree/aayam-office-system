@@ -430,7 +430,7 @@ export default function OrdersPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-5 border-b border-gray-100 sticky top-0 bg-white z-10">
-              <h2 className="text-xl font-bold text-gray-900">
+              <h2 className="text-section text-gray-900">
                 {isEditing ? 'Edit Order' : 'New Order'}
               </h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
@@ -592,7 +592,7 @@ export default function OrdersPage() {
             <div className="flex justify-between items-center p-6 border-b border-gray-100">
               <div>
                 <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-bold text-gray-900">{selectedJob.project_name}</h2>
+                  <h2 className="text-section text-gray-900">{selectedJob.project_name}</h2>
                   <span className="bg-gray-100 text-gray-600 text-xs font-mono px-2 py-0.5 rounded-md">{selectedJob.job_number}</span>
                 </div>
                 <p className="text-sm text-gray-500 mt-1">Ordered on {formatDate(selectedJob.order_date)}</p>

@@ -207,7 +207,7 @@ export default function AdminDashboard() {
           {/* Left: Today's Focus Stats */}
           <div className="lg:col-span- 2 space-y-4 md:space-y-5">
             <div className="min-w-[120px]">
-              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <h2 className="text-section text-gray-900 flex items-center gap-2">
                 <span className="w-2 h-8 bg-oms-blue rounded-full"></span>
                 Today
               </h2>
@@ -221,7 +221,7 @@ export default function AdminDashboard() {
                   <AlertCircle size={16} />
                 </div>
                 <div>
-                  <div className={`text-lg font-bold leading-none ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'text-red-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsDue || 0}</div>
+                  <div className={`text-section leading-none ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'text-red-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsDue || 0}</div>
                   <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Jobs Due</div>
                 </div>
               </div>
@@ -232,7 +232,7 @@ export default function AdminDashboard() {
                   <Clock size={16} />
                 </div>
                 <div>
-                  <div className={`text-lg font-bold leading-none ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'text-orange-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsDelayed || 0}</div>
+                  <div className={`text-section leading-none ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'text-orange-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsDelayed || 0}</div>
                   <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Delayed</div>
                 </div>
               </div>
@@ -243,7 +243,7 @@ export default function AdminDashboard() {
                   <CheckCircle size={16} />
                 </div>
                 <div>
-                  <div className={`text-lg font-bold leading-none ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'text-green-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsCompleted || 0}</div>
+                  <div className={`text-section leading-none ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'text-green-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsCompleted || 0}</div>
                   <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Completed</div>
                 </div>
               </div>
@@ -254,7 +254,7 @@ export default function AdminDashboard() {
                   <Receipt size={16} />
                 </div>
                 <div>
-                  <div className={`text-lg font-bold leading-none ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'text-blue-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.paymentsDue || 0}</div>
+                  <div className={`text-section leading-none ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'text-blue-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.paymentsDue || 0}</div>
                   <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Payments</div>
                 </div>
               </div>
@@ -265,7 +265,7 @@ export default function AdminDashboard() {
                   <Phone size={16} />
                 </div>
                 <div>
-                  <div className={`text-lg font-bold leading-none ${dashboardStats.alerts?.followUpsDue > 0 ? 'text-purple-700' : 'text-gray-500'}`}>{dashboardStats.alerts?.followUpsDue || 0}</div>
+                  <div className={`text-section leading-none ${dashboardStats.alerts?.followUpsDue > 0 ? 'text-purple-700' : 'text-gray-500'}`}>{dashboardStats.alerts?.followUpsDue || 0}</div>
                   <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Follow-ups</div>
                 </div>
               </Link>
@@ -278,7 +278,7 @@ export default function AdminDashboard() {
                   <Printer size={16} />
                 </div>
                 <div>
-                  <div className={`text-lg font-bold leading-none ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'text-indigo-700' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.jobsAtVendor || 0}</div>
+                  <div className={`text-section leading-none ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'text-indigo-700' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.jobsAtVendor || 0}</div>
                   <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">At Process</div>
                 </div>
               </div>
@@ -289,7 +289,7 @@ export default function AdminDashboard() {
                   <Truck size={16} />
                 </div>
                 <div>
-                  <div className={`text-lg font-bold leading-none ${dashboardStats.vendorStats?.dueToday > 0 ? 'text-cyan-700' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.dueToday || 0}</div>
+                  <div className={`text-section leading-none ${dashboardStats.vendorStats?.dueToday > 0 ? 'text-cyan-700' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.dueToday || 0}</div>
                   <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Return Today</div>
                 </div>
               </div>
@@ -300,7 +300,7 @@ export default function AdminDashboard() {
                   <AlertCircle size={16} />
                 </div>
                 <div>
-                  <div className={`text-lg font-bold leading-none ${dashboardStats.vendorStats?.delayed > 0 ? 'text-rose-700' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.delayed || 0}</div>
+                  <div className={`text-section leading-none ${dashboardStats.vendorStats?.delayed > 0 ? 'text-rose-700' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.delayed || 0}</div>
                   <div className="text-[10px] text-gray-500 font-medium whitespace-nowrap">Vendor Late</div>
                 </div>
               </div>
@@ -321,7 +321,7 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 flex flex-col h-full">
           <div className="flex items-center gap-2.5 mb-6">
             <AlertCircle size={20} className="text-amber-500" />
-            <h2 className="text-lg font-bold text-gray-900">Needs Attention</h2>
+            <h2 className="text-section text-gray-900">Needs Attention</h2>
           </div>
 
           <div className="space-y-4 flex-1 overflow-y-auto max-h-[400px] pr-1">
@@ -341,7 +341,7 @@ export default function AdminDashboard() {
               return (
                 <Link key={alert.label} href={alert.href} className={`flex items-center justify-between p-4 rounded-xl border transition-all hover:shadow-md ${colors}`}>
                   <div className="flex items-center gap-4">
-                    <span className={`w-10 h-10 ${iconColors} rounded-lg flex items-center justify-center text-lg font-bold shadow-sm`}>
+                    <span className={`w-10 h-10 ${iconColors} rounded-lg flex items-center justify-center text-section shadow-sm`}>
                       {isSafe ? <Check size={20} /> : alert.icon}
                     </span>
                     <div>
@@ -375,7 +375,7 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 shadow-sm border border-gray-100">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0 mb-6 md:mb-8">
               <div>
-                <h2 className="text-lg md:text-xl font-bold text-gray-900">Sales Performance</h2>
+                <h2 className="text-lg md:text-section text-gray-900">Sales Performance</h2>
                 <p className="text-xs md:text-sm text-gray-500 mt-1">Monthly revenue overview</p>
               </div>
               <div className="flex items-center gap-2">
@@ -430,7 +430,7 @@ export default function AdminDashboard() {
           {/* Recent Jobs */}
           <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-4 md:mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Recent Jobs</h2>
+              <h2 className="text-section text-gray-900">Recent Jobs</h2>
               <Link href="/admin/sales/orders" className="flex items-center gap-1 text-sm text-oms-blue hover:text-indigo-700 font-bold">
                 View All
                 <ArrowUpRight size={16} />
@@ -533,7 +533,7 @@ export default function AdminDashboard() {
 
           {/* Quick Actions */}
           <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 shadow-sm border border-gray-100">
-            <h2 className="text-base md:text-lg font-bold text-gray-900 mb-4 md:mb-5">Quick Actions</h2>
+            <h2 className="text-base md:text-section text-gray-900 mb-4 md:mb-5">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-3 md:gap-4">
               <Link href="/admin/sales/orders" className="p-4 bg-gray-900 text-white rounded-xl text-center text-sm font-semibold hover:bg-gray-800 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5">
                 + New Order
@@ -552,7 +552,7 @@ export default function AdminDashboard() {
 
           {/* Work Pipeline */}
           <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 shadow-sm border border-gray-100">
-            <h2 className="text-base md:text-lg font-bold text-gray-900 mb-4 md:mb-6">Work Pipeline</h2>
+            <h2 className="text-base md:text-section text-gray-900 mb-4 md:mb-6">Work Pipeline</h2>
 
             <div className="relative w-48 h-48 mx-auto mb-8">
               <svg viewBox="0 0 120 120" className="w-full h-full transform -rotate-90 drop-shadow-md">
@@ -609,7 +609,7 @@ export default function AdminDashboard() {
                       </div>
 
                       <div className="ml-4 text-right">
-                        <span className={`text-lg font-bold ${isBottleneck || overdueCount > 0 ? 'text-red-600' : 'text-gray-900 group-hover:text-oms-blue'}`}>{item.count}</span>
+                        <span className={`text-section ${isBottleneck || overdueCount > 0 ? 'text-red-600' : 'text-gray-900 group-hover:text-oms-blue'}`}>{item.count}</span>
                         <p className="text-[10px] text-gray-400 font-medium">{percent}%</p>
                       </div>
                     </div>
