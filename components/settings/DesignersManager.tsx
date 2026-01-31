@@ -255,9 +255,9 @@ export default function DesignersManager() {
     };
 
     return (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-3 md:space-y-6 animate-fade-in">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
                 <div>
                     <h2 className="text-page-title text-gray-900">Designers Directory</h2>
                     <p className="text-sm text-gray-500">{activeDesigners} active of {totalDesigners} total</p>
@@ -289,7 +289,7 @@ export default function DesignersManager() {
             </div>
 
             {/* Cards Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2 md:gap-4">
                 {filteredDesigners.map(designer => (
                     <div key={designer.id} className="bg-white rounded-xl border p-4  transition-shadow group">
                         <div className="flex items-start justify-between mb-3">
@@ -335,13 +335,13 @@ export default function DesignersManager() {
                         </div>
                         <form onSubmit={handleSubmit} className="p-5 space-y-4">
                             {/* Form fields same as original but tighter */}
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-2 md:gap-4">
                                 <div><label className="text-xs font-bold text-gray-500 mb-1 block">Full Name</label><input required className="w-full border rounded-lg p-2 text-sm" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} /></div>
                                 <div><label className="text-xs font-bold text-gray-500 mb-1 block">Phone</label><input required className="w-full border rounded-lg p-2 text-sm" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} /></div>
                             </div>
                             <div><label className="text-xs font-bold text-gray-500 mb-1 block">Email</label><input className="w-full border rounded-lg p-2 text-sm" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} /></div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-2 md:gap-4">
                                 <div>
                                     <label className="text-xs font-bold text-gray-500 mb-1 block">Type</label>
                                     <select className="w-full border rounded-lg p-2 text-sm" value={formData.employment_type} onChange={e => setFormData({ ...formData, employment_type: e.target.value })}>
@@ -356,7 +356,7 @@ export default function DesignersManager() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-2 md:gap-4">
                                 <div><label className="text-xs font-bold text-gray-500 mb-1 block">Hourly Rate</label><input type="number" className="w-full border rounded-lg p-2 text-sm" value={formData.hourly_rate} onChange={e => setFormData({ ...formData, hourly_rate: +e.target.value })} /></div>
                                 <div><label className="text-xs font-bold text-gray-500 mb-1 block">Monthly Salary</label><input type="number" className="w-full border rounded-lg p-2 text-sm" value={formData.monthly_salary} onChange={e => setFormData({ ...formData, monthly_salary: +e.target.value })} /></div>
                             </div>
@@ -398,7 +398,7 @@ export default function DesignersManager() {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl w-full max-w-md p-6 relative">
                         <button onClick={() => setShowDetailModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={20} /></button>
-                        <div className="flex items-center gap-4 mb-6">
+                        <div className="flex items-center gap-2 md:gap-4 mb-3 md:mb-6">
                             <div className="w-16 h-16 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center text-page-title text-oms-blue">{selectedDesigner.name.charAt(0)}</div>
                             <div>
                                 <h2 className="text-page-title">{selectedDesigner.name}</h2>
@@ -411,7 +411,7 @@ export default function DesignersManager() {
                                 <p className="flex items-center gap-2"><Mail size={14} /> {selectedDesigner.email}</p>
                                 <p className="flex items-center gap-2"><MapPin size={14} /> {selectedDesigner.city}, {selectedDesigner.state}</p>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-2 md:gap-4">
                                 <div className="p-3 border rounded-lg">
                                     <p className="text-xs text-gray-500">Hourly</p>
                                     <p className="font-bold">{formatCurrency(selectedDesigner.hourly_rate)}</p>

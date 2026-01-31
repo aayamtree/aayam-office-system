@@ -75,7 +75,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                     </div>
 
                     {/* Quick Stats */}
-                    <div className="grid grid-cols-3 gap-4 mt-6">
+                    <div className="grid grid-cols-3 gap-2 md:gap-4 mt-3 md:mt-6">
                         <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
                             <div className="text-page-title">{todayEvents.length}</div>
                             <div className="text-xs text-white/80">Tasks Today</div>

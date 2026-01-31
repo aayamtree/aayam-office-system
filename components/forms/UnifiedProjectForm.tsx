@@ -214,7 +214,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                         )}
 
                         {/* Section 1: Project Basics (ALL ROLES) */}
-                        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 border-2 border-blue-100">
+                        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg md:rounded-2xl p-4 md:p-6 border-2 border-blue-100">
                             <h4 className="font-bold text-blue-900 mb-4 text-lg">📋 Project Basics</h4>
                             <div className="space-y-4">
                                 <div>
@@ -231,7 +231,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-2 md:gap-4">
                                     <div>
                                         <label className="block text-sm font-bold text-gray-700 mb-2">
                                             Client <span className="text-red-500">*</span>
@@ -292,12 +292,12 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                         </div>
 
                         {/* Section 2: Designer Assignment (ALL ROLES) */}
-                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border-2 border-green-100">
+                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg md:rounded-2xl p-4 md:p-6 border-2 border-green-100">
                             <h4 className="font-bold text-green-900 mb-4 text-lg flex items-center gap-2">
                                 <User size={20} />
                                 Designer & Timeline
                             </h4>
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-3 gap-2 md:gap-4">
                                 <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-2">
                                         Assign Designer
@@ -346,7 +346,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                         </div>
 
                         {/* Section 3: Multiple Files (ALL ROLES) */}
-                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border-2 border-amber-100">
+                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg md:rounded-2xl p-4 md:p-6 border-2 border-amber-100">
                             <h4 className="font-bold text-amber-900 mb-4 text-lg flex items-center gap-2">
                                 <Upload size={20} />
                                 Project Files (Multiple Upload)
@@ -379,7 +379,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
 
                         {/* Section 4: Financial (ADMIN ONLY - HIDDEN FROM DESIGNERS) */}
                         {!isDesigner && (
-                            <div className="bg-oms-blue rounded-2xl p-6 border-2 border-[rgba(0,0,255,0.2)]-200">
+                            <div className="bg-oms-blue rounded-lg md:rounded-2xl p-4 md:p-6 border-2 border-[rgba(0,0,255,0.2)]-200">
                                 <div className="flex items-center justify-between mb-4">
                                     <h4 className="font-bold text-indigo-900 text-lg flex items-center gap-2">
                                         <DollarSign size={20} />
@@ -391,7 +391,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                 </div>
 
                                 <div className="space-y-4">
-                                    <div className="grid grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-3 gap-2 md:gap-4">
                                         <div>
                                             <label className="block text-sm font-bold text-gray-700 mb-2">
                                                 Product Category
@@ -440,7 +440,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-4 gap-4">
+                                    <div className="grid grid-cols-4 gap-2 md:gap-4">
                                         <div>
                                             <label className="block text-sm font-bold text-gray-700 mb-2">
                                                 Base Price (₹)
@@ -510,7 +510,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                         )}
 
                         {/* Footer */}
-                        <div className="pt-4 border-t-2 border-gray-100 flex gap-4 justify-end">
+                        <div className="pt-4 border-t-2 border-gray-100 flex gap-2 md:gap-4 justify-end">
                             <button
                                 type="button"
                                 onClick={onClose}

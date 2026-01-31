@@ -217,7 +217,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                 </div>
 
                 {/* Print Specifications */}
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-2 md:gap-4">
                     <div>
                         <div className="flex items-center justify-between mb-2">
                             <label className="block text-sm font-bold text-gray-700">Machine</label>
@@ -287,7 +287,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                 </div>
 
                 {/* Deadline & Amount */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-2 md:gap-4">
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">
                             <Calendar size={14} className="inline mr-1" />

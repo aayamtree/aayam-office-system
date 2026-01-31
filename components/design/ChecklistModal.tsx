@@ -116,7 +116,7 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
                                         key={idx}
                                         onClick={() => toggleItem(item)}
                                         className={`
-                      flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer group select-none
+                      flex items-center gap-2 md:gap-4 p-4 rounded-xl border transition-all cursor-pointer group select-none
                       ${progress[item]
                                                 ? 'bg-green-50 border-green-200'
                                                 : 'bg-white border-gray-200 hover:border-oms-blue/20 hover:bg-gray-50'

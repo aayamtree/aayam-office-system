@@ -163,7 +163,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
 
                 {/* Transaction Details */}
                 <div className="px-6 py-4 bg-gray-50 border-b border-gray-100">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-2 md:gap-4">
                         <div>
                             <p className="text-xs text-gray-500 uppercase tracking-wide">Date</p>
                             <p className="font-semibold text-gray-900">

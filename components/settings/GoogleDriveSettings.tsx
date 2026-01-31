@@ -166,7 +166,7 @@ export default function GoogleDriveSettings() {
 
     return (
         <div className="bg-white rounded-2xl border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-3 md:mb-6">
                 <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
                     <Cloud className="w-6 h-6 text-blue-600" />
                 </div>

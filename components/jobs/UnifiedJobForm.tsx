@@ -219,14 +219,14 @@ export default function UnifiedJobForm({
     };
 
     const containerClass = mode === 'modal'
-        ? 'bg-white rounded-2xl p-6 max-h-[85vh] overflow-y-auto'
+        ? 'bg-white rounded-lg md:rounded-2xl p-4 md:p-6 max-h-[85vh] overflow-y-auto'
         : 'space-y-6';
 
     return (
         <div className={containerClass}>
             {/* Header */}
             {mode === 'modal' && (
-                <div className="flex items-center justify-between mb-6 pb-4 border-b">
+                <div className="flex items-center justify-between mb-3 md:mb-6 pb-4 border-b">
                     <div className="flex items-center gap-3">
                         <Briefcase className="text-oms-blue" size={24} />
                         <h2 className="text-page-title text-gray-900">
@@ -241,13 +241,13 @@ export default function UnifiedJobForm({
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* SECTION 1: Project Basics - ALL ROLES */}
-                <div className="space-y-4 bg-oms-blue rounded-xl p-6 border-2 border-[rgba(0,0,255,0.2)]-200">
+                <div className="space-y-2 md:space-y-4 bg-oms-blue rounded-lg md:rounded-2xl p-4 md:p-6 border-2 border-[rgba(0,0,255,0.2)]-200">
                     <h3 className="text-section text-gray-900 flex items-center gap-2">
                         <span className="bg-[rgba(0,0,255,0.1)] text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">1</span>
                         Project Basics
                     </h3>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
                         <div className="col-span-2">
                             <label className="block text-sm font-medium mb-1">Project Name *</label>
                             <input
@@ -301,13 +301,13 @@ export default function UnifiedJobForm({
                 </div>
 
                 {/* SECTION 2: Project Parameters - ALL ROLES */}
-                <div className="space-y-4 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-6 border-2 border-orange-200">
+                <div className="space-y-2 md:space-y-4 bg-gradient-to-br from-orange-50 to-red-50 rounded-lg md:rounded-2xl p-4 md:p-6 border-2 border-orange-200">
                     <h3 className="text-section text-gray-900 flex items-center gap-2">
                         <span className="bg-orange-600 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">2</span>
                         Project Parameters
                     </h3>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
                         <div>
                             <label className="block text-sm font-medium mb-1">Job Type</label>
                             <select
@@ -368,14 +368,14 @@ export default function UnifiedJobForm({
 
                 {/* SECTION 3: Financial Details - ADMIN ONLY */}
                 {isAdmin && (
-                    <div className="space-y-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-200">
+                    <div className="space-y-2 md:space-y-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg md:rounded-2xl p-4 md:p-6 border-2 border-green-200">
                         <h3 className="text-section text-gray-900 flex items-center gap-2">
                             <span className="bg-green-600 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">3</span>
                             Financial Details
                             <span className="ml-auto text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full">Admin Only</span>
                         </h3>
 
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-3 gap-2 md:gap-4">
                             <div>
                                 <label className="block text-sm font-medium mb-1">Quantity</label>
                                 <input
@@ -415,7 +415,7 @@ export default function UnifiedJobForm({
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-4 gap-4 bg-white p-4 rounded-lg">
+                        <div className="grid grid-cols-4 gap-2 md:gap-4 bg-white p-4 rounded-lg">
                             <div>
                                 <p className="text-xs text-gray-500">Subtotal</p>
                                 <p className="font-bold text-gray-900">₹{subtotal.toFixed(2)}</p>
@@ -471,7 +471,7 @@ export default function UnifiedJobForm({
                 )}
 
                 {/* SECTION 4: Assets & Description - ALL ROLES */}
-                <div className="space-y-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border-2 border-blue-200">
+                <div className="space-y-2 md:space-y-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg md:rounded-2xl p-4 md:p-6 border-2 border-blue-200">
                     <h3 className="text-section text-gray-900 flex items-center gap-2">
                         <span className="bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">{isAdmin ? '4' : '3'}</span>
                         Assets & Brief

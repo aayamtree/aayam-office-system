@@ -103,7 +103,7 @@ export default function ClientQuickAdd({ onClientCreated, onClose }: ClientQuick
                     )}
 
                     {/* Basic Info */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-2 md:gap-4">
                         <div className="col-span-2">
                             <label className="block text-sm font-bold text-gray-700 mb-2">
                                 Name <span className="text-red-500">*</span>
@@ -184,7 +184,7 @@ export default function ClientQuickAdd({ onClientCreated, onClose }: ClientQuick
                     {/* Business Info */}
                     <div className="pt-4">
                         <h4 className="font-bold text-gray-900 mb-4 pb-2 border-b-2 border-gray-100">Business Details</h4>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-2 md:gap-4">
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-2">
                                     GSTIN
@@ -235,7 +235,7 @@ export default function ClientQuickAdd({ onClientCreated, onClose }: ClientQuick
                                     placeholder="Building, Street, Area"
                                 />
                             </div>
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-3 gap-2 md:gap-4">
                                 <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-2">
                                         City
@@ -278,7 +278,7 @@ export default function ClientQuickAdd({ onClientCreated, onClose }: ClientQuick
                     </div>
 
                     {/* Footer */}
-                    <div className="pt-4 border-t-2 border-gray-100 flex gap-4 justify-end">
+                    <div className="pt-4 border-t-2 border-gray-100 flex gap-2 md:gap-4 justify-end">
                         <button
                             type="button"
                             onClick={onClose}

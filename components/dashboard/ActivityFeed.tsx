@@ -35,7 +35,7 @@ export default function ActivityFeed({ variant = 'card' }: { variant?: 'card' | 
 
     const Container = variant === 'card' ? 'div' : 'div';
     const containerClasses = variant === 'card'
-        ? "bg-white rounded-2xl p-6 border border-gray-100 h-full"
+        ? "bg-white rounded-lg md:rounded-2xl p-4 md:p-6 border border-gray-100 h-full"
         : "h-full";
 
     return (
@@ -45,7 +45,7 @@ export default function ActivityFeed({ variant = 'card' }: { variant?: 'card' | 
                 <h2 className="text-section text-gray-900">Activity Feed</h2>
             </div>
 
-            <div className="space-y-6 relative pl-2">
+            <div className="space-y-3 md:space-y-6 relative pl-2">
                 {/* Connector Line */}
                 <div className="absolute left-4.5 top-0 bottom-0 w-[2px] bg-gray-100"></div>
 

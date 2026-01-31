@@ -86,7 +86,7 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-2 md:gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-oms-blue"></div>
         <p className="text-gray-500 text-body">Initializing...</p>
         <button
@@ -220,7 +220,7 @@ export default function LoginPage() {
         )}
 
         {/* Footer */}
-        <div className="text-center mt-6">
+        <div className="text-center mt-3 md:mt-6">
           <p className="text-label text-gray-500">
             © 2026 Aayam Creative. All rights reserved.
           </p>
