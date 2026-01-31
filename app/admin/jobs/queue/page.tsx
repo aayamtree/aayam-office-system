@@ -171,52 +171,102 @@ export default function JobQueuePage() {
         </select>
       </div>
 
-      {/* Jobs List Render (keep simplified) */}
-      <div className="space-y-3">
+      {/* Jobs List Render - Modern Card Design */}
+      <div className="space-y-4">
         {filteredJobs.length === 0 && <div className="text-center py-10 text-gray-500">No jobs found matching criteria.</div>}
-        {filteredJobs.map((job) => (
-          <div key={job.id} className={`bg-white rounded-xl p-4 border ${['high', 'urgent'].includes(job.priority) ? 'border-red-200' : 'border-gray-100'}`}>
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 md:gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className="font-semibold text-gray-900">{job.job_number}</span>
-                  {job.priority !== 'normal' && (
-                    <span className={`px-2 py-0.5 text-xs rounded-full ${getPriorityColor(job.priority)}`}>
+        {filteredJobs.map((job) => {
+          // Determine header color based on status
+          const headerColors: Record<string, string> = {
+            'new': 'bg-gradient-to-r from-blue-500 to-blue-600',
+            'designing': 'bg-gradient-to-r from-oms-blue to-blue-600',
+            'approval': 'bg-gradient-to-r from-yellow-400 to-yellow-500',
+            'printing': 'bg-gradient-to-r from-purple-500 to-purple-600',
+            'finishing': 'bg-gradient-to-r from-pink-500 to-pink-600',
+            'quality_check': 'bg-gradient-to-r from-orange-500 to-orange-600',
+            'ready': 'bg-gradient-to-r from-green-500 to-green-600',
+            'dispatched': 'bg-gradient-to-r from-cyan-500 to-cyan-600',
+            'delivered': 'bg-gradient-to-r from-gray-400 to-gray-500',
+            'cancelled': 'bg-gradient-to-r from-red-500 to-red-600',
+            'on_hold': 'bg-gradient-to-r from-gray-500 to-gray-600',
+          };
+          const headerBg = headerColors[job.current_stage] || 'bg-gradient-to-r from-gray-400 to-gray-500';
+          const headerTextColor = job.current_stage === 'approval' ? 'text-gray-900' : 'text-white';
+          const isUrgent = ['high', 'urgent'].includes(job.priority);
+
+          return (
+            <div key={job.id} className={`bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border ${isUrgent ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-100'}`}>
+              {/* Colored Header Tab */}
+              <div className={`${headerBg} px-5 py-3 flex items-center justify-between`}>
+                <span className={`${headerTextColor} font-semibold text-sm md:text-base`}>
+                  {job.job_number}
+                </span>
+                <div className="flex items-center gap-2">
+                  {isUrgent && (
+                    <span className={`${headerTextColor}/90 text-xs px-3 py-1 bg-white/30 rounded-full font-bold uppercase`}>
                       {job.priority}
                     </span>
                   )}
-                  <span className={`px-2 py-0.5 text-xs rounded-full border ${getStatusColor(job.current_stage)}`}>
-                    {job.current_stage}
+                  <span className={`${headerTextColor}/90 text-xs px-3 py-1 bg-white/20 rounded-full font-medium capitalize`}>
+                    {job.current_stage.replace('_', ' ')}
                   </span>
-                </div>
-                <p className="text-sm text-gray-600">{job.client?.company || job.client?.name}</p>
-                <p className="text-sm text-gray-900 font-medium mt-1">{job.job_type}: {job.project_name}</p>
-                <div className="flex items-center gap-2 md:gap-4 mt-2 text-sm text-gray-500">
-                  <span>Qty: {job.quantity}</span>
-                  <span>Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : 'N/A'}</span>
-                  {job.designer?.name && <span className="text-oms-blue">🎨 {job.designer.name}</span>}
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button onClick={() => handleView(job)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"> <Eye size={18} /> </button>
-                {job.current_stage !== 'delivered' && job.current_stage !== 'cancelled' && (
-                  <button
-                    onClick={() => handleMoveToNext(job)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium ${job.current_stage === 'dispatched' ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-oms-blue text-white hover:bg-oms-blue'}`}
-                  >
-                    {job.current_stage === 'new' && <Play size={14} />}
-                    {job.current_stage !== 'new' && job.current_stage !== 'dispatched' && <ArrowRight size={14} />}
-                    {job.current_stage === 'dispatched' && <CheckCircle size={14} />}
-                    <span className="hidden sm:inline">
-                      {job.current_stage === 'new' ? 'Start' : job.current_stage === 'dispatched' ? 'Deliver' : 'Next Stage'}
+              {/* White Card Body */}
+              <div className="p-5">
+                {/* Client/Subtitle */}
+                <p className="text-gray-500 text-sm mb-1">
+                  {job.client?.company || job.client?.name || 'Unknown Client'}
+                </p>
+
+                {/* Project Name */}
+                <h3 className="text-gray-900 font-bold text-lg mb-3">
+                  {job.job_type}: {job.project_name}
+                </h3>
+
+                {/* Details Row */}
+                <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <span className="font-medium">Qty: {job.quantity}</span>
+                    <span>Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : 'N/A'}</span>
+                  </div>
+                  {job.designer?.name && (
+                    <span className="text-oms-blue text-sm font-medium">
+                      🎨 {job.designer.name}
                     </span>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleView(job)}
+                    className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Eye size={18} />
+                    <span className="hidden sm:inline">View Details</span>
                   </button>
-                )}
+                  {job.current_stage !== 'delivered' && job.current_stage !== 'cancelled' && (
+                    <button
+                      onClick={() => handleMoveToNext(job)}
+                      className={`px-4 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2 ${job.current_stage === 'dispatched'
+                          ? 'bg-green-600 text-white hover:bg-green-700'
+                          : 'bg-oms-blue text-white hover:bg-blue-700'
+                        }`}
+                    >
+                      {job.current_stage === 'new' && <Play size={18} />}
+                      {job.current_stage !== 'new' && job.current_stage !== 'dispatched' && <ArrowRight size={18} />}
+                      {job.current_stage === 'dispatched' && <CheckCircle size={18} />}
+                      <span className="hidden md:inline">
+                        {job.current_stage === 'new' ? 'Start' : job.current_stage === 'dispatched' ? 'Mark Delivered' : 'Next Stage'}
+                      </span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* View Modal with Interactive Workflow */}
