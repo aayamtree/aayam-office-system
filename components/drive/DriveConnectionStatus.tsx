@@ -38,15 +38,15 @@ export default function DriveConnectionStatus() {
     // Not connected - show warning
     if (!status?.connected || status?.isExpired) {
         return (
-            <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
-                <XCircle className="w-4 h-4 text-amber-600" />
-                <span className="text-label text-amber-900">
+            <div className="flex items-center gap-2 px-3 py-2 bg-[rgba(255,102,0,0.1)] border border-[rgba(255,102,0,0.2)] rounded-lg">
+                <XCircle className="w-4 h-4 text-oms-orange" />
+                <span className="text-label text-oms-orange">
                     Drive: {status?.isExpired ? 'Expired' : 'Not Connected'}
                 </span>
                 {profile?.role === 'admin' && (
                     <Link
                         href="/admin/settings"
-                        className="ml-auto px-3 py-1 bg-amber-600 text-white text-label rounded hover:bg-amber-700 transition-colors"
+                        className="ml-auto px-3 py-1 bg-oms-orange text-white text-label rounded hover:opacity-90 transition-all"
                     >
                         Configure
                     </Link>
