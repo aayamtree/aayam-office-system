@@ -157,9 +157,9 @@ export default function PaperStockPage() {
   const totalValue = stock.reduce((sum, item) => sum + (item.quantity * item.cost_per_unit), 0);
 
   return (
-    <div className="space-y-4 lg:space-y-6">
+    <div className="space-y-2 md:space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/cmyk-print" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
             <ArrowLeft size={20} />
@@ -259,7 +259,7 @@ export default function PaperStockPage() {
             <div key={item.id} className={`bg-white rounded-xl p-4 border ${status === 'out_of_stock' ? 'border-red-200' :
                 status === 'low_stock' ? 'border-gray-200' : 'border-gray-100'
               }`}>
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 md:gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold text-gray-900">{item.name}</h3>
@@ -268,7 +268,7 @@ export default function PaperStockPage() {
                     </span>
                   </div>
                   {item.size && <p className="text-sm text-gray-500">{item.size} {item.gsm ? `| ${item.gsm} GSM` : ''}</p>}
-                  <div className="flex items-center gap-4 mt-2 text-sm">
+                  <div className="flex items-center gap-2 md:gap-4 mt-2 text-sm">
                     <span className={`font-medium ${item.quantity < item.reorder_level ? 'text-red-600' : 'text-gray-900'}`}>
                       Stock: {item.quantity} {item.unit}
                     </span>
@@ -328,7 +328,7 @@ export default function PaperStockPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Size / Attributes</label>
                   <input
@@ -350,7 +350,7 @@ export default function PaperStockPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
                   <select
@@ -378,7 +378,7 @@ export default function PaperStockPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Current Stock</label>
                   <input

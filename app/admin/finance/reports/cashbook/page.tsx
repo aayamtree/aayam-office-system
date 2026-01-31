@@ -152,7 +152,7 @@ export default function CashBookPage() {
     };
 
     return (
-        <div className="space-y-4 md:space-y-6 pb-20">
+        <div className="space-y-2 md:space-y-6 pb-16 md:pb-20">
             {/* Header - Responsive - Hide on print */}
             <div className="flex flex-col gap-3 print:hidden">
                 <div className="flex items-center gap-3">

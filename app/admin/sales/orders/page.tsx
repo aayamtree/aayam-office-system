@@ -233,8 +233,8 @@ export default function OrdersPage() {
   }, [jobs, searchQuery, statusFilter]);
 
   return (
-    <div className="space-y-6 lg:space-y-8 pb-10">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-3 md:space-y-6 lg:space-y-8 pb-10">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/sales" className="p-2 hover:bg-white rounded-xl border border-gray-100 lg:hidden bg-gray-50 transition-colors">
             <ArrowLeft size={20} className="text-gray-600" />
@@ -488,7 +488,7 @@ export default function OrdersPage() {
                   />
                 </div>
 
-                <div className="col-span-1 sm:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <div className="col-span-1 sm:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Quantity</label>
                     <input
@@ -565,7 +565,7 @@ export default function OrdersPage() {
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-4 border-t border-gray-100">
+              <div className="flex gap-2 md:gap-4 pt-4 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
@@ -603,7 +603,7 @@ export default function OrdersPage() {
             </div>
 
             <div className="p-6 space-y-6">
-              <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+              <div className="flex items-center gap-2 md:gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
                 <div className="w-12 h-12 rounded-full bg-oms-blue flex items-center justify-center text-oms-blue text-section">
                   {selectedJob.client?.company?.charAt(0) || 'C'}
                 </div>
@@ -613,7 +613,7 @@ export default function OrdersPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div className="p-3 border rounded-xl">
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Status</p>
                   <p className="font-medium text-gray-900 capitalize mt-1">{selectedJob.current_stage.replace('_', ' ')}</p>

@@ -64,7 +64,7 @@ export default function OpeningBalancePage() {
   return (
     <div className="p-4 sm:p-6 space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/finance" className="p-2 hover:bg-gray-100 rounded-lg">
             <ArrowLeft size={20} />
@@ -112,7 +112,7 @@ export default function OpeningBalancePage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-4">
         <div className="bg-white rounded-xl border p-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">

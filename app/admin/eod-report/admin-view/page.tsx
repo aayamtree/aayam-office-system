@@ -82,7 +82,7 @@ export default function AdminEODDashboard() {
     }
 
     return (
-        <div className="space-y-6 max-w-7xl">
+        <div className="space-y-3 md:space-y-6 max-w-7xl">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -98,7 +98,7 @@ export default function AdminEODDashboard() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4">
                 <div className="bg-white rounded-xl p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-2">
                         <CheckCircle size={18} className="text-gray-900" />
@@ -236,7 +236,7 @@ export default function AdminEODDashboard() {
                                     className="flex items-center justify-between cursor-pointer"
                                     onClick={() => toggleReportExpand(report.id)}
                                 >
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-2 md:gap-4">
                                         <div className="flex items-center gap-2">
                                             {expandedReport === report.id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                             <User size={16} className="text-gray-400" />
@@ -244,7 +244,7 @@ export default function AdminEODDashboard() {
                                         </div>
                                         <span className="text-sm text-gray-500">{report.user?.role}</span>
                                     </div>
-                                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                                    <div className="flex items-center gap-2 md:gap-4 text-sm text-gray-600">
                                         <span className="flex items-center gap-1">
                                             <Calendar size={14} />
                                             {new Date(report.report_date).toLocaleDateString()}
@@ -278,7 +278,7 @@ export default function AdminEODDashboard() {
                                                                 </span>
                                                             </div>
                                                             <p className="text-sm text-gray-700 mb-2">{update.status_update}</p>
-                                                            <div className="flex items-center gap-4 text-xs text-gray-600">
+                                                            <div className="flex items-center gap-2 md:gap-4 text-xs text-gray-600">
                                                                 <span>Progress: {update.completion_percentage}%</span>
                                                                 <span>Time: {update.time_spent}h</span>
                                                                 {update.client_approval_received && <span className="text-gray-900 font-medium">✓ Client Approved</span>}

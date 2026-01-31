@@ -25,7 +25,7 @@ export default function CalendarPage() {
     );
 
     return (
-        <div className="space-y-6 p-6">
+        <div className="space-y-3 md:space-y-6 p-6">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -46,7 +46,7 @@ export default function CalendarPage() {
 
             {/* Week Planner */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-3 md:mb-6">
                     <h2 className="text-section text-gray-900">This Week</h2>
                     <button
                         onClick={() => setShowNewEvent(true)}
@@ -58,7 +58,7 @@ export default function CalendarPage() {
                 </div>
 
                 {/* Week Grid */}
-                <div className="grid grid-cols-7 gap-4">
+                <div className="grid grid-cols-7 gap-2 md:gap-4">
                     {[0, 1, 2, 3, 4, 5, 6].map(dayOffset => {
                         const day = addDays(weekStart, dayOffset);
                         const dateStr = format(day, 'yyyy-MM-dd');
@@ -284,7 +284,7 @@ function NewEventModal({ profile, onClose, onCreate }: {
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-2 md:gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Date *
@@ -315,7 +315,7 @@ function NewEventModal({ profile, onClose, onCreate }: {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 md:gap-4">
                         <label className="flex items-center gap-2">
                             <input
                                 type="checkbox"

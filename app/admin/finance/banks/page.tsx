@@ -125,7 +125,7 @@ export default function BankAccountsPage() {
   return (
     <div className="p-4 sm:p-6 space-y-5 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/finance" className="p-2 hover:bg-gray-100 rounded-lg">
             <ArrowLeft size={20} />
@@ -177,7 +177,7 @@ export default function BankAccountsPage() {
       </div>
 
       {/* Bank Accounts List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-4">
         {filteredBanks.map(bank => (
           <div key={bank.id} className={`bg-white rounded-xl border p-4  transition-shadow ${!bank.is_active ? 'opacity-60' : ''} ${bank.is_default ? 'ring-2 ring-oms-blue' : ''}`}>
             <div className="flex items-start justify-between mb-3">
@@ -262,7 +262,7 @@ export default function BankAccountsPage() {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-3 py-2.5 border rounded-lg" placeholder="HDFC Bank Current Account" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Account Number *</label>
                   <input type="text" required value={formData.account_number}
@@ -276,7 +276,7 @@ export default function BankAccountsPage() {
                     className="w-full px-3 py-2.5 border rounded-lg" placeholder="HDFC0001234" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Branch *</label>
                   <input type="text" required value={formData.branch}
@@ -323,7 +323,7 @@ export default function BankAccountsPage() {
                 <p className="text-sm text-gray-600">Current Balance</p>
                 <p className="text-page-title text-oms-blue">{formatCurrency(selectedBank.current_balance)}</p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <p className="text-xs text-gray-500">Account Number</p>
                   <p className="font-mono font-medium">{selectedBank.account_number}</p>

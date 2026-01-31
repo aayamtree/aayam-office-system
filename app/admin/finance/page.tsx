@@ -26,9 +26,9 @@ export default function FinancePage() {
   ];
 
   return (
-    <div className="space-y-6 lg:space-y-8 animate-fade-in pb-10">
+    <div className="space-y-3 md:space-y-6 lg:space-y-8 animate-fade-in pb-10">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div>
           <h1 className="text-2xl lg:text-page-title text-gray-900 tracking-tight">Finance</h1>
           <p className="text-gray-500 mt-1">Manage invoices, payments & transactions</p>
@@ -52,9 +52,9 @@ export default function FinancePage() {
       </div>
 
       {/* Quick Actions - Finance Tools */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2 md:gap-4">
         <Link href="/admin/finance/opening-balance"
-          className="flex items-center gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
+          className="flex items-center gap-2 md:gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
           <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
             <IndianRupee className="text-oms-blue" size={24} />
           </div>
@@ -64,7 +64,7 @@ export default function FinancePage() {
           </div>
         </Link>
         <Link href="/admin/finance/banks"
-          className="flex items-center gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
+          className="flex items-center gap-2 md:gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
           <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
             <CreditCard className="text-oms-blue" size={24} />
           </div>
@@ -74,7 +74,7 @@ export default function FinancePage() {
           </div>
         </Link>
         <Link href="/admin/finance/banking"
-          className="flex items-center gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
+          className="flex items-center gap-2 md:gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
           <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
             <RefreshCw className="text-oms-blue" size={24} />
           </div>
@@ -84,7 +84,7 @@ export default function FinancePage() {
           </div>
         </Link>
         <Link href="/admin/finance/expenses/quick"
-          className="flex items-center gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
+          className="flex items-center gap-2 md:gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
           <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
             <TrendingDown className="text-oms-blue" size={24} />
           </div>
@@ -94,7 +94,7 @@ export default function FinancePage() {
           </div>
         </Link>
         <Link href="/admin/finance/reports/cashbook"
-          className="flex items-center gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
+          className="flex items-center gap-2 md:gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
           <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
             <FileText className="text-oms-blue" size={24} />
           </div>
@@ -106,7 +106,7 @@ export default function FinancePage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
         {stats.map((stat) => (
           <div key={stat.label} className="bg-white rounded-2xl p-5 border border-gray-100 transition-shadow  group">
             <div className="flex items-center gap-3 mb-3">
@@ -124,9 +124,9 @@ export default function FinancePage() {
       </div>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link href="/admin/finance/invoices" className="bg-white rounded-2xl p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
-          <div className="flex items-center gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
+        <Link href="/admin/finance/invoices" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
+          <div className="flex items-center gap-2 md:gap-4 mb-4">
             <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <FileText size={28} className="text-blue-600" />
             </div>
@@ -142,8 +142,8 @@ export default function FinancePage() {
           </div>
         </Link>
 
-        <Link href="/admin/finance/vendors" className="bg-white rounded-2xl p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
-          <div className="flex items-center gap-4 mb-4">
+        <Link href="/admin/finance/vendors" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
+          <div className="flex items-center gap-2 md:gap-4 mb-4">
             <div className="w-14 h-14 bg-oms-blue rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <CreditCard size={28} className="text-oms-blue" />
             </div>
@@ -158,8 +158,8 @@ export default function FinancePage() {
           </div>
         </Link>
 
-        <Link href="/admin/finance/payments" className="bg-white rounded-2xl p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
-          <div className="flex items-center gap-4 mb-4">
+        <Link href="/admin/finance/payments" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
+          <div className="flex items-center gap-2 md:gap-4 mb-4">
             <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <CreditCard size={28} className="text-gray-900" />
             </div>
@@ -176,10 +176,10 @@ export default function FinancePage() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
         {/* Recent Transactions */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-3 md:mb-6">
             <div className="flex items-center gap-3">
               <div className="w-1 h-6 bg-oms-blue rounded-full"></div>
               <h2 className="text-section text-gray-900">Recent Transactions</h2>
@@ -215,8 +215,8 @@ export default function FinancePage() {
         </div>
 
         {/* Overdue Invoices */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-3 md:mb-6">
             <div className="flex items-center gap-3">
               <div className="w-1 h-6 bg-red-500 rounded-full"></div>
               <h2 className="text-section text-gray-900">Overdue Invoices</h2>
@@ -250,11 +250,11 @@ export default function FinancePage() {
 
       {/* Monthly Summary */}
       <div className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100">
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-3 md:mb-6">
           <div className="w-1 h-6 bg-oms-blue rounded-full"></div>
           <h2 className="text-section text-gray-900">Monthly Summary</h2>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
           <div className="p-4 bg-white border-2 border-gray-100 rounded-2xl hover:border-gray-200 transition-colors">
             <p className="text-xs sm:text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wider">Total Invoiced</p>
             <p className="text-xl sm:text-page-title text-gray-900 font-semibold">₹5,25,000</p>

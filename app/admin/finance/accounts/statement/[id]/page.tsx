@@ -189,10 +189,10 @@ export default function AccountStatementPage() {
         .reduce((sum, t) => sum + (t.amount || 0), 0);
 
     return (
-        <div className="space-y-6 pb-20">
+        <div className="space-y-3 md:space-y-6 pb-16 md:pb-20">
             {/* Header - Hide on print */}
             <div className="flex justify-between items-start print:hidden">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 md:gap-4">
                     <button
                         onClick={() => router.back()}
                         className="p-2 hover:bg-gray-100 rounded-lg"
@@ -232,9 +232,9 @@ export default function AccountStatementPage() {
 
             {/* Filters - Hide on print */}
             <div className="bg-white rounded-xl border p-4 print:hidden">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 md:gap-4">
                     <Calendar size={18} className="text-gray-400" />
-                    <div className="flex gap-4 flex-1">
+                    <div className="flex gap-2 md:gap-4 flex-1">
                         <div>
                             <label className="text-sm text-gray-600">From:</label>
                             <input

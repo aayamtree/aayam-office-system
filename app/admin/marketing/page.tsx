@@ -58,9 +58,9 @@ export default function MarketingDashboard() {
       </div>
 
       {/* Hero Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
         {/* Today's Focus */}
-        <div className="bg-oms-blue rounded-2xl p-6 text-white -200">
+        <div className="bg-oms-blue rounded-lg md:rounded-2xl p-3 md:p-6 text-white -200">
           <div className="flex items-center gap-3 mb-2 opacity-90">
             <Calendar size={20} />
             <span className="font-medium">Today&apos;s Follow-ups</span>
@@ -72,7 +72,7 @@ export default function MarketingDashboard() {
         </div>
 
         {/* Overdue Warning */}
-        <div className="bg-white rounded-2xl p-6 border border-red-100 relative overflow-hidden">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-red-100 relative overflow-hidden">
           {overdueFollowUps.length > 0 && (
             <div className="absolute top-0 right-0 p-4 opacity-10">
               <AlertCircle size={80} className="text-red-500" />
@@ -87,7 +87,7 @@ export default function MarketingDashboard() {
         </div>
 
         {/* New Leads */}
-        <div className="bg-white rounded-2xl p-6 border border-blue-100">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-blue-100">
           <div className="flex items-center gap-3 mb-2 text-blue-600">
             <Users size={20} />
             <span className="font-medium">New Leads</span>
@@ -97,7 +97,7 @@ export default function MarketingDashboard() {
         </div>
 
         {/* Performance */}
-        <div className="bg-white rounded-2xl p-6 border border-green-100">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-green-100">
           <div className="flex items-center gap-3 mb-2 text-gray-900">
             <TrendingUp size={20} />
             <span className="font-medium">Converted</span>

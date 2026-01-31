@@ -105,9 +105,9 @@ export default function ManualJournalPage() {
     };
 
     return (
-        <div className="max-w-5xl mx-auto space-y-6 animate-fade-in pb-20">
+        <div className="max-w-5xl mx-auto space-y-3 md:space-y-6 animate-fade-in pb-16 md:pb-20">
             {/* Header */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
                 <Link href="/admin/reports" className="p-2 hover:bg-gray-100 rounded-full text-gray-500">
                     <ArrowLeft />
                 </Link>
@@ -120,7 +120,7 @@ export default function ManualJournalPage() {
             {/* Form */}
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                 {/* Top Info */}
-                <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 border-b bg-gray-50">
+                <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 border-b bg-gray-50">
                     <div>
                         <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Date</label>
                         <input

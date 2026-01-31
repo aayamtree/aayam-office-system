@@ -165,7 +165,7 @@ export default function NewProjectPage() {
                         <ArrowLeft size={18} />
                         Back to My Queue
                     </Link>
-                    <div className="flex items-start gap-4">
+                    <div className="flex items-start gap-2 md:gap-4">
                         <div className="p-3 bg-white/20 backdrop-blur-lg rounded-2xl">
                             <Briefcase size={32} className="text-white" />
                         </div>
@@ -234,7 +234,7 @@ export default function NewProjectPage() {
                             <h4 className="text-base font-bold text-gray-800 uppercase tracking-wide">Project Basics</h4>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
                             <div className="col-span-2">
                                 <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                                     📝 Project Name <span className="text-red-500">*</span>
@@ -291,7 +291,7 @@ export default function NewProjectPage() {
                             <h4 className="text-base font-bold text-gray-800 uppercase tracking-wide">Project Parameters</h4>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                                     📋 Job Type
@@ -430,7 +430,7 @@ export default function NewProjectPage() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-4 items-center justify-end bg-white rounded-2xl p-6 border border-gray-100 sticky bottom-4">
+                    <div className="flex gap-2 md:gap-4 items-center justify-end bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100 sticky bottom-4">
                         <Link
                             href="/admin/designers/my-queue"
                             className="px-8 py-4 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all text-base"

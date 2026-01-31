@@ -145,9 +145,9 @@ export default function TransportersPage() {
   if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-oms-blue" /></div>;
 
   return (
-    <div className="space-y-4 lg:space-y-6 animate-fade-in">
+    <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/dispatch" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
             <ArrowLeft size={20} />
@@ -202,7 +202,7 @@ export default function TransportersPage() {
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
               {stateTransporters.map((t) => (
                 <div key={t.id} className="bg-white rounded-xl p-4 border border-gray-100">
                   <div className="flex items-start justify-between mb-3">
@@ -281,7 +281,7 @@ export default function TransportersPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Contact Person *</label>
                   <input
@@ -305,7 +305,7 @@ export default function TransportersPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                   <input
@@ -337,7 +337,7 @@ export default function TransportersPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
                   <input
@@ -400,7 +400,7 @@ export default function TransportersPage() {
             </div>
 
             <div className="p-4 space-y-4">
-              <div className="flex items-center gap-4 p-4 bg-[rgba(0,0,255,0.05)] rounded-xl">
+              <div className="flex items-center gap-2 md:gap-4 p-4 bg-[rgba(0,0,255,0.05)] rounded-xl">
                 <div className="w-12 h-12 bg-oms-blue rounded-full flex items-center justify-center">
                   <Truck size={24} className="text-oms-blue" />
                 </div>

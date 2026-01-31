@@ -204,7 +204,7 @@ export default function MarketingFollowUpsPage() {
   if (leadsLoading || followUpsLoading) return <div className="p-12 text-center"><Loader2 className="animate-spin mx-auto" /> Loading Data...</div>;
 
   return (
-    <div className="p-3 md:p-4 lg:p-6 space-y-4 md:space-y-5 animate-fade-in">
+    <div className="p-3 md:p-4 lg:p-6 space-y-2 md:space-y-4 md:space-y-5 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
         <div>
@@ -310,7 +310,7 @@ export default function MarketingFollowUpsPage() {
                   {followUpTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Date *</label>
                   <input type="date" required value={formData.date}

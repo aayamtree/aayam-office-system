@@ -72,7 +72,7 @@ export default function MarketingPaymentsPage() {
   return (
     <div className="p-4 sm:p-6 space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
         <div>
           <h1 className="text-page-title text-gray-900">Payment Status</h1>
           <p className="text-gray-500">Track payment status for your orders</p>
@@ -84,7 +84,7 @@ export default function MarketingPaymentsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
         <div className="bg-white rounded-xl border p-4">
           <p className="text-sm text-gray-500">Total Orders</p>
           <p className="text-page-title text-gray-900">{totalOrders}</p>
@@ -141,7 +141,7 @@ export default function MarketingPaymentsPage() {
                     <span className="flex items-center gap-1"><Calendar size={14} />Due: {formatDate(payment.dueDate)}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 md:gap-4">
                   <div className="text-right">
                     <p className="text-section text-gray-900">{formatCurrency(payment.totalAmount)}</p>
                     <p className="text-xs text-gray-500">
@@ -195,7 +195,7 @@ export default function MarketingPaymentsPage() {
               <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <div className="p-5 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <p className="text-xs text-gray-500">Client</p>
                   <p className="font-medium">{selectedPayment.clientName}</p>

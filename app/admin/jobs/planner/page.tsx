@@ -121,7 +121,7 @@ export default function PrintPlannerPage() {
     };
 
     return (
-        <div className="h-[calc(100vh-100px)] flex flex-col gap-6 animate-fade-in">
+        <div className="h-[calc(100vh-100px)] flex flex-col gap-3 md:gap-6 animate-fade-in">
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
@@ -144,7 +144,7 @@ export default function PrintPlannerPage() {
                 </div>
             </div>
 
-            <div className="flex-1 flex flex-col md:flex-row gap-6 min-h-0">
+            <div className="flex-1 flex flex-col md:flex-row gap-3 md:gap-6 min-h-0">
 
                 {/* LEFT COLUMN: Input Queue */}
                 <div className="w-full md:w-1/3 flex flex-col bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden h-1/3 md:h-auto">

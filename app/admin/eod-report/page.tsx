@@ -197,7 +197,7 @@ export default function EODReportPage() {
     }
 
     return (
-        <div className="space-y-6 max-w-5xl">
+        <div className="space-y-3 md:space-y-6 max-w-5xl">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -252,7 +252,7 @@ export default function EODReportPage() {
                                                 <p className="text-sm text-gray-600">{task.client?.name || task.client?.company}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-4 text-sm">
+                                        <div className="flex items-center gap-2 md:gap-4 text-sm">
                                             <span className="text-gray-500">Stage: <span className="font-medium text-gray-900">{task.current_stage}</span></span>
                                             {task.client_deadline && (
                                                 <span className="flex items-center gap-1 text-gray-500">
@@ -265,7 +265,7 @@ export default function EODReportPage() {
 
                                     {/* Task Update Form */}
                                     {taskUpdates[task.id]?.expanded && (
-                                        <div className="p-4 space-y-4 bg-white">
+                                        <div className="p-4 space-y-2 md:space-y-4 bg-white">
                                             {/* Status Selection */}
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -298,7 +298,7 @@ export default function EODReportPage() {
                                             </div>
 
                                             {/* Completion & Time */}
-                                            <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-2 gap-2 md:gap-4">
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-2">Completion %</label>
                                                     <input
@@ -339,7 +339,7 @@ export default function EODReportPage() {
                                             {/* Checklists */}
                                             <div className="space-y-2">
                                                 <label className="block text-sm font-medium text-gray-700">Quick Checks</label>
-                                                <div className="flex flex-wrap gap-4">
+                                                <div className="flex flex-wrap gap-2 md:gap-4">
                                                     <label className="flex items-center gap-2 cursor-pointer">
                                                         <input
                                                             type="checkbox"
@@ -441,7 +441,7 @@ export default function EODReportPage() {
                 </div>
 
                 {/* Submit Button */}
-                <div className="flex items-center justify-between bg-gray-50 rounded-xl p-6 border border-gray-200">
+                <div className="flex items-center justify-between bg-gray-50 rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-200">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                         <AlertCircle size={16} />
                         <span>Updates must be submitted before leaving office</span>

@@ -278,9 +278,9 @@ export default function DesignersPage() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-6">
+    <div className="space-y-2 md:space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div>
           <h1 className="text-xl lg:text-page-title text-gray-900">Designers</h1>
           <p className="text-sm text-gray-500">{activeDesigners} active of {totalDesigners} total</p>
@@ -353,7 +353,7 @@ export default function DesignersPage() {
       )}
 
       {/* Designer Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
         {filteredDesigners.map(designer => (
           <div key={designer.id} className="bg-white rounded-xl border p-4  transition-shadow">
             <div className="flex items-start justify-between mb-3">
@@ -418,7 +418,7 @@ export default function DesignersPage() {
               <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Name *</label>
                   <input type="text" required value={formData.name}
@@ -440,7 +440,7 @@ export default function DesignersPage() {
                   className="w-full px-3 py-2 border rounded-xl" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Employment Type</label>
                   <select value={formData.employment_type}
@@ -459,7 +459,7 @@ export default function DesignersPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Hourly Rate (₹)</label>
                   <input type="number" min="0" value={formData.hourly_rate}
@@ -474,7 +474,7 @@ export default function DesignersPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">City</label>
                   <input type="text" value={formData.city}
@@ -551,7 +551,7 @@ export default function DesignersPage() {
             <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
               <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 md:gap-4">
                     <div className="w-14 h-14 bg-oms-blue rounded-full flex items-center justify-center">
                       <span className="text-oms-blue font-bold text-xl">{selectedDesigner.name?.charAt(0)}</span>
                     </div>

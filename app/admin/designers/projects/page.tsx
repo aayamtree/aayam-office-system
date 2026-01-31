@@ -176,7 +176,7 @@ export default function DesignerProjectsPage() {
   return (
     <div className="p-4 sm:p-6 space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/designers" className="p-2 hover:bg-gray-100 rounded-lg">
             <ArrowLeft size={20} />
@@ -249,7 +249,7 @@ export default function DesignerProjectsPage() {
           return (
             <div key={project.id} className={`bg-white rounded-xl border p-4  transition-shadow ${daysRemaining < 0 && project.status !== 'completed' ? 'border-l-4 border-l-red-500' :
                 daysRemaining <= 3 && project.status !== 'completed' ? 'border-l-4 border-l-orange-400' : ''}`}>
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 md:gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     <span className="font-mono text-sm text-oms-blue font-medium">{project.projectId}</span>
@@ -269,7 +269,7 @@ export default function DesignerProjectsPage() {
                   </div>
                   <h3 className="text-section text-gray-900">{project.name}</h3>
                   <p className="text-sm text-gray-500">{project.description}</p>
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mt-2">
+                  <div className="flex flex-wrap items-center gap-2 md:gap-4 text-sm text-gray-600 mt-2">
                     <span className="flex items-center gap-1"><Briefcase size={14} />{project.clientName}</span>
                     <span className="flex items-center gap-1"><Users size={14} />{project.teamNames.join(', ')}</span>
                     <span className="flex items-center gap-1">
@@ -280,7 +280,7 @@ export default function DesignerProjectsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 md:gap-4">
                   {/* Progress */}
                   <div className="w-32">
                     <div className="flex items-center justify-between text-sm mb-1">
@@ -377,7 +377,7 @@ export default function DesignerProjectsPage() {
                   {designers.length === 0 && <span className="text-xs text-gray-400">No designers found in database.</span>}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Start Date</label>
                   <input type="date" required value={formData.startDate}

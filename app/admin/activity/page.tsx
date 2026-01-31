@@ -82,7 +82,7 @@ export default function ActivityPage() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-6">
+    <div className="space-y-2 md:space-y-4 lg:space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-xl lg:text-page-title text-gray-900">Activity Logs</h1>
@@ -90,29 +90,29 @@ export default function ActivityPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl p-4 border border-gray-100">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
             <Clock size={18} className="text-oms-blue" />
             <span className="text-sm text-gray-500">Today&apos;s Activity</span>
           </div>
           <p className="text-page-title text-gray-900">{todayLogs}</p>
         </div>
-        <div className="bg-white rounded-2xl p-4 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
             <User size={18} className="text-blue-600" />
             <span className="text-sm text-gray-500">Active Users</span>
           </div>
           <p className="text-page-title text-gray-900">{uniqueUsersCount}</p>
         </div>
-        <div className="bg-white rounded-2xl p-4 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
             <Package size={18} className="text-gray-900" />
             <span className="text-sm text-gray-500">Sales Actions</span>
           </div>
           <p className="text-page-title text-gray-900">{salesActions}</p>
         </div>
-        <div className="bg-white rounded-2xl p-4 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
             <CreditCard size={18} className="text-oms-blue" />
             <span className="text-sm text-gray-500">Finance Actions</span>
@@ -122,7 +122,7 @@ export default function ActivityPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl p-4 border border-gray-100">
+      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
         <div className="flex items-center gap-2 mb-3">
           <Filter size={16} className="text-gray-500" />
           <span className="font-medium text-gray-700">Filters</span>
@@ -174,7 +174,7 @@ export default function ActivityPage() {
         <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
           {filteredLogs.map((log) => (
             <div key={log.id} className="p-4 hover:bg-gray-50 transition-colors">
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-2 md:gap-4">
                 {/* Icon */}
                 <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
                   {getModuleIcon(log.module)}
@@ -191,7 +191,7 @@ export default function ActivityPage() {
                   <p className="text-sm text-gray-600 mt-1">
                     {typeof log.details === 'string' ? log.details : log.details?.description || JSON.stringify(log.details)}
                   </p>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
+                  <div className="flex items-center gap-2 md:gap-4 mt-2 text-xs text-gray-400">
                     <span className="flex items-center gap-1">
                       <User size={12} />
                       {log.user?.full_name || 'System User'}

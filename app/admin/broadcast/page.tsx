@@ -104,7 +104,7 @@ export default function BroadcastPage() {
             </div>
 
             {/* Send Form */}
-            <div className="bg-white rounded-xl p-6 mb-8">
+            <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 mb-8">
                 <h2 className="text-page-title text-gray-900 mb-4">Send Broadcast</h2>
 
                 <form onSubmit={handleSend} className="space-y-4">
@@ -218,7 +218,7 @@ export default function BroadcastPage() {
                                     }
                 `}
                             >
-                                <div className="flex items-start justify-between gap-4">
+                                <div className="flex items-start justify-between gap-2 md:gap-4">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-1">
                                             {notif.priority === 'urgent' ? (

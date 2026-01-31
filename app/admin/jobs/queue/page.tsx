@@ -100,7 +100,7 @@ export default function JobQueuePage() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-6 animate-fade-in px-3 md:px-0">
+    <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 animate-fade-in px-3 md:px-0">
       {/* Header */}
       <div className="flex items-center gap-2 md:gap-3">
         <Link href="/admin/jobs" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
@@ -176,7 +176,7 @@ export default function JobQueuePage() {
         {filteredJobs.length === 0 && <div className="text-center py-10 text-gray-500">No jobs found matching criteria.</div>}
         {filteredJobs.map((job) => (
           <div key={job.id} className={`bg-white rounded-xl p-4 border ${['high', 'urgent'].includes(job.priority) ? 'border-red-200' : 'border-gray-100'}`}>
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 md:gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <span className="font-semibold text-gray-900">{job.job_number}</span>
@@ -191,7 +191,7 @@ export default function JobQueuePage() {
                 </div>
                 <p className="text-sm text-gray-600">{job.client?.company || job.client?.name}</p>
                 <p className="text-sm text-gray-900 font-medium mt-1">{job.job_type}: {job.project_name}</p>
-                <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                <div className="flex items-center gap-2 md:gap-4 mt-2 text-sm text-gray-500">
                   <span>Qty: {job.quantity}</span>
                   <span>Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : 'N/A'}</span>
                   {job.designer?.name && <span className="text-oms-blue">🎨 {job.designer.name}</span>}

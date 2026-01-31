@@ -176,7 +176,7 @@ export default function QuickExpensePage() {
     const accounts = formData.payment_mode === 'cash' ? cashAccounts : bankAccounts;
 
     return (
-        <div className="space-y-4 md:space-y-6 pb-20">
+        <div className="space-y-2 md:space-y-6 pb-16 md:pb-20">
             {/* Header */}
             <div className="flex items-center gap-3 md:gap-4">
                 <button
@@ -192,7 +192,7 @@ export default function QuickExpensePage() {
             </div>
 
             {/* Main Grid - Stack on mobile, side-by-side on desktop */}
-            <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4 md:gap-6">
+            <div className="flex flex-col lg:grid lg:grid-cols-3 gap-2 md:gap-4 md:gap-6">
                 {/* Main Form */}
                 <div className="lg:col-span-2">
                     <div className="bg-white rounded-xl border p-4 md:p-6">
@@ -214,7 +214,7 @@ export default function QuickExpensePage() {
 
                         <form onSubmit={handleSubmit} className="space-y-4">
                             {/* Category & Amount - Stack on mobile */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
                                 {/* Category */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -267,7 +267,7 @@ export default function QuickExpensePage() {
                             </div>
 
                             {/* Payment Mode & Account - Stack on mobile */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
                                 {/* Payment Mode */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -308,7 +308,7 @@ export default function QuickExpensePage() {
                             </div>
 
                             {/* Vendor & Date - Stack on mobile */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
                                 {/* Vendor (Optional) */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">

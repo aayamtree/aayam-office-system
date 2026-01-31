@@ -164,7 +164,7 @@ export default function VendorPurchasesPage() {
   return (
     <div className="p-4 sm:p-6 space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/finance/vendors" className="p-2 hover:bg-gray-100 rounded-lg">
             <ArrowLeft size={20} />
@@ -245,7 +245,7 @@ export default function VendorPurchasesPage() {
                   <span className="flex items-center gap-1"><Calendar size={14} />Due: {purchase.due_date ? formatDate(purchase.due_date) : 'N/A'}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 md:gap-4">
                 <div className="text-right">
                   <p className="text-section text-gray-900">{formatCurrency(purchase.total_amount)}</p>
                   <p className="text-xs text-gray-500">
@@ -283,7 +283,7 @@ export default function VendorPurchasesPage() {
               <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div className="col-span-2">
                   <label className="block text-sm font-medium mb-1.5">Vendor *</label>
                   <select required value={formData.vendorId} onChange={(e) => setFormData({ ...formData, vendorId: e.target.value })}
@@ -414,7 +414,7 @@ export default function VendorPurchasesPage() {
               <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <div className="p-5 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <p className="text-xs text-gray-500">Vendor</p>
                   <p className="font-medium">{selectedPurchase.vendor?.name}</p>

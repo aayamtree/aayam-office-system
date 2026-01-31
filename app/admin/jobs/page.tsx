@@ -340,7 +340,7 @@ export default function JobsPage() {
   // JobCard Component 
   const JobCard = ({ job }: { job: Job }) => (
     <div
-      className={`group bg-white rounded-2xl p-4   transition-all duration-300 hover:-translate-y-1 border border-transparent hover:border-gray-100 ring-1 ring-black/5 cursor-pointer relative overflow-hidden ${isOverdue(job.client_deadline, job.current_stage) ? 'ring-red-100 bg-red-50/30' : ''
+      className={`group bg-white rounded-lg md:rounded-2xl p-3 md:p-4   transition-all duration-300 hover:-translate-y-1 border border-transparent hover:border-gray-100 ring-1 ring-black/5 cursor-pointer relative overflow-hidden ${isOverdue(job.client_deadline, job.current_stage) ? 'ring-red-100 bg-red-50/30' : ''
         }`}
       onClick={() => handleViewDetail(job)}
     >
@@ -400,9 +400,9 @@ export default function JobsPage() {
   );
 
   return (
-    <div className="space-y-6 lg:space-y-8 animate-fade-in pb-10">
+    <div className="space-y-3 md:space-y-6 lg:space-y-8 animate-fade-in pb-10">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div>
           <h1 className="text-page-title text-gray-900 tracking-tight">Jobs</h1>
           <p className="text-sm text-gray-500 mt-1">{activeJobs} active of {totalJobs} total jobs</p>
@@ -443,8 +443,8 @@ export default function JobsPage() {
 
 
       {/* Print Production Links */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Link href="/admin/print-planner" className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-oms-blue/20 transition-all group">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
+        <Link href="/admin/print-planner" className="flex items-center gap-2 md:gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-oms-blue/20 transition-all group">
           <div className="w-12 h-12 bg-oms-blue rounded-xl flex items-center justify-center transition-colors">
             <Layers size={24} className="text-oms-blue" />
           </div>
@@ -454,7 +454,7 @@ export default function JobsPage() {
           </div>
           <ArrowRight size={20} className="ml-auto text-gray-300 group-hover:text-oms-blue" />
         </Link>
-        <Link href="/admin/production-queue" className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-oms-blue/20 transition-all group">
+        <Link href="/admin/production-queue" className="flex items-center gap-2 md:gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-oms-blue/20 transition-all group">
           <div className="w-12 h-12 bg-oms-blue rounded-xl flex items-center justify-center transition-colors">
             <Printer size={24} className="text-oms-blue" />
           </div>
@@ -529,7 +529,7 @@ export default function JobsPage() {
               <Briefcase size={32} className="text-gray-400" />
             </div>
             <h3 className="text-section text-gray-900 mb-2">No jobs found</h3>
-            <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+            <p className="text-gray-500 mb-3 md:mb-6 max-w-sm mx-auto">
               {searchTerm ? 'Try adjusting your search terms or filters.' : 'Get started by creating your first job.'}
             </p>
             <button
@@ -546,7 +546,7 @@ export default function JobsPage() {
       {/* Kanban View */}
       {
         viewMode === 'kanban' && filteredJobs.length > 0 && (
-          <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-220px)] items-start">
+          <div className="flex gap-2 md:gap-4 overflow-x-auto pb-4 h-[calc(100vh-220px)] items-start">
             {stages.map(stage => {
               const stageJobs = jobsByStage[stage.id] || [];
               return (
@@ -708,7 +708,7 @@ export default function JobsPage() {
                   <p className="text-xs text-orange-600 mt-1">⚡ Jobs with same type can be batched together in print runs</p>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-2 md:gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">Quantity</label>
                     <input type="number" min="1" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
@@ -732,7 +732,7 @@ export default function JobsPage() {
                 </div>
 
                 {/* Amount Preview */}
-                <div className="bg-white rounded-xl p-4 grid grid-cols-3 gap-4 text-center">
+                <div className="bg-white rounded-xl p-4 grid grid-cols-3 gap-2 md:gap-4 text-center">
                   <div><p className="text-xs text-gray-500">Subtotal</p><p className="font-semibold">{formatCurrency(formData.quantity * formData.quote_per_piece)}</p></div>
                   <div><p className="text-xs text-gray-500">GST ({formData.gst_rate}%)</p><p className="font-semibold text-blue-600">{formatCurrency(formData.quantity * formData.quote_per_piece * formData.gst_rate / 100)}</p></div>
                   <div><p className="text-xs text-gray-500">Total</p><p className="font-bold text-oms-blue">{formatCurrency(formData.quantity * formData.quote_per_piece * (1 + formData.gst_rate / 100))}</p></div>
@@ -762,7 +762,7 @@ export default function JobsPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-2 md:gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">Priority</label>
                     <div className="flex gap-2">

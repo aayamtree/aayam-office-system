@@ -43,9 +43,9 @@ export default function PreferencesPage() {
   };
 
   return (
-    <div className="space-y-4 lg:space-y-6">
+    <div className="space-y-2 md:space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/settings" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
             <ArrowLeft size={20} />
@@ -65,12 +65,12 @@ export default function PreferencesPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
         {/* Invoice Settings */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Invoice Settings</h2>
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-2 md:gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Prefix</label>
                 <input
@@ -126,7 +126,7 @@ export default function PreferencesPage() {
         </div>
 
         {/* Notification Settings */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Notifications</h2>
           <div className="space-y-4">
             {[
@@ -157,7 +157,7 @@ export default function PreferencesPage() {
         </div>
 
         {/* Display Settings */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Display Settings</h2>
           <div className="space-y-4">
             <div>
@@ -201,7 +201,7 @@ export default function PreferencesPage() {
         </div>
 
         {/* Print Settings */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Print Settings</h2>
           <div className="space-y-4">
             <div>

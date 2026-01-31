@@ -241,7 +241,7 @@ export default function LeadsPage() {
     }
 
     return (
-        <div className="space-y-4 md:space-y-6 pb-12 md:pb-20 animate-fade-in text-sm lg:text-base px-3 md:px-0">
+        <div className="space-y-2 md:space-y-6 pb-12 md:pb-20 animate-fade-in text-sm lg:text-base px-3 md:px-0">
 
             {/* HEADER */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 md:gap-4">
@@ -287,7 +287,7 @@ export default function LeadsPage() {
             </div>
 
             {/* LEAD LIST */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-5">
                 {filteredLeads.length === 0 ? (
                     <div className="col-span-full py-8 md:py-12 text-center text-sm md:text-base text-gray-400 bg-gray-50 rounded-xl md:rounded-2xl border-2 border-dashed border-gray-200">
                         No leads found matching your search.
@@ -295,7 +295,7 @@ export default function LeadsPage() {
                     </div>
                 ) : (
                     filteredLeads.map((lead) => (
-                        <div key={lead.id} className="bg-white rounded-xl md:rounded-2xl p-4 md:p-5 border border-gray-100  transition-all group relative overflow-hidden">
+                        <div key={lead.id} className="bg-white rounded-xl md:rounded-lg md:rounded-2xl p-3 md:p-4 md:p-5 border border-gray-100  transition-all group relative overflow-hidden">
                             {/* Status Strip */}
                             <div className={`absolute top-0 left-0 w-1.5 h-full 
                  ${lead.status === 'new' ? 'bg-blue-500' :
@@ -501,11 +501,11 @@ export default function LeadsPage() {
                             {/* Optional Details */}
                             <div className="border-t border-gray-100 pt-4 space-y-4">
                                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Additional Details</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
                                     <input type="text" placeholder="Company Name (Optional)" value={formData.company} onChange={e => setFormData({ ...formData, company: e.target.value })} className="border-b border-gray-200 py-2 focus:border-oms-blue focus:outline-none bg-transparent placeholder-gray-400" />
                                     <input type="email" placeholder="Email Address (Optional)" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="border-b border-gray-200 py-2 focus:border-oms-blue focus:outline-none bg-transparent placeholder-gray-400" />
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
                                     <select value={formData.billingPreference} onChange={e => setFormData({ ...formData, billingPreference: e.target.value as any })} className="border-b border-gray-200 py-2 focus:border-oms-blue focus:outline-none bg-transparent text-gray-600">
                                         <option value="gst">GST Invoice</option>
                                         <option value="non_gst">Cash / Estimates</option>
@@ -534,7 +534,7 @@ export default function LeadsPage() {
                     <div className="bg-white rounded-2xl w-full max-w-lg p-6 relative ">
                         <button onClick={() => setShowViewModal(false)} className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full"><X size={18} /></button>
                         <h2 className="text-page-title text-gray-900 mb-1">{selectedLead.name}</h2>
-                        <p className="text-gray-500 font-mono text-sm mb-6">{selectedLead.lead_number}</p>
+                        <p className="text-gray-500 font-mono text-sm mb-3 md:mb-6">{selectedLead.lead_number}</p>
 
                         <div className="space-y-4">
                             <div className="flex justify-between border-b pb-2"><span className="text-gray-500">Phone</span> <span className="font-medium font-mono">{selectedLead.phone}</span></div>
@@ -547,7 +547,7 @@ export default function LeadsPage() {
                             </div>
                         </div>
 
-                        <button onClick={() => { setShowViewModal(false); handleEdit(selectedLead); }} className="w-full mt-6 bg-oms-blue text-white py-3 rounded-xl font-bold hover:bg-oms-blue">Edit Details</button>
+                        <button onClick={() => { setShowViewModal(false); handleEdit(selectedLead); }} className="w-full mt-3 md:mt-6 bg-oms-blue text-white py-3 rounded-xl font-bold hover:bg-oms-blue">Edit Details</button>
                     </div>
                 </div>
             )}

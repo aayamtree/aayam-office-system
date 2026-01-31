@@ -45,9 +45,9 @@ export default function CompanyPage() {
   };
 
   return (
-    <div className="space-y-4 lg:space-y-6">
+    <div className="space-y-2 md:space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/settings" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
             <ArrowLeft size={20} />
@@ -67,9 +67,9 @@ export default function CompanyPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-6">
         {/* Logo Section */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Company Logo</h2>
           <div className="flex flex-col items-center">
             <label className="w-32 h-32 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 overflow-hidden">
@@ -90,9 +90,9 @@ export default function CompanyPage() {
         </div>
 
         {/* Basic Info */}
-        <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-100">
+        <div className="lg:col-span-2 bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Basic Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Company Name *</label>
               <input
@@ -151,7 +151,7 @@ export default function CompanyPage() {
         </div>
 
         {/* Tax Info */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Tax Information</h2>
           <div className="space-y-4">
             <div>
@@ -178,9 +178,9 @@ export default function CompanyPage() {
         </div>
 
         {/* Address */}
-        <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-100">
+        <div className="lg:col-span-2 bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Address</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Street Address *</label>
               <textarea
@@ -221,9 +221,9 @@ export default function CompanyPage() {
         </div>
 
         {/* Bank Details */}
-        <div className="lg:col-span-3 bg-white rounded-2xl p-6 border border-gray-100">
+        <div className="lg:col-span-3 bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Bank Details</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
               <input

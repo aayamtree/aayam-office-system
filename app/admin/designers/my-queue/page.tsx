@@ -67,7 +67,7 @@ export default function MyQueue() {
                 </div>
 
                 {/* Task Groups */}
-                <div className="space-y-6 md:space-y-8">
+                <div className="space-y-3 md:space-y-6 md:space-y-8">
                     {/* Urgent */}
                     {urgentTasks.length > 0 && (
                         <div>

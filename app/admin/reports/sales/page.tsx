@@ -72,9 +72,9 @@ export default function SalesReportPage() {
   };
 
   return (
-    <div className="space-y-4 lg:space-y-6">
+    <div className="space-y-2 md:space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/reports" className="p-2 hover:bg-gray-100 rounded-lg">
             <ArrowLeft size={20} />
@@ -97,7 +97,7 @@ export default function SalesReportPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl p-4 border border-gray-100">
+      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
         <div className="flex items-center gap-2 mb-3">
           <Filter size={16} className="text-gray-500" />
           <span className="font-medium text-gray-700">Filters</span>
@@ -148,29 +148,29 @@ export default function SalesReportPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-4 text-white">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <IndianRupee size={18} />
             <span className="text-sm opacity-90">Total Revenue</span>
           </div>
           <p className="text-page-title">₹{(totalRevenue / 1000).toFixed(1)}K</p>
         </div>
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <Package size={18} />
             <span className="text-sm opacity-90">Total Orders</span>
           </div>
           <p className="text-page-title">{totalOrders}</p>
         </div>
-        <div className="bg-oms-blue rounded-2xl p-4 text-white">
+        <div className="bg-oms-blue rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp size={18} />
             <span className="text-sm opacity-90">Avg Order Value</span>
           </div>
           <p className="text-page-title">₹{(avgOrderValue / 1000).toFixed(1)}K</p>
         </div>
-        <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-4 text-white">
+        <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <Users size={18} />
             <span className="text-sm opacity-90">Unique Clients</span>
@@ -179,7 +179,7 @@ export default function SalesReportPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-6">
         {/* Sales Table */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="p-4 border-b border-gray-100">
@@ -221,7 +221,7 @@ export default function SalesReportPage() {
         </div>
 
         {/* Top Clients */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
           <h2 className="font-semibold text-gray-900 mb-4">Top Clients</h2>
           <div className="space-y-3">
             {topClients.map(([client, revenue], index) => (

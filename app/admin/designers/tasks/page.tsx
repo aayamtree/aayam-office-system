@@ -58,7 +58,7 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
           <p className="text-white/80 text-sm mt-1">Here is your focus for today.</p>
         </div>
 
-        <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+        <div className="p-6 space-y-3 md:space-y-6 max-h-[60vh] overflow-y-auto">
           {overdue.length > 0 && (
             <div className="space-y-2">
               <h3 className="text-red-600 font-bold text-sm uppercase tracking-wider flex items-center gap-2">
@@ -635,7 +635,7 @@ export default function DesignerWorkspace() {
         {activeTab === 'board' ? (
           <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-gray-50">
             <div className="flex bg-white p-4 rounded-xl mb-4 justify-between items-center sticky left-0 min-w-[768px]">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 md:gap-4">
                 <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2"><Layout size={20} /> Kanban Team Board</h2>
                 <div className="flex bg-gray-100 p-1 rounded-lg">
                   <button onClick={() => setView('my_tasks')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">List</button>
@@ -647,7 +647,7 @@ export default function DesignerWorkspace() {
               <button onClick={() => setIsNewTaskModalOpen(true)} className="px-4 py-2 bg-oms-blue text-white rounded-lg text-sm font-bold flex gap-2 items-center"><Plus size={16} /> New Task</button>
             </div>
 
-            <div className="flex h-[calc(100%-5rem)] gap-6 min-w-max pb-4">
+            <div className="flex h-[calc(100%-5rem)] gap-3 md:gap-6 min-w-max pb-4">
               {kanbanColumns.map(col => {
                 const colTasks = tasks.filter(t => {
                   const matchesStatus = t.status === col.id || (col.id === 'pending' && (!t.status || t.status === 'new')); // fallback
@@ -725,7 +725,7 @@ export default function DesignerWorkspace() {
           <div className="flex-1 overflow-hidden flex flex-col bg-white">
             {/* Timeline Header */}
             <div className="flex bg-white p-4 justify-between items-center border-b">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 md:gap-4">
                 <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2"><GanttChart size={20} /> Production Timeline</h2>
                 <div className="flex bg-gray-100 p-1 rounded-lg">
                   <button onClick={() => setView('my_tasks')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">List</button>
@@ -866,7 +866,7 @@ export default function DesignerWorkspace() {
                     <p>No tasks found.</p>
                   </div>
                 ) : activeTab === 'timeline' ? (
-                  <div className="space-y-4 pt-2">
+                  <div className="space-y-2 md:space-y-4 pt-2">
                     <h3 className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2 mb-4">
                       <GanttChart size={16} /> Project Timeline Status
                     </h3>
@@ -1016,7 +1016,7 @@ export default function DesignerWorkspace() {
               ) : selectedTask ? (
                 <>
                   {/* Header */}
-                  <div className="px-6 py-5 border-b flex flex-col md:flex-row md:justify-between md:items-start bg-white sticky top-0 z-20 gap-4">
+                  <div className="px-6 py-5 border-b flex flex-col md:flex-row md:justify-between md:items-start bg-white sticky top-0 z-20 gap-2 md:gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2">
                         <span className="text-section text-gray-900 leading-tight">{selectedTask.title}</span>
@@ -1115,14 +1115,14 @@ export default function DesignerWorkspace() {
                         </h4>
                       </div>
                       <div className="bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden h-[320px]">
-                        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/30">
+                        <div className="flex-1 overflow-y-auto p-6 space-y-3 md:space-y-6 bg-gray-50/30">
                           {/* Simulated Threaded Comments */}
                           {/* In a real app, map through 'remarks' joined to task */}
                           <div className="space-y-4">
                             <div className="flex gap-3">
                               <div className="min-w-8 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600">M</div>
                               <div className="bg-white p-3 rounded-2xl rounded-tl-none border max-w-[80%]">
-                                <div className="flex justify-between items-center mb-1 gap-4">
+                                <div className="flex justify-between items-center mb-1 gap-2 md:gap-4">
                                   <span className="text-[10px] font-bold text-gray-900">Manager</span>
                                   <span className="text-[9px] font-bold bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded">Correction ❌</span>
                                 </div>
@@ -1132,7 +1132,7 @@ export default function DesignerWorkspace() {
                             <div className="flex gap-3 flex-row-reverse">
                               <div className="min-w-8 w-8 h-8 rounded-full bg-oms-blue flex items-center justify-center text-xs font-bold text-oms-blue">Me</div>
                               <div className="bg-oms-blue p-3 rounded-2xl rounded-tr-none border border-[rgba(0,0,255,0.2)]-600  max-w-[80%] text-white">
-                                <div className="flex justify-between items-center mb-1 gap-4">
+                                <div className="flex justify-between items-center mb-1 gap-2 md:gap-4">
                                   <span className="text-[10px] font-bold text-white/80">You</span>
                                 </div>
                                 <p className="text-xs text-indigo-50">Updated. V2 attached in drive.</p>
@@ -1201,7 +1201,7 @@ export default function DesignerWorkspace() {
                 </>
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-gray-400 bg-gray-50/30">
-                  <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 border border-gray-100">
+                  <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-3 md:mb-6 border border-gray-100">
                     <Briefcase size={40} className="text-gray-300" />
                   </div>
                   <h3 className="text-section text-gray-700 mb-2">Ready to work?</h3>
@@ -1230,7 +1230,7 @@ export default function DesignerWorkspace() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl p-4 border border-gray-100">
+                <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
                   <div className="grid grid-cols-7 mb-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">
                     <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
                   </div>
@@ -1276,7 +1276,7 @@ export default function DesignerWorkspace() {
                   <p className="text-xs text-gray-500 pl-9">Track your work execution.</p>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-6 space-y-6 py-4">
+                <div className="flex-1 overflow-y-auto px-6 space-y-3 md:space-y-6 py-4">
                   <div className="relative border-l-2 border-gray-100 ml-3.5 space-y-8 pb-4">
                     {logs.map(log => (
                       <div key={log.id} className="relative pl-6 group">
@@ -1318,7 +1318,7 @@ export default function DesignerWorkspace() {
               <div className="relative p-6 bg-oms-blue overflow-hidden">
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30"></div>
                 <div className="relative flex justify-between items-start">
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-2 md:gap-4">
                     <div className="p-3 bg-white/20 backdrop-blur-lg rounded-2xl">
                       <Briefcase size={28} className="text-white" />
                     </div>
@@ -1341,7 +1341,7 @@ export default function DesignerWorkspace() {
                 <form id="create-project-form" onSubmit={handleCreateTask} className="space-y-8">
 
                   {/* 1. Project Basics */}
-                  <div className="space-y-5 bg-white rounded-2xl p-6 border border-gray-100">
+                  <div className="space-y-5 bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
                     <div className="flex items-center gap-3 pb-3 border-b-2 border-oms-blue">
                       <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-oms-blue text-white text-sm font-bold -200">
                         1
@@ -1398,7 +1398,7 @@ export default function DesignerWorkspace() {
                   </div>
 
                   {/* 2. Parameters */}
-                  <div className="space-y-5 bg-white rounded-2xl p-6 border border-gray-100">
+                  <div className="space-y-5 bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
                     <div className="flex items-center gap-3 pb-3 border-b-2 border-gradient-to-r from-orange-500 to-red-500">
                       <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 text-white text-sm font-bold -200">
                         2
@@ -1452,7 +1452,7 @@ export default function DesignerWorkspace() {
                   </div>
 
                   {/* 3. Assets & Brief */}
-                  <div className="space-y-5 bg-white rounded-2xl p-6 border border-gray-100">
+                  <div className="space-y-5 bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
                     <div className="flex items-center gap-3 pb-3 border-b-2 border-gradient-to-r from-blue-500 to-cyan-500">
                       <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white text-sm font-bold -200">
                         3
@@ -1504,7 +1504,7 @@ export default function DesignerWorkspace() {
               </div>
 
               {/* Premium Footer with Action Buttons */}
-              <div className="p-6 border-t-2 border-gray-100 bg-gradient-to-r from-gray-50 to-white flex gap-4 items-center justify-end">
+              <div className="p-6 border-t-2 border-gray-100 bg-gradient-to-r from-gray-50 to-white flex gap-2 md:gap-4 items-center justify-end">
                 <button
                   type="button"
                   onClick={() => setIsNewTaskModalOpen(false)}

@@ -417,7 +417,7 @@ export default function InvoicesPage() {
     .reduce((sum, i) => sum + (i.total_amount - i.amount_paid), 0);
 
   return (
-    <div className="space-y-4 lg:space-y-6 px-3 md:px-0">
+    <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 px-3 md:px-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
         <div className="flex items-center gap-2 md:gap-3">
@@ -452,7 +452,7 @@ export default function InvoicesPage() {
                 <p className="text-xs text-gray-500">Recently dispatched jobs ready for billing</p>
               </div>
             </div>
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
+            <div className="flex gap-2 md:gap-4 overflow-x-auto pb-2 scrollbar-none">
               {pendingInvoicingJobs.map((job: any) => (
                 <div key={job.id} className="min-w-[280px] bg-white p-3 rounded-xl border border-gray-200 flex flex-col justify-between  transition-shadow">
                   <div>
@@ -757,7 +757,7 @@ export default function InvoicesPage() {
 
                 {/* Financials */}
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4 mb-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Subtotal</label>
                       <div className="font-bold text-gray-900 text-lg">{formatCurrency(formData.subtotal)}</div>
@@ -790,7 +790,7 @@ export default function InvoicesPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-gray-200 pt-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4 border-t border-gray-200 pt-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1.5">Paid Amount (₹)</label>
                       <input
@@ -817,7 +817,7 @@ export default function InvoicesPage() {
                 </div>
 
 
-                <div className="flex gap-4 pt-4 border-t border-gray-100">
+                <div className="flex gap-2 md:gap-4 pt-4 border-t border-gray-100">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
@@ -861,7 +861,7 @@ export default function InvoicesPage() {
 
               <div className="p-6 space-y-6">
                 {/* Client Info */}
-                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="flex items-center gap-2 md:gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
                   <div className="w-12 h-12 bg-oms-blue rounded-full flex items-center justify-center">
                     <User size={24} className="text-oms-blue" />
                   </div>
@@ -916,7 +916,7 @@ export default function InvoicesPage() {
                 </div>
 
                 {/* Due Date & Status */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-2 md:gap-4">
                   <div className="p-3 border rounded-xl">
                     <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Due Date</p>
                     <p className="font-medium text-gray-900 mt-1">{selectedInvoice.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : '-'}</p>

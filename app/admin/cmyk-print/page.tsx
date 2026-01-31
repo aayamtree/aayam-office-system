@@ -59,7 +59,7 @@ export default function CMYKPrintPage() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-3 md:space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
         <div>
@@ -70,9 +70,9 @@ export default function CMYKPrintPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-2xl p-4 lg:p-6 border border-gray-100">
+          <div key={stat.label} className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-6 border border-gray-100">
             <div className="flex items-center gap-3 mb-3">
               <div className={`w-10 h-10 ${stat.color} rounded-xl flex items-center justify-center`}>
                 <stat.icon size={20} className="text-white" />
@@ -88,10 +88,10 @@ export default function CMYKPrintPage() {
       </div>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
 
-        <Link href="/admin/cmyk-print/retail-pos" className="bg-white rounded-2xl p-6 border border-gray-100  transition-shadow group">
-          <div className="flex items-center gap-4 mb-4">
+        <Link href="/admin/cmyk-print/retail-pos" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100  transition-shadow group">
+          <div className="flex items-center gap-2 md:gap-4 mb-4">
             <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <ShoppingCart size={24} className="text-gray-900" />
             </div>
@@ -103,8 +103,8 @@ export default function CMYKPrintPage() {
           <div className="text-sm text-gray-900">● Open Counter →</div>
         </Link>
 
-        <Link href="/admin/cmyk-print/paper-stock" className="bg-white rounded-2xl p-6 border border-gray-100  transition-shadow group">
-          <div className="flex items-center gap-4 mb-4">
+        <Link href="/admin/cmyk-print/paper-stock" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100  transition-shadow group">
+          <div className="flex items-center gap-2 md:gap-4 mb-4">
             <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <Package size={24} className="text-blue-600" />
             </div>
@@ -113,7 +113,7 @@ export default function CMYKPrintPage() {
               <p className="text-sm text-gray-500">Inventory</p>
             </div>
           </div>
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-2 md:gap-4 text-sm">
             <span className={lowStockItems.length > 0 ? "text-red-600 font-medium" : "text-gray-500"}>
               ● {lowStockItems.length} Low
             </span>
@@ -122,9 +122,9 @@ export default function CMYKPrintPage() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
         {/* Recent Sales */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-section text-gray-900">Recent Sales</h2>
             <Link href="/admin/cmyk-print/retail-pos" className="text-sm text-oms-blue hover:underline">
@@ -150,7 +150,7 @@ export default function CMYKPrintPage() {
         </div>
 
         {/* Pending Jobs */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-section text-gray-900">Pending Jobs</h2>
             <Link href="/admin/jobs/queue" className="text-sm text-oms-blue hover:underline">
@@ -183,7 +183,7 @@ export default function CMYKPrintPage() {
       </div>
 
       {/* Low Stock Alert */}
-      <div className={`rounded-2xl p-4 sm:p-6 border ${lowStockItems.length > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-green-200'}`}>
+      <div className={`rounded-lg md:rounded-2xl p-3 md:p-4 sm:p-6 border ${lowStockItems.length > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-green-200'}`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${lowStockItems.length > 0 ? 'bg-red-100' : 'bg-gray-100'}`}>

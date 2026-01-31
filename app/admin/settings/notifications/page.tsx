@@ -39,10 +39,10 @@ export default function NotificationSettings() {
 
     return (
         <div className="p-6 max-w-2xl mx-auto">
-            <h1 className="text-page-title mb-6">Notification Settings</h1>
+            <h1 className="text-page-title mb-3 md:mb-6">Notification Settings</h1>
 
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-2 md:gap-4">
                     <div className="w-12 h-12 bg-oms-blue rounded-full flex items-center justify-center flex-shrink-0">
                         <Bell className="text-oms-blue" size={24} />
                     </div>

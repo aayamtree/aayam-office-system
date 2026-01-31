@@ -77,7 +77,7 @@ export default function TeamQueue() {
                 </div>
 
                 {/* Filters & View Toggle - Responsive */}
-                <div className="flex flex-col md:flex-row gap-3 mb-6">
+                <div className="flex flex-col md:flex-row gap-3 mb-3 md:mb-6">
                     <div className="flex-1 relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                         <input
@@ -123,7 +123,7 @@ export default function TeamQueue() {
 
                 {/* Kanban Board View */}
                 {viewMode === 'board' && (
-                    <div className="grid grid-cols-4 gap-4">
+                    <div className="grid grid-cols-4 gap-2 md:gap-4">
                         {statuses.map(status => {
                             const tasksInStatus = filteredTasks.filter(t => t.status === status.id);
                             return (

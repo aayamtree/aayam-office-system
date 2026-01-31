@@ -60,7 +60,7 @@ export default function PrintPlannerPage() {
             </div>
 
             {/* Split Screen Layout - No fixed height to prevent overlap */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6 mb-8">
                 {/* Left: Job Queue */}
                 <div className="h-[calc(100vh-350px)]">
                     <PrintJobQueue

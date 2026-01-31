@@ -473,7 +473,7 @@ export default function RetailPOSPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
             <div className="p-5 border-b bg-white flex items-center justify-between">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 md:gap-4">
                 <h2 className="text-page-title">Manage Items</h2>
                 <div className="flex bg-gray-100 p-1 rounded-lg">
                   <button onClick={() => setActiveTab('products')} className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${activeTab === 'products' ? 'bg-white text-gray-900' : 'text-gray-500'}`}>Products</button>
@@ -485,7 +485,7 @@ export default function RetailPOSPage() {
 
             <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
               {activeTab === 'products' ? (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-6">
                   {/* Product List */}
                   <div className="lg:col-span-2 space-y-4">
                     <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
@@ -545,7 +545,7 @@ export default function RetailPOSPage() {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-6">
                   {/* Categories List */}
                   <div className="lg:col-span-2 space-y-4">
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">

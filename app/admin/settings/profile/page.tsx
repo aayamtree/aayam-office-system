@@ -51,9 +51,9 @@ export default function ProfileSettingsPage() {
     };
 
     return (
-        <div className="space-y-6 pb-20">
+        <div className="space-y-3 md:space-y-6 pb-16 md:pb-20">
             {/* Header */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
                 <Link
                     href="/admin/dashboard"
                     className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
@@ -85,7 +85,7 @@ export default function ProfileSettingsPage() {
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     {/* Avatar Section */}
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-3 md:gap-6">
                         <div className="w-20 h-20 bg-oms-blue rounded-full flex items-center justify-center text-white font-bold text-page-title overflow-hidden">
                             {formData.avatar_url ? (
                                 <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />

@@ -65,7 +65,7 @@ export default function DailyFinancePage() {
     const netChange = todayIncome - todayExpense;
 
     return (
-        <div className="space-y-6 animate-fade-in pb-20">
+        <div className="space-y-3 md:space-y-6 animate-fade-in pb-16 md:pb-20">
             {/* Header */}
             <div className="flex justify-between items-start">
                 <div>
@@ -83,7 +83,7 @@ export default function DailyFinancePage() {
             </div>
 
             {/* Total Balance Card */}
-            <div className="bg-oms-blue rounded-2xl p-6 text-white">
+            <div className="bg-oms-blue rounded-lg md:rounded-2xl p-3 md:p-6 text-white">
                 <div className="flex justify-between items-start mb-4">
                     <div>
                         <p className="text-sm opacity-90">Total Available Balance</p>
@@ -97,7 +97,7 @@ export default function DailyFinancePage() {
                     </Link>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-2 md:gap-4">
                     <div className="bg-white/10 rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-2">
                             <Building2 size={18} />
@@ -122,7 +122,7 @@ export default function DailyFinancePage() {
             <div className="bg-white rounded-2xl border p-6">
                 <h2 className="text-section mb-4">Today&apos;s Activity</h2>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-2 md:gap-4">
                     <div className="bg-white rounded-xl p-4">
                         <div className="flex items-center gap-2 text-gray-900 mb-2">
                             <ArrowDownRight size={20} />
@@ -157,7 +157,7 @@ export default function DailyFinancePage() {
             </div>
 
             {/* Account Breakdown */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-3 md:gap-6">
                 {/* Bank Accounts */}
                 <div className="bg-white rounded-2xl border p-5">
                     <h3 className="font-bold mb-4 flex items-center gap-2">
@@ -241,7 +241,7 @@ export default function DailyFinancePage() {
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-2 md:gap-4">
                 <Link
                     href="/admin/finance/payments?new=true"
                     className="bg-oms-blue hover:bg-oms-blue text-white rounded-xl p-4 text-center font-medium"

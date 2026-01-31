@@ -147,7 +147,7 @@ export default function PrintRunDetailPage() {
 
                     <div className="flex items-start justify-between">
                         <div>
-                            <div className="flex items-center gap-4 mb-2">
+                            <div className="flex items-center gap-2 md:gap-4 mb-2">
                                 <h1 className="text-page-title text-gray-900 flex items-center gap-3">
                                     <Printer className="text-oms-blue" size={32} />
                                     {printRun.print_run_number}
@@ -156,7 +156,7 @@ export default function PrintRunDetailPage() {
                                     {printRun.status.toUpperCase()}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-6 text-sm text-gray-600">
+                            <div className="flex items-center gap-3 md:gap-6 text-sm text-gray-600">
                                 <span><strong>Machine:</strong> {printRun.machine?.name || 'Not set'}</span>
                                 <span><strong>Size:</strong> {printRun.sheet_size?.size || 'Not set'}</span>
                                 <span><strong>Material:</strong> {printRun.material?.name || 'Not set'}</span>
@@ -197,9 +197,9 @@ export default function PrintRunDetailPage() {
             {/* Content */}
             <div className="max-w-7xl mx-auto p-6 space-y-6">
                 {/* Summary */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-100">
+                <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
                     <h2 className="text-section text-gray-900 mb-4">Print Run Summary</h2>
-                    <div className="grid grid-cols-5 gap-6">
+                    <div className="grid grid-cols-5 gap-3 md:gap-6">
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Total Jobs</p>
                             <p className="text-page-title text-oms-blue">{printRunJobs.length}</p>
@@ -487,7 +487,7 @@ function AddJobsModal({
                         </div>
                     ) : (
                         <>
-                            <div className="space-y-3 mb-6">
+                            <div className="space-y-3 mb-3 md:mb-6">
                                 {eligibleJobs.map((job) => {
                                     const isSelected = selectedJobs.has(job.id);
                                     const quantities = jobQuantities[job.id] || { quantity: 0, ups: 1 };
@@ -501,7 +501,7 @@ function AddJobsModal({
                                                 : 'bg-white border-gray-200'
                                                 }`}
                                         >
-                                            <div className="flex items-start gap-4">
+                                            <div className="flex items-start gap-2 md:gap-4">
                                                 <input
                                                     type="checkbox"
                                                     checked={isSelected}
@@ -568,7 +568,7 @@ function AddJobsModal({
                                 })}
                             </div>
 
-                            <div className="flex gap-4 justify-end border-t-2 border-gray-100 pt-4">
+                            <div className="flex gap-2 md:gap-4 justify-end border-t-2 border-gray-100 pt-4">
                                 <button
                                     onClick={onClose}
                                     className="px-6 py-3 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-100 transition-all"

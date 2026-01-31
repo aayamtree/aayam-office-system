@@ -118,7 +118,7 @@ export default function DispatchPage() {
   };
 
   return (
-    <div className="space-y-4 md:space-y-6 animate-fade-in px-3 md:px-0">
+    <div className="space-y-2 md:space-y-6 animate-fade-in px-3 md:px-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
         <div>
@@ -155,9 +155,9 @@ export default function DispatchPage() {
       </div>
 
       {/* QC & Ready Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
         {/* Pending QC */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-section text-gray-900">Pending QC</h2>
             <Link href="/admin/dispatch/qc-check" className="text-sm text-oms-blue hover:underline">
@@ -187,7 +187,7 @@ export default function DispatchPage() {
         </div>
 
         {/* Ready to Dispatch - NOW WITH ACTION */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-section text-gray-900">Ready to Dispatch</h2>
             <span className="px-3 py-1 bg-gray-100 text-gray-900 text-xs rounded-full font-medium">
@@ -231,14 +231,14 @@ export default function DispatchPage() {
       </div>
 
       {/* Recent Dispatches */}
-      <div className="bg-white rounded-2xl p-6 border border-gray-100">
+      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-section text-gray-900">Recent Dispatches</h2>
           <Link href="/admin/dispatch/history" className="text-sm text-oms-blue hover:underline">
             View All →
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
           {sentDispatches.length === 0 ? (
             <div className="col-span-3 text-center text-gray-400 py-4">No recent dispatches.</div>
           ) : sentDispatches.map((dispatch) => (
@@ -273,7 +273,7 @@ export default function DispatchPage() {
             </div>
 
             <form onSubmit={handleDispatchSubmit} className="p-4 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Transporter Name</label>
                   <input type="text" placeholder="e.g. DTDC, Self"
@@ -288,7 +288,7 @@ export default function DispatchPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Vehicle No</label>
                   <input type="text" placeholder="e.g. OD-02-AA-1234"
@@ -303,7 +303,7 @@ export default function DispatchPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Driver Name</label>
                   <input type="text" placeholder="Optional"

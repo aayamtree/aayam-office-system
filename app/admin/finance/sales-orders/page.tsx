@@ -117,8 +117,8 @@ export default function SalesOrdersPage() {
     };
 
     return (
-        <div className="space-y-6 animate-fade-in">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-3 md:space-y-6 animate-fade-in">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
                 <div>
                     <h1 className="text-page-title text-gray-900">Sales Orders</h1>
                     <p className="text-gray-500">Manage incoming orders and initiate workflows.</p>
@@ -129,7 +129,7 @@ export default function SalesOrdersPage() {
             </div>
 
             {/* Filter Bar */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-2 md:gap-4">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                     <input
@@ -272,7 +272,7 @@ export default function SalesOrdersPage() {
                             </div>
 
                             {/* Money */}
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-2 md:gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Amount (Excl. Tax)</label>
                                     <input required type="number" min="0" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} className="w-full px-3 py-2 border rounded-xl" />

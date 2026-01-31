@@ -105,7 +105,7 @@ export default function QCCheckPage() {
   if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-oms-blue" /></div>;
 
   return (
-    <div className="space-y-4 lg:space-y-6 animate-fade-in">
+    <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link href="/admin/dispatch" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
@@ -162,7 +162,7 @@ export default function QCCheckPage() {
         {filteredJobs.length === 0 && <div className="text-center py-10 text-gray-500">No jobs found.</div>}
         {filteredJobs.map((job) => (
           <div key={job.id} className="bg-white rounded-xl p-4 border border-gray-100">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 md:gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <span className="font-semibold text-gray-900">{job.job_number}</span>
@@ -181,7 +181,7 @@ export default function QCCheckPage() {
                 <p className="text-xs text-gray-500 mt-1">Qty: {job.quantity}</p>
               </div>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 md:gap-4">
                 <div className="text-right">
                   <p className="text-xs text-gray-500">Due</p>
                   <p className="font-medium text-gray-900">{job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : 'N/A'}</p>

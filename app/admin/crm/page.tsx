@@ -11,9 +11,9 @@ export default function CRMPage() {
   ];
 
   return (
-    <div className="space-y-6 lg:space-y-8 animate-fade-in pb-10">
+    <div className="space-y-3 md:space-y-6 lg:space-y-8 animate-fade-in pb-10">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div>
           <h1 className="text-2xl lg:text-page-title text-gray-900 tracking-tight">CRM</h1>
           <p className="text-gray-500 mt-1">Manage your clients</p>
@@ -28,7 +28,7 @@ export default function CRMPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
         {stats.map((stat) => (
           <div key={stat.label} className="bg-white rounded-2xl p-5 border border-gray-100 transition-shadow  group">
             <div className="flex items-center gap-3 mb-3">
@@ -44,10 +44,10 @@ export default function CRMPage() {
       </div>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
         {/* Clients Card */}
-        <Link href="/admin/crm/clients" className="bg-white rounded-2xl p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
-          <div className="flex items-center gap-4 mb-4">
+        <Link href="/admin/crm/clients" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
+          <div className="flex items-center gap-2 md:gap-4 mb-4">
             <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <Users size={28} className="text-blue-600" />
             </div>
@@ -67,8 +67,8 @@ export default function CRMPage() {
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-2xl p-6 border border-gray-100">
-        <div className="flex items-center gap-3 mb-6">
+      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
+        <div className="flex items-center gap-3 mb-3 md:mb-6">
           <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
           <h2 className="text-section text-gray-900">Recent Activity</h2>
         </div>
@@ -78,7 +78,7 @@ export default function CRMPage() {
             { action: 'Client updated', name: 'ABC Industries', time: '5 hours ago', type: 'client' },
             { action: 'Order placed by', name: 'Global Traders', time: '1 day ago', type: 'client' },
           ].map((item, index) => (
-            <div key={index} className="flex items-center gap-4 p-4 bg-gray-50/80 rounded-xl hover:bg-gray-100 transition-colors border border-gray-100">
+            <div key={index} className="flex items-center gap-2 md:gap-4 p-4 bg-gray-50/80 rounded-xl hover:bg-gray-100 transition-colors border border-gray-100">
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${item.type === 'client' ? 'bg-blue-100 text-blue-600' : 'bg-oms-blue text-oms-blue'
                 }`}>
                 {item.type === 'client' ? (

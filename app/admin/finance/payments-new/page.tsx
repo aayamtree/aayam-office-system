@@ -109,7 +109,7 @@ export default function PaymentsPageNew() {
 
     return (
         <div className="p-6 max-w-7xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-3 md:mb-6">
                 <div>
                     <h1 className="text-page-title">Payments (New)</h1>
                     <p className="text-gray-500">{payments.length} transactions</p>

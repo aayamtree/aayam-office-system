@@ -425,9 +425,9 @@ export default function QuotationsPage() {
   });
 
   return (
-    <div className="space-y-4 lg:space-y-6">
+    <div className="space-y-2 md:space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/sales" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
             <ArrowLeft size={20} />
@@ -656,7 +656,7 @@ export default function QuotationsPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Client / Lead *</label>
                   <select
@@ -792,7 +792,7 @@ export default function QuotationsPage() {
 
               {/* Financials */}
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Subtotal</label>
                     <div className="font-bold text-gray-900 text-lg">{formatCurrency(formData.subtotal)}</div>
@@ -841,7 +841,7 @@ export default function QuotationsPage() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Terms & Conditions</label>
                   <textarea

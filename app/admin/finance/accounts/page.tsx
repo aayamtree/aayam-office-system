@@ -16,9 +16,9 @@ export default function AccountsPage() {
     const grandTotal = totalBankBalance + totalCashBalance;
 
     return (
-        <div className="space-y-6 animate-fade-in pb-20">
+        <div className="space-y-3 md:space-y-6 animate-fade-in pb-16 md:pb-20">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
                 <div>
                     <h1 className="text-page-title text-gray-900">Accounts</h1>
                     <p className="text-gray-500">Manage bank accounts and cash registers</p>
@@ -35,10 +35,10 @@ export default function AccountsPage() {
             </div>
 
             {/* Total Balance Summary */}
-            <div className="bg-oms-blue rounded-2xl p-6 text-white">
+            <div className="bg-oms-blue rounded-lg md:rounded-2xl p-3 md:p-6 text-white">
                 <h2 className="text-sm font-medium opacity-90 mb-2">Total Available Balance</h2>
                 <p className="text-page-title">₹{grandTotal.toLocaleString()}</p>
-                <div className="mt-4 flex gap-6 text-sm">
+                <div className="mt-4 flex gap-3 md:gap-6 text-sm">
                     <div>
                         <p className="opacity-75">Bank Accounts</p>
                         <p className="text-page-title">₹{totalBankBalance.toLocaleString()}</p>
