@@ -158,10 +158,10 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-4 md:space-y-6 animate-fade-in pb-6 md:pb-10 px-3 md:px-0">
+    <div className="space-y-2 md:space-y-6 animate-fade-in pb-6 md:pb-10 px-2 md:px-0">
       {/* Welcome Header */}
-      <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 border border-gray-100">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4 mb-4 md:mb-8">
+      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 lg:p-8 border border-gray-100">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4 mb-3 md:mb-8">
           <div>
             <h1 className="text-page-title text-gray-900">
               Welcome back, {profile?.full_name?.split(' ')[0] || 'Admin'}
@@ -178,12 +178,12 @@ export default function AdminDashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 lg:gap-6">
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <div key={stat.label} className="bg-white rounded-xl md:rounded-2xl p-3 md:p-5 border-2 border-gray-100 hover:border-oms-blue/20 transition-all duration-150">
-                <div className="flex items-start justify-between mb-2 md:mb-3">
+              <div key={stat.label} className="bg-white rounded-lg md:rounded-2xl p-2 md:p-5 border-2 border-gray-100 hover:border-oms-blue/20 transition-all duration-150">
+                <div className="flex items-start justify-between mb-1 md:mb-3">
                   <p className="text-gray-600 text-xs md:text-sm font-medium">{stat.label}</p>
                   <Icon size={16} className="text-oms-blue md:hidden" />
                   <Icon size={20} className="text-oms-blue hidden md:block" />
@@ -203,7 +203,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Daily Briefing Panel (Focus + Activity) */}
-      <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 border border-gray-100 animate-fade-in-up">
+      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100 animate-fade-in-up">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
           {/* Left: Today's Focus Stats */}
           <div className="lg:col-span- 2 space-y-4 md:space-y-5">
@@ -215,9 +215,9 @@ export default function AdminDashboard() {
               <p className="text-xs text-gray-400 pl-4 mt-1">Daily Focus</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 w-full">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4 w-full">
               {/* Jobs Due */}
-              <div className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex flex-col items-center justify-center gap-1 md:gap-2 p-2 md:p-4 rounded-lg md:rounded-xl border ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-200 text-gray-500'}`}>
                   <AlertCircle size={20} />
                 </div>
@@ -228,7 +228,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Jobs Delayed */}
-              <div className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-[rgba(255,102,0,0.08)] border-[rgba(255,102,0,0.15)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex flex-col items-center justify-center gap-1 md:gap-2 p-2 md:p-4 rounded-lg md:rounded-xl border ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-[rgba(255,102,0,0.08)] border-[rgba(255,102,0,0.15)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-[rgba(255,102,0,0.12)] text-oms-orange' : 'bg-gray-200 text-gray-500'}`}>
                   <Clock size={20} />
                 </div>
@@ -239,7 +239,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Jobs Completed */}
-              <div className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border transition-colors ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-gray-50 border-gray-200 hover:bg-gray-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex flex-col items-center justify-center gap-1 md:gap-2 p-2 md:p-4 rounded-lg md:rounded-xl border transition-colors ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-gray-50 border-gray-200 hover:bg-gray-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-gray-200 text-gray-600' : 'bg-gray-200 text-gray-500'}`}>
                   <CheckCircle size={20} />
                 </div>
@@ -250,7 +250,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Payments Due */}
-              <div className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex flex-col items-center justify-center gap-1 md:gap-2 p-2 md:p-4 rounded-lg md:rounded-xl border ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-oms-blue text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
                   <IndianRupee size={20} />
                 </div>
@@ -261,7 +261,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Follow-ups */}
-              <Link href="/admin/marketing/follow-ups" className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border transition-all hover:scale-105 ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)] cursor-pointer' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <Link href="/admin/marketing/follow-ups" className={`flex flex-col items-center justify-center gap-1 md:gap-2 p-2 md:p-4 rounded-lg md:rounded-xl border transition-all hover:scale-105 ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)] cursor-pointer' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-oms-blue text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
                   <Phone size={20} />
                 </div>
@@ -274,7 +274,7 @@ export default function AdminDashboard() {
               {/* --- VENDOR SNAPSHOT --- */}
 
               {/* Jobs At Vendor */}
-              <div className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex flex-col items-center justify-center gap-1 md:gap-2 p-2 md:p-4 rounded-lg md:rounded-xl border ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-oms-blue text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
                   <Printer size={20} />
                 </div>
@@ -285,7 +285,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Return Today */}
-              <div className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex flex-col items-center justify-center gap-1 md:gap-2 p-2 md:p-4 rounded-lg md:rounded-xl border ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-oms-blue text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
                   <Truck size={20} />
                 </div>
@@ -296,7 +296,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Vendor Delayed */}
-              <div className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border ${dashboardStats.vendorStats?.delayed > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex flex-col items-center justify-center gap-1 md:gap-2 p-2 md:p-4 rounded-lg md:rounded-xl border ${dashboardStats.vendorStats?.delayed > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.delayed > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-200 text-gray-500'}`}>
                   <AlertCircle size={20} />
                 </div>
@@ -316,16 +316,16 @@ export default function AdminDashboard() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 md:gap-6 lg:gap-8">
 
         {/* Needs Attention */}
-        <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 border border-gray-100 flex flex-col h-full">
-          <div className="flex items-center gap-2.5 mb-6">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100 flex flex-col h-full">
+          <div className="flex items-center gap-2.5 mb-3 md:mb-6">
             <AlertCircle size={20} className="text-oms-orange" />
             <h2 className="text-section text-gray-900">Needs Attention</h2>
           </div>
 
-          <div className="space-y-4 flex-1 overflow-y-auto max-h-[400px] pr-1">
+          <div className="space-y-2 md:space-y-4 flex-1 overflow-y-auto max-h-[400px] pr-1">
             {sortedAlerts.map((alert) => {
               const isSafe = alert.count === 0;
               let colors = isSafe ? 'bg-gray-50 text-gray-700 border-gray-200' : 'bg-[rgba(255,102,0,0.05)] text-oms-orange border-[rgba(255,102,0,0.1)]';
@@ -340,7 +340,7 @@ export default function AdminDashboard() {
               }
 
               return (
-                <Link key={alert.label} href={alert.href} className={`flex items-center justify-between p-4 rounded-xl border transition-all  ${colors}`}>
+                <Link key={alert.label} href={alert.href} className={`flex items-center justify-between p-3 md:p-4 rounded-lg md:rounded-xl border transition-all  ${colors}`}>
                   <div className="flex items-center gap-4">
                     <span className={`w-10 h-10 ${iconColors} rounded-lg flex items-center justify-center text-section`}>
                       {isSafe ? <Check size={20} /> : alert.icon}
@@ -370,11 +370,11 @@ export default function AdminDashboard() {
 
         {/* Row 2: Main Business Data */}
         {/* Left Column - 2/3 width */}
-        <div className="lg:col-span-2 space-y-6 lg:space-y-8">
+        <div className="lg:col-span-2 space-y-3 md:space-y-6 lg:space-y-8">
 
           {/* Sales Performance */}
-          <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 border border-gray-100">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0 mb-6 md:mb-8">
+          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 lg:p-8 border border-gray-100">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0 mb-3 md:mb-8">
               <div>
                 <h2 className="text-lg md:text-section text-gray-900">Sales Performance</h2>
                 <p className="text-xs md:text-sm text-gray-500 mt-1">Monthly revenue overview</p>
@@ -429,8 +429,8 @@ export default function AdminDashboard() {
           </div>
 
           {/* Recent Jobs */}
-          <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 border border-gray-100">
-            <div className="flex items-center justify-between mb-4 md:mb-6">
+          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 lg:p-8 border border-gray-100">
+            <div className="flex items-center justify-between mb-3 md:mb-6">
               <h2 className="text-section text-gray-900">Recent Jobs</h2>
               <Link href="/admin/sales/orders" className="flex items-center gap-1 text-sm text-oms-blue hover:text-oms-blue font-bold">
                 View All
@@ -504,11 +504,11 @@ export default function AdminDashboard() {
             </div>
 
             {/* Mobile Card View */}
-            <div className="md:hidden space-y-4">
+            <div className="md:hidden space-y-2">
               {recentJobs.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">No recent jobs found</div>
               ) : recentJobs.map((job) => (
-                <div key={job.id} className="border border-gray-100 p-4 rounded-xl bg-gray-50/30">
+                <div key={job.id} className="border border-gray-100 p-3 rounded-lg bg-gray-50/30">
                   <div className="flex justify-between items-start mb-3">
                     <span className="font-bold text-indigo-900 bg-oms-blue px-3 py-1 rounded-lg text-sm">{job.job_number}</span>
                     <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full ${getStatusColor(job.current_stage)}`}>
@@ -530,30 +530,30 @@ export default function AdminDashboard() {
         </div>
 
         {/* Right Column - 1/3 width */}
-        <div className="lg:col-span-1 space-y-6 lg:space-y-8">
+        <div className="lg:col-span-1 space-y-3 md:space-y-6 lg:space-y-8">
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 border border-gray-100">
-            <h2 className="text-base md:text-section text-gray-900 mb-4 md:mb-5">Quick Actions</h2>
-            <div className="grid grid-cols-2 gap-3 md:gap-4">
+          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 lg:p-8 border border-gray-100">
+            <h2 className="text-base md:text-section text-gray-900 mb-3 md:mb-5">Quick Actions</h2>
+            <div className="grid grid-cols-2 gap-2 md:gap-4">
               <Link href="/admin/sales/orders" className="p-4 bg-oms-blue text-white rounded-xl text-center text-sm font-semibold hover:bg-blue-600 transition-all  hover:-translate-y-0.5">
                 + New Order
               </Link>
-              <Link href="/admin/cmyk-print" className="p-4 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-xl text-center text-sm font-semibold hover:bg-oms-blue transition-all">
+              <Link href="/admin/cmyk-print" className="p-3 md:p-4 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-lg md:rounded-xl text-center text-xs md:text-sm font-semibold hover:bg-oms-blue transition-all">
                 Print Job
               </Link>
-              <Link href="/admin/dispatch" className="p-4 bg-white text-gray-900 rounded-xl text-center text-sm font-semibold hover:bg-gray-100 transition-all">
+              <Link href="/admin/dispatch" className="p-3 md:p-4 bg-white text-gray-900 rounded-lg md:rounded-xl text-center text-xs md:text-sm font-semibold hover:bg-gray-100 transition-all">
                 QC Check
               </Link>
-              <Link href="/admin/crm/clients" className="p-4 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-xl text-center text-sm font-semibold hover:bg-oms-blue transition-all">
+              <Link href="/admin/crm/clients" className="p-3 md:p-4 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-lg md:rounded-xl text-center text-xs md:text-sm font-semibold hover:bg-oms-blue transition-all">
                 Clients
               </Link>
             </div>
           </div>
 
           {/* Work Pipeline */}
-          <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 border border-gray-100">
-            <h2 className="text-base md:text-section text-gray-900 mb-4 md:mb-6">Work Pipeline</h2>
+          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 lg:p-8 border border-gray-100">
+            <h2 className="text-base md:text-section text-gray-900 mb-3 md:mb-6">Work Pipeline</h2>
 
             <div className="relative w-48 h-48 mx-auto mb-8">
               <svg viewBox="0 0 120 120" className="w-full h-full transform -rotate-90 drop-">
@@ -569,7 +569,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-2 md:space-y-4">
               {pipeline.map((item) => {
                 const percent = Math.round((item.count / totalPipeline) * 100);
                 const isBottleneck = item.count > item.thresh;
