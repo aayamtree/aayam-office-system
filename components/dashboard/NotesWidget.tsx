@@ -167,7 +167,7 @@ export default function NotesWidget() {
                                 </Link>
                             )}
 
-                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5">
                                 <button
                                     onClick={() => togglePin(note)}
                                     className={`p-1.5 rounded-md transition-colors ${note.is_pinned ? 'bg-oms-blue/10 text-oms-blue' : 'hover:bg-gray-100 text-gray-600 hover:text-oms-blue'}`}
