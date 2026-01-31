@@ -236,13 +236,13 @@ export default function DesignerWorkspace() {
     router.push(`/admin/designers/tasks?view=${view}`);
   };
 
-  // Kanban Columns
+  // Kanban Columns - Fixed visibility with dark text on light backgrounds
   const kanbanColumns = [
-    { id: 'pending', title: 'To Do', color: 'bg-gray-100 text-gray-600', border: 'border-gray-400' },
-    { id: 'in_progress', title: 'Designing', color: 'bg-blue-50 text-blue-600', border: 'border-blue-500' },
-    { id: 'review', title: 'Review', color: 'bg-[rgba(0,0,255,0.05)] text-oms-blue', border: 'border-oms-blue' },
-    { id: 'waiting', title: 'Waiting', color: 'bg-white text-oms-orange', border: 'border-gray-500' },
-    { id: 'completed', title: 'Done', color: 'bg-white text-gray-900', border: 'border-green-500' }
+    { id: 'pending', title: 'To Do', color: 'bg-gray-100', textColor: 'text-gray-900', border: 'border-gray-400' },
+    { id: 'in_progress', title: 'Designing', color: 'bg-blue-50', textColor: 'text-gray-900', border: 'border-blue-500' },
+    { id: 'review', title: 'Review', color: 'bg-[rgba(0,0,255,0.05)]', textColor: 'text-gray-900', border: 'border-oms-blue' },
+    { id: 'waiting', title: 'Waiting', color: 'bg-white', textColor: 'text-gray-900', border: 'border-gray-500' },
+    { id: 'completed', title: 'Done', color: 'bg-white', textColor: 'text-gray-900', border: 'border-green-500' }
   ];
 
   // Notes State
@@ -657,9 +657,9 @@ export default function DesignerWorkspace() {
 
                 return (
                   <div key={col.id} className="w-80 flex flex-col bg-gray-100/50 rounded-2xl border border-gray-200/50">
-                    <div className={`p-4 font-bold text-sm uppercase tracking-wide flex justify-between items-center ${col.color.replace('bg-', 'text-')}`}>
+                    <div className={`p-4 font-bold text-sm uppercase tracking-wide flex justify-between items-center ${col.textColor}`}>
                       {col.title}
-                      <span className="bg-white/50 px-2 py-0.5 rounded text-xs text-gray-700">{colTasks.length}</span>
+                      <span className="bg-oms-blue text-white px-2 py-0.5 rounded text-xs font-bold">{colTasks.length}</span>
                     </div>
                     <div className="flex-1 overflow-y-auto p-3 space-y-3">
                       {colTasks.map(task => {
