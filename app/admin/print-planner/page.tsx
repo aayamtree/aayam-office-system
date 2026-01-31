@@ -52,34 +52,38 @@ export default function PrintPlannerPage() {
     const selectedJobType = selectedJobs.length > 0 ? selectedJobs[0].job_type : null;
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
+        <div className="min-h-screen bg-gray-50 p-6 pb-12">
             {/* Header */}
             <div className="mb-6">
                 <h1 className="text-page-title text-gray-900 mb-2">Print Planner</h1>
                 <p className="text-gray-600">Batch print jobs with same job type for efficient printing</p>
             </div>
 
-            {/* Split Screen Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" style={{ height: 'calc(100vh - 200px)' }}>
+            {/* Split Screen Layout - No fixed height to prevent overlap */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 {/* Left: Job Queue */}
-                <PrintJobQueue
-                    key={refreshKey}
-                    onAddJob={handleAddJob}
-                    selectedJobType={selectedJobType}
-                    disabledJobIds={selectedJobIds}
-                />
+                <div className="h-[calc(100vh-350px)]">
+                    <PrintJobQueue
+                        key={refreshKey}
+                        onAddJob={handleAddJob}
+                        selectedJobType={selectedJobType}
+                        disabledJobIds={selectedJobIds}
+                    />
+                </div>
 
                 {/* Right: Create Print Run */}
-                <CreatePrintRunForm
-                    selectedJobs={selectedJobs}
-                    onRemoveJob={handleRemoveJob}
-                    onClear={handleClear}
-                    onSuccess={handleSuccess}
-                />
+                <div className="h-[calc(100vh-350px)]">
+                    <CreatePrintRunForm
+                        selectedJobs={selectedJobs}
+                        onRemoveJob={handleRemoveJob}
+                        onClear={handleClear}
+                        onSuccess={handleSuccess}
+                    />
+                </div>
             </div>
 
-            {/* Info Banner - Spacer to prevent overlap */}
-            <div className="mt-12 p-4 bg-[rgba(0,0,255,0.05)] border-2 border-[rgba(0,0,255,0.2)] rounded-xl">
+            {/* Info Banner - Clear separation from grid above */}
+            <div className="p-4 bg-[rgba(0,0,255,0.05)] border-2 border-[rgba(0,0,255,0.2)] rounded-xl max-w-7xl">
                 <div className="flex items-start gap-3">
                     <div className="w-6 h-6 bg-oms-blue rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                         <span className="text-white text-sm font-bold">ℹ</span>
