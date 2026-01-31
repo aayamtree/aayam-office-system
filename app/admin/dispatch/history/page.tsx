@@ -37,8 +37,8 @@ export default function DispatchHistoryPage() {
     const colors: Record<string, string> = {
       'pending': 'bg-gray-100 text-gray-700 border-gray-200',
       'packed': 'bg-amber-100 text-amber-700 border-gray-200',
-      'dispatched': 'bg-[rgba(0,0,255,0.1)] text-oms-blue border-[rgba(0,0,255,0.2)]',
-      'in_transit': 'bg-[rgba(0,0,255,0.1)] text-oms-blue border-[rgba(0,0,255,0.2)]',
+      'dispatched': 'bg-oms-blue text-oms-blue border-[rgba(0,0,255,0.2)]',
+      'in_transit': 'bg-oms-blue text-oms-blue border-[rgba(0,0,255,0.2)]',
       'delivered': 'bg-gray-100 text-gray-900 border-green-200',
       'returned': 'bg-red-100 text-red-700 border-red-200',
     };

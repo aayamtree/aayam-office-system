@@ -134,7 +134,7 @@ export default function MarketingDashboard() {
                       {lead.notes && <p className="text-xs text-gray-600 mt-1 line-clamp-1 italic">&quot;{lead.notes}&quot;</p>}
                     </div>
                     <div className="flex gap-2">
-                      <a href={`tel:${lead.phone}`} className="p-2 bg-[rgba(0,0,255,0.1)] text-oms-blue rounded-lg hover:bg-[rgba(0,0,255,0.1)] transition-colors">
+                      <a href={`tel:${lead.phone}`} className="p-2 bg-oms-blue text-oms-blue rounded-lg hover:bg-oms-blue transition-colors">
                         <Phone size={16} />
                       </a>
                       <Link href="/admin/marketing/leads" className="p-2 border text-gray-500 rounded-lg hover:bg-gray-100 transition-colors">

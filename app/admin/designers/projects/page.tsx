@@ -12,7 +12,7 @@ import { useDesignProjects, useClients, useDesigners } from '@/lib/hooks';
 const projectStatuses = [
   { id: 'planning', name: 'Planning', color: 'bg-gray-100 text-gray-700' },
   { id: 'in_progress', name: 'In Progress', color: 'bg-blue-100 text-blue-700' },
-  { id: 'review', name: 'Review', color: 'bg-[rgba(0,0,255,0.1)] text-oms-blue' },
+  { id: 'review', name: 'Review', color: 'bg-oms-blue text-oms-blue' },
   { id: 'on_hold', name: 'On Hold', color: 'bg-orange-100 text-orange-700' },
   { id: 'completed', name: 'Completed', color: 'bg-gray-100 text-gray-900' },
 ];
@@ -188,7 +188,7 @@ export default function DesignerProjectsPage() {
         </div>
         <div className="flex gap-2">
           <button onClick={() => setShowGanttModal(true)}
-            className="flex items-center gap-2 bg-[rgba(0,0,255,0.1)] text-oms-blue px-4 py-2.5 rounded-lg hover:bg-[rgba(0,0,255,0.15)] font-medium">
+            className="flex items-center gap-2 bg-oms-blue text-oms-blue px-4 py-2.5 rounded-lg hover:bg-[rgba(0,0,255,0.15)] font-medium">
             <BarChart3 size={18} />
             <span className="hidden sm:inline">Gantt View</span>
           </button>
@@ -313,7 +313,7 @@ export default function DesignerProjectsPage() {
                     {project.tasks.map((task: any) => (
                       <span key={task.id} className={`text-xs px-2 py-1 rounded-lg ${task.status === 'completed' ? 'bg-gray-100 text-gray-900' :
                           task.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
-                            task.status === 'review' ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' :
+                            task.status === 'review' ? 'bg-oms-blue text-oms-blue' :
                               'bg-gray-100 text-gray-600'}`}>
                         {task.name}
                       </span>

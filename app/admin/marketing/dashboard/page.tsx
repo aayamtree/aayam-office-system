@@ -61,9 +61,9 @@ export default function AdminMarketingDashboard() {
             title: 'Converted',
             value: stats.convertedLeads,
             icon: CheckCircle,
-            color: 'bg-[rgba(0,0,255,0.1)]',
+            color: 'bg-oms-blue',
             textColor: 'text-oms-blue',
-            bgColor: 'bg-[rgba(0,0,255,0.1)]',
+            bgColor: 'bg-oms-blue',
             link: '/admin/marketing/leads?filter=converted'
         },
         {
@@ -79,9 +79,9 @@ export default function AdminMarketingDashboard() {
             title: 'Active Quotations',
             value: stats.activeQuotations,
             icon: FileText,
-            color: 'bg-[rgba(0,0,255,0.1)]',
+            color: 'bg-oms-blue',
             textColor: 'text-oms-blue',
-            bgColor: 'bg-[rgba(0,0,255,0.1)]',
+            bgColor: 'bg-oms-blue',
             link: '/admin/marketing/quotations?filter=active'
         },
     ];
@@ -181,7 +181,7 @@ export default function AdminMarketingDashboard() {
                             {teamMembers.map((member: any, idx: number) => (
                                 <div key={idx} className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-oms-blue/20 transition-colors">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-[rgba(0,0,255,0.1)] flex items-center justify-center font-bold text-oms-blue">
+                                        <div className="w-10 h-10 rounded-full bg-oms-blue flex items-center justify-center font-bold text-oms-blue">
                                             {member.name.charAt(0)}
                                         </div>
                                         <div>
@@ -211,7 +211,7 @@ export default function AdminMarketingDashboard() {
                         </div>
                         <button
                             onClick={() => router.push('/admin/marketing/commissions')}
-                            className="px-4 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-lg hover:bg-[rgba(0,0,255,0.1)] transition-colors text-sm font-bold"
+                            className="px-4 py-2 bg-oms-blue text-white rounded-lg hover:bg-oms-blue transition-colors text-sm font-bold"
                         >
                             View All
                         </button>

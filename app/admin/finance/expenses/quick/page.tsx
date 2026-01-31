@@ -362,7 +362,7 @@ export default function QuickExpensePage() {
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="flex-1 bg-[rgba(0,0,255,0.1)] hover:bg-[rgba(0,0,255,0.1)] text-white font-medium py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+                                    className="flex-1 bg-oms-blue hover:bg-oms-blue text-white font-medium py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
                                 >
                                     {loading ? (
                                         <>Processing...</>

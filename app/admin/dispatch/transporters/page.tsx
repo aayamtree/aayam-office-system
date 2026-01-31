@@ -197,7 +197,7 @@ export default function TransportersPage() {
             <div className="flex items-center gap-2 mb-3">
               <MapPin size={16} className="text-oms-blue" />
               <h2 className="text-section text-gray-900">{state}</h2>
-              <span className="px-2 py-0.5 bg-[rgba(0,0,255,0.1)] text-oms-blue text-xs rounded-full">
+              <span className="px-2 py-0.5 bg-oms-blue text-oms-blue text-xs rounded-full">
                 {stateTransporters.length}
               </span>
             </div>
@@ -207,7 +207,7 @@ export default function TransportersPage() {
                 <div key={t.id} className="bg-white rounded-xl p-4 border border-gray-100">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center">
+                      <div className="w-10 h-10 bg-oms-blue rounded-full flex items-center justify-center">
                         <Truck size={18} className="text-oms-blue" />
                       </div>
                       <div>
@@ -401,7 +401,7 @@ export default function TransportersPage() {
 
             <div className="p-4 space-y-4">
               <div className="flex items-center gap-4 p-4 bg-[rgba(0,0,255,0.05)] rounded-xl">
-                <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-oms-blue rounded-full flex items-center justify-center">
                   <Truck size={24} className="text-oms-blue" />
                 </div>
                 <div>

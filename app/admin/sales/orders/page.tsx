@@ -206,9 +206,9 @@ export default function OrdersPage() {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'new': 'bg-blue-100 text-blue-700',
-      'designing': 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
+      'designing': 'bg-oms-blue text-oms-blue',
       'approval': 'bg-amber-100 text-amber-700',
-      'printing': 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
+      'printing': 'bg-oms-blue text-oms-blue',
       'finishing': 'bg-pink-100 text-pink-700',
       'quality_check': 'bg-orange-100 text-orange-700',
       'ready': 'bg-gray-100 text-gray-900',
@@ -604,7 +604,7 @@ export default function OrdersPage() {
 
             <div className="p-6 space-y-6">
               <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div className="w-12 h-12 rounded-full bg-[rgba(0,0,255,0.1)] flex items-center justify-center text-oms-blue text-section">
+                <div className="w-12 h-12 rounded-full bg-oms-blue flex items-center justify-center text-oms-blue text-section">
                   {selectedJob.client?.company?.charAt(0) || 'C'}
                 </div>
                 <div>

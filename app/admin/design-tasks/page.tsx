@@ -70,8 +70,8 @@ export default function DesignTasksPage() {
                             </div>
                             <span className={`px-3 py-1 text-xs font-bold rounded-full capitalize
                 ${job.current_stage === 'new' ? 'bg-blue-100 text-blue-700' :
-                                    job.current_stage === 'designing' ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' :
-                                        'bg-[rgba(0,0,255,0.1)] text-oms-blue'}`}>
+                                    job.current_stage === 'designing' ? 'bg-oms-blue text-oms-blue' :
+                                        'bg-oms-blue text-oms-blue'}`}>
                                 {job.current_stage}
                             </span>
                         </div>
@@ -94,7 +94,7 @@ export default function DesignTasksPage() {
                                         </div>
                                         <div className="bg-gray-100 rounded-full h-1.5 overflow-hidden">
                                             <div
-                                                className={`h-full ${progress.percentage === 100 ? 'bg-white0' : 'bg-[rgba(0,0,255,0.1)]'}`}
+                                                className={`h-full ${progress.percentage === 100 ? 'bg-white0' : 'bg-oms-blue'}`}
                                                 style={{ width: `${progress.percentage}%` }}
                                             ></div>
                                         </div>
@@ -109,7 +109,7 @@ export default function DesignTasksPage() {
                                 <button
                                     disabled={processingId === job.id}
                                     onClick={() => handleStageUpdate(job.id, 'designing')}
-                                    className="flex-1 bg-[rgba(0,0,255,0.1)] text-white py-2 rounded-lg text-sm font-semibold hover:bg-[rgba(0,0,255,0.1)] flex items-center justify-center gap-2">
+                                    className="flex-1 bg-oms-blue text-white py-2 rounded-lg text-sm font-semibold hover:bg-oms-blue flex items-center justify-center gap-2">
                                     <Play size={16} /> Start Design
                                 </button>
                             )}
@@ -126,7 +126,7 @@ export default function DesignTasksPage() {
                                     <button
                                         disabled={processingId === job.id}
                                         onClick={() => handleStageUpdate(job.id, 'approval')}
-                                        className="flex-1 bg-[rgba(0,0,255,0.1)] text-white py-2 rounded-lg text-sm font-semibold hover:bg-[rgba(0,0,255,0.1)] flex items-center justify-center gap-2">
+                                        className="flex-1 bg-oms-blue text-white py-2 rounded-lg text-sm font-semibold hover:bg-oms-blue flex items-center justify-center gap-2">
                                         <Clock size={16} /> Send Approval
                                     </button>
                                 </>

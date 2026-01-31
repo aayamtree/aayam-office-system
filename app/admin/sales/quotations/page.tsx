@@ -104,7 +104,7 @@ export default function QuotationsPage() {
     const colors: Record<string, string> = {
       'draft': 'bg-gray-100 text-gray-700',
       'sent': 'bg-blue-100 text-blue-700',
-      'viewed': 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
+      'viewed': 'bg-oms-blue text-oms-blue',
       'accepted': 'bg-gray-100 text-gray-900',
       'rejected': 'bg-red-100 text-red-700',
       'expired': 'bg-amber-100 text-amber-700',

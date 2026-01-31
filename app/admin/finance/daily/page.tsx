@@ -244,7 +244,7 @@ export default function DailyFinancePage() {
             <div className="grid grid-cols-3 gap-4">
                 <Link
                     href="/admin/finance/payments?new=true"
-                    className="bg-[rgba(0,0,255,0.1)] hover:bg-[rgba(0,0,255,0.1)] text-white rounded-xl p-4 text-center font-medium"
+                    className="bg-oms-blue hover:bg-oms-blue text-white rounded-xl p-4 text-center font-medium"
                 >
                     Record Payment
                 </Link>

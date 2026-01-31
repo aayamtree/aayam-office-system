@@ -322,7 +322,7 @@ export default function AdminEODDashboard() {
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <span className="text-label text-gray-500">Tags:</span>
                                                 {report.tags.map((tag: string) => (
-                                                    <span key={tag} className="px-2 py-0.5 bg-[rgba(0,0,255,0.1)] text-oms-blue text-xs rounded-full">
+                                                    <span key={tag} className="px-2 py-0.5 bg-oms-blue text-oms-blue text-xs rounded-full">
                                                         {tag}
                                                     </span>
                                                 ))}

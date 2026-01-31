@@ -256,7 +256,7 @@ export default function PaymentsPage() {
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-gray-500">{p.display_company}</p>
                     {p.attachment_url && (
-                      <a href={p.attachment_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[10px] bg-[rgba(0,0,255,0.1)] text-oms-blue px-2 py-1 rounded-md font-medium">
+                      <a href={p.attachment_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[10px] bg-oms-blue text-oms-blue px-2 py-1 rounded-md font-medium">
                         <FileText size={10} /> Proof
                       </a>
                     )}

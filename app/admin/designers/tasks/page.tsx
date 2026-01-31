@@ -31,7 +31,7 @@ const getDesignerStatus = (stage: string) => {
 const taskStatuses = [
   { id: 'pending', name: 'To Do', color: 'bg-gray-100 text-gray-700' },
   { id: 'in_progress', name: 'Designing', color: 'bg-blue-100 text-blue-700' },
-  { id: 'review', name: 'Review', color: 'bg-[rgba(0,0,255,0.1)] text-oms-blue' },
+  { id: 'review', name: 'Review', color: 'bg-oms-blue text-oms-blue' },
   { id: 'waiting', name: 'Waiting Client', color: 'bg-amber-100 text-amber-700' },
   { id: 'completed', name: 'Done', color: 'bg-gray-100 text-gray-900' },
 ];
@@ -928,7 +928,7 @@ export default function DesignerWorkspace() {
                             const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                             const hasNote = (notes || []).some(n => n?.note_date === dateStr);
                             return (
-                              <div key={d} className={`text-xs h-6 flex items-center justify-center rounded-full cursor-pointer hover:bg-[rgba(0,0,255,0.05)] ${hasNote ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue font-bold' : 'text-gray-600'}`}>
+                              <div key={d} className={`text-xs h-6 flex items-center justify-center rounded-full cursor-pointer hover:bg-[rgba(0,0,255,0.05)] ${hasNote ? 'bg-oms-blue text-oms-blue font-bold' : 'text-gray-600'}`}>
                                 {d}
                               </div>
                             );
@@ -1130,7 +1130,7 @@ export default function DesignerWorkspace() {
                               </div>
                             </div>
                             <div className="flex gap-3 flex-row-reverse">
-                              <div className="min-w-8 w-8 h-8 rounded-full bg-[rgba(0,0,255,0.1)] flex items-center justify-center text-xs font-bold text-oms-blue">Me</div>
+                              <div className="min-w-8 w-8 h-8 rounded-full bg-oms-blue flex items-center justify-center text-xs font-bold text-oms-blue">Me</div>
                               <div className="bg-oms-blue p-3 rounded-2xl rounded-tr-none border border-[rgba(0,0,255,0.2)]-600  max-w-[80%] text-white">
                                 <div className="flex justify-between items-center mb-1 gap-4">
                                   <span className="text-[10px] font-bold text-white/80">You</span>
@@ -1219,7 +1219,7 @@ export default function DesignerWorkspace() {
               <div className="p-6 border-b bg-gradient-to-br from-white to-gray-50">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2 text-gray-900 font-bold">
-                    <div className="p-1.5 bg-[rgba(0,0,255,0.1)] text-oms-blue rounded-lg">
+                    <div className="p-1.5 bg-oms-blue text-oms-blue rounded-lg">
                       <Calendar size={16} />
                     </div>
                     <h2>{monthName}</h2>

@@ -13,7 +13,7 @@ import { formatDate } from '@/lib/utils';
 const followUpTypes = [
   { id: 'call', name: 'Call', icon: Phone, color: 'bg-gray-100 text-gray-900' },
   { id: 'email', name: 'Email', icon: Mail, color: 'bg-blue-100 text-blue-700' },
-  { id: 'meeting', name: 'Meeting', icon: Users, color: 'bg-[rgba(0,0,255,0.1)] text-oms-blue' },
+  { id: 'meeting', name: 'Meeting', icon: Users, color: 'bg-oms-blue text-oms-blue' },
   { id: 'video_call', name: 'Video Call', icon: Video, color: 'bg-orange-100 text-orange-700' },
   { id: 'message', name: 'Message', icon: MessageSquare, color: 'bg-cyan-100 text-cyan-700' },
 ];
@@ -191,7 +191,7 @@ export default function MarketingFollowUpsPage() {
           ) : (
             <button
               onClick={() => handleCreateQuote(followUp)}
-              className="text-xs font-bold text-oms-blue hover:bg-[rgba(0,0,255,0.1)] px-2 py-1 rounded-lg transition-colors flex items-center gap-1"
+              className="text-xs font-bold text-oms-blue hover:bg-oms-blue px-2 py-1 rounded-lg transition-colors flex items-center gap-1"
             >
               <FileText size={14} /> Create Quote
             </button>
@@ -212,7 +212,7 @@ export default function MarketingFollowUpsPage() {
           <p className="text-sm md:text-base text-gray-500">Track and manage your client follow-ups</p>
         </div>
         <button onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-[rgba(0,0,255,0.1)] text-white px-3 md:px-4 py-2 md:py-2.5 rounded-lg hover:bg-[rgba(0,0,255,0.1)] font-medium text-sm md:text-base w-full sm:w-auto justify-center">
+          className="flex items-center gap-2 bg-oms-blue text-white px-3 md:px-4 py-2 md:py-2.5 rounded-lg hover:bg-oms-blue font-medium text-sm md:text-base w-full sm:w-auto justify-center">
           <Plus size={16} className="md:hidden" />
           <Plus size={18} className="hidden md:block" />
           <span>Add Follow-up</span>
@@ -332,7 +332,7 @@ export default function MarketingFollowUpsPage() {
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-lg font-medium">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-[rgba(0,0,255,0.1)] text-white rounded-lg font-medium hover:bg-[rgba(0,0,255,0.1)]">
+                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-lg font-medium hover:bg-oms-blue">
                   {submitting ? 'Saving...' : (editingFollowUp ? 'Update' : 'Add')}
                 </button>
               </div>

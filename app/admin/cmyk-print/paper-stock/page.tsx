@@ -203,7 +203,7 @@ export default function PaperStockPage() {
           </div>
           <p className="text-page-title text-red-700">{loading ? '...' : outOfStockCount}</p>
         </div>
-        <div className="bg-[rgba(0,0,255,0.1)] border border-[rgba(0,0,255,0.2)]-200 rounded-xl p-3">
+        <div className="bg-oms-blue border border-[rgba(0,0,255,0.2)]-200 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-1">
             <TrendingUp size={16} className="text-oms-blue" />
             <span className="text-xs text-oms-blue font-medium">Stock Value</span>

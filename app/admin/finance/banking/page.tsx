@@ -235,7 +235,7 @@ export default function BankingPage() {
                     <button
                         onClick={() => setShowImportModal(true)}
                         disabled={!selectedAccountId}
-                        className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 bg-[rgba(0,0,255,0.1)] text-white rounded-xl hover:bg-[rgba(0,0,255,0.1)] disabled:opacity-50 whitespace-nowrap text-sm font-medium"
+                        className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 bg-oms-blue text-white rounded-xl hover:bg-oms-blue disabled:opacity-50 whitespace-nowrap text-sm font-medium"
                     >
                         <Upload size={16} /> Import Statement
                     </button>
@@ -279,7 +279,7 @@ export default function BankingPage() {
                 <button
                     onClick={() => setStatusFilter('all')}
                     className={`px-4 py-2 rounded-xl font-medium text-sm whitespace-nowrap transition-colors ${statusFilter === 'all'
-                        ? 'bg-[rgba(0,0,255,0.1)] text-white'
+                        ? 'bg-oms-blue text-white'
                         : 'bg-white border border-gray-200 text-gray-600 hover:border-oms-blue/30'
                         }`}
                 >
@@ -359,7 +359,7 @@ export default function BankingPage() {
                                                     <CheckCircle size={12} /> Verified
                                                 </span>
                                                 {getCategoryName(txn) && (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[rgba(0,0,255,0.1)] text-oms-blue rounded-full text-xs">
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-oms-blue text-oms-blue rounded-full text-xs">
                                                         <Tag size={10} /> {getCategoryName(txn)}
                                                     </span>
                                                 )}
@@ -396,7 +396,7 @@ export default function BankingPage() {
                                             {!txn.is_verified && txn.status !== 'ignored' && (
                                                 <button
                                                     onClick={() => handleCategorize(txn)}
-                                                    className="p-1.5 hover:bg-[rgba(0,0,255,0.1)] text-gray-600 hover:text-oms-blue rounded-lg transition-colors"
+                                                    className="p-1.5 hover:bg-oms-blue text-gray-600 hover:text-oms-blue rounded-lg transition-colors"
                                                     title="Categorize Transaction"
                                                 >
                                                     <Edit3 size={16} />
@@ -492,7 +492,7 @@ export default function BankingPage() {
                                 <button
                                     onClick={handleParse}
                                     disabled={!importText || parsing}
-                                    className="px-6 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-lg hover:bg-[rgba(0,0,255,0.1)] disabled:opacity-50"
+                                    className="px-6 py-2 bg-oms-blue text-white rounded-lg hover:bg-oms-blue disabled:opacity-50"
                                 >
                                     {parsing ? 'Parsing...' : 'Process & Import'}
                                 </button>

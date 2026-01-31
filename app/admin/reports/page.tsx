@@ -110,7 +110,7 @@ function ClientStatementGenerator() {
     <div className="bg-white rounded-2xl p-6 border border-gray-100 animate-scale-in">
       {/* ... Header UI ... */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-[rgba(0,0,255,0.1)] rounded-xl flex items-center justify-center text-oms-blue">
+        <div className="w-10 h-10 bg-oms-blue rounded-xl flex items-center justify-center text-oms-blue">
           <FileText size={20} />
         </div>
         <div>
@@ -137,7 +137,7 @@ function ClientStatementGenerator() {
           <input type="date" className="w-full px-3 py-2 border rounded-xl" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
         </div>
       </div>
-      <button onClick={generateStatement} className="px-6 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-xl hover:bg-[rgba(0,0,255,0.1)] font-medium w-full md:w-auto">
+      <button onClick={generateStatement} className="px-6 py-2 bg-oms-blue text-white rounded-xl hover:bg-oms-blue font-medium w-full md:w-auto">
         Generate Statement
       </button>
 
@@ -215,7 +215,7 @@ function VendorStatementGenerator() {
           <input type="date" className="w-full px-3 py-2 border rounded-xl" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
         </div>
       </div>
-      <button onClick={() => selectedVendorId && setShowStatement(true)} className="px-6 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-xl hover:bg-[rgba(0,0,255,0.1)] font-medium w-full md:w-auto">
+      <button onClick={() => selectedVendorId && setShowStatement(true)} className="px-6 py-2 bg-oms-blue text-white rounded-xl hover:bg-oms-blue font-medium w-full md:w-auto">
         Generate Statement
       </button>
 
@@ -307,7 +307,7 @@ function CashFlowStatement() {
           <p className="text-sm text-red-600 font-medium">Total Outflow</p>
           <p className="text-page-title text-red-700">₹{totalOut.toLocaleString()}</p>
         </div>
-        <div className={`p-4 rounded-xl border ${netFlow >= 0 ? 'bg-[rgba(0,0,255,0.1)] border-[rgba(0,0,255,0.2)]-100' : 'bg-white border-gray-100'}`}>
+        <div className={`p-4 rounded-xl border ${netFlow >= 0 ? 'bg-oms-blue border-[rgba(0,0,255,0.2)]-100' : 'bg-white border-gray-100'}`}>
           <p className={`text-sm font-medium ${netFlow >= 0 ? 'text-oms-blue' : 'text-oms-orange'}`}>Net Cash Flow</p>
           <p className={`text-page-title ${netFlow >= 0 ? 'text-oms-blue' : 'text-amber-700'}`}>
             {netFlow >= 0 ? '+' : ''}₹{netFlow.toLocaleString()}

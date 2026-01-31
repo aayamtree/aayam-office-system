@@ -126,7 +126,7 @@ export default function PrintRunDetailPage() {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'planned': return 'bg-blue-100 text-blue-800 border-blue-200';
-            case 'printed': return 'bg-[rgba(0,0,255,0.1)] text-oms-blue-800 border-[rgba(0,0,255,0.2)]-200';
+            case 'printed': return 'bg-oms-blue text-oms-blue-800 border-[rgba(0,0,255,0.2)]-200';
             case 'delivered': return 'bg-gray-100 text-green-800 border-green-200';
             default: return 'bg-gray-100 text-gray-800 border-gray-200';
         }
@@ -167,7 +167,7 @@ export default function PrintRunDetailPage() {
                             {printRun.status === 'planned' && (
                                 <button
                                     onClick={() => updateStatus('printed')}
-                                    className="px-6 py-3 bg-[rgba(0,0,255,0.1)] text-white rounded-xl font-bold hover:bg-[rgba(0,0,255,0.1)] transition-all flex items-center gap-2"
+                                    className="px-6 py-3 bg-oms-blue text-white rounded-xl font-bold hover:bg-oms-blue transition-all flex items-center gap-2"
                                 >
                                     <CheckCircle size={20} />
                                     Mark as Printed
@@ -281,7 +281,7 @@ export default function PrintRunDetailPage() {
                                                 {prj.ups_in_sheet || 1}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="px-3 py-1 bg-[rgba(0,0,255,0.1)] text-indigo-800 rounded-lg text-sm font-bold">
+                                                <span className="px-3 py-1 bg-oms-blue text-indigo-800 rounded-lg text-sm font-bold">
                                                     {Math.ceil((prj.quantity_needed || 0) / (prj.ups_in_sheet || 1))} sheets
                                                 </span>
                                             </td>
@@ -497,7 +497,7 @@ function AddJobsModal({
                                         <div
                                             key={job.id}
                                             className={`p-4 rounded-xl border-2 transition-all ${isSelected
-                                                ? 'bg-[rgba(0,0,255,0.1)] border-[rgba(0,0,255,0.2)]-300'
+                                                ? 'bg-oms-blue border-[rgba(0,0,255,0.2)]-300'
                                                 : 'bg-white border-gray-200'
                                                 }`}
                                         >
@@ -555,7 +555,7 @@ function AddJobsModal({
                                                                 <label className="block text-xs font-bold text-gray-700 mb-1">
                                                                     Sheets Required
                                                                 </label>
-                                                                <div className="w-full border-2 border-[rgba(0,0,255,0.2)]-200 bg-[rgba(0,0,255,0.1)] rounded-lg px-3 py-2 text-sm font-bold text-oms-blue">
+                                                                <div className="w-full border-2 border-[rgba(0,0,255,0.2)]-200 bg-oms-blue rounded-lg px-3 py-2 text-sm font-bold text-oms-blue">
                                                                     {sheets} sheets
                                                                 </div>
                                                             </div>

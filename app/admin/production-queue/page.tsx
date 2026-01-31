@@ -89,7 +89,7 @@ export default function ProductionQueuePage() {
         }
         switch (job.current_stage) {
             case 'designing':
-                return <span className="px-3 py-1 bg-[rgba(0,0,255,0.1)] text-oms-blue text-xs rounded-full font-bold">Designing</span>;
+                return <span className="px-3 py-1 bg-oms-blue text-oms-blue text-xs rounded-full font-bold">Designing</span>;
             case 'printing':
             case 'finishing':
                 return <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-bold">In Production</span>;

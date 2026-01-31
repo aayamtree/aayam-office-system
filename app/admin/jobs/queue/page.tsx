@@ -38,7 +38,7 @@ export default function JobQueuePage() {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'new': 'bg-gray-100 text-gray-700 border-gray-200',
-      'designing': 'bg-[rgba(0,0,255,0.1)] text-oms-blue border-[rgba(0,0,255,0.2)]-200',
+      'designing': 'bg-oms-blue text-oms-blue border-[rgba(0,0,255,0.2)]-200',
       'approval': 'bg-yellow-100 text-yellow-700 border-yellow-200',
       'printing': 'bg-blue-100 text-blue-700 border-blue-200',
       'finishing': 'bg-cyan-100 text-cyan-700 border-cyan-200',
@@ -114,7 +114,7 @@ export default function JobQueuePage() {
 
       {/* Stats Cards - Updated Layout */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
-        <div className="bg-[rgba(0,0,255,0.1)] border border-[rgba(0,0,255,0.2)]-200 rounded-lg md:rounded-xl p-2 md:p-3">
+        <div className="bg-oms-blue border border-[rgba(0,0,255,0.2)]-200 rounded-lg md:rounded-xl p-2 md:p-3">
           <div className="flex items-center gap-1 md:gap-2 mb-1">
             <Clock size={14} className="text-oms-blue md:hidden" />
             <Clock size={16} className="text-oms-blue hidden md:block" />
@@ -203,7 +203,7 @@ export default function JobQueuePage() {
                 {job.current_stage !== 'delivered' && job.current_stage !== 'cancelled' && (
                   <button
                     onClick={() => handleMoveToNext(job)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium ${job.current_stage === 'dispatched' ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-[rgba(0,0,255,0.1)] text-white hover:bg-[rgba(0,0,255,0.1)]'}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium ${job.current_stage === 'dispatched' ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-oms-blue text-white hover:bg-oms-blue'}`}
                   >
                     {job.current_stage === 'new' && <Play size={14} />}
                     {job.current_stage !== 'new' && job.current_stage !== 'dispatched' && <ArrowRight size={14} />}
@@ -259,7 +259,7 @@ export default function JobQueuePage() {
                         onClick={() => handleStageSelect(status)}
                         title={`Move to ${status}`}
                       >
-                        <div className={`px-3 py-1.5 rounded-lg text-label whitespace-nowrap capitalize transition-all transform group-hover:scale-105 ${isCurrent ? 'bg-[rgba(0,0,255,0.1)] text-white ring-2 ring-oms-blue/20' :
+                        <div className={`px-3 py-1.5 rounded-lg text-label whitespace-nowrap capitalize transition-all transform group-hover:scale-105 ${isCurrent ? 'bg-oms-blue text-white ring-2 ring-oms-blue/20' :
                           isCompleted ? 'bg-gray-100 text-gray-900 hover:bg-green-200' :
                             'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
                           }`}>

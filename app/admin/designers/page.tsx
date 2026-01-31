@@ -263,7 +263,7 @@ export default function DesignersPage() {
     const badges: Record<string, string> = {
       'full-time': 'bg-gray-100 text-gray-900',
       'part-time': 'bg-blue-100 text-blue-700',
-      'freelance': 'bg-[rgba(0,0,255,0.1)] text-oms-blue'
+      'freelance': 'bg-oms-blue text-oms-blue'
     };
     return badges[type] || 'bg-gray-100 text-gray-700';
   };
@@ -295,7 +295,7 @@ export default function DesignersPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white rounded-xl p-4 border">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg"><Users size={20} className="text-oms-blue" /></div>
+            <div className="p-2 bg-oms-blue rounded-lg"><Users size={20} className="text-oms-blue" /></div>
             <div><p className="text-xs text-gray-500">Total</p><p className="text-page-title">{totalDesigners}</p></div>
           </div>
         </div>
@@ -358,7 +358,7 @@ export default function DesignersPage() {
           <div key={designer.id} className="bg-white rounded-xl border p-4  transition-shadow">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-oms-blue rounded-full flex items-center justify-center">
                   <span className="text-oms-blue text-section">{designer.name?.charAt(0)}</span>
                 </div>
                 <div>
@@ -502,7 +502,7 @@ export default function DesignersPage() {
                       type="file"
                       accept="image/*,application/pdf"
                       onChange={handleFileUpload}
-                      className="w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[rgba(0,0,255,0.05)] file:text-oms-blue hover:file:bg-[rgba(0,0,255,0.1)]"
+                      className="w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[rgba(0,0,255,0.05)] file:text-oms-blue hover:file:bg-oms-blue"
                       disabled={uploadingDoc}
                     />
                     {uploadingDoc && <div className="absolute right-3 top-1/2 -translate-y-1/2"><Loader2 size={16} className="animate-spin text-oms-blue" /></div>}
@@ -552,7 +552,7 @@ export default function DesignersPage() {
               <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center">
+                    <div className="w-14 h-14 bg-oms-blue rounded-full flex items-center justify-center">
                       <span className="text-oms-blue font-bold text-xl">{selectedDesigner.name?.charAt(0)}</span>
                     </div>
                     <div>
@@ -607,7 +607,7 @@ export default function DesignersPage() {
                     <h3 className="font-semibold text-gray-900 mb-3">Skills</h3>
                     <div className="flex flex-wrap gap-2">
                       {selectedDesigner.skills.map((skill, i) => (
-                        <span key={i} className="px-3 py-1 bg-[rgba(0,0,255,0.1)] text-oms-blue rounded-full text-sm">{skill}</span>
+                        <span key={i} className="px-3 py-1 bg-oms-blue text-oms-blue rounded-full text-sm">{skill}</span>
                       ))}
                     </div>
                   </div>

@@ -251,7 +251,7 @@ export default function LeadsPage() {
                 </div>
                 <button
                     onClick={handleAddNew}
-                    className="flex items-center justify-center gap-2 bg-[rgba(0,0,255,0.1)] hover:bg-[rgba(0,0,255,0.1)] text-white px-4 md:px-5 py-2 md:py-2.5 rounded-xl font-medium -200 transition-all hover:scale-105 active:scale-95 text-sm md:text-base"
+                    className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-oms-blue text-white px-4 md:px-5 py-2 md:py-2.5 rounded-xl font-medium -200 transition-all hover:scale-105 active:scale-95 text-sm md:text-base"
                 >
                     <Plus size={16} className="md:hidden" />
                     <Plus size={18} className="hidden md:block" />
@@ -300,7 +300,7 @@ export default function LeadsPage() {
                             <div className={`absolute top-0 left-0 w-1.5 h-full 
                  ${lead.status === 'new' ? 'bg-blue-500' :
                                     lead.status === 'converted' ? 'bg-white0' :
-                                        lead.status === 'lost' ? 'bg-red-400' : 'bg-[rgba(0,0,255,0.1)]'}`}
+                                        lead.status === 'lost' ? 'bg-red-400' : 'bg-oms-blue'}`}
                             />
 
                             <div className="pl-3">
@@ -323,9 +323,9 @@ export default function LeadsPage() {
                                         {/* Project Type Badge */}
                                         {lead.project_type && (
                                             <div className="mt-2">
-                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${lead.project_type === 'print' ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' :
+                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${lead.project_type === 'print' ? 'bg-oms-blue text-oms-blue' :
                                                     lead.project_type === 'design' ? 'bg-pink-100 text-pink-700' :
-                                                        'bg-[rgba(0,0,255,0.1)] text-oms-blue'
+                                                        'bg-oms-blue text-oms-blue'
                                                     }`}>
                                                     {lead.project_type === 'print' ? '🖨️ Print Only' :
                                                         lead.project_type === 'design' ? '🎨 Design Only' :
@@ -335,7 +335,7 @@ export default function LeadsPage() {
                                         )}
                                     </div>
                                     <div className="flex gap-1">
-                                        <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-400 hover:text-oms-blue hover:bg-[rgba(0,0,255,0.1)] rounded-lg transition-colors">
+                                        <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-400 hover:text-oms-blue hover:bg-oms-blue rounded-lg transition-colors">
                                             <Eye size={18} />
                                         </button>
                                         <button onClick={() => handleEdit(lead)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
@@ -518,7 +518,7 @@ export default function LeadsPage() {
 
                             <div className="sticky bottom-0 bg-white pt-4 border-t border-gray-100 flex gap-3">
                                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 border border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
-                                <button type="submit" disabled={submitting} className="flex-1 py-3 bg-[rgba(0,0,255,0.1)] text-white rounded-xl font-semibold hover:bg-[rgba(0,0,255,0.1)] transition-colors -200 disabled:opacity-50 flex items-center justify-center gap-2">
+                                <button type="submit" disabled={submitting} className="flex-1 py-3 bg-oms-blue text-white rounded-xl font-semibold hover:bg-oms-blue transition-colors -200 disabled:opacity-50 flex items-center justify-center gap-2">
                                     {submitting && <Loader2 className="animate-spin" size={18} />}
                                     {submitting ? 'Saving...' : 'Save Lead'}
                                 </button>
@@ -547,7 +547,7 @@ export default function LeadsPage() {
                             </div>
                         </div>
 
-                        <button onClick={() => { setShowViewModal(false); handleEdit(selectedLead); }} className="w-full mt-6 bg-[rgba(0,0,255,0.1)] text-white py-3 rounded-xl font-bold hover:bg-[rgba(0,0,255,0.1)]">Edit Details</button>
+                        <button onClick={() => { setShowViewModal(false); handleEdit(selectedLead); }} className="w-full mt-6 bg-oms-blue text-white py-3 rounded-xl font-bold hover:bg-oms-blue">Edit Details</button>
                     </div>
                 </div>
             )}

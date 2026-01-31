@@ -36,7 +36,7 @@ export default function SalesPage() {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'new': 'bg-blue-100 text-blue-700',
-      'designing': 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
+      'designing': 'bg-oms-blue text-oms-blue',
       'production': 'bg-amber-100 text-amber-700',
       'printing': 'bg-amber-100 text-amber-700',
       'finishing': 'bg-orange-100 text-orange-700',
@@ -120,7 +120,7 @@ export default function SalesPage() {
 
         <Link href="/admin/sales/quotations" className="bg-white rounded-2xl p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 bg-[rgba(0,0,255,0.1)] rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div className="w-14 h-14 bg-oms-blue rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <FileText size={28} className="text-oms-blue" />
             </div>
             <div>
@@ -223,7 +223,7 @@ export default function SalesPage() {
               <p className="text-sm font-medium text-amber-700 mt-0.5">{followUpsDue} due today</p>
             </div>
           </Link>
-          <Link href="/admin/sales/quotations" className="flex items-center gap-4 p-4 bg-[rgba(0,0,255,0.05)]/80 rounded-2xl border border-[rgba(0,0,255,0.1)] transition-colors hover:bg-[rgba(0,0,255,0.1)] cursor-pointer">
+          <Link href="/admin/sales/quotations" className="flex items-center gap-4 p-4 bg-[rgba(0,0,255,0.05)]/80 rounded-2xl border border-[rgba(0,0,255,0.1)] transition-colors hover:bg-oms-blue cursor-pointer">
             <div className="bg-white p-3 rounded-xl">
               <AlertCircle size={24} className="text-oms-blue" />
             </div>

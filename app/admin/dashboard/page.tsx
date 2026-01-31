@@ -145,8 +145,8 @@ export default function AdminDashboard() {
   const getStatusColor = (stage: string) => {
     const map: any = {
       'new': 'bg-blue-100 text-blue-700',
-      'designing': 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
-      'approval': 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
+      'designing': 'bg-oms-blue text-oms-blue',
+      'approval': 'bg-oms-blue text-oms-blue',
       'printing': 'bg-amber-100 text-amber-700',
       'finishing': 'bg-orange-100 text-orange-700',
       'quality_check': 'bg-pink-100 text-pink-700',
@@ -251,7 +251,7 @@ export default function AdminDashboard() {
 
               {/* Payments Due */}
               <div className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-oms-blue text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
                   <IndianRupee size={20} />
                 </div>
                 <div className="text-center">
@@ -262,7 +262,7 @@ export default function AdminDashboard() {
 
               {/* Follow-ups */}
               <Link href="/admin/marketing/follow-ups" className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border transition-all hover:scale-105 ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)] cursor-pointer' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-oms-blue text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
                   <Phone size={20} />
                 </div>
                 <div className="text-center">
@@ -275,7 +275,7 @@ export default function AdminDashboard() {
 
               {/* Jobs At Vendor */}
               <div className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-oms-blue text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
                   <Printer size={20} />
                 </div>
                 <div className="text-center">
@@ -286,7 +286,7 @@ export default function AdminDashboard() {
 
               {/* Return Today */}
               <div className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-oms-blue text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
                   <Truck size={20} />
                 </div>
                 <div className="text-center">
@@ -333,7 +333,7 @@ export default function AdminDashboard() {
 
               // Specific Alert Colors
               if (!isSafe) {
-                if (alert.id === 'blocked') { colors = 'bg-[rgba(0,0,255,0.05)] text-oms-blue border-[rgba(0,0,255,0.1)]'; iconColors = 'bg-[rgba(0,0,255,0.1)] text-oms-blue'; }
+                if (alert.id === 'blocked') { colors = 'bg-[rgba(0,0,255,0.05)] text-oms-blue border-[rgba(0,0,255,0.1)]'; iconColors = 'bg-oms-blue text-oms-blue'; }
                 if (alert.id === 'payments') { colors = 'bg-red-50 text-red-700 border-red-200'; iconColors = 'bg-red-100 text-red-600'; }
                 if (alert.id === 'stock') { colors = 'bg-[rgba(255,102,0,0.1)] text-oms-orange border-[rgba(255,102,0,0.2)]'; iconColors = 'bg-[rgba(255,102,0,0.15)] text-oms-orange'; }
                 if (alert.id === 'followups') { colors = 'bg-[rgba(255,102,0,0.08)] text-oms-orange border-[rgba(255,102,0,0.15)]'; iconColors = 'bg-[rgba(255,102,0,0.12)] text-oms-orange'; }
@@ -380,7 +380,7 @@ export default function AdminDashboard() {
                 <p className="text-xs md:text-sm text-gray-500 mt-1">Monthly revenue overview</p>
               </div>
               <div className="flex items-center gap-2">
-                <button className="px-4 py-2 text-sm bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-xl font-medium transition-colors hover:bg-[rgba(0,0,255,0.1)]">Monthly</button>
+                <button className="px-4 py-2 text-sm bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-xl font-medium transition-colors hover:bg-oms-blue">Monthly</button>
                 <button className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-xl transition-colors">Yearly</button>
               </div>
             </div>
@@ -479,7 +479,7 @@ export default function AdminDashboard() {
 
                     return (
                       <tr key={job.id} className={rowClass}>
-                        <td className="py-4 pl-4"><span className="font-bold text-indigo-900 bg-[rgba(0,0,255,0.1)] px-2 py-1 rounded-md text-xs">{job.job_number}</span></td>
+                        <td className="py-4 pl-4"><span className="font-bold text-indigo-900 bg-oms-blue px-2 py-1 rounded-md text-xs">{job.job_number}</span></td>
                         <td className="py-4">
                           <div className="font-bold text-gray-800 text-sm">{job.project_name}</div>
                           <div className="text-xs text-gray-500">{job.client?.company || '-'}</div>
@@ -510,7 +510,7 @@ export default function AdminDashboard() {
               ) : recentJobs.map((job) => (
                 <div key={job.id} className="border border-gray-100 p-4 rounded-xl bg-gray-50/30">
                   <div className="flex justify-between items-start mb-3">
-                    <span className="font-bold text-indigo-900 bg-[rgba(0,0,255,0.1)] px-3 py-1 rounded-lg text-sm">{job.job_number}</span>
+                    <span className="font-bold text-indigo-900 bg-oms-blue px-3 py-1 rounded-lg text-sm">{job.job_number}</span>
                     <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full ${getStatusColor(job.current_stage)}`}>
                       {job.current_stage}
                     </span>
@@ -539,13 +539,13 @@ export default function AdminDashboard() {
               <Link href="/admin/sales/orders" className="p-4 bg-oms-blue text-white rounded-xl text-center text-sm font-semibold hover:bg-blue-600 transition-all  hover:-translate-y-0.5">
                 + New Order
               </Link>
-              <Link href="/admin/cmyk-print" className="p-4 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-xl text-center text-sm font-semibold hover:bg-[rgba(0,0,255,0.1)] transition-all">
+              <Link href="/admin/cmyk-print" className="p-4 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-xl text-center text-sm font-semibold hover:bg-oms-blue transition-all">
                 Print Job
               </Link>
               <Link href="/admin/dispatch" className="p-4 bg-white text-gray-900 rounded-xl text-center text-sm font-semibold hover:bg-gray-100 transition-all">
                 QC Check
               </Link>
-              <Link href="/admin/crm/clients" className="p-4 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-xl text-center text-sm font-semibold hover:bg-[rgba(0,0,255,0.1)] transition-all">
+              <Link href="/admin/crm/clients" className="p-4 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-xl text-center text-sm font-semibold hover:bg-oms-blue transition-all">
                 Clients
               </Link>
             </div>

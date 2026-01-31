@@ -144,7 +144,7 @@ export default function FinancePage() {
 
         <Link href="/admin/finance/vendors" className="bg-white rounded-2xl p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 bg-[rgba(0,0,255,0.1)] rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div className="w-14 h-14 bg-oms-blue rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <CreditCard size={28} className="text-oms-blue" />
             </div>
             <div>
@@ -153,7 +153,7 @@ export default function FinancePage() {
             </div>
           </div>
           <div className="flex items-center gap-3 text-label">
-            <span className="text-oms-blue bg-[rgba(0,0,255,0.1)] px-2.5 py-1 rounded-full">34 Vendors</span>
+            <span className="text-oms-blue bg-oms-blue px-2.5 py-1 rounded-full">34 Vendors</span>
             <span className="text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">Manage Bills</span>
           </div>
         </Link>
@@ -181,10 +181,10 @@ export default function FinancePage() {
         <div className="bg-white rounded-2xl p-6 border border-gray-100">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-1 h-6 bg-[rgba(0,0,255,0.1)] rounded-full"></div>
+              <div className="w-1 h-6 bg-oms-blue rounded-full"></div>
               <h2 className="text-section text-gray-900">Recent Transactions</h2>
             </div>
-            <Link href="/admin/finance/payments" className="text-sm font-medium text-oms-blue hover:text-oms-blue bg-[rgba(0,0,255,0.1)] px-3 py-1.5 rounded-lg transition-colors">
+            <Link href="/admin/finance/payments" className="text-sm font-medium text-oms-blue hover:text-oms-blue bg-oms-blue px-3 py-1.5 rounded-lg transition-colors">
               View All
             </Link>
           </div>

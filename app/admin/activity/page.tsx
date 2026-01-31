@@ -48,11 +48,11 @@ export default function ActivityPage() {
     const colors: Record<string, string> = {
       'Sales': 'bg-gray-100 text-gray-900',
       'CRM': 'bg-blue-100 text-blue-700',
-      'Finance': 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
+      'Finance': 'bg-oms-blue text-oms-blue',
       'Dispatch': 'bg-amber-100 text-amber-700',
       'CMYK': 'bg-cyan-100 text-cyan-700',
       'Settings': 'bg-gray-100 text-gray-700',
-      'System': 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
+      'System': 'bg-oms-blue text-oms-blue',
     };
     return colors[module] || 'bg-gray-100 text-gray-700';
   };

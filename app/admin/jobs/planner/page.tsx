@@ -96,7 +96,7 @@ export default function PrintPlannerPage() {
         return (
             <div
                 className={`p-3 rounded-xl border mb-2 cursor-pointer transition-all 
-          ${inBatch ? 'bg-[rgba(0,0,255,0.1)] border-[rgba(0,0,255,0.2)]-200' : 'bg-white border-gray-200'}
+          ${inBatch ? 'bg-oms-blue border-[rgba(0,0,255,0.2)]-200' : 'bg-white border-gray-200'}
         `}
                 onClick={() => !inBatch && addToBatch(job)}
             >
@@ -168,7 +168,7 @@ export default function PrintPlannerPage() {
                 <div className="w-full md:flex-1 flex flex-col bg-white rounded-2xl border-2 border-dashed border-[rgba(0,0,255,0.2)]-200 overflow-hidden relative h-2/3 md:h-auto">
 
                     {/* Batch Config Header */}
-                    <div className="p-6 border-b bg-[rgba(0,0,255,0.1)]/50">
+                    <div className="p-6 border-b bg-oms-blue/50">
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <label className="text-xs font-bold text-oms-blue uppercase tracking-wider">New Batch Configuration</label>
@@ -193,7 +193,7 @@ export default function PrintPlannerPage() {
                                         {stage}
                                     </div>
                                     {i < WORKFLOWS[selectedWorkflow].stages.length - 1 && (
-                                        <div className="h-0.5 w-4 bg-[rgba(0,0,255,0.1)]"></div>
+                                        <div className="h-0.5 w-4 bg-oms-blue"></div>
                                     )}
                                 </div>
                             ))}
@@ -223,7 +223,7 @@ export default function PrintPlannerPage() {
                         <button
                             onClick={createBatch}
                             disabled={selectedJobs.length === 0}
-                            className="bg-[rgba(0,0,255,0.1)] hover:bg-[rgba(0,0,255,0.1)] disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 -200 transition-all"
+                            className="bg-oms-blue hover:bg-oms-blue disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 -200 transition-all"
                         >
                             <Printer size={18} />
                             Start Production Run

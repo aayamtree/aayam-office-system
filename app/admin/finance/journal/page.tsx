@@ -242,7 +242,7 @@ export default function ManualJournalPage() {
                     <button
                         onClick={handleSave}
                         disabled={!isBalanced || loading}
-                        className={`ml-4 px-6 py-3 rounded-xl font-bold text-white flex items-center gap-2 ${isBalanced ? 'bg-[rgba(0,0,255,0.1)] hover:bg-[rgba(0,0,255,0.1)] -200' : 'bg-gray-300 cursor-not-allowed'
+                        className={`ml-4 px-6 py-3 rounded-xl font-bold text-white flex items-center gap-2 ${isBalanced ? 'bg-oms-blue hover:bg-oms-blue -200' : 'bg-gray-300 cursor-not-allowed'
                             }`}
                     >
                         {loading ? 'Saving...' : <><Save size={18} /> Save Journal</>}

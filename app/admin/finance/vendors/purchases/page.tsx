@@ -175,7 +175,7 @@ export default function VendorPurchasesPage() {
           </div>
         </div>
         <button onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-[rgba(0,0,255,0.1)] text-white px-4 py-2.5 rounded-lg hover:bg-[rgba(0,0,255,0.1)] font-medium">
+          className="flex items-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-lg hover:bg-oms-blue font-medium">
           <Plus size={18} />
           <span>Add Purchase</span>
         </button>
@@ -236,7 +236,7 @@ export default function VendorPurchasesPage() {
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusBadge(purchase.payment_status)}`}>
                     {purchase.payment_status}
                   </span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-[rgba(0,0,255,0.1)] text-oms-blue">{purchase.product_type}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-oms-blue text-oms-blue">{purchase.product_type}</span>
                 </div>
                 <h3 className="font-semibold text-gray-900">{purchase.description}</h3>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mt-1">
@@ -366,7 +366,7 @@ export default function VendorPurchasesPage() {
                         setFormData({ ...formData, attachmentUrl: file.name });
                       }
                     }}
-                    className="w-full px-3 py-2 border rounded-lg text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[rgba(0,0,255,0.1)] file:text-oms-blue hover:file:bg-[rgba(0,0,255,0.1)]"
+                    className="w-full px-3 py-2 border rounded-lg text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-oms-blue file:text-oms-blue hover:file:bg-oms-blue"
                   />
                   {formData.attachmentUrl && (
                     <p className="text-xs text-gray-900 mt-1">✓ {formData.attachmentUrl}</p>
@@ -376,7 +376,7 @@ export default function VendorPurchasesPage() {
               </div>
 
               {/* Calculation Preview */}
-              <div className="bg-[rgba(0,0,255,0.1)] rounded-xl p-4 space-y-2">
+              <div className="bg-oms-blue rounded-xl p-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal ({formData.quantity} × ₹{formData.rate})</span>
                   <span className="font-medium">{formatCurrency(totals.amount)}</span>
@@ -393,7 +393,7 @@ export default function VendorPurchasesPage() {
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-lg font-medium">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-[rgba(0,0,255,0.1)] text-white rounded-lg font-medium hover:bg-[rgba(0,0,255,0.1)] disabled:opacity-50">
+                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-lg font-medium hover:bg-oms-blue disabled:opacity-50">
                   {submitting ? 'Saving...' : (editingPurchase ? 'Update' : 'Add')} Purchase
                 </button>
               </div>

@@ -133,7 +133,7 @@ export default function OpeningBalancePage() {
         </div>
         <div className="bg-white rounded-xl border p-4">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-[rgba(0,0,255,0.1)] rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-oms-blue rounded-lg flex items-center justify-center">
               <IndianRupee className="text-oms-blue" size={20} />
             </div>
             <span className="text-gray-600">Total Opening</span>

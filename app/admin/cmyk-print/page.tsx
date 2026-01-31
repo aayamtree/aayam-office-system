@@ -52,7 +52,7 @@ export default function CMYKPrintPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'printing': return 'bg-blue-100 text-blue-700';
-      case 'finishing': return 'bg-[rgba(0,0,255,0.1)] text-oms-blue';
+      case 'finishing': return 'bg-oms-blue text-oms-blue';
       case 'ready': return 'bg-gray-100 text-gray-900';
       default: return 'bg-gray-100 text-gray-700';
     }

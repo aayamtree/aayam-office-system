@@ -236,7 +236,7 @@ export default function SalesReportPage() {
                 </div>
                 <div className="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-[rgba(0,0,255,0.1)] rounded-full"
+                    className="h-full bg-oms-blue rounded-full"
                     style={{ width: `${(revenue / topClients[0][1]) * 100}%` }}
                   />
                 </div>

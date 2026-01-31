@@ -47,8 +47,8 @@ export default function TeamQueue() {
     const statuses = [
         { id: 'new', name: 'To Do', color: 'bg-gray-100' },
         { id: 'designing', name: 'Designing', color: 'bg-blue-100' },
-        { id: 'approval', name: 'Approval', color: 'bg-[rgba(0,0,255,0.1)]' },
-        { id: 'printing', name: 'Printing', color: 'bg-[rgba(0,0,255,0.1)]' },
+        { id: 'approval', name: 'Approval', color: 'bg-oms-blue' },
+        { id: 'printing', name: 'Printing', color: 'bg-oms-blue' },
     ];
 
     if (loading) {
@@ -105,14 +105,14 @@ export default function TeamQueue() {
                         <div className="flex border rounded-xl overflow-hidden bg-white flex-shrink-0">
                             <button
                                 onClick={() => setViewMode('board')}
-                                className={`px-3 md:px-4 py-2.5 md:py-3 flex items-center gap-1.5 md:gap-2 ${viewMode === 'board' ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'text-gray-600'}`}
+                                className={`px-3 md:px-4 py-2.5 md:py-3 flex items-center gap-1.5 md:gap-2 ${viewMode === 'board' ? 'bg-oms-blue text-oms-blue' : 'text-gray-600'}`}
                             >
                                 <LayoutGrid size={18} />
                                 <span className="text-xs md:text-sm font-medium">Board</span>
                             </button>
                             <button
                                 onClick={() => setViewMode('table')}
-                                className={`px-3 md:px-4 py-2.5 md:py-3 flex items-center gap-1.5 md:gap-2 border-l ${viewMode === 'table' ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue' : 'text-gray-600'}`}
+                                className={`px-3 md:px-4 py-2.5 md:py-3 flex items-center gap-1.5 md:gap-2 border-l ${viewMode === 'table' ? 'bg-oms-blue text-oms-blue' : 'text-gray-600'}`}
                             >
                                 <List size={18} />
                                 <span className="text-xs md:text-sm font-medium">Table</span>

@@ -353,7 +353,7 @@ export default function JobsPage() {
         <div className={`px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide ${getPriorityBadge(job.priority)}`}>
           {job.priority.toUpperCase()}
         </div>
-        <span className="font-mono text-xs text-oms-blue font-medium bg-[rgba(0,0,255,0.1)] px-2 py-1 rounded-md">
+        <span className="font-mono text-xs text-oms-blue font-medium bg-oms-blue px-2 py-1 rounded-md">
           {job.job_number}
         </span>
       </div>
@@ -445,7 +445,7 @@ export default function JobsPage() {
       {/* Print Production Links */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link href="/admin/print-planner" className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-oms-blue/20 transition-all group">
-          <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-xl flex items-center justify-center transition-colors">
+          <div className="w-12 h-12 bg-oms-blue rounded-xl flex items-center justify-center transition-colors">
             <Layers size={24} className="text-oms-blue" />
           </div>
           <div>
@@ -455,7 +455,7 @@ export default function JobsPage() {
           <ArrowRight size={20} className="ml-auto text-gray-300 group-hover:text-oms-blue" />
         </Link>
         <Link href="/admin/production-queue" className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-oms-blue/20 transition-all group">
-          <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-xl flex items-center justify-center transition-colors">
+          <div className="w-12 h-12 bg-oms-blue rounded-xl flex items-center justify-center transition-colors">
             <Printer size={24} className="text-oms-blue" />
           </div>
           <div>
@@ -661,7 +661,7 @@ export default function JobsPage() {
                       {clients.map(c => <option key={c.id} value={c.id}>{c.name} {c.company && `(${c.company})`}</option>)}
                     </select>
                     <button type="button" onClick={() => setShowAddClientModal(true)}
-                      className="px-3 py-2 bg-[rgba(0,0,255,0.1)] text-oms-blue rounded-xl hover:bg-[rgba(0,0,255,0.1)] flex items-center gap-1">
+                      className="px-3 py-2 bg-oms-blue text-oms-blue rounded-xl hover:bg-oms-blue flex items-center gap-1">
                       <UserPlus size={16} /><span className="hidden sm:inline">Add</span>
                     </button>
                   </div>
@@ -674,7 +674,7 @@ export default function JobsPage() {
                       {jobTypes.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
                     </select>
                     <button type="button" onClick={() => setShowAddJobTypeModal(true)}
-                      className="px-3 py-2 bg-[rgba(0,0,255,0.1)] text-oms-blue rounded-xl hover:bg-[rgba(0,0,255,0.1)] flex items-center gap-1">
+                      className="px-3 py-2 bg-oms-blue text-oms-blue rounded-xl hover:bg-oms-blue flex items-center gap-1">
                       <Plus size={16} /><span className="hidden sm:inline">Add</span>
                     </button>
                   </div>
@@ -683,11 +683,11 @@ export default function JobsPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Product Category *</label>
                   <div className="flex gap-2">
-                    <select value={formData.product_category} onChange={(e) => setFormData({ ...formData, product_category: e.target.value })} className="flex-1 px-3 py-2 border rounded-xl bg-[rgba(0,0,255,0.1)]">
+                    <select value={formData.product_category} onChange={(e) => setFormData({ ...formData, product_category: e.target.value })} className="flex-1 px-3 py-2 border rounded-xl bg-oms-blue">
                       {productCategories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                     </select>
                     <button type="button" onClick={() => setShowAddCategoryModal(true)}
-                      className="px-3 py-2 bg-[rgba(0,0,255,0.1)] text-oms-blue rounded-xl hover:bg-[rgba(0,0,255,0.1)] flex items-center gap-1">
+                      className="px-3 py-2 bg-oms-blue text-oms-blue rounded-xl hover:bg-oms-blue flex items-center gap-1">
                       <Plus size={16} /><span className="hidden sm:inline">Add</span>
                     </button>
                   </div>

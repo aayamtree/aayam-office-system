@@ -151,7 +151,7 @@ export default function MyNotes() {
                                         <button
                                             key={tag}
                                             onClick={() => setSearchQuery(tag)}
-                                            className="px-2 py-1 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded text-xs hover:bg-[rgba(0,0,255,0.1)]"
+                                            className="px-2 py-1 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded text-xs hover:bg-oms-blue"
                                         >
                                             {tag}
                                         </button>

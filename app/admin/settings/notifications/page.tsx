@@ -43,7 +43,7 @@ export default function NotificationSettings() {
 
             <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 bg-oms-blue rounded-full flex items-center justify-center flex-shrink-0">
                         <Bell className="text-oms-blue" size={24} />
                     </div>
                     <div className="flex-1">

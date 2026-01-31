@@ -88,7 +88,7 @@ export default function VendorsPage() {
   };
 
   const getCategoryColor = (cat: string) => {
-    const colors: Record<string, string> = { 'Paper': 'bg-blue-100 text-blue-700', 'Ink & Toner': 'bg-[rgba(0,0,255,0.1)] text-oms-blue', 'Binding': 'bg-amber-100 text-amber-700', 'Lamination': 'bg-gray-100 text-gray-900', 'Machinery': 'bg-red-100 text-red-700', 'Packaging': 'bg-[rgba(0,0,255,0.1)] text-oms-blue' };
+    const colors: Record<string, string> = { 'Paper': 'bg-blue-100 text-blue-700', 'Ink & Toner': 'bg-oms-blue text-oms-blue', 'Binding': 'bg-amber-100 text-amber-700', 'Lamination': 'bg-gray-100 text-gray-900', 'Machinery': 'bg-red-100 text-red-700', 'Packaging': 'bg-oms-blue text-oms-blue' };
     return colors[cat] || 'bg-gray-100 text-gray-700';
   };
 
@@ -163,7 +163,7 @@ export default function VendorsPage() {
                   </span>
 
                   <div className="flex items-center gap-1">
-                    <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="p-2 bg-[rgba(0,0,255,0.1)] text-oms-blue rounded-lg">
+                    <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="p-2 bg-oms-blue text-oms-blue rounded-lg">
                       <Package size={16} />
                     </Link>
                     <button onClick={() => handleView(vendor)} className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg">
@@ -184,7 +184,7 @@ export default function VendorsPage() {
                 <Package size={48} className="mx-auto text-gray-300 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-1">No vendors found</h3>
                 <p className="text-sm text-gray-500 mb-4">Try adjusting your filters</p>
-                <button onClick={handleAddNew} className="inline-flex items-center gap-2 bg-[rgba(0,0,255,0.1)] text-white px-4 py-2 rounded-xl text-sm font-bold">
+                <button onClick={handleAddNew} className="inline-flex items-center gap-2 bg-oms-blue text-white px-4 py-2 rounded-xl text-sm font-bold">
                   <Plus size={16} /> Add Vendor
                 </button>
               </div>
@@ -233,7 +233,7 @@ export default function VendorsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="p-2 hover:bg-[rgba(0,0,255,0.1)] text-oms-blue rounded-lg" title="View Bills">
+                        <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="p-2 hover:bg-oms-blue text-oms-blue rounded-lg" title="View Bills">
                           <Package size={18} />
                         </Link>
                         <button onClick={() => handleView(vendor)} className="p-2 hover:bg-gray-100 rounded-lg" title="View Details">
@@ -286,7 +286,7 @@ export default function VendorsPage() {
               <div className="flex items-center gap-4"><div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center"><span className="text-orange-600 font-bold text-2xl">{selectedVendor.name?.charAt(0)}</span></div><div><h3 className="text-section">{selectedVendor.name}</h3><p className="text-gray-500">{selectedVendor.company}</p><span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${getCategoryColor(selectedVendor.category || 'Paper')}`}>{selectedVendor.category}</span></div></div>
               <div className="space-y-3 p-4 bg-gray-50 rounded-xl"><div className="flex items-center gap-3"><Phone size={16} className="text-gray-400" /><span>{selectedVendor.phone}</span></div>{selectedVendor.email && <div className="flex items-center gap-3"><Mail size={16} className="text-gray-400" /><span>{selectedVendor.email}</span></div>}{selectedVendor.address && <div className="flex items-center gap-3"><MapPin size={16} className="text-gray-400" /><span>{selectedVendor.address}, {selectedVendor.city}</span></div>}{selectedVendor.gstin && <div className="flex items-center gap-3"><Building2 size={16} className="text-gray-400" /><span>GSTIN: {selectedVendor.gstin}</span></div>}</div>
               <div className="flex gap-3">
-                <Link href="/admin/finance/vendors/purchases" className="flex-1 px-4 py-2.5 bg-[rgba(0,0,255,0.1)] text-oms-blue rounded-xl font-medium text-center hover:bg-[rgba(0,0,255,0.1)] flex items-center justify-center gap-2">
+                <Link href="/admin/finance/vendors/purchases" className="flex-1 px-4 py-2.5 bg-oms-blue text-oms-blue rounded-xl font-medium text-center hover:bg-oms-blue flex items-center justify-center gap-2">
                   <Package size={18} /> Record Bill
                 </Link>
                 <button onClick={() => { setShowViewModal(false); handleEdit(selectedVendor); }} className="flex-1 px-4 py-2.5 border rounded-xl font-medium">Edit</button>

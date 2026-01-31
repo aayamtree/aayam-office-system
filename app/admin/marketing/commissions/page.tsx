@@ -68,7 +68,7 @@ export default function CommissionsPage() {
                     </div>
                     <div className="bg-white rounded-2xl p-6 border border-gray-100">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg">
+                            <div className="p-2 bg-oms-blue rounded-lg">
                                 <CheckCircle className="text-oms-blue" size={20} />
                             </div>
                             <p className="text-sm text-gray-500 font-medium">Approved</p>

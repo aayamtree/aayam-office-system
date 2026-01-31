@@ -444,7 +444,7 @@ export default function InvoicesPage() {
         pendingInvoicingJobs.length > 0 && (
           <div className="bg-gradient-to-r bg-white p-4 rounded-xl border border-[rgba(0,0,255,0.2)]-100">
             <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg">
+              <div className="p-2 bg-oms-blue rounded-lg">
                 <CheckCircle size={18} className="text-oms-blue" />
               </div>
               <div>
@@ -465,7 +465,7 @@ export default function InvoicesPage() {
                   </div>
                   <button
                     onClick={() => handleCreateFromJob(job)}
-                    className="mt-3 w-full py-2 text-xs font-bold text-oms-blue bg-[rgba(0,0,255,0.1)] hover:bg-[rgba(0,0,255,0.1)] rounded-lg transition-colors flex items-center justify-center gap-1"
+                    className="mt-3 w-full py-2 text-xs font-bold text-oms-blue bg-oms-blue hover:bg-oms-blue rounded-lg transition-colors flex items-center justify-center gap-1"
                   >
                     <Plus size={14} /> Create Invoice
                   </button>
@@ -566,7 +566,7 @@ export default function InvoicesPage() {
                       <button onClick={() => handleWhatsAppShare(inv)} className="p-2 bg-white text-gray-900 rounded-lg">
                         <MessageCircle size={16} />
                       </button>
-                      <button onClick={() => handleDownloadPDF(inv)} className="p-2 bg-[rgba(0,0,255,0.1)] text-oms-blue rounded-lg">
+                      <button onClick={() => handleDownloadPDF(inv)} className="p-2 bg-oms-blue text-oms-blue rounded-lg">
                         <Download size={16} />
                       </button>
                       <button onClick={() => { setSelectedInvoice(inv); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg">
@@ -625,7 +625,7 @@ export default function InvoicesPage() {
                           <button onClick={() => handleWhatsAppShare(inv)} className="p-2 hover:bg-white rounded-lg" title="Share on WhatsApp">
                             <MessageCircle size={18} className="text-green-500" />
                           </button>
-                          <button onClick={() => handleDownloadPDF(inv)} className="p-2 hover:bg-[rgba(0,0,255,0.1)] rounded-lg" title="Download PDF">
+                          <button onClick={() => handleDownloadPDF(inv)} className="p-2 hover:bg-oms-blue rounded-lg" title="Download PDF">
                             <Download size={18} className="text-oms-blue" />
                           </button>
                           <button onClick={() => handleEdit(inv)} className="p-2 hover:bg-gray-100 rounded-lg" title="Edit">
@@ -828,7 +828,7 @@ export default function InvoicesPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="flex-1 px-6 py-3.5 bg-[rgba(0,0,255,0.1)] text-white font-semibold rounded-xl hover:bg-[rgba(0,0,255,0.1)] transition-colors -200 disabled:opacity-50"
+                    className="flex-1 px-6 py-3.5 bg-oms-blue text-white font-semibold rounded-xl hover:bg-oms-blue transition-colors -200 disabled:opacity-50"
                   >
                     {submitting ? 'Saving...' : (isEditing ? 'Update' : 'Create')}
                   </button>
@@ -862,7 +862,7 @@ export default function InvoicesPage() {
               <div className="p-6 space-y-6">
                 {/* Client Info */}
                 <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center">
+                  <div className="w-12 h-12 bg-oms-blue rounded-full flex items-center justify-center">
                     <User size={24} className="text-oms-blue" />
                   </div>
                   <div>
@@ -888,7 +888,7 @@ export default function InvoicesPage() {
                 </div>
 
                 {/* Amount Details */}
-                <div className="bg-[rgba(0,0,255,0.1)]/50 rounded-xl p-5 border border-[rgba(0,0,255,0.2)]-100 space-y-3">
+                <div className="bg-oms-blue/50 rounded-xl p-5 border border-[rgba(0,0,255,0.2)]-100 space-y-3">
                   <div className="flex justify-between text-gray-600">
                     <span>Subtotal</span>
                     <span>{formatCurrency(selectedInvoice.subtotal)}</span>

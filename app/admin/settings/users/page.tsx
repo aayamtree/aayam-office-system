@@ -82,7 +82,7 @@ export default function UserManagementPage() {
               <tr key={profile.id} className="hover:bg-gray-50 transition-colors">
                 <td className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center text-oms-blue font-bold">
+                    <div className="w-10 h-10 bg-oms-blue rounded-full flex items-center justify-center text-oms-blue font-bold">
                       {profile.full_name?.charAt(0).toUpperCase() || '?'}
                     </div>
                     <div>

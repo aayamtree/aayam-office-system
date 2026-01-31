@@ -21,13 +21,13 @@ interface CartItem {
 
 const categoryColors = [
   'bg-blue-100 text-blue-700',
-  'bg-[rgba(0,0,255,0.1)] text-oms-blue',
+  'bg-oms-blue text-oms-blue',
   'bg-gray-100 text-gray-900',
   'bg-amber-100 text-amber-700',
   'bg-pink-100 text-pink-700',
   'bg-cyan-100 text-cyan-700',
   'bg-red-100 text-red-700',
-  'bg-[rgba(0,0,255,0.1)] text-oms-blue',
+  'bg-oms-blue text-oms-blue',
   'bg-orange-100 text-orange-700',
   'bg-teal-100 text-teal-700',
   'bg-lime-100 text-lime-700',
@@ -412,7 +412,7 @@ export default function RetailPOSPage() {
               <div className="flex justify-between text-section pt-2 border-t"><span>Grand Total</span><span className="text-oms-blue">{formatCurrency(grandTotal)}</span></div>
             </div>
             <button onClick={() => setShowPaymentModal(true)} disabled={cart.length === 0}
-              className="w-full py-3 bg-[rgba(0,0,255,0.1)] text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[rgba(0,0,255,0.1)] transition-colors">
+              className="w-full py-3 bg-oms-blue text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-oms-blue transition-colors">
               Pay {formatCurrency(grandTotal)}
             </button>
           </div>
@@ -428,7 +428,7 @@ export default function RetailPOSPage() {
               <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
             </div>
             <div className="p-5 space-y-4">
-              <div className="text-center bg-[rgba(0,0,255,0.1)] rounded-xl p-4">
+              <div className="text-center bg-oms-blue rounded-xl p-4">
                 <p className="text-sm text-gray-600">Total Amount</p>
                 <p className="text-page-title text-oms-blue">{formatCurrency(grandTotal)}</p>
               </div>
@@ -437,7 +437,7 @@ export default function RetailPOSPage() {
                 <div className="grid grid-cols-3 gap-2">
                   {[{ id: 'cash', label: 'Cash', icon: Banknote }, { id: 'card', label: 'Card', icon: CreditCard }, { id: 'upi', label: 'UPI', icon: Smartphone }].map(method => (
                     <button key={method.id} onClick={() => setPaymentMethod(method.id as any)}
-                      className={`p-3 rounded-lg border-2 flex flex-col items-center gap-1 transition-all ${paymentMethod === method.id ? 'border-oms-blue bg-[rgba(0,0,255,0.1)]' : 'border-gray-200 hover:border-gray-300'}`}>
+                      className={`p-3 rounded-lg border-2 flex flex-col items-center gap-1 transition-all ${paymentMethod === method.id ? 'border-oms-blue bg-oms-blue' : 'border-gray-200 hover:border-gray-300'}`}>
                       <method.icon size={20} /><span className="text-sm">{method.label}</span>
                     </button>
                   ))}
