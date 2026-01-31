@@ -45,7 +45,7 @@ export default function CommissionsPage() {
                         </div>
                         <button
                             onClick={() => setShowAddModal(true)}
-                            className="px-6 py-3 bg-oms-blue text-white rounded-xl font-semibold hover:bg-oms-blue/90 transition-all flex items-center gap-2">
+                            className="px-4 py-2 bg-oms-blue text-white rounded-xl font-semibold hover:bg-oms-blue/90 transition-all flex items-center gap-2">
                             <Plus size={20} />
                             Add Commission
                         </button>
@@ -349,7 +349,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                 <div className="p-6 border-t-2 border-gray-100 bg-gray-50 flex gap-2 md:gap-4 justify-end">
                     <button
                         onClick={onClose}
-                        className="px-6 py-3 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-100 transition-all"
+                        className="px-4 py-2 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-100 transition-all"
                     >
                         Cancel
                     </button>

@@ -449,7 +449,7 @@ export default function EODReportPage() {
                     <button
                         type="submit"
                         disabled={submitting}
-                        className="px-6 py-3 bg-oms-blue text-white rounded-xl font-medium hover:bg-oms-blue disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="px-4 py-2 bg-oms-blue text-white rounded-xl font-medium hover:bg-oms-blue disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                         {submitting ? (
                             <>

@@ -126,7 +126,7 @@ export default function PrintRunDetailPage() {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'planned': return 'bg-blue-100 text-blue-800 border-blue-200';
-            case 'printed': return 'bg-oms-blue text-oms-blue-800 border-[rgba(0,0,255,0.2)]-200';
+            case 'printed': return 'bg-oms-blue text-white-800 border-[rgba(0,0,255,0.2)]-200';
             case 'delivered': return 'bg-gray-100 text-green-800 border-green-200';
             default: return 'bg-gray-100 text-gray-800 border-gray-200';
         }
@@ -167,7 +167,7 @@ export default function PrintRunDetailPage() {
                             {printRun.status === 'planned' && (
                                 <button
                                     onClick={() => updateStatus('printed')}
-                                    className="px-6 py-3 bg-oms-blue text-white rounded-xl font-bold hover:bg-oms-blue transition-all flex items-center gap-2"
+                                    className="px-4 py-2 bg-oms-blue text-white rounded-xl font-bold hover:bg-oms-blue transition-all flex items-center gap-2"
                                 >
                                     <CheckCircle size={20} />
                                     Mark as Printed
@@ -176,7 +176,7 @@ export default function PrintRunDetailPage() {
                             {printRun.status === 'printed' && (
                                 <button
                                     onClick={() => updateStatus('delivered')}
-                                    className="px-6 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all flex items-center gap-2"
+                                    className="px-4 py-2 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all flex items-center gap-2"
                                 >
                                     <CheckCircle size={20} />
                                     Mark as Delivered
@@ -184,7 +184,7 @@ export default function PrintRunDetailPage() {
                             )}
                             <button
                                 onClick={() => setShowAddJobsModal(true)}
-                                className="px-6 py-3 bg-oms-blue text-white rounded-xl font-bold  transition-all flex items-center gap-2"
+                                className="px-4 py-2 bg-oms-blue text-white rounded-xl font-bold  transition-all flex items-center gap-2"
                             >
                                 <Plus size={20} />
                                 Add Jobs
@@ -571,7 +571,7 @@ function AddJobsModal({
                             <div className="flex gap-2 md:gap-4 justify-end border-t-2 border-gray-100 pt-4">
                                 <button
                                     onClick={onClose}
-                                    className="px-6 py-3 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-100 transition-all"
+                                    className="px-4 py-2 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-100 transition-all"
                                 >
                                     Cancel
                                 </button>

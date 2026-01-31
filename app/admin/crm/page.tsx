@@ -20,7 +20,7 @@ export default function CRMPage() {
         </div>
         <Link
           href="/admin/crm/clients?new=true"
-          className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-blue-600 text-white px-5 py-3 rounded-xl -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
+          className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-blue-600 text-white px-4 py-2 rounded-xl -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
         >
           <UserPlus size={20} />
           <span>Add Client</span>
@@ -79,7 +79,7 @@ export default function CRMPage() {
             { action: 'Order placed by', name: 'Global Traders', time: '1 day ago', type: 'client' },
           ].map((item, index) => (
             <div key={index} className="flex items-center gap-2 md:gap-4 p-4 bg-gray-50/80 rounded-xl hover:bg-gray-100 transition-colors border border-gray-100">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${item.type === 'client' ? 'bg-blue-100 text-blue-600' : 'bg-oms-blue text-oms-blue'
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${item.type === 'client' ? 'bg-blue-100 text-blue-600' : 'bg-oms-blue text-white'
                 }`}>
                 {item.type === 'client' ? (
                   <Users size={20} />

@@ -36,7 +36,7 @@ export default function SalesPage() {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'new': 'bg-blue-100 text-blue-700',
-      'designing': 'bg-oms-blue text-oms-blue',
+      'designing': 'bg-oms-blue text-white',
       'production': 'bg-amber-100 text-amber-700',
       'printing': 'bg-amber-100 text-amber-700',
       'finishing': 'bg-orange-100 text-orange-700',
@@ -76,7 +76,7 @@ export default function SalesPage() {
         </div>
         <Link
           href="/admin/sales/orders?new=true"
-          className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-blue-600 text-white px-5 py-3 rounded-xl -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
+          className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-blue-600 text-white px-4 py-2 rounded-xl -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
         >
           <ShoppingCart size={20} />
           <span>New Order</span>

@@ -223,7 +223,7 @@ export default function PrintPlannerPage() {
                         <button
                             onClick={createBatch}
                             disabled={selectedJobs.length === 0}
-                            className="bg-oms-blue hover:bg-oms-blue disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 -200 transition-all"
+                            className="bg-oms-blue hover:bg-oms-blue disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 -200 transition-all"
                         >
                             <Printer size={18} />
                             Start Production Run

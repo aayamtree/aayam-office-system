@@ -359,7 +359,7 @@ export default function BankingPage() {
                                                     <CheckCircle size={12} /> Verified
                                                 </span>
                                                 {getCategoryName(txn) && (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-oms-blue text-oms-blue rounded-full text-xs">
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-oms-blue text-white rounded-full text-xs">
                                                         <Tag size={10} /> {getCategoryName(txn)}
                                                     </span>
                                                 )}

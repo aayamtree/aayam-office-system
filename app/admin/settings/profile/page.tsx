@@ -175,14 +175,14 @@ export default function ProfileSettingsPage() {
                         <button
                             type="button"
                             onClick={() => router.back()}
-                            className="flex-1 px-6 py-3 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                            className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={saving}
-                            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-oms-blue text-white font-semibold rounded-xl hover:bg-oms-blue transition-colors disabled:opacity-50"
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-oms-blue text-white font-semibold rounded-xl hover:bg-oms-blue transition-colors disabled:opacity-50"
                         >
                             <Save size={18} />
                             {saving ? 'Saving...' : 'Save Changes'}

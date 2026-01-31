@@ -263,7 +263,7 @@ export default function DesignersPage() {
     const badges: Record<string, string> = {
       'full-time': 'bg-gray-100 text-gray-900',
       'part-time': 'bg-blue-100 text-blue-700',
-      'freelance': 'bg-oms-blue text-oms-blue'
+      'freelance': 'bg-oms-blue text-white'
     };
     return badges[type] || 'bg-gray-100 text-gray-700';
   };
@@ -607,7 +607,7 @@ export default function DesignersPage() {
                     <h3 className="font-semibold text-gray-900 mb-3">Skills</h3>
                     <div className="flex flex-wrap gap-2">
                       {selectedDesigner.skills.map((skill, i) => (
-                        <span key={i} className="px-3 py-1 bg-oms-blue text-oms-blue rounded-full text-sm">{skill}</span>
+                        <span key={i} className="px-3 py-1 bg-oms-blue text-white rounded-full text-sm">{skill}</span>
                       ))}
                     </div>
                   </div>

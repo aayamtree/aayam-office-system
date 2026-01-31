@@ -36,14 +36,14 @@ export default function FinancePage() {
         <div className="flex gap-3">
           <Link
             href="/admin/finance/payments?new=true"
-            className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 px-5 py-3 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium"
+            className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium"
           >
             <CreditCard size={20} />
             <span>Record Payment</span>
           </Link>
           <Link
             href="/admin/finance/invoices?new=true"
-            className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-blue-600 text-white px-5 py-3 rounded-xl -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
+            className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-blue-600 text-white px-4 py-2 rounded-xl -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
           >
             <FileText size={20} />
             <span>New Invoice</span>

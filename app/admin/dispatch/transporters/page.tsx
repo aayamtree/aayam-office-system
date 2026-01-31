@@ -197,7 +197,7 @@ export default function TransportersPage() {
             <div className="flex items-center gap-2 mb-3">
               <MapPin size={16} className="text-oms-blue" />
               <h2 className="text-section text-gray-900">{state}</h2>
-              <span className="px-2 py-0.5 bg-oms-blue text-oms-blue text-xs rounded-full">
+              <span className="px-2 py-0.5 bg-oms-blue text-white text-xs rounded-full">
                 {stateTransporters.length}
               </span>
             </div>

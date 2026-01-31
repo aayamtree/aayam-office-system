@@ -566,7 +566,7 @@ export default function InvoicesPage() {
                       <button onClick={() => handleWhatsAppShare(inv)} className="p-2 bg-white text-gray-900 rounded-lg">
                         <MessageCircle size={16} />
                       </button>
-                      <button onClick={() => handleDownloadPDF(inv)} className="p-2 bg-oms-blue text-oms-blue rounded-lg">
+                      <button onClick={() => handleDownloadPDF(inv)} className="p-2 bg-oms-blue text-white rounded-lg">
                         <Download size={16} />
                       </button>
                       <button onClick={() => { setSelectedInvoice(inv); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg">
@@ -821,14 +821,14 @@ export default function InvoicesPage() {
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="flex-1 px-6 py-3.5 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="flex-1 px-6 py-3.5 bg-oms-blue text-white font-semibold rounded-xl hover:bg-oms-blue transition-colors -200 disabled:opacity-50"
+                    className="flex-1 px-4 py-2.5 bg-oms-blue text-white font-semibold rounded-xl hover:bg-oms-blue transition-colors -200 disabled:opacity-50"
                   >
                     {submitting ? 'Saving...' : (isEditing ? 'Update' : 'Create')}
                   </button>

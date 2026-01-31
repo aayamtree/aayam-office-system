@@ -234,7 +234,7 @@ export default function ProductionSettings() {
                                 {/* Header */}
                                 <div className={`p-4 border-b flex justify-between items-center rounded-t-xl ${editingId === checklist.id ? 'bg-[rgba(0,0,255,0.05)]/50' : 'bg-gray-50/50'}`}>
                                     <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-lg ${activeCategory === 'design' ? 'bg-oms-blue text-oms-blue' : 'bg-orange-100 text-orange-600'}`}>
+                                        <div className={`p-2 rounded-lg ${activeCategory === 'design' ? 'bg-oms-blue text-white' : 'bg-orange-100 text-orange-600'}`}>
                                             <Check size={16} strokeWidth={3} />
                                         </div>
                                         <h3 className="font-bold text-gray-800">{checklist.job_type}</h3>

@@ -145,8 +145,8 @@ export default function AdminDashboard() {
   const getStatusColor = (stage: string) => {
     const map: any = {
       'new': 'bg-blue-100 text-blue-700',
-      'designing': 'bg-oms-blue text-oms-blue',
-      'approval': 'bg-oms-blue text-oms-blue',
+      'designing': 'bg-oms-blue text-white',
+      'approval': 'bg-oms-blue text-white',
       'printing': 'bg-amber-100 text-amber-700',
       'finishing': 'bg-orange-100 text-orange-700',
       'quality_check': 'bg-pink-100 text-pink-700',
@@ -251,7 +251,7 @@ export default function AdminDashboard() {
 
               {/* Payments Due */}
               <div className={`flex flex-col items-center justify-center gap-1 md:gap-2 p-2 md:p-4 rounded-lg md:rounded-xl border ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-oms-blue text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-oms-blue text-white' : 'bg-gray-200 text-gray-500'}`}>
                   <IndianRupee size={20} />
                 </div>
                 <div className="text-center">
@@ -262,7 +262,7 @@ export default function AdminDashboard() {
 
               {/* Follow-ups */}
               <Link href="/admin/marketing/follow-ups" className={`flex flex-col items-center justify-center gap-1 md:gap-2 p-2 md:p-4 rounded-lg md:rounded-xl border transition-all hover:scale-105 ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)] cursor-pointer' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-oms-blue text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-oms-blue text-white' : 'bg-gray-200 text-gray-500'}`}>
                   <Phone size={20} />
                 </div>
                 <div className="text-center">
@@ -275,7 +275,7 @@ export default function AdminDashboard() {
 
               {/* Jobs At Vendor */}
               <div className={`flex flex-col items-center justify-center gap-1 md:gap-2 p-2 md:p-4 rounded-lg md:rounded-xl border ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-oms-blue text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-oms-blue text-white' : 'bg-gray-200 text-gray-500'}`}>
                   <Printer size={20} />
                 </div>
                 <div className="text-center">
@@ -286,7 +286,7 @@ export default function AdminDashboard() {
 
               {/* Return Today */}
               <div className={`flex flex-col items-center justify-center gap-1 md:gap-2 p-2 md:p-4 rounded-lg md:rounded-xl border ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-oms-blue text-oms-blue' : 'bg-gray-200 text-gray-500'}`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-oms-blue text-white' : 'bg-gray-200 text-gray-500'}`}>
                   <Truck size={20} />
                 </div>
                 <div className="text-center">
@@ -333,7 +333,7 @@ export default function AdminDashboard() {
 
               // Specific Alert Colors
               if (!isSafe) {
-                if (alert.id === 'blocked') { colors = 'bg-[rgba(0,0,255,0.05)] text-oms-blue border-[rgba(0,0,255,0.1)]'; iconColors = 'bg-oms-blue text-oms-blue'; }
+                if (alert.id === 'blocked') { colors = 'bg-[rgba(0,0,255,0.05)] text-oms-blue border-[rgba(0,0,255,0.1)]'; iconColors = 'bg-oms-blue text-white'; }
                 if (alert.id === 'payments') { colors = 'bg-red-50 text-red-700 border-red-200'; iconColors = 'bg-red-100 text-red-600'; }
                 if (alert.id === 'stock') { colors = 'bg-[rgba(255,102,0,0.1)] text-oms-orange border-[rgba(255,102,0,0.2)]'; iconColors = 'bg-[rgba(255,102,0,0.15)] text-oms-orange'; }
                 if (alert.id === 'followups') { colors = 'bg-[rgba(255,102,0,0.08)] text-oms-orange border-[rgba(255,102,0,0.15)]'; iconColors = 'bg-[rgba(255,102,0,0.12)] text-oms-orange'; }

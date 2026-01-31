@@ -206,9 +206,9 @@ export default function OrdersPage() {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'new': 'bg-blue-100 text-blue-700',
-      'designing': 'bg-oms-blue text-oms-blue',
+      'designing': 'bg-oms-blue text-white',
       'approval': 'bg-amber-100 text-amber-700',
-      'printing': 'bg-oms-blue text-oms-blue',
+      'printing': 'bg-oms-blue text-white',
       'finishing': 'bg-pink-100 text-pink-700',
       'quality_check': 'bg-orange-100 text-orange-700',
       'ready': 'bg-gray-100 text-gray-900',
@@ -248,7 +248,7 @@ export default function OrdersPage() {
           {profile?.role !== 'marketing' && (
             <button
               onClick={handleAddNew}
-              className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-blue-600 text-white px-5 py-3 rounded-xl -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
+              className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-blue-600 text-white px-4 py-2 rounded-xl -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
             >
               <Plus size={20} />
               <span>New Order</span>
@@ -569,14 +569,14 @@ export default function OrdersPage() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-6 py-3.5 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 px-6 py-3.5 bg-oms-blue text-white font-semibold rounded-xl hover:bg-oms-blue transition-colors -200 disabled:opacity-50"
+                  className="flex-1 px-4 py-2.5 bg-oms-blue text-white font-semibold rounded-xl hover:bg-oms-blue transition-colors -200 disabled:opacity-50"
                 >
                   {submitting ? 'Saving...' : (isEditing ? 'Update Order' : 'Create Order')}
                 </button>

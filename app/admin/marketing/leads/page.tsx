@@ -323,9 +323,9 @@ export default function LeadsPage() {
                                         {/* Project Type Badge */}
                                         {lead.project_type && (
                                             <div className="mt-2">
-                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${lead.project_type === 'print' ? 'bg-oms-blue text-oms-blue' :
+                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${lead.project_type === 'print' ? 'bg-oms-blue text-white' :
                                                     lead.project_type === 'design' ? 'bg-pink-100 text-pink-700' :
-                                                        'bg-oms-blue text-oms-blue'
+                                                        'bg-oms-blue text-white'
                                                     }`}>
                                                     {lead.project_type === 'print' ? '🖨️ Print Only' :
                                                         lead.project_type === 'design' ? '🎨 Design Only' :

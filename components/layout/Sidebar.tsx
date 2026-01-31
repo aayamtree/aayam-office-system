@@ -278,7 +278,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <input
             type="text"
             placeholder="Search..."
-            className="w-full pl-9 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-oms-blue"
+            className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-oms-blue"
           />
         </div>
       </div>
@@ -341,7 +341,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   {hasSubmenu && item.name !== 'Design Studio' ? (
                     <button
                       onClick={() => toggleExpanded(item.name)}
-                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all text-body
+                      className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl transition-all text-body
                       ${active
                           ? 'bg-[rgba(0,0,255,0.15)] text-white border-l-4 border-oms-blue'
                           : 'text-white/70 hover:bg-white/5 hover:text-white'
@@ -360,7 +360,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     <Link
                       href={item.href}
                       onClick={handleLinkClick}
-                      className={`flex items-center gap-2 px-4 py-3 rounded-xl transition-all
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all
                       ${active
                           ? 'bg-[rgba(0,0,255,0.15)] border-l-4 border-oms-blue text-white'
                           : 'text-white/70 hover:bg-white/5 hover:text-white'

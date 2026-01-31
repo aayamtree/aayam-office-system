@@ -236,7 +236,7 @@ export default function VendorPurchasesPage() {
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusBadge(purchase.payment_status)}`}>
                     {purchase.payment_status}
                   </span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-oms-blue text-oms-blue">{purchase.product_type}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-oms-blue text-white">{purchase.product_type}</span>
                 </div>
                 <h3 className="font-semibold text-gray-900">{purchase.description}</h3>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mt-1">

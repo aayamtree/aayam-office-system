@@ -189,7 +189,7 @@ export default function BankAccountsPage() {
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-gray-900">{bank.name}</h3>
                     {bank.is_default && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-oms-blue text-oms-blue">Default</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-oms-blue text-white">Default</span>
                     )}
                   </div>
                   <p className="text-sm text-gray-500">{bank.account_type} • {bank.account_number}</p>

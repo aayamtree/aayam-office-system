@@ -13,7 +13,7 @@ import { formatDate } from '@/lib/utils';
 const followUpTypes = [
   { id: 'call', name: 'Call', icon: Phone, color: 'bg-gray-100 text-gray-900' },
   { id: 'email', name: 'Email', icon: Mail, color: 'bg-blue-100 text-blue-700' },
-  { id: 'meeting', name: 'Meeting', icon: Users, color: 'bg-oms-blue text-oms-blue' },
+  { id: 'meeting', name: 'Meeting', icon: Users, color: 'bg-oms-blue text-white' },
   { id: 'video_call', name: 'Video Call', icon: Video, color: 'bg-orange-100 text-orange-700' },
   { id: 'message', name: 'Message', icon: MessageSquare, color: 'bg-cyan-100 text-cyan-700' },
 ];

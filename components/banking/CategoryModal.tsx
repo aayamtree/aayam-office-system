@@ -382,14 +382,14 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-6 py-3 border border-gray-200 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                            className="flex-1 px-4 py-2 border border-gray-200 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={saving}
-                            className="flex-1 px-6 py-3 bg-[rgba(0,0,255,0.1)] text-white rounded-xl font-medium hover:bg-[rgba(0,0,255,0.1)] transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
+                            className="flex-1 px-4 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-xl font-medium hover:bg-[rgba(0,0,255,0.1)] transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
                         >
                             {saving && <Loader2 size={18} className="animate-spin" />}
                             {saving ? 'Saving...' : 'Save & Verify'}

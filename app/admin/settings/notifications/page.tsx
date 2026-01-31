@@ -70,7 +70,7 @@ export default function NotificationSettings() {
                         ) : (
                             <button
                                 onClick={requestPermission}
-                                className="px-6 py-3 bg-oms-blue text-white rounded-xl font-medium hover:bg-oms-blue transition-colors"
+                                className="px-4 py-2 bg-oms-blue text-white rounded-xl font-medium hover:bg-oms-blue transition-colors"
                             >
                                 Enable Notifications
                             </button>

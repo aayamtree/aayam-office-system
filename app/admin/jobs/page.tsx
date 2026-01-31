@@ -534,7 +534,7 @@ export default function JobsPage() {
             </p>
             <button
               onClick={handleAddNew}
-              className="inline-flex items-center gap-2 bg-oms-blue hover:opacity-90 text-white px-6 py-3 rounded-xl font-medium transition-colors -200"
+              className="inline-flex items-center gap-2 bg-oms-blue hover:opacity-90 text-white px-4 py-2 rounded-xl font-medium transition-colors -200"
             >
               <Plus size={20} />
               <span>Create New Job</span>
@@ -661,7 +661,7 @@ export default function JobsPage() {
                       {clients.map(c => <option key={c.id} value={c.id}>{c.name} {c.company && `(${c.company})`}</option>)}
                     </select>
                     <button type="button" onClick={() => setShowAddClientModal(true)}
-                      className="px-3 py-2 bg-oms-blue text-oms-blue rounded-xl hover:bg-oms-blue flex items-center gap-1">
+                      className="px-3 py-2 bg-oms-blue text-white rounded-xl hover:bg-oms-blue flex items-center gap-1">
                       <UserPlus size={16} /><span className="hidden sm:inline">Add</span>
                     </button>
                   </div>
@@ -674,7 +674,7 @@ export default function JobsPage() {
                       {jobTypes.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
                     </select>
                     <button type="button" onClick={() => setShowAddJobTypeModal(true)}
-                      className="px-3 py-2 bg-oms-blue text-oms-blue rounded-xl hover:bg-oms-blue flex items-center gap-1">
+                      className="px-3 py-2 bg-oms-blue text-white rounded-xl hover:bg-oms-blue flex items-center gap-1">
                       <Plus size={16} /><span className="hidden sm:inline">Add</span>
                     </button>
                   </div>
@@ -687,7 +687,7 @@ export default function JobsPage() {
                       {productCategories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                     </select>
                     <button type="button" onClick={() => setShowAddCategoryModal(true)}
-                      className="px-3 py-2 bg-oms-blue text-oms-blue rounded-xl hover:bg-oms-blue flex items-center gap-1">
+                      className="px-3 py-2 bg-oms-blue text-white rounded-xl hover:bg-oms-blue flex items-center gap-1">
                       <Plus size={16} /><span className="hidden sm:inline">Add</span>
                     </button>
                   </div>

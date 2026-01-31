@@ -111,7 +111,7 @@ export default function SalesOrdersPage() {
     const getStatusColor = (status: string) => {
         if (status === 'draft') return 'bg-gray-100 text-gray-700';
         if (status === 'confirmed') return 'bg-blue-100 text-blue-700';
-        if (status === 'in_progress') return 'bg-oms-blue text-oms-blue';
+        if (status === 'in_progress') return 'bg-oms-blue text-white';
         if (status === 'ready_for_invoice') return 'bg-gray-100 text-gray-900';
         return 'bg-gray-100 text-gray-500';
     };
@@ -171,8 +171,8 @@ export default function SalesOrdersPage() {
                                     <td className="p-4">
                                         <p className="text-sm text-gray-900 font-medium">{so.project_name}</p>
                                         <div className="flex gap-2 mt-1">
-                                            {so.work_type === 'design_only' && <span className="inline-flex items-center gap-1 text-[10px] bg-oms-blue text-oms-blue px-1.5 py-0.5 rounded border border-[rgba(0,0,255,0.2)]-100"><Palette size={10} /> Design</span>}
-                                            {so.work_type === 'print_only' && <span className="inline-flex items-center gap-1 text-[10px] bg-oms-blue text-oms-blue px-1.5 py-0.5 rounded border border-[rgba(0,0,255,0.2)]-100"><Printer size={10} /> Print</span>}
+                                            {so.work_type === 'design_only' && <span className="inline-flex items-center gap-1 text-[10px] bg-oms-blue text-white px-1.5 py-0.5 rounded border border-[rgba(0,0,255,0.2)]-100"><Palette size={10} /> Design</span>}
+                                            {so.work_type === 'print_only' && <span className="inline-flex items-center gap-1 text-[10px] bg-oms-blue text-white px-1.5 py-0.5 rounded border border-[rgba(0,0,255,0.2)]-100"><Printer size={10} /> Print</span>}
                                             {so.work_type === 'design_and_print' && <span className="inline-flex items-center gap-1 text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100"><Layers size={10} /> Full</span>}
                                         </div>
                                     </td>
@@ -250,7 +250,7 @@ export default function SalesOrdersPage() {
                                         type="button"
                                         onClick={() => setFormData({ ...formData, workType: type.id as any })}
                                         className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${formData.workType === type.id
-                                                ? 'border-oms-blue bg-oms-blue text-oms-blue'
+                                                ? 'border-oms-blue bg-oms-blue text-white'
                                                 : 'border-gray-200 hover:border-oms-blue/20 text-gray-600'
                                             }`}
                                     >

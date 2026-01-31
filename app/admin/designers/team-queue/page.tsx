@@ -105,14 +105,14 @@ export default function TeamQueue() {
                         <div className="flex border rounded-xl overflow-hidden bg-white flex-shrink-0">
                             <button
                                 onClick={() => setViewMode('board')}
-                                className={`px-3 md:px-4 py-2.5 md:py-3 flex items-center gap-1.5 md:gap-2 ${viewMode === 'board' ? 'bg-oms-blue text-oms-blue' : 'text-gray-600'}`}
+                                className={`px-3 md:px-4 py-2.5 md:py-3 flex items-center gap-1.5 md:gap-2 ${viewMode === 'board' ? 'bg-oms-blue text-white' : 'text-gray-600'}`}
                             >
                                 <LayoutGrid size={18} />
                                 <span className="text-xs md:text-sm font-medium">Board</span>
                             </button>
                             <button
                                 onClick={() => setViewMode('table')}
-                                className={`px-3 md:px-4 py-2.5 md:py-3 flex items-center gap-1.5 md:gap-2 border-l ${viewMode === 'table' ? 'bg-oms-blue text-oms-blue' : 'text-gray-600'}`}
+                                className={`px-3 md:px-4 py-2.5 md:py-3 flex items-center gap-1.5 md:gap-2 border-l ${viewMode === 'table' ? 'bg-oms-blue text-white' : 'text-gray-600'}`}
                             >
                                 <List size={18} />
                                 <span className="text-xs md:text-sm font-medium">Table</span>

@@ -164,7 +164,7 @@ export default function ClientsPage() {
                 {/* Row 3: Footer */}
                 <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
                   {profile?.role === 'admin' && (
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${client.created_by ? 'bg-oms-blue text-oms-blue' : 'bg-gray-100 text-gray-600'}`}>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${client.created_by ? 'bg-oms-blue text-white' : 'bg-gray-100 text-gray-600'}`}>
                       {client.created_by ? 'Marketing' : 'Existing'}
                     </span>
                   )}
@@ -227,7 +227,7 @@ export default function ClientsPage() {
                     </td>
                     {profile?.role === 'admin' && (
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide ${client.created_by ? 'bg-oms-blue text-oms-blue' : 'bg-gray-100 text-gray-600'}`}>
+                        <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide ${client.created_by ? 'bg-oms-blue text-white' : 'bg-gray-100 text-gray-600'}`}>
                           {client.created_by ? 'Marketing' : 'Existing'}
                         </span>
                       </td>

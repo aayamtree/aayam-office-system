@@ -60,7 +60,7 @@ export default function ReportsPage() {
           <h3 className="text-section mb-1">Manual Journal Entry</h3>
           <p className="text-gray-300 text-sm">Record accounting adjustments and non-cash transactions</p>
         </div>
-        <Link href="/admin/finance/journal" className="px-6 py-3 bg-white text-gray-900 rounded-xl font-bold hover:bg-gray-100 transition-colors">
+        <Link href="/admin/finance/journal" className="px-4 py-2 bg-white text-gray-900 rounded-xl font-bold hover:bg-gray-100 transition-colors">
           Open Journal
         </Link>
       </div>

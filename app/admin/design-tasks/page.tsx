@@ -70,8 +70,8 @@ export default function DesignTasksPage() {
                             </div>
                             <span className={`px-3 py-1 text-xs font-bold rounded-full capitalize
                 ${job.current_stage === 'new' ? 'bg-blue-100 text-blue-700' :
-                                    job.current_stage === 'designing' ? 'bg-oms-blue text-oms-blue' :
-                                        'bg-oms-blue text-oms-blue'}`}>
+                                    job.current_stage === 'designing' ? 'bg-oms-blue text-white' :
+                                        'bg-oms-blue text-white'}`}>
                                 {job.current_stage}
                             </span>
                         </div>

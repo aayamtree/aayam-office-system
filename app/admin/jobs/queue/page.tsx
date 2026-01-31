@@ -38,7 +38,7 @@ export default function JobQueuePage() {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'new': 'bg-gray-100 text-gray-700 border-gray-200',
-      'designing': 'bg-oms-blue text-oms-blue border-[rgba(0,0,255,0.2)]-200',
+      'designing': 'bg-oms-blue text-white border-[rgba(0,0,255,0.2)]-200',
       'approval': 'bg-yellow-100 text-yellow-700 border-yellow-200',
       'printing': 'bg-blue-100 text-blue-700 border-blue-200',
       'finishing': 'bg-cyan-100 text-cyan-700 border-cyan-200',

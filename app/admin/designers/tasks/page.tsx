@@ -31,7 +31,7 @@ const getDesignerStatus = (stage: string) => {
 const taskStatuses = [
   { id: 'pending', name: 'To Do', color: 'bg-gray-100 text-gray-700' },
   { id: 'in_progress', name: 'Designing', color: 'bg-blue-100 text-blue-700' },
-  { id: 'review', name: 'Review', color: 'bg-oms-blue text-oms-blue' },
+  { id: 'review', name: 'Review', color: 'bg-oms-blue text-white' },
   { id: 'waiting', name: 'Waiting Client', color: 'bg-amber-100 text-amber-700' },
   { id: 'completed', name: 'Done', color: 'bg-gray-100 text-gray-900' },
 ];
@@ -928,7 +928,7 @@ export default function DesignerWorkspace() {
                             const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                             const hasNote = (notes || []).some(n => n?.note_date === dateStr);
                             return (
-                              <div key={d} className={`text-xs h-6 flex items-center justify-center rounded-full cursor-pointer hover:bg-[rgba(0,0,255,0.05)] ${hasNote ? 'bg-oms-blue text-oms-blue font-bold' : 'text-gray-600'}`}>
+                              <div key={d} className={`text-xs h-6 flex items-center justify-center rounded-full cursor-pointer hover:bg-[rgba(0,0,255,0.05)] ${hasNote ? 'bg-oms-blue text-white font-bold' : 'text-gray-600'}`}>
                                 {d}
                               </div>
                             );
@@ -1219,7 +1219,7 @@ export default function DesignerWorkspace() {
               <div className="p-6 border-b bg-gradient-to-br from-white to-gray-50">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2 text-gray-900 font-bold">
-                    <div className="p-1.5 bg-oms-blue text-oms-blue rounded-lg">
+                    <div className="p-1.5 bg-oms-blue text-white rounded-lg">
                       <Calendar size={16} />
                     </div>
                     <h2>{monthName}</h2>
@@ -1508,7 +1508,7 @@ export default function DesignerWorkspace() {
                 <button
                   type="button"
                   onClick={() => setIsNewTaskModalOpen(false)}
-                  className="px-6 py-3 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all text-sm"
+                  className="px-4 py-2 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all text-sm"
                 >
                   Cancel
                 </button>

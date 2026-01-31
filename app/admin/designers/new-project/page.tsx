@@ -242,7 +242,7 @@ export default function NewProjectPage() {
                                 <input
                                     required
                                     type="text"
-                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all font-medium hover:border-gray-300"
+                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 text-base focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all font-medium hover:border-gray-300"
                                     placeholder="e.g. Wedding Invitation - Sharma Family"
                                     value={formData.title}
                                     onChange={e => setFormData({ ...formData, title: e.target.value })}
@@ -255,7 +255,7 @@ export default function NewProjectPage() {
                                 </label>
                                 <select
                                     required
-                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all bg-white hover:border-gray-300"
+                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 text-base focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all bg-white hover:border-gray-300"
                                     value={formData.clientId}
                                     onChange={e => setFormData({ ...formData, clientId: e.target.value })}
                                 >
@@ -269,7 +269,7 @@ export default function NewProjectPage() {
                                     🎨 Assign Designer
                                 </label>
                                 <select
-                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all bg-white hover:border-gray-300"
+                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 text-base focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all bg-white hover:border-gray-300"
                                     value={formData.designerId}
                                     onChange={e => setFormData({ ...formData, designerId: e.target.value })}
                                 >
@@ -297,7 +297,7 @@ export default function NewProjectPage() {
                                     📋 Job Type
                                 </label>
                                 <select
-                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-orange-500/20 focus:border-orange-500 bg-white hover:border-gray-300 transition-all"
+                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 text-base focus:ring-4 ring-orange-500/20 focus:border-orange-500 bg-white hover:border-gray-300 transition-all"
                                     value={formData.jobType}
                                     onChange={e => setFormData({ ...formData, jobType: e.target.value })}
                                 >
@@ -313,7 +313,7 @@ export default function NewProjectPage() {
                                 </label>
                                 <input
                                     type="date"
-                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-orange-500/20 focus:border-orange-500 font-medium text-gray-600 hover:border-gray-300 transition-all"
+                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 text-base focus:ring-4 ring-orange-500/20 focus:border-orange-500 font-medium text-gray-600 hover:border-gray-300 transition-all"
                                     value={formData.deadline}
                                     onChange={e => setFormData({ ...formData, deadline: e.target.value })}
                                 />
@@ -324,7 +324,7 @@ export default function NewProjectPage() {
                                     ⚡ Priority
                                 </label>
                                 <select
-                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-orange-500/20 focus:border-orange-500 bg-white hover:border-gray-300 transition-all"
+                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 text-base focus:ring-4 ring-orange-500/20 focus:border-orange-500 bg-white hover:border-gray-300 transition-all"
                                     value={formData.priority}
                                     onChange={e => setFormData({ ...formData, priority: e.target.value })}
                                 >
@@ -352,7 +352,7 @@ export default function NewProjectPage() {
                             </label>
                             <input
                                 type="url"
-                                className="w-full border-2 border-blue-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-blue-500/20 focus:border-blue-500 placeholder:text-blue-300 bg-white hover:border-blue-300 transition-all"
+                                className="w-full border-2 border-blue-200 rounded-xl px-4 py-2 text-base focus:ring-4 ring-blue-500/20 focus:border-blue-500 placeholder:text-blue-300 bg-white hover:border-blue-300 transition-all"
                                 placeholder="https://drive.google.com/drive/folders/..."
                                 value={formData.driveLink}
                                 onChange={e => handleDriveLinkChange(e.target.value)}
@@ -421,7 +421,7 @@ export default function NewProjectPage() {
                             </label>
                             <textarea
                                 rows={5}
-                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-base focus:ring-4 ring-blue-500/20 focus:border-blue-500 leading-relaxed hover:border-gray-300 transition-all"
+                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 text-base focus:ring-4 ring-blue-500/20 focus:border-blue-500 leading-relaxed hover:border-gray-300 transition-all"
                                 placeholder="Describe specific requirements, items to print, size, quantity, special instructions..."
                                 value={formData.description}
                                 onChange={e => setFormData({ ...formData, description: e.target.value })}
@@ -433,7 +433,7 @@ export default function NewProjectPage() {
                     <div className="flex gap-2 md:gap-4 items-center justify-end bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100 sticky bottom-4">
                         <Link
                             href="/admin/designers/my-queue"
-                            className="px-8 py-4 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all text-base"
+                            className="px-6 py-2 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all text-base"
                         >
                             Cancel
                         </Link>

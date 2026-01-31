@@ -282,7 +282,7 @@ export default function ClientQuickAdd({ onClientCreated, onClose }: ClientQuick
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-3 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-100 transition-all"
+                            className="px-4 py-2 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-100 transition-all"
                         >
                             Cancel
                         </button>
