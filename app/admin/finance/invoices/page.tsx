@@ -528,57 +528,90 @@ export default function InvoicesPage() {
           <>
             {/* Mobile View: Cards */}
             <div className="lg:hidden space-y-4">
-              {filteredInvoices.map((inv) => (
-                <div key={inv.id} className="bg-white p-4 rounded-2xl border border-gray-100 relative">
-                  {/* Row 1: Invoice # & Status */}
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <span className="font-bold text-gray-900 font-mono text-sm bg-gray-100 px-2 py-1 rounded-md">{inv.invoice_number}</span>
-                      <p className="text-[10px] text-gray-400 mt-1">{formatDate(inv.invoice_date)}</p>
-                    </div>
-                    <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full border ${getStatusColor(inv.payment_status)}`}>
-                      {inv.payment_status}
-                    </span>
-                  </div>
+              {filteredInvoices.map((inv) => {
+                // Determine header color based on status
+                const headerColors = {
+                  'paid': 'bg-gradient-to-r from-oms-blue to-blue-600',
+                  'partial': 'bg-gradient-to-r from-yellow-400 to-yellow-500',
+                  'pending': 'bg-gradient-to-r from-green-500 to-green-600',
+                  'overdue': 'bg-gradient-to-r from-red-500 to-red-600',
+                };
+                const headerBg = headerColors[inv.payment_status as keyof typeof headerColors] || 'bg-gradient-to-r from-gray-400 to-gray-500';
+                const headerTextColor = inv.payment_status === 'partial' ? 'text-gray-900' : 'text-white';
 
-                  {/* Row 2: Client & Amount */}
-                  <div className="flex justify-between items-start gap-3 mb-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-900 leading-tight mb-0.5">{inv.client?.company || 'Unknown Client'}</h3>
-                      <div className="text-sm text-gray-600">{inv.client?.name}</div>
+                return (
+                  <div key={inv.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
+                    {/* Colored Header Tab */}
+                    <div className={`${headerBg} px-5 py-3 flex items-center justify-between`}>
+                      <span className={`${headerTextColor} font-semibold text-sm md:text-base`}>
+                        {inv.invoice_number}
+                      </span>
+                      <span className={`${headerTextColor}/90 text-sm`}>
+                        {formatDate(inv.invoice_date)}
+                      </span>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="font-bold text-gray-900 text-lg">{formatCurrency(inv.total_amount)}</div>
-                      {inv.amount_paid > 0 && inv.amount_paid < inv.total_amount && (
-                        <div className="text-xs text-oms-orange font-medium">Paid: {formatCurrency(inv.amount_paid)}</div>
+
+                    {/* White Card Body */}
+                    <div className="p-5">
+                      {/* Client/Subtitle */}
+                      <p className="text-gray-500 text-sm mb-1">
+                        {inv.client?.company || 'Unknown Client'}
+                      </p>
+
+                      {/* Client Name */}
+                      <h3 className="text-gray-900 font-bold text-lg mb-4">
+                        {inv.client?.name || 'No Contact Name'}
+                      </h3>
+
+                      {/* Price & Status Row */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <span className="text-gray-900 font-bold text-2xl md:text-3xl">
+                            {formatCurrency(inv.total_amount)}
+                          </span>
+                          {inv.amount_paid > 0 && inv.amount_paid < inv.total_amount && (
+                            <p className="text-xs text-gray-500 mt-1">Paid: {formatCurrency(inv.amount_paid)}</p>
+                          )}
+                        </div>
+                        <span className={`px-3 py-1.5 text-xs font-semibold rounded-full ${getStatusColor(inv.payment_status)}`}>
+                          {inv.payment_status}
+                        </span>
+                      </div>
+
+                      {/* Due Date Info */}
+                      {inv.due_date && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4 pb-4 border-b border-gray-100">
+                          <Calendar size={16} className="text-gray-400" />
+                          <span>Due: {formatDate(inv.due_date)}</span>
+                        </div>
                       )}
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleDownloadPDF(inv)}
+                          className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                        >
+                          <Download size={18} />
+                          <span className="hidden sm:inline">Download</span>
+                        </button>
+                        <button
+                          onClick={() => handleWhatsAppShare(inv)}
+                          className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                        >
+                          <MessageCircle size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleEdit(inv)}
+                          className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                        >
+                          <Edit size={18} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-
-                  {/* Row 3: Footer (Due Date & Actions) */}
-                  <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-md">
-                      <Calendar size={12} />
-                      <span>Due: {inv.due_date ? formatDate(inv.due_date) : 'N/A'}</span>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => handleWhatsAppShare(inv)} className="p-2 bg-white text-gray-900 rounded-lg">
-                        <MessageCircle size={16} />
-                      </button>
-                      <button onClick={() => handleDownloadPDF(inv)} className="p-2 bg-oms-blue text-white rounded-lg">
-                        <Download size={16} />
-                      </button>
-                      <button onClick={() => { setSelectedInvoice(inv); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg">
-                        <Eye size={16} />
-                      </button>
-                      <button onClick={() => handleEdit(inv)} className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg">
-                        <Edit size={16} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Desktop View: Table */}

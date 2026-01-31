@@ -500,73 +500,97 @@ export default function QuotationsPage() {
           <>
             {/* Mobile View: Cards */}
             <div className="lg:hidden space-y-4">
-              {filteredQuotations.map((q) => (
-                <div key={q.id} className={`bg-white p-4 rounded-2xl border border-gray-100 relative ${q.status === 'accepted' || q.status === 'rejected' ? 'bg-gray-50/50' : ''}`}>
-                  {/* Row 1: ID & Status */}
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <span className="font-bold text-gray-900 font-mono text-sm bg-gray-100 px-2 py-1 rounded-md">{q.quote_number}</span>
-                      <p className="text-[10px] text-gray-400 mt-1">{formatDate(q.created_at)}</p>
-                    </div>
-                    <span className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full ${getStatusColor(q.status)}`}>
-                      {getStatusIcon(q.status)}
-                      {q.status}
-                    </span>
-                  </div>
+              {filteredQuotations.map((q) => {
+                // Determine header color based on status
+                const headerColors = {
+                  'sent': 'bg-gradient-to-r from-green-500 to-green-600',
+                  'viewed': 'bg-gradient-to-r from-oms-blue to-blue-600',
+                  'accepted': 'bg-gradient-to-r from-green-500 to-green-600',
+                  'rejected': 'bg-gradient-to-r from-red-500 to-red-600',
+                  'expired': 'bg-gradient-to-r from-gray-400 to-gray-500',
+                  'draft': 'bg-gradient-to-r from-yellow-400 to-yellow-500',
+                };
+                const headerBg = headerColors[q.status as keyof typeof headerColors] || 'bg-gradient-to-r from-gray-400 to-gray-500';
+                const headerTextColor = q.status === 'draft' ? 'text-gray-900' : 'text-white';
 
-                  {/* Row 2: Client & Amount */}
-                  <div className="flex justify-between items-start gap-3 mb-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-900 leading-tight mb-0.5">{q.client?.company || q.lead?.company || q.lead?.name || 'Unknown Client'}</h3>
-                      <div className="text-sm text-gray-600">{q.client?.name || (q.lead ? 'LEAD' : '')}</div>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="font-bold text-gray-900 text-lg">{formatCurrency(q.total_amount)}</div>
-                      <div className="text-xs text-gray-500">Total</div>
-                    </div>
-                  </div>
-
-                  {/* Row 3: Items Preview */}
-                  <div className="mb-4 bg-gray-50 p-2.5 rounded-xl border border-gray-100/50">
-                    <p className="text-xs text-gray-600 line-clamp-2">
-                      {q.items?.map(i => `${i.description} (${i.quantity})`).join(', ')}
-                    </p>
-                  </div>
-
-                  {/* Row 4: Footer (Validation & Actions) */}
-                  <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-md">
-                      <Clock size={12} />
-                      <span>Valid: {q.valid_until ? formatDate(q.valid_until) : 'N/A'}</span>
+                return (
+                  <div key={q.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
+                    {/* Colored Header Tab */}
+                    <div className={`${headerBg} px-5 py-3 flex items-center justify-between`}>
+                      <span className={`${headerTextColor} font-semibold text-sm md:text-base`}>
+                        {q.quote_number}
+                      </span>
+                      <span className={`${headerTextColor}/90 text-sm`}>
+                        {formatDate(q.created_at)}
+                      </span>
                     </div>
 
-                    <div className="flex items-center gap-1">
-                      {q.status === 'accepted' && (
-                        <button
-                          onClick={() => handleConvertToOrder(q)}
-                          className="px-2 py-1.5 bg-gray-100 text-gray-900 rounded-lg text-xs font-bold uppercase tracking-wide"
-                        >
-                          → Order
-                        </button>
+                    {/* White Card Body */}
+                    <div className="p-5">
+                      {/* Client/Subtitle */}
+                      <p className="text-gray-500 text-sm mb-1">
+                        {q.client?.company || q.lead?.company || q.lead?.name || 'Unknown Client'}
+                      </p>
+
+                      {/* Client Name/Type */}
+                      <h3 className="text-gray-900 font-bold text-lg mb-4">
+                        {q.client?.name || (q.lead ? 'LEAD' : 'No Contact')}
+                      </h3>
+
+                      {/* Items Preview */}
+                      <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-4">
+                        <p className="text-xs text-gray-600 line-clamp-2">
+                          {q.items?.map(i => `${i.description} (${i.quantity})`).join(', ') || 'No items'}
+                        </p>
+                      </div>
+
+                      {/* Price & Status Row */}
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-gray-900 font-bold text-2xl md:text-3xl">
+                          {formatCurrency(q.total_amount)}
+                        </span>
+                        <span className={`px-3 py-1.5 text-xs font-semibold rounded-full flex items-center gap-1 ${getStatusColor(q.status)}`}>
+                          {getStatusIcon(q.status)}
+                          {q.status}
+                        </span>
+                      </div>
+
+                      {/* Valid Until Info */}
+                      {q.valid_until && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4 pb-4 border-b border-gray-100">
+                          <Clock size={16} className="text-gray-400" />
+                          <span>Valid Until: {formatDate(q.valid_until)}</span>
+                        </div>
                       )}
-                      {(q.status === 'sent' || q.status === 'viewed' || q.status === 'draft') && (
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2">
+                        {(q.status === 'sent' || q.status === 'viewed' || q.status === 'draft' || q.status === 'accepted') && (
+                          <button
+                            onClick={() => handleConvertToOrder(q)}
+                            className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                          >
+                            <CheckCircle size={18} />
+                            <span className="hidden sm:inline">{q.status === 'accepted' ? 'Create Order' : 'Accept'}</span>
+                          </button>
+                        )}
                         <button
-                          onClick={() => handleConvertToOrder(q)}
-                          className="p-2 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-lg"
+                          onClick={() => handleEdit(q)}
+                          className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-xl font-medium hover:bg-gray-50 transition-colors"
                         >
-                          <CheckCircle size={16} />
+                          <Edit size={18} />
                         </button>
-                      )}
-                      <button onClick={() => handleEdit(q)} className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg">
-                        <Edit size={16} />
-                      </button>
-                      <button onClick={() => handleDownloadPDF(q)} className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg">
-                        <Download size={16} />
-                      </button>
+                        <button
+                          onClick={() => handleDownloadPDF(q)}
+                          className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                        >
+                          <Download size={18} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Desktop View: Table */}
