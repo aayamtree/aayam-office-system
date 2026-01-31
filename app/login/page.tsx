@@ -70,15 +70,15 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-purple-100 gap-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-        <p className="text-gray-500 text-sm">Initializing...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-oms-blue"></div>
+        <p className="text-gray-500 text-body">Initializing...</p>
         <button
           onClick={() => {
             localStorage.clear();
             window.location.reload();
           }}
-          className="text-xs text-indigo-600 hover:underline mt-4"
+          className="text-xs text-oms-blue hover:underline mt-4"
         >
           Stuck? Click to reset application
         </button>
@@ -87,15 +87,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-purple-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-white p-4">
       <div className="w-full max-w-md">
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <div className="w-16 h-16 bg-oms-blue rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
             <span className="text-white font-bold text-2xl">A</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Aayam Office</h1>
-          <p className="text-gray-600 mt-1">Sign in to your account</p>
+          <h1 className="text-page-title text-gray-900">Aayam Office</h1>
+          <p className="text-body text-gray-600 mt-1">Sign in to your account</p>
         </div>
 
         {/* Login Form */}
@@ -109,7 +109,7 @@ export default function LoginPage() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="form-label">
                 Username
               </label>
               <div className="relative">
@@ -118,18 +118,18 @@ export default function LoginPage() {
                   type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                  className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-oms-blue/20 focus:border-oms-blue transition-all"
                   placeholder="designer1, admin1, etc."
                   required
                   disabled={isLoading}
                   autoComplete="username"
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">Enter your username only (no email needed)</p>
+              <p className="text-label text-gray-500 mt-1">Enter your username only (no email needed)</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="form-label">
                 Password
               </label>
               <div className="relative">
@@ -138,7 +138,7 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                  className="w-full pl-11 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-oms-blue/20 focus:border-oms-blue transition-all"
                   placeholder="••••••••"
                   required
                   disabled={isLoading}
@@ -155,10 +155,10 @@ export default function LoginPage() {
 
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2">
-                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-                <span className="text-sm text-gray-600">Remember me</span>
+                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-oms-blue focus:ring-oms-blue" />
+                <span className="text-body text-gray-600">Remember me</span>
               </label>
-              <button type="button" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+              <button type="button" className="text-body text-oms-blue hover:opacity-80 font-medium">
                 Forgot password?
               </button>
             </div>
@@ -166,7 +166,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 focus:ring-4 focus:ring-indigo-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full py-3 text-white rounded-xl font-semibold focus:ring-4 focus:ring-oms-blue/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -181,7 +181,7 @@ export default function LoginPage() {
 
           {/* Help Text */}
           <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-center text-sm text-gray-500">
+            <p className="text-center text-body text-gray-500">
               Need help? Contact your system administrator.
             </p>
           </div>
@@ -189,7 +189,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div className="text-center mt-6">
-          <p className="text-sm text-gray-500">
+          <p className="text-label text-gray-500">
             © 2026 Aayam Creative. All rights reserved.
           </p>
         </div>
