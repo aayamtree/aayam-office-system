@@ -341,7 +341,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   {hasSubmenu && item.name !== 'Design Studio' ? (
                     <button
                       onClick={() => toggleExpanded(item.name)}
-                      className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl transition-all text-body
+                      className={`w-full flex items-center justify-between px-4 py-2 rounded-xl transition-all text-body
                       ${active
                           ? 'bg-[rgba(0,0,255,0.15)] text-white border-l-4 border-oms-blue'
                           : 'text-white/70 hover:bg-white/5 hover:text-white'
@@ -360,7 +360,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     <Link
                       href={item.href}
                       onClick={handleLinkClick}
-                      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all
                       ${active
                           ? 'bg-[rgba(0,0,255,0.15)] border-l-4 border-oms-blue text-white'
                           : 'text-white/70 hover:bg-white/5 hover:text-white'
@@ -373,7 +373,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                   {/* Submenu */}
                   {hasSubmenu && (isExpanded || item.name === 'Design Studio') && (
-                    <div className="ml-4 mt-1 space-y-1 border-l border-white/10 pl-4">
+                    <div className="ml-4 mt-0.5 space-y-0.5 border-l border-white/10 pl-4">
                       {item.submenu!.map((sub) => {
                         let badge = 0;
                         if (sub.name === 'Leads') badge = stats?.leadsThisMonth || 0;
@@ -389,7 +389,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                             key={sub.href}
                             href={sub.href}
                             onClick={handleLinkClick}
-                            className={`group flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all
+                            className={`group flex items-center justify-between px-3 py-1.5 rounded-lg text-sm transition-all
                           ${isSubActive(sub.href)
                                 ? 'bg-white/10 text-white font-medium'
                                 : 'text-gray-500 hover:text-white'

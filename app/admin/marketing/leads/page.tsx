@@ -251,7 +251,7 @@ export default function LeadsPage() {
                 </div>
                 <button
                     onClick={handleAddNew}
-                    className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-oms-blue text-white px-4 md:px-5 py-2 md:py-2.5 rounded-xl font-medium -200 transition-all hover:scale-105 active:scale-95 text-sm md:text-base"
+                    className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-oms-blue text-white px-3 md:px-4 py-1.5 md:py-2 rounded-xl font-medium transition-all hover:scale-105 active:scale-95 text-sm md:text-base"
                 >
                     <Plus size={16} className="md:hidden" />
                     <Plus size={18} className="hidden md:block" />
@@ -310,7 +310,7 @@ export default function LeadsPage() {
                         return (
                             <div key={lead.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
                                 {/* Colored Header */}
-                                <div className={`${headerBg} px-4 py-3 flex items-center justify-between`}>
+                                <div className={`${headerBg} px-3 py-2.5 flex items-center justify-between`}>
                                     <span className={`${headerTextColor} font-mono text-sm font-bold`}>
                                         {lead.lead_number}
                                     </span>
@@ -328,7 +328,7 @@ export default function LeadsPage() {
                                 </div>
 
                                 {/* White Card Body */}
-                                <div className="p-5">
+                                <div className="p-4">
                                     <div className="flex justify-between items-start mb-3">
                                         <div className="flex-1">
                                             <h3 className="font-bold text-gray-900 text-lg leading-tight mb-1">{lead.name}</h3>
