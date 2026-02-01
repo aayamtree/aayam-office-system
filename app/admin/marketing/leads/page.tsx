@@ -294,126 +294,137 @@ export default function LeadsPage() {
                         <br /><span className="text-xs text-gray-300">If you just added a lead, try refreshing the page manually.</span>
                     </div>
                 ) : (
-                    filteredLeads.map((lead) => (
-                        <div key={lead.id} className="bg-white rounded-xl md:rounded-lg md:rounded-2xl p-3 md:p-4 md:p-5 border border-gray-100  transition-all group relative overflow-hidden">
-                            {/* Status Strip */}
-                            <div className={`absolute top-0 left-0 w-1.5 h-full 
-                 ${lead.status === 'new' ? 'bg-blue-500' :
-                                    lead.status === 'converted' ? 'bg-white0' :
-                                        lead.status === 'lost' ? 'bg-red-400' : 'bg-oms-blue'}`}
-                            />
+                    filteredLeads.map((lead) => {
+                        // Determine header color based on status
+                        const headerColors: Record<string, string> = {
+                            'new': 'bg-gradient-to-r from-blue-500 to-blue-600',
+                            'contacted': 'bg-gradient-to-r from-oms-blue to-blue-600',
+                            'quotation_shared': 'bg-gradient-to-r from-purple-500 to-purple-600',
+                            'follow_up': 'bg-gradient-to-r from-orange-500 to-orange-600',
+                            'converted': 'bg-gradient-to-r from-green-500 to-green-600',
+                            'lost': 'bg-gradient-to-r from-red-500 to-red-600',
+                        };
+                        const headerBg = headerColors[lead.status] || 'bg-gradient-to-r from-gray-400 to-gray-500';
+                        const headerTextColor = 'text-white';
 
-                            <div className="pl-3">
-                                <div className="flex justify-between items-start mb-3">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                                            <span className="inline-block px-2 py-0.5 rounded-md bg-gray-100 text-xs font-mono font-bold text-gray-600">
-                                                {lead.lead_number}
+                        return (
+                            <div key={lead.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
+                                {/* Colored Header */}
+                                <div className={`${headerBg} px-4 py-3 flex items-center justify-between`}>
+                                    <span className={`${headerTextColor} font-mono text-sm font-bold`}>
+                                        {lead.lead_number}
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        {/* Owner Tag - visible for admin */}
+                                        {profile?.role === 'admin' && lead.assigned_user && (
+                                            <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-full font-medium">
+                                                👤 {lead.assigned_user.full_name || 'Unassigned'}
                                             </span>
-                                            {/* Owner Tag - visible for admin */}
-                                            {profile?.role === 'admin' && lead.assigned_user && (
-                                                <span className="inline-block px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 text-xs font-bold">
-                                                    👤 {lead.assigned_user.full_name || 'Unassigned'}
-                                                </span>
+                                        )}
+                                        <span className={`${headerTextColor}/90 text-xs px-3 py-1 bg-white/20 rounded-full font-medium capitalize`}>
+                                            {lead.status.replace('_', ' ')}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* White Card Body */}
+                                <div className="p-5">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-900 text-lg leading-tight mb-1">{lead.name}</h3>
+                                            {lead.company && <p className="text-gray-500 text-sm font-medium">{lead.company}</p>}
+
+                                            {/* Project Type Badge */}
+                                            {lead.project_type && (
+                                                <div className="mt-2">
+                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${lead.project_type === 'print' ? 'bg-oms-blue text-white' :
+                                                        lead.project_type === 'design' ? 'bg-pink-100 text-pink-700' :
+                                                            'bg-oms-blue text-white'
+                                                        }`}>
+                                                        {lead.project_type === 'print' ? '🖨️ Print Only' :
+                                                            lead.project_type === 'design' ? '🎨 Design Only' :
+                                                                '✨ Design + Print'}
+                                                    </span>
+                                                </div>
                                             )}
                                         </div>
-                                        <h3 className="font-bold text-gray-900 text-lg leading-tight">{lead.name}</h3>
-                                        {lead.company && <p className="text-gray-500 text-sm font-medium">{lead.company}</p>}
-
-                                        {/* Project Type Badge */}
-                                        {lead.project_type && (
-                                            <div className="mt-2">
-                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${lead.project_type === 'print' ? 'bg-oms-blue text-white' :
-                                                    lead.project_type === 'design' ? 'bg-pink-100 text-pink-700' :
-                                                        'bg-oms-blue text-white'
-                                                    }`}>
-                                                    {lead.project_type === 'print' ? '🖨️ Print Only' :
-                                                        lead.project_type === 'design' ? '🎨 Design Only' :
-                                                            '✨ Design + Print'}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex gap-1">
-                                        <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-400 hover:text-oms-blue hover:bg-oms-blue rounded-lg transition-colors">
-                                            <Eye size={18} />
-                                        </button>
-                                        <button onClick={() => handleEdit(lead)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                                            <Edit size={18} />
-                                        </button>
-                                        <button onClick={() => handleDelete(lead.id, lead.name)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Project Details Summary */}
-                                {(lead.quantity || lead.estimated_amount || lead.deadline) && (
-                                    <div className="grid grid-cols-3 gap-2 mb-3 p-2 bg-gray-50 rounded-lg">
-                                        {lead.quantity && (
-                                            <div className="text-center">
-                                                <p className="text-xs text-gray-500 font-medium">Qty</p>
-                                                <p className="text-sm font-bold text-gray-900">{lead.quantity.toLocaleString()}</p>
-                                            </div>
-                                        )}
-                                        {lead.estimated_amount && (
-                                            <div className="text-center">
-                                                <p className="text-xs text-gray-500 font-medium">Amount</p>
-                                                <p className="text-sm font-bold text-gray-900">₹{lead.estimated_amount.toLocaleString()}</p>
-                                            </div>
-                                        )}
-                                        {lead.deadline && (
-                                            <div className="text-center">
-                                                <p className="text-xs text-gray-500 font-medium">Deadline</p>
-                                                <p className="text-xs font-bold text-gray-900">{formatDate(lead.deadline)}</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                <div className="space-y-2 mt-4">
-                                    <div className="flex items-center gap-2 text-gray-600">
-                                        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-900 shrink-0">
-                                            <Phone size={14} />
+                                        <div className="flex gap-1">
+                                            <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-400 hover:text-oms-blue hover:bg-blue-50 rounded-lg transition-colors">
+                                                <Eye size={18} />
+                                            </button>
+                                            <button onClick={() => handleEdit(lead)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                                                <Edit size={18} />
+                                            </button>
+                                            <button onClick={() => handleDelete(lead.id, lead.name)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                                <Trash2 size={18} />
+                                            </button>
                                         </div>
-                                        <span className="font-medium">{lead.phone}</span>
                                     </div>
 
-                                    {lead.next_follow_up && (
-                                        <div className="flex items-center gap-2 text-oms-orange bg-white p-2 rounded-lg border border-gray-100">
-                                            <Clock size={14} />
-                                            <span className="text-xs font-bold">Follow up: {formatDate(lead.next_follow_up)}</span>
+                                    {/* Project Details Summary */}
+                                    {(lead.quantity || lead.estimated_amount || lead.deadline) && (
+                                        <div className="grid grid-cols-3 gap-2 mb-3 p-2 bg-gray-50 rounded-lg">
+                                            {lead.quantity && (
+                                                <div className="text-center">
+                                                    <p className="text-xs text-gray-500 font-medium">Qty</p>
+                                                    <p className="text-sm font-bold text-gray-900">{lead.quantity.toLocaleString()}</p>
+                                                </div>
+                                            )}
+                                            {lead.estimated_amount && (
+                                                <div className="text-center">
+                                                    <p className="text-xs text-gray-500 font-medium">Amount</p>
+                                                    <p className="text-sm font-bold text-gray-900">₹{lead.estimated_amount.toLocaleString()}</p>
+                                                </div>
+                                            )}
+                                            {lead.deadline && (
+                                                <div className="text-center">
+                                                    <p className="text-xs text-gray-500 font-medium">Deadline</p>
+                                                    <p className="text-xs font-bold text-gray-900">{formatDate(lead.deadline)}</p>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
-                                    {lead.requirement && (
-                                        <p className="text-sm text-gray-500 line-clamp-2 bg-gray-50 p-2 rounded-lg italic">
-                                            &quot;{lead.requirement}&quot;
-                                        </p>
-                                    )}
-                                </div>
+                                    <div className="space-y-2 mt-4">
+                                        <div className="flex items-center gap-2 text-gray-600">
+                                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-900 shrink-0">
+                                                <Phone size={14} />
+                                            </div>
+                                            <span className="font-medium">{lead.phone}</span>
+                                        </div>
 
-                                {/* Action Footer */}
-                                <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
-                                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${lead.status === 'converted' ? 'bg-gray-100 text-gray-900' : 'bg-gray-100 text-gray-600'
-                                        }`}>
-                                        {lead.status.replace('_', ' ')}
-                                    </span>
+                                        {lead.next_follow_up && (
+                                            <div className="flex items-center gap-2 text-oms-orange bg-white p-2 rounded-lg border border-gray-100">
+                                                <Clock size={14} />
+                                                <span className="text-xs font-bold">Follow up: {formatDate(lead.next_follow_up)}</span>
+                                            </div>
+                                        )}
 
-                                    {lead.status !== 'converted' && lead.status !== 'follow_up' && (
-                                        <button
-                                            onClick={() => handleMoveToFollowUp(lead)}
-                                            className="text-xs font-bold text-oms-blue hover:underline flex items-center gap-1"
-                                        >
-                                            <CheckCircle size={14} /> Move to Follow-up
-                                        </button>
-                                    )}
+                                        {lead.requirement && (
+                                            <p className="text-sm text-gray-500 line-clamp-2 bg-gray-50 p-2 rounded-lg italic">
+                                                &quot;{lead.requirement}&quot;
+                                            </p>
+                                        )}
+                                    </div>
 
-                                    {/* Convert button removed to enforce workflow hierarchy */}
+                                    {/* Action Footer */}
+                                    <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
+                                        {lead.status !== 'converted' && lead.status !== 'follow_up' && (
+                                            <button
+                                                onClick={() => handleMoveToFollowUp(lead)}
+                                                className="px-4 py-2 bg-oms-blue text-white rounded-xl font-medium hover:bg-blue-600 transition-colors flex items-center gap-2"
+                                            >
+                                                <CheckCircle size={14} /> Move to Follow-up
+                                            </button>
+                                        )}
+                                        {(lead.status === 'converted' || lead.status === 'follow_up') && (
+                                            <span className="text-sm text-gray-500">—</span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
 
