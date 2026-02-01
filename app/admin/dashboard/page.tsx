@@ -166,7 +166,7 @@ export default function AdminDashboard() {
             <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">
               Welcome back, {profile?.full_name?.split(' ')[0] || 'Admin'}
             </h1>
-            <p className="text-body text-gray-500 mt-1 md:mt-2">{dateStr}</p>
+            <p className="text-body text-gray-500 mt-1 md:mt-2 leading-tight">{dateStr}</p>
           </div>
           <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
             <DriveConnectionStatus />
@@ -203,7 +203,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Daily Briefing Panel (Focus + Activity) */}
-      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100 animate-fade-in-up">
+      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100 animate-fade-in-up">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
           {/* Left: Today's Focus Stats */}
           <div className="lg:col-span- 2 space-y-4 md:space-y-5">
