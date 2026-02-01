@@ -158,7 +158,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-2 md:space-y-6 animate-fade-in px-2 pb-6 md:pb-10 px-2">
+    <div className="space-y-2 md:space-y-6 animate-fade-in pb-6 md:pb-10">
       {/* Welcome Header */}
       <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 lg:p-8 border border-gray-100">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4 mb-3 md:mb-8">
@@ -182,7 +182,7 @@ export default function AdminDashboard() {
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <div key={stat.label} className="bg-white rounded-lg md:rounded-2xl p-2 md:p-5 border-2 border-gray-100 hover:border-oms-blue/20 transition-all duration-150">
+              <div key={stat.label} className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-2 border-gray-100 hover:border-oms-blue/20 transition-all duration-150">
                 <div className="flex items-start justify-between mb-1 md:mb-3">
                   <p className="text-gray-600 text-xs md:text-sm font-medium">{stat.label}</p>
                   <Icon size={16} className="text-oms-blue md:hidden" />

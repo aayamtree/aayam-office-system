@@ -72,8 +72,8 @@ export default function AdminLayout({
         {/* Daily Briefing - Auto shows once per day on login */}
         {profile && <DailyBriefingTrigger />}
 
-        {/* Main Content - Proper padding on all screen sizes following PAGE_LAYOUT_GUIDELINE */}
-        <main className="lg:ml-64 pt-20 lg:pt-24 px-4 md:px-6  py-4 md:py-6 min-h-screen">
+        {/* Main Content - Optimized padding for mobile (px-2) and desktop (px-6) */}
+        <main className="lg:ml-64 pt-20 lg:pt-24 px-2 md:px-6 py-4 md:py-6 min-h-screen">
           {children}
         </main>
       </div>
