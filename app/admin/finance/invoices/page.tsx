@@ -598,12 +598,14 @@ export default function InvoicesPage() {
                         <button
                           onClick={() => handleWhatsAppShare(inv)}
                           className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                          aria-label="Share via WhatsApp"
                         >
                           <MessageCircle size={18} />
                         </button>
                         <button
                           onClick={() => handleEdit(inv)}
                           className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                          aria-label="Edit invoice"
                         >
                           <Edit size={18} />
                         </button>
