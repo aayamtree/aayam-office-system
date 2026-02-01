@@ -319,7 +319,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 md:gap-6 lg:gap-8">
 
         {/* Needs Attention */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100 flex flex-col h-full">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100 flex flex-col h-full">
           <div className="flex items-center gap-2.5 mb-3 md:mb-6">
             <AlertCircle size={20} className="text-oms-orange" />
             <h2 className="text-section text-gray-900">Needs Attention</h2>
@@ -373,7 +373,7 @@ export default function AdminDashboard() {
         <div className="lg:col-span-2 space-y-3 md:space-y-6 lg:space-y-8">
 
           {/* Sales Performance */}
-          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 lg:p-8 border border-gray-100">
+          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-5 border border-gray-100">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0 mb-3 md:mb-8">
               <div>
                 <h2 className="text-lg md:text-section text-gray-900">Sales Performance</h2>
@@ -429,7 +429,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Recent Jobs */}
-          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 lg:p-8 border border-gray-100">
+          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-5 border border-gray-100">
             <div className="flex items-center justify-between mb-3 md:mb-6">
               <h2 className="text-section text-gray-900">Recent Jobs</h2>
               <Link href="/admin/sales/orders" className="flex items-center gap-1 text-sm text-oms-blue hover:text-oms-blue font-bold">
@@ -533,7 +533,7 @@ export default function AdminDashboard() {
         <div className="lg:col-span-1 space-y-3 md:space-y-6 lg:space-y-8">
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 lg:p-8 border border-gray-100">
+          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-5 border border-gray-100">
             <h2 className="text-base md:text-section text-gray-900 mb-3 md:mb-5">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-2 md:gap-4">
               <Link href="/admin/sales/orders" className="px-4 py-3 bg-oms-blue text-white rounded-xl text-center text-sm font-semibold hover:bg-blue-600 transition-colors">
@@ -552,7 +552,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Work Pipeline */}
-          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 lg:p-8 border border-gray-100">
+          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-5 border border-gray-100">
             <h2 className="text-base md:text-section text-gray-900 mb-3 md:mb-6">Work Pipeline</h2>
 
             <div className="relative w-48 h-48 mx-auto mb-8">
