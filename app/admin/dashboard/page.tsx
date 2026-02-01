@@ -160,10 +160,10 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-2 md:space-y-6 animate-fade-in pb-6 md:pb-10">
       {/* Welcome Header */}
-      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 lg:p-8 border border-gray-100">
+      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-5 border border-gray-100">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4 mb-3 md:mb-8">
           <div>
-            <h1 className="text-page-title text-gray-900">
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">
               Welcome back, {profile?.full_name?.split(' ')[0] || 'Admin'}
             </h1>
             <p className="text-body text-gray-500 mt-1 md:mt-2">{dateStr}</p>
