@@ -46,7 +46,7 @@ export default function DriveConnectionStatus() {
                 {profile?.role === 'admin' && (
                     <Link
                         href="/admin/settings"
-                        className="ml-auto px-3 py-1 bg-oms-orange text-white text-label rounded hover:opacity-90 transition-all"
+                        className="ml-auto px-3 py-2 bg-oms-orange text-white text-xs font-medium rounded-lg hover:opacity-90 transition-all"
                     >
                         Configure
                     </Link>
