@@ -227,43 +227,82 @@ export default function VendorPurchasesPage() {
 
       {/* Purchase List */}
       <div className="space-y-3">
-        {filteredPurchases.map(purchase => (
-          <div key={purchase.id} className={`bg-white rounded-xl border p-4  transition-shadow ${purchase.payment_status === 'pending' && new Date(purchase.due_date || '') < new Date() ? 'border-l-4 border-l-red-500' : ''}`}>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <span className="font-mono text-sm text-oms-blue font-medium">{purchase.bill_number}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusBadge(purchase.payment_status)}`}>
+        {filteredPurchases.map(purchase => {
+          // Determine header color based on payment status
+          const headerColors: Record<string, string> = {
+            'paid': 'bg-gradient-to-r from-green-500 to-green-600',
+            'partial': 'bg-gradient-to-r from-orange-500 to-orange-600',
+            'pending': 'bg-gradient-to-r from-red-500 to-red-600',
+          };
+          const headerBg = headerColors[purchase.payment_status] || 'bg-gradient-to-r from-gray-400 to-gray-500';
+          const isOverdue = purchase.payment_status === 'pending' && new Date(purchase.due_date || '') < new Date();
+
+          return (
+            <div key={purchase.id} className={`bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border ${isOverdue ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-100'}`}>
+              {/* Colored Header */}
+              <div className={`${headerBg} px-4 py-3 flex items-center justify-between`}>
+                <div className="flex items-center gap-2">
+                  <span className="text-white font-mono text-sm font-bold">
+                    {purchase.bill_number}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-full font-medium hidden sm:inline-block">
+                    {purchase.product_type}
+                  </span>
+                  <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-full font-medium capitalize">
                     {purchase.payment_status}
                   </span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-oms-blue text-white">{purchase.product_type}</span>
-                </div>
-                <h3 className="font-semibold text-gray-900">{purchase.description}</h3>
-                <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mt-1">
-                  <span className="flex items-center gap-1"><Building2 size={14} />{purchase.vendor?.name || 'Unknown Vendor'}</span>
-                  <span className="flex items-center gap-1"><Package size={14} />{purchase.job?.project_name ? `${purchase.job.job_number} - ${purchase.job.project_name}` : 'General Stock'}</span>
-                  <span className="flex items-center gap-1"><Calendar size={14} />Due: {purchase.due_date ? formatDate(purchase.due_date) : 'N/A'}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2 md:gap-4">
-                <div className="text-right">
-                  <p className="text-section text-gray-900">{formatCurrency(purchase.total_amount)}</p>
-                  <p className="text-xs text-gray-500">
-                    Paid: <span className="text-gray-900 font-medium">{formatCurrency(purchase.amount_paid)}</span>
-                  </p>
+
+              {/* White Card Body */}
+              <div className="p-5">
+                <h3 className="font-semibold text-gray-900 mb-2">{purchase.description}</h3>
+
+                <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-4">
+                  <span className="flex items-center gap-1">
+                    <Building2 size={14} />
+                    {purchase.vendor?.name || 'Unknown Vendor'}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Package size={14} />
+                    {purchase.job?.project_name ? `${purchase.job.job_number} - ${purchase.job.project_name}` : 'General Stock'}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Calendar size={14} />
+                    Due: {purchase.due_date ? formatDate(purchase.due_date) : 'N/A'}
+                  </span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <button onClick={() => { setSelectedPurchase(purchase); setShowDetailModal(true); }}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Eye size={18} /></button>
-                  <button onClick={() => handleEdit(purchase)}
-                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"><Edit size={18} /></button>
-                  <button onClick={() => handleDelete(purchase.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={18} /></button>
+
+                {/* Amount and Actions */}
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                  <div className="text-left">
+                    <p className="text-2xl font-bold text-gray-900">{formatCurrency(purchase.total_amount)}</p>
+                    <p className="text-xs text-gray-500">
+                      Paid: <span className="text-green-600 font-medium">{formatCurrency(purchase.amount_paid)}</span>
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => { setSelectedPurchase(purchase); setShowDetailModal(true); }}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                      <Eye size={18} />
+                    </button>
+                    <button onClick={() => handleEdit(purchase)}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                      <Edit size={18} />
+                    </button>
+                    <button onClick={() => handleDelete(purchase.id)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {filteredPurchases.length === 0 && (
