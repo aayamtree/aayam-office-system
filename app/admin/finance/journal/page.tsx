@@ -225,7 +225,7 @@ export default function ManualJournalPage() {
                 </div>
 
                 {/* Footer */}
-                <div className="bg-gray-50 p-6 border-t flex justify-end items-center gap-8">
+                <div className="bg-gray-50 p-4 border-t flex justify-end items-center gap-8">
                     <div className="text-right">
                         <p className="text-gray-500 text-xs uppercase font-bold">Total Debit</p>
                         <p className="text-xl font-mono text-gray-900">{totalDebit.toFixed(2)}</p>

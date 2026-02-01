@@ -119,7 +119,7 @@ export default function DailyFinancePage() {
             </div>
 
             {/* Today's Activity */}
-            <div className="bg-white rounded-2xl border p-6">
+            <div className="bg-white rounded-2xl border p-4">
                 <h2 className="text-section mb-4">Today&apos;s Activity</h2>
 
                 <div className="grid grid-cols-3 gap-2 md:gap-4">

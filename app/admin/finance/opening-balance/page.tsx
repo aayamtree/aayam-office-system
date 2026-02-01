@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { 
+import {
   ArrowLeft, Save, IndianRupee, Building, Wallet, Calendar, CheckCircle, AlertCircle, Edit
 } from 'lucide-react';
 
@@ -29,7 +29,7 @@ export default function OpeningBalancePage() {
     banks: [...openingBalance.banks]
   });
 
-  const formatCurrency = (amount: number) => 
+  const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 
   const totalBankBalance = openingBalance.banks.reduce((sum, b) => sum + b.balance, 0);
@@ -62,7 +62,7 @@ export default function OpeningBalancePage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-5">
+    <div className="p-4 sm: p-4 space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
         <div className="flex items-center gap-3">
@@ -90,8 +90,7 @@ export default function OpeningBalancePage() {
       </div>
 
       {/* Status Banner */}
-      <div className={`rounded-xl p-4 flex items-center gap-3 ${
-        openingBalance.isLocked ? 'bg-white border border-green-200' : 'bg-white border border-gray-200'}`}>
+      <div className={`rounded-xl p-4 flex items-center gap-3 ${openingBalance.isLocked ? 'bg-white border border-green-200' : 'bg-white border border-gray-200'}`}>
         {openingBalance.isLocked ? (
           <>
             <CheckCircle className="text-gray-900 flex-shrink-0" size={20} />
@@ -175,7 +174,7 @@ export default function OpeningBalancePage() {
             Manage Bank Accounts →
           </Link>
         </div>
-        
+
         <div className="space-y-3">
           {(isEditing ? editData.banks : openingBalance.banks).map(bank => (
             <div key={bank.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
@@ -193,12 +192,12 @@ export default function OpeningBalancePage() {
             </div>
           ))}
         </div>
-        
+
         <div className="mt-4 pt-4 border-t flex justify-between">
           <span className="font-semibold text-gray-700">Total Bank Balance</span>
           <span className="text-page-title text-blue-600">
-            {formatCurrency(isEditing 
-              ? editData.banks.reduce((sum, b) => sum + b.balance, 0) 
+            {formatCurrency(isEditing
+              ? editData.banks.reduce((sum, b) => sum + b.balance, 0)
               : totalBankBalance)}
           </span>
         </div>
@@ -211,8 +210,8 @@ export default function OpeningBalancePage() {
           <div>
             <p className="font-medium text-blue-900">Important Note</p>
             <p className="text-sm text-blue-700 mt-1">
-              Opening balances are the starting point for financial year {openingBalance.financialYear}. 
-              All transactions, reports, and profit calculations are based on these balances. 
+              Opening balances are the starting point for financial year {openingBalance.financialYear}.
+              All transactions, reports, and profit calculations are based on these balances.
               Please ensure accuracy before locking.
             </p>
           </div>
