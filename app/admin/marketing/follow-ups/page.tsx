@@ -215,7 +215,7 @@ export default function MarketingFollowUpsPage() {
               </button>
             )}
 
-            <div className="flex gap-1">
+            <div className="p-4 flex gap-1">
               <button onClick={() => handleEdit(followUp)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" aria-label="Edit follow-up">
                 <Edit size={18} />
               </button>

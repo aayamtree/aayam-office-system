@@ -213,7 +213,7 @@ export default function JobQueuePage() {
               </div>
 
               {/* White Card Body */}
-              <div className="p-5">
+              <div className="p-4">
                 {/* Client/Subtitle */}
                 <p className="text-gray-500 text-sm mb-1">
                   {job.client?.company || job.client?.name || 'Unknown Client'}

@@ -542,7 +542,7 @@ export default function InvoicesPage() {
                 return (
                   <div key={inv.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
                     {/* Colored Header Tab */}
-                    <div className={`${headerBg} px-5 py-3 flex items-center justify-between`}>
+                    <div className={`${headerBg} px-4 py-2.5 flex items-center justify-between`}>
                       <span className={`${headerTextColor} font-semibold text-sm md:text-base`}>
                         {inv.invoice_number}
                       </span>
@@ -552,7 +552,7 @@ export default function InvoicesPage() {
                     </div>
 
                     {/* White Card Body */}
-                    <div className="p-5">
+                    <div className="p-4">
                       {/* Client/Subtitle */}
                       <p className="text-gray-500 text-sm mb-1">
                         {inv.client?.company || 'Unknown Client'}

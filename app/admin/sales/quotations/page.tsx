@@ -526,7 +526,7 @@ export default function QuotationsPage() {
                     </div>
 
                     {/* White Card Body */}
-                    <div className="p-5">
+                    <div className="p-4">
                       {/* Client/Subtitle */}
                       <p className="text-gray-500 text-sm mb-1">
                         {q.client?.company || q.lead?.company || q.lead?.name || 'Unknown Client'}

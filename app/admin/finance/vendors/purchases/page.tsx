@@ -257,7 +257,7 @@ export default function VendorPurchasesPage() {
               </div>
 
               {/* White Card Body */}
-              <div className="p-5">
+              <div className="p-4">
                 <h3 className="font-semibold text-gray-900 mb-2">{purchase.description}</h3>
 
                 <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-4">

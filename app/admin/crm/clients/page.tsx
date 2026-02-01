@@ -147,7 +147,7 @@ export default function ClientsPage() {
                   </div>
 
                   {/* White Card Body */}
-                  <div className="p-5">
+                  <div className="p-4">
                     {/* Client Name/Subtitle */}
                     <p className="text-gray-500 text-sm mb-1">
                       {client.company ? client.name : 'Individual'}

@@ -156,7 +156,7 @@ export default function VendorsPage() {
                   </div>
 
                   {/* White Card Body */}
-                  <div className="p-5">
+                  <div className="p-4">
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Phone size={14} className="text-gray-400" />
