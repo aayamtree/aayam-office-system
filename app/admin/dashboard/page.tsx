@@ -380,8 +380,8 @@ export default function AdminDashboard() {
                 <p className="text-xs md:text-sm text-gray-500 mt-1">Monthly revenue overview</p>
               </div>
               <div className="flex items-center gap-2">
-                <button className="px-4 py-2 text-sm bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-xl font-medium transition-colors hover:bg-oms-blue">Monthly</button>
-                <button className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-xl transition-colors">Yearly</button>
+                <button className="px-4 py-2.5 text-sm bg-blue-50 text-oms-blue rounded-xl font-medium transition-colors hover:bg-blue-100">Monthly</button>
+                <button className="px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition-colors">Yearly</button>
               </div>
             </div>
 
@@ -536,16 +536,16 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 lg:p-8 border border-gray-100">
             <h2 className="text-base md:text-section text-gray-900 mb-3 md:mb-5">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-2 md:gap-4">
-              <Link href="/admin/sales/orders" className="p-4 bg-oms-blue text-white rounded-xl text-center text-sm font-semibold hover:bg-blue-600 transition-all  hover:-translate-y-0.5">
+              <Link href="/admin/sales/orders" className="px-4 py-3 bg-oms-blue text-white rounded-xl text-center text-sm font-semibold hover:bg-blue-600 transition-colors">
                 + New Order
               </Link>
-              <Link href="/admin/cmyk-print" className="p-3 md:p-4 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-lg md:rounded-xl text-center text-xs md:text-sm font-semibold hover:bg-oms-blue transition-all">
+              <Link href="/admin/cmyk-print" className="px-4 py-3 bg-blue-50 text-oms-blue rounded-xl text-center text-sm font-semibold hover:bg-blue-100 transition-colors">
                 Print Job
               </Link>
-              <Link href="/admin/dispatch" className="p-3 md:p-4 bg-white text-gray-900 rounded-lg md:rounded-xl text-center text-xs md:text-sm font-semibold hover:bg-gray-100 transition-all">
+              <Link href="/admin/dispatch" className="px-4 py-3 bg-white border border-gray-200 text-gray-900 rounded-xl text-center text-sm font-semibold hover:bg-gray-50 transition-colors">
                 QC Check
               </Link>
-              <Link href="/admin/crm/clients" className="p-3 md:p-4 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-lg md:rounded-xl text-center text-xs md:text-sm font-semibold hover:bg-oms-blue transition-all">
+              <Link href="/admin/crm/clients" className="px-4 py-3 bg-blue-50 text-oms-blue rounded-xl text-center text-sm font-semibold hover:bg-blue-100 transition-colors">
                 Clients
               </Link>
             </div>
