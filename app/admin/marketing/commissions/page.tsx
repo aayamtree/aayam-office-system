@@ -53,7 +53,7 @@ export default function CommissionsPage() {
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto p-6 space-y-6">
+            <div className="max-w-7xl mx-auto p-4 space-y-6">
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-6">
                     <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
@@ -191,7 +191,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <div className="bg-white rounded-3xl w-full max-w-3xl  overflow-hidden max-h-[90vh] overflow-y-auto">
                 {/* Header */}
-                <div className="bg-oms-blue p-6 text-white">
+                <div className="bg-oms-blue p-4 text-white">
                     <h3 className="text-page-title flex items-center gap-3">
                         <Calculator size={28} />
                         Add Commission with GST Calculator

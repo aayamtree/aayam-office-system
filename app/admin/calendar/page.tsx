@@ -25,7 +25,7 @@ export default function CalendarPage() {
     );
 
     return (
-        <div className="space-y-3 md:space-y-6 p-6">
+        <div className="space-y-3 md:space-y-6 p-4">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -45,7 +45,7 @@ export default function CalendarPage() {
             </div>
 
             {/* Week Planner */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
                 <div className="flex items-center justify-between mb-3 md:mb-6">
                     <h2 className="text-section text-gray-900">This Week</h2>
                     <button
@@ -98,7 +98,7 @@ export default function CalendarPage() {
             </div>
 
             {/* All Events List */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
                 <h2 className="text-section text-gray-900 mb-4">All Events</h2>
                 {loading ? (
                     <div className="text-center py-8 text-gray-500">Loading...</div>
@@ -248,7 +248,7 @@ function NewEventModal({ profile, onClose, onCreate }: {
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl  max-w-md w-full p-6">
+            <div className="bg-white rounded-2xl  max-w-md w-full p-4">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-section text-gray-900">New Event</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600">

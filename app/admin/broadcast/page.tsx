@@ -193,7 +193,7 @@ export default function BroadcastPage() {
             </div>
 
             {/* Notification History */}
-            <div className="bg-white rounded-xl p-6">
+            <div className="bg-white rounded-xl p-4">
                 <h2 className="text-page-title text-gray-900 mb-4 flex items-center gap-2">
                     <Clock size={20} />
                     Recent Broadcasts

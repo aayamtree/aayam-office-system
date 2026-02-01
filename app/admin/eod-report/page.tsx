@@ -229,7 +229,7 @@ export default function EODReportPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Tasks Section */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                <div className="bg-white rounded-2xl border border-gray-200 p-4">
                     <h2 className="text-section text-gray-900 mb-4">Today&apos;s Tasks ({todayTasks.length})</h2>
 
                     {todayTasks.length === 0 ? (
@@ -390,7 +390,7 @@ export default function EODReportPage() {
                 </div>
 
                 {/* Overall Summary */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+                <div className="bg-white rounded-2xl border border-gray-200 p-4 space-y-4">
                     <h2 className="text-section text-gray-900">Overall Summary</h2>
 
                     <div>
@@ -468,7 +468,7 @@ export default function EODReportPage() {
 
             {/* Past Reports */}
             {pastReports.length > 0 && (
-                <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                <div className="bg-white rounded-2xl border border-gray-200 p-4">
                     <h2 className="text-section text-gray-900 mb-4">Past Reports</h2>
                     <div className="space-y-2">
                         {pastReports.slice(0, 5).map(report => (
