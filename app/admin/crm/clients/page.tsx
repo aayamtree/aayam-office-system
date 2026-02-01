@@ -262,10 +262,10 @@ export default function ClientsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => handleView(client)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
+                        <button onClick={() => handleView(client)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors" aria-label="View client details">
                           <Eye size={18} />
                         </button>
-                        <button onClick={() => handleEdit(client)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
+                        <button onClick={() => handleEdit(client)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors" aria-label="Edit client">
                           <Edit size={18} />
                         </button>
                         <button onClick={() => handleDelete(client.id)} className="p-2 hover:bg-red-50 rounded-lg text-red-500 transition-colors">

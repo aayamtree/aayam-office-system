@@ -177,16 +177,16 @@ export default function VendorsPage() {
                       </span>
 
                       <div className="flex items-center gap-1">
-                        <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                        <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" aria-label="View vendor purchases">
                           <Package size={16} />
                         </Link>
-                        <button onClick={() => handleView(vendor)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                        <button onClick={() => handleView(vendor)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" aria-label="View vendor details">
                           <Eye size={16} />
                         </button>
-                        <button onClick={() => handleEdit(vendor)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                        <button onClick={() => handleEdit(vendor)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" aria-label="Edit vendor">
                           <Edit size={16} />
                         </button>
-                        <button onClick={() => handleDelete(vendor.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                        <button onClick={() => handleDelete(vendor.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" aria-label="Delete vendor">
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -249,16 +249,16 @@ export default function VendorsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="p-2 hover:bg-oms-blue text-white rounded-lg" title="View Bills">
+                        <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="p-2 hover:bg-oms-blue text-white rounded-lg" title="View Bills" aria-label="View vendor purchases">
                           <Package size={18} />
                         </Link>
-                        <button onClick={() => handleView(vendor)} className="p-2 hover:bg-gray-100 rounded-lg" title="View Details">
+                        <button onClick={() => handleView(vendor)} className="p-2 hover:bg-gray-100 rounded-lg" title="View Details" aria-label="View vendor details">
                           <Eye size={18} className="text-gray-500" />
                         </button>
-                        <button onClick={() => handleEdit(vendor)} className="p-2 hover:bg-gray-100 rounded-lg" title="Edit">
+                        <button onClick={() => handleEdit(vendor)} className="p-2 hover:bg-gray-100 rounded-lg" title="Edit" aria-label="Edit vendor">
                           <Edit size={18} className="text-gray-500" />
                         </button>
-                        <button onClick={() => handleDelete(vendor.id)} className="p-2 hover:bg-red-50 rounded-lg" title="Delete">
+                        <button onClick={() => handleDelete(vendor.id)} className="p-2 hover:bg-red-50 rounded-lg" title="Delete" aria-label="Delete vendor">
                           <Trash2 size={18} className="text-red-500" />
                         </button>
                       </div>
