@@ -148,54 +148,82 @@ export default function MarketingFollowUpsPage() {
     const typeInfo = getTypeInfo(type);
     const TypeIcon = typeInfo.icon;
     const isOverdue = followUp.date < today;
+    const isToday = followUp.date === today;
+
+    // Determine header color based on date status
+    const headerColors = {
+      overdue: 'bg-gradient-to-r from-red-500 to-red-600',
+      today: 'bg-gradient-to-r from-blue-500 to-blue-600',
+      upcoming: 'bg-gradient-to-r from-oms-blue to-blue-600',
+    };
+    const headerBg = isOverdue ? headerColors.overdue : isToday ? headerColors.today : headerColors.upcoming;
 
     return (
-      <div className={`bg-white rounded-xl border p-4 ${isOverdue ? 'border-l-4 border-l-red-500' : ''}`}>
-        <div className="flex items-start gap-3">
-          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${typeInfo.color}`}>
-            <TypeIcon size={20} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">{followUp.clientName}</h3>
-              {followUp.companyName && <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{followUp.companyName}</span>}
+      <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
+        {/* Colored Header */}
+        <div className={`${headerBg} px-4 py-3 flex items-center justify-between`}>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+              <TypeIcon size={18} className="text-white" />
             </div>
-            <p className="text-sm text-gray-600 mt-1">{cleanNotes}</p>
-            <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
-              <span className="flex items-center gap-1">
-                <Calendar size={12} />
-                {formatDate(followUp.date)}
-              </span>
-              <span className="flex items-center gap-1">
-                <Clock size={12} />
-                {followUp.time ? new Date(`2000-01-01T${followUp.time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : ''}
-              </span>
-              <span className={`px-2 py-0.5 rounded ${typeInfo.color}`}>{typeInfo.name}</span>
-            </div>
+            <span className="text-white font-semibold text-sm md:text-base">
+              {followUp.clientName}
+            </span>
           </div>
-          <div className="flex flex-col gap-1">
-            <button onClick={() => handleEdit(followUp)} className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg"><Edit size={18} /></button>
-            <button onClick={() => handleDelete(followUp.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={18} /></button>
+          <div className="flex items-center gap-2">
+            {followUp.companyName && (
+              <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-full font-medium hidden sm:inline-block">
+                {followUp.companyName}
+              </span>
+            )}
+            <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-full font-medium capitalize">
+              {typeInfo.name}
+            </span>
           </div>
         </div>
 
-        {/* Quick Actions Footer */}
-        <div className="mt-3 pt-3 border-t flex justify-end">
-          {followUp.quotation ? (
-            <button
-              onClick={() => handleViewQuote(followUp)}
-              className="text-xs font-bold text-gray-900 hover:bg-white px-2 py-1 rounded-lg transition-colors flex items-center gap-1"
-            >
-              <CheckCircle size={14} /> View Quote {followUp.quotationNumber}
-            </button>
-          ) : (
-            <button
-              onClick={() => handleCreateQuote(followUp)}
-              className="text-xs font-bold text-oms-blue hover:bg-oms-blue px-2 py-1 rounded-lg transition-colors flex items-center gap-1"
-            >
-              <FileText size={14} /> Create Quote
-            </button>
-          )}
+        {/* White Card Body */}
+        <div className="p-5">
+          <p className="text-sm text-gray-600 mb-3">{cleanNotes}</p>
+
+          <div className="flex items-center gap-4 mb-4 text-sm text-gray-500">
+            <span className="flex items-center gap-1">
+              <Calendar size={14} />
+              {formatDate(followUp.date)}
+            </span>
+            <span className="flex items-center gap-1">
+              <Clock size={14} />
+              {followUp.time ? new Date(`2000-01-01T${followUp.time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : ''}
+            </span>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+            {followUp.quotation ? (
+              <button
+                onClick={() => handleViewQuote(followUp)}
+                className="px-4 py-2 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+              >
+                <CheckCircle size={14} /> View Quote {followUp.quotationNumber}
+              </button>
+            ) : (
+              <button
+                onClick={() => handleCreateQuote(followUp)}
+                className="px-4 py-2 bg-oms-blue text-white rounded-xl font-medium hover:bg-blue-600 transition-colors flex items-center gap-2"
+              >
+                <FileText size={14} /> Create Quote
+              </button>
+            )}
+
+            <div className="flex gap-1">
+              <button onClick={() => handleEdit(followUp)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                <Edit size={18} />
+              </button>
+              <button onClick={() => handleDelete(followUp.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                <Trash2 size={18} />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
