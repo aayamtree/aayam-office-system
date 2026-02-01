@@ -143,7 +143,7 @@ export default function PaymentsPageNew() {
                     <tbody className="divide-y">
                         {payments.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="text-center p-8 text-gray-500">
+                                <td colSpan={5} className="text-center p-6 text-gray-500">
                                     No payments found
                                 </td>
                             </tr>
