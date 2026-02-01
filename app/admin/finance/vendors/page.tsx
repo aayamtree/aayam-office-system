@@ -123,62 +123,78 @@ export default function VendorsPage() {
         <>
           {/* Mobile View: Cards */}
           <div className="lg:hidden space-y-4">
-            {filteredVendors.map((vendor) => (
-              <div key={vendor.id} className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100 relative">
-                {/* Row 1: Name & Category */}
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center shrink-0">
-                      <span className="text-orange-600 text-section">{vendor.name?.charAt(0)}</span>
+            {filteredVendors.map((vendor) => {
+              // Header color based on category
+              const categoryGradients: Record<string, string> = {
+                'Paper': 'bg-gradient-to-r from-blue-500 to-blue-600',
+                'Ink & Toner': 'bg-gradient-to-r from-purple-500 to-purple-600',
+                'Binding': 'bg-gradient-to-r from-amber-500 to-amber-600',
+                'Lamination': 'bg-gradient-to-r from-gray-500 to-gray-600',
+                'Machinery': 'bg-gradient-to-r from-red-500 to-red-600',
+                'Packaging': 'bg-gradient-to-r from-green-500 to-green-600',
+              };
+              const headerBg = categoryGradients[vendor.category || 'Paper'] || 'bg-gradient-to-r from-gray-400 to-gray-500';
+
+              return (
+                <div key={vendor.id} className={`bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border ${!vendor.is_active ? 'border-gray-300 opacity-60' : 'border-gray-100'}`}>
+                  {/* Colored Header */}
+                  <div className={`${headerBg} px-4 py-3 flex items-center justify-between`}>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">{vendor.name?.charAt(0)}</span>
+                      </div>
+                      <div>
+                        <span className="text-white font-bold text-sm block">{vendor.name}</span>
+                        <span className="text-white/80 text-xs">{vendor.company || 'Individual'}</span>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900 leading-tight mobile-card-title">{vendor.name}</h3>
-                      <p className="text-xs text-gray-500">{vendor.company || 'Individual'}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-full font-medium capitalize">
+                        {vendor.category}
+                      </span>
                     </div>
                   </div>
-                  <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full ${getCategoryColor(vendor.category || 'Paper')}`}>
-                    {vendor.category}
-                  </span>
-                </div>
 
-                {/* Row 2: Contact Info */}
-                <div className="mb-4 pl-[3.25rem]"> {/* Indent to align with text next to avatar */}
-                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                    <Phone size={14} className="text-gray-400" />
-                    <span>{vendor.phone}</span>
-                  </div>
-                  {vendor.city && (
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <MapPin size={12} className="text-gray-400" />
-                      <span>{vendor.city}</span>
+                  {/* White Card Body */}
+                  <div className="p-5">
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Phone size={14} className="text-gray-400" />
+                        <span>{vendor.phone}</span>
+                      </div>
+                      {vendor.city && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <MapPin size={14} className="text-gray-400" />
+                          <span>{vendor.city}</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
 
-                {/* Row 3: Footer */}
-                <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
-                  <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${vendor.is_active ? 'bg-white text-gray-900' : 'bg-gray-100 text-gray-500'}`}>
-                    <div className={`w-1.5 h-1.5 rounded-full ${vendor.is_active ? 'bg-white0' : 'bg-gray-400'}`}></div>
-                    {vendor.is_active ? 'Active' : 'Inactive'}
-                  </span>
+                    {/* Actions Footer */}
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${vendor.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                        {vendor.is_active ? 'Active' : 'Inactive'}
+                      </span>
 
-                  <div className="flex items-center gap-1">
-                    <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="p-2 bg-oms-blue text-white rounded-lg">
-                      <Package size={16} />
-                    </Link>
-                    <button onClick={() => handleView(vendor)} className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg">
-                      <Eye size={16} />
-                    </button>
-                    <button onClick={() => handleEdit(vendor)} className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg">
-                      <Edit size={16} />
-                    </button>
-                    <button onClick={() => handleDelete(vendor.id)} className="p-2 hover:bg-red-50 text-red-500 rounded-lg">
-                      <Trash2 size={16} />
-                    </button>
+                      <div className="flex items-center gap-1">
+                        <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                          <Package size={16} />
+                        </Link>
+                        <button onClick={() => handleView(vendor)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                          <Eye size={16} />
+                        </button>
+                        <button onClick={() => handleEdit(vendor)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                          <Edit size={16} />
+                        </button>
+                        <button onClick={() => handleDelete(vendor.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {filteredVendors.length === 0 && (
               <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
                 <Package size={48} className="mx-auto text-gray-300 mb-4" />
