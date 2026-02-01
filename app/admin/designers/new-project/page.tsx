@@ -157,7 +157,7 @@ export default function NewProjectPage() {
             {/* Premium Gradient Header */}
             <div className="relative bg-oms-blue overflow-hidden">
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30"></div>
-                <div className="relative max-w-5xl mx-auto p-6">
+                <div className="relative max-w-5xl mx-auto p-4">
                     <Link
                         href="/admin/designers/my-queue"
                         className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-4 text-sm"
@@ -178,7 +178,7 @@ export default function NewProjectPage() {
             </div>
 
             {/* Form Content */}
-            <div className="max-w-5xl mx-auto p-6">
+            <div className="max-w-5xl mx-auto p-4">
                 {/* Calendar Integration Notice */}
                 <div className="mb-6 p-4 bg-gradient-to-br bg-white-50 border-2 border-[rgba(0,0,255,0.2)] rounded-xl">
                     <div className="flex items-center justify-between">
@@ -345,7 +345,7 @@ export default function NewProjectPage() {
                             <h4 className="text-base font-bold text-gray-800 uppercase tracking-wide">Assets & Brief</h4>
                         </div>
 
-                        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-xl border-2 border-blue-100 space-y-4">
+                        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-4 rounded-xl border-2 border-blue-100 space-y-4">
                             <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                                 <Folder size={18} className="text-blue-600" />
                                 Design Assets (Drive Link or File Upload)

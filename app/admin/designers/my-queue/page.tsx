@@ -157,7 +157,7 @@ export default function MyQueue() {
                             <div className="grid gap-3 md:gap-4">
                                 {normalTasks.map(task => (
                                     <Link key={task.id} href="/admin/designers/tasks">
-                                        <div className="bg-white p-6 rounded-xl border  transition-shadow cursor-pointer">
+                                        <div className="bg-white p-4 rounded-xl border  transition-shadow cursor-pointer">
                                             <div className="flex justify-between items-start mb-3">
                                                 <div>
                                                     <h3 className="text-section text-gray-900">{task.title}</h3>

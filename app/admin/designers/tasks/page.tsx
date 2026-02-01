@@ -51,7 +51,7 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl  w-full max-w-lg overflow-hidden border border-gray-100">
-        <div className="bg-oms-blue p-6 text-white">
+        <div className="bg-oms-blue p-4 text-white">
           <h2 className="text-page-title flex items-center gap-2">
             <Monitor size={24} /> Good Morning, {userName || 'Designer'}!
           </h2>
@@ -633,7 +633,7 @@ export default function DesignerWorkspace() {
       <div className="flex flex-col md:flex-row bg-gray-50 md:h-[calc(100vh-4rem)] md:overflow-hidden h-auto overflow-y-auto">
 
         {activeTab === 'board' ? (
-          <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-gray-50">
+          <div className="flex-1 overflow-x-auto overflow-y-hidden p-4 bg-gray-50">
             <div className="flex bg-white p-4 rounded-xl mb-4 justify-between items-center sticky left-0 min-w-[768px]">
               <div className="flex items-center gap-2 md:gap-4">
                 <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2"><Layout size={20} /> Kanban Team Board</h2>
@@ -1066,7 +1066,7 @@ export default function DesignerWorkspace() {
                   <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-gray-50/30">
 
                     {/* 1. Brief / Description */}
-                    <section className="bg-white p-6 rounded-2xl border border-gray-100">
+                    <section className="bg-white p-4 rounded-2xl border border-gray-100">
                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                         <FileText size={16} className="text-oms-blue" /> Design Brief & Instructions
                       </h4>
@@ -1076,7 +1076,7 @@ export default function DesignerWorkspace() {
                     </section>
 
                     {/* 2. Assets & Assignment */}
-                    <section className="bg-white p-6 rounded-2xl border border-gray-100 space-y-6">
+                    <section className="bg-white p-4 rounded-2xl border border-gray-100 space-y-6">
                       {/* Google Drive Link */}
                       <div>
                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -1115,7 +1115,7 @@ export default function DesignerWorkspace() {
                         </h4>
                       </div>
                       <div className="bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden h-[320px]">
-                        <div className="flex-1 overflow-y-auto p-6 space-y-3 md:space-y-6 bg-gray-50/30">
+                        <div className="flex-1 overflow-y-auto p-4 space-y-3 md:space-y-6 bg-gray-50/30">
                           {/* Simulated Threaded Comments */}
                           {/* In a real app, map through 'remarks' joined to task */}
                           <div className="space-y-4">
@@ -1148,7 +1148,7 @@ export default function DesignerWorkspace() {
                     </section>
 
                     {/* 4. Final Review & Checklist */}
-                    <section className="bg-gradient-to-br bg-white p-6 rounded-2xl border border-[rgba(0,0,255,0.1)] space-y-4">
+                    <section className="bg-gradient-to-br bg-white p-4 rounded-2xl border border-[rgba(0,0,255,0.1)] space-y-4">
                       <h4 className="text-xs font-bold text-oms-blue uppercase tracking-widest flex items-center gap-2">
                         <CheckCircle size={16} /> Pre-Print Checklist (Mandatory)
                       </h4>
@@ -1315,7 +1315,7 @@ export default function DesignerWorkspace() {
           <div className="fixed inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60 flex items-center justify-center z-50 p-4 animate-in fade-in zoom-in duration-300 backdrop-blur-sm">
             <div className="bg-white rounded-3xl w-full max-w-4xl  overflow-hidden flex flex-col max-h-[90vh] border border-gray-100">
               {/* Premium Gradient Header */}
-              <div className="relative p-6 bg-oms-blue overflow-hidden">
+              <div className="relative p-4 bg-oms-blue overflow-hidden">
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30"></div>
                 <div className="relative flex justify-between items-start">
                   <div className="flex items-start gap-2 md:gap-4">

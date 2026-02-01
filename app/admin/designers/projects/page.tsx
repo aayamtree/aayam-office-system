@@ -174,7 +174,7 @@ export default function DesignerProjectsPage() {
   if (loading) return <div className="p-12 text-center text-gray-500"><Loader2 className="animate-spin mx-auto mb-2" />Loading Projects...</div>;
 
   return (
-    <div className="p-4 sm:p-6 space-y-5">
+    <div className="p-4 sm:p-4 space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
         <div className="flex items-center gap-3">
@@ -248,7 +248,7 @@ export default function DesignerProjectsPage() {
           const daysRemaining = getDaysRemaining(project.endDate);
           return (
             <div key={project.id} className={`bg-white rounded-xl border p-4  transition-shadow ${daysRemaining < 0 && project.status !== 'completed' ? 'border-l-4 border-l-red-500' :
-                daysRemaining <= 3 && project.status !== 'completed' ? 'border-l-4 border-l-orange-400' : ''}`}>
+              daysRemaining <= 3 && project.status !== 'completed' ? 'border-l-4 border-l-orange-400' : ''}`}>
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 md:gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -289,7 +289,7 @@ export default function DesignerProjectsPage() {
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div className={`h-full rounded-full ${project.progress >= 100 ? 'bg-white0' :
-                          project.progress >= 50 ? 'bg-blue-500' : 'bg-orange-500'}`}
+                        project.progress >= 50 ? 'bg-blue-500' : 'bg-orange-500'}`}
                         style={{ width: `${project.progress}%` }} />
                     </div>
                   </div>
@@ -312,9 +312,9 @@ export default function DesignerProjectsPage() {
                   <div className="flex flex-wrap gap-2">
                     {project.tasks.map((task: any) => (
                       <span key={task.id} className={`text-xs px-2 py-1 rounded-lg ${task.status === 'completed' ? 'bg-gray-100 text-gray-900' :
-                          task.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
-                            task.status === 'review' ? 'bg-oms-blue text-white' :
-                              'bg-gray-100 text-gray-600'}`}>
+                        task.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
+                          task.status === 'review' ? 'bg-oms-blue text-white' :
+                            'bg-gray-100 text-gray-600'}`}>
                         {task.name}
                       </span>
                     ))}
@@ -369,8 +369,8 @@ export default function DesignerProjectsPage() {
                   {(designers || []).map((d: any) => (
                     <button key={d.id} type="button" onClick={() => handleTeamMemberToggle(d.id)}
                       className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${formData.teamMembers.includes(d.id)
-                          ? 'bg-oms-blue text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                        ? 'bg-oms-blue text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
                       {d.name}
                     </button>
                   ))}
