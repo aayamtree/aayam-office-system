@@ -137,7 +137,7 @@ export default function AdminEODDashboard() {
             </div>
 
             {/* Today's Submission Status */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="bg-white rounded-xl border border-gray-200 p-4">
                 <h2 className="text-section text-gray-900 mb-4">Today&apos;s Status</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {submissionStatus.map(status => (
