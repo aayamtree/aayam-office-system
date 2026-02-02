@@ -121,7 +121,7 @@ export default function PrintPlannerPage() {
     };
 
     return (
-        <div className="h-[calc(100vh-100px)] flex flex-col gap-3 md:gap-6 animate-fade-in">
+        <div className="h-[calc(100vh-100px)] flex flex-col gap-3 md:gap-4 animate-fade-in">
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
@@ -144,7 +144,7 @@ export default function PrintPlannerPage() {
                 </div>
             </div>
 
-            <div className="flex-1 flex flex-col md:flex-row gap-3 md:gap-6 min-h-0">
+            <div className="flex-1 flex flex-col md:flex-row gap-3 md:gap-4 min-h-0">
 
                 {/* LEFT COLUMN: Input Queue */}
                 <div className="w-full md:w-1/3 flex flex-col bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden h-1/3 md:h-auto">
@@ -168,8 +168,8 @@ export default function PrintPlannerPage() {
                 <div className="w-full md:flex-1 flex flex-col bg-white rounded-2xl border-2 border-dashed border-[rgba(0,0,255,0.2)]-200 overflow-hidden relative h-2/3 md:h-auto">
 
                     {/* Batch Config Header */}
-                    <div className="p-6 border-b bg-oms-blue/50">
-                        <div className="flex justify-between items-start mb-4">
+                    <div className="p-4 border-b bg-oms-blue/50">
+                        <div className="flex justify-between items-start mb-1.5">
                             <div>
                                 <label className="text-xs font-bold text-oms-blue uppercase tracking-wider">New Batch Configuration</label>
                                 <h2 className="text-page-title text-gray-900 mt-1">Untitled Batch #{Math.floor(Math.random() * 1000)}</h2>
@@ -201,7 +201,7 @@ export default function PrintPlannerPage() {
                     </div>
 
                     {/* Batch Content Area */}
-                    <div className="flex-1 p-6 overflow-y-auto bg-white">
+                    <div className="flex-1 p-4 overflow-y-auto bg-white">
                         {selectedJobs.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-100 rounded-xl">
                                 <Box size={48} className="mb-4 opacity-50" />

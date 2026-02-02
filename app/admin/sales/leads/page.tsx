@@ -406,8 +406,8 @@ export default function LeadsPage() {
               </div>
 
               <div className="sticky bottom-0 bg-white pt-4 border-t border-gray-100 flex gap-3">
-                <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 border border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 py-3 bg-oms-blue text-white rounded-xl font-semibold hover:bg-oms-blue transition-colors -200 disabled:opacity-50 flex items-center justify-center gap-2">
+                <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2 border border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="submit" disabled={submitting} className="flex-1 py-2 bg-oms-blue text-white rounded-xl font-semibold hover:bg-oms-blue transition-colors -200 disabled:opacity-50 flex items-center justify-center gap-2">
                   {submitting && <Loader2 className="animate-spin" size={18} />}
                   {submitting ? 'Saving...' : 'Save Lead'}
                 </button>
@@ -436,7 +436,7 @@ export default function LeadsPage() {
               </div>
             </div>
 
-            <button onClick={() => { setShowViewModal(false); handleEdit(selectedLead); }} className="w-full mt-3 md:mt-6 bg-oms-blue text-white py-3 rounded-xl font-bold hover:bg-oms-blue">Edit Details</button>
+            <button onClick={() => { setShowViewModal(false); handleEdit(selectedLead); }} className="w-full mt-3 md:mt-6 bg-oms-blue text-white py-2 rounded-xl font-bold hover:bg-oms-blue">Edit Details</button>
           </div>
         </div>
       )}
