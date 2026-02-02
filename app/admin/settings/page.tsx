@@ -121,7 +121,7 @@ export default function UserManagementPage() {
   return (
     <div className="space-y-6">
       {/* Header Card - Stack on mobile, row on desktop */}
-      <div className="bg-white p-4 md:p-6 rounded-xl border space-y-4">
+      <div className="bg-white p-4 md:p-4 rounded-xl border space-y-4">
         {/* Title Section */}
         <div>
           <h1 className="text-xl md:text-page-title text-gray-900">Settings & Team</h1>
@@ -244,7 +244,7 @@ export default function UserManagementPage() {
           {showAddModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
               <div className="bg-white rounded-xl  w-full max-w-md overflow-hidden">
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                <div className="p-4 border-b border-gray-100 flex justify-between items-center">
                   <h2 className="text-section text-gray-900">Add New Team Member</h2>
                   <button
                     onClick={() => setShowAddModal(false)}
@@ -254,7 +254,7 @@ export default function UserManagementPage() {
                   </button>
                 </div>
 
-                <form onSubmit={handleCreateUser} className="p-6 space-y-4">
+                <form onSubmit={handleCreateUser} className="p-4 space-y-4">
                   {creationError && (
                     <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
                       {creationError}

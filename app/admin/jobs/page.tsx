@@ -529,7 +529,7 @@ export default function JobsPage() {
               <Briefcase size={32} className="text-gray-400" />
             </div>
             <h3 className="text-section text-gray-900 mb-2">No jobs found</h3>
-            <p className="text-gray-500 mb-3 md:mb-6 max-w-sm mx-auto">
+            <p className="text-gray-500 mb-3 md:mb-1.5 max-w-sm mx-auto">
               {searchTerm ? 'Try adjusting your search terms or filters.' : 'Get started by creating your first job.'}
             </p>
             <button

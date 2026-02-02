@@ -44,9 +44,9 @@ export default function CRMPage() {
       </div>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
         {/* Clients Card */}
-        <Link href="/admin/crm/clients" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
+        <Link href="/admin/crm/clients" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
             <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <Users size={28} className="text-blue-600" />
@@ -67,8 +67,8 @@ export default function CRMPage() {
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
-        <div className="flex items-center gap-3 mb-3 md:mb-6">
+      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+        <div className="flex items-center gap-3 mb-3 md:mb-1.5">
           <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
           <h2 className="text-section text-gray-900">Recent Activity</h2>
         </div>

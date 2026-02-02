@@ -91,9 +91,9 @@ export default function BroadcastPage() {
     ];
 
     return (
-        <div className="p-6 max-w-6xl mx-auto">
+        <div className="p-4 max-w-6xl mx-auto">
             {/* Header */}
-            <div className="mb-8">
+            <div className="mb-1.5">
                 <h1 className="text-page-title text-gray-900 flex items-center gap-3">
                     <Bell className="text-oms-blue" size={32} />
                     Broadcast Notifications
@@ -104,7 +104,7 @@ export default function BroadcastPage() {
             </div>
 
             {/* Send Form */}
-            <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 mb-8">
+            <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 mb-1.5">
                 <h2 className="text-page-title text-gray-900 mb-4">Send Broadcast</h2>
 
                 <form onSubmit={handleSend} className="space-y-4">

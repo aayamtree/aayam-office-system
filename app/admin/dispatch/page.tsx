@@ -138,7 +138,7 @@ export default function DispatchPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-6 border border-gray-100">
+          <div key={stat.label} className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-4 border border-gray-100">
             <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
               <div className={`w-8 h-8 md:w-10 md:h-10 ${stat.color} rounded-lg md:rounded-xl flex items-center justify-center`}>
                 <stat.icon size={16} className="text-white md:hidden" />
@@ -155,9 +155,9 @@ export default function DispatchPage() {
       </div>
 
       {/* QC & Ready Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         {/* Pending QC */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-section text-gray-900">Pending QC</h2>
             <Link href="/admin/dispatch/qc-check" className="text-sm text-oms-blue hover:underline">
@@ -187,7 +187,7 @@ export default function DispatchPage() {
         </div>
 
         {/* Ready to Dispatch - NOW WITH ACTION */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-section text-gray-900">Ready to Dispatch</h2>
             <span className="px-3 py-1 bg-gray-100 text-gray-900 text-xs rounded-full font-medium">
@@ -231,7 +231,7 @@ export default function DispatchPage() {
       </div>
 
       {/* Recent Dispatches */}
-      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
+      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-section text-gray-900">Recent Dispatches</h2>
           <Link href="/admin/dispatch/history" className="text-sm text-oms-blue hover:underline">

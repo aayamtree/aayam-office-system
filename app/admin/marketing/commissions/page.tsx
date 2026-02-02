@@ -55,8 +55,8 @@ export default function CommissionsPage() {
 
             <div className="max-w-7xl mx-auto p-4 space-y-6">
                 {/* Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-6">
-                    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
+                    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-blue-50 rounded-lg">
                                 <Clock className="text-blue-600" size={20} />
@@ -66,7 +66,7 @@ export default function CommissionsPage() {
                         <p className="text-page-title text-gray-900">₹0</p>
                         <p className="text-xs text-gray-400 mt-1">0 projects</p>
                     </div>
-                    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
+                    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-oms-blue rounded-lg">
                                 <CheckCircle className="text-oms-blue" size={20} />
@@ -76,7 +76,7 @@ export default function CommissionsPage() {
                         <p className="text-page-title text-gray-900">₹0</p>
                         <p className="text-xs text-gray-400 mt-1">0 projects</p>
                     </div>
-                    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
+                    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-white rounded-lg">
                                 <TrendingUp className="text-gray-900" size={20} />
@@ -86,7 +86,7 @@ export default function CommissionsPage() {
                         <p className="text-page-title text-gray-900">₹0</p>
                         <p className="text-xs text-gray-400 mt-1">0 projects</p>
                     </div>
-                    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border-2 border-gray-100">
+                    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-2 border-gray-100">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-[rgba(0,0,255,0.05)] rounded-lg">
                                 <DollarSign className="text-oms-blue" size={20} />
@@ -123,11 +123,11 @@ export default function CommissionsPage() {
 
                 {/* Commissions List */}
                 <div className="bg-white rounded-2xl border border-gray-100">
-                    <div className="p-6 border-b border-gray-100">
+                    <div className="p-4 border-b border-gray-100">
                         <h2 className="text-page-title text-gray-900">Commission Records</h2>
                         <p className="text-sm text-gray-500 mt-1">All commission calculations with GST breakdown</p>
                     </div>
-                    <div className="p-6">
+                    <div className="p-4">
                         {loading ? (
                             <div className="text-center py-12">
                                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[rgba(0,0,255,0.2)]-600"></div>
@@ -199,7 +199,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                     <p className="text-white/80 text-sm mt-1">User-configurable GST rates for all printing materials</p>
                 </div>
 
-                <div className="p-6 space-y-6">
+                <div className="p-4 space-y-6">
                     {/* Project Name */}
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">Project Name</label>
@@ -309,7 +309,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
 
                     {/* Live Calculation Result */}
                     {calculationResult && (
-                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg md:rounded-2xl p-3 md:p-6 border-2 border-green-200">
+                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg md:rounded-2xl p-3 md:p-4 border-2 border-green-200">
                             <h4 className="font-bold text-green-900 mb-4 flex items-center gap-2">
                                 <Calculator size={20} />
                                 Live Calculation
@@ -346,7 +346,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 border-t-2 border-gray-100 bg-gray-50 flex gap-2 md:gap-4 justify-end">
+                <div className="p-4 border-t-2 border-gray-100 bg-gray-50 flex gap-2 md:gap-4 justify-end">
                     <button
                         onClick={onClose}
                         className="px-4 py-2 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-100 transition-all"

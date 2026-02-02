@@ -139,9 +139,9 @@ export default function PaymentsPageNew() {
     }
 
     return (
-        <div className="p-4 md:p-6 max-w-7xl mx-auto">
+        <div className="p-4 md:p-4 max-w-7xl mx-auto">
             {/* Header - Stack on mobile */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 md:mb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 md:mb-1.5">
                 <div>
                     <h1 className="text-xl md:text-page-title">Payments (New)</h1>
                     <p className="text-sm text-gray-500">{payments.length} transactions</p>

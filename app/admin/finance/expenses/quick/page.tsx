@@ -192,10 +192,10 @@ export default function QuickExpensePage() {
             </div>
 
             {/* Main Grid - Stack on mobile, side-by-side on desktop */}
-            <div className="flex flex-col lg:grid lg:grid-cols-3 gap-2 md:gap-4 md:gap-6">
+            <div className="flex flex-col lg:grid lg:grid-cols-3 gap-2 md:gap-4 md:gap-4">
                 {/* Main Form */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white rounded-xl border p-4 md:p-6">
+                    <div className="bg-white rounded-xl border p-4 md:p-4">
                         <h2 className="text-section mb-4">Add New Expense</h2>
 
                         {success && (

@@ -439,7 +439,7 @@ export default function LeadsPage() {
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                        <form onSubmit={handleSubmit} className="p-4 space-y-6">
                             {/* Mandatory Section */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div>
@@ -542,10 +542,10 @@ export default function LeadsPage() {
             {/* VIEW MODAL - Simplified for read-only view */}
             {showViewModal && selectedLead && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl w-full max-w-lg p-6 relative ">
+                    <div className="bg-white rounded-2xl w-full max-w-lg p-4 relative ">
                         <button onClick={() => setShowViewModal(false)} className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full"><X size={18} /></button>
                         <h2 className="text-page-title text-gray-900 mb-1">{selectedLead.name}</h2>
-                        <p className="text-gray-500 font-mono text-sm mb-3 md:mb-6">{selectedLead.lead_number}</p>
+                        <p className="text-gray-500 font-mono text-sm mb-3 md:mb-1.5">{selectedLead.lead_number}</p>
 
                         <div className="space-y-4">
                             <div className="flex justify-between border-b pb-2"><span className="text-gray-500">Phone</span> <span className="font-medium font-mono">{selectedLead.phone}</span></div>

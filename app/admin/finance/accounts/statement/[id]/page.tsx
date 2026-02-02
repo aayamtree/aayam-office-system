@@ -268,7 +268,7 @@ export default function AccountStatementPage() {
             {/* Statement */}
             <div className="bg-white rounded-xl border print:">
                 {/* Statement Header - Shows on print */}
-                <div className="p-6 border-b">
+                <div className="p-4 border-b">
                     <div className="text-center mb-4">
                         <h2 className="text-page-title">{account.name} - Statement</h2>
                         {accountType === 'bank' && account.account_number && (

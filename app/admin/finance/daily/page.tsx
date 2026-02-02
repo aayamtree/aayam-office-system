@@ -83,7 +83,7 @@ export default function DailyFinancePage() {
             </div>
 
             {/* Total Balance Card */}
-            <div className="bg-oms-blue rounded-lg md:rounded-2xl p-3 md:p-6 text-white">
+            <div className="bg-oms-blue rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
                 <div className="flex justify-between items-start mb-4">
                     <div>
                         <p className="text-sm opacity-90">Total Available Balance</p>
@@ -157,7 +157,7 @@ export default function DailyFinancePage() {
             </div>
 
             {/* Account Breakdown */}
-            <div className="grid grid-cols-2 gap-3 md:gap-6">
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
                 {/* Bank Accounts */}
                 <div className="bg-white rounded-2xl border p-5">
                     <h3 className="font-bold mb-4 flex items-center gap-2">

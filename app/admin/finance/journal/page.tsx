@@ -120,7 +120,7 @@ export default function ManualJournalPage() {
             {/* Form */}
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                 {/* Top Info */}
-                <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 border-b bg-gray-50">
+                <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 border-b bg-gray-50">
                     <div>
                         <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Date</label>
                         <input
@@ -153,7 +153,7 @@ export default function ManualJournalPage() {
                 </div>
 
                 {/* Lines */}
-                <div className="p-6">
+                <div className="p-4">
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="text-left text-gray-500 border-b">

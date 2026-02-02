@@ -156,7 +156,7 @@ export default function PrintRunDetailPage() {
                                     {printRun.status.toUpperCase()}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-3 md:gap-6 text-sm text-gray-600">
+                            <div className="flex items-center gap-3 md:gap-4 text-sm text-gray-600">
                                 <span><strong>Machine:</strong> {printRun.machine?.name || 'Not set'}</span>
                                 <span><strong>Size:</strong> {printRun.sheet_size?.size || 'Not set'}</span>
                                 <span><strong>Material:</strong> {printRun.material?.name || 'Not set'}</span>
@@ -195,11 +195,11 @@ export default function PrintRunDetailPage() {
             </div>
 
             {/* Content */}
-            <div className="max-w-7xl mx-auto p-6 space-y-6">
+            <div className="max-w-7xl mx-auto p-4 space-y-6">
                 {/* Summary */}
-                <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
+                <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
                     <h2 className="text-section text-gray-900 mb-4">Print Run Summary</h2>
-                    <div className="grid grid-cols-5 gap-3 md:gap-6">
+                    <div className="grid grid-cols-5 gap-3 md:gap-4">
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Total Jobs</p>
                             <p className="text-page-title text-oms-blue">{printRunJobs.length}</p>
@@ -232,7 +232,7 @@ export default function PrintRunDetailPage() {
 
                 {/* Jobs Table */}
                 <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-                    <div className="p-6 border-b border-gray-100">
+                    <div className="p-4 border-b border-gray-100">
                         <h2 className="text-section text-gray-900">Jobs in This Print Run</h2>
                     </div>
 
@@ -460,7 +460,7 @@ function AddJobsModal({
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <div className="bg-white rounded-3xl w-full max-w-4xl  overflow-hidden max-h-[90vh] overflow-y-auto">
-                <div className="bg-oms-blue p-6 text-white flex items-center justify-between sticky top-0">
+                <div className="bg-oms-blue p-4 text-white flex items-center justify-between sticky top-0">
                     <div>
                         <h3 className="text-page-title">Add Jobs to Print Run</h3>
                         <p className="text-white/80 text-sm mt-1">
@@ -472,7 +472,7 @@ function AddJobsModal({
                     </button>
                 </div>
 
-                <div className="p-6">
+                <div className="p-4">
                     {loading ? (
                         <div className="text-center py-12">
                             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[rgba(0,0,255,0.2)]-600"></div>
@@ -487,7 +487,7 @@ function AddJobsModal({
                         </div>
                     ) : (
                         <>
-                            <div className="space-y-3 mb-3 md:mb-6">
+                            <div className="space-y-3 mb-3 md:mb-1.5">
                                 {eligibleJobs.map((job) => {
                                     const isSelected = selectedJobs.has(job.id);
                                     const quantities = jobQuantities[job.id] || { quantity: 0, ups: 1 };

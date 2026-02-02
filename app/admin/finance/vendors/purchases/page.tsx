@@ -162,7 +162,7 @@ export default function VendorPurchasesPage() {
   if (loading) return <div className="p-12 text-center text-gray-500"><Loader2 className="animate-spin mx-auto mb-2" />Loading Purchase Bills...</div>;
 
   return (
-    <div className="p-4 sm:p-6 space-y-5">
+    <div className="p-4 sm:p-4 space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
         <div className="flex items-center gap-3">

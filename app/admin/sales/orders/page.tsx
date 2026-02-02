@@ -466,7 +466,7 @@ export default function OrdersPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <form onSubmit={handleSubmit} className="p-4 space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="col-span-1 sm:col-span-2">
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Project / Order Name *</label>
@@ -617,7 +617,7 @@ export default function OrdersPage() {
       {showViewModal && selectedJob && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100">
+            <div className="flex justify-between items-center p-4 border-b border-gray-100">
               <div>
                 <div className="flex items-center gap-3">
                   <h2 className="text-section text-gray-900">{selectedJob.project_name}</h2>
@@ -630,7 +630,7 @@ export default function OrdersPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-4 space-y-6">
               <div className="flex items-center gap-2 md:gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
                 <div className="w-12 h-12 rounded-full bg-oms-blue flex items-center justify-center text-white text-section">
                   {selectedJob.client?.company?.charAt(0) || 'C'}

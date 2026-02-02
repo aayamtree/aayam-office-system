@@ -219,7 +219,7 @@ export default function SalesOrdersPage() {
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl w-full max-w-lg  overflow-hidden animate-scale-in">
-                        <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+                        <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
                             <h3 className="text-section text-gray-900">
                                 {isEditing ? 'Edit Order' : 'New Sales Order'}
                             </h3>
@@ -227,7 +227,7 @@ export default function SalesOrdersPage() {
                                 <X size={20} />
                             </button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                        <form onSubmit={handleSubmit} className="p-4 space-y-4">
 
                             {/* Client Selection */}
                             <div>

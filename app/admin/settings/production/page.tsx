@@ -131,8 +131,8 @@ export default function ProductionSettings() {
 
     return (
         <div className="p-1 space-y-6">
-            <div className="bg-white p-6 rounded-2xl border border-gray-100">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4 mb-3 md:mb-6">
+            <div className="bg-white p-4 rounded-2xl border border-gray-100">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4 mb-3 md:mb-1.5">
                     <div>
                         <h2 className="text-section text-gray-900">Production Checklists</h2>
                         <p className="text-gray-500 text-sm mt-1">Configure standard quality checks for different job types.</p>
@@ -171,7 +171,7 @@ export default function ProductionSettings() {
                 </div>
 
                 {isAddingNew && (
-                    <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-8 animate-in fade-in slide-in-from-top-2">
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-1.5 animate-in fade-in slide-in-from-top-2">
                         <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
                             <Plus size={18} className={activeCategory === 'design' ? 'text-oms-blue' : 'text-orange-600'} />
                             Add New {activeCategory === 'design' ? 'Pre-Print' : 'Dispatch QC'} Logic
@@ -227,7 +227,7 @@ export default function ProductionSettings() {
                         </button>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                         {checklists.map(checklist => (
                             <div key={checklist.id} className={`bg-white rounded-xl border transition-all ${editingId === checklist.id ? 'border-oms-blue ring-4 ring-oms-blue/10 relative z-10' : 'border-gray-200  hover:border-[rgba(0,0,255,0.2)]'}`}>
 

@@ -161,7 +161,7 @@ export default function AdminDashboard() {
     <div className="space-y-2 md:space-y-6 animate-fade-in pb-6 md:pb-10">
       {/* Welcome Header */}
       <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-5 border border-gray-100">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4 mb-3 md:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4 mb-3 md:mb-1.5">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">
               Welcome back, {profile?.full_name?.split(' ')[0] || 'Admin'}
@@ -381,7 +381,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Chart */}
-            <div className="flex items-end justify-between gap-3 h-56 mb-8">
+            <div className="flex items-end justify-between gap-3 h-56 mb-1.5">
               {dashboardStats.salesPerformance?.map((item) => (
                 <div key={item.month} className="flex flex-col items-center flex-1 group h-full justify-end">
                   <div className="relative w-full flex items-end justify-center h-full">
@@ -550,7 +550,7 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-5 border border-gray-100">
             <h2 className="text-base md:text-section text-gray-900 mb-1.5">Work Pipeline</h2>
 
-            <div className="relative w-48 h-48 mx-auto mb-8">
+            <div className="relative w-48 h-48 mx-auto mb-1.5">
               <svg viewBox="0 0 120 120" className="w-full h-full transform -rotate-90 drop-">
                 <circle cx="60" cy="60" r="45" fill="none" stroke="#f3f4f6" strokeWidth="10" />
                 <circle cx="60" cy="60" r="45" fill="none" stroke="#4f46e5" strokeWidth="10"

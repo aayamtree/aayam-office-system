@@ -301,7 +301,7 @@ export default function CashBookPage() {
 
             {/* Cash Book Table - Horizontal scroll on mobile */}
             <div className="bg-white rounded-xl border print: overflow-hidden">
-                <div className="p-4 md:p-6 border-b print:text-center">
+                <div className="p-4 md:p-4 border-b print:text-center">
                     <h2 className="text-lg md:text-page-title">Cash Book</h2>
                     {(startDate || endDate) && (
                         <p className="text-xs md:text-sm text-gray-600 mt-1">

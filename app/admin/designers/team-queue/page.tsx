@@ -58,16 +58,16 @@ export default function TeamQueue() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-3 md:p-6">
+        <div className="min-h-screen bg-gray-50 p-3 md:p-4">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
-                <div className="mb-4 md:mb-6">
+                <div className="mb-4 md:mb-1.5">
                     <h1 className="text-2xl md:text-page-title text-gray-900 mb-1 md:mb-2">Team Queue</h1>
                     <p className="text-sm md:text-base text-gray-600">{filteredTasks.length} active tasks</p>
                 </div>
 
                 {/* Designer Summary Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-1.5">
                     {designerCounts.map(d => (
                         <div key={d.id} className="bg-white p-4 rounded-xl border text-center">
                             <div className="text-page-title text-oms-blue">{d.count}</div>
@@ -77,7 +77,7 @@ export default function TeamQueue() {
                 </div>
 
                 {/* Filters & View Toggle - Responsive */}
-                <div className="flex flex-col md:flex-row gap-3 mb-3 md:mb-6">
+                <div className="flex flex-col md:flex-row gap-3 mb-3 md:mb-1.5">
                     <div className="flex-1 relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                         <input

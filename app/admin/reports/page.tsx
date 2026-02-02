@@ -55,7 +55,7 @@ export default function ReportsPage() {
       {activeTab === 'cashflow' && <CashFlowStatement />}
 
       {/* Manual Journal Link */}
-      <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-lg md:rounded-2xl p-3 md:p-6 text-white flex justify-between items-center">
+      <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-lg md:rounded-2xl p-3 md:p-4 text-white flex justify-between items-center">
         <div>
           <h3 className="text-section mb-1">Manual Journal Entry</h3>
           <p className="text-gray-300 text-sm">Record accounting adjustments and non-cash transactions</p>
@@ -107,9 +107,9 @@ function ClientStatementGenerator() {
   });
 
   return (
-    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100 animate-scale-in">
+    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100 animate-scale-in">
       {/* ... Header UI ... */}
-      <div className="flex items-center gap-3 mb-3 md:mb-6">
+      <div className="flex items-center gap-3 mb-3 md:mb-1.5">
         <div className="w-10 h-10 bg-oms-blue rounded-xl flex items-center justify-center text-white">
           <FileText size={20} />
         </div>
@@ -120,7 +120,7 @@ function ClientStatementGenerator() {
       </div>
 
       {/* Controls */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4 items-end mb-3 md:mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4 items-end mb-3 md:mb-1.5">
         <div className="md:col-span-2">
           <label className="block text-sm font-medium mb-1">Select Client</label>
           <select value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)} className="w-full px-3 py-2 border rounded-xl bg-white">
@@ -188,8 +188,8 @@ function VendorStatementGenerator() {
   });
 
   return (
-    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100 animate-scale-in">
-      <div className="flex items-center gap-3 mb-3 md:mb-6">
+    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100 animate-scale-in">
+      <div className="flex items-center gap-3 mb-3 md:mb-1.5">
         <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-oms-orange">
           <Truck size={20} />
         </div>
@@ -198,7 +198,7 @@ function VendorStatementGenerator() {
           <p className="text-sm text-gray-500">Creditor Ledger (Payables)</p>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4 items-end mb-3 md:mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4 items-end mb-3 md:mb-1.5">
         <div className="md:col-span-2">
           <label className="block text-sm font-medium mb-1">Select Vendor</label>
           <select value={selectedVendorId} onChange={e => setSelectedVendorId(e.target.value)} className="w-full px-3 py-2 border rounded-xl bg-white">
@@ -275,8 +275,8 @@ function CashFlowStatement() {
   const netFlow = totalIn - totalOut;
 
   return (
-    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100 animate-scale-in">
-      <div className="flex items-center gap-3 mb-3 md:mb-6">
+    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100 animate-scale-in">
+      <div className="flex items-center gap-3 mb-3 md:mb-1.5">
         <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-900">
           <ArrowRightLeft size={20} />
         </div>
@@ -286,7 +286,7 @@ function CashFlowStatement() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 md:gap-4 mb-3 md:mb-6">
+      <div className="flex flex-wrap gap-2 md:gap-4 mb-3 md:mb-1.5">
         <div>
           <label className="block text-sm font-medium mb-1">From</label>
           <input type="date" value={dateRange.start} className="px-3 py-2 border rounded-xl" onChange={e => setDateRange({ ...dateRange, start: e.target.value })} />
@@ -298,7 +298,7 @@ function CashFlowStatement() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4 mb-3 md:mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4 mb-3 md:mb-1.5">
         <div className="bg-white p-4 rounded-xl border border-green-100">
           <p className="text-sm text-gray-900 font-medium">Total Inflow</p>
           <p className="text-page-title text-gray-900">₹{totalIn.toLocaleString()}</p>
@@ -368,7 +368,7 @@ function StatementModal({ title, entity, period, ledger, onClose, columns, rever
   return (
     <div className="fixed inset-0 bg-white z-[100] overflow-auto p-4 md:p-8 animate-fade-in">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-start mb-8 border-b pb-4">
+        <div className="flex justify-between items-start mb-1.5 border-b pb-4">
           <div>
             <h1 className="text-page-title uppercase tracking-widest text-gray-900">{title}</h1>
             <p className="text-gray-500 mt-1">Aayam Office System</p>
@@ -381,7 +381,7 @@ function StatementModal({ title, entity, period, ledger, onClose, columns, rever
           </div>
         </div>
 
-        <div className="flex justify-between mb-8">
+        <div className="flex justify-between mb-1.5">
           <div>
             <p className="text-xs text-gray-400 uppercase font-bold">To</p>
             <h3 className="text-page-title">{entity.name}</h3>

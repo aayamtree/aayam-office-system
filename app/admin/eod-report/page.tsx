@@ -441,7 +441,7 @@ export default function EODReportPage() {
                 </div>
 
                 {/* Submit Button */}
-                <div className="flex items-center justify-between bg-gray-50 rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-200">
+                <div className="flex items-center justify-between bg-gray-50 rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-200">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                         <AlertCircle size={16} />
                         <span>Updates must be submitted before leaving office</span>

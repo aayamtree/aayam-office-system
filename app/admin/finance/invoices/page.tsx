@@ -691,7 +691,7 @@ export default function InvoicesPage() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              <form onSubmit={handleSubmit} className="p-4 space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Client *</label>
@@ -879,7 +879,7 @@ export default function InvoicesPage() {
         showViewModal && selectedInvoice && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <div className="flex items-center justify-between p-4 border-b border-gray-100">
                 <div>
                   <h2 className="text-page-title text-gray-900">{selectedInvoice.invoice_number}</h2>
                   <div className="flex items-center gap-2 mt-1">
@@ -894,7 +894,7 @@ export default function InvoicesPage() {
                 </button>
               </div>
 
-              <div className="p-6 space-y-6">
+              <div className="p-4 space-y-6">
                 {/* Client Info */}
                 <div className="flex items-center gap-2 md:gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
                   <div className="w-12 h-12 bg-oms-blue rounded-full flex items-center justify-center">

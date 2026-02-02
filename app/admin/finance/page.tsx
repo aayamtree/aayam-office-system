@@ -124,8 +124,8 @@ export default function FinancePage() {
       </div>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
-        <Link href="/admin/finance/invoices" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+        <Link href="/admin/finance/invoices" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
             <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <FileText size={28} className="text-blue-600" />
@@ -142,7 +142,7 @@ export default function FinancePage() {
           </div>
         </Link>
 
-        <Link href="/admin/finance/vendors" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
+        <Link href="/admin/finance/vendors" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
             <div className="w-14 h-14 bg-oms-blue rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <CreditCard size={28} className="text-oms-blue" />
@@ -158,7 +158,7 @@ export default function FinancePage() {
           </div>
         </Link>
 
-        <Link href="/admin/finance/payments" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
+        <Link href="/admin/finance/payments" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
             <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <CreditCard size={28} className="text-gray-900" />
@@ -176,10 +176,10 @@ export default function FinancePage() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         {/* Recent Transactions */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
-          <div className="flex items-center justify-between mb-3 md:mb-6">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+          <div className="flex items-center justify-between mb-3 md:mb-1.5">
             <div className="flex items-center gap-3">
               <div className="w-1 h-6 bg-oms-blue rounded-full"></div>
               <h2 className="text-section text-gray-900">Recent Transactions</h2>
@@ -215,8 +215,8 @@ export default function FinancePage() {
         </div>
 
         {/* Overdue Invoices */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
-          <div className="flex items-center justify-between mb-3 md:mb-6">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+          <div className="flex items-center justify-between mb-3 md:mb-1.5">
             <div className="flex items-center gap-3">
               <div className="w-1 h-6 bg-red-500 rounded-full"></div>
               <h2 className="text-section text-gray-900">Overdue Invoices</h2>
@@ -249,8 +249,8 @@ export default function FinancePage() {
       </div>
 
       {/* Monthly Summary */}
-      <div className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100">
-        <div className="flex items-center gap-3 mb-3 md:mb-6">
+      <div className="bg-white rounded-2xl p-5 sm:p-4 border border-gray-100">
+        <div className="flex items-center gap-3 mb-3 md:mb-1.5">
           <div className="w-1 h-6 bg-oms-blue rounded-full"></div>
           <h2 className="text-section text-gray-900">Monthly Summary</h2>
         </div>

@@ -59,7 +59,7 @@ export default function DesignTasksPage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 p-4">
                 {designJobs.map(job => (
                     <div key={job.id} className="bg-white rounded-xl border border-gray-200  transition-shadow p-5 flex flex-col">
                         <div className="flex justify-between items-start mb-4">

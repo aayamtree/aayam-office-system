@@ -70,7 +70,7 @@ export default function MarketingPaymentsPage() {
   const totalPending = payments.reduce((sum, p) => sum + p.pendingAmount, 0);
 
   return (
-    <div className="p-4 sm:p-6 space-y-5">
+    <div className="p-4 sm:p-4 space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
         <div>

@@ -112,7 +112,7 @@ export default function MyNotes() {
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto p-4">
                 {/* Header - Responsive */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 md:mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 md:mb-1.5">
                     <h1 className="text-2xl md:text-page-title text-gray-900">My Notes</h1>
                     <button
                         onClick={createNote}
@@ -124,7 +124,7 @@ export default function MyNotes() {
                 </div>
 
                 {/* Mobile: Stack layout, Desktop: Side-by-side */}
-                <div className="flex flex-col lg:grid lg:grid-cols-3 gap-2 md:gap-4 lg:gap-6">
+                <div className="flex flex-col lg:grid lg:grid-cols-3 gap-2 md:gap-4 lg:gap-4">
                     {/* Notes List - Full width on mobile, 1/3 on desktop */}
                     <div className="lg:col-span-1 space-y-3 order-2 lg:order-1">
                         {/* Search Bar */}
@@ -218,7 +218,7 @@ export default function MyNotes() {
                     {/* Editor - Full width on mobile, 2/3 on desktop, shows first on mobile */}
                     <div className="lg:col-span-2 order-1 lg:order-2">
                         {selectedNote ? (
-                            <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border h-full">
+                            <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border h-full">
                                 <div className="flex justify-between items-center mb-4">
                                     <input
                                         type="text"

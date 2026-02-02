@@ -46,7 +46,7 @@ export default function CalendarPage() {
 
             {/* Week Planner */}
             <div className="bg-white rounded-2xl border border-gray-100 p-4">
-                <div className="flex items-center justify-between mb-3 md:mb-6">
+                <div className="flex items-center justify-between mb-3 md:mb-1.5">
                     <h2 className="text-section text-gray-900">This Week</h2>
                     <button
                         onClick={() => setShowNewEvent(true)}

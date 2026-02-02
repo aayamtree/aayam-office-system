@@ -46,16 +46,16 @@ export default function MyQueue() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-3 md:p-6">
+        <div className="min-h-screen bg-gray-50 p-3 md:p-4">
             <div className="max-w-6xl mx-auto">
                 {/* Header */}
-                <div className="mb-4 md:mb-6">
+                <div className="mb-4 md:mb-1.5">
                     <h1 className="text-2xl md:text-page-title text-gray-900 mb-1 md:mb-2">My Queue</h1>
                     <p className="text-sm md:text-base text-gray-600">{filteredTasks.length} active tasks</p>
                 </div>
 
                 {/* Search */}
-                <div className="mb-4 md:mb-6 relative">
+                <div className="mb-4 md:mb-1.5 relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <input
                         type="text"
@@ -78,7 +78,7 @@ export default function MyQueue() {
                             <div className="grid gap-3 md:gap-4">
                                 {urgentTasks.map(task => (
                                     <Link key={task.id} href="/admin/designers/tasks">
-                                        <div className="bg-white p-4 md:p-6 rounded-lg md:rounded-xl border-2 border-red-200  transition-shadow cursor-pointer">
+                                        <div className="bg-white p-4 md:p-4 rounded-lg md:rounded-xl border-2 border-red-200  transition-shadow cursor-pointer">
                                             <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2 md:gap-0 mb-2 md:mb-3">
                                                 <div className="flex-1">
                                                     <h3 className="text-base md:text-section text-gray-900 line-clamp-2">{task.title}</h3>
@@ -118,7 +118,7 @@ export default function MyQueue() {
                             <div className="grid gap-3 md:gap-4">
                                 {highTasks.map(task => (
                                     <Link key={task.id} href="/admin/designers/tasks">
-                                        <div className="bg-white p-4 md:p-6 rounded-lg md:rounded-xl border-2 border-orange-200  transition-shadow cursor-pointer">
+                                        <div className="bg-white p-4 md:p-4 rounded-lg md:rounded-xl border-2 border-orange-200  transition-shadow cursor-pointer">
                                             <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2 md:gap-0 mb-2 md:mb-3">
                                                 <div className="flex-1">
                                                     <h3 className="text-base md:text-section text-gray-900 line-clamp-2">{task.title}</h3>

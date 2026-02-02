@@ -52,15 +52,15 @@ export default function PrintPlannerPage() {
     const selectedJobType = selectedJobs.length > 0 ? selectedJobs[0].job_type : null;
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6 pb-12">
+        <div className="min-h-screen bg-gray-50 p-4 pb-12">
             {/* Header */}
-            <div className="mb-6">
+            <div className="mb-1.5">
                 <h1 className="text-page-title text-gray-900 mb-2">Print Planner</h1>
                 <p className="text-gray-600">Batch print jobs with same job type for efficient printing</p>
             </div>
 
             {/* Split Screen Layout - No fixed height to prevent overlap */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mb-1.5">
                 {/* Left: Job Queue */}
                 <div className="h-[calc(100vh-350px)]">
                     <PrintJobQueue

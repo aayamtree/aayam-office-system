@@ -78,14 +78,14 @@ export default function ProfileSettingsPage() {
 
             {/* Main Form */}
             <div className="bg-white rounded-2xl border border-gray-100">
-                <div className="p-6 border-b border-gray-100">
+                <div className="p-4 border-b border-gray-100">
                     <h2 className="text-section text-gray-900">Personal Information</h2>
                     <p className="text-sm text-gray-500 mt-1">Update your personal details</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                <form onSubmit={handleSubmit} className="p-4 space-y-6">
                     {/* Avatar Section */}
-                    <div className="flex items-center gap-3 md:gap-6">
+                    <div className="flex items-center gap-3 md:gap-4">
                         <div className="w-20 h-20 bg-oms-blue rounded-full flex items-center justify-center text-white font-bold text-page-title overflow-hidden">
                             {formData.avatar_url ? (
                                 <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />

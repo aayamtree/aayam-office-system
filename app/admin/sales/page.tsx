@@ -102,8 +102,8 @@ export default function SalesPage() {
       </div>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
-        <Link href="/admin/sales/leads" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+        <Link href="/admin/sales/leads" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
             <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <Users size={28} className="text-oms-orange" />
@@ -118,7 +118,7 @@ export default function SalesPage() {
           </div>
         </Link>
 
-        <Link href="/admin/sales/quotations" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
+        <Link href="/admin/sales/quotations" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
             <div className="w-14 h-14 bg-oms-blue rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <FileText size={28} className="text-oms-blue" />
@@ -133,7 +133,7 @@ export default function SalesPage() {
           </div>
         </Link>
 
-        <Link href="/admin/sales/orders" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
+        <Link href="/admin/sales/orders" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
             <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <ShoppingCart size={28} className="text-blue-600" />
@@ -150,10 +150,10 @@ export default function SalesPage() {
       </div>
 
       {/* Order Pipeline & Recent Orders */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         {/* Order Pipeline */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
-          <div className="flex items-center gap-3 mb-3 md:mb-6">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+          <div className="flex items-center gap-3 mb-3 md:mb-1.5">
             <div className="w-1 h-6 bg-[rgba(0,0,255,0.05)]0 rounded-full"></div>
             <h2 className="text-section text-gray-900">Order Pipeline</h2>
           </div>
@@ -173,8 +173,8 @@ export default function SalesPage() {
         </div>
 
         {/* Recent Orders */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
-          <div className="flex items-center justify-between mb-3 md:mb-6">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+          <div className="flex items-center justify-between mb-3 md:mb-1.5">
             <div className="flex items-center gap-3">
               <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
               <h2 className="text-section text-gray-900">Recent Orders</h2>
@@ -208,8 +208,8 @@ export default function SalesPage() {
       </div>
 
       {/* Pending Actions */}
-      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
-        <div className="flex items-center gap-3 mb-3 md:mb-6">
+      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+        <div className="flex items-center gap-3 mb-3 md:mb-1.5">
           <div className="w-1 h-6 bg-white0 rounded-full"></div>
           <h2 className="text-section text-gray-900">Pending Actions</h2>
         </div>

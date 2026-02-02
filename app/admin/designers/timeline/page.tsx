@@ -31,7 +31,7 @@ export default function Timeline() {
     return (
         <div className="min-h-screen bg-gray-50 p-4">
             <div className="max-w-4xl mx-auto">
-                <h1 className="text-page-title text-gray-900 mb-3 md:mb-6">Production Timeline</h1>
+                <h1 className="text-page-title text-gray-900 mb-3 md:mb-1.5">Production Timeline</h1>
 
                 <div className="space-y-4">
                     {activeTasks.map((task, index) => {
@@ -39,7 +39,7 @@ export default function Timeline() {
                         const isOverdue = daysLeft < 0;
 
                         return (
-                            <div key={task.id} className="bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border-l-4" style={{
+                            <div key={task.id} className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-l-4" style={{
                                 borderLeftColor: isOverdue ? '#ef4444' : task.priority === 'urgent' ? '#f97316' : '#8b5cf6'
                             }}>
                                 <div className="flex justify-between items-start mb-3">

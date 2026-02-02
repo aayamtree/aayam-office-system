@@ -58,7 +58,7 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
           <p className="text-white/80 text-sm mt-1">Here is your focus for today.</p>
         </div>
 
-        <div className="p-6 space-y-3 md:space-y-6 max-h-[60vh] overflow-y-auto">
+        <div className="p-4 space-y-3 md:space-y-6 max-h-[60vh] overflow-y-auto">
           {overdue.length > 0 && (
             <div className="space-y-2">
               <h3 className="text-red-600 font-bold text-sm uppercase tracking-wider flex items-center gap-2">
@@ -647,7 +647,7 @@ export default function DesignerWorkspace() {
               <button onClick={() => setIsNewTaskModalOpen(true)} className="px-4 py-2 bg-oms-blue text-white rounded-lg text-sm font-bold flex gap-2 items-center"><Plus size={16} /> New Task</button>
             </div>
 
-            <div className="flex h-[calc(100%-5rem)] gap-3 md:gap-6 min-w-max pb-4">
+            <div className="flex h-[calc(100%-5rem)] gap-3 md:gap-4 min-w-max pb-4">
               {kanbanColumns.map(col => {
                 const colTasks = tasks.filter(t => {
                   const matchesStatus = t.status === col.id || (col.id === 'pending' && (!t.status || t.status === 'new')); // fallback
@@ -739,7 +739,7 @@ export default function DesignerWorkspace() {
 
             {/* Gantt Chart Body */}
             {/* Gantt Chart Body */}
-            <div className="flex-1 overflow-x-auto overflow-y-auto p-2 md:p-6 bg-gray-50">
+            <div className="flex-1 overflow-x-auto overflow-y-auto p-2 md:p-4 bg-gray-50">
               <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden min-w-[800px]">
                 {/* Header Row */}
                 <div className="grid grid-cols-12 bg-gray-50 border-b text-[10px] font-bold text-gray-500 uppercase tracking-wider h-10 items-center px-4">
@@ -1201,7 +1201,7 @@ export default function DesignerWorkspace() {
                 </>
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-gray-400 bg-gray-50/30">
-                  <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-3 md:mb-6 border border-gray-100">
+                  <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-3 md:mb-1.5 border border-gray-100">
                     <Briefcase size={40} className="text-gray-300" />
                   </div>
                   <h3 className="text-section text-gray-700 mb-2">Ready to work?</h3>
@@ -1216,7 +1216,7 @@ export default function DesignerWorkspace() {
             <div className="w-full md:w-80 bg-white border-l h-full flex flex-col z-10 [-4px_0_24px_rgba(0,0,0,0.02)]">
 
               {/* Full Month Calendar Widget */}
-              <div className="p-6 border-b bg-gradient-to-br from-white to-gray-50">
+              <div className="p-4 border-b bg-gradient-to-br from-white to-gray-50">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2 text-gray-900 font-bold">
                     <div className="p-1.5 bg-oms-blue text-white rounded-lg">
@@ -1266,7 +1266,7 @@ export default function DesignerWorkspace() {
 
               {/* Daily Log */}
               <div className="flex-1 flex flex-col overflow-hidden bg-white">
-                <div className="p-6 pb-2">
+                <div className="p-4 pb-2">
                   <div className="flex items-center gap-2 text-gray-900 font-bold mb-1">
                     <div className="p-1.5 bg-orange-100 text-orange-600 rounded-lg">
                       <Clock size={16} />
@@ -1341,7 +1341,7 @@ export default function DesignerWorkspace() {
                 <form id="create-project-form" onSubmit={handleCreateTask} className="space-y-8">
 
                   {/* 1. Project Basics */}
-                  <div className="space-y-5 bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
+                  <div className="space-y-5 bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
                     <div className="flex items-center gap-3 pb-3 border-b-2 border-oms-blue">
                       <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-oms-blue text-white text-sm font-bold -200">
                         1
@@ -1398,7 +1398,7 @@ export default function DesignerWorkspace() {
                   </div>
 
                   {/* 2. Parameters */}
-                  <div className="space-y-5 bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
+                  <div className="space-y-5 bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
                     <div className="flex items-center gap-3 pb-3 border-b-2 border-gradient-to-r from-orange-500 to-red-500">
                       <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 text-white text-sm font-bold -200">
                         2
@@ -1452,7 +1452,7 @@ export default function DesignerWorkspace() {
                   </div>
 
                   {/* 3. Assets & Brief */}
-                  <div className="space-y-5 bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border border-gray-100">
+                  <div className="space-y-5 bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
                     <div className="flex items-center gap-3 pb-3 border-b-2 border-gradient-to-r from-blue-500 to-cyan-500">
                       <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white text-sm font-bold -200">
                         3
@@ -1504,7 +1504,7 @@ export default function DesignerWorkspace() {
               </div>
 
               {/* Premium Footer with Action Buttons */}
-              <div className="p-6 border-t-2 border-gray-100 bg-gradient-to-r from-gray-50 to-white flex gap-2 md:gap-4 items-center justify-end">
+              <div className="p-4 border-t-2 border-gray-100 bg-gradient-to-r from-gray-50 to-white flex gap-2 md:gap-4 items-center justify-end">
                 <button
                   type="button"
                   onClick={() => setIsNewTaskModalOpen(false)}

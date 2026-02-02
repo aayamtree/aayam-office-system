@@ -108,8 +108,8 @@ export default function PaymentsPageNew() {
     }
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
-            <div className="flex justify-between items-center mb-3 md:mb-6">
+        <div className="p-4 max-w-7xl mx-auto">
+            <div className="flex justify-between items-center mb-3 md:mb-1.5">
                 <div>
                     <h1 className="text-page-title">Payments (New)</h1>
                     <p className="text-gray-500">{payments.length} transactions</p>
@@ -143,7 +143,7 @@ export default function PaymentsPageNew() {
                     <tbody className="divide-y">
                         {payments.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="text-center p-6 text-gray-500">
+                                <td colSpan={5} className="text-center p-4 text-gray-500">
                                     No payments found
                                 </td>
                             </tr>
@@ -174,7 +174,7 @@ export default function PaymentsPageNew() {
 
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg w-full max-w-md p-6">
+                    <div className="bg-white rounded-lg w-full max-w-md p-4">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-page-title">Record Payment</h2>
                             <button onClick={() => setShowModal(false)}>

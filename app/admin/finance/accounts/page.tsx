@@ -35,10 +35,10 @@ export default function AccountsPage() {
             </div>
 
             {/* Total Balance Summary */}
-            <div className="bg-oms-blue rounded-lg md:rounded-2xl p-3 md:p-6 text-white">
+            <div className="bg-oms-blue rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
                 <h2 className="text-sm font-medium opacity-90 mb-2">Total Available Balance</h2>
                 <p className="text-page-title">₹{grandTotal.toLocaleString()}</p>
-                <div className="mt-4 flex gap-3 md:gap-6 text-sm">
+                <div className="mt-4 flex gap-3 md:gap-4 text-sm">
                     <div>
                         <p className="opacity-75">Bank Accounts</p>
                         <p className="text-page-title">₹{totalBankBalance.toLocaleString()}</p>

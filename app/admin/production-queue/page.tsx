@@ -119,13 +119,13 @@ export default function ProductionQueuePage() {
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto p-6 space-y-6">
+            <div className="max-w-7xl mx-auto p-4 space-y-6">
                 {/* Summary Cards - Clickable Filters */}
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4">
                     {/* Design Stage */}
                     <button
                         onClick={() => setFilter(filter === 'design_stage' ? null : 'design_stage')}
-                        className={`bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border-2 transition-all  text-left ${filter === 'design_stage' ? 'border-purple-400 ring-4 ring-oms-blue' : 'border-gray-100 hover:border-[rgba(0,0,255,0.2)]'
+                        className={`bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-2 transition-all  text-left ${filter === 'design_stage' ? 'border-purple-400 ring-4 ring-oms-blue' : 'border-gray-100 hover:border-[rgba(0,0,255,0.2)]'
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
@@ -140,7 +140,7 @@ export default function ProductionQueuePage() {
                     {/* Print Ready */}
                     <button
                         onClick={() => setFilter(filter === 'print_ready' ? null : 'print_ready')}
-                        className={`bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border-2 transition-all  text-left relative ${filter === 'print_ready' ? 'border-green-400 ring-4 ring-green-100' : 'border-gray-100 hover:border-green-200'
+                        className={`bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-2 transition-all  text-left relative ${filter === 'print_ready' ? 'border-green-400 ring-4 ring-green-100' : 'border-gray-100 hover:border-green-200'
                             }`}
                     >
                         {summary.print_ready > 0 && (
@@ -158,7 +158,7 @@ export default function ProductionQueuePage() {
                     {/* Awaiting Approval */}
                     <button
                         onClick={() => setFilter(filter === 'awaiting_approval' ? null : 'awaiting_approval')}
-                        className={`bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border-2 transition-all  text-left ${filter === 'awaiting_approval' ? 'border-gray-400 ring-4 ring-amber-100' : 'border-gray-100 hover:border-gray-200'
+                        className={`bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-2 transition-all  text-left ${filter === 'awaiting_approval' ? 'border-gray-400 ring-4 ring-amber-100' : 'border-gray-100 hover:border-gray-200'
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
@@ -173,7 +173,7 @@ export default function ProductionQueuePage() {
                     {/* High Priority */}
                     <button
                         onClick={() => setFilter(filter === 'high_priority' ? null : 'high_priority')}
-                        className={`bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border-2 transition-all  text-left relative ${filter === 'high_priority' ? 'border-red-400 ring-4 ring-red-100' : 'border-gray-100 hover:border-red-200'
+                        className={`bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-2 transition-all  text-left relative ${filter === 'high_priority' ? 'border-red-400 ring-4 ring-red-100' : 'border-gray-100 hover:border-red-200'
                             }`}
                     >
                         {summary.high_priority > 0 && (
@@ -193,7 +193,7 @@ export default function ProductionQueuePage() {
                     {/* In Production */}
                     <button
                         onClick={() => setFilter(filter === 'in_production' ? null : 'in_production')}
-                        className={`bg-white rounded-lg md:rounded-2xl p-3 md:p-6 border-2 transition-all  text-left ${filter === 'in_production' ? 'border-blue-400 ring-4 ring-blue-100' : 'border-gray-100 hover:border-blue-200'
+                        className={`bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-2 transition-all  text-left ${filter === 'in_production' ? 'border-blue-400 ring-4 ring-blue-100' : 'border-gray-100 hover:border-blue-200'
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
@@ -208,7 +208,7 @@ export default function ProductionQueuePage() {
                     {/* Total Active */}
                     <button
                         onClick={() => setFilter(null)}
-                        className={`bg-oms-blue rounded-lg md:rounded-2xl p-3 md:p-6 border-2 transition-all  text-left ${!filter ? 'border-oms-blue-400 ring-4 ring-oms-blue' : 'border-[rgba(0,0,255,0.1)] hover:border-[rgba(0,0,255,0.2)]'
+                        className={`bg-oms-blue rounded-lg md:rounded-2xl p-3 md:p-4 border-2 transition-all  text-left ${!filter ? 'border-oms-blue-400 ring-4 ring-oms-blue' : 'border-[rgba(0,0,255,0.1)] hover:border-[rgba(0,0,255,0.2)]'
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
@@ -244,7 +244,7 @@ export default function ProductionQueuePage() {
 
                 {/* Jobs Table */}
                 <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-                    <div className="p-6 border-b border-gray-100">
+                    <div className="p-4 border-b border-gray-100">
                         <h2 className="text-section text-gray-900">
                             {filter ? `Filtered Jobs (${filteredJobs.length})` : `All Active Jobs (${jobs.length})`}
                         </h2>
