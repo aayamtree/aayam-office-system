@@ -178,7 +178,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 lg:gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
@@ -191,11 +191,6 @@ export default function AdminDashboard() {
                 <p className="text-xl md:text-3xl lg:text-page-title tracking-tight text-gray-900 font-semibold">
                   {statsLoading ? '...' : stat.value}
                 </p>
-                {stat.subtext && (
-                  <span className="text-xs text-gray-500 mt-1 block">
-                    {stat.subtext}
-                  </span>
-                )}
               </div>
             );
           })}
@@ -204,7 +199,7 @@ export default function AdminDashboard() {
 
       {/* Daily Briefing Panel (Focus + Activity) */}
       <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100 animate-fade-in-up">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Left: Today's Focus Stats */}
           <div className="lg:col-span- 2 space-y-4 md:space-y-5">
             <div className="min-w-[120px]">
@@ -316,11 +311,11 @@ export default function AdminDashboard() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 md:gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 md:gap-4">
 
         {/* Needs Attention */}
         <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100 flex flex-col h-full">
-          <div className="flex items-center gap-2.5 mb-3 md:mb-6">
+          <div className="flex items-center gap-2.5 mb-1.5">
             <AlertCircle size={20} className="text-oms-orange" />
             <h2 className="text-section text-gray-900">Needs Attention</h2>
           </div>
@@ -374,7 +369,7 @@ export default function AdminDashboard() {
 
           {/* Sales Performance */}
           <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-5 border border-gray-100">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0 mb-3 md:mb-8">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0 mb-1.5">
               <div>
                 <h2 className="text-lg md:text-section text-gray-900">Sales Performance</h2>
                 <p className="text-xs md:text-sm text-gray-500 mt-1">Monthly revenue overview</p>
@@ -430,7 +425,7 @@ export default function AdminDashboard() {
 
           {/* Recent Jobs */}
           <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-5 border border-gray-100">
-            <div className="flex items-center justify-between mb-3 md:mb-6">
+            <div className="flex items-center justify-between mb-1.5">
               <h2 className="text-section text-gray-900">Recent Jobs</h2>
               <Link href="/admin/sales/orders" className="flex items-center gap-1 text-sm text-oms-blue hover:text-oms-blue font-bold">
                 View All
@@ -553,7 +548,7 @@ export default function AdminDashboard() {
 
           {/* Work Pipeline */}
           <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-5 border border-gray-100">
-            <h2 className="text-base md:text-section text-gray-900 mb-3 md:mb-6">Work Pipeline</h2>
+            <h2 className="text-base md:text-section text-gray-900 mb-1.5">Work Pipeline</h2>
 
             <div className="relative w-48 h-48 mx-auto mb-8">
               <svg viewBox="0 0 120 120" className="w-full h-full transform -rotate-90 drop-">
