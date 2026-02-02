@@ -105,19 +105,19 @@ export default function RemindersWidget() {
                     </div>
                 )}
 
-                <div className="space-y-2">
+                <div className="space-y-1">
                     {activeReminders.map(reminder => (
-                        <div key={reminder.id} className="group flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                        <div key={reminder.id} className="group flex items-center gap-2 p-1.5 hover:bg-gray-50 rounded-lg transition-colors">
                             <button
                                 onClick={() => toggleComplete(reminder)}
-                                className="text-gray-400 hover:text-oms-blue transition-colors"
+                                className="text-gray-400 hover:text-oms-blue transition-colors flex-shrink-0"
                             >
-                                <Circle size={18} />
+                                <Circle size={16} />
                             </button>
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-gray-700 truncate">{reminder.title}</p>
                                 {reminder.due_date && (
-                                    <p className={`text-xs ${getDateColor(reminder.due_date, false)} flex items-center gap-1`}>
+                                    <p className={`text-xs ${getDateColor(reminder.due_date, false)} flex items-center gap-1 mt-0.5`}>
                                         <Calendar size={10} />
                                         {getDateLabel(reminder.due_date)}
                                     </p>
@@ -125,7 +125,7 @@ export default function RemindersWidget() {
                             </div>
                             <button
                                 onClick={() => deleteReminder(reminder.id)}
-                                className="opacity-0 group-hover:opacity-100 p-1.5 bg-red-600/90 hover:bg-red-700 rounded-md transition-all"
+                                className="p-1.5 bg-red-600/90 hover:bg-red-700 rounded-md transition-all flex-shrink-0"
                             >
                                 <Trash2 size={14} className="text-white" />
                             </button>
@@ -133,21 +133,21 @@ export default function RemindersWidget() {
                     ))}
 
                     {completedReminders.length > 0 && (
-                        <div className="pt-4 border-t border-dashed mt-4">
-                            <p className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Completed</p>
+                        <div className="pt-3 border-t border-dashed mt-3">
+                            <p className="text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Completed</p>
                             <div className="space-y-1 opacity-60">
                                 {completedReminders.map(reminder => (
-                                    <div key={reminder.id} className="group flex items-center gap-3 p-2 rounded-lg">
+                                    <div key={reminder.id} className="group flex items-center gap-2 p-1.5 rounded-lg">
                                         <button
                                             onClick={() => toggleComplete(reminder)}
-                                            className="text-gray-400 hover:text-oms-blue transition-colors"
+                                            className="text-gray-400 hover:text-oms-blue transition-colors flex-shrink-0"
                                         >
-                                            <CheckCircle2 size={18} className="text-green-500" />
+                                            <CheckCircle2 size={16} className="text-green-500" />
                                         </button>
                                         <span className="text-sm text-gray-500 line-through flex-1 truncate">{reminder.title}</span>
                                         <button
                                             onClick={() => deleteReminder(reminder.id)}
-                                            className="opacity-0 group-hover:opacity-100 p-1.5 bg-red-600/90 hover:bg-red-700 rounded-md transition-all"
+                                            className="p-1.5 bg-red-600/90 hover:bg-red-700 rounded-md transition-all flex-shrink-0"
                                         >
                                             <Trash2 size={14} className="text-white" />
                                         </button>

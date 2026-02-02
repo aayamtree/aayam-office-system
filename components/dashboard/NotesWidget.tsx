@@ -154,13 +154,13 @@ export default function NotesWidget() {
                 {sortedNotes.map(note => {
                     const style = getStyle(note.color);
                     return (
-                        <div key={note.id} className={`group relative p-4 rounded-xl ${style.bg} border ${style.border} transition-all `}>
-                            <p className="text-sm text-gray-800 whitespace-pre-wrap">{note.content}</p>
+                        <div key={note.id} className={`group relative p-3 rounded-xl ${style.bg} border ${style.border} transition-all`}>
+                            <p className="text-sm text-gray-800 whitespace-pre-wrap pr-16">{note.content}</p>
 
                             {note.job && (
                                 <Link
                                     href={`/admin/jobs?search=${note.job.job_number}`}
-                                    className="inline-flex items-center gap-1.5 mt-2 px-2 py-1 bg-white/50 rounded-lg text-label text-gray-600 hover:text-oms-blue hover:bg-white transition-colors"
+                                    className="inline-flex items-center gap-1.5 mt-2 px-2 py-0.5 bg-white/50 rounded-lg text-xs text-gray-600 hover:text-oms-blue hover:bg-white transition-colors"
                                 >
                                     <LinkIcon size={10} />
                                     Job #{note.job.job_number}
@@ -170,13 +170,13 @@ export default function NotesWidget() {
                             <div className="absolute top-2 right-2 flex gap-1">
                                 <button
                                     onClick={() => togglePin(note)}
-                                    className={`p-1.5 rounded-md transition-all ${note.is_pinned ? 'bg-yellow-600/90 hover:bg-yellow-700' : 'bg-gray-700/90 hover:bg-gray-800 opacity-0 group-hover:opacity-100'}`}
+                                    className={`p-1.5 rounded-md transition-all ${note.is_pinned ? 'bg-yellow-600/90 hover:bg-yellow-700' : 'bg-gray-700/90 hover:bg-gray-800'}`}
                                 >
                                     <Pin size={14} className="text-white" />
                                 </button>
                                 <button
                                     onClick={() => deleteNote(note.id)}
-                                    className="p-1.5 bg-red-600/90 hover:bg-red-700 rounded-md transition-all opacity-0 group-hover:opacity-100"
+                                    className="p-1.5 bg-red-600/90 hover:bg-red-700 rounded-md transition-all"
                                 >
                                     <Trash2 size={14} className="text-white" />
                                 </button>
