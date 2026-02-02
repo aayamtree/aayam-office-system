@@ -167,18 +167,18 @@ export default function NotesWidget() {
                                 </Link>
                             )}
 
-                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                            <div className="absolute top-2 right-2 flex gap-1">
                                 <button
                                     onClick={() => togglePin(note)}
-                                    className={`p-1.5 rounded-md transition-colors ${note.is_pinned ? 'bg-oms-blue/10 text-oms-blue' : 'hover:bg-gray-100 text-gray-600 hover:text-oms-blue'}`}
+                                    className={`p-1.5 rounded-md transition-all ${note.is_pinned ? 'bg-yellow-600/90 hover:bg-yellow-700' : 'bg-gray-700/90 hover:bg-gray-800 opacity-0 group-hover:opacity-100'}`}
                                 >
-                                    <Pin size={14} className={note.is_pinned ? 'fill-current' : ''} />
+                                    <Pin size={14} className="text-white" />
                                 </button>
                                 <button
                                     onClick={() => deleteNote(note.id)}
-                                    className="p-1.5 hover:bg-red-50 hover:text-red-600 rounded-md text-gray-600 transition-colors"
+                                    className="p-1.5 bg-red-600/90 hover:bg-red-700 rounded-md transition-all opacity-0 group-hover:opacity-100"
                                 >
-                                    <Trash2 size={14} />
+                                    <Trash2 size={14} className="text-white" />
                                 </button>
                             </div>
                             {note.is_pinned && (

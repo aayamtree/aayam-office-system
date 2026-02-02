@@ -125,9 +125,9 @@ export default function RemindersWidget() {
                             </div>
                             <button
                                 onClick={() => deleteReminder(reminder.id)}
-                                className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 transition-opacity"
+                                className="opacity-0 group-hover:opacity-100 p-1.5 bg-red-600/90 hover:bg-red-700 rounded-md transition-all"
                             >
-                                <Trash2 size={16} />
+                                <Trash2 size={14} className="text-white" />
                             </button>
                         </div>
                     ))}
@@ -147,9 +147,9 @@ export default function RemindersWidget() {
                                         <span className="text-sm text-gray-500 line-through flex-1 truncate">{reminder.title}</span>
                                         <button
                                             onClick={() => deleteReminder(reminder.id)}
-                                            className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 transition-opacity"
+                                            className="opacity-0 group-hover:opacity-100 p-1.5 bg-red-600/90 hover:bg-red-700 rounded-md transition-all"
                                         >
-                                            <Trash2 size={16} />
+                                            <Trash2 size={14} className="text-white" />
                                         </button>
                                     </div>
                                 ))}
