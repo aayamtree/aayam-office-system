@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { 
+import {
   Plus, Search, Building2, Calendar, IndianRupee, X, Eye, Trash2,
   ArrowLeft, CheckCircle, CreditCard, Wallet, Building, ArrowUpRight
 } from 'lucide-react';
@@ -23,15 +23,21 @@ const bankAccounts = [
 ];
 
 const initialPayments = [
-  { id: 1, paymentNo: 'VP-001', vendorId: 1, vendorName: 'Raj Packaging', amount: 15000,
+  {
+    id: 1, paymentNo: 'VP-001', vendorId: 1, vendorName: 'Raj Packaging', amount: 15000,
     paymentMode: 'NEFT', bankAccountId: 1, bankName: 'HDFC Current Account',
-    reference: 'TXN123456', billNos: ['PB-001'], paymentDate: '2025-12-22', notes: 'Partial payment for boxes' },
-  { id: 2, paymentNo: 'VP-002', vendorId: 3, vendorName: 'Shree Inks', amount: 20060,
+    reference: 'TXN123456', billNos: ['PB-001'], paymentDate: '2025-12-22', notes: 'Partial payment for boxes'
+  },
+  {
+    id: 2, paymentNo: 'VP-002', vendorId: 3, vendorName: 'Shree Inks', amount: 20060,
     paymentMode: 'Bank Transfer', bankAccountId: 2, bankName: 'ICICI Savings',
-    reference: 'TXN789012', billNos: ['PB-003'], paymentDate: '2025-12-20', notes: 'Full payment for inks' },
-  { id: 3, paymentNo: 'VP-003', vendorId: 4, vendorName: 'Modern Plastics', amount: 5000,
+    reference: 'TXN789012', billNos: ['PB-003'], paymentDate: '2025-12-20', notes: 'Full payment for inks'
+  },
+  {
+    id: 3, paymentNo: 'VP-003', vendorId: 4, vendorName: 'Modern Plastics', amount: 5000,
     paymentMode: 'Cash', bankAccountId: null, bankName: 'Cash',
-    reference: 'CASH-001', billNos: [], paymentDate: '2025-12-18', notes: 'Advance payment' },
+    reference: 'CASH-001', billNos: [], paymentDate: '2025-12-18', notes: 'Advance payment'
+  },
 ];
 
 export default function VendorPaymentsPage() {
@@ -46,23 +52,24 @@ export default function VendorPaymentsPage() {
   const [formData, setFormData] = useState({
     vendorId: '', amount: 0, paymentMode: 'NEFT', bankAccountId: '', reference: '', paymentDate: '', notes: ''
   });
+  const [submitting, setSubmitting] = useState(false);
 
   const filteredPayments = payments.filter(p => {
     const matchesSearch = p.paymentNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         p.vendorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         p.reference.toLowerCase().includes(searchTerm.toLowerCase());
+      p.vendorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.reference.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesVendor = vendorFilter === 'all' || p.vendorId.toString() === vendorFilter;
     return matchesSearch && matchesVendor;
   });
 
-  const formatCurrency = (amount: number) => 
+  const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const vendor = vendors.find(v => v.id.toString() === formData.vendorId);
     const bank = bankAccounts.find(b => b.id.toString() === formData.bankAccountId);
-    
+
     const newPayment = {
       id: Date.now(), paymentNo: `VP-${String(paymentCounter).padStart(3, '0')}`,
       ...formData, vendorId: parseInt(formData.vendorId), vendorName: vendor?.name || '',
@@ -84,10 +91,10 @@ export default function VendorPaymentsPage() {
   };
 
   const getModeIcon = (mode: string) => {
-    switch(mode) {
-      case 'Cash': return <Wallet size={16} className="text-gray-900" />;
-      case 'UPI': return <CreditCard size={16} className="text-oms-blue" />;
-      default: return <Building size={16} className="text-blue-600" />;
+    switch (mode) {
+      case 'Cash': return <Wallet className="w-4 h-4 text-gray-900" />;
+      case 'UPI': return <CreditCard className="w-4 h-4 text-oms-blue" />;
+      default: return <Building className="w-4 h-4 text-blue-600" />;
     }
   };
 
@@ -103,16 +110,15 @@ export default function VendorPaymentsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/finance/vendors" className="p-2 hover:bg-gray-100 rounded-lg">
-            <ArrowLeft size={20} />
+            <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
             <h1 className="text-page-title text-gray-900">Vendor Payments</h1>
             <p className="text-gray-500">Payment out to vendors</p>
           </div>
         </div>
-        <button onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 font-medium">
-          <Plus size={18} />
+        <button onClick={() => { resetForm(); setShowModal(true); }} className="flex items-center gap-2 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] shadow-sm font-semibold">
+          <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
           <span>Record Payment</span>
         </button>
       </div>
@@ -157,7 +163,7 @@ export default function VendorPaymentsPage() {
       <div className="bg-white rounded-xl border p-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <input type="text" placeholder="Search payments..." value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue" />
@@ -177,7 +183,7 @@ export default function VendorPaymentsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <ArrowUpRight className="text-gray-900" size={20} />
+                  <ArrowUpRight className="w-5 h-5 text-gray-900" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -189,8 +195,8 @@ export default function VendorPaymentsPage() {
                   </div>
                   <h3 className="font-semibold text-gray-900">{payment.vendorName}</h3>
                   <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mt-1">
-                    <span className="flex items-center gap-1"><Building size={14} />{payment.bankName}</span>
-                    <span className="flex items-center gap-1"><Calendar size={14} />{new Date(payment.paymentDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
+                    <span className="flex items-center gap-1"><Building className="w-3.5 h-3.5" />{payment.bankName}</span>
+                    <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{new Date(payment.paymentDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
                   </div>
                   {payment.notes && <p className="text-sm text-gray-500 mt-1">{payment.notes}</p>}
                 </div>
@@ -202,9 +208,9 @@ export default function VendorPaymentsPage() {
                 </div>
                 <div className="flex items-center gap-1">
                   <button onClick={() => { setSelectedPayment(payment); setShowDetailModal(true); }}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Eye size={18} /></button>
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Eye className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
                   <button onClick={() => handleDelete(payment.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={18} /></button>
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
                 </div>
               </div>
             </div>
@@ -226,7 +232,7 @@ export default function VendorPaymentsPage() {
           <div className="bg-white rounded-2xl w-full max-w-md">
             <div className="p-5 border-b flex items-center justify-between">
               <h2 className="text-page-title">Record Payment</h2>
-              <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+              <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div>
@@ -284,7 +290,7 @@ export default function VendorPaymentsPage() {
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-lg font-medium">Cancel</button>
-                <button type="submit" className="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700">
+                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] font-semibold shadow-sm disabled:opacity-50">
                   Record Payment
                 </button>
               </div>
@@ -302,7 +308,7 @@ export default function VendorPaymentsPage() {
                 <span className="font-mono text-gray-900">{selectedPayment.paymentNo}</span>
                 <h2 className="text-page-title">Payment Details</h2>
               </div>
-              <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+              <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div className="text-center bg-white rounded-xl p-4">

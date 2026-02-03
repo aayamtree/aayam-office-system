@@ -392,7 +392,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                             className={`group flex items-center justify-between px-3 py-1.5 rounded-lg text-sm transition-all
                           ${isSubActive(sub.href)
                                 ? 'bg-white/10 text-white font-medium'
-                                : 'text-gray-500 hover:text-white'
+                                : 'text-gray-300 hover:text-white'
                               }`}
                           >
                             <span>{sub.name}</span>

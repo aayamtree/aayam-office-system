@@ -135,7 +135,7 @@ export default function UserManagementPage() {
               onClick={() => setActiveTab('users')}
               className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'users'
                 ? 'bg-white text-oms-blue'
-                : 'text-gray-500 hover:text-gray-700'
+                : 'text-gray-600 hover:text-gray-800'
                 }`}
             >
               Users & Roles
@@ -144,7 +144,7 @@ export default function UserManagementPage() {
               onClick={() => setActiveTab('designers')}
               className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'designers'
                 ? 'bg-white text-oms-blue'
-                : 'text-gray-500 hover:text-gray-700'
+                : 'text-gray-600 hover:text-gray-800'
                 }`}
             >
               Designers Directory
@@ -153,7 +153,7 @@ export default function UserManagementPage() {
               onClick={() => setActiveTab('production')}
               className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'production'
                 ? 'bg-white text-orange-600'
-                : 'text-gray-500 hover:text-gray-700'
+                : 'text-gray-600 hover:text-gray-800'
                 }`}
             >
               Production
@@ -162,7 +162,7 @@ export default function UserManagementPage() {
               onClick={() => setActiveTab('drive')}
               className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'drive'
                 ? 'bg-white text-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
+                : 'text-gray-600 hover:text-gray-800'
                 }`}
             >
               Google Drive
@@ -177,9 +177,9 @@ export default function UserManagementPage() {
           <div className="flex justify-end">
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-oms-blue font-medium text-sm"
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] font-semibold text-sm shadow-sm"
             >
-              <Plus size={18} />
+              <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
               Add User
             </button>
           </div>
@@ -250,7 +250,7 @@ export default function UserManagementPage() {
                     onClick={() => setShowAddModal(false)}
                     className="text-gray-400 hover:text-gray-600"
                   >
-                    <X size={24} />
+                    <X className="w-6 h-6" />
                   </button>
                 </div>
 
@@ -328,7 +328,7 @@ export default function UserManagementPage() {
                     <button
                       type="submit"
                       disabled={isCreating}
-                      className="flex-1 px-4 py-2 bg-oms-blue text-white rounded-lg hover:bg-oms-blue font-medium disabled:opacity-50"
+                      className="flex-1 px-4 py-2 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] font-semibold disabled:opacity-50 shadow-sm"
                     >
                       {isCreating ? 'Creating...' : 'Create User'}
                     </button>
