@@ -237,7 +237,7 @@ export default function OrdersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/sales" className="p-2 hover:bg-white rounded-xl border border-gray-100 lg:hidden bg-gray-50 transition-colors">
-            <ArrowLeft size={20} className="text-gray-600" />
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
           </Link>
           <div>
             <h1 className="text-2xl lg:text-page-title text-gray-900 tracking-tight">Orders</h1>
@@ -248,9 +248,9 @@ export default function OrdersPage() {
           {profile?.role !== 'marketing' && (
             <button
               onClick={handleAddNew}
-              className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-blue-600 text-white px-4 py-2 rounded-xl -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
+              className="flex items-center justify-center gap-2 bg-[#0000FF] hover:bg-[#0000CC] text-white px-4 py-2 rounded-lg transition-all hover:scale-105 active:scale-95 font-semibold shadow-sm"
             >
-              <Plus size={20} />
+              <Plus className="w-5 h-5" />
               <span>New Order</span>
             </button>
           )}
@@ -259,7 +259,7 @@ export default function OrdersPage() {
 
       <div className="flex flex-col sm:flex-row gap-3 bg-white p-3 sm:p-4 rounded-2xl border border-gray-100">
         <div className="relative flex-1">
-          <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search className="w-4 h-4 md:w-5 md:h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Search orders, clients..."
@@ -338,7 +338,7 @@ export default function OrdersPage() {
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3 text-sm text-gray-600">
                           <div className="flex items-center gap-1">
-                            <Package size={16} className="text-gray-400" />
+                            <Package className="w-4 h-4 text-gray-400" />
                             <span>{job.quantity} pcs</span>
                           </div>
                         </div>
@@ -350,7 +350,7 @@ export default function OrdersPage() {
                       {/* Deadline */}
                       {job.client_deadline && (
                         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4 pb-4 border-b border-gray-100">
-                          <Calendar size={16} className="text-gray-400" />
+                          <Calendar className="w-4 h-4 text-gray-400" />
                           <span>Due: {formatDate(job.client_deadline)}</span>
                         </div>
                       )}
@@ -361,7 +361,7 @@ export default function OrdersPage() {
                           onClick={() => { setSelectedJob(job); setShowViewModal(true); }}
                           className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
                         >
-                          <Eye size={18} />
+                          <Eye className="w-4 h-4 md:w-4.5 md:h-4.5" />
                           <span className="hidden sm:inline">View</span>
                         </button>
                         {profile?.role !== 'marketing' && (
@@ -369,7 +369,7 @@ export default function OrdersPage() {
                             onClick={() => handleEdit(job)}
                             className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-xl font-medium hover:bg-gray-50 transition-colors"
                           >
-                            <Edit size={18} />
+                            <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
                           </button>
                         )}
                       </div>
@@ -406,7 +406,7 @@ export default function OrdersPage() {
                       <td className="px-6 py-4 align-top">
                         <div className="font-medium text-gray-900">{job.client?.company || '-'}</div>
                         <div className="text-sm text-gray-500 flex items-center gap-1">
-                          <User size={12} /> {job.client?.name || 'Unknown'}
+                          <User className="w-3 h-3" /> {job.client?.name || 'Unknown'}
                         </div>
                       </td>
                       <td className="px-6 py-4 align-top">
@@ -419,7 +419,7 @@ export default function OrdersPage() {
                       </td>
                       <td className="px-6 py-4 align-top">
                         <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg w-fit">
-                          <Calendar size={14} className="text-gray-400" />
+                          <Calendar className="w-3.5 h-3.5 text-gray-400" />
                           {job.client_deadline ? formatDate(job.client_deadline) : '-'}
                         </div>
                       </td>
@@ -431,15 +431,15 @@ export default function OrdersPage() {
                       <td className="px-6 py-4 align-middle text-right">
                         <div className="flex items-center justify-end gap-2 text-gray-500">
                           <button onClick={() => { setSelectedJob(job); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-lg hover:text-oms-blue transition-colors">
-                            <Eye size={18} />
+                            <Eye className="w-4 h-4 md:w-4.5 md:h-4.5" />
                           </button>
                           {profile?.role !== 'marketing' && (
                             <>
                               <button onClick={() => handleEdit(job)} className="p-2 hover:bg-gray-100 rounded-lg hover:text-oms-blue transition-colors">
-                                <Edit size={18} />
+                                <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
                               </button>
                               <button onClick={(e) => handleDelete(job.id, e)} className="p-2 hover:bg-red-50 rounded-lg hover:text-red-500 transition-colors">
-                                <Trash2 size={18} />
+                                <Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" />
                               </button>
                             </>
                           )}
@@ -462,7 +462,7 @@ export default function OrdersPage() {
                 {isEditing ? 'Edit Order' : 'New Order'}
               </h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <X size={20} />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -597,14 +597,14 @@ export default function OrdersPage() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-white border-2 border-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 px-4 py-2.5 bg-oms-blue text-white font-semibold rounded-xl hover:bg-oms-blue transition-colors -200 disabled:opacity-50"
+                  className="flex-1 px-4 py-2.5 bg-[#0000FF] text-white font-semibold rounded-lg hover:bg-[#0000CC] transition-colors shadow-sm disabled:opacity-50"
                 >
                   {submitting ? 'Saving...' : (isEditing ? 'Update Order' : 'Create Order')}
                 </button>
@@ -626,7 +626,7 @@ export default function OrdersPage() {
                 <p className="text-sm text-gray-500 mt-1">Ordered on {formatDate(selectedJob.order_date)}</p>
               </div>
               <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X size={20} />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -686,7 +686,7 @@ export default function OrdersPage() {
                 <button onClick={() => { setShowViewModal(false); handleEdit(selectedJob); }} className="flex-1 py-3 border border-[rgba(0,0,255,0.2)] text-oms-blue font-semibold rounded-xl hover:bg-[rgba(0,0,255,0.05)] transition-colors">
                   Edit Order
                 </button>
-                <button onClick={() => setShowViewModal(false)} className="flex-1 py-3 bg-oms-blue text-white font-semibold rounded-xl hover:bg-blue-600 transition-colors">
+                <button onClick={() => setShowViewModal(false)} className="flex-1 py-3 bg-[#0000FF] text-white font-semibold rounded-lg hover:bg-[#0000CC] transition-colors shadow-sm">
                   Close
                 </button>
               </div>

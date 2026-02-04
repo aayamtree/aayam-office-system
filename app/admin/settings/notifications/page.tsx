@@ -44,7 +44,7 @@ export default function NotificationSettings() {
             <div className="bg-white rounded-xl border border-gray-200 p-4">
                 <div className="flex items-start gap-2 md:gap-4">
                     <div className="w-12 h-12 bg-oms-blue rounded-full flex items-center justify-center flex-shrink-0">
-                        <Bell className="text-oms-blue" size={24} />
+                        <Bell className="w-6 h-6 text-oms-blue" />
                     </div>
                     <div className="flex-1">
                         <h2 className="text-section mb-2">Push Notifications</h2>
@@ -54,7 +54,7 @@ export default function NotificationSettings() {
 
                         {permission === 'granted' ? (
                             <div className="flex items-center gap-2 text-gray-900">
-                                <CheckCircle size={20} />
+                                <CheckCircle className="w-5 h-5" />
                                 <span className="font-medium">Notifications Enabled</span>
                             </div>
                         ) : permission === 'denied' ? (
@@ -70,7 +70,7 @@ export default function NotificationSettings() {
                         ) : (
                             <button
                                 onClick={requestPermission}
-                                className="px-4 py-2 bg-oms-blue text-white rounded-xl font-medium hover:bg-oms-blue transition-colors"
+                                className="px-4 py-2 bg-[#0000FF] text-white rounded-lg font-semibold hover:bg-[#0000CC] transition-colors shadow-sm"
                             >
                                 Enable Notifications
                             </button>

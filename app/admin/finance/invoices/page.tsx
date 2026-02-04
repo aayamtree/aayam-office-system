@@ -422,7 +422,7 @@ export default function InvoicesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
         <div className="flex items-center gap-2 md:gap-3">
           <Link href="/admin/finance" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
-            <ArrowLeft size={20} />
+            <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
             <h1 className="text-lg md:text-xl lg:text-page-title text-gray-900">Invoices</h1>
@@ -431,10 +431,10 @@ export default function InvoicesPage() {
         </div>
         <button
           onClick={handleAddNew}
-          className="flex items-center justify-center gap-2 bg-oms-blue text-white px-3 md:px-4 py-2 md:py-2.5 rounded-xl hover:bg-blue-600 transition-colors text-sm md:text-base"
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] shadow-sm font-semibold"
         >
-          <Plus size={16} className="md:hidden" />
-          <Plus size={18} className="hidden md:block" />
+          <Plus className="w-4 h-4 md:hidden" />
+          <Plus className="w-4 h-4 md:w-4.5 md:h-4.5 hidden md:block" />
           <span>New Invoice</span>
         </button>
       </div>
@@ -445,7 +445,7 @@ export default function InvoicesPage() {
           <div className="bg-gradient-to-r bg-white p-4 rounded-xl border border-[rgba(0,0,255,0.2)]-100">
             <div className="flex items-center gap-2 mb-3">
               <div className="p-2 bg-oms-blue rounded-lg">
-                <CheckCircle size={18} className="text-oms-blue" />
+                <CheckCircle className="w-4 h-4 md:w-4.5 md:h-4.5 text-oms-blue" />
               </div>
               <div>
                 <h3 className="font-bold text-gray-900">Completed Jobs Pending Invoice</h3>
@@ -467,7 +467,7 @@ export default function InvoicesPage() {
                     onClick={() => handleCreateFromJob(job)}
                     className="mt-3 w-full py-2 text-xs font-bold text-oms-blue bg-oms-blue hover:bg-oms-blue rounded-lg transition-colors flex items-center justify-center gap-1"
                   >
-                    <Plus size={14} /> Create Invoice
+                    <Plus className="w-3.5 h-3.5" /> Create Invoice
                   </button>
                 </div>
               ))}
@@ -494,7 +494,7 @@ export default function InvoicesPage() {
       {/* Search & Filter */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Search invoices by number, client..."
@@ -581,7 +581,7 @@ export default function InvoicesPage() {
                       {/* Due Date Info */}
                       {inv.due_date && (
                         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4 pb-4 border-b border-gray-100">
-                          <Calendar size={16} className="text-gray-400" />
+                          <Calendar className="w-4 h-4 text-gray-400" />
                           <span>Due: {formatDate(inv.due_date)}</span>
                         </div>
                       )}
@@ -590,9 +590,9 @@ export default function InvoicesPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleDownloadPDF(inv)}
-                          className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                          className="flex-1 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] font-semibold shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
                         >
-                          <Download size={18} />
+                          <Download className="w-4 h-4 md:w-4.5 md:h-4.5" />
                           <span className="hidden sm:inline">Download</span>
                         </button>
                         <button
@@ -600,14 +600,14 @@ export default function InvoicesPage() {
                           className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-xl font-medium hover:bg-gray-50 transition-colors"
                           aria-label="Share via WhatsApp"
                         >
-                          <MessageCircle size={18} />
+                          <MessageCircle className="w-4 h-4 md:w-4.5 md:h-4.5" />
                         </button>
                         <button
                           onClick={() => handleEdit(inv)}
                           className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-xl font-medium hover:bg-gray-50 transition-colors"
                           aria-label="Edit invoice"
                         >
-                          <Edit size={18} />
+                          <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
                         </button>
                       </div>
                     </div>
@@ -655,16 +655,16 @@ export default function InvoicesPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
                           <button onClick={() => { setSelectedInvoice(inv); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-lg" title="View">
-                            <Eye size={18} className="text-gray-500" />
+                            <Eye className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-500" />
                           </button>
                           <button onClick={() => handleWhatsAppShare(inv)} className="p-2 hover:bg-white rounded-lg" title="Share on WhatsApp">
-                            <MessageCircle size={18} className="text-green-500" />
+                            <MessageCircle className="w-4 h-4 md:w-4.5 md:h-4.5 text-green-500" />
                           </button>
                           <button onClick={() => handleDownloadPDF(inv)} className="p-2 hover:bg-oms-blue rounded-lg" title="Download PDF">
-                            <Download size={18} className="text-oms-blue" />
+                            <Download className="w-4 h-4 md:w-4.5 md:h-4.5 text-oms-blue" />
                           </button>
                           <button onClick={() => handleEdit(inv)} className="p-2 hover:bg-gray-100 rounded-lg" title="Edit">
-                            <Edit size={18} className="text-gray-500" />
+                            <Edit className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-500" />
                           </button>
                         </div>
                       </td>
@@ -687,7 +687,7 @@ export default function InvoicesPage() {
                   {isEditing ? 'Edit Invoice' : 'New Invoice'}
                 </h2>
                 <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                  <X size={20} />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
@@ -781,7 +781,7 @@ export default function InvoicesPage() {
                           <span className="font-medium text-gray-700 text-sm">{formatCurrency(item.amount)}</span>
                           {formData.items.length > 1 && (
                             <button type="button" onClick={() => removeItem(index)} className="text-red-500 hover:text-red-700 p-1">
-                              <X size={16} />
+                              <X className="w-4 h-4" />
                             </button>
                           )}
                         </div>
@@ -890,7 +890,7 @@ export default function InvoicesPage() {
                   </div>
                 </div>
                 <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                  <X size={20} />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
@@ -898,7 +898,7 @@ export default function InvoicesPage() {
                 {/* Client Info */}
                 <div className="flex items-center gap-2 md:gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
                   <div className="w-12 h-12 bg-oms-blue rounded-full flex items-center justify-center">
-                    <User size={24} className="text-oms-blue" />
+                    <User className="w-6 h-6 text-oms-blue" />
                   </div>
                   <div>
                     <h3 className="font-bold text-gray-900">{selectedInvoice.client?.company}</h3>
@@ -971,7 +971,7 @@ export default function InvoicesPage() {
                     disabled={pdfLoading}
                     className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-colors"
                   >
-                    {pdfLoading ? <Loader2 size={18} className="animate-spin" /> : <Printer size={18} />}
+                    {pdfLoading ? <Loader2 className="w-4 h-4 md:w-4.5 md:h-4.5 animate-spin" /> : <Printer className="w-4 h-4 md:w-4.5 md:h-4.5" />}
                     Print
                   </button>
                   <button
@@ -979,14 +979,14 @@ export default function InvoicesPage() {
                     disabled={pdfLoading}
                     className="flex items-center justify-center gap-2 px-4 py-3 bg-oms-blue text-white font-semibold rounded-xl hover:bg-blue-600 disabled:opacity-50 transition-colors"
                   >
-                    {pdfLoading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+                    {pdfLoading ? <Loader2 className="w-4 h-4 md:w-4.5 md:h-4.5 animate-spin" /> : <Download className="w-4 h-4 md:w-4.5 md:h-4.5" />}
                     Download PDF
                   </button>
                   <button
                     onClick={() => handleWhatsAppShare(selectedInvoice)}
                     className="col-span-2 flex items-center justify-center gap-2 px-4 py-3 bg-white0 text-white font-semibold rounded-xl hover:bg-green-600 transition-colors"
                   >
-                    <MessageCircle size={18} />
+                    <MessageCircle className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     Share on WhatsApp
                   </button>
                 </div>
@@ -997,7 +997,7 @@ export default function InvoicesPage() {
                     onClick={() => handlePaymentReminder(selectedInvoice)}
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white0 text-white font-semibold rounded-xl hover:bg-oms-orange transition-colors"
                   >
-                    <MessageCircle size={18} />
+                    <MessageCircle className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     Send Payment Reminder
                   </button>
                 )}

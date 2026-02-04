@@ -211,7 +211,7 @@ export default function ManualJournalPage() {
                                     </td>
                                     <td className="py-2 text-center">
                                         <button onClick={() => removeLine(line.id)} className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Trash2 size={16} />
+                                            <Trash2 className="w-4 h-4" />
                                         </button>
                                     </td>
                                 </tr>
@@ -220,7 +220,7 @@ export default function ManualJournalPage() {
                     </table>
 
                     <button onClick={addLine} className="mt-4 flex items-center gap-2 text-sm text-oms-blue font-medium hover:text-indigo-800">
-                        <Plus size={16} /> Add Line
+                        <Plus className="w-4 h-4" /> Add Line
                     </button>
                 </div>
 
@@ -245,7 +245,7 @@ export default function ManualJournalPage() {
                         className={`ml-4 px-4 py-2 rounded-xl font-bold text-white flex items-center gap-2 ${isBalanced ? 'bg-oms-blue hover:bg-oms-blue -200' : 'bg-gray-300 cursor-not-allowed'
                             }`}
                     >
-                        {loading ? 'Saving...' : <><Save size={18} /> Save Journal</>}
+                        {loading ? 'Saving...' : <><Save className="w-4 h-4 md:w-4.5 md:h-4.5" /> Save Journal</>}
                     </button>
                 </div>
             </div>
@@ -257,7 +257,7 @@ export default function ManualJournalPage() {
             {/* Success / Error Messages */}
             {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex gap-3 items-start">
-                    <AlertTriangle className="shrink-0 mt-0.5" size={20} />
+                    <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
                     <div>
                         <h3 className="font-bold">Error Saving Journal</h3>
                         <p className="text-sm mt-1">{error}</p>

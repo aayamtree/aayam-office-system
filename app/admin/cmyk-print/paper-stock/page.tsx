@@ -162,7 +162,7 @@ export default function PaperStockPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/cmyk-print" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
-            <ArrowLeft size={20} />
+            <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
             <h1 className="text-xl lg:text-page-title text-gray-900">Paper Stock</h1>
@@ -171,9 +171,9 @@ export default function PaperStockPage() {
         </div>
         <button
           onClick={handleAddNew}
-          className="flex items-center justify-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-xl hover:bg-blue-600 transition-colors"
+          className="flex items-center justify-center gap-2 bg-[#0000FF] text-white px-4 py-2.5 rounded-lg hover:bg-[#0000CC] shadow-sm font-semibold transition-colors"
         >
-          <Plus size={18} />
+          <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
           <span>Add Item</span>
         </button>
       </div>
@@ -182,7 +182,7 @@ export default function PaperStockPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white border border-green-200 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-1">
-            <Package size={16} className="text-gray-900" />
+            <Package className="w-4 h-4 text-gray-900" />
             <span className="text-xs text-gray-900 font-medium">In Stock</span>
           </div>
           <p className="text-page-title text-gray-900">
@@ -191,21 +191,21 @@ export default function PaperStockPage() {
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-1">
-            <TrendingDown size={16} className="text-oms-orange" />
+            <TrendingDown className="w-4 h-4 text-oms-orange" />
             <span className="text-xs text-oms-orange font-medium">Low Stock</span>
           </div>
           <p className="text-page-title text-amber-700">{loading ? '...' : lowStockCount}</p>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-1">
-            <AlertTriangle size={16} className="text-red-600" />
+            <AlertTriangle className="w-4 h-4 text-red-600" />
             <span className="text-xs text-red-600 font-medium">Out of Stock</span>
           </div>
           <p className="text-page-title text-red-700">{loading ? '...' : outOfStockCount}</p>
         </div>
         <div className="bg-oms-blue border border-[rgba(0,0,255,0.2)]-200 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-1">
-            <TrendingUp size={16} className="text-oms-blue" />
+            <TrendingUp className="w-4 h-4 text-oms-blue" />
             <span className="text-xs text-oms-blue font-medium">Stock Value</span>
           </div>
           <p className="text-page-title text-oms-blue">
@@ -217,7 +217,7 @@ export default function PaperStockPage() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Search items..."
@@ -257,7 +257,7 @@ export default function PaperStockPage() {
           const status = getStatus(item);
           return (
             <div key={item.id} className={`bg-white rounded-xl p-4 border ${status === 'out_of_stock' ? 'border-red-200' :
-                status === 'low_stock' ? 'border-gray-200' : 'border-gray-100'
+              status === 'low_stock' ? 'border-gray-200' : 'border-gray-100'
               }`}>
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 md:gap-4">
                 <div className="flex-1">
@@ -282,19 +282,19 @@ export default function PaperStockPage() {
                     onClick={() => handleRestock(item)}
                     className="flex items-center gap-1 px-3 py-2 bg-gray-100 text-gray-900 rounded-xl hover:bg-green-200 text-sm font-medium transition-colors"
                   >
-                    <Plus size={14} /> Restock
+                    <Plus className="w-3.5 h-3.5" /> Restock
                   </button>
                   <button
                     onClick={() => handleEdit(item)}
                     className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                   >
-                    <Edit size={16} />
+                    <Edit className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(item.id)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -312,7 +312,7 @@ export default function PaperStockPage() {
                 {isEditing ? 'Edit Item' : 'Add New Item'}
               </h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X size={20} />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -416,9 +416,9 @@ export default function PaperStockPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm font-semibold"
                 >
-                  {submitting && <Loader2 size={16} className="animate-spin" />}
+                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   {isEditing ? 'Update' : 'Add Item'}
                 </button>
               </div>
@@ -434,7 +434,7 @@ export default function PaperStockPage() {
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <h2 className="text-section text-gray-900">Restock Item</h2>
               <button onClick={() => setShowRestockModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X size={20} />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -471,7 +471,7 @@ export default function PaperStockPage() {
                   disabled={submitting || !restockQty}
                   className="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {submitting && <Loader2 size={16} className="animate-spin" />}
+                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   Restock
                 </button>
               </div>

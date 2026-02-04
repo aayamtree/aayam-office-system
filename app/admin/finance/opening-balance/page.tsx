@@ -67,7 +67,7 @@ export default function OpeningBalancePage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/finance" className="p-2 hover:bg-gray-100 rounded-lg">
-            <ArrowLeft size={20} />
+            <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
             <h1 className="text-page-title text-gray-900">Opening Balance</h1>
@@ -77,13 +77,13 @@ export default function OpeningBalancePage() {
         {openingBalance.isLocked ? (
           <button onClick={handleUnlock}
             className="flex items-center gap-2 bg-amber-100 text-amber-700 px-4 py-2.5 rounded-lg hover:bg-amber-200 font-medium">
-            <Edit size={18} />
+            <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
             <span>Unlock to Edit</span>
           </button>
         ) : (
           <button onClick={handleSave}
             className="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 font-medium">
-            <Save size={18} />
+            <Save className="w-4 h-4 md:w-4.5 md:h-4.5" />
             <span>Save & Lock</span>
           </button>
         )}
@@ -93,7 +93,7 @@ export default function OpeningBalancePage() {
       <div className={`rounded-xl p-4 flex items-center gap-3 ${openingBalance.isLocked ? 'bg-white border border-green-200' : 'bg-white border border-gray-200'}`}>
         {openingBalance.isLocked ? (
           <>
-            <CheckCircle className="text-gray-900 flex-shrink-0" size={20} />
+            <CheckCircle className="w-5 h-5 text-gray-900 flex-shrink-0" />
             <div>
               <p className="font-medium text-green-900">Opening Balance Locked</p>
               <p className="text-sm text-gray-900">As of {new Date(openingBalance.asOfDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
@@ -101,7 +101,7 @@ export default function OpeningBalancePage() {
           </>
         ) : (
           <>
-            <AlertCircle className="text-oms-orange flex-shrink-0" size={20} />
+            <AlertCircle className="w-5 h-5 text-oms-orange flex-shrink-0" />
             <div>
               <p className="font-medium text-amber-900">Editing Mode</p>
               <p className="text-sm text-amber-700">Make changes and save to lock the balances</p>
@@ -115,7 +115,7 @@ export default function OpeningBalancePage() {
         <div className="bg-white rounded-xl border p-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-              <Wallet className="text-gray-900" size={20} />
+              <Wallet className="w-5 h-5 text-gray-900" />
             </div>
             <span className="text-gray-600">Cash Opening</span>
           </div>
@@ -124,7 +124,7 @@ export default function OpeningBalancePage() {
         <div className="bg-white rounded-xl border p-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Building className="text-blue-600" size={20} />
+              <Building className="w-5 h-5 text-blue-600" />
             </div>
             <span className="text-gray-600">Bank Opening</span>
           </div>
@@ -133,7 +133,7 @@ export default function OpeningBalancePage() {
         <div className="bg-white rounded-xl border p-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-oms-blue rounded-lg flex items-center justify-center">
-              <IndianRupee className="text-oms-blue" size={20} />
+              <IndianRupee className="w-5 h-5 text-oms-blue" />
             </div>
             <span className="text-gray-600">Total Opening</span>
           </div>
@@ -145,7 +145,7 @@ export default function OpeningBalancePage() {
       <div className="bg-white rounded-xl border p-5">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-            <Wallet className="text-gray-900" size={20} />
+            <Wallet className="w-5 h-5 text-gray-900" />
           </div>
           <h2 className="text-section text-gray-900">Cash Opening Balance</h2>
         </div>
@@ -166,7 +166,7 @@ export default function OpeningBalancePage() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Building className="text-blue-600" size={20} />
+              <Building className="w-5 h-5 text-blue-600" />
             </div>
             <h2 className="text-section text-gray-900">Bank Opening Balances</h2>
           </div>
@@ -206,7 +206,7 @@ export default function OpeningBalancePage() {
       {/* Info Note */}
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
         <div className="flex items-start gap-3">
-          <AlertCircle className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
+          <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
           <div>
             <p className="font-medium text-blue-900">Important Note</p>
             <p className="text-sm text-blue-700 mt-1">

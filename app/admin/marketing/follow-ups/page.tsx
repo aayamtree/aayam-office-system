@@ -164,7 +164,7 @@ export default function MarketingFollowUpsPage() {
         <div className={`${headerBg} px-4 py-3 flex items-center justify-between`}>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-              <TypeIcon size={18} className="text-white" />
+              <TypeIcon className="w-4 h-4 md:w-4.5 md:h-4.5 text-white" />
             </div>
             <span className="text-white font-semibold text-sm md:text-base">
               {followUp.clientName}
@@ -188,11 +188,11 @@ export default function MarketingFollowUpsPage() {
 
           <div className="flex items-center gap-4 mb-4 text-sm text-gray-500">
             <span className="flex items-center gap-1">
-              <Calendar size={14} />
+              <Calendar className="w-3.5 h-3.5" />
               {formatDate(followUp.date)}
             </span>
             <span className="flex items-center gap-1">
-              <Clock size={14} />
+              <Clock className="w-3.5 h-3.5" />
               {followUp.time ? new Date(`2000-01-01T${followUp.time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : ''}
             </span>
           </div>
@@ -204,23 +204,23 @@ export default function MarketingFollowUpsPage() {
                 onClick={() => handleViewQuote(followUp)}
                 className="px-4 py-2 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
               >
-                <CheckCircle size={14} /> View Quote {followUp.quotationNumber}
+                <CheckCircle className="w-3.5 h-3.5" /> View Quote {followUp.quotationNumber}
               </button>
             ) : (
               <button
                 onClick={() => handleCreateQuote(followUp)}
-                className="px-4 py-2 bg-oms-blue text-white rounded-xl font-medium hover:bg-blue-600 transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-[#0000FF] text-white rounded-lg font-semibold hover:bg-[#0000CC] transition-colors flex items-center gap-2 shadow-sm"
               >
-                <FileText size={14} /> Create Quote
+                <FileText className="w-3.5 h-3.5" /> Create Quote
               </button>
             )}
 
             <div className="p-4 flex gap-1">
               <button onClick={() => handleEdit(followUp)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" aria-label="Edit follow-up">
-                <Edit size={18} />
+                <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
               </button>
               <button onClick={() => handleDelete(followUp.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" aria-label="Delete follow-up">
-                <Trash2 size={18} />
+                <Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" />
               </button>
             </div>
           </div>
@@ -240,9 +240,9 @@ export default function MarketingFollowUpsPage() {
           <p className="text-sm md:text-base text-gray-500">Track and manage your client follow-ups</p>
         </div>
         <button onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-oms-blue text-white px-3 md:px-4 py-2 md:py-2.5 rounded-lg hover:bg-oms-blue font-medium text-sm md:text-base w-full sm:w-auto justify-center">
-          <Plus size={16} className="md:hidden" />
-          <Plus size={18} className="hidden md:block" />
+          className="flex items-center gap-2 bg-[#0000FF] text-white px-3 md:px-4 py-2 md:py-2.5 rounded-lg hover:bg-[#0000CC] font-semibold shadow-sm text-sm md:text-base w-full sm:w-auto justify-center">
+          <Plus className="w-4 h-4 md:hidden" />
+          <Plus className="w-4.5 h-4.5 hidden md:block" />
           <span>Add Follow-up</span>
         </button>
       </div>
@@ -267,7 +267,7 @@ export default function MarketingFollowUpsPage() {
       <div className="bg-white rounded-xl border p-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input type="text" placeholder="Search follow-ups..." value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue" />
@@ -284,7 +284,7 @@ export default function MarketingFollowUpsPage() {
       {overdueFollowUps.length > 0 && (
         <div className="bg-red-50 rounded-xl border border-red-200 p-4">
           <div className="flex items-center gap-2 mb-3">
-            <AlertCircle className="text-red-600" size={20} />
+            <AlertCircle className="text-red-600 w-5 h-5" />
             <h2 className="font-semibold text-red-900">Overdue ({overdueFollowUps.length})</h2>
           </div>
           <div className="space-y-3">
@@ -320,7 +320,7 @@ export default function MarketingFollowUpsPage() {
           <div className="bg-white rounded-2xl w-full max-w-md">
             <div className="p-5 border-b flex items-center justify-between">
               <h2 className="text-page-title">{editingFollowUp ? 'Edit Follow-up' : 'Add Follow-up'}</h2>
-              <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+              <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div>
@@ -360,7 +360,7 @@ export default function MarketingFollowUpsPage() {
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-lg font-medium">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-lg font-medium hover:bg-oms-blue">
+                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg font-semibold hover:bg-[#0000CC] shadow-sm">
                   {submitting ? 'Saving...' : (editingFollowUp ? 'Update' : 'Add')}
                 </button>
               </div>

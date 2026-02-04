@@ -58,7 +58,7 @@ export default function ProfileSettingsPage() {
                     href="/admin/dashboard"
                     className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
                 >
-                    <ArrowLeft size={20} />
+                    <ArrowLeft className="w-5 h-5" />
                 </Link>
                 <div>
                     <h1 className="text-page-title text-gray-900">Profile Settings</h1>
@@ -110,7 +110,7 @@ export default function ProfileSettingsPage() {
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
                             <div className="flex items-center gap-2">
-                                <User size={16} />
+                                <User className="w-4 h-4" />
                                 Full Name
                             </div>
                         </label>
@@ -127,7 +127,7 @@ export default function ProfileSettingsPage() {
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
                             <div className="flex items-center gap-2">
-                                <Mail size={16} />
+                                <Mail className="w-4 h-4" />
                                 Email
                             </div>
                         </label>
@@ -144,7 +144,7 @@ export default function ProfileSettingsPage() {
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
                             <div className="flex items-center gap-2">
-                                <Phone size={16} />
+                                <Phone className="w-4 h-4" />
                                 Phone Number
                             </div>
                         </label>
@@ -182,9 +182,9 @@ export default function ProfileSettingsPage() {
                         <button
                             type="submit"
                             disabled={saving}
-                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-oms-blue text-white font-semibold rounded-xl hover:bg-oms-blue transition-colors disabled:opacity-50"
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#0000FF] text-white font-semibold rounded-lg hover:bg-[#0000CC] transition-colors disabled:opacity-50 shadow-sm"
                         >
-                            <Save size={18} />
+                            <Save className="w-4 h-4 md:w-4.5 md:h-4.5" />
                             {saving ? 'Saving...' : 'Save Changes'}
                         </button>
                     </div>

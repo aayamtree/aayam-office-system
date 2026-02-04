@@ -160,7 +160,7 @@ export default function CashBookPage() {
                         onClick={() => router.back()}
                         className="p-2 hover:bg-gray-100 rounded-lg flex-shrink-0"
                     >
-                        <ArrowLeft size={20} />
+                        <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div className="min-w-0">
                         <h1 className="text-xl md:text-page-title truncate">Cash Book Report</h1>
@@ -174,21 +174,21 @@ export default function CashBookPage() {
                         onClick={handlePrint}
                         className="flex items-center gap-1.5 px-3 py-2 border rounded-xl hover:bg-gray-50 text-sm font-medium whitespace-nowrap"
                     >
-                        <Printer size={16} />
+                        <Printer className="w-4 h-4" />
                         Print
                     </button>
                     <button
                         onClick={handleExportExcel}
                         className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 text-sm font-medium whitespace-nowrap"
                     >
-                        <FileSpreadsheet size={16} />
+                        <FileSpreadsheet className="w-4 h-4" />
                         Export Excel
                     </button>
                     <button
                         onClick={handleExportCSV}
                         className="flex items-center gap-1.5 px-3 py-2 border rounded-xl hover:bg-gray-50 text-sm font-medium whitespace-nowrap"
                     >
-                        <Download size={16} />
+                        <Download className="w-4 h-4" />
                         CSV
                     </button>
                 </div>
@@ -198,7 +198,7 @@ export default function CashBookPage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 md:p-4 border border-blue-200">
                     <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
-                        <Wallet className="text-blue-600 flex-shrink-0" size={16} />
+                        <Wallet className="w-4 h-4 text-blue-600 flex-shrink-0" />
                         <p className="text-xs md:text-sm font-medium text-blue-900 truncate">Current Balance</p>
                     </div>
                     <p className="text-lg md:text-page-title text-blue-900 truncate">₹{currentCashBalance.toLocaleString()}</p>
@@ -206,7 +206,7 @@ export default function CashBookPage() {
 
                 <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-3 md:p-4 border border-green-200">
                     <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
-                        <TrendingDown className="text-gray-900 flex-shrink-0" size={16} />
+                        <TrendingDown className="w-4 h-4 text-gray-900 flex-shrink-0" />
                         <p className="text-xs md:text-sm font-medium text-green-900 truncate">Total Cash In</p>
                     </div>
                     <p className="text-lg md:text-page-title text-green-900 truncate">₹{totalCashIn.toLocaleString()}</p>
@@ -215,7 +215,7 @@ export default function CashBookPage() {
 
                 <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-3 md:p-4 border border-red-200">
                     <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
-                        <TrendingUp className="text-red-600 flex-shrink-0" size={16} />
+                        <TrendingUp className="w-4 h-4 text-red-600 flex-shrink-0" />
                         <p className="text-xs md:text-sm font-medium text-red-900 truncate">Total Cash Out</p>
                     </div>
                     <p className="text-lg md:text-page-title text-red-900 truncate">₹{totalCashOut.toLocaleString()}</p>
@@ -224,7 +224,7 @@ export default function CashBookPage() {
 
                 <div className={`bg-gradient-to-br rounded-xl p-3 md:p-4 border ${netCash >= 0 ? 'bg-oms-blue border-[rgba(0,0,255,0.2)]-200' : 'from-orange-50 to-orange-100 border-orange-200'}`}>
                     <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
-                        <TrendingUp className={`flex-shrink-0 ${netCash >= 0 ? 'text-oms-blue' : 'text-orange-600'}`} size={16} />
+                        <TrendingUp className={`w-4 h-4 flex-shrink-0 ${netCash >= 0 ? 'text-oms-blue' : 'text-orange-600'}`} />
                         <p className={`text-xs md:text-sm font-medium truncate ${netCash >= 0 ? 'text-indigo-900' : 'text-orange-900'}`}>Net Change</p>
                     </div>
                     <p className={`text-lg md:text-page-title truncate ${netCash >= 0 ? 'text-indigo-900' : 'text-orange-900'}`}>

@@ -363,7 +363,7 @@ export default function JobsPage() {
       </h4>
 
       <div className="flex items-center gap-2 mb-4">
-        <Building2 size={14} className="text-gray-400" />
+        <Building2 className="w-3.5 h-3.5 text-gray-400" />
         <p className="text-sm text-gray-500 truncate">{job.client?.name || 'No client'}</p>
       </div>
 
@@ -374,7 +374,7 @@ export default function JobsPage() {
 
         {job.client_deadline && (
           <span className={`flex items-center gap-1.5 font-medium ${isOverdue(job.client_deadline, job.current_stage) ? 'text-red-600' : 'text-gray-400'}`}>
-            <Calendar size={14} />
+            <Calendar className="w-3.5 h-3.5" />
             {formatDate(job.client_deadline)}
           </span>
         )}
@@ -386,14 +386,14 @@ export default function JobsPage() {
           className="p-2 bg-white hover:bg-gray-100 text-gray-600 rounded-lg transition-colors"
           title="Edit"
         >
-          <Edit size={14} />
+          <Edit className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); handleAddPayment(job); }}
           className="p-2 bg-white hover:bg-gray-100 text-gray-900 rounded-lg transition-colors"
           title="Add Payment"
         >
-          <IndianRupee size={14} />
+          <IndianRupee className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>
@@ -411,8 +411,8 @@ export default function JobsPage() {
           onClick={handleAddNew}
           className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-blue-600 text-white px-4 md:px-5 py-2.5 md:py-3 rounded-xl transition-all hover:scale-105 active:scale-95 text-sm md:text-base"
         >
-          <Plus size={18} className="md:hidden" />
-          <Plus size={20} className="hidden md:block" />
+          <Plus className="w-4 h-4 md:w-4.5 md:h-4.5 md:hidden" />
+          <Plus className="w-5 h-5 hidden md:block" />
           <span className="font-medium">New Job</span>
         </button>
       </div>
@@ -446,30 +446,30 @@ export default function JobsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
         <Link href="/admin/print-planner" className="flex items-center gap-2 md:gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-oms-blue/20 transition-all group">
           <div className="w-12 h-12 bg-oms-blue rounded-xl flex items-center justify-center transition-colors">
-            <Layers size={24} className="text-white" />
+            <Layers className="w-6 h-6 text-white" />
           </div>
           <div>
             <h3 className="font-bold text-gray-900">Print Planner</h3>
             <p className="text-sm text-gray-500">Create production batches</p>
           </div>
-          <ArrowRight size={20} className="ml-auto text-gray-300 group-hover:text-oms-blue" />
+          <ArrowRight className="w-5 h-5 ml-auto text-gray-300 group-hover:text-oms-blue" />
         </Link>
         <Link href="/admin/production-queue" className="flex items-center gap-2 md:gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-oms-blue/20 transition-all group">
           <div className="w-12 h-12 bg-oms-blue rounded-xl flex items-center justify-center transition-colors">
-            <Printer size={24} className="text-white" />
+            <Printer className="w-6 h-6 text-white" />
           </div>
           <div>
             <h3 className="font-bold text-gray-900">Production Queue</h3>
             <p className="text-sm text-gray-500">Track job status</p>
           </div>
-          <ArrowRight size={20} className="ml-auto text-gray-300 group-hover:text-oms-blue" />
+          <ArrowRight className="w-5 h-5 ml-auto text-gray-300 group-hover:text-oms-blue" />
         </Link>
       </div>
 
       {/* Filters & Controls */}
       <div className="flex flex-col xl:flex-row gap-3 md:gap-4 bg-white p-3 md:p-4 rounded-xl md:rounded-2xl  border border-gray-100">
         <div className="relative flex-1">
-          <Search size={18} className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Search jobs, clients, or numbers..."
@@ -506,16 +506,16 @@ export default function JobsPage() {
               className={`p-2 md:p-2.5 rounded-md md:rounded-lg transition-all ${viewMode === 'kanban' ? 'bg-white shadow text-oms-blue' : 'text-gray-500 hover:text-gray-700'}`}
               title="Board View"
             >
-              <LayoutGrid size={18} className="md:hidden" />
-              <LayoutGrid size={20} className="hidden md:block" />
+              <LayoutGrid className="w-4 h-4 md:w-4.5 md:h-4.5 md:hidden" />
+              <LayoutGrid className="w-5 h-5 hidden md:block" />
             </button>
             <button
               onClick={() => setViewMode('list')}
               className={`p-2 md:p-2.5 rounded-md md:rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow text-oms-blue' : 'text-gray-500 hover:text-gray-700'}`}
               title="List View"
             >
-              <List size={18} className="md:hidden" />
-              <List size={20} className="hidden md:block" />
+              <List className="w-4 h-4 md:w-4.5 md:h-4.5 md:hidden" />
+              <List className="w-5 h-5 hidden md:block" />
             </button>
           </div>
         </div>
@@ -526,7 +526,7 @@ export default function JobsPage() {
         filteredJobs.length === 0 && (
           <div className="text-center py-24 bg-white rounded-3xl border border-dashed border-gray-300">
             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
-              <Briefcase size={32} className="text-gray-400" />
+              <Briefcase className="w-8 h-8 text-gray-400" />
             </div>
             <h3 className="text-section text-gray-900 mb-2">No jobs found</h3>
             <p className="text-gray-500 mb-3 md:mb-1.5 max-w-sm mx-auto">
@@ -536,7 +536,7 @@ export default function JobsPage() {
               onClick={handleAddNew}
               className="inline-flex items-center gap-2 bg-oms-blue hover:opacity-90 text-white px-4 py-2 rounded-xl font-medium transition-colors -200"
             >
-              <Plus size={20} />
+              <Plus className="w-5 h-5" />
               <span>Create New Job</span>
             </button>
           </div>
@@ -623,8 +623,8 @@ export default function JobsPage() {
                       </td>
                       <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
-                          <button onClick={() => handleEdit(job)} className="p-2 hover:bg-gray-100 rounded-lg"><Edit size={16} className="text-gray-500" /></button>
-                          <button onClick={() => handleDelete(job.id)} className="p-2 hover:bg-red-50 rounded-lg"><Trash2 size={16} className="text-red-500" /></button>
+                          <button onClick={() => handleEdit(job)} className="p-2 hover:bg-gray-100 rounded-lg"><Edit className="w-4 h-4 text-gray-500" /></button>
+                          <button onClick={() => handleDelete(job.id)} className="p-2 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4 text-red-500" /></button>
                         </div>
                       </td>
                     </tr>
@@ -643,7 +643,7 @@ export default function JobsPage() {
             <div className="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto animate-scale-in">
               <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white rounded-t-2xl z-10">
                 <h2 className="text-section">{editingJob ? 'Edit Job' : 'New Job'}</h2>
-                <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+                <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
               </div>
               <form onSubmit={handleSubmit} className="p-4 space-y-4">
                 <div>
@@ -662,7 +662,7 @@ export default function JobsPage() {
                     </select>
                     <button type="button" onClick={() => setShowAddClientModal(true)}
                       className="px-3 py-2 bg-oms-blue text-white rounded-xl hover:bg-oms-blue flex items-center gap-1">
-                      <UserPlus size={16} /><span className="hidden sm:inline">Add</span>
+                      <Plus className="w-4 h-4" /><span className="hidden sm:inline">Add</span>
                     </button>
                   </div>
                 </div>
@@ -757,7 +757,7 @@ export default function JobsPage() {
                     </select>
                     <button type="button" onClick={() => setShowAddVendorModal(true)}
                       className="px-3 py-2 bg-orange-100 text-orange-700 rounded-xl hover:bg-orange-200 flex items-center gap-1">
-                      <UserPlus size={16} /><span className="hidden sm:inline">Add</span>
+                      <Plus className="w-4 h-4" /><span className="hidden sm:inline">Add</span>
                     </button>
                   </div>
                 </div>
@@ -803,7 +803,7 @@ export default function JobsPage() {
                     disabled={saving}
                     className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {saving && <Loader2 size={16} className="animate-spin" />}
+                    {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                     {editingJob ? 'Update Job' : 'Create Job'}
                   </button>
                 </div>

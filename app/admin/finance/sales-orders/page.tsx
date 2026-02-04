@@ -123,15 +123,15 @@ export default function SalesOrdersPage() {
                     <h1 className="text-page-title text-gray-900">Sales Orders</h1>
                     <p className="text-gray-500">Manage incoming orders and initiate workflows.</p>
                 </div>
-                <button onClick={handleAddNew} className="flex items-center justify-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-xl hover:bg-oms-blue transition-colors">
-                    <Plus size={18} /> New Sales Order
+                <button onClick={handleAddNew} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] shadow-sm font-semibold transition-colors">
+                    <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" /> New Sales Order
                 </button>
             </div>
 
             {/* Filter Bar */}
             <div className="flex flex-col sm:flex-row gap-2 md:gap-4">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                         type="text"
                         placeholder="Search orders..."
@@ -171,9 +171,9 @@ export default function SalesOrdersPage() {
                                     <td className="p-4">
                                         <p className="text-sm text-gray-900 font-medium">{so.project_name}</p>
                                         <div className="flex gap-2 mt-1">
-                                            {so.work_type === 'design_only' && <span className="inline-flex items-center gap-1 text-[10px] bg-oms-blue text-white px-1.5 py-0.5 rounded border border-[rgba(0,0,255,0.2)]-100"><Palette size={10} /> Design</span>}
-                                            {so.work_type === 'print_only' && <span className="inline-flex items-center gap-1 text-[10px] bg-oms-blue text-white px-1.5 py-0.5 rounded border border-[rgba(0,0,255,0.2)]-100"><Printer size={10} /> Print</span>}
-                                            {so.work_type === 'design_and_print' && <span className="inline-flex items-center gap-1 text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100"><Layers size={10} /> Full</span>}
+                                            {so.work_type === 'design_only' && <span className="inline-flex items-center gap-1 text-[10px] bg-oms-blue text-white px-1.5 py-0.5 rounded border border-[rgba(0,0,255,0.2)]-100"><Palette className="w-2.5 h-2.5" /> Design</span>}
+                                            {so.work_type === 'print_only' && <span className="inline-flex items-center gap-1 text-[10px] bg-oms-blue text-white px-1.5 py-0.5 rounded border border-[rgba(0,0,255,0.2)]-100"><Printer className="w-2.5 h-2.5" /> Print</span>}
+                                            {so.work_type === 'design_and_print' && <span className="inline-flex items-center gap-1 text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100"><Layers className="w-2.5 h-2.5" /> Full</span>}
                                         </div>
                                     </td>
                                     <td className="p-4 font-medium text-gray-900">₹{so.total_amount}</td>
@@ -185,8 +185,8 @@ export default function SalesOrdersPage() {
                                     <td className="p-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             {so.status === 'draft' && (
-                                                <button onClick={() => handleConfirmOrder(so)} className="text-xs bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 flex items-center gap-1">
-                                                    Confirm <ArrowRight size={12} />
+                                                <button onClick={() => handleConfirmOrder(so)} className="text-xs px-3 py-1 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] font-semibold flex items-center gap-1 shadow-sm transition-colors">
+                                                    Confirm <ArrowRight className="w-3 h-3" />
                                                 </button>
                                             )}
 
@@ -196,12 +196,12 @@ export default function SalesOrdersPage() {
                                                 <>
                                                     {so.work_type.includes('design') && (
                                                         <Link href="/admin/designers" className="p-1.5 text-oms-blue hover:bg-oms-blue rounded-lg" title="View Design">
-                                                            <Palette size={16} />
+                                                            <Palette className="w-4 h-4" />
                                                         </Link>
                                                     )}
                                                     {(so.work_type === 'print_only' || so.status === 'completed') && (
                                                         <Link href="/admin/jobs" className="p-1.5 text-oms-blue hover:bg-oms-blue rounded-lg" title="View Job">
-                                                            <Printer size={16} />
+                                                            <Printer className="w-4 h-4" />
                                                         </Link>
                                                     )}
                                                 </>
@@ -224,7 +224,7 @@ export default function SalesOrdersPage() {
                                 {isEditing ? 'Edit Order' : 'New Sales Order'}
                             </h3>
                             <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
-                                <X size={20} />
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-4 space-y-4">
@@ -250,11 +250,11 @@ export default function SalesOrdersPage() {
                                         type="button"
                                         onClick={() => setFormData({ ...formData, workType: type.id as any })}
                                         className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${formData.workType === type.id
-                                                ? 'border-oms-blue bg-oms-blue text-white'
-                                                : 'border-gray-200 hover:border-oms-blue/20 text-gray-600'
+                                            ? 'border-oms-blue bg-oms-blue text-white'
+                                            : 'border-gray-200 hover:border-oms-blue/20 text-gray-600'
                                             }`}
                                     >
-                                        <type.icon size={20} className="mb-1" />
+                                        <type.icon className="w-5 h-5 mb-1" />
                                         <span className="text-label">{type.label}</span>
                                     </button>
                                 ))}

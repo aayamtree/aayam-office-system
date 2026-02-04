@@ -235,9 +235,9 @@ export default function BankingPage() {
                     <button
                         onClick={() => setShowImportModal(true)}
                         disabled={!selectedAccountId}
-                        className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 bg-oms-blue text-white rounded-xl hover:bg-oms-blue disabled:opacity-50 whitespace-nowrap text-sm font-medium"
+                        className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] disabled:opacity-50 whitespace-nowrap text-sm font-semibold shadow-sm"
                     >
-                        <Upload size={16} /> Import Statement
+                        <Upload className="w-4 h-4" /> Import Statement
                     </button>
                 </div>
             </div>
@@ -246,7 +246,7 @@ export default function BankingPage() {
             {successMessage && (
                 <div className="bg-white border border-green-200 rounded-xl p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <CheckCircle size={24} className="text-gray-900" />
+                        <CheckCircle className="w-6 h-6 text-gray-900" />
                         <p className="text-green-800 font-medium">{successMessage}</p>
                     </div>
                     <button
@@ -262,7 +262,7 @@ export default function BankingPage() {
             {errorMessage && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <AlertTriangle size={24} className="text-red-600" />
+                        <AlertTriangle className="w-6 h-6 text-red-600" />
                         <p className="text-red-800 font-medium">{errorMessage}</p>
                     </div>
                     <button
@@ -356,25 +356,25 @@ export default function BankingPage() {
                                         {txn.is_verified ? (
                                             <div className="flex flex-col items-center gap-1">
                                                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-900 rounded-full text-label">
-                                                    <CheckCircle size={12} /> Verified
+                                                    <CheckCircle className="w-3 h-3" /> Verified
                                                 </span>
                                                 {getCategoryName(txn) && (
                                                     <span className="inline-flex items-center gap-1 px-2 py-1 bg-oms-blue text-white rounded-full text-xs">
-                                                        <Tag size={10} /> {getCategoryName(txn)}
+                                                        <Tag className="w-2.5 h-2.5" /> {getCategoryName(txn)}
                                                     </span>
                                                 )}
                                             </div>
                                         ) : txn.status === 'matched' ? (
                                             <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-label">
-                                                <CheckCircle size={12} /> Matched
+                                                <CheckCircle className="w-3 h-3" /> Matched
                                             </span>
                                         ) : txn.status === 'ignored' ? (
                                             <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-200 text-gray-600 rounded-full text-label">
-                                                <EyeOff size={12} /> Ignored
+                                                <EyeOff className="w-3 h-3" /> Ignored
                                             </span>
                                         ) : (
                                             <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-full text-label">
-                                                <AlertTriangle size={12} /> Missing
+                                                <AlertTriangle className="w-3 h-3" /> Missing
                                             </span>
                                         )}
                                     </td>
@@ -399,7 +399,7 @@ export default function BankingPage() {
                                                     className="p-1.5 hover:bg-oms-blue text-gray-600 hover:text-oms-blue rounded-lg transition-colors"
                                                     title="Categorize Transaction"
                                                 >
-                                                    <Edit3 size={16} />
+                                                    <Edit3 className="w-4 h-4" />
                                                 </button>
                                             )}
 
@@ -410,7 +410,7 @@ export default function BankingPage() {
                                                     className="p-1.5 hover:bg-blue-50 text-gray-400 hover:text-blue-500 rounded-lg transition-colors"
                                                     title="Un-ignore (Track again)"
                                                 >
-                                                    <Eye size={16} />
+                                                    <Eye className="w-4 h-4" />
                                                 </button>
                                             ) : (
                                                 <button
@@ -418,7 +418,7 @@ export default function BankingPage() {
                                                     className="p-1.5 hover:bg-gray-100 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
                                                     title="Ignore (Don't track)"
                                                 >
-                                                    <EyeOff size={16} />
+                                                    <EyeOff className="w-4 h-4" />
                                                 </button>
                                             )}
 
@@ -428,7 +428,7 @@ export default function BankingPage() {
                                                 className="p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
                                                 title="Delete Permanently"
                                             >
-                                                <Trash2 size={16} />
+                                                <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>
                                     </td>
@@ -478,7 +478,7 @@ export default function BankingPage() {
                                     }}
                                     className="text-xs text-oms-blue font-medium hover:underline flex items-center gap-1"
                                 >
-                                    <ClipboardCopy size={12} /> Paste from Clipboard
+                                    <ClipboardCopy className="w-3 h-3" /> Paste from Clipboard
                                 </button>
                             </div>
                             <textarea
@@ -492,7 +492,7 @@ export default function BankingPage() {
                                 <button
                                     onClick={handleParse}
                                     disabled={!importText || parsing}
-                                    className="px-6 py-2 bg-oms-blue text-white rounded-lg hover:bg-oms-blue disabled:opacity-50"
+                                    className="px-6 py-2 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] disabled:opacity-50 font-semibold shadow-sm"
                                 >
                                     {parsing ? 'Parsing...' : 'Process & Import'}
                                 </button>

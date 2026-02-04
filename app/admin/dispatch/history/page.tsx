@@ -84,7 +84,7 @@ export default function DispatchHistoryPage() {
   return (
     <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 px-2 animate-fade-in">
       <div className="flex items-center gap-3">
-        <Link href="/admin/dispatch" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden"><ArrowLeft size={20} /></Link>
+        <Link href="/admin/dispatch" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden"><ArrowLeft className="w-5 h-5" /></Link>
         <div>
           <h1 className="text-xl lg:text-page-title text-gray-900">Dispatch History</h1>
           <p className="text-sm text-gray-500">{filteredDispatches.length} records</p>
@@ -108,7 +108,7 @@ export default function DispatchHistoryPage() {
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue" />
         </div>
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue">
@@ -153,15 +153,15 @@ export default function DispatchHistoryPage() {
                   {dispatch.actual_delivery && <span className="ml-3 text-gray-900">Delivered: {new Date(dispatch.actual_delivery).toLocaleDateString()}</span>}
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => handleWhatsAppShare(dispatch)} className="px-3 py-1.5 text-sm text-gray-900 hover:bg-white rounded-lg flex items-center gap-1"><MessageCircle size={14} /> WhatsApp</button>
+                  <button onClick={() => handleWhatsAppShare(dispatch)} className="px-3 py-1.5 text-sm text-gray-900 hover:bg-white rounded-lg flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> WhatsApp</button>
 
                   {dispatch.status === 'dispatched' || dispatch.status === 'in_transit' ? (
                     <>
-                      <button onClick={() => handleView(dispatch)} className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg flex items-center gap-1"><Eye size={14} /> View</button>
-                      <button onClick={() => handleMarkDelivered(dispatch)} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 text-sm"><CheckCircle size={14} /> Delivered</button>
+                      <button onClick={() => handleView(dispatch)} className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg flex items-center gap-1"><Eye className="w-3.5 h-3.5" /> View</button>
+                      <button onClick={() => handleMarkDelivered(dispatch)} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm shadow-sm font-semibold"><CheckCircle className="w-3.5 h-3.5" /> Delivered</button>
                     </>
                   ) : (
-                    <button onClick={() => handleView(dispatch)} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 text-sm"><Eye size={16} /> View</button>
+                    <button onClick={() => handleView(dispatch)} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-semibold"><Eye className="w-4 h-4" /> View</button>
                   )}
                 </div>
               </div>
@@ -175,11 +175,11 @@ export default function DispatchHistoryPage() {
           <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <h2 className="text-section text-gray-900">Dispatch Details</h2>
-              <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+              <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-4 space-y-4">
               <div className={`p-4 rounded-xl text-center ${selectedDispatch.status === 'delivered' ? 'bg-white' : 'bg-blue-50'}`}>
-                {selectedDispatch.status === 'delivered' ? <CheckCircle size={32} className="mx-auto mb-2 text-gray-900" /> : <Truck size={32} className="mx-auto mb-2 text-blue-600" />}
+                {selectedDispatch.status === 'delivered' ? <CheckCircle className="w-8 h-8 mx-auto mb-2 text-gray-900" /> : <Truck className="w-8 h-8 mx-auto mb-2 text-blue-600" />}
                 <p className="text-section">{getStatusLabel(selectedDispatch.status)}</p>
               </div>
 
@@ -219,7 +219,7 @@ export default function DispatchHistoryPage() {
                 {selectedDispatch.actual_delivery && <div className="p-3 bg-white rounded-xl"><p className="text-xs text-gray-900">Delivered</p><p className="font-medium text-gray-900">{new Date(selectedDispatch.actual_delivery).toLocaleDateString()}</p></div>}
               </div>
 
-              <button onClick={() => setShowViewModal(false)} className="w-full px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-blue-600">Close</button>
+              <button onClick={() => setShowViewModal(false)} className="w-full px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] shadow-sm font-semibold">Close</button>
             </div>
           </div>
         </div>

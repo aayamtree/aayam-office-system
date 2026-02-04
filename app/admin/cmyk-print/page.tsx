@@ -75,7 +75,7 @@ export default function CMYKPrintPage() {
           <div key={stat.label} className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-4 border border-gray-100">
             <div className="flex items-center gap-3 mb-3">
               <div className={`w-10 h-10 ${stat.color} rounded-xl flex items-center justify-center`}>
-                <stat.icon size={20} className="text-white" />
+                <stat.icon className="w-5 h-5 text-white" />
               </div>
             </div>
             <p className="text-2xl lg:text-page-title text-gray-900">
@@ -93,7 +93,7 @@ export default function CMYKPrintPage() {
         <Link href="/admin/cmyk-print/retail-pos" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  transition-shadow group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
             <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <ShoppingCart size={24} className="text-gray-900" />
+              <ShoppingCart className="w-6 h-6 text-gray-900" />
             </div>
             <div>
               <h2 className="text-section text-gray-900">Retail POS</h2>
@@ -106,7 +106,7 @@ export default function CMYKPrintPage() {
         <Link href="/admin/cmyk-print/paper-stock" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  transition-shadow group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
             <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Package size={24} className="text-blue-600" />
+              <Package className="w-6 h-6 text-blue-600" />
             </div>
             <div>
               <h2 className="text-section text-gray-900">Paper Stock</h2>
@@ -187,7 +187,7 @@ export default function CMYKPrintPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${lowStockItems.length > 0 ? 'bg-red-100' : 'bg-gray-100'}`}>
-              <Package size={20} className={lowStockItems.length > 0 ? 'text-red-600' : 'text-gray-900'} />
+              <Package className={`w-5 h-5 ${lowStockItems.length > 0 ? 'text-red-600' : 'text-gray-900'}`} />
             </div>
             <div>
               <h2 className={`text-base sm:text-section ${lowStockItems.length > 0 ? 'text-red-900' : 'text-green-900'}`}>

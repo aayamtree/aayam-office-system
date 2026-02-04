@@ -28,7 +28,7 @@ export default function AccountsPage() {
                         onClick={() => { refreshBanks(); refreshCash(); }}
                         className="flex items-center gap-2 px-4 py-2 bg-white border rounded-xl hover:bg-gray-50"
                     >
-                        <RefreshCw size={18} />
+                        <RefreshCw className="w-4 h-4 md:w-4.5 md:h-4.5" />
                         Refresh
                     </button>
                 </div>
@@ -55,7 +55,7 @@ export default function AccountsPage() {
                 <div className="p-5 border-b flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                            <Building2 className="text-blue-600" size={20} />
+                            <Building2 className="w-5 h-5 text-blue-600" />
                         </div>
                         <div>
                             <h2 className="text-section text-gray-900">Bank Accounts</h2>
@@ -66,7 +66,7 @@ export default function AccountsPage() {
                         onClick={() => setShowAddBank(true)}
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
                     >
-                        <Plus size={18} />
+                        <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
                         Add Bank Account
                     </button>
                 </div>
@@ -128,7 +128,7 @@ export default function AccountsPage() {
                 <div className="p-5 border-b flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
-                            <Wallet className="text-gray-900" size={20} />
+                            <Wallet className="w-5 h-5 text-gray-900" />
                         </div>
                         <div>
                             <h2 className="text-section text-gray-900">Cash Accounts</h2>
@@ -139,7 +139,7 @@ export default function AccountsPage() {
                         onClick={() => setShowAddCash(true)}
                         className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700"
                     >
-                        <Plus size={18} />
+                        <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
                         Add Cash Account
                     </button>
                 </div>

@@ -74,10 +74,10 @@ export default function DailyFinancePage() {
                 </div>
                 <button
                     onClick={loadData}
-                    className="flex items-center gap-2 px-4 py-2 bg-white border rounded-xl hover:bg-gray-50"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] font-semibold transition-colors shadow-sm"
                     disabled={loading}
                 >
-                    <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                    <RefreshCw className={`w-4 h-4 md:w-4.5 md:h-4.5 ${loading ? 'animate-spin' : ''}`} />
                     Refresh
                 </button>
             </div>
@@ -91,16 +91,16 @@ export default function DailyFinancePage() {
                     </div>
                     <Link
                         href="/admin/finance/accounts"
-                        className="text-sm bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg"
+                        className="text-sm bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg flex items-center gap-1"
                     >
-                        View Accounts →
+                        <Wallet className="w-3.5 h-3.5" />Accounts →
                     </Link>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 md:gap-4">
                     <div className="bg-white/10 rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-2">
-                            <Building2 size={18} />
+                            <Building2 className="w-4 h-4 md:w-4.5 md:h-4.5" />
                             <p className="text-sm opacity-90">Bank Accounts</p>
                         </div>
                         <p className="text-page-title">₹{totalBanks.toLocaleString()}</p>
@@ -109,7 +109,7 @@ export default function DailyFinancePage() {
 
                     <div className="bg-white/10 rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-2">
-                            <Wallet size={18} />
+                            <Wallet className="w-4 h-4 md:w-4.5 md:h-4.5" />
                             <p className="text-sm opacity-90">Cash</p>
                         </div>
                         <p className="text-page-title">₹{totalCash.toLocaleString()}</p>
@@ -125,7 +125,7 @@ export default function DailyFinancePage() {
                 <div className="grid grid-cols-3 gap-2 md:gap-4">
                     <div className="bg-white rounded-xl p-4">
                         <div className="flex items-center gap-2 text-gray-900 mb-2">
-                            <ArrowDownRight size={20} />
+                            <ArrowDownRight className="w-5 h-5" />
                             <p className="text-sm font-medium">Money IN</p>
                         </div>
                         <p className="text-page-title text-gray-900">₹{todayIncome.toLocaleString()}</p>
@@ -134,7 +134,7 @@ export default function DailyFinancePage() {
 
                     <div className="bg-red-50 rounded-xl p-4">
                         <div className="flex items-center gap-2 text-red-600 mb-2">
-                            <ArrowUpRight size={20} />
+                            <ArrowUpRight className="w-5 h-5" />
                             <p className="text-sm font-medium">Money OUT</p>
                         </div>
                         <p className="text-page-title text-red-700">₹{todayExpense.toLocaleString()}</p>
@@ -143,7 +143,7 @@ export default function DailyFinancePage() {
 
                     <div className={`rounded-xl p-4 ${netChange >= 0 ? 'bg-blue-50' : 'bg-orange-50'}`}>
                         <div className={`flex items-center gap-2 mb-2 ${netChange >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
-                            <TrendingUp size={20} />
+                            <TrendingUp className="w-5 h-5" />
                             <p className="text-sm font-medium">Net Change</p>
                         </div>
                         <p className={`text-page-title ${netChange >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
@@ -161,7 +161,7 @@ export default function DailyFinancePage() {
                 {/* Bank Accounts */}
                 <div className="bg-white rounded-2xl border p-5">
                     <h3 className="font-bold mb-4 flex items-center gap-2">
-                        <Building2 size={18} className="text-blue-600" />
+                        <Building2 className="w-3.5 h-3.5" />
                         Bank Accounts
                     </h3>
                     <div className="space-y-3">
@@ -183,7 +183,7 @@ export default function DailyFinancePage() {
                 {/* Cash Accounts */}
                 <div className="bg-white rounded-2xl border p-5">
                     <h3 className="font-bold mb-4 flex items-center gap-2">
-                        <Wallet size={18} className="text-gray-900" />
+                        <Wallet className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-900" />
                         Cash Registers
                     </h3>
                     <div className="space-y-3">
@@ -211,7 +211,7 @@ export default function DailyFinancePage() {
                     {todayPayments.map((payment) => (
                         <div key={payment.id} className="flex justify-between items-center p-3 bg-white rounded-lg">
                             <div className="flex items-center gap-3">
-                                <ArrowDownRight className="text-gray-900" size={18} />
+                                <ArrowDownRight className="w-4 h-4" />
                                 <div>
                                     <p className="font-medium text-sm">{payment.clients?.name}</p>
                                     <p className="text-xs text-gray-500">{payment.payment_mode}</p>
@@ -244,7 +244,7 @@ export default function DailyFinancePage() {
             <div className="grid grid-cols-3 gap-2 md:gap-4">
                 <Link
                     href="/admin/finance/payments?new=true"
-                    className="bg-oms-blue hover:bg-oms-blue text-white rounded-xl p-4 text-center font-medium"
+                    className="bg-[#0000FF] hover:bg-[#0000CC] text-white rounded-lg p-4 text-center font-semibold shadow-sm"
                 >
                     Record Payment
                 </Link>

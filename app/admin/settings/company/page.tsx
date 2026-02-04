@@ -50,7 +50,7 @@ export default function CompanyPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/settings" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
-            <ArrowLeft size={20} />
+            <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
             <h1 className="text-xl lg:text-page-title text-gray-900">Company Settings</h1>
@@ -60,9 +60,9 @@ export default function CompanyPage() {
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center justify-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-xl hover:bg-blue-600 disabled:bg-gray-400"
+          className="flex items-center justify-center gap-2 bg-[#0000FF] text-white px-4 py-2.5 rounded-lg hover:bg-[#0000CC] disabled:bg-gray-400 shadow-sm font-semibold"
         >
-          <Save size={18} />
+          <Save className="w-4 h-4 md:w-4.5 md:h-4.5" />
           <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
         </button>
       </div>
@@ -77,7 +77,7 @@ export default function CompanyPage() {
                 <img src={logo} alt="Logo" className="w-full h-full object-contain" />
               ) : (
                 <div className="text-center text-gray-400">
-                  <Upload size={32} className="mx-auto mb-2" />
+                  <Upload className="w-8 h-8 mx-auto mb-2" />
                   <span className="text-sm">Upload Logo</span>
                 </div>
               )}

@@ -163,17 +163,17 @@ export default function ProductionSettings() {
 
                     <button
                         onClick={() => setIsAddingNew(true)}
-                        className={`text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors ${activeCategory === 'design' ? 'bg-oms-blue hover:bg-oms-blue' : 'bg-orange-600 hover:bg-orange-700'
+                        className={`text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors ${activeCategory === 'design' ? 'bg-[#0000FF] hover:bg-[#0000CC]' : 'bg-orange-600 hover:bg-orange-700'
                             }`}
                     >
-                        <Plus size={18} /> Add {activeCategory === 'design' ? 'Design' : 'QC'} Checklist
+                        <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" /> Add {activeCategory === 'design' ? 'Design' : 'QC'} Checklist
                     </button>
                 </div>
 
                 {isAddingNew && (
                     <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-1.5 animate-in fade-in slide-in-from-top-2">
                         <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                            <Plus size={18} className={activeCategory === 'design' ? 'text-oms-blue' : 'text-orange-600'} />
+                            <Plus className={`w-4 h-4 md:w-4.5 md:h-4.5 ${activeCategory === 'design' ? 'text-oms-blue' : 'text-orange-600'}`} />
                             Add New {activeCategory === 'design' ? 'Pre-Print' : 'Dispatch QC'} Logic
                         </h3>
                         <div className="flex gap-2 md:gap-4">
@@ -194,7 +194,7 @@ export default function ProductionSettings() {
                                 <button
                                     onClick={createNewChecklist}
                                     disabled={!newJobType.trim()}
-                                    className="bg-oms-blue text-white px-6 py-2.5 rounded-lg font-bold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="bg-[#0000FF] text-white px-6 py-2.5 rounded-lg font-bold hover:bg-[#0000CC] disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                                 >
                                     Create
                                 </button>
@@ -235,20 +235,20 @@ export default function ProductionSettings() {
                                 <div className={`p-4 border-b flex justify-between items-center rounded-t-xl ${editingId === checklist.id ? 'bg-[rgba(0,0,255,0.05)]/50' : 'bg-gray-50/50'}`}>
                                     <div className="flex items-center gap-3">
                                         <div className={`p-2 rounded-lg ${activeCategory === 'design' ? 'bg-oms-blue text-white' : 'bg-orange-100 text-orange-600'}`}>
-                                            <Check size={16} strokeWidth={3} />
+                                            <Check className="w-4 h-4" strokeWidth={3} />
                                         </div>
                                         <h3 className="font-bold text-gray-800">{checklist.job_type}</h3>
                                     </div>
                                     <div className="flex gap-2">
                                         {editingId === checklist.id ? (
                                             <>
-                                                <button onClick={handleSaveEdit} className="p-2 bg-white0 text-white rounded-lg hover:bg-green-600" title="Save Changes"><Save size={18} /></button>
-                                                <button onClick={() => setEditingId(null)} className="p-2 bg-white border text-gray-600 rounded-lg hover:bg-gray-50" title="Cancel Edit"><X size={18} /></button>
+                                                <button onClick={handleSaveEdit} className="p-2 bg-white0 text-white rounded-lg hover:bg-green-600" title="Save Changes"><Save className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
+                                                <button onClick={() => setEditingId(null)} className="p-2 bg-white border text-gray-600 rounded-lg hover:bg-gray-50" title="Cancel Edit"><X className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
                                             </>
                                         ) : (
                                             <>
-                                                <button onClick={() => handleStartEdit(checklist)} className="p-2 bg-white border hover:bg-[rgba(0,0,255,0.05)] text-gray-600 hover:text-oms-blue rounded-lg transition-colors" title="Edit Items"><Edit2 size={16} /></button>
-                                                <button onClick={() => deleteChecklist(checklist.id)} className="p-2 bg-white border hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-lg transition-colors" title="Delete Checklist"><Trash2 size={16} /></button>
+                                                <button onClick={() => handleStartEdit(checklist)} className="p-2 bg-white border hover:bg-[rgba(0,0,255,0.05)] text-gray-600 hover:text-oms-blue rounded-lg transition-colors" title="Edit Items"><Edit2 className="w-4 h-4" /></button>
+                                                <button onClick={() => deleteChecklist(checklist.id)} className="p-2 bg-white border hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-lg transition-colors" title="Delete Checklist"><Trash2 className="w-4 h-4" /></button>
                                             </>
                                         )}
                                     </div>
@@ -272,11 +272,11 @@ export default function ProductionSettings() {
                                                             placeholder="e.g. Check spelling..."
                                                         />
                                                     </div>
-                                                    <button onClick={() => removeEditItem(idx)} className="text-gray-400 hover:text-red-500 p-2 hover:bg-red-50 rounded-lg"><X size={16} /></button>
+                                                    <button onClick={() => removeEditItem(idx)} className="text-gray-400 hover:text-red-500 p-2 hover:bg-red-50 rounded-lg"><X className="w-4 h-4" /></button>
                                                 </div>
                                             ))}
                                             <button onClick={addItemToEdit} className="w-full py-2.5 border-2 border-dashed border-gray-200 rounded-lg text-sm font-bold text-gray-500 hover:border-oms-blue/30 hover:text-oms-blue hover:bg-[rgba(0,0,255,0.05)] flex items-center justify-center gap-2 transition-all mt-4">
-                                                <Plus size={16} /> Add Another Item
+                                                <Plus className="w-4 h-4" /> Add Another Item
                                             </button>
                                         </div>
                                     ) : (
@@ -290,7 +290,7 @@ export default function ProductionSettings() {
                                                     </li>
                                                 )) : (
                                                     <li className="text-sm text-gray-400 italic flex items-center gap-2">
-                                                        <AlertCircle size={14} />
+                                                        <AlertCircle className="w-3.5 h-3.5" />
                                                         No checklist items configured.
                                                     </li>
                                                 )}

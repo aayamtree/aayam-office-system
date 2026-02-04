@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Product+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -9,7 +9,7 @@
    ============================================= */
 :root {
   /* Typography Scale */
-  --font-family: 'Product Sans', 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   /* Font Sizes - Using a consistent scale */
   --text-xs: 0.75rem;
@@ -382,6 +382,7 @@ td {
     padding-top: max(1rem, env(safe-area-inset-top));
   }
 }
+
 /* =============================================
    DESIGN SYSTEM - Aayam Office Management System
    Official UI/UX Guidelines Implementation
@@ -389,15 +390,23 @@ td {
 
 /* Design System Colors */
 :root {
-  --oms-blue: #0000FF;         /* Primary Blue */
-  --oms-orange: #FF6600;       /* Accent Orange */
-  --oms-dark: #3A3F4F;         /* Dark Grey (structure) */
-  --oms-light: #D5D5D6;        /* Light Grey (disabled) */
-  --oms-white: #FFFFFF;        /* White */
-  
-  --oms-text-primary: #3A3F4F;     /* Primary text */
-  --oms-text-secondary: #6B6F7A;   /* Secondary text */
-  --oms-text-disabled: #9AA0A6;    /* Disabled text */
+  --oms-blue: #0000FF;
+  /* Primary Blue */
+  --oms-orange: #FF6600;
+  /* Accent Orange */
+  --oms-dark: #3A3F4F;
+  /* Dark Grey (structure) */
+  --oms-light: #D5D5D6;
+  /* Light Grey (disabled) */
+  --oms-white: #FFFFFF;
+  /* White */
+
+  --oms-text-primary: #3A3F4F;
+  /* Primary text */
+  --oms-text-secondary: #6B6F7A;
+  /* Secondary text */
+  --oms-text-disabled: #9AA0A6;
+  /* Disabled text */
 }
 
 /* =============================================
@@ -466,7 +475,8 @@ td {
 
 /* Table Row Selected State */
 .table-row-selected {
-  @apply border-l-oms-blue bg-[rgba(0,0,255,0.08)];
+  @apply border-l-oms-blue;
+  background: rgba(0, 0, 255, 0.08);
 }
 
 /* Hover effect for table rows */
@@ -490,7 +500,8 @@ td {
 
 /* Sidebar Active Item */
 .sidebar-item-active {
-  @apply bg-[rgba(0,0,255,0.15)] text-white border-l-4 border-oms-blue;
+  background: rgba(0, 0, 255, 0.15);
+  @apply text-white border-l-4 border-oms-blue;
 }
 
 /* =============================================
@@ -562,8 +573,22 @@ td {
    ============================================= */
 
 /* Gap utilities for 8px grid */
-.gap-oms-1 { gap: 8px; }
-.gap-oms-2 { gap: 16px; }
-.gap-oms-3 { gap: 24px; }
-.gap-oms-4 { gap: 32px; }
-.gap-oms-5 { gap: 40px; }
+.gap-oms-1 {
+  gap: 8px;
+}
+
+.gap-oms-2 {
+  gap: 16px;
+}
+
+.gap-oms-3 {
+  gap: 24px;
+}
+
+.gap-oms-4 {
+  gap: 32px;
+}
+
+.gap-oms-5 {
+  gap: 40px;
+}

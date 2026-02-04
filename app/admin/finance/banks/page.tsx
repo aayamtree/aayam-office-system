@@ -128,7 +128,7 @@ export default function BankAccountsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/finance" className="p-2 hover:bg-gray-100 rounded-lg">
-            <ArrowLeft size={20} />
+            <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
             <h1 className="text-page-title text-gray-900">Bank Accounts</h1>
@@ -139,7 +139,7 @@ export default function BankAccountsPage() {
           {/* Record Transaction Button Removed for Simplicity/Refactor needed if connected to real data */}
           <button onClick={() => setShowModal(true)}
             className="flex items-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-lg hover:bg-oms-blue font-medium">
-            <Plus size={18} />
+            <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
             <span>Add Bank</span>
           </button>
         </div>
@@ -169,7 +169,7 @@ export default function BankAccountsPage() {
       {/* Search */}
       <div className="bg-white rounded-xl border p-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input type="text" placeholder="Search by bank name or account number..." value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue" />
@@ -183,7 +183,7 @@ export default function BankAccountsPage() {
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <Building className="text-blue-600" size={24} />
+                  <Building className="w-6 h-6 text-blue-600" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
@@ -197,11 +197,11 @@ export default function BankAccountsPage() {
               </div>
               <div className="flex items-center gap-1">
                 <button onClick={() => { setSelectedBank(bank); setShowDetailModal(true); }}
-                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Eye size={18} /></button>
+                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Eye className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
                 <button onClick={() => handleEdit(bank)}
-                  className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"><Edit size={18} /></button>
+                  className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"><Edit className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
                 <button onClick={() => handleDelete(bank.id, bank.current_balance)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={18} /></button>
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
               </div>
             </div>
 
@@ -253,7 +253,7 @@ export default function BankAccountsPage() {
           <div className="bg-white rounded-2xl w-full max-w-md animate-scale-in">
             <div className="p-5 border-b flex items-center justify-between">
               <h2 className="text-page-title">{editingBank ? 'Edit Bank Account' : 'Add Bank Account'}</h2>
-              <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+              <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div>
@@ -316,7 +316,7 @@ export default function BankAccountsPage() {
           <div className="bg-white rounded-2xl w-full max-w-md animate-scale-in">
             <div className="p-5 border-b flex items-center justify-between">
               <h2 className="text-page-title">{selectedBank.name}</h2>
-              <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+              <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div className="text-center bg-oms-blue rounded-xl p-4">

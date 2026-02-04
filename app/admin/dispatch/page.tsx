@@ -127,10 +127,10 @@ export default function DispatchPage() {
         </div>
         <Link
           href="/admin/dispatch/qc-check"
-          className="flex items-center justify-center gap-2 bg-oms-blue text-white px-3 md:px-4 py-2 md:py-2.5 rounded-xl hover:bg-blue-600 transition-colors text-sm md:text-base"
+          className="flex items-center justify-center gap-2 bg-[#0000FF] text-white px-3 md:px-4 py-2 md:py-2.5 rounded-lg hover:bg-[#0000CC] transition-colors shadow-sm font-semibold text-sm md:text-base"
         >
-          <ClipboardCheck size={16} className="md:hidden" />
-          <ClipboardCheck size={18} className="hidden md:block" />
+          <ClipboardCheck className="w-4 h-4 md:hidden" />
+          <ClipboardCheck className="w-4.5 h-4.5 hidden md:block" />
           <span>Start QC</span>
         </Link>
       </div>
@@ -141,8 +141,8 @@ export default function DispatchPage() {
           <div key={stat.label} className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-4 border border-gray-100">
             <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
               <div className={`w-8 h-8 md:w-10 md:h-10 ${stat.color} rounded-lg md:rounded-xl flex items-center justify-center`}>
-                <stat.icon size={16} className="text-white md:hidden" />
-                <stat.icon size={20} className="text-white hidden md:block" />
+                <stat.icon className="w-4 h-4 text-white md:hidden" />
+                <stat.icon className="w-5 h-5 text-white hidden md:block" />
               </div>
             </div>
             <p className="text-2xl lg:text-page-title text-gray-900">
@@ -269,7 +269,7 @@ export default function DispatchPage() {
                 <h2 className="text-section">Create Dispatch</h2>
                 <p className="text-sm text-gray-500">Order #{selectedJob.job_number}</p>
               </div>
-              <button onClick={() => setShowDispatchModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+              <button onClick={() => setShowDispatchModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
             </div>
 
             <form onSubmit={handleDispatchSubmit} className="p-4 space-y-4">
@@ -347,13 +347,13 @@ export default function DispatchPage() {
               </div>
 
               <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-500 flex gap-2">
-                <AlertTriangle size={16} className="text-amber-500 shrink-0" />
+                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
                 This will move the order status to &quot;Dispatched&quot; and create a dispatch record.
               </div>
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowDispatchModal(false)} className="flex-1 px-4 py-2 border rounded-xl">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2 bg-oms-blue text-white rounded-xl">
+                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] shadow-sm font-semibold">
                   {submitting ? 'Creating...' : 'Create Dispatch'}
                 </button>
               </div>

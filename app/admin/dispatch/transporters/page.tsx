@@ -150,7 +150,7 @@ export default function TransportersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/dispatch" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
-            <ArrowLeft size={20} />
+            <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
             <h1 className="text-xl lg:text-page-title text-gray-900">Transporters</h1>
@@ -159,9 +159,9 @@ export default function TransportersPage() {
         </div>
         <button
           onClick={handleAddNew}
-          className="flex items-center justify-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-xl hover:bg-blue-600"
+          className="flex items-center justify-center gap-2 bg-[#0000FF] text-white px-4 py-2.5 rounded-lg hover:bg-[#0000CC] shadow-sm font-semibold"
         >
-          <Plus size={18} />
+          <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
           <span>Add Transporter</span>
         </button>
       </div>
@@ -169,7 +169,7 @@ export default function TransportersPage() {
       {/* Search & Filter */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Search transporters..."
@@ -195,7 +195,7 @@ export default function TransportersPage() {
         {Object.entries(groupedByState).sort((a, b) => a[0].localeCompare(b[0])).map(([state, stateTransporters]) => (
           <div key={state}>
             <div className="flex items-center gap-2 mb-3">
-              <MapPin size={16} className="text-oms-blue" />
+              <MapPin className="w-4 h-4 text-oms-blue" />
               <h2 className="text-section text-gray-900">{state}</h2>
               <span className="px-2 py-0.5 bg-oms-blue text-white text-xs rounded-full">
                 {stateTransporters.length}
@@ -208,7 +208,7 @@ export default function TransportersPage() {
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-oms-blue rounded-full flex items-center justify-center">
-                        <Truck size={18} className="text-oms-blue" />
+                        <Truck className="w-4 h-4 md:w-4.5 md:h-4.5 text-oms-blue" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900">{t.company || t.name}</h3>
@@ -222,16 +222,16 @@ export default function TransportersPage() {
 
                   <div className="space-y-1 text-sm mb-3">
                     <div className="flex items-center gap-2 text-gray-600">
-                      <Phone size={14} />
+                      <Phone className="w-3.5 h-3.5" />
                       <a href={`tel:${t.phone}`} className="text-oms-blue">{t.phone}</a>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
-                      <MapPin size={14} />
+                      <MapPin className="w-3.5 h-3.5" />
                       <span>{t.city}, {t.state}</span>
                     </div>
                     {t.gstin && (
                       <div className="flex items-center gap-2 text-gray-600">
-                        <FileText size={14} />
+                        <FileText className="w-3.5 h-3.5" />
                         <span className="text-xs">{t.gstin}</span>
                       </div>
                     )}
@@ -239,13 +239,13 @@ export default function TransportersPage() {
 
                   <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
                     <button onClick={() => handleView(t)} className="flex-1 flex items-center justify-center gap-1 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">
-                      <Eye size={14} /> View
+                      <Eye className="w-3.5 h-3.5" /> View
                     </button>
                     <button onClick={() => handleEdit(t)} className="flex-1 flex items-center justify-center gap-1 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">
-                      <Edit size={14} /> Edit
+                      <Edit className="w-3.5 h-3.5" /> Edit
                     </button>
                     <button onClick={() => handleDelete(t.id)} className="flex-1 flex items-center justify-center gap-1 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg">
-                      <Trash2 size={14} /> Delete
+                      <Trash2 className="w-3.5 h-3.5" /> Delete
                     </button>
                   </div>
                 </div>
@@ -264,7 +264,7 @@ export default function TransportersPage() {
                 {isEditing ? 'Edit Transporter' : 'Add Transporter'}
               </h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X size={20} />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -379,7 +379,7 @@ export default function TransportersPage() {
                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50">
                   Cancel
                 </button>
-                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-blue-600 disabled:opacity-50">
+                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] disabled:opacity-50 shadow-sm font-semibold">
                   {submitting ? 'Saving...' : (isEditing ? 'Update' : 'Add')}
                 </button>
               </div>
@@ -395,14 +395,14 @@ export default function TransportersPage() {
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <h2 className="text-section text-gray-900">Transporter Details</h2>
               <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X size={20} />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-4 space-y-4">
               <div className="flex items-center gap-2 md:gap-4 p-4 bg-[rgba(0,0,255,0.05)] rounded-xl">
                 <div className="w-12 h-12 bg-oms-blue rounded-full flex items-center justify-center">
-                  <Truck size={24} className="text-oms-blue" />
+                  <Truck className="w-6 h-6 text-oms-blue" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">{selectedTransporter.company || selectedTransporter.name}</h3>
@@ -440,7 +440,7 @@ export default function TransportersPage() {
 
               <button
                 onClick={() => setShowViewModal(false)}
-                className="w-full px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-blue-600"
+                className="w-full px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] shadow-sm font-semibold"
               >
                 Close
               </button>

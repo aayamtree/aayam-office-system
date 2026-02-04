@@ -102,7 +102,7 @@ export default function PaymentsPageNew() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <Loader2 className="animate-spin" size={32} />
+                <Loader2 className="w-8 h-8 animate-spin" />
             </div>
         );
     }
@@ -118,7 +118,7 @@ export default function PaymentsPageNew() {
                     onClick={() => setShowModal(true)}
                     className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-blue-600"
                 >
-                    <Plus size={20} />
+                    <Plus className="w-5 h-5" />
                     Record Payment
                 </button>
             </div>
@@ -152,7 +152,7 @@ export default function PaymentsPageNew() {
                                 <tr key={payment.id} className="hover:bg-gray-50">
                                     <td className="p-4">
                                         <span className={`flex items-center gap-2 ${payment.type === 'received' ? 'text-gray-900' : 'text-red-600'}`}>
-                                            {payment.type === 'received' ? <ArrowDownRight size={16} /> : <ArrowUpRight size={16} />}
+                                            {payment.type === 'received' ? <ArrowDownRight className="w-4 h-4" /> : <ArrowUpRight className="w-4 h-4" />}
                                             {payment.type === 'received' ? 'Received' : 'Paid'}
                                         </span>
                                     </td>
@@ -178,7 +178,7 @@ export default function PaymentsPageNew() {
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-page-title">Record Payment</h2>
                             <button onClick={() => setShowModal(false)}>
-                                <X size={20} />
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
 

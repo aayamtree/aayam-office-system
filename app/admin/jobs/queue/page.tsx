@@ -104,7 +104,7 @@ export default function JobQueuePage() {
       {/* Header */}
       <div className="flex items-center gap-2 md:gap-3">
         <Link href="/admin/jobs" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
-          <ArrowLeft size={20} />
+          <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
           <h1 className="text-lg md:text-xl lg:text-page-title text-gray-900">Job Queue</h1>
@@ -116,32 +116,32 @@ export default function JobQueuePage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
         <div className="bg-oms-blue border border-blue-200 rounded-lg md:rounded-xl p-2 md:p-3">
           <div className="flex items-center gap-1 md:gap-2 mb-1">
-            <Clock size={14} className="text-white md:hidden" />
-            <Clock size={16} className="text-white hidden md:block" />
+            <Clock className="w-3.5 h-3.5 text-white md:hidden" />
+            <Clock className="w-4 h-4 text-white hidden md:block" />
             <span className="text-[10px] md:text-xs text-white font-medium">Design Stage</span>
           </div>
           <p className="text-xl md:text-page-title text-white">{designCount}</p>
         </div>
         <div className="bg-blue-50 border border-blue-200 rounded-lg md:rounded-xl p-2 md:p-3">
           <div className="flex items-center gap-1 md:gap-2 mb-1">
-            <Printer size={14} className="text-blue-600 md:hidden" />
-            <Printer size={16} className="text-blue-600 hidden md:block" />
+            <Printer className="w-3.5 h-3.5 text-blue-600 md:hidden" />
+            <Printer className="w-4 h-4 text-blue-600 hidden md:block" />
             <span className="text-[10px] md:text-xs text-blue-600 font-medium">In Production</span>
           </div>
           <p className="text-xl md:text-page-title text-blue-700">{productionCount}</p>
         </div>
         <div className="bg-white border border-green-200 rounded-lg md:rounded-xl p-2 md:p-3">
           <div className="flex items-center gap-1 md:gap-2 mb-1">
-            <CheckCircle size={14} className="text-gray-900 md:hidden" />
-            <CheckCircle size={16} className="text-gray-900 hidden md:block" />
+            <CheckCircle className="w-3.5 h-3.5 text-gray-900 md:hidden" />
+            <CheckCircle className="w-4 h-4 text-gray-900 hidden md:block" />
             <span className="text-[10px] md:text-xs text-gray-900 font-medium">Dispatched</span>
           </div>
           <p className="text-xl md:text-page-title text-gray-900">{dispatchedCount}</p>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-lg md:rounded-xl p-2 md:p-3">
           <div className="flex items-center gap-1 md:gap-2 mb-1">
-            <AlertTriangle size={14} className="text-red-600 md:hidden" />
-            <AlertTriangle size={16} className="text-red-600 hidden md:block" />
+            <AlertTriangle className="w-3.5 h-3.5 text-red-600 md:hidden" />
+            <AlertTriangle className="w-4 h-4 text-red-600 hidden md:block" />
             <span className="text-[10px] md:text-xs text-red-600 font-medium">High Priority</span>
           </div>
           <p className="text-xl md:text-page-title text-red-700">{urgentCount}</p>
@@ -152,7 +152,7 @@ export default function JobQueuePage() {
       <div className="flex flex-col sm:flex-row gap-3">
         {/* ... (keep search filters same) */}
         <div className="relative flex-1">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Search jobs..."
@@ -243,7 +243,7 @@ export default function JobQueuePage() {
                     onClick={() => handleView(job)}
                     className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
                   >
-                    <Eye size={18} />
+                    <Eye className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     <span className="hidden sm:inline">View Details</span>
                   </button>
                   {job.current_stage !== 'delivered' && job.current_stage !== 'cancelled' && (
@@ -254,9 +254,9 @@ export default function JobQueuePage() {
                         : 'bg-oms-blue text-white hover:bg-blue-700'
                         }`}
                     >
-                      {job.current_stage === 'new' && <Play size={18} />}
-                      {job.current_stage !== 'new' && job.current_stage !== 'dispatched' && <ArrowRight size={18} />}
-                      {job.current_stage === 'dispatched' && <CheckCircle size={18} />}
+                      {job.current_stage === 'new' && <Play className="w-4 h-4 md:w-4.5 md:h-4.5" />}
+                      {job.current_stage !== 'new' && job.current_stage !== 'dispatched' && <ArrowRight className="w-4 h-4 md:w-4.5 md:h-4.5" />}
+                      {job.current_stage === 'dispatched' && <CheckCircle className="w-4 h-4 md:w-4.5 md:h-4.5" />}
                       <span className="hidden md:inline">
                         {job.current_stage === 'new' ? 'Start' : job.current_stage === 'dispatched' ? 'Mark Delivered' : 'Next Stage'}
                       </span>
@@ -276,7 +276,7 @@ export default function JobQueuePage() {
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <h2 className="text-section text-gray-900">Job Details</h2>
               <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X size={20} />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -316,7 +316,7 @@ export default function JobQueuePage() {
                           {status}
                         </div>
                         {idx < statusFlow.length - 1 && (
-                          <ArrowRight size={12} className={`mx-1 ${isCompleted ? 'text-green-500' : 'text-gray-300'}`} />
+                          <ArrowRight className={`w-3 h-3 mx-1 ${isCompleted ? 'text-green-500' : 'text-gray-300'}`} />
                         )}
                       </button>
                     );

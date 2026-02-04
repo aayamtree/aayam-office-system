@@ -167,16 +167,15 @@ export default function VendorPurchasesPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/finance/vendors" className="p-2 hover:bg-gray-100 rounded-lg">
-            <ArrowLeft size={20} />
+            <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
             <h1 className="text-page-title text-gray-900">Purchase Bills</h1>
             <p className="text-gray-500">Track vendor purchases & COGS</p>
           </div>
         </div>
-        <button onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-lg hover:bg-oms-blue font-medium">
-          <Plus size={18} />
+        <button onClick={() => { resetForm(); setShowModal(true); }} className="flex items-center gap-2 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] shadow-sm font-semibold">
+          <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
           <span>Add Purchase</span>
         </button>
       </div>
@@ -205,7 +204,7 @@ export default function VendorPurchasesPage() {
       <div className="bg-white rounded-xl border p-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input type="text" placeholder="Search bills..." value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue" />
@@ -262,15 +261,15 @@ export default function VendorPurchasesPage() {
 
                 <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-4">
                   <span className="flex items-center gap-1">
-                    <Building2 size={14} />
+                    <Building2 className="w-3.5 h-3.5" />
                     {purchase.vendor?.name || 'Unknown Vendor'}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Package size={14} />
+                    <Package className="w-3.5 h-3.5" />
                     {purchase.job?.project_name ? `${purchase.job.job_number} - ${purchase.job.project_name}` : 'General Stock'}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Calendar size={14} />
+                    <Calendar className="w-3.5 h-3.5" />
                     Due: {purchase.due_date ? formatDate(purchase.due_date) : 'N/A'}
                   </span>
                 </div>
@@ -287,15 +286,15 @@ export default function VendorPurchasesPage() {
                   <div className="flex items-center gap-1">
                     <button onClick={() => { setSelectedPurchase(purchase); setShowDetailModal(true); }}
                       className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                      <Eye size={18} />
+                      <Eye className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     </button>
                     <button onClick={() => handleEdit(purchase)}
                       className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                      <Edit size={18} />
+                      <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     </button>
                     <button onClick={() => handleDelete(purchase.id)}
                       className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                      <Trash2 size={18} />
+                      <Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     </button>
                   </div>
                 </div>
@@ -319,7 +318,7 @@ export default function VendorPurchasesPage() {
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
               <h2 className="text-page-title">{editingPurchase ? 'Edit Purchase' : 'Add Purchase Bill'}</h2>
-              <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+              <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div className="grid grid-cols-2 gap-2 md:gap-4">
@@ -432,7 +431,7 @@ export default function VendorPurchasesPage() {
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-lg font-medium">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-lg font-medium hover:bg-oms-blue disabled:opacity-50">
+                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] font-semibold shadow-sm disabled:opacity-50">
                   {submitting ? 'Saving...' : (editingPurchase ? 'Update' : 'Add')} Purchase
                 </button>
               </div>
@@ -450,7 +449,7 @@ export default function VendorPurchasesPage() {
                 <span className="font-mono text-oms-blue">{selectedPurchase.bill_number}</span>
                 <h2 className="text-page-title">{selectedPurchase.description}</h2>
               </div>
-              <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+              <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div className="grid grid-cols-2 gap-2 md:gap-4">

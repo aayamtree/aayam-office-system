@@ -38,14 +38,14 @@ export default function FinancePage() {
             href="/admin/finance/payments?new=true"
             className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium"
           >
-            <CreditCard size={20} />
+            <CreditCard className="w-5 h-5" />
             <span>Record Payment</span>
           </Link>
           <Link
             href="/admin/finance/invoices?new=true"
-            className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-blue-600 text-white px-4 py-2 rounded-xl -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
+            className="flex items-center justify-center gap-2 bg-[#0000FF] hover:bg-[#0000CC] text-white px-4 py-2 rounded-lg shadow-sm transition-all hover:scale-105 active:scale-95 font-semibold"
           >
-            <FileText size={20} />
+            <FileText className="w-5 h-5" />
             <span>New Invoice</span>
           </Link>
         </div>
@@ -56,7 +56,7 @@ export default function FinancePage() {
         <Link href="/admin/finance/opening-balance"
           className="flex items-center gap-2 md:gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
           <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <IndianRupee className="text-oms-blue" size={24} />
+            <IndianRupee className="w-6 h-6 text-oms-blue" />
           </div>
           <div>
             <p className="font-semibold text-gray-900 text-base">Opening Balance</p>
@@ -66,7 +66,7 @@ export default function FinancePage() {
         <Link href="/admin/finance/banks"
           className="flex items-center gap-2 md:gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
           <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <CreditCard className="text-oms-blue" size={24} />
+            <CreditCard className="w-6 h-6 text-oms-blue" />
           </div>
           <div>
             <p className="font-semibold text-gray-900 text-base">Bank Accounts</p>
@@ -76,7 +76,7 @@ export default function FinancePage() {
         <Link href="/admin/finance/banking"
           className="flex items-center gap-2 md:gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
           <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <RefreshCw className="text-oms-blue" size={24} />
+            <RefreshCw className="w-6 h-6 text-oms-blue" />
           </div>
           <div>
             <p className="font-semibold text-gray-900 text-base">Reconciliation</p>
@@ -86,7 +86,7 @@ export default function FinancePage() {
         <Link href="/admin/finance/expenses/quick"
           className="flex items-center gap-2 md:gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
           <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <TrendingDown className="text-oms-blue" size={24} />
+            <TrendingDown className="w-6 h-6 text-oms-blue" />
           </div>
           <div>
             <p className="font-semibold text-gray-900 text-base">Quick Expense</p>
@@ -96,7 +96,7 @@ export default function FinancePage() {
         <Link href="/admin/finance/reports/cashbook"
           className="flex items-center gap-2 md:gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
           <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <FileText className="text-oms-blue" size={24} />
+            <FileText className="w-6 h-6 text-oms-blue" />
           </div>
           <div>
             <p className="font-semibold text-gray-900 text-base">Cash Book</p>
@@ -111,7 +111,7 @@ export default function FinancePage() {
           <div key={stat.label} className="bg-white rounded-2xl p-5 border border-gray-100 transition-shadow  group">
             <div className="flex items-center gap-3 mb-3">
               <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                <stat.icon size={22} className="text-white" />
+                <stat.icon className="w-5 h-5 md:w-5.5 md:h-5.5 text-white" />
               </div>
             </div>
             <p className="text-page-title text-gray-900">{stat.value}</p>
@@ -128,7 +128,7 @@ export default function FinancePage() {
         <Link href="/admin/finance/invoices" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
             <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <FileText size={28} className="text-blue-600" />
+              <FileText className="w-7 h-7 text-blue-600" />
             </div>
             <div>
               <h2 className="text-section text-gray-900">Invoices</h2>
@@ -145,7 +145,7 @@ export default function FinancePage() {
         <Link href="/admin/finance/vendors" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
             <div className="w-14 h-14 bg-oms-blue rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <CreditCard size={28} className="text-oms-blue" />
+              <CreditCard className="w-7 h-7 text-oms-blue" />
             </div>
             <div>
               <h2 className="text-section text-gray-900">Purchases</h2>
@@ -161,7 +161,7 @@ export default function FinancePage() {
         <Link href="/admin/finance/payments" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
             <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <CreditCard size={28} className="text-gray-900" />
+              <CreditCard className="w-7 h-7 text-gray-900" />
             </div>
             <div>
               <h2 className="text-section text-gray-900">Payments</h2>
@@ -195,9 +195,9 @@ export default function FinancePage() {
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === 'received' ? 'bg-gray-100' : 'bg-red-100'
                     }`}>
                     {tx.type === 'received' ? (
-                      <ArrowDownRight size={18} className="text-gray-900" />
+                      <ArrowDownRight className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-900" />
                     ) : (
-                      <ArrowUpRight size={18} className="text-red-600" />
+                      <ArrowUpRight className="w-4 h-4 md:w-4.5 md:h-4.5 text-red-600" />
                     )}
                   </div>
                   <div>

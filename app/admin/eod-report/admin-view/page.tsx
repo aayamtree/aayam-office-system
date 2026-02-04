@@ -75,7 +75,7 @@ export default function AdminEODDashboard() {
     if (profile?.role !== 'admin') {
         return (
             <div className="text-center py-12">
-                <AlertCircle className="mx-auto text-red-500" size={48} />
+                <AlertCircle className="w-12 h-12 mx-auto text-red-500" />
                 <p className="mt-4 text-gray-600">Access denied. Admin only.</p>
             </div>
         );
@@ -101,7 +101,7 @@ export default function AdminEODDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4">
                 <div className="bg-white rounded-xl p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle size={18} className="text-gray-900" />
+                        <CheckCircle className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-900" />
                         <span className="text-sm text-gray-500">Today Submitted</span>
                     </div>
                     <p className="text-page-title text-gray-900">{todaySubmitted}</p>
@@ -110,7 +110,7 @@ export default function AdminEODDashboard() {
 
                 <div className="bg-white rounded-xl p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-2">
-                        <AlertCircle size={18} className="text-oms-orange" />
+                        <AlertCircle className="w-4 h-4 md:w-4.5 md:h-4.5 text-oms-orange" />
                         <span className="text-sm text-gray-500">Pending Today</span>
                     </div>
                     <p className="text-page-title text-gray-900">{todayPending}</p>
@@ -119,7 +119,7 @@ export default function AdminEODDashboard() {
 
                 <div className="bg-white rounded-xl p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-2">
-                        <TrendingUp size={18} className="text-blue-600" />
+                        <TrendingUp className="w-4 h-4 md:w-4.5 md:h-4.5 text-blue-600" />
                         <span className="text-sm text-gray-500">Total Submissions</span>
                     </div>
                     <p className="text-page-title text-gray-900">{totalSubmissions}</p>
@@ -128,7 +128,7 @@ export default function AdminEODDashboard() {
 
                 <div className="bg-white rounded-xl p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-2">
-                        <Clock size={18} className="text-oms-blue" />
+                        <Clock className="w-4 h-4 md:w-4.5 md:h-4.5 text-oms-blue" />
                         <span className="text-sm text-gray-500">Avg Work Hours</span>
                     </div>
                     <p className="text-page-title text-gray-900">{avgWorkHours}</p>
@@ -151,9 +151,9 @@ export default function AdminEODDashboard() {
                             <div className="flex items-center justify-between">
                                 <span className="font-medium text-gray-900 text-sm">{status.user_name}</span>
                                 {status.submitted ? (
-                                    <CheckCircle size={16} className="text-gray-900" />
+                                    <CheckCircle className="w-4 h-4 text-gray-900" />
                                 ) : (
-                                    <X size={16} className="text-red-600" />
+                                    <X className="w-4 h-4 text-red-600" />
                                 )}
                             </div>
                             <p className="text-xs text-gray-500 mt-1">
@@ -169,12 +169,12 @@ export default function AdminEODDashboard() {
             {/* Filters */}
             <div className="bg-white rounded-xl border border-gray-200 p-4">
                 <div className="flex items-center gap-2 mb-3">
-                    <Filter size={16} className="text-gray-500" />
+                    <Filter className="w-4 h-4 text-gray-500" />
                     <span className="font-medium text-gray-700">Filters & Search</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div className="relative">
-                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
                             placeholder="Search reports (use #hashtags)..."
@@ -213,14 +213,14 @@ export default function AdminEODDashboard() {
                 <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                     <h2 className="font-semibold text-gray-900">Reports ({reports.length})</h2>
                     <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">
-                        <Download size={16} />
+                        <Download className="w-4 h-4" />
                         Export
                     </button>
                 </div>
 
                 {loading ? (
                     <div className="p-12 text-center">
-                        <Loader2 className="animate-spin text-oms-blue mx-auto" size={32} />
+                        <Loader2 className="w-8 h-8 animate-spin text-oms-blue mx-auto" />
                         <p className="mt-3 text-gray-500">Loading reports...</p>
                     </div>
                 ) : reports.length === 0 ? (
@@ -238,19 +238,19 @@ export default function AdminEODDashboard() {
                                 >
                                     <div className="flex items-center gap-2 md:gap-4">
                                         <div className="flex items-center gap-2">
-                                            {expandedReport === report.id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                                            <User size={16} className="text-gray-400" />
+                                            {expandedReport === report.id ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                                            <User className="w-4 h-4 text-gray-400" />
                                             <span className="font-medium text-gray-900">{report.user?.full_name}</span>
                                         </div>
                                         <span className="text-sm text-gray-500">{report.user?.role}</span>
                                     </div>
                                     <div className="flex items-center gap-2 md:gap-4 text-sm text-gray-600">
                                         <span className="flex items-center gap-1">
-                                            <Calendar size={14} />
+                                            <Calendar className="w-3.5 h-3.5" />
                                             {new Date(report.report_date).toLocaleDateString()}
                                         </span>
                                         <span className="flex items-center gap-1">
-                                            <Clock size={14} />
+                                            <Clock className="w-3.5 h-3.5" />
                                             {report.work_hours}h
                                         </span>
                                         <span className="text-xs text-gray-400">

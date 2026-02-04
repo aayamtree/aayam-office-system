@@ -183,7 +183,7 @@ export default function QuickExpensePage() {
                     onClick={() => router.back()}
                     className="p-2 hover:bg-gray-100 rounded-lg flex-shrink-0"
                 >
-                    <ArrowLeft size={20} />
+                    <ArrowLeft className="w-5 h-5" />
                 </button>
                 <div className="min-w-0">
                     <h1 className="text-xl md:text-page-title truncate">Quick Expense Entry</h1>
@@ -200,14 +200,14 @@ export default function QuickExpensePage() {
 
                         {success && (
                             <div className="mb-4 p-3 md:p-4 bg-white border border-green-200 rounded-lg flex items-center gap-2 text-sm md:text-base text-green-800">
-                                <Check size={18} className="flex-shrink-0" />
+                                <Check className="w-4 h-4 md:w-4.5 md:h-4.5 flex-shrink-0" />
                                 <span>Expense recorded successfully!</span>
                             </div>
                         )}
 
                         {error && (
                             <div className="mb-4 p-3 md:p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm md:text-base text-red-800">
-                                <AlertCircle size={18} className="flex-shrink-0" />
+                                <AlertCircle className="w-4 h-4 md:w-4.5 md:h-4.5 flex-shrink-0" />
                                 <span>{error}</span>
                             </div>
                         )}
@@ -368,7 +368,7 @@ export default function QuickExpensePage() {
                                         <>Processing...</>
                                     ) : (
                                         <>
-                                            <Plus size={18} />
+                                            <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
                                             Record Expense
                                         </>
                                     )}

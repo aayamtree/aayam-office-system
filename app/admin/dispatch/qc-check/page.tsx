@@ -109,7 +109,7 @@ export default function QCCheckPage() {
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link href="/admin/dispatch" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
-          <ArrowLeft size={20} />
+          <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
           <h1 className="text-xl lg:text-page-title text-gray-900">QC Check</h1>
@@ -136,7 +136,7 @@ export default function QCCheckPage() {
       {/* Search & Filter */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Search orders..."
@@ -189,16 +189,16 @@ export default function QCCheckPage() {
 
                 {job.current_stage === 'ready' ? (
                   <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-900 rounded-xl">
-                    <CheckCircle size={16} />
+                    <CheckCircle className="w-4 h-4" />
                     <span className="hidden sm:inline">Passed</span>
                   </div>
                 ) : (
                   <button
                     onClick={() => handleStartQC(job)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-white ${job.current_stage === 'quality_check' ? 'bg-oms-blue hover:opacity-90' : 'bg-oms-blue hover:bg-blue-600'
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white ${job.current_stage === 'quality_check' ? 'bg-[#0000FF] hover:opacity-90' : 'bg-[#0000FF] hover:bg-[#0000CC]'
                       }`}
                   >
-                    <ClipboardCheck size={16} />
+                    <ClipboardCheck className="w-4 h-4" />
                     <span className="hidden sm:inline">{job.current_stage === 'quality_check' ? 'Continue QC' : 'Start QC'}</span>
                   </button>
                 )}
@@ -219,7 +219,7 @@ export default function QCCheckPage() {
                 <p className="text-sm text-gray-500">{selectedJob.project_name}</p>
               </div>
               <button onClick={() => setShowQCModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <XCircle size={20} className="text-gray-500" />
+                <XCircle className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
@@ -260,7 +260,7 @@ export default function QCCheckPage() {
                           </div>
                           <p className="text-xs text-gray-500">{cp.desc}</p>
                         </div>
-                        {checkpoints[cp.id]?.checked && <CheckCircle size={18} className="text-gray-900" />}
+                        {checkpoints[cp.id]?.checked && <CheckCircle className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-900" />}
                       </label>
                     </div>
                   ))}
@@ -287,13 +287,13 @@ export default function QCCheckPage() {
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-100 text-red-700 rounded-xl hover:bg-red-200 transition-colors"
                 title="Send back for Rework"
               >
-                <AlertTriangle size={16} /> Rework
+                <AlertTriangle className="w-4 h-4" /> Rework
               </button>
               <button
                 onClick={() => handleQCSubmit('passed')}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors -200"
               >
-                <CheckCircle size={16} /> Pass
+                <CheckCircle className="w-4 h-4" /> Pass
               </button>
             </div>
           </div>

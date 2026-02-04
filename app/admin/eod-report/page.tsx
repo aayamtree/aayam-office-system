@@ -190,7 +190,7 @@ export default function EODReportPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-96">
-                <Loader2 className="animate-spin text-oms-blue" size={32} />
+                <Loader2 className="w-8 h-8 animate-spin text-oms-blue" />
                 <span className="ml-3 text-gray-600">Loading your tasks...</span>
             </div>
         );
@@ -209,7 +209,7 @@ export default function EODReportPage() {
                 {profile?.role === 'admin' && (
                     <Link
                         href="/admin/eod-report/admin-view"
-                        className="px-4 py-2 bg-oms-blue text-white rounded-xl text-sm font-medium hover:bg-blue-600 transition-colors"
+                        className="px-4 py-2 bg-[#0000FF] text-white rounded-lg text-sm font-semibold hover:bg-[#0000CC] transition-colors shadow-sm"
                     >
                         Admin Dashboard →
                     </Link>
@@ -219,7 +219,7 @@ export default function EODReportPage() {
             {/* Status Banner */}
             {todayReport && (
                 <div className="bg-white border border-green-200 rounded-xl p-4 flex items-center gap-3">
-                    <CheckCircle className="text-gray-900" size={24} />
+                    <CheckCircle className="w-6 h-6 text-gray-900" />
                     <div>
                         <p className="font-medium text-green-900">Report submitted at {new Date(todayReport.submitted_at).toLocaleTimeString()}</p>
                         <p className="text-sm text-gray-900">You can update it anytime before midnight</p>
@@ -246,7 +246,7 @@ export default function EODReportPage() {
                                         onClick={() => toggleTaskExpanded(task.id)}
                                     >
                                         <div className="flex items-center gap-3">
-                                            {taskUpdates[task.id]?.expanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                                            {taskUpdates[task.id]?.expanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
                                             <div>
                                                 <p className="font-medium text-gray-900">#{task.job_number} - {task.project_name}</p>
                                                 <p className="text-sm text-gray-600">{task.client?.name || task.client?.company}</p>
@@ -256,7 +256,7 @@ export default function EODReportPage() {
                                             <span className="text-gray-500">Stage: <span className="font-medium text-gray-900">{task.current_stage}</span></span>
                                             {task.client_deadline && (
                                                 <span className="flex items-center gap-1 text-gray-500">
-                                                    <Calendar size={14} />
+                                                    <Calendar className="w-3.5 h-3.5" />
                                                     Due: {new Date(task.client_deadline).toLocaleDateString()}
                                                 </span>
                                             )}
@@ -443,22 +443,22 @@ export default function EODReportPage() {
                 {/* Submit Button */}
                 <div className="flex items-center justify-between bg-gray-50 rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-200">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <AlertCircle size={16} />
+                        <AlertCircle className="w-4 h-4" />
                         <span>Updates must be submitted before leaving office</span>
                     </div>
                     <button
                         type="submit"
                         disabled={submitting}
-                        className="px-4 py-2 bg-oms-blue text-white rounded-xl font-medium hover:bg-oms-blue disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="px-4 py-2 bg-[#0000FF] text-white rounded-lg font-semibold hover:bg-[#0000CC] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
                     >
                         {submitting ? (
                             <>
-                                <Loader2 className="animate-spin" size={18} />
+                                <Loader2 className="w-4 h-4 md:w-4.5 md:h-4.5 animate-spin" />
                                 Submitting...
                             </>
                         ) : (
                             <>
-                                <Send size={18} />
+                                <Send className="w-4 h-4 md:w-4.5 md:h-4.5" />
                                 {todayReport ? 'Update Report' : 'Submit Report'}
                             </>
                         )}
@@ -474,7 +474,7 @@ export default function EODReportPage() {
                         {pastReports.slice(0, 5).map(report => (
                             <div key={report.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                                 <div className="flex items-center gap-3">
-                                    <Calendar size={16} className="text-gray-400" />
+                                    <Calendar className="w-4 h-4 text-gray-400" />
                                     <span className="font-medium text-gray-900">{new Date(report.report_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
                                     <span className="text-sm text-gray-600">• {report.task_updates?.length || 0} tasks updated</span>
                                 </div>

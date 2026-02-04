@@ -234,7 +234,7 @@ export default function LeadsPage() {
     if (leadsLoading) {
         return (
             <div className="flex h-96 items-center justify-center">
-                <Loader2 className="animate-spin text-oms-blue" size={32} />
+                <Loader2 className="animate-spin text-oms-blue w-8 h-8" />
                 <span className="ml-3 text-gray-500 font-medium">Loading leads...</span>
             </div>
         );
@@ -251,10 +251,10 @@ export default function LeadsPage() {
                 </div>
                 <button
                     onClick={handleAddNew}
-                    className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-oms-blue text-white px-3 md:px-4 py-1.5 md:py-2 rounded-xl font-medium transition-all hover:scale-105 active:scale-95 text-sm md:text-base"
+                    className="flex items-center justify-center gap-2 bg-[#0000FF] hover:bg-[#0000CC] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 shadow-sm text-sm md:text-base"
                 >
-                    <Plus size={16} className="md:hidden" />
-                    <Plus size={18} className="hidden md:block" />
+                    <Plus className="w-4 h-4 md:hidden" />
+                    <Plus className="w-4.5 h-4.5 hidden md:block" />
                     <span>New Lead</span>
                 </button>
             </div>
@@ -262,7 +262,7 @@ export default function LeadsPage() {
             {/* FILTERS */}
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 bg-white p-3 md:p-4 rounded-xl md:rounded-2xl border border-gray-100">
                 <div className="relative flex-1">
-                    <Search size={16} className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Search className="w-4 h-4 absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                         type="text"
                         placeholder="Search name, phone, company..."
@@ -350,13 +350,13 @@ export default function LeadsPage() {
                                         </div>
                                         <div className="flex gap-1">
                                             <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-400 hover:text-oms-blue hover:bg-blue-50 rounded-lg transition-colors" aria-label="View lead details">
-                                                <Eye size={18} />
+                                                <Eye className="w-4 h-4 md:w-4.5 md:h-4.5" />
                                             </button>
                                             <button onClick={() => handleEdit(lead)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" aria-label="Edit lead">
-                                                <Edit size={18} />
+                                                <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
                                             </button>
                                             <button onClick={() => handleDelete(lead.id, lead.name)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" aria-label="Delete lead">
-                                                <Trash2 size={18} />
+                                                <Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" />
                                             </button>
                                         </div>
                                     </div>
@@ -388,14 +388,14 @@ export default function LeadsPage() {
                                     <div className="space-y-2 mt-4">
                                         <div className="flex items-center gap-2 text-gray-600">
                                             <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-900 shrink-0">
-                                                <Phone size={14} />
+                                                <Phone className="w-3.5 h-3.5" />
                                             </div>
                                             <span className="font-medium">{lead.phone}</span>
                                         </div>
 
                                         {lead.next_follow_up && (
                                             <div className="flex items-center gap-2 text-oms-orange bg-white p-2 rounded-lg border border-gray-100">
-                                                <Clock size={14} />
+                                                <Clock className="w-3.5 h-3.5" />
                                                 <span className="text-xs font-bold">Follow up: {formatDate(lead.next_follow_up)}</span>
                                             </div>
                                         )}
@@ -412,9 +412,9 @@ export default function LeadsPage() {
                                         {lead.status !== 'converted' && lead.status !== 'follow_up' && (
                                             <button
                                                 onClick={() => handleMoveToFollowUp(lead)}
-                                                className="px-4 py-2 bg-oms-blue text-white rounded-xl font-medium hover:bg-blue-600 transition-colors flex items-center gap-2"
+                                                className="px-4 py-2 bg-[#0000FF] text-white rounded-lg font-semibold hover:bg-[#0000CC] transition-colors flex items-center gap-2 shadow-sm"
                                             >
-                                                <CheckCircle size={14} /> Move to Follow-up
+                                                <CheckCircle className="w-3.5 h-3.5" /> Move to Follow-up
                                             </button>
                                         )}
                                         {(lead.status === 'converted' || lead.status === 'follow_up') && (
@@ -435,7 +435,7 @@ export default function LeadsPage() {
                         <div className="sticky top-0 bg-white p-5 border-b border-gray-100 flex justify-between items-center z-10">
                             <h2 className="text-page-title text-gray-900">{isEditing ? 'Edit Lead' : 'New Lead Card'}</h2>
                             <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                                <X size={20} />
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
 
@@ -528,9 +528,9 @@ export default function LeadsPage() {
                             </div>
 
                             <div className="sticky bottom-0 bg-white pt-4 border-t border-gray-100 flex gap-3">
-                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2 border border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
-                                <button type="submit" disabled={submitting} className="flex-1 py-2 bg-oms-blue text-white rounded-xl font-semibold hover:bg-oms-blue transition-colors -200 disabled:opacity-50 flex items-center justify-center gap-2">
-                                    {submitting && <Loader2 className="animate-spin" size={18} />}
+                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2 bg-white border-2 border-gray-200 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+                                <button type="submit" disabled={submitting} className="flex-1 py-2 bg-[#0000FF] text-white rounded-lg font-semibold hover:bg-[#0000CC] transition-colors shadow-sm disabled:opacity-50 flex items-center justify-center gap-2">
+                                    {submitting && <Loader2 className="animate-spin w-4.5 h-4.5" />}
                                     {submitting ? 'Saving...' : 'Save Lead'}
                                 </button>
                             </div>
@@ -543,7 +543,7 @@ export default function LeadsPage() {
             {showViewModal && selectedLead && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl w-full max-w-lg p-4 relative ">
-                        <button onClick={() => setShowViewModal(false)} className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full"><X size={18} /></button>
+                        <button onClick={() => setShowViewModal(false)} className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full"><X className="w-4.5 h-4.5" /></button>
                         <h2 className="text-page-title text-gray-900 mb-1">{selectedLead.name}</h2>
                         <p className="text-gray-500 font-mono text-sm mb-3 md:mb-1.5">{selectedLead.lead_number}</p>
 
@@ -558,7 +558,7 @@ export default function LeadsPage() {
                             </div>
                         </div>
 
-                        <button onClick={() => { setShowViewModal(false); handleEdit(selectedLead); }} className="w-full mt-3 md:mt-6 bg-oms-blue text-white py-2 rounded-xl font-bold hover:bg-oms-blue">Edit Details</button>
+                        <button onClick={() => { setShowViewModal(false); handleEdit(selectedLead); }} className="w-full mt-3 md:mt-6 bg-[#0000FF] text-white py-2 rounded-lg font-semibold hover:bg-[#0000CC] shadow-sm">Edit Details</button>
                     </div>
                 </div>
             )}

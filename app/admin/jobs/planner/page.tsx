@@ -108,7 +108,7 @@ export default function PrintPlannerPage() {
                     </div>
                     {inBatch && (
                         <button onClick={(e) => { e.stopPropagation(); removeFromBatch(job.id); }} className="text-gray-400 hover:text-red-500">
-                            <X size={16} />
+                            <X className="w-4 h-4" />
                         </button>
                     )}
                 </div>
@@ -126,7 +126,7 @@ export default function PrintPlannerPage() {
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
                     <Link href="/admin/jobs" className="p-2 hover:bg-gray-100 rounded-lg">
-                        <ArrowLeft size={20} className="text-gray-600" />
+                        <ArrowLeft className="w-5 h-5 text-gray-600" />
                     </Link>
                     <div>
                         <h1 className="text-page-title text-gray-900 flex items-center gap-2">
@@ -139,7 +139,7 @@ export default function PrintPlannerPage() {
                 <div className="flex gap-2">
                     {/* Filters placeholder */}
                     <button className="px-4 py-2 border rounded-xl flex items-center gap-2 text-sm font-medium hover:bg-gray-50">
-                        <Filter size={16} /> Filter Queue
+                        <Filter className="w-4 h-4" /> Filter Queue
                     </button>
                 </div>
             </div>
@@ -150,7 +150,7 @@ export default function PrintPlannerPage() {
                 <div className="w-full md:w-1/3 flex flex-col bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden h-1/3 md:h-auto">
                     <div className="p-4 border-b bg-white flex justify-between items-center sticky top-0">
                         <h3 className="font-bold text-gray-700 flex items-center gap-2">
-                            <FileText size={18} /> Ready for Print ({poolJobs.length})
+                            <FileText className="w-4 h-4 md:w-4.5 md:h-4.5" /> Ready for Print ({poolJobs.length})
                         </h3>
                     </div>
                     <div className="flex-1 p-4 overflow-y-auto">
@@ -204,7 +204,7 @@ export default function PrintPlannerPage() {
                     <div className="flex-1 p-4 overflow-y-auto bg-white">
                         {selectedJobs.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-100 rounded-xl">
-                                <Box size={48} className="mb-4 opacity-50" />
+                                <Box className="w-12 h-12 mb-4 opacity-50" />
                                 <p className="font-medium">Drag jobs here or click +</p>
                                 <p className="text-sm">Group jobs to optimize material usage</p>
                             </div>
@@ -225,7 +225,7 @@ export default function PrintPlannerPage() {
                             disabled={selectedJobs.length === 0}
                             className="bg-oms-blue hover:bg-oms-blue disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 -200 transition-all"
                         >
-                            <Printer size={18} />
+                            <Printer className="w-4 h-4 md:w-4.5 md:h-4.5" />
                             Start Production Run
                         </button>
                     </div>
