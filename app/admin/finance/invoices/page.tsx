@@ -70,8 +70,8 @@ export default function InvoicesPage() {
     return {
       ...defaultCompanyData,
       invoiceNumber: invoice.invoice_number,
-      invoiceDate: formatDate(new Date(invoice.invoice_date)),
-      dueDate: invoice.due_date ? formatDate(new Date(invoice.due_date)) : '',
+      invoiceDate: formatDate(invoice.invoice_date),
+      dueDate: invoice.due_date ? formatDate(invoice.due_date) : '',
       clientName,
       clientCompany,
       clientAddress,
@@ -157,7 +157,7 @@ export default function InvoicesPage() {
       clientCompany: invoice.client?.company || '',
       totalAmount: invoice.total_amount,
       paidAmount: invoice.amount_paid,
-      dueDate: invoice.due_date ? formatDate(new Date(invoice.due_date)) : '',
+      dueDate: invoice.due_date ? formatDate(invoice.due_date) : '',
       items: itemsList,
     });
     shareOnWhatsApp(invoice.client.phone, message, `${invoice.client.name} (${invoice.client.company})`);
@@ -175,7 +175,7 @@ export default function InvoicesPage() {
       clientCompany: invoice.client?.company || '',
       totalAmount: invoice.total_amount,
       paidAmount: invoice.amount_paid,
-      dueDate: invoice.due_date ? formatDate(new Date(invoice.due_date)) : '',
+      dueDate: invoice.due_date ? formatDate(invoice.due_date) : '',
     });
     shareOnWhatsApp(invoice.client.phone, message, `${invoice.client.name} (${invoice.client.company})`);
   };
@@ -431,7 +431,7 @@ export default function InvoicesPage() {
         </div>
         <button
           onClick={handleAddNew}
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] shadow-sm font-semibold"
+          className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold"
         >
           <Plus className="w-4 h-4 md:hidden" />
           <Plus className="w-4 h-4 md:w-4.5 md:h-4.5 hidden md:block" />
@@ -442,10 +442,10 @@ export default function InvoicesPage() {
       {/* Ready for Invoicing Alert (Data Flow: Jobs -> Finance) */}
       {
         pendingInvoicingJobs.length > 0 && (
-          <div className="bg-gradient-to-r bg-white p-4 rounded-xl border border-[rgba(0,0,255,0.2)]-100">
+          <div className="bg-gradient-to-r bg-white p-4 rounded-xl border border-border-100">
             <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 bg-oms-blue rounded-lg">
-                <CheckCircle className="w-4 h-4 md:w-4.5 md:h-4.5 text-oms-blue" />
+              <div className="p-2 bg-gray-900 rounded-lg">
+                <CheckCircle className="w-4 h-4 md:w-4.5 md:h-4.5 text-primary" />
               </div>
               <div>
                 <h3 className="font-bold text-gray-900">Completed Jobs Pending Invoice</h3>
@@ -458,16 +458,16 @@ export default function InvoicesPage() {
                   <div>
                     <div className="flex justify-between items-start mb-1">
                       <span className="text-xs font-mono text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded">{job.job_number}</span>
-                      <span className="text-xs font-bold text-oms-blue">₹{job.total_amount}</span>
+                      <span className="text-xs font-bold text-primary">₹{job.total_amount}</span>
                     </div>
                     <p className="font-semibold text-gray-800 text-sm truncate" title={job.project_name}>{job.project_name}</p>
                     <p className="text-xs text-gray-500 truncate">{job.client?.company || 'Unknown Client'}</p>
                   </div>
                   <button
                     onClick={() => handleCreateFromJob(job)}
-                    className="mt-3 w-full py-2 text-xs font-bold text-oms-blue bg-oms-blue hover:bg-oms-blue rounded-lg transition-colors flex items-center justify-center gap-1"
+                    className="mt-3 w-full py-2 text-xs font-bold text-primary bg-gray-900 hover:bg-gray-900 rounded-lg transition-colors flex items-center justify-center gap-1"
                   >
-                    <Plus className="w-3.5 h-3.5" /> Create Invoice
+                    <Plus className="w-4 h-4" /> Create Invoice
                   </button>
                 </div>
               ))}
@@ -486,7 +486,7 @@ export default function InvoicesPage() {
         ].map((item) => (
           <div key={item.status} className={`rounded-lg md:rounded-xl p-2 md:p-3 text-center border ${item.bg}`}>
             <p className={`text-lg md:text-page-title ${item.text}`}>{invoices.filter(i => i.payment_status === item.status).length}</p>
-            <p className={`text-[10px] md:text-label ${item.text}`}>{item.label}</p>
+            <p className={`text-xs md:text-label ${item.text}`}>{item.label}</p>
           </div>
         ))}
       </div>
@@ -500,13 +500,13 @@ export default function InvoicesPage() {
             placeholder="Search invoices by number, client..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
         >
           <option value="all">All Status</option>
           <option value="pending">Pending</option>
@@ -531,7 +531,7 @@ export default function InvoicesPage() {
               {filteredInvoices.map((inv) => {
                 // Determine header color based on status
                 const headerColors = {
-                  'paid': 'bg-gradient-to-r from-oms-blue to-blue-600',
+                  'paid': 'bg-gradient-to-r from-gray-700 to-gray-800',
                   'partial': 'bg-gradient-to-r from-yellow-400 to-yellow-500',
                   'pending': 'bg-gradient-to-r from-green-500 to-green-600',
                   'overdue': 'bg-gradient-to-r from-red-500 to-red-600',
@@ -590,7 +590,7 @@ export default function InvoicesPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleDownloadPDF(inv)}
-                          className="flex-1 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] font-semibold shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                          className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-semibold shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
                         >
                           <Download className="w-4 h-4 md:w-4.5 md:h-4.5" />
                           <span className="hidden sm:inline">Download</span>
@@ -643,7 +643,7 @@ export default function InvoicesPage() {
                       <td className="px-6 py-4">
                         <p className="font-semibold text-gray-900">{formatCurrency(inv.total_amount)}</p>
                         {inv.amount_paid > 0 && inv.amount_paid < inv.total_amount && (
-                          <p className="text-xs text-oms-orange">Paid: {formatCurrency(inv.amount_paid)}</p>
+                          <p className="text-xs text-destructive">Paid: {formatCurrency(inv.amount_paid)}</p>
                         )}
                       </td>
                       <td className="px-6 py-4 text-gray-600">{inv.due_date ? formatDate(inv.due_date) : '-'}</td>
@@ -658,10 +658,10 @@ export default function InvoicesPage() {
                             <Eye className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-500" />
                           </button>
                           <button onClick={() => handleWhatsAppShare(inv)} className="p-2 hover:bg-white rounded-lg" title="Share on WhatsApp">
-                            <MessageCircle className="w-4 h-4 md:w-4.5 md:h-4.5 text-green-500" />
+                            <MessageCircle className="w-4 h-4 md:w-4.5 md:h-4.5 text-foreground" />
                           </button>
-                          <button onClick={() => handleDownloadPDF(inv)} className="p-2 hover:bg-oms-blue rounded-lg" title="Download PDF">
-                            <Download className="w-4 h-4 md:w-4.5 md:h-4.5 text-oms-blue" />
+                          <button onClick={() => handleDownloadPDF(inv)} className="p-2 hover:bg-gray-900 rounded-lg" title="Download PDF">
+                            <Download className="w-4 h-4 md:w-4.5 md:h-4.5 text-primary" />
                           </button>
                           <button onClick={() => handleEdit(inv)} className="p-2 hover:bg-gray-100 rounded-lg" title="Edit">
                             <Edit className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-500" />
@@ -699,7 +699,7 @@ export default function InvoicesPage() {
                       required
                       value={formData.clientId}
                       onChange={(e) => setFormData({ ...formData, clientId: e.target.value, jobId: '' })}
-                      className="w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue bg-white text-sm md:text-base"
+                      className="w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white text-sm md:text-base"
                     >
                       <option value="">Select Client</option>
                       {clients.map(c => (
@@ -714,7 +714,7 @@ export default function InvoicesPage() {
                       value={formData.jobId}
                       onChange={(e) => setFormData({ ...formData, jobId: e.target.value })}
                       disabled={!formData.clientId}
-                      className="w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue bg-white disabled:bg-gray-100 disabled:text-gray-400 text-sm md:text-base"
+                      className="w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white disabled:bg-gray-100 disabled:text-gray-400 text-sm md:text-base"
                     >
                       <option value="">Select Job (Optional)</option>
                       {jobs
@@ -733,7 +733,7 @@ export default function InvoicesPage() {
                       value={formData.dueDate}
                       onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                       style={{ boxSizing: 'border-box', minWidth: 0 }}
-                      className="w-full max-w-[200px] sm:max-w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue text-sm md:text-base"
+                      className="w-full max-w-[200px] sm:max-w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm md:text-base"
                     />
                   </div>
                 </div>
@@ -742,7 +742,7 @@ export default function InvoicesPage() {
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <label className="block text-sm font-semibold text-gray-700">Items</label>
-                    <button type="button" onClick={addItem} className="text-sm font-medium text-oms-blue hover:text-oms-blue">+ Add Item</button>
+                    <button type="button" onClick={addItem} className="text-sm font-medium text-primary hover:text-primary">+ Add Item</button>
                   </div>
                   <div className="space-y-4">
                     {formData.items.map((item, index) => (
@@ -821,7 +821,7 @@ export default function InvoicesPage() {
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Grand Total</label>
-                      <div className="font-bold text-oms-blue text-lg">{formatCurrency(formData.totalAmount)}</div>
+                      <div className="font-bold text-primary text-lg">{formatCurrency(formData.totalAmount)}</div>
                     </div>
                   </div>
 
@@ -832,7 +832,7 @@ export default function InvoicesPage() {
                         type="number"
                         value={formData.paidAmount}
                         onChange={(e) => setFormData({ ...formData, paidAmount: parseFloat(e.target.value) || 0 })}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
                       />
                     </div>
                     <div>
@@ -840,7 +840,7 @@ export default function InvoicesPage() {
                       <select
                         value={formData.status}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
                       >
                         <option value="pending">Pending</option>
                         <option value="partial">Partial</option>
@@ -863,7 +863,7 @@ export default function InvoicesPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="flex-1 px-4 py-2.5 bg-oms-blue text-white font-semibold rounded-xl hover:bg-oms-blue transition-colors -200 disabled:opacity-50"
+                    className="flex-1 px-4 py-2.5 bg-gray-900 text-white font-semibold rounded-md hover:bg-gray-900 transition-colors -200 disabled:opacity-50"
                   >
                     {submitting ? 'Saving...' : (isEditing ? 'Update' : 'Create')}
                   </button>
@@ -885,7 +885,7 @@ export default function InvoicesPage() {
                   <div className="flex items-center gap-2 mt-1">
                     <p className="text-sm text-gray-500">{new Date(selectedInvoice.invoice_date).toLocaleDateString()}</p>
                     {selectedInvoice.payment_status === 'overdue' && (
-                      <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full">OVERDUE</span>
+                      <span className="text-xs font-bold text-white bg-red-500 px-2 py-0.5 rounded-full">OVERDUE</span>
                     )}
                   </div>
                 </div>
@@ -897,8 +897,8 @@ export default function InvoicesPage() {
               <div className="p-4 space-y-6">
                 {/* Client Info */}
                 <div className="flex items-center gap-2 md:gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <div className="w-12 h-12 bg-oms-blue rounded-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-oms-blue" />
+                  <div className="w-12 h-12 bg-gray-900 rounded-full flex items-center justify-center">
+                    <User className="w-6 h-6 text-primary" />
                   </div>
                   <div>
                     <h3 className="font-bold text-gray-900">{selectedInvoice.client?.company}</h3>
@@ -923,7 +923,7 @@ export default function InvoicesPage() {
                 </div>
 
                 {/* Amount Details */}
-                <div className="bg-oms-blue/50 rounded-xl p-5 border border-[rgba(0,0,255,0.2)]-100 space-y-3">
+                <div className="bg-gray-900/50 rounded-xl p-5 border border-border-100 space-y-3">
                   <div className="flex justify-between text-gray-600">
                     <span>Subtotal</span>
                     <span>{formatCurrency(selectedInvoice.subtotal)}</span>
@@ -932,7 +932,7 @@ export default function InvoicesPage() {
                     <span>GST</span>
                     <span>{formatCurrency(selectedInvoice.total_tax)}</span>
                   </div>
-                  <div className="flex justify-between font-bold text-gray-900 pt-3 border-t border-[rgba(0,0,255,0.2)]-100">
+                  <div className="flex justify-between font-bold text-gray-900 pt-3 border-t border-border-100">
                     <span>Total Amount</span>
                     <span className="text-lg">{formatCurrency(selectedInvoice.total_amount)}</span>
                   </div>
@@ -942,7 +942,7 @@ export default function InvoicesPage() {
                         <span>Paid</span>
                         <span>- {formatCurrency(selectedInvoice.amount_paid)}</span>
                       </div>
-                      <div className="flex justify-between font-bold text-amber-700 pt-3 border-t border-[rgba(0,0,255,0.2)]-100">
+                      <div className="flex justify-between font-bold text-amber-700 pt-3 border-t border-border-100">
                         <span>Balance Due</span>
                         <span>{formatCurrency(selectedInvoice.total_amount - selectedInvoice.amount_paid)}</span>
                       </div>
@@ -977,14 +977,14 @@ export default function InvoicesPage() {
                   <button
                     onClick={() => handleDownloadPDF(selectedInvoice)}
                     disabled={pdfLoading}
-                    className="flex items-center justify-center gap-2 px-4 py-3 bg-oms-blue text-white font-semibold rounded-xl hover:bg-blue-600 disabled:opacity-50 transition-colors"
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 disabled:opacity-50 transition-colors"
                   >
                     {pdfLoading ? <Loader2 className="w-4 h-4 md:w-4.5 md:h-4.5 animate-spin" /> : <Download className="w-4 h-4 md:w-4.5 md:h-4.5" />}
                     Download PDF
                   </button>
                   <button
                     onClick={() => handleWhatsAppShare(selectedInvoice)}
-                    className="col-span-2 flex items-center justify-center gap-2 px-4 py-3 bg-white0 text-white font-semibold rounded-xl hover:bg-green-600 transition-colors"
+                    className="col-span-2 flex items-center justify-center gap-2 px-4 py-3 bg-white0 text-white font-semibold rounded-xl hover:bg-gray-900 transition-colors"
                   >
                     <MessageCircle className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     Share on WhatsApp
@@ -995,7 +995,7 @@ export default function InvoicesPage() {
                 {selectedInvoice.amount_paid < selectedInvoice.total_amount && (
                   <button
                     onClick={() => handlePaymentReminder(selectedInvoice)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white0 text-white font-semibold rounded-xl hover:bg-oms-orange transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white0 text-white font-semibold rounded-xl hover:bg-destructive transition-colors"
                   >
                     <MessageCircle className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     Send Payment Reminder

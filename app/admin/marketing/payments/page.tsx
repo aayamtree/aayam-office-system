@@ -6,11 +6,13 @@ import {
   CheckCircle, Clock, Lock, AlertCircle, CreditCard
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const currentUser = { id: 1, name: 'Marketing User' };
 
 const paymentStatuses = [
-  { id: 'pending', name: 'Pending', color: 'bg-yellow-100 text-yellow-700' },
+  { id: 'pending', name: 'Pending', color: 'bg-muted text-muted-foreground' },
   { id: 'partial', name: 'Partial', color: 'bg-orange-100 text-orange-700' },
   { id: 'paid', name: 'Paid', color: 'bg-gray-100 text-gray-900' },
   { id: 'overdue', name: 'Overdue', color: 'bg-red-100 text-red-700' },
@@ -91,7 +93,7 @@ export default function MarketingPaymentsPage() {
         </div>
         <div className="bg-white rounded-xl border p-4">
           <p className="text-sm text-gray-500">Total Amount</p>
-          <p className="text-page-title text-oms-blue">{formatCurrency(totalAmount)}</p>
+          <p className="text-page-title text-primary">{formatCurrency(totalAmount)}</p>
         </div>
         <div className="bg-white rounded-xl border p-4">
           <p className="text-sm text-gray-500">Received</p>
@@ -99,7 +101,7 @@ export default function MarketingPaymentsPage() {
         </div>
         <div className="bg-white rounded-xl border p-4">
           <p className="text-sm text-gray-500">Pending</p>
-          <p className="text-page-title text-oms-orange">{formatCurrency(totalPending)}</p>
+          <p className="text-page-title text-destructive">{formatCurrency(totalPending)}</p>
         </div>
       </div>
 
@@ -107,16 +109,24 @@ export default function MarketingPaymentsPage() {
       <div className="bg-white rounded-xl border p-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <input type="text" placeholder="Search by order ID, client..." value={searchTerm}
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Search by order ID, client..."
+              value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue" />
+              className="pl-10"
+            />
           </div>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue">
-            <option value="all">All Status</option>
-            {paymentStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-auto min-w-[120px] h-9 text-sm">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              {paymentStatuses.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -130,7 +140,7 @@ export default function MarketingPaymentsPage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className="font-mono text-sm text-oms-blue font-medium">{payment.orderId}</span>
+                    <span className="font-mono text-sm text-primary font-medium">{payment.orderId}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusBadge(payment.status)}`}>
                       {getStatusName(payment.status)}
                     </span>
@@ -149,7 +159,7 @@ export default function MarketingPaymentsPage() {
                     </p>
                   </div>
                   <button onClick={() => { setSelectedPayment(payment); setShowDetailModal(true); }}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="View Details">
+                    className="p-2 text-foreground hover:bg-muted rounded-lg" title="View Details">
                     <Eye size={18} />
                   </button>
                 </div>
@@ -167,7 +177,7 @@ export default function MarketingPaymentsPage() {
                 </div>
                 <div className="flex justify-between text-xs mt-1">
                   <span className="text-gray-900">Paid: {formatCurrency(payment.paidAmount)}</span>
-                  <span className="text-oms-orange">Pending: {formatCurrency(payment.pendingAmount)}</span>
+                  <span className="text-destructive">Pending: {formatCurrency(payment.pendingAmount)}</span>
                 </div>
               </div>
             </div>
@@ -189,7 +199,7 @@ export default function MarketingPaymentsPage() {
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
               <div>
-                <span className="font-mono text-oms-blue">{selectedPayment.orderId}</span>
+                <span className="font-mono text-primary">{selectedPayment.orderId}</span>
                 <h2 className="text-page-title">{selectedPayment.subject}</h2>
               </div>
               <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
@@ -232,7 +242,7 @@ export default function MarketingPaymentsPage() {
                 </div>
                 <div className="flex justify-between pt-2 border-t">
                   <span className="font-medium">Pending Amount</span>
-                  <span className="font-bold text-oms-orange">{formatCurrency(selectedPayment.pendingAmount)}</span>
+                  <span className="font-bold text-destructive">{formatCurrency(selectedPayment.pendingAmount)}</span>
                 </div>
               </div>
 
@@ -264,10 +274,10 @@ export default function MarketingPaymentsPage() {
                 )}
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <div className="bg-muted border border-border rounded-xl p-4">
                 <div className="flex items-start gap-2">
-                  <AlertCircle className="text-blue-600 flex-shrink-0 mt-0.5" size={18} />
-                  <p className="text-sm text-blue-700">
+                  <AlertCircle className="text-foreground flex-shrink-0 mt-0.5" size={18} />
+                  <p className="text-sm text-foreground">
                     Contact Finance team for payment collection queries or to update payment status.
                   </p>
                 </div>

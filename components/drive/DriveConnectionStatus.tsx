@@ -39,14 +39,14 @@ export default function DriveConnectionStatus() {
     if (!status?.connected || status?.isExpired) {
         return (
             <div className="flex items-center gap-2 px-3 py-2 bg-[rgba(255,102,0,0.1)] border border-[rgba(255,102,0,0.2)] rounded-lg">
-                <XCircle className="w-4 h-4 text-oms-orange" />
-                <span className="text-label text-oms-orange">
+                <XCircle className="w-4 h-4 text-destructive" />
+                <span className="text-label text-destructive">
                     Drive: {status?.isExpired ? 'Expired' : 'Not Connected'}
                 </span>
                 {profile?.role === 'admin' && (
                     <Link
                         href="/admin/settings"
-                        className="ml-auto px-3 py-2 bg-oms-orange text-white text-xs font-medium rounded-lg hover:opacity-90 transition-all"
+                        className="ml-auto px-3 py-2 bg-destructive text-white text-xs font-medium rounded-lg hover:opacity-90 transition-all"
                     >
                         Configure
                     </Link>

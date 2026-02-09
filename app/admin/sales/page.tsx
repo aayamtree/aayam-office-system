@@ -27,16 +27,16 @@ export default function SalesPage() {
   const pendingQuotesCount = quotations.filter(q => q.status === 'draft' || q.status === 'sent' || q.status === 'viewed').length;
 
   const stats = [
-    { label: 'Total Jobs', value: dashboardStats.activeJobs.toString(), change: 'Active Now', icon: ShoppingCart, color: 'bg-blue-500' },
+    { label: 'Total Jobs', value: dashboardStats.activeJobs.toString(), change: 'Active Now', icon: ShoppingCart, color: 'bg-primary' },
     { label: 'Active Leads', value: activeLeadsCount.toString(), change: `${leads.length} total`, icon: Users, color: 'bg-white0' },
-    { label: 'Pending Quotes', value: pendingQuotesCount.toString(), change: `${quotations.length} total`, icon: FileText, color: 'bg-[rgba(0,0,255,0.05)]0' },
+    { label: 'Pending Quotes', value: pendingQuotesCount.toString(), change: `${quotations.length} total`, icon: FileText, color: 'bg-muted0' },
     { label: 'Total Revenue', value: formatCurrency(dashboardStats.totalRevenue), change: 'Lifetime', icon: IndianRupee, color: 'bg-white0' },
   ];
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      'new': 'bg-blue-100 text-blue-700',
-      'designing': 'bg-oms-blue text-white',
+      'new': 'bg-muted text-foreground',
+      'designing': 'bg-gray-900 text-white',
       'production': 'bg-amber-100 text-amber-700',
       'printing': 'bg-amber-100 text-amber-700',
       'finishing': 'bg-orange-100 text-orange-700',
@@ -54,8 +54,8 @@ export default function SalesPage() {
 
   const pipeline = [
     { stage: 'Design', count: (pipelineStats.designing || 0) + (pipelineStats.approval || 0), color: 'bg-white0' },
-    { stage: 'Production', count: (pipelineStats.printing || 0) + (pipelineStats.finishing || 0), color: 'bg-blue-500' },
-    { stage: 'QC', count: pipelineStats.quality_check || 0, color: 'bg-[rgba(0,0,255,0.05)]0' },
+    { stage: 'Production', count: (pipelineStats.printing || 0) + (pipelineStats.finishing || 0), color: 'bg-primary' },
+    { stage: 'QC', count: pipelineStats.quality_check || 0, color: 'bg-muted0' },
     { stage: 'Ready', count: (pipelineStats.ready || 0) + (pipelineStats.packed || 0), color: 'bg-white0' },
     { stage: 'Dispatched', count: (pipelineStats.dispatched || 0) + (pipelineStats.in_transit || 0), color: 'bg-gray-500' },
   ].map(p => ({
@@ -71,12 +71,12 @@ export default function SalesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div>
-          <h1 className="text-2xl lg:text-page-title text-gray-900 tracking-tight">Sales Overview</h1>
+          <h1 className="text-page-title text-gray-900 tracking-tight">Sales Overview</h1>
           <p className="text-gray-500 mt-1">Manage leads, quotations, and orders</p>
         </div>
         <Link
           href="/admin/sales/orders?new=true"
-          className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-blue-600 text-white px-4 py-2 rounded-xl -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
+          className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-xl -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
         >
           <ShoppingCart size={20} />
           <span>New Order</span>
@@ -106,7 +106,7 @@ export default function SalesPage() {
         <Link href="/admin/sales/leads" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
             <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Users size={28} className="text-oms-orange" />
+              <Users size={28} className="text-destructive" />
             </div>
             <div>
               <h2 className="text-section text-gray-900">Leads</h2>
@@ -120,8 +120,8 @@ export default function SalesPage() {
 
         <Link href="/admin/sales/quotations" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
-            <div className="w-14 h-14 bg-oms-blue rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <FileText size={28} className="text-oms-blue" />
+            <div className="w-14 h-14 bg-gray-900 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <FileText size={28} className="text-primary" />
             </div>
             <div>
               <h2 className="text-section text-gray-900">Quotations</h2>
@@ -135,8 +135,8 @@ export default function SalesPage() {
 
         <Link href="/admin/sales/orders" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
-            <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <ShoppingCart size={28} className="text-blue-600" />
+            <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <ShoppingCart size={28} className="text-foreground" />
             </div>
             <div>
               <h2 className="text-section text-gray-900">Orders</h2>
@@ -154,7 +154,7 @@ export default function SalesPage() {
         {/* Order Pipeline */}
         <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
           <div className="flex items-center gap-3 mb-3 md:mb-1.5">
-            <div className="w-1 h-6 bg-[rgba(0,0,255,0.05)]0 rounded-full"></div>
+            <div className="w-1 h-6 bg-muted0 rounded-full"></div>
             <h2 className="text-section text-gray-900">Order Pipeline</h2>
           </div>
           <div className="space-y-5">
@@ -176,10 +176,10 @@ export default function SalesPage() {
         <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
           <div className="flex items-center justify-between mb-3 md:mb-1.5">
             <div className="flex items-center gap-3">
-              <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
+              <div className="w-1 h-6 bg-gray-900 rounded-full"></div>
               <h2 className="text-section text-gray-900">Recent Orders</h2>
             </div>
-            <Link href="/admin/sales/orders" className="text-sm font-medium text-oms-blue hover:text-oms-blue bg-[rgba(0,0,255,0.05)] px-3 py-1.5 rounded-lg transition-colors">
+            <Link href="/admin/sales/orders" className="text-sm font-medium text-primary hover:text-primary bg-muted px-3 py-1.5 rounded-lg transition-colors">
               View All
             </Link>
           </div>
@@ -197,7 +197,7 @@ export default function SalesPage() {
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-gray-900">{formatCurrency(order.total_amount)}</p>
-                  <span className={`inline-block px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded-full mt-1 ${getStatusColor(order.current_stage)}`}>
+                  <span className={`inline-block px-2 py-0.5 text-xs uppercase font-bold tracking-wider rounded-full mt-1 ${getStatusColor(order.current_stage)}`}>
                     {order.current_stage}
                   </span>
                 </div>
@@ -216,20 +216,20 @@ export default function SalesPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
           <Link href="/admin/sales/leads" className="flex items-center gap-2 md:gap-4 p-4 bg-white/80 rounded-2xl border border-gray-100 transition-colors hover:bg-amber-100 cursor-pointer">
             <div className="bg-white p-3 rounded-xl">
-              <Clock size={24} className="text-oms-orange" />
+              <Clock size={24} className="text-destructive" />
             </div>
             <div>
               <p className="font-bold text-gray-900">Follow-ups</p>
               <p className="text-sm font-medium text-amber-700 mt-0.5">{followUpsDue} due today</p>
             </div>
           </Link>
-          <Link href="/admin/sales/quotations" className="flex items-center gap-2 md:gap-4 p-4 bg-[rgba(0,0,255,0.05)]/80 rounded-2xl border border-[rgba(0,0,255,0.1)] transition-colors hover:bg-oms-blue cursor-pointer">
+          <Link href="/admin/sales/quotations" className="flex items-center gap-2 md:gap-4 p-4 bg-muted/80 rounded-2xl border border-gray-200 transition-colors hover:bg-gray-900 cursor-pointer">
             <div className="bg-white p-3 rounded-xl">
-              <AlertCircle size={24} className="text-oms-blue" />
+              <AlertCircle size={24} className="text-primary" />
             </div>
             <div>
               <p className="font-bold text-gray-900">Quotations</p>
-              <p className="text-sm font-medium text-oms-blue mt-0.5">{pendingQuotesCount} pending review</p>
+              <p className="text-sm font-medium text-primary mt-0.5">{pendingQuotesCount} pending review</p>
             </div>
           </Link>
           <Link href="/admin/dispatch" className="flex items-center gap-2 md:gap-4 p-4 bg-white/80 rounded-2xl border border-green-100 transition-colors hover:bg-gray-100 cursor-pointer">

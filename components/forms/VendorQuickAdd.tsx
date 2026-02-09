@@ -83,7 +83,7 @@ export default function VendorQuickAdd({ onVendorCreated, onClose }: VendorQuick
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-white/20 rounded-lg transition-all"
+                        className="p-2 hover:bg-white/20 rounded-md transition-all"
                     >
                         <X size={24} />
                     </button>
@@ -262,14 +262,14 @@ export default function VendorQuickAdd({ onVendorCreated, onClose }: VendorQuick
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-100 transition-all"
+                            className="px-4 py-2 border-2 border-gray-300 rounded-md font-bold text-gray-700 hover:bg-gray-100 transition-all"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-8 py-3 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-bold  transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-8 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-md font-bold  transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? 'Adding...' : 'Add Vendor'}
                         </button>

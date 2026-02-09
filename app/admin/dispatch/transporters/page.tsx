@@ -142,7 +142,7 @@ export default function TransportersPage() {
 
   const uniqueStates = Array.from(new Set(transporters.map(t => t.state || 'Unknown'))).sort();
 
-  if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-oms-blue" /></div>;
+  if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary" /></div>;
 
   return (
     <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 px-2 animate-fade-in">
@@ -159,7 +159,7 @@ export default function TransportersPage() {
         </div>
         <button
           onClick={handleAddNew}
-          className="flex items-center justify-center gap-2 bg-[#0000FF] text-white px-4 py-2.5 rounded-lg hover:bg-[#0000CC] shadow-sm font-semibold"
+          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-md hover:bg-gray-800 shadow-sm font-semibold"
         >
           <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
           <span>Add Transporter</span>
@@ -195,9 +195,9 @@ export default function TransportersPage() {
         {Object.entries(groupedByState).sort((a, b) => a[0].localeCompare(b[0])).map(([state, stateTransporters]) => (
           <div key={state}>
             <div className="flex items-center gap-2 mb-3">
-              <MapPin className="w-4 h-4 text-oms-blue" />
+              <MapPin className="w-4 h-4 text-primary" />
               <h2 className="text-section text-gray-900">{state}</h2>
-              <span className="px-2 py-0.5 bg-oms-blue text-white text-xs rounded-full">
+              <span className="px-2 py-0.5 bg-gray-900 text-white text-xs rounded-full">
                 {stateTransporters.length}
               </span>
             </div>
@@ -207,8 +207,8 @@ export default function TransportersPage() {
                 <div key={t.id} className="bg-white rounded-xl p-4 border border-gray-100">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-oms-blue rounded-full flex items-center justify-center">
-                        <Truck className="w-4 h-4 md:w-4.5 md:h-4.5 text-oms-blue" />
+                      <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center">
+                        <Truck className="w-4 h-4 md:w-4.5 md:h-4.5 text-primary" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900">{t.company || t.name}</h3>
@@ -222,16 +222,16 @@ export default function TransportersPage() {
 
                   <div className="space-y-1 text-sm mb-3">
                     <div className="flex items-center gap-2 text-gray-600">
-                      <Phone className="w-3.5 h-3.5" />
-                      <a href={`tel:${t.phone}`} className="text-oms-blue">{t.phone}</a>
+                      <Phone className="w-4 h-4" />
+                      <a href={`tel:${t.phone}`} className="text-primary">{t.phone}</a>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
-                      <MapPin className="w-3.5 h-3.5" />
+                      <MapPin className="w-4 h-4" />
                       <span>{t.city}, {t.state}</span>
                     </div>
                     {t.gstin && (
                       <div className="flex items-center gap-2 text-gray-600">
-                        <FileText className="w-3.5 h-3.5" />
+                        <FileText className="w-4 h-4" />
                         <span className="text-xs">{t.gstin}</span>
                       </div>
                     )}
@@ -239,13 +239,13 @@ export default function TransportersPage() {
 
                   <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
                     <button onClick={() => handleView(t)} className="flex-1 flex items-center justify-center gap-1 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">
-                      <Eye className="w-3.5 h-3.5" /> View
+                      <Eye className="w-4 h-4" /> View
                     </button>
                     <button onClick={() => handleEdit(t)} className="flex-1 flex items-center justify-center gap-1 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">
-                      <Edit className="w-3.5 h-3.5" /> Edit
+                      <Edit className="w-4 h-4" /> Edit
                     </button>
                     <button onClick={() => handleDelete(t.id)} className="flex-1 flex items-center justify-center gap-1 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg">
-                      <Trash2 className="w-3.5 h-3.5" /> Delete
+                      <Trash2 className="w-4 h-4" /> Delete
                     </button>
                   </div>
                 </div>
@@ -370,7 +370,7 @@ export default function TransportersPage() {
                   id="is_active"
                   checked={formData.is_active}
                   onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="w-5 h-5 rounded border-gray-300 text-oms-blue focus:ring-oms-blue"
+                  className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-gray-400"
                 />
                 <label htmlFor="is_active" className="text-sm text-gray-700">Active Transporter</label>
               </div>
@@ -379,7 +379,7 @@ export default function TransportersPage() {
                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50">
                   Cancel
                 </button>
-                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] disabled:opacity-50 shadow-sm font-semibold">
+                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 disabled:opacity-50 shadow-sm font-semibold">
                   {submitting ? 'Saving...' : (isEditing ? 'Update' : 'Add')}
                 </button>
               </div>
@@ -400,9 +400,9 @@ export default function TransportersPage() {
             </div>
 
             <div className="p-4 space-y-4">
-              <div className="flex items-center gap-2 md:gap-4 p-4 bg-[rgba(0,0,255,0.05)] rounded-xl">
-                <div className="w-12 h-12 bg-oms-blue rounded-full flex items-center justify-center">
-                  <Truck className="w-6 h-6 text-oms-blue" />
+              <div className="flex items-center gap-2 md:gap-4 p-4 bg-muted rounded-xl">
+                <div className="w-12 h-12 bg-gray-900 rounded-full flex items-center justify-center">
+                  <Truck className="w-6 h-6 text-primary" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">{selectedTransporter.company || selectedTransporter.name}</h3>
@@ -417,7 +417,7 @@ export default function TransportersPage() {
                 </div>
                 <div className="flex justify-between p-3 bg-gray-50 rounded-xl">
                   <span className="text-gray-500">Phone</span>
-                  <a href={`tel:${selectedTransporter.phone}`} className="font-medium text-oms-blue">{selectedTransporter.phone}</a>
+                  <a href={`tel:${selectedTransporter.phone}`} className="font-medium text-primary">{selectedTransporter.phone}</a>
                 </div>
                 {selectedTransporter.email && (
                   <div className="flex justify-between p-3 bg-gray-50 rounded-xl">
@@ -440,7 +440,7 @@ export default function TransportersPage() {
 
               <button
                 onClick={() => setShowViewModal(false)}
-                className="w-full px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] shadow-sm font-semibold"
+                className="w-full px-4 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 shadow-sm font-semibold"
               >
                 Close
               </button>

@@ -107,7 +107,7 @@ export default function PrintRunDetailPage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[rgba(0,0,255,0.2)]-600"></div>
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
             </div>
         );
     }
@@ -125,8 +125,8 @@ export default function PrintRunDetailPage() {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'planned': return 'bg-blue-100 text-blue-800 border-blue-200';
-            case 'printed': return 'bg-oms-blue text-white-800 border-[rgba(0,0,255,0.2)]-200';
+            case 'planned': return 'bg-muted text-gray-800 border-border';
+            case 'printed': return 'bg-gray-900 text-white-800 border-gray-300';
             case 'delivered': return 'bg-gray-100 text-green-800 border-green-200';
             default: return 'bg-gray-100 text-gray-800 border-gray-200';
         }
@@ -139,7 +139,7 @@ export default function PrintRunDetailPage() {
                 <div className="max-w-7xl mx-auto">
                     <Link
                         href="/admin/print-planner"
-                        className="inline-flex items-center gap-2 text-oms-blue hover:text-indigo-800 font-medium mb-4 transition-colors"
+                        className="inline-flex items-center gap-2 text-primary hover:text-gray-800 font-medium mb-4 transition-colors"
                     >
                         <ArrowLeft size={20} />
                         Back to Print Planner
@@ -149,7 +149,7 @@ export default function PrintRunDetailPage() {
                         <div>
                             <div className="flex items-center gap-2 md:gap-4 mb-2">
                                 <h1 className="text-page-title text-gray-900 flex items-center gap-3">
-                                    <Printer className="text-oms-blue" size={32} />
+                                    <Printer className="text-primary" size={32} />
                                     {printRun.print_run_number}
                                 </h1>
                                 <span className={`px-4 py-2 rounded-full text-sm font-bold border-2 ${getStatusColor(printRun.status)}`}>
@@ -167,7 +167,7 @@ export default function PrintRunDetailPage() {
                             {printRun.status === 'planned' && (
                                 <button
                                     onClick={() => updateStatus('printed')}
-                                    className="px-4 py-2 bg-oms-blue text-white rounded-xl font-bold hover:bg-oms-blue transition-all flex items-center gap-2"
+                                    className="px-4 py-2 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-900 transition-all flex items-center gap-2"
                                 >
                                     <CheckCircle size={20} />
                                     Mark as Printed
@@ -176,7 +176,7 @@ export default function PrintRunDetailPage() {
                             {printRun.status === 'printed' && (
                                 <button
                                     onClick={() => updateStatus('delivered')}
-                                    className="px-4 py-2 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all flex items-center gap-2"
+                                    className="px-4 py-2 bg-gray-900 text-white rounded-xl font-bold hover:bg-green-700 transition-all flex items-center gap-2"
                                 >
                                     <CheckCircle size={20} />
                                     Mark as Delivered
@@ -184,7 +184,7 @@ export default function PrintRunDetailPage() {
                             )}
                             <button
                                 onClick={() => setShowAddJobsModal(true)}
-                                className="px-4 py-2 bg-oms-blue text-white rounded-xl font-bold  transition-all flex items-center gap-2"
+                                className="px-4 py-2 bg-gray-900 text-white rounded-xl font-bold  transition-all flex items-center gap-2"
                             >
                                 <Plus size={20} />
                                 Add Jobs
@@ -202,11 +202,11 @@ export default function PrintRunDetailPage() {
                     <div className="grid grid-cols-5 gap-3 md:gap-4">
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Total Jobs</p>
-                            <p className="text-page-title text-oms-blue">{printRunJobs.length}</p>
+                            <p className="text-page-title text-primary">{printRunJobs.length}</p>
                         </div>
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Total Sheets</p>
-                            <p className="text-page-title text-oms-blue">
+                            <p className="text-page-title text-primary">
                                 {printRunJobs.reduce((sum, job) => {
                                     const sheets = Math.ceil((job.quantity_needed || 0) / (job.ups_in_sheet || 1));
                                     return sum + sheets;
@@ -263,7 +263,7 @@ export default function PrintRunDetailPage() {
                                             <td className="px-6 py-4">
                                                 <Link
                                                     href={`/admin/jobs/${prj.job_id}`}
-                                                    className="font-mono text-sm text-oms-blue hover:text-indigo-800 font-bold"
+                                                    className="font-mono text-sm text-primary hover:text-gray-800 font-bold"
                                                 >
                                                     {(prj.job as any)?.job_number || 'N/A'}
                                                 </Link>
@@ -281,12 +281,12 @@ export default function PrintRunDetailPage() {
                                                 {prj.ups_in_sheet || 1}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="px-3 py-1 bg-oms-blue text-white rounded-lg text-sm font-bold">
+                                                <span className="px-3 py-1 bg-gray-900 text-white rounded-lg text-sm font-bold">
                                                     {Math.ceil((prj.quantity_needed || 0) / (prj.ups_in_sheet || 1))} sheets
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-bold">
+                                                <span className="px-2 py-1 bg-muted text-gray-800 rounded text-xs font-bold">
                                                     {prj.file_version || 'v1'}
                                                 </span>
                                             </td>
@@ -460,14 +460,14 @@ function AddJobsModal({
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <div className="bg-white rounded-3xl w-full max-w-4xl  overflow-hidden max-h-[90vh] overflow-y-auto">
-                <div className="bg-oms-blue p-4 text-white flex items-center justify-between sticky top-0">
+                <div className="bg-gray-900 p-4 text-white flex items-center justify-between sticky top-0">
                     <div>
                         <h3 className="text-page-title">Add Jobs to Print Run</h3>
                         <p className="text-white/80 text-sm mt-1">
                             Select print-ready jobs below ({selectedJobs.size} selected)
                         </p>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-lg transition-all">
+                    <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-md transition-all">
                         ✕
                     </button>
                 </div>
@@ -475,7 +475,7 @@ function AddJobsModal({
                 <div className="p-4">
                     {loading ? (
                         <div className="text-center py-12">
-                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[rgba(0,0,255,0.2)]-600"></div>
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
                         </div>
                     ) : eligibleJobs.length === 0 ? (
                         <div className="text-center py-12">
@@ -497,7 +497,7 @@ function AddJobsModal({
                                         <div
                                             key={job.id}
                                             className={`p-4 rounded-xl border-2 transition-all ${isSelected
-                                                ? 'bg-oms-blue border-[rgba(0,0,255,0.2)]-300'
+                                                ? 'bg-gray-900 border-gray-300'
                                                 : 'bg-white border-gray-200'
                                                 }`}
                                         >
@@ -506,12 +506,12 @@ function AddJobsModal({
                                                     type="checkbox"
                                                     checked={isSelected}
                                                     onChange={() => toggleJob(job.id)}
-                                                    className="h-5 w-5 text-oms-blue rounded focus:ring-oms-blue mt-1"
+                                                    className="h-5 w-5 text-primary rounded focus:ring-gray-400 mt-1"
                                                 />
 
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-3 mb-2">
-                                                        <span className="font-mono text-sm font-bold text-oms-blue">
+                                                        <span className="font-mono text-sm font-bold text-primary">
                                                             {job.job_number}
                                                         </span>
                                                         <span className="font-medium text-gray-900">{job.project_name}</span>
@@ -532,7 +532,7 @@ function AddJobsModal({
                                                                     min="0"
                                                                     value={quantities.quantity}
                                                                     onChange={(e) => updateJobQuantity(job.id, 'quantity', parseInt(e.target.value) || 0)}
-                                                                    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 ring-oms-blue/20 focus:border-oms-blue"
+                                                                    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 ring-primary/20 focus:border-gray-400"
                                                                     placeholder="0"
                                                                 />
                                                             </div>
@@ -546,7 +546,7 @@ function AddJobsModal({
                                                                     min="1"
                                                                     value={quantities.ups}
                                                                     onChange={(e) => updateJobQuantity(job.id, 'ups', parseInt(e.target.value) || 1)}
-                                                                    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 ring-oms-blue/20 focus:border-oms-blue"
+                                                                    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 ring-primary/20 focus:border-gray-400"
                                                                     placeholder="1"
                                                                 />
                                                             </div>
@@ -555,7 +555,7 @@ function AddJobsModal({
                                                                 <label className="block text-xs font-bold text-gray-700 mb-1">
                                                                     Sheets Required
                                                                 </label>
-                                                                <div className="w-full border-2 border-[rgba(0,0,255,0.2)]-200 bg-oms-blue rounded-lg px-3 py-2 text-sm font-bold text-oms-blue">
+                                                                <div className="w-full border-2 border-gray-300 bg-gray-900 rounded-lg px-3 py-2 text-sm font-bold text-primary">
                                                                     {sheets} sheets
                                                                 </div>
                                                             </div>
@@ -571,14 +571,14 @@ function AddJobsModal({
                             <div className="flex gap-2 md:gap-4 justify-end border-t-2 border-gray-100 pt-4">
                                 <button
                                     onClick={onClose}
-                                    className="px-4 py-2 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-100 transition-all"
+                                    className="px-4 py-2 border-2 border-gray-300 rounded-md font-bold text-gray-700 hover:bg-gray-100 transition-all"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleSubmit}
                                     disabled={selectedJobs.size === 0 || submitting}
-                                    className="px-8 py-3 bg-oms-blue text-white rounded-xl font-bold  transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-8 py-2 bg-gray-900 text-white rounded-md font-bold  transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {submitting ? 'Adding...' : `Add ${selectedJobs.size} Job${selectedJobs.size !== 1 ? 's' : ''}`}
                                 </button>

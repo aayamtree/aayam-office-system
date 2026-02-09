@@ -58,7 +58,7 @@ export default function PreferencesPage() {
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center justify-center gap-2 bg-[#0000FF] text-white px-4 py-2.5 rounded-lg hover:bg-[#0000CC] disabled:bg-gray-400 shadow-sm font-semibold"
+          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-md hover:bg-gray-800 disabled:bg-gray-400 shadow-sm font-semibold"
         >
           <Save className="w-4 h-4 md:w-4.5 md:h-4.5" />
           <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>

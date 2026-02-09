@@ -41,7 +41,7 @@ export default function ActivityFeed({ variant = 'card' }: { variant?: 'card' | 
     return (
         <Container className={containerClasses}>
             <div className="flex items-center gap-2 mb-4">
-                <Activity size={20} className="text-oms-blue" />
+                <Activity size={20} className="text-primary" />
                 <h2 className="text-section text-gray-900">Activity Feed</h2>
             </div>
 
@@ -58,7 +58,7 @@ export default function ActivityFeed({ variant = 'card' }: { variant?: 'card' | 
                     return (
                         <div key={log.id} className="relative pl-8 group">
                             {/* Timeline Dot */}
-                            <div className={`absolute left-0 top-1.5 w-5 h-5 bg-white border-2 rounded-full flex items-center justify-center group-hover:border-oms-blue transition-colors z-10 ${isUpload ? 'border-green-400' : 'border-oms-blue-100'
+                            <div className={`absolute left-0 top-1.5 w-5 h-5 bg-white border-2 rounded-full flex items-center justify-center group-hover:border-primary transition-colors z-10 ${isUpload ? 'border-green-400' : 'border-primary-100'
                                 }`}>
                                 {isUpload ? (
                                     <Upload className="w-2.5 h-2.5 text-green-600" />

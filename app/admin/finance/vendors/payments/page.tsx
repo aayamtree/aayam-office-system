@@ -6,6 +6,8 @@ import {
   Plus, Search, Building2, Calendar, IndianRupee, X, Eye, Trash2,
   ArrowLeft, CheckCircle, CreditCard, Wallet, Building, ArrowUpRight
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const paymentModes = ['Cash', 'Bank Transfer', 'NEFT', 'RTGS', 'UPI', 'Cheque'];
 
@@ -93,8 +95,8 @@ export default function VendorPaymentsPage() {
   const getModeIcon = (mode: string) => {
     switch (mode) {
       case 'Cash': return <Wallet className="w-4 h-4 text-gray-900" />;
-      case 'UPI': return <CreditCard className="w-4 h-4 text-oms-blue" />;
-      default: return <Building className="w-4 h-4 text-blue-600" />;
+      case 'UPI': return <CreditCard className="w-4 h-4 text-primary" />;
+      default: return <Building className="w-4 h-4 text-foreground" />;
     }
   };
 
@@ -117,7 +119,7 @@ export default function VendorPaymentsPage() {
             <p className="text-gray-500">Payment out to vendors</p>
           </div>
         </div>
-        <button onClick={() => { resetForm(); setShowModal(true); }} className="flex items-center gap-2 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] shadow-sm font-semibold">
+        <button onClick={() => { resetForm(); setShowModal(true); }} className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 shadow-sm font-semibold">
           <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
           <span>Record Payment</span>
         </button>
@@ -127,19 +129,19 @@ export default function VendorPaymentsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Paid</p>
-          <p className="text-lg sm:text-page-title text-gray-900">{formatCurrency(totalPaid)}</p>
+          <p className="text-page-title text-gray-900">{formatCurrency(totalPaid)}</p>
         </div>
         <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Cash Payments</p>
-          <p className="text-lg sm:text-page-title text-emerald-600">{formatCurrency(cashPayments)}</p>
+          <p className="text-page-title text-emerald-600">{formatCurrency(cashPayments)}</p>
         </div>
         <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Bank Payments</p>
-          <p className="text-lg sm:text-page-title text-blue-600">{formatCurrency(bankPayments)}</p>
+          <p className="text-page-title text-foreground">{formatCurrency(bankPayments)}</p>
         </div>
         <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Outstanding</p>
-          <p className="text-lg sm:text-page-title text-red-600">{formatCurrency(totalOutstanding)}</p>
+          <p className="text-page-title text-red-600">{formatCurrency(totalOutstanding)}</p>
         </div>
       </div>
 
@@ -163,16 +165,24 @@ export default function VendorPaymentsPage() {
       <div className="bg-white rounded-xl border p-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <input type="text" placeholder="Search payments..." value={searchTerm}
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Search payments..."
+              value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue" />
+              className="pl-10"
+            />
           </div>
-          <select value={vendorFilter} onChange={(e) => setVendorFilter(e.target.value)}
-            className="px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue">
-            <option value="all">All Vendors</option>
-            {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-          </select>
+          <Select value={vendorFilter} onValueChange={setVendorFilter}>
+            <SelectTrigger className="w-auto min-w-[140px] h-9 text-sm">
+              <SelectValue placeholder="All Vendors" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Vendors</SelectItem>
+              {vendors.map(v => <SelectItem key={v.id} value={v.id.toString()}>{v.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -195,8 +205,8 @@ export default function VendorPaymentsPage() {
                   </div>
                   <h3 className="font-semibold text-gray-900">{payment.vendorName}</h3>
                   <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mt-1">
-                    <span className="flex items-center gap-1"><Building className="w-3.5 h-3.5" />{payment.bankName}</span>
-                    <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{new Date(payment.paymentDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
+                    <span className="flex items-center gap-1"><Building className="w-4 h-4" />{payment.bankName}</span>
+                    <span className="flex items-center gap-1"><Calendar className="w-4 h-4" />{new Date(payment.paymentDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
                   </div>
                   {payment.notes && <p className="text-sm text-gray-500 mt-1">{payment.notes}</p>}
                 </div>
@@ -208,7 +218,7 @@ export default function VendorPaymentsPage() {
                 </div>
                 <div className="flex items-center gap-1">
                   <button onClick={() => { setSelectedPayment(payment); setShowDetailModal(true); }}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Eye className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
+                    className="p-2 text-foreground hover:bg-muted rounded-lg"><Eye className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
                   <button onClick={() => handleDelete(payment.id)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
                 </div>
@@ -232,7 +242,7 @@ export default function VendorPaymentsPage() {
           <div className="bg-white rounded-2xl w-full max-w-md">
             <div className="p-5 border-b flex items-center justify-between">
               <h2 className="text-page-title">Record Payment</h2>
-              <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
+              <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div>
@@ -289,8 +299,8 @@ export default function VendorPaymentsPage() {
                   className="w-full px-3 py-2.5 border rounded-lg" rows={2} placeholder="Payment notes..." />
               </div>
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-lg font-medium">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] font-semibold shadow-sm disabled:opacity-50">
+                <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-md font-medium">Cancel</button>
+                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-semibold shadow-sm disabled:opacity-50">
                   Record Payment
                 </button>
               </div>

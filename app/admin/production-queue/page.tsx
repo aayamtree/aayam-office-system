@@ -89,10 +89,10 @@ export default function ProductionQueuePage() {
         }
         switch (job.current_stage) {
             case 'designing':
-                return <span className="px-3 py-1 bg-oms-blue text-white text-xs rounded-full font-bold">Designing</span>;
+                return <span className="px-3 py-1 bg-gray-900 text-white text-xs rounded-full font-bold">Designing</span>;
             case 'printing':
             case 'finishing':
-                return <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-bold">In Production</span>;
+                return <span className="px-3 py-1 bg-muted text-foreground text-xs rounded-full font-bold">In Production</span>;
             default:
                 return <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full font-bold capitalize">{job.current_stage}</span>;
         }
@@ -106,7 +106,7 @@ export default function ProductionQueuePage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-page-title text-gray-900 flex items-center gap-3">
-                                <TrendingUp className="text-oms-blue" size={32} />
+                                <TrendingUp className="text-primary" size={32} />
                                 Production Queue
                             </h1>
                             <p className="text-gray-500 mt-1">Live overview of all active jobs • Updates every 30s</p>
@@ -125,15 +125,15 @@ export default function ProductionQueuePage() {
                     {/* Design Stage */}
                     <button
                         onClick={() => setFilter(filter === 'design_stage' ? null : 'design_stage')}
-                        className={`bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-2 transition-all  text-left ${filter === 'design_stage' ? 'border-purple-400 ring-4 ring-oms-blue' : 'border-gray-100 hover:border-[rgba(0,0,255,0.2)]'
+                        className={`bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-2 transition-all  text-left ${filter === 'design_stage' ? 'border-purple-400 ring-4 ring-primary' : 'border-gray-100 hover:border-border'
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-[rgba(0,0,255,0.05)] rounded-lg">
-                                <Palette className="text-oms-blue" size={20} />
+                            <div className="p-2 bg-muted rounded-lg">
+                                <Palette className="text-primary" size={20} />
                             </div>
                         </div>
-                        <p className="text-page-title text-oms-blue">{summary.design_stage}</p>
+                        <p className="text-page-title text-primary">{summary.design_stage}</p>
                         <p className="text-sm text-gray-600 font-medium mt-1">Design Stage</p>
                     </button>
 
@@ -163,10 +163,10 @@ export default function ProductionQueuePage() {
                     >
                         <div className="flex items-center gap-3 mb-3">
                             <div className="p-2 bg-white rounded-lg">
-                                <Clock className="text-oms-orange" size={20} />
+                                <Clock className="text-destructive" size={20} />
                             </div>
                         </div>
-                        <p className="text-page-title text-oms-orange">{summary.awaiting_approval}</p>
+                        <p className="text-page-title text-destructive">{summary.awaiting_approval}</p>
                         <p className="text-sm text-gray-600 font-medium mt-1">Awaiting Approval</p>
                     </button>
 
@@ -193,49 +193,49 @@ export default function ProductionQueuePage() {
                     {/* In Production */}
                     <button
                         onClick={() => setFilter(filter === 'in_production' ? null : 'in_production')}
-                        className={`bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-2 transition-all  text-left ${filter === 'in_production' ? 'border-blue-400 ring-4 ring-blue-100' : 'border-gray-100 hover:border-blue-200'
+                        className={`bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-2 transition-all  text-left ${filter === 'in_production' ? 'border-gray-400 ring-4 ring-gray-100' : 'border-gray-100 hover:border-border'}
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-blue-50 rounded-lg">
-                                <Printer className="text-blue-600" size={20} />
+                            <div className="p-2 bg-muted rounded-lg">
+                                <Printer className="text-foreground" size={20} />
                             </div>
                         </div>
-                        <p className="text-page-title text-blue-600">{summary.in_production}</p>
+                        <p className="text-page-title text-foreground">{summary.in_production}</p>
                         <p className="text-sm text-gray-600 font-medium mt-1">In Production</p>
                     </button>
 
                     {/* Total Active */}
                     <button
                         onClick={() => setFilter(null)}
-                        className={`bg-oms-blue rounded-lg md:rounded-2xl p-3 md:p-4 border-2 transition-all  text-left ${!filter ? 'border-oms-blue-400 ring-4 ring-oms-blue' : 'border-[rgba(0,0,255,0.1)] hover:border-[rgba(0,0,255,0.2)]'
+                        className={`bg-gray-900 rounded-lg md:rounded-2xl p-3 md:p-4 border-2 transition-all  text-left ${!filter ? 'border-primary-400 ring-4 ring-primary' : 'border-gray-200 hover:border-border'
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
                             <div className="p-2 bg-white rounded-lg">
-                                <TrendingUp className="text-oms-blue" size={20} />
+                                <TrendingUp className="text-primary" size={20} />
                             </div>
                         </div>
-                        <p className="text-page-title text-indigo-900">{summary.total_active}</p>
+                        <p className="text-page-title text-gray-900">{summary.total_active}</p>
                         <p className="text-sm text-gray-700 font-medium mt-1">Total Active</p>
                     </button>
                 </div>
 
                 {/* Active Filter Indicator */}
                 {filter && (
-                    <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 flex items-center justify-between">
+                    <div className="bg-muted border-2 border-border rounded-xl p-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
-                            <p className="text-sm font-bold text-blue-900">
+                            <div className="w-2 h-2 bg-gray-900 rounded-full animate-pulse"></div>
+                            <p className="text-sm font-bold text-foreground">
                                 Filtering by: <span className="capitalize">{filter.replace('_', ' ')}</span>
                             </p>
-                            <span className="px-3 py-1 bg-blue-200 text-blue-800 rounded-full text-xs font-bold">
+                            <span className="px-3 py-1 bg-muted text-gray-800 rounded-full text-xs font-bold">
                                 {filteredJobs.length} jobs
                             </span>
                         </div>
                         <button
                             onClick={() => setFilter(null)}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-bold"
+                            className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-900 transition-all text-sm font-bold"
                         >
                             Clear Filter
                         </button>
@@ -252,7 +252,7 @@ export default function ProductionQueuePage() {
 
                     {loading ? (
                         <div className="p-12 text-center">
-                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-oms-blue"></div>
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                         </div>
                     ) : filteredJobs.length === 0 ? (
                         <div className="p-12 text-center">
@@ -289,7 +289,7 @@ export default function ProductionQueuePage() {
                                                 <td className="px-6 py-4">
                                                     <Link
                                                         href={`/admin/jobs/${job.id}`}
-                                                        className="font-mono text-sm text-oms-blue hover:text-oms-blue font-bold"
+                                                        className="font-mono text-sm text-primary hover:text-primary font-bold"
                                                     >
                                                         {job.job_number}
                                                     </Link>

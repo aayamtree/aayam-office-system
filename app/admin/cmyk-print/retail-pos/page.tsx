@@ -10,6 +10,7 @@ import {
 import { ReceiptData, defaultReceiptCompany, printReceipt, downloadReceipt } from '@/components/receipt/ReceiptPDF';
 import { usePOSSales, usePOSProducts } from '@/lib/hooks';
 import { POSCategory, POSProduct } from '@/types/database';
+import { Input } from '@/components/ui/input';
 
 interface CartItem {
   id: string;
@@ -20,14 +21,14 @@ interface CartItem {
 }
 
 const categoryColors = [
-  'bg-blue-100 text-blue-700',
-  'bg-oms-blue text-white',
+  'bg-muted text-foreground',
+  'bg-gray-900 text-white',
   'bg-gray-100 text-gray-900',
   'bg-amber-100 text-amber-700',
   'bg-pink-100 text-pink-700',
   'bg-cyan-100 text-cyan-700',
   'bg-red-100 text-red-700',
-  'bg-oms-blue text-white',
+  'bg-gray-900 text-white',
   'bg-orange-100 text-orange-700',
   'bg-teal-100 text-teal-700',
   'bg-lime-100 text-lime-700',
@@ -300,21 +301,21 @@ export default function RetailPOSPage() {
         <div className="flex-1 flex flex-col p-4 overflow-hidden">
           {/* Search */}
           <div className="relative mb-4">
-            <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input type="text" placeholder="Search products..." value={searchQuery}
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input type="text" placeholder="Search products..." value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-oms-blue" />
+              className="pl-10" />
           </div>
 
           {/* Categories */}
           <div className="flex flex-wrap gap-2 mb-4">
             <button onClick={() => setSelectedCategory('all')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${selectedCategory === 'all' ? 'bg-oms-blue text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${selectedCategory === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
               All
             </button>
             {categories?.map(cat => (
               <button key={cat.id} onClick={() => setSelectedCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${selectedCategory === cat.id ? 'bg-oms-blue text-white' : `${cat.color} hover:opacity-80`}`}>
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${selectedCategory === cat.id ? 'bg-gray-900 text-white' : `${cat.color} hover:opacity-80`}`}>
                 {cat.name}
               </button>
             ))}
@@ -329,18 +330,18 @@ export default function RetailPOSPage() {
             ) : filteredProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-400">
                 <p>No products found in this category.</p>
-                <button onClick={() => setShowSettingsModal(true)} className="mt-2 text-oms-blue font-medium">Add Products</button>
+                <button onClick={() => setShowSettingsModal(true)} className="mt-2 text-primary font-medium">Add Products</button>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                 {filteredProducts.map(product => (
                   <button key={product.id} onClick={() => addToCart(product)}
-                    className="p-3 bg-white border rounded-lg  hover:border-oms-blue/30 transition-all text-left flex flex-col justify-between h-full">
+                    className="p-3 bg-white border rounded-lg  hover:border-primary/30 transition-all text-left flex flex-col justify-between h-full">
                     <div>
                       <p className="font-medium text-gray-900 text-sm line-clamp-2">{product.name}</p>
                       <p className="text-xs text-gray-500 mt-1">{product.category?.name}</p>
                     </div>
-                    <p className="text-oms-blue font-bold mt-2">{formatCurrency(product.price)}</p>
+                    <p className="text-primary font-bold mt-2">{formatCurrency(product.price)}</p>
                   </button>
                 ))}
               </div>
@@ -353,7 +354,7 @@ export default function RetailPOSPage() {
           <div className="p-4 border-b bg-white">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <ShoppingCart className="w-5 h-5 text-oms-blue" />
+                <ShoppingCart className="w-5 h-5 text-primary" />
                 <span className="font-semibold">Cart ({cart.length})</span>
               </div>
               {cart.length > 0 && (
@@ -363,10 +364,10 @@ export default function RetailPOSPage() {
             <div className="grid grid-cols-2 gap-2">
               <input type="text" placeholder="Customer Name" value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-oms-blue" />
+                className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
               <input type="tel" placeholder="Phone" value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
-                className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-oms-blue" />
+                className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
             </div>
           </div>
 
@@ -382,15 +383,15 @@ export default function RetailPOSPage() {
                 <div key={item.id} className="bg-white p-3 rounded-lg border">
                   <div className="flex justify-between mb-2">
                     <span className="font-medium text-sm">{item.name}</span>
-                    <button onClick={() => removeFromCart(item.id)} className="text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => removeFromCart(item.id)} className="text-red-500"><Trash2 className="w-4 h-4" /></button>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <button onClick={() => updateQty(item.id, -1)} className="w-7 h-7 bg-gray-100 rounded flex items-center justify-center hover:bg-gray-200"><Minus className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => updateQty(item.id, -1)} className="w-7 h-7 bg-gray-100 rounded flex items-center justify-center hover:bg-gray-200"><Minus className="w-4 h-4" /></button>
                       <span className="w-8 text-center font-medium">{item.qty}</span>
-                      <button onClick={() => updateQty(item.id, 1)} className="w-7 h-7 bg-gray-100 rounded flex items-center justify-center hover:bg-gray-200"><Plus className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => updateQty(item.id, 1)} className="w-7 h-7 bg-gray-100 rounded flex items-center justify-center hover:bg-gray-200"><Plus className="w-4 h-4" /></button>
                     </div>
-                    <span className="font-bold text-oms-blue">{formatCurrency(item.total)}</span>
+                    <span className="font-bold text-primary">{formatCurrency(item.total)}</span>
                   </div>
                 </div>
               ))
@@ -405,14 +406,14 @@ export default function RetailPOSPage() {
                 <span>Discount</span>
                 <div className="flex items-center gap-2">
                   <input type="number" value={discount || ''} onChange={(e) => setDiscount(Math.min(100, parseFloat(e.target.value) || 0))}
-                    className="w-16 px-2 py-1 border rounded text-right text-sm focus:outline-none focus:ring-2 focus:ring-oms-blue" /><span>%</span>
+                    className="w-16 px-2 py-1 border rounded text-right text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" /><span>%</span>
                 </div>
               </div>
               {discount > 0 && <div className="flex justify-between text-sm text-gray-900"><span>Discount Amount</span><span>-{formatCurrency(discountAmount)}</span></div>}
-              <div className="flex justify-between text-section pt-2 border-t"><span>Grand Total</span><span className="text-oms-blue">{formatCurrency(grandTotal)}</span></div>
+              <div className="flex justify-between text-section pt-2 border-t"><span>Grand Total</span><span className="text-primary">{formatCurrency(grandTotal)}</span></div>
             </div>
             <button onClick={() => setShowPaymentModal(true)} disabled={cart.length === 0}
-              className="w-full py-3 bg-[#0000FF] text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#0000CC] transition-colors shadow-sm">
+              className="w-full py-3 bg-gray-900 text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors shadow-sm">
               Pay {formatCurrency(grandTotal)}
             </button>
           </div>
@@ -428,16 +429,16 @@ export default function RetailPOSPage() {
               <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
-              <div className="text-center bg-oms-blue rounded-xl p-4">
+              <div className="text-center bg-gray-900 rounded-xl p-4">
                 <p className="text-sm text-gray-600">Total Amount</p>
-                <p className="text-page-title text-oms-blue">{formatCurrency(grandTotal)}</p>
+                <p className="text-page-title text-primary">{formatCurrency(grandTotal)}</p>
               </div>
               <div>
                 <p className="text-sm font-medium mb-2">Payment Method</p>
                 <div className="grid grid-cols-3 gap-2">
                   {[{ id: 'cash', label: 'Cash', icon: Banknote }, { id: 'card', label: 'Card', icon: CreditCard }, { id: 'upi', label: 'UPI', icon: Smartphone }].map(method => (
                     <button key={method.id} onClick={() => setPaymentMethod(method.id as any)}
-                      className={`p-3 rounded-lg border-2 flex flex-col items-center gap-1 transition-all ${paymentMethod === method.id ? 'border-oms-blue bg-oms-blue' : 'border-gray-200 hover:border-gray-300'}`}>
+                      className={`p-3 rounded-lg border-2 flex flex-col items-center gap-1 transition-all ${paymentMethod === method.id ? 'border-primary bg-primary' : 'border-gray-200 hover:border-gray-300'}`}>
                       <method.icon className="w-5 h-5" /><span className="text-sm">{method.label}</span>
                     </button>
                   ))}
@@ -447,18 +448,18 @@ export default function RetailPOSPage() {
                 <div>
                   <label className="text-sm font-medium">Amount Received</label>
                   <input type="number" value={amountReceived} onChange={(e) => setAmountReceived(e.target.value)}
-                    className="w-full mt-1 px-4 py-2.5 border rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-oms-blue" placeholder="Enter amount" />
+                    className="w-full mt-1 px-4 py-2.5 border rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-gray-400" placeholder="Enter amount" />
                   {changeAmount >= 0 && amountReceived && <p className="mt-2 text-gray-900 font-medium">Change: {formatCurrency(changeAmount)}</p>}
                 </div>
               )}
               <div className="flex gap-3">
                 <button onClick={handleDownloadReceipt} disabled={isProcessing}
-                  className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-gray-200 disabled:opacity-50 transition-colors">
+                  className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-md font-semibold flex items-center justify-center gap-2 hover:bg-gray-200 disabled:opacity-50 transition-colors">
                   {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
                   Download Receipt
                 </button>
                 <button onClick={handlePrint} disabled={isProcessing}
-                  className="flex-1 py-3 bg-green-600 text-white rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-700 disabled:opacity-50 transition-colors">
+                  className="flex-1 py-3 bg-gray-900 text-white rounded-md font-semibold flex items-center justify-center gap-2 hover:bg-green-700 disabled:opacity-50 transition-colors">
                   {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Printer className="w-5 h-5" />}
                   Print & Complete
                 </button>
@@ -506,7 +507,7 @@ export default function RetailPOSPage() {
                               <td className="px-4 py-3 text-right font-medium text-gray-900">{formatCurrency(p.price)}</td>
                               <td className="px-4 py-3 text-right">
                                 <div className="flex justify-end gap-2">
-                                  <button onClick={() => handleEditProductClick(p)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Edit className="w-4 h-4" /></button>
+                                  <button onClick={() => handleEditProductClick(p)} className="p-1.5 text-foreground hover:bg-muted rounded"><Edit className="w-4 h-4" /></button>
                                   <button onClick={() => handleDeleteProductReq(p.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded"><Trash2 className="w-4 h-4" /></button>
                                 </div>
                               </td>
@@ -524,22 +525,22 @@ export default function RetailPOSPage() {
                     <form onSubmit={handleSaveProduct} className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                        <input type="text" required value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-oms-blue" />
+                        <input type="text" required value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-                        <input type="number" required min="0" value={productForm.price} onChange={e => setProductForm({ ...productForm, price: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-oms-blue" />
+                        <input type="number" required min="0" value={productForm.price} onChange={e => setProductForm({ ...productForm, price: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                        <select required value={productForm.category_id} onChange={e => setProductForm({ ...productForm, category_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-oms-blue">
+                        <select required value={productForm.category_id} onChange={e => setProductForm({ ...productForm, category_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400">
                           <option value="">Select Category</option>
                           {categories?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                       </div>
                       <div className="flex gap-2 pt-2">
                         {isEditingProduct && <button type="button" onClick={() => { setIsEditingProduct(false); setProductForm({ id: '', name: '', price: 0, category_id: '' }) }} className="flex-1 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>}
-                        <button type="submit" className="flex-1 py-2 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] shadow-sm font-semibold">{isEditingProduct ? 'Update' : 'Add Product'}</button>
+                        <button type="submit" className="flex-1 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold">{isEditingProduct ? 'Update' : 'Add Product'}</button>
                       </div>
                     </form>
                   </div>
@@ -564,7 +565,7 @@ export default function RetailPOSPage() {
                     <form onSubmit={handleSaveCategory} className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                        <input type="text" required value={categoryForm.name} onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-oms-blue" />
+                        <input type="text" required value={categoryForm.name} onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Color Theme</label>
@@ -575,7 +576,7 @@ export default function RetailPOSPage() {
                           ))}
                         </div>
                       </div>
-                      <button type="submit" className="w-full py-2 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] mt-2 shadow-sm font-semibold">Add Category</button>
+                      <button type="submit" className="w-full py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 mt-2 shadow-sm font-semibold">Add Category</button>
                     </form>
                   </div>
                 </div>

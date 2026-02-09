@@ -34,12 +34,12 @@ export default function ActivityPage() {
 
     const icons: Record<string, React.ReactNode> = {
       'Sales': <Package size={16} className="text-gray-900" />,
-      'CRM': <Users size={16} className="text-blue-600" />,
-      'Finance': <CreditCard size={16} className="text-oms-blue" />,
-      'Dispatch': <Truck size={16} className="text-oms-orange" />,
+      'CRM': <Users size={16} className="text-foreground" />,
+      'Finance': <CreditCard size={16} className="text-primary" />,
+      'Dispatch': <Truck size={16} className="text-destructive" />,
       'CMYK': <Printer size={16} className="text-cyan-600" />,
       'Settings': <Settings size={16} className="text-gray-600" />,
-      'System': <FileText size={16} className="text-oms-blue" />,
+      'System': <FileText size={16} className="text-primary" />,
     };
     return icons[module] || <FileText size={16} className="text-gray-600" />;
   };
@@ -47,21 +47,21 @@ export default function ActivityPage() {
   const getModuleColor = (module: string) => {
     const colors: Record<string, string> = {
       'Sales': 'bg-gray-100 text-gray-900',
-      'CRM': 'bg-blue-100 text-blue-700',
-      'Finance': 'bg-oms-blue text-white',
+      'CRM': 'bg-muted text-foreground',
+      'Finance': 'bg-gray-900 text-white',
       'Dispatch': 'bg-amber-100 text-amber-700',
       'CMYK': 'bg-cyan-100 text-cyan-700',
       'Settings': 'bg-gray-100 text-gray-700',
-      'System': 'bg-oms-blue text-white',
+      'System': 'bg-gray-900 text-white',
     };
     return colors[module] || 'bg-gray-100 text-gray-700';
   };
 
   const getActionColor = (action: string) => {
     if (action.includes('Created') || action.includes('Added')) return 'text-gray-900';
-    if (action.includes('Updated') || action.includes('Completed')) return 'text-blue-600';
+    if (action.includes('Updated') || action.includes('Completed')) return 'text-foreground';
     if (action.includes('Deleted') || action.includes('Cancelled')) return 'text-red-600';
-    if (action.includes('Login') || action.includes('Logout')) return 'text-oms-blue';
+    if (action.includes('Login') || action.includes('Logout')) return 'text-primary';
     return 'text-gray-700';
   };
 
@@ -75,7 +75,7 @@ export default function ActivityPage() {
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
-        <Loader2 className="animate-spin text-oms-blue" size={32} />
+        <Loader2 className="animate-spin text-primary" size={32} />
         <span className="ml-3 text-gray-500 font-medium">Loading activity logs...</span>
       </div>
     );
@@ -93,14 +93,14 @@ export default function ActivityPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
         <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
-            <Clock size={18} className="text-oms-blue" />
+            <Clock size={18} className="text-primary" />
             <span className="text-sm text-gray-500">Today&apos;s Activity</span>
           </div>
           <p className="text-page-title text-gray-900">{todayLogs}</p>
         </div>
         <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
-            <User size={18} className="text-blue-600" />
+            <User size={18} className="text-foreground" />
             <span className="text-sm text-gray-500">Active Users</span>
           </div>
           <p className="text-page-title text-gray-900">{uniqueUsersCount}</p>
@@ -114,7 +114,7 @@ export default function ActivityPage() {
         </div>
         <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
           <div className="flex items-center gap-2 mb-2">
-            <CreditCard size={18} className="text-oms-blue" />
+            <CreditCard size={18} className="text-primary" />
             <span className="text-sm text-gray-500">Finance Actions</span>
           </div>
           <p className="text-page-title text-gray-900">{financeActions}</p>
@@ -198,7 +198,7 @@ export default function ActivityPage() {
                     </span>
                     <span className="flex items-center gap-1">
                       <Calendar size={12} />
-                      {formatDate(log.created_at, true)}
+                      {formatDate(log.created_at)}
                     </span>
                     <span className="hidden sm:block truncate max-w-[100px]">{log.ip_address}</span>
                   </div>

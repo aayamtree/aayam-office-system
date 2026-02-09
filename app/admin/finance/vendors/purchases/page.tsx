@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { usePurchaseBills, useVendors, useJobs } from '@/lib/hooks';
 import { formatDate } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const productTypes = [
   'Pouches', 'Labels', 'Boxes', 'Brochures', 'Visiting Cards', 'Envelopes',
@@ -174,7 +176,7 @@ export default function VendorPurchasesPage() {
             <p className="text-gray-500">Track vendor purchases & COGS</p>
           </div>
         </div>
-        <button onClick={() => { resetForm(); setShowModal(true); }} className="flex items-center gap-2 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] shadow-sm font-semibold">
+        <button onClick={() => { resetForm(); setShowModal(true); }} className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 shadow-sm font-semibold">
           <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
           <span>Add Purchase</span>
         </button>
@@ -184,19 +186,19 @@ export default function VendorPurchasesPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Purchases</p>
-          <p className="text-lg sm:text-page-title text-gray-900">{formatCurrency(totalPurchases)}</p>
+          <p className="text-page-title text-gray-900">{formatCurrency(totalPurchases)}</p>
         </div>
         <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Paid to Vendors</p>
-          <p className="text-lg sm:text-page-title text-gray-900">{formatCurrency(totalPaid)}</p>
+          <p className="text-page-title text-gray-900">{formatCurrency(totalPaid)}</p>
         </div>
         <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Pending Payments</p>
-          <p className="text-lg sm:text-page-title text-red-600">{formatCurrency(totalPending)}</p>
+          <p className="text-page-title text-red-600">{formatCurrency(totalPending)}</p>
         </div>
         <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Job-linked COGS</p>
-          <p className="text-lg sm:text-page-title text-oms-blue">{formatCurrency(totalCOGS)}</p>
+          <p className="text-page-title text-primary">{formatCurrency(totalCOGS)}</p>
         </div>
       </div>
 
@@ -204,23 +206,35 @@ export default function VendorPurchasesPage() {
       <div className="bg-white rounded-xl border p-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input type="text" placeholder="Search bills..." value={searchTerm}
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Search bills..."
+              value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue" />
+              className="pl-10"
+            />
           </div>
-          <select value={vendorFilter} onChange={(e) => setVendorFilter(e.target.value)}
-            className="px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue">
-            <option value="all">All Vendors</option>
-            {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-          </select>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue">
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="partial">Partial</option>
-            <option value="paid">Paid</option>
-          </select>
+          <Select value={vendorFilter} onValueChange={setVendorFilter}>
+            <SelectTrigger className="w-auto min-w-[140px] h-9 text-sm">
+              <SelectValue placeholder="All Vendors" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Vendors</SelectItem>
+              {vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-auto min-w-[120px] h-9 text-sm">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="partial">Partial</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -261,15 +275,15 @@ export default function VendorPurchasesPage() {
 
                 <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-4">
                   <span className="flex items-center gap-1">
-                    <Building2 className="w-3.5 h-3.5" />
+                    <Building2 className="w-4 h-4" />
                     {purchase.vendor?.name || 'Unknown Vendor'}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Package className="w-3.5 h-3.5" />
+                    <Package className="w-4 h-4" />
                     {purchase.job?.project_name ? `${purchase.job.job_number} - ${purchase.job.project_name}` : 'General Stock'}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5" />
+                    <Calendar className="w-4 h-4" />
                     Due: {purchase.due_date ? formatDate(purchase.due_date) : 'N/A'}
                   </span>
                 </div>
@@ -279,17 +293,17 @@ export default function VendorPurchasesPage() {
                   <div className="text-left">
                     <p className="text-2xl font-bold text-gray-900">{formatCurrency(purchase.total_amount)}</p>
                     <p className="text-xs text-gray-500">
-                      Paid: <span className="text-green-600 font-medium">{formatCurrency(purchase.amount_paid)}</span>
+                      Paid: <span className="text-foreground font-medium">{formatCurrency(purchase.amount_paid)}</span>
                     </p>
                   </div>
 
                   <div className="flex items-center gap-1">
                     <button onClick={() => { setSelectedPurchase(purchase); setShowDetailModal(true); }}
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                      className="p-2 text-gray-400 hover:text-foreground hover:bg-muted rounded-lg transition-colors">
                       <Eye className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     </button>
                     <button onClick={() => handleEdit(purchase)}
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                      className="p-2 text-gray-400 hover:text-foreground hover:bg-muted rounded-lg transition-colors">
                       <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     </button>
                     <button onClick={() => handleDelete(purchase.id)}
@@ -318,7 +332,7 @@ export default function VendorPurchasesPage() {
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
               <h2 className="text-page-title">{editingPurchase ? 'Edit Purchase' : 'Add Purchase Bill'}</h2>
-              <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
+              <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div className="grid grid-cols-2 gap-2 md:gap-4">
@@ -404,7 +418,7 @@ export default function VendorPurchasesPage() {
                         setFormData({ ...formData, attachmentUrl: file.name });
                       }
                     }}
-                    className="w-full px-3 py-2 border rounded-lg text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-oms-blue file:text-white hover:file:bg-oms-blue"
+                    className="w-full px-3 py-2 border rounded-lg text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-900 file:text-white hover:file:bg-primary"
                   />
                   {formData.attachmentUrl && (
                     <p className="text-xs text-gray-900 mt-1">✓ {formData.attachmentUrl}</p>
@@ -414,7 +428,7 @@ export default function VendorPurchasesPage() {
               </div>
 
               {/* Calculation Preview */}
-              <div className="bg-oms-blue rounded-xl p-4 space-y-2">
+              <div className="bg-gray-900 rounded-xl p-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal ({formData.quantity} × ₹{formData.rate})</span>
                   <span className="font-medium">{formatCurrency(totals.amount)}</span>
@@ -423,15 +437,15 @@ export default function VendorPurchasesPage() {
                   <span>GST ({formData.gstRate}%)</span>
                   <span className="font-medium">{formatCurrency(totals.gstAmount)}</span>
                 </div>
-                <div className="flex justify-between font-semibold pt-2 border-t border-[rgba(0,0,255,0.2)]-200">
+                <div className="flex justify-between font-semibold pt-2 border-t border-border-200">
                   <span>Total Amount</span>
-                  <span className="text-oms-blue">{formatCurrency(totals.totalAmount)}</span>
+                  <span className="text-primary">{formatCurrency(totals.totalAmount)}</span>
                 </div>
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-lg font-medium">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] font-semibold shadow-sm disabled:opacity-50">
+                <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-md font-medium">Cancel</button>
+                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-semibold shadow-sm disabled:opacity-50">
                   {submitting ? 'Saving...' : (editingPurchase ? 'Update' : 'Add')} Purchase
                 </button>
               </div>
@@ -446,7 +460,7 @@ export default function VendorPurchasesPage() {
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
               <div>
-                <span className="font-mono text-oms-blue">{selectedPurchase.bill_number}</span>
+                <span className="font-mono text-primary">{selectedPurchase.bill_number}</span>
                 <h2 className="text-page-title">{selectedPurchase.description}</h2>
               </div>
               <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
@@ -509,7 +523,7 @@ export default function VendorPurchasesPage() {
               </div>
 
               <Link href="/admin/finance/vendors/payments"
-                className="block w-full text-center px-4 py-2.5 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700">
+                className="block w-full text-center px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium hover:bg-green-700">
                 Record Payment
               </Link>
             </div>

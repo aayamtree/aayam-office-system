@@ -30,14 +30,14 @@ const getDesignerStatus = (stage: string) => {
 
 const taskStatuses = [
   { id: 'pending', name: 'To Do', color: 'bg-gray-100 text-gray-700' },
-  { id: 'in_progress', name: 'Designing', color: 'bg-blue-100 text-blue-700' },
-  { id: 'review', name: 'Review', color: 'bg-oms-blue text-white' },
+  { id: 'in_progress', name: 'Designing', color: 'bg-muted text-foreground' },
+  { id: 'review', name: 'Review', color: 'bg-gray-900 text-white' },
   { id: 'waiting', name: 'Waiting Client', color: 'bg-amber-100 text-amber-700' },
   { id: 'completed', name: 'Done', color: 'bg-gray-100 text-gray-900' },
 ];
 
 const priorities = [
-  { id: 'normal', name: 'Normal', color: 'text-blue-600 bg-blue-50' },
+  { id: 'normal', name: 'Normal', color: 'text-foreground bg-muted' },
   { id: 'high', name: 'High', color: 'text-orange-600 bg-orange-50' },
   { id: 'urgent', name: 'Urgent', color: 'text-red-600 bg-red-50' },
 ];
@@ -51,7 +51,7 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl  w-full max-w-lg overflow-hidden border border-gray-100">
-        <div className="bg-oms-blue p-4 text-white">
+        <div className="bg-gray-900 p-4 text-white">
           <h2 className="text-page-title flex items-center gap-2">
             <Monitor size={24} /> Good Morning, {userName || 'Designer'}!
           </h2>
@@ -67,7 +67,7 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
               {overdue.map(t => (
                 <div key={t.id} className="p-3 bg-red-50 border border-red-100 rounded-lg flex justify-between items-center">
                   <span className="text-sm font-medium text-red-900">{t.title}</span>
-                  <span className="text-[10px] text-red-600 font-bold px-2 py-0.5 bg-white rounded-full">Due: {t.deadline}</span>
+                  <span className="text-xs text-red-600 font-bold px-2 py-0.5 bg-white rounded-full">Due: {t.deadline}</span>
                 </div>
               ))}
             </div>
@@ -75,13 +75,13 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
 
           {dueToday.length > 0 && (
             <div className="space-y-2">
-              <h3 className="text-oms-blue font-bold text-sm uppercase tracking-wider flex items-center gap-2">
+              <h3 className="text-primary font-bold text-sm uppercase tracking-wider flex items-center gap-2">
                 <Calendar size={16} /> Due Today ({dueToday.length})
               </h3>
               {dueToday.map(t => (
-                <div key={t.id} className="p-3 bg-[rgba(0,0,255,0.05)] border border-[rgba(0,0,255,0.1)] rounded-lg flex justify-between items-center">
-                  <span className="text-sm font-medium text-indigo-900">{t.title}</span>
-                  <span className="text-[10px] text-oms-blue font-bold px-2 py-0.5 bg-white rounded-full">Today</span>
+                <div key={t.id} className="p-3 bg-muted border border-gray-200 rounded-lg flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-900">{t.title}</span>
+                  <span className="text-xs text-primary font-bold px-2 py-0.5 bg-white rounded-full">Today</span>
                 </div>
               ))}
             </div>
@@ -89,7 +89,7 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
 
           {dueToday.length === 0 && overdue.length === 0 && (
             <div className="text-center py-8 text-gray-500">
-              <CheckCircle size={48} className="mx-auto text-green-500 mb-2" />
+              <CheckCircle size={48} className="mx-auto text-foreground mb-2" />
               <p>You are all caught up! No urgent deadlines today.</p>
             </div>
           )}
@@ -98,7 +98,7 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
         <div className="p-4 bg-gray-50 border-t flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-oms-blue text-white rounded-lg font-bold text-sm hover:bg-blue-600 transition-colors"
+            className="px-4 py-2 bg-gray-900 text-white rounded-md font-bold text-sm hover:bg-gray-800 transition-colors"
           >
             Let&apos;s Start Working
           </button>
@@ -239,8 +239,8 @@ export default function DesignerWorkspace() {
   // Kanban Columns - Fixed visibility with dark text on light backgrounds
   const kanbanColumns = [
     { id: 'pending', title: 'To Do', color: 'bg-gray-100', textColor: 'text-gray-900', border: 'border-gray-400' },
-    { id: 'in_progress', title: 'Designing', color: 'bg-blue-50', textColor: 'text-gray-900', border: 'border-blue-500' },
-    { id: 'review', title: 'Review', color: 'bg-[rgba(0,0,255,0.05)]', textColor: 'text-gray-900', border: 'border-oms-blue' },
+    { id: 'in_progress', title: 'Designing', color: 'bg-muted', textColor: 'text-gray-900', border: 'border-primary' },
+    { id: 'review', title: 'Review', color: 'bg-muted', textColor: 'text-gray-900', border: 'border-primary' },
     { id: 'waiting', title: 'Waiting', color: 'bg-white', textColor: 'text-gray-900', border: 'border-gray-500' },
     { id: 'completed', title: 'Done', color: 'bg-white', textColor: 'text-gray-900', border: 'border-green-500' }
   ];
@@ -639,12 +639,12 @@ export default function DesignerWorkspace() {
                 <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2"><Layout size={20} /> Kanban Team Board</h2>
                 <div className="flex bg-gray-100 p-1 rounded-lg">
                   <button onClick={() => setView('my_tasks')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">List</button>
-                  <button onClick={() => setView('board')} className="px-3 py-1 text-xs font-bold bg-white text-oms-blue rounded">Board</button>
+                  <button onClick={() => setView('board')} className="px-3 py-1 text-xs font-bold bg-white text-primary rounded">Board</button>
                   <button onClick={() => setView('timeline')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Timeline</button>
                   <button onClick={() => setView('notes')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Notes</button>
                 </div>
               </div>
-              <button onClick={() => setIsNewTaskModalOpen(true)} className="px-4 py-2 bg-oms-blue text-white rounded-lg text-sm font-bold flex gap-2 items-center"><Plus size={16} /> New Task</button>
+              <button onClick={() => setIsNewTaskModalOpen(true)} className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold flex gap-2 items-center"><Plus size={16} /> New Task</button>
             </div>
 
             <div className="flex h-[calc(100%-5rem)] gap-3 md:gap-4 min-w-max pb-4">
@@ -659,7 +659,7 @@ export default function DesignerWorkspace() {
                   <div key={col.id} className="w-80 flex flex-col bg-gray-100/50 rounded-2xl border border-gray-200/50">
                     <div className={`p-4 font-bold text-sm uppercase tracking-wide flex justify-between items-center ${col.textColor}`}>
                       {col.title}
-                      <span className="bg-oms-blue text-white px-2 py-0.5 rounded text-xs font-bold">{colTasks.length}</span>
+                      <span className="bg-gray-900 text-white px-2 py-0.5 rounded text-xs font-bold">{colTasks.length}</span>
                     </div>
                     <div className="flex-1 overflow-y-auto p-3 space-y-3">
                       {colTasks.map(task => {
@@ -680,11 +680,11 @@ export default function DesignerWorkspace() {
                             className={`bg-white p-4 rounded-xl border border-gray-100  transition-shadow cursor-pointer group relative ${borderClass}`}
                           >
                             {/* Revision Badge (Mocked based on description or random) */}
-                            <div className="absolute top-4 right-4 text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border">Rev {(task.id % 3) + 1}</div>
+                            <div className="absolute top-4 right-4 text-xs font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border">Rev {(task.id % 3) + 1}</div>
 
                             <div className="flex justify-between items-start mb-2 pr-12">
                               {/* Job Type Tag */}
-                              <span className="flex items-center gap-1 text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded uppercase tracking-wider">
+                              <span className="flex items-center gap-1 text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded uppercase tracking-wider">
                                 <TypeIcon size={10} /> {typeLabel}
                               </span>
                             </div>
@@ -696,13 +696,13 @@ export default function DesignerWorkspace() {
                             <div className="flex justify-between items-center border-t pt-3 mt-1">
                               <div className="flex items-center gap-3">
                                 {/* Designer Avatar */}
-                                <span className="text-[10px] font-bold text-oms-blue bg-[rgba(0,0,255,0.05)] border border-[rgba(0,0,255,0.1)] px-2 py-0.5 rounded overflow-hidden text-ellipsis whitespace-nowrap max-w-[80px]">
+                                <span className="text-xs font-bold text-primary bg-muted border border-gray-200 px-2 py-0.5 rounded overflow-hidden text-ellipsis whitespace-nowrap max-w-[80px]">
                                   {task.designerName || 'Unassigned'}
                                 </span>
 
                                 {/* Date / Risk */}
                                 {task.rawDeadline && (
-                                  <span className={`flex items-center gap-1 text-[10px] font-bold ${new Date(task.rawDeadline) < new Date() ? 'text-red-500' : 'text-gray-400'}`}>
+                                  <span className={`flex items-center gap-1 text-xs font-bold ${new Date(task.rawDeadline) < new Date() ? 'text-red-500' : 'text-gray-400'}`}>
                                     {new Date(task.rawDeadline) < new Date() && <AlertTriangle size={10} />}
                                     {task.deadline}
                                   </span>
@@ -710,7 +710,7 @@ export default function DesignerWorkspace() {
                               </div>
 
                               {/* Drive Link Indicator (if exists) */}
-                              {task.driveLink && <div className="text-blue-500"><Folder size={12} /></div>}
+                              {task.driveLink && <div className="text-foreground"><Folder size={12} /></div>}
                             </div>
                           </div>
                         )
@@ -730,11 +730,11 @@ export default function DesignerWorkspace() {
                 <div className="flex bg-gray-100 p-1 rounded-lg">
                   <button onClick={() => setView('my_tasks')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">List</button>
                   <button onClick={() => setView('board')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Board</button>
-                  <button className="px-3 py-1 text-xs font-bold bg-white text-oms-blue rounded">Timeline</button>
+                  <button className="px-3 py-2 text-xs font-bold bg-white text-primary rounded">Timeline</button>
                   <button onClick={() => setView('notes')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Notes</button>
                 </div>
               </div>
-              <button onClick={() => setIsNewTaskModalOpen(true)} className="px-4 py-2 bg-oms-blue text-white rounded-lg text-sm font-bold flex gap-2 items-center"><Plus size={16} /> New Task</button>
+              <button onClick={() => setIsNewTaskModalOpen(true)} className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold flex gap-2 items-center"><Plus size={16} /> New Task</button>
             </div>
 
             {/* Gantt Chart Body */}
@@ -742,7 +742,7 @@ export default function DesignerWorkspace() {
             <div className="flex-1 overflow-x-auto overflow-y-auto p-2 md:p-4 bg-gray-50">
               <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden min-w-[800px]">
                 {/* Header Row */}
-                <div className="grid grid-cols-12 bg-gray-50 border-b text-[10px] font-bold text-gray-500 uppercase tracking-wider h-10 items-center px-4">
+                <div className="grid grid-cols-12 bg-gray-50 border-b text-xs font-bold text-gray-500 uppercase tracking-wider h-10 items-center px-4">
                   <div className="col-span-3">Task / Designer</div>
                   <div className="col-span-1 border-l pl-2">Start</div>
                   <div className="col-span-8 flex justify-between px-2">
@@ -769,7 +769,7 @@ export default function DesignerWorkspace() {
                         {/* Track */}
                         <div className="w-full h-2 bg-gray-100 rounded-full relative overflow-hidden">
                           {/* Bar */}
-                          <div className={`h-full rounded-full ${isOverdue ? 'bg-red-500' : 'bg-[rgba(0,0,255,0.05)]0'}`} style={{ width: Math.random() * 60 + 20 + '%' }}></div>
+                          <div className={`h-full rounded-full ${isOverdue ? 'bg-red-500' : 'bg-muted0'}`} style={{ width: Math.random() * 60 + 20 + '%' }}></div>
                         </div>
                         {/* Deadline Tooltip */}
                         <div className="absolute right-0 text-xs font-bold text-gray-400">
@@ -793,22 +793,22 @@ export default function DesignerWorkspace() {
               <div className="p-4 pb-0 bg-gray-50/50 space-y-3">
                 {/* Work Summary Widget */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-white p-2 rounded-lg border border-[rgba(0,0,255,0.1)]">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">This Month</p>
-                    <p className="text-section text-oms-blue">{thisMonthCount} <span className="text-[10px] text-gray-400 font-normal">Tasks</span></p>
+                  <div className="bg-white p-2 rounded-lg border border-gray-200">
+                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">This Month</p>
+                    <p className="text-section text-primary">{thisMonthCount} <span className="text-xs text-gray-400 font-normal">Tasks</span></p>
                   </div>
                   <div className="bg-white p-2 rounded-lg border border-gray-100">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Last Month</p>
-                    <p className="text-section text-gray-600">{lastMonthCount} <span className="text-[10px] text-gray-400 font-normal">Tasks</span></p>
+                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Last Month</p>
+                    <p className="text-section text-gray-600">{lastMonthCount} <span className="text-xs text-gray-400 font-normal">Tasks</span></p>
                   </div>
                 </div>
 
                 {/* View Tabs - Color Blocks */}
                 <div className="grid grid-cols-4 gap-1 mt-4 px-1">
-                  <button onClick={() => setView('my_tasks')} className={`py-2 rounded-lg text-[10px] font-bold border transition-all ${activeTab === 'my_tasks' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-500 border-gray-200'}`}>List</button>
-                  <button onClick={() => setView('board')} className={`py-2 rounded-lg text-[10px] font-bold border transition-all ${activeTab === 'board' ? 'bg-oms-blue text-white border-[rgba(0,0,255,0.2)]-600' : 'bg-white text-gray-500 border-gray-200'}`}>Board</button>
-                  <button onClick={() => setView('timeline')} className={`py-2 rounded-lg text-[10px] font-bold border transition-all ${activeTab === 'timeline' ? 'bg-oms-blue text-white border-[rgba(0,0,255,0.2)]-600' : 'bg-white text-gray-500 border-gray-200'}`}>Timeline</button>
-                  <button onClick={() => setView('notes')} className={`py-2 rounded-lg text-[10px] font-bold border transition-all ${activeTab === 'notes' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-500 border-gray-200'}`}>Notes</button>
+                  <button onClick={() => setView('my_tasks')} className={`py-2 rounded-lg text-xs font-bold border transition-all ${activeTab === 'my_tasks' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200'}`}>List</button>
+                  <button onClick={() => setView('board')} className={`py-2 rounded-lg text-xs font-bold border transition-all ${activeTab === 'board' ? 'bg-gray-900 text-white border-border-600' : 'bg-white text-gray-500 border-gray-200'}`}>Board</button>
+                  <button onClick={() => setView('timeline')} className={`py-2 rounded-lg text-xs font-bold border transition-all ${activeTab === 'timeline' ? 'bg-gray-900 text-white border-border-600' : 'bg-white text-gray-500 border-gray-200'}`}>Timeline</button>
+                  <button onClick={() => setView('notes')} className={`py-2 rounded-lg text-xs font-bold border transition-all ${activeTab === 'notes' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-500 border-gray-200'}`}>Notes</button>
                 </div>
               </div>
 
@@ -823,19 +823,19 @@ export default function DesignerWorkspace() {
                 <div className="flex justify-between items-center mb-4">
                   <div>
                     <h2 className="font-bold text-gray-800 flex items-center gap-2">
-                      <Briefcase size={18} className="text-oms-blue" />
+                      <Briefcase size={18} className="text-primary" />
                       {activeTab === 'notes' ? 'My Notes' : (activeTab === 'team_tasks' ? 'Team Queue' : 'My Queue')}
                     </h2>
                     {activeTab === 'my_tasks' && profile?.role === 'admin' && (
-                      <p className="text-[10px] text-gray-500 mt-1 ml-7">Unassigned + Needs Attention + Overdue</p>
+                      <p className="text-xs text-gray-500 mt-1 ml-7">Unassigned + Needs Attention + Overdue</p>
                     )}
                     {activeTab === 'my_tasks' && profile?.role === 'designer' && (
-                      <p className="text-[10px] text-gray-500 mt-1 ml-7">Your assigned tasks</p>
+                      <p className="text-xs text-gray-500 mt-1 ml-7">Your assigned tasks</p>
                     )}
                   </div>
                   <button
                     onClick={() => setIsNewTaskModalOpen(true)}
-                    className="p-2 bg-oms-blue text-white rounded-lg hover:bg-oms-blue transition-all flex items-center gap-1 text-xs font-bold px-3"
+                    className="p-2 bg-gray-900 text-white rounded-lg hover:bg-gray-900 transition-all flex items-center gap-1 text-xs font-bold px-3"
                   >
                     <Plus size={14} /> New Project
                   </button>
@@ -847,14 +847,14 @@ export default function DesignerWorkspace() {
                     placeholder="Search project, date..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-oms-blue bg-white"
+                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400 bg-white"
                   />
                 </div>
               </div>
 
               <div className="flex-1 overflow-y-auto p-3 space-y-3">
                 {(!forceShow && jobsLoading) ? (
-                  <div className="flex justify-center py-10"><Loader2 className="animate-spin text-oms-blue" /></div>
+                  <div className="flex justify-center py-10"><Loader2 className="animate-spin text-primary" /></div>
                 ) : jobsError ? (
                   <div className="p-4 m-2 bg-red-50 text-red-600 text-xs rounded-xl border border-red-100 flex flex-col items-center gap-2">
                     <AlertCircle size={20} />
@@ -885,7 +885,7 @@ export default function DesignerWorkspace() {
                         <div key={task.id} className="bg-white p-4 rounded-xl border border-gray-100  transition-shadow">
                           <div className="flex justify-between items-center mb-3">
                             <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-lg ${isOverdue ? 'bg-red-100 text-red-600' : 'bg-[rgba(0,0,255,0.05)] text-oms-blue'}`}>
+                              <div className={`p-2 rounded-lg ${isOverdue ? 'bg-red-100 text-red-600' : 'bg-muted text-primary'}`}>
                                 {isOverdue ? <AlertCircle size={18} /> : <Briefcase size={18} />}
                               </div>
                               <div>
@@ -894,19 +894,19 @@ export default function DesignerWorkspace() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${taskStatuses.find(s => s.id === task.status)?.color}`}>
+                              <span className={`text-xs font-bold px-2 py-1 rounded-full ${taskStatuses.find(s => s.id === task.status)?.color}`}>
                                 {taskStatuses.find(s => s.id === task.status)?.name}
                               </span>
                             </div>
                           </div>
 
                           <div className="relative pt-2">
-                            <div className="flex justify-between text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">
+                            <div className="flex justify-between text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">
                               <span>Start: {new Date(task.createdAt).toLocaleDateString()}</span>
                               <span>Due: {task.deadline || 'No Date'}</span>
                             </div>
                             <div className="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                              <div className={`h-full rounded-full transition-all duration-1000 ${isOverdue ? 'bg-red-500' : (task.status === 'completed' ? 'bg-emerald-500' : 'bg-oms-blue')}`} style={{ width: `${task.status === 'completed' ? 100 : progress}%` }}></div>
+                              <div className={`h-full rounded-full transition-all duration-1000 ${isOverdue ? 'bg-red-500' : (task.status === 'completed' ? 'bg-emerald-500' : 'bg-primary')}`} style={{ width: `${task.status === 'completed' ? 100 : progress}%` }}></div>
                             </div>
                           </div>
                         </div>
@@ -919,7 +919,7 @@ export default function DesignerWorkspace() {
                       <div className="bg-white p-4 rounded-xl border border-gray-100">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Calendar size={14} /> Calendar</h3>
                         <div className="grid grid-cols-7 gap-1 text-center mb-1">
-                          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <span key={d} className="text-[10px] text-gray-400 font-bold">{d}</span>)}
+                          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <span key={d} className="text-xs text-gray-400 font-bold">{d}</span>)}
                         </div>
                         <div className="grid grid-cols-7 gap-1">
                           {Array.from({ length: firstDay }).map((_, i) => <div key={`empty-${i}`} />)}
@@ -928,7 +928,7 @@ export default function DesignerWorkspace() {
                             const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                             const hasNote = (notes || []).some(n => n?.note_date === dateStr);
                             return (
-                              <div key={d} className={`text-xs h-6 flex items-center justify-center rounded-full cursor-pointer hover:bg-[rgba(0,0,255,0.05)] ${hasNote ? 'bg-oms-blue text-white font-bold' : 'text-gray-600'}`}>
+                              <div key={d} className={`text-xs h-6 flex items-center justify-center rounded-full cursor-pointer hover:bg-muted ${hasNote ? 'bg-gray-900 text-white font-bold' : 'text-gray-600'}`}>
                                 {d}
                               </div>
                             );
@@ -937,11 +937,11 @@ export default function DesignerWorkspace() {
                       </div>
                     )}
 
-                    <button onClick={handleCreateNote} className="w-full py-2 bg-oms-blue text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:bg-oms-blue"><Plus size={16} /> New Note</button>
+                    <button onClick={handleCreateNote} className="w-full py-2 bg-gray-900 text-white rounded-md text-sm font-bold flex items-center justify-center gap-2 hover:bg-gray-800"><Plus size={16} /> New Note</button>
 
                     {(notes || []).length === 0 ? <p className="text-center text-gray-400 text-xs py-4">No notes created.</p> : (notes || []).map((note, i) => (
-                      <div key={note?.id || `note-${i}`} onClick={() => selectNoteForEdit(note)} className={`p-3 rounded-xl border cursor-pointer  transition-all bg-white ${selectedNote?.id === note?.id ? 'border-oms-blue ring-1 ring-oms-blue' : 'border-gray-100'}`}>
-                        <div className="flex justify-between items-start mb-1"><h4 className="font-bold text-sm text-gray-800 line-clamp-1">{note?.title || 'Untitled'}</h4><span className="text-[10px] text-gray-400">{note?.note_date || ''}</span></div>
+                      <div key={note?.id || `note-${i}`} onClick={() => selectNoteForEdit(note)} className={`p-3 rounded-xl border cursor-pointer  transition-all bg-white ${selectedNote?.id === note?.id ? 'border-primary ring-1 ring-primary' : 'border-gray-100'}`}>
+                        <div className="flex justify-between items-start mb-1"><h4 className="font-bold text-sm text-gray-800 line-clamp-1">{note?.title || 'Untitled'}</h4><span className="text-xs text-gray-400">{note?.note_date || ''}</span></div>
                         <p className="text-xs text-gray-500 line-clamp-2">{note?.content || ''}</p>
                       </div>
                     ))}
@@ -951,38 +951,38 @@ export default function DesignerWorkspace() {
                     key={task.id}
                     onClick={() => setSelectedTaskId(task.id)}
                     className={`p-4 rounded-xl border cursor-pointer transition-all  group relative overflow-hidden
-                ${selectedTaskId === task.id ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.2)] ring-1 ring-oms-blue' : 'bg-white border-gray-100 hover:border-gray-300'}`}
+                ${selectedTaskId === task.id ? 'bg-muted border-border ring-1 ring-primary' : 'bg-white border-gray-100 hover:border-gray-300'}`}
                   >
-                    {selectedTaskId === task.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[rgba(0,0,255,0.05)]0"></div>}
+                    {selectedTaskId === task.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-muted0"></div>}
 
                     <div className="flex justify-between items-start mb-2">
-                      <span className="font-mono text-[10px] text-gray-500 font-medium tracking-wide">{task.taskId}</span>
+                      <span className="font-mono text-xs text-gray-500 font-medium tracking-wide">{task.taskId}</span>
                       <div className="flex flex-col items-end gap-0.5">
                         {task.rawDeadline && new Date(task.rawDeadline) < new Date() && task.current_stage !== 'delivered' ? (
-                          <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full flex items-center gap-1 mb-1">
+                          <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full flex items-center gap-1 mb-1">
                             <Clock size={10} /> Overdue
                           </span>
                         ) : (
-                          <span className="text-[10px] text-gray-400 font-medium">{task.deadline || 'No Deadline'}</span>
+                          <span className="text-xs text-gray-400 font-medium">{task.deadline || 'No Deadline'}</span>
                         )}
 
                         {/* Show Designer Label in Team View */}
                         {activeTab === 'team_tasks' && (
-                          <span className="text-[9px] font-bold text-oms-blue bg-[rgba(0,0,255,0.05)] border border-[rgba(0,0,255,0.1)] px-1.5 py-0.5 rounded">
+                          <span className="text-[9px] font-bold text-primary bg-muted border border-gray-200 px-1.5 py-0.5 rounded">
                             {task.designerName}
                           </span>
                         )}
                       </div>
                     </div>
-                    <h3 className={`font-semibold text-sm mb-3 leading-snug ${selectedTaskId === task.id ? 'text-indigo-900' : 'text-gray-800'}`}>
+                    <h3 className={`font-semibold text-sm mb-3 leading-snug ${selectedTaskId === task.id ? 'text-gray-900' : 'text-gray-800'}`}>
                       {task.title}
                     </h3>
                     <div className="flex items-center justify-between">
-                      <span className={`text-[10px] px-2.5 py-1 rounded-md font-medium ${taskStatuses.find(s => s.id === task.status)?.color}`}>
+                      <span className={`text-xs px-2.5 py-1 rounded-md font-medium ${taskStatuses.find(s => s.id === task.status)?.color}`}>
                         {taskStatuses.find(s => s.id === task.status)?.name}
                       </span>
                       {task.priority !== 'normal' && (
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${priorities.find(p => p.id === task.priority)?.color}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full border ${priorities.find(p => p.id === task.priority)?.color}`}>
                           {task.priority}
                         </span>
                       )}
@@ -1009,7 +1009,7 @@ export default function DesignerWorkspace() {
                   <div className="p-4 border-t bg-white flex justify-between items-center">
                     {selectedNote && <button onClick={() => handleDeleteNote(selectedNote.id)} className="text-red-500 hover:text-red-700 text-sm font-bold flex items-center gap-2"><Trash2 size={16} /> Delete</button>}
                     <div className="flex gap-2 ml-auto">
-                      <button onClick={handleSaveNote} className="px-6 py-2 bg-oms-blue text-white rounded-xl font-bold hover:bg-oms-blue flex items-center gap-2"><Save size={18} /> Save Note</button>
+                      <button onClick={handleSaveNote} className="px-4 py-2 bg-gray-900 text-white rounded-md font-bold hover:bg-gray-900 flex items-center gap-2"><Save size={18} /> Save Note</button>
                     </div>
                   </div>
                 </div>
@@ -1031,7 +1031,7 @@ export default function DesignerWorkspace() {
                         </div>
                         {/* Order ID Link if exists */}
                         <span className="hidden md:inline text-gray-300">|</span>
-                        <div className="flex items-center gap-1.5 text-oms-blue font-medium bg-[rgba(0,0,255,0.05)] px-2 py-0.5 rounded-full whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 text-primary font-medium bg-muted px-2 py-0.5 rounded-full whitespace-nowrap">
                           <FileText size={12} /> Ref: {selectedTask.taskId}
                         </div>
                       </div>
@@ -1068,7 +1068,7 @@ export default function DesignerWorkspace() {
                     {/* 1. Brief / Description */}
                     <section className="bg-white p-4 rounded-2xl border border-gray-100">
                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <FileText size={16} className="text-oms-blue" /> Design Brief & Instructions
+                        <FileText size={16} className="text-primary" /> Design Brief & Instructions
                       </h4>
                       <div className="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap font-sans">
                         {selectedTask.description}
@@ -1080,7 +1080,7 @@ export default function DesignerWorkspace() {
                       {/* Google Drive Link */}
                       <div>
                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                          <Folder size={16} className="text-blue-600" /> Project Assets (Drive / Local)
+                          <Folder size={16} className="text-foreground" /> Project Assets (Drive / Local)
                         </h4>
                         <div className="flex gap-2 mb-2">
                           <input
@@ -1095,7 +1095,7 @@ export default function DesignerWorkspace() {
                             }}
                           />
                           {selectedTask.driveLink && (
-                            <a href={selectedTask.driveLink} target="_blank" className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors">
+                            <a href={selectedTask.driveLink} target="_blank" className="p-2 bg-muted text-foreground rounded-md hover:bg-muted transition-colors">
                               <ExternalLink size={18} />
                             </a>
                           )}
@@ -1120,60 +1120,60 @@ export default function DesignerWorkspace() {
                           {/* In a real app, map through 'remarks' joined to task */}
                           <div className="space-y-4">
                             <div className="flex gap-3">
-                              <div className="min-w-8 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600">M</div>
+                              <div className="min-w-8 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-foreground">M</div>
                               <div className="bg-white p-3 rounded-2xl rounded-tl-none border max-w-[80%]">
                                 <div className="flex justify-between items-center mb-1 gap-2 md:gap-4">
-                                  <span className="text-[10px] font-bold text-gray-900">Manager</span>
+                                  <span className="text-xs font-bold text-gray-900">Manager</span>
                                   <span className="text-[9px] font-bold bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded">Correction ❌</span>
                                 </div>
                                 <p className="text-xs text-gray-600">Client wants the logo bigger. Please check brand guidelines.</p>
                               </div>
                             </div>
                             <div className="flex gap-3 flex-row-reverse">
-                              <div className="min-w-8 w-8 h-8 rounded-full bg-oms-blue flex items-center justify-center text-xs font-bold text-white">Me</div>
-                              <div className="bg-oms-blue p-3 rounded-2xl rounded-tr-none border border-[rgba(0,0,255,0.2)]-600  max-w-[80%] text-white">
+                              <div className="min-w-8 w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center text-xs font-bold text-white">Me</div>
+                              <div className="bg-gray-900 p-3 rounded-2xl rounded-tr-none border border-border-600  max-w-[80%] text-white">
                                 <div className="flex justify-between items-center mb-1 gap-2 md:gap-4">
-                                  <span className="text-[10px] font-bold text-white/80">You</span>
+                                  <span className="text-xs font-bold text-white/80">You</span>
                                 </div>
-                                <p className="text-xs text-indigo-50">Updated. V2 attached in drive.</p>
+                                <p className="text-xs text-gray-50">Updated. V2 attached in drive.</p>
                               </div>
                             </div>
                           </div>
                         </div>
                         <form onSubmit={handleAddFeedback} className="p-4 border-t bg-white flex gap-3 items-center">
-                          <input type="text" value={newFeedback} onChange={(e) => setNewFeedback(e.target.value)} placeholder="Type reply (tag: #correction, #approved)..." className="flex-1 border rounded-xl px-4 py-2 text-sm focus:ring-2 ring-oms-blue/20 outline-none" />
-                          <button type="submit" disabled={!newFeedback.trim()} className="p-2 bg-oms-blue text-white rounded-xl hover:bg-oms-blue transition-colors"><Send size={18} /></button>
+                          <input type="text" value={newFeedback} onChange={(e) => setNewFeedback(e.target.value)} placeholder="Type reply (tag: #correction, #approved)..." className="flex-1 border rounded-xl px-4 py-2 text-sm focus:ring-2 ring-primary/20 outline-none" />
+                          <button type="submit" disabled={!newFeedback.trim()} className="p-2 bg-gray-900 text-white rounded-md hover:bg-gray-900 transition-colors"><Send size={18} /></button>
                         </form>
                       </div>
                     </section>
 
                     {/* 4. Final Review & Checklist */}
-                    <section className="bg-gradient-to-br bg-white p-4 rounded-2xl border border-[rgba(0,0,255,0.1)] space-y-4">
-                      <h4 className="text-xs font-bold text-oms-blue uppercase tracking-widest flex items-center gap-2">
+                    <section className="bg-gradient-to-br bg-white p-4 rounded-2xl border border-gray-200 space-y-4">
+                      <h4 className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-2">
                         <CheckCircle size={16} /> Pre-Print Checklist (Mandatory)
                       </h4>
                       <div className="grid grid-cols-2 gap-3">
                         {(checklistConfig[selectedTask.jobType] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed']).map((label, i) => (
-                          <label key={i} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl cursor-pointer hover:border-[rgba(0,0,255,0.2)] transition-colors">
+                          <label key={i} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl cursor-pointer hover:border-border transition-colors">
                             <input type="checkbox"
                               checked={!!checklist[`item_${i}`]}
                               onChange={e => setChecklist(prev => ({ ...prev, [`item_${i}`]: e.target.checked }))}
-                              className="w-4 h-4 text-oms-blue rounded focus:ring-oms-blue border-gray-300"
+                              className="w-4 h-4 text-primary rounded focus:ring-gray-400 border-gray-300"
                             />
                             <span className="text-sm font-bold text-gray-600">{label}</span>
                           </label>
                         ))}
-                        <label className="col-span-2 flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl cursor-pointer hover:border-[rgba(0,0,255,0.2)] transition-colors">
+                        <label className="col-span-2 flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl cursor-pointer hover:border-border transition-colors">
                           <input type="checkbox"
                             checked={checklist.approval || false}
                             onChange={e => setChecklist(prev => ({ ...prev, approval: e.target.checked }))}
-                            className="w-4 h-4 text-oms-blue rounded focus:ring-oms-blue border-gray-300"
+                            className="w-4 h-4 text-primary rounded focus:ring-gray-400 border-gray-300"
                           />
                           <span className="text-sm font-bold text-gray-600 flex items-center gap-2"><Paperclip size={14} /> Client Approval Attached / Verified</span>
                         </label>
                       </div>
 
-                      <div className="pt-4 border-t border-[rgba(0,0,255,0.1)]">
+                      <div className="pt-4 border-t border-gray-200">
                         {(() => {
                           const requiredList = checklistConfig[selectedTask.jobType] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed'];
                           const allMainChecks = requiredList.every((_, i) => checklist[`item_${i}`]);
@@ -1188,13 +1188,13 @@ export default function DesignerWorkspace() {
                                 }
                               }}
                               className="w-full py-4 rounded-xl font-bold text-white -200 flex items-center justify-center gap-2 transition-all
-                             disabled:bg-gray-300 disabled: disabled:cursor-not-allowed bg-oms-blue hover:bg-oms-blue hover:scale-[1.01]"
+                             disabled:bg-gray-300 disabled: disabled:cursor-not-allowed bg-gray-900 hover:bg-gray-900 hover:scale-[1.01]"
                             >
                               {isComplete ? <><Printer size={20} /> Client Approved - Ready for Print</> : 'Complete Checklist to Finish'}
                             </button>
                           )
                         })()}
-                        <p className="text-center text-[10px] text-gray-400 mt-2 font-medium uppercase tracking-wide">Prevents costly print mistakes</p>
+                        <p className="text-center text-xs text-gray-400 mt-2 font-medium uppercase tracking-wide">Prevents costly print mistakes</p>
                       </div>
                     </section>
                   </div>
@@ -1219,7 +1219,7 @@ export default function DesignerWorkspace() {
               <div className="p-4 border-b bg-gradient-to-br from-white to-gray-50">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2 text-gray-900 font-bold">
-                    <div className="p-1.5 bg-oms-blue text-white rounded-lg">
+                    <div className="p-1.5 bg-gray-900 text-white rounded-lg">
                       <Calendar size={16} />
                     </div>
                     <h2>{monthName}</h2>
@@ -1231,7 +1231,7 @@ export default function DesignerWorkspace() {
                 </div>
 
                 <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
-                  <div className="grid grid-cols-7 mb-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">
+                  <div className="grid grid-cols-7 mb-3 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">
                     <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
                   </div>
                   <div className="grid grid-cols-7 gap-1 text-center">
@@ -1248,7 +1248,7 @@ export default function DesignerWorkspace() {
 
                       return (
                         <div key={day} className={`h-8 flex flex-col items-center justify-center relative rounded-lg text-label cursor-pointer transition-colors hover:bg-gray-50
-                    ${isToday ? 'bg-oms-blue text-white hover:bg-oms-blue' : 'text-gray-700'}`}>
+                    ${isToday ? 'bg-gray-900 text-white hover:bg-primary' : 'text-gray-700'}`}>
                           {day}
                           {hasTasks && (
                             <div className={`absolute bottom-1 w-1 h-1 rounded-full ${isToday ? 'bg-white' : 'bg-red-500'}`}></div>
@@ -1258,9 +1258,9 @@ export default function DesignerWorkspace() {
                     })}
                   </div>
                 </div>
-                <div className="mt-3 flex items-center justify-between text-[10px] text-gray-400">
+                <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
                   <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-red-500"></div> Deadline</div>
-                  <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-oms-blue"></div> Today</div>
+                  <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-gray-900"></div> Today</div>
                 </div>
               </div>
 
@@ -1280,8 +1280,8 @@ export default function DesignerWorkspace() {
                   <div className="relative border-l-2 border-gray-100 ml-3.5 space-y-8 pb-4">
                     {logs.map(log => (
                       <div key={log.id} className="relative pl-6 group">
-                        <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-white border-2 border-gray-300 ring-4 ring-white group-hover:border-oms-blue transition-colors z-10"></div>
-                        <span className="text-[10px] font-mono text-gray-400 block mb-1 font-medium">{log.time}</span>
+                        <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-white border-2 border-gray-300 ring-4 ring-white group-hover:border-primary transition-colors z-10"></div>
+                        <span className="text-xs font-mono text-gray-400 block mb-1 font-medium">{log.time}</span>
                         <p className="text-xs text-gray-700 font-medium leading-relaxed bg-gray-50 p-2 rounded-lg border border-transparent group-hover:border-gray-100 group- transition-all">{log.text}</p>
                       </div>
                     ))}
@@ -1295,10 +1295,10 @@ export default function DesignerWorkspace() {
                       type="text"
                       value={newLog}
                       onChange={(e) => setNewLog(e.target.value)}
-                      className="flex-1 text-xs border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-oms-blue bg-white"
+                      className="flex-1 text-xs border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-gray-400 bg-white"
                       placeholder="Finished logo design..."
                     />
-                    <button type="submit" disabled={!newLog.trim()} className="p-3 bg-oms-blue text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 transition-all hover:-translate-y-0.5">
+                    <button type="submit" disabled={!newLog.trim()} className="p-3 bg-gray-900 text-white rounded-md hover:bg-gray-800 disabled:opacity-50 transition-all hover:-translate-y-0.5">
                       <ArrowRight size={14} />
                     </button>
                   </form>
@@ -1315,7 +1315,7 @@ export default function DesignerWorkspace() {
           <div className="fixed inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60 flex items-center justify-center z-50 p-4 animate-in fade-in zoom-in duration-300 backdrop-blur-sm">
             <div className="bg-white rounded-3xl w-full max-w-4xl  overflow-hidden flex flex-col max-h-[90vh] border border-gray-100">
               {/* Premium Gradient Header */}
-              <div className="relative p-4 bg-oms-blue overflow-hidden">
+              <div className="relative p-4 bg-gray-900 overflow-hidden">
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30"></div>
                 <div className="relative flex justify-between items-start">
                   <div className="flex items-start gap-2 md:gap-4">
@@ -1342,8 +1342,8 @@ export default function DesignerWorkspace() {
 
                   {/* 1. Project Basics */}
                   <div className="space-y-5 bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
-                    <div className="flex items-center gap-3 pb-3 border-b-2 border-oms-blue">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-oms-blue text-white text-sm font-bold -200">
+                    <div className="flex items-center gap-3 pb-3 border-b-2 border-primary">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gray-900 text-white text-sm font-bold -200">
                         1
                       </div>
                       <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Project Basics</h4>
@@ -1357,7 +1357,7 @@ export default function DesignerWorkspace() {
                         <input
                           required
                           type="text"
-                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all font-medium hover:border-gray-300"
+                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all font-medium hover:border-gray-300"
                           placeholder="e.g. Wedding Invitation - Sharma Family"
                           value={newTaskData.title}
                           onChange={e => setNewTaskData({ ...newTaskData, title: e.target.value })}
@@ -1370,7 +1370,7 @@ export default function DesignerWorkspace() {
                         </label>
                         <select
                           required
-                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all bg-white hover:border-gray-300"
+                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all bg-white hover:border-gray-300"
                           value={newTaskData.clientId}
                           onChange={e => setNewTaskData({ ...newTaskData, clientId: e.target.value })}
                         >
@@ -1384,7 +1384,7 @@ export default function DesignerWorkspace() {
                           🎨 Assign Designer
                         </label>
                         <select
-                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all bg-white hover:border-gray-300"
+                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all bg-white hover:border-gray-300"
                           value={newTaskData.designerId}
                           onChange={e => setNewTaskData({ ...newTaskData, designerId: e.target.value })}
                         >
@@ -1453,21 +1453,21 @@ export default function DesignerWorkspace() {
 
                   {/* 3. Assets & Brief */}
                   <div className="space-y-5 bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
-                    <div className="flex items-center gap-3 pb-3 border-b-2 border-gradient-to-r from-blue-500 to-cyan-500">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white text-sm font-bold -200">
+                    <div className="flex items-center gap-3 pb-3 border-b-2 border-gray-300">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-gray-700 to-gray-800 text-white text-sm font-bold -200">
                         3
                       </div>
                       <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Assets & Brief</h4>
                     </div>
 
-                    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-5 rounded-xl border-2 border-blue-100 space-y-3">
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-5 rounded-xl border-2 border-border space-y-3">
                       <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                        <Folder size={18} className="text-blue-600" />
+                        <Folder size={18} className="text-foreground" />
                         Design Assets (Drive Link or File Upload)
                       </label>
                       <input
                         type="url"
-                        className="w-full border-2 border-blue-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-blue-500/20 focus:border-blue-500 placeholder:text-blue-300 bg-white hover:border-blue-300 transition-all"
+                        className="w-full border-2 border-border rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-gray-400/20 focus:border-gray-400 placeholder:text-gray-300 bg-white hover:border-border transition-all"
                         placeholder="https://drive.google.com/drive/folders/..."
                         value={newTaskData.driveLink}
                         onChange={e => setNewTaskData({ ...newTaskData, driveLink: e.target.value })}
@@ -1481,7 +1481,7 @@ export default function DesignerWorkspace() {
                               setNewTaskData({ ...newTaskData, file: e.target.files[0] });
                             }
                           }}
-                          className="text-xs text-gray-600 file:mr-3 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-500 file:text-white hover:file:bg-blue-600 file: file:-200 file:transition-all"
+                          className="text-xs text-gray-600 file:mr-3 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-gray-900 file:text-white hover:file:bg-gray-900 file: file:-200 file:transition-all"
                         />
                       </div>
                     </div>
@@ -1492,7 +1492,7 @@ export default function DesignerWorkspace() {
                       </label>
                       <textarea
                         rows={4}
-                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-blue-500/20 focus:border-blue-500 leading-relaxed hover:border-gray-300 transition-all"
+                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-gray-400/20 focus:border-gray-400 leading-relaxed hover:border-gray-300 transition-all"
                         placeholder="Describe specific requirements, items to print, size, quantity, special instructions..."
                         value={newTaskData.description}
                         onChange={e => setNewTaskData({ ...newTaskData, description: e.target.value })}
@@ -1516,7 +1516,7 @@ export default function DesignerWorkspace() {
                   form="create-project-form"
                   type="submit"
                   disabled={creatingTask}
-                  className="px-8 py-3 bg-oms-blue text-white rounded-xl font-bold 2xl -300 disabled:opacity-50 transition-all transform hover:scale-105 text-sm flex items-center gap-2"
+                  className="px-8 py-2 bg-gray-900 text-white rounded-md font-bold 2xl -300 disabled:opacity-50 transition-all transform hover:scale-105 text-sm flex items-center gap-2"
                 >
                   {creatingTask ? <><Loader2 size={18} className="animate-spin" /> Creating...</> : <><CheckCircle size={18} /> Create Project</>}
                 </button>
@@ -1532,8 +1532,8 @@ export default function DesignerWorkspace() {
 // Helper for download icon
 function DownloadButton() {
   return (
-    <button className="text-gray-400 hover:text-oms-blue transition-colors">
-      <div className="p-2 hover:bg-[rgba(0,0,255,0.05)] rounded-lg transition-colors">
+    <button className="text-gray-400 hover:text-primary transition-colors">
+      <div className="p-2 hover:bg-muted rounded-lg transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
       </div>
     </button>

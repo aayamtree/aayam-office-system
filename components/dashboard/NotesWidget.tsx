@@ -160,7 +160,7 @@ export default function NotesWidget() {
                             {note.job && (
                                 <Link
                                     href={`/admin/jobs?search=${note.job.job_number}`}
-                                    className="inline-flex items-center gap-1.5 mt-2 px-2 py-0.5 bg-white/50 rounded-lg text-xs text-gray-600 hover:text-oms-blue hover:bg-white transition-colors"
+                                    className="inline-flex items-center gap-1.5 mt-2 px-2 py-0.5 bg-white/50 rounded-lg text-xs text-gray-600 hover:text-primary hover:bg-white transition-colors"
                                 >
                                     <LinkIcon size={10} />
                                     Job #{note.job.job_number}
@@ -170,7 +170,7 @@ export default function NotesWidget() {
                             <div className="absolute top-2 right-2 flex gap-1">
                                 <button
                                     onClick={() => togglePin(note)}
-                                    className={`p-1.5 rounded-md transition-all flex items-center justify-center ${note.is_pinned ? 'bg-oms-blue text-white hover:bg-blue-700' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
+                                    className={`p-1.5 rounded-md transition-all flex items-center justify-center ${note.is_pinned ? 'bg-gray-900 text-white hover:bg-blue-700' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
                                 >
                                     <Pin size={14} />
                                 </button>
@@ -183,7 +183,7 @@ export default function NotesWidget() {
                             </div>
                             {note.is_pinned && (
                                 <div className="absolute -top-2 -left-2">
-                                    <span className="bg-oms-blue border border-oms-blue/20 p-1 rounded-full block">
+                                    <span className="bg-gray-900 border border-primary/20 p-1 rounded-full block">
                                         <Pin size={10} className="fill-current text-white" />
                                     </span>
                                 </div>

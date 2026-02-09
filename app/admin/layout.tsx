@@ -8,6 +8,8 @@ import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import { NotificationPopup } from '@/components/NotificationPopup';
 import DailyBriefingTrigger from '@/components/calendar/DailyBriefingTrigger';
+import CommandPalette from '@/components/shared/CommandPalette';
+import SmartReminders from '@/components/shared/SmartReminders';
 
 export default function AdminLayout({
   children,
@@ -36,10 +38,10 @@ export default function AdminLayout({
 
   if (!mounted || loading) {
     return (
-      <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-oms-blue-100 border-t-oms-blue rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-500">Loading...</p>
+          <div className="w-12 h-12 border-4 border-muted border-t-foreground rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -51,7 +53,7 @@ export default function AdminLayout({
 
   return (
     <SessionProvider>
-      <div className="min-h-screen bg-[#f5f5f7]">
+      <div className="min-h-screen bg-background">
         {/* Mobile Overlay */}
         {sidebarOpen && (
           <div
@@ -69,11 +71,17 @@ export default function AdminLayout({
         {/* Broadcast Notifications Popup */}
         <NotificationPopup />
 
+        {/* Global Command Palette (Cmd+K) */}
+        <CommandPalette />
+
+        {/* Smart Reminders (Auto) */}
+        <SmartReminders />
+
         {/* Daily Briefing - Auto shows once per day on login */}
         {profile && <DailyBriefingTrigger />}
 
-        {/* Main Content - Optimized padding for mobile (px-2) and desktop (px-6) */}
-        <main className="lg:ml-64 pt-20 lg:pt-24 px-2 md:px-6 py-4 md:py-6 min-h-screen">
+        {/* Main Content */}
+        <main className="lg:ml-64 pt-20 lg:pt-24 px-4 md:px-6 lg:px-8 py-6 min-h-screen">
           {children}
         </main>
       </div>

@@ -228,12 +228,12 @@ export default function UnifiedJobForm({
             {mode === 'modal' && (
                 <div className="flex items-center justify-between mb-3 md:mb-6 pb-4 border-b">
                     <div className="flex items-center gap-3">
-                        <Briefcase className="text-oms-blue" size={24} />
+                        <Briefcase className="text-primary" size={24} />
                         <h2 className="text-page-title text-gray-900">
                             {editingJob ? 'Edit Job' : 'New Job'}
                         </h2>
                     </div>
-                    <button onClick={onCancel} className="p-2 hover:bg-gray-100 rounded-lg">
+                    <button onClick={onCancel} className="p-2 hover:bg-gray-100 rounded-md">
                         <X size={20} />
                     </button>
                 </div>
@@ -241,7 +241,7 @@ export default function UnifiedJobForm({
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* SECTION 1: Project Basics - ALL ROLES */}
-                <div className="space-y-2 md:space-y-4 bg-oms-blue rounded-lg md:rounded-2xl p-4 md:p-6 border-2 border-[rgba(0,0,255,0.2)]-200">
+                <div className="space-y-2 md:space-y-4 bg-gray-900 rounded-lg md:rounded-2xl p-4 md:p-6 border-2 border-[rgba(0,0,255,0.2)]-200">
                     <h3 className="text-section text-gray-900 flex items-center gap-2">
                         <span className="bg-[rgba(0,0,255,0.1)] text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">1</span>
                         Project Basics
@@ -277,7 +277,7 @@ export default function UnifiedJobForm({
                                 <button
                                     type="button"
                                     onClick={() => setShowAddClient(true)}
-                                    className="px-3 py-2 bg-[rgba(0,0,255,0.1)] text-oms-blue rounded-xl hover:bg-[rgba(0,0,255,0.1)]"
+                                    className="px-3 py-2 bg-[rgba(0,0,255,0.1)] text-primary rounded-xl hover:bg-[rgba(0,0,255,0.1)]"
                                 >
                                     <Plus size={20} />
                                 </button>
@@ -340,7 +340,7 @@ export default function UnifiedJobForm({
                             >
                                 {productTypes.map(t => <option key={t} value={t}>{t}</option>)}
                             </select>
-                            <p className="text-xs text-oms-blue mt-1">⚡ For print batching</p>
+                            <p className="text-xs text-primary mt-1">⚡ For print batching</p>
                         </div>
 
                         <div>
@@ -426,7 +426,7 @@ export default function UnifiedJobForm({
                             </div>
                             <div className="col-span-2">
                                 <p className="text-xs text-gray-500">Total</p>
-                                <p className="font-bold text-oms-blue text-xl">₹{total.toFixed(2)}</p>
+                                <p className="font-bold text-primary text-xl">₹{total.toFixed(2)}</p>
                             </div>
                         </div>
 
@@ -549,14 +549,14 @@ export default function UnifiedJobForm({
                     <button
                         type="button"
                         onClick={onCancel}
-                        className="px-6 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50"
+                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
                         disabled={saving}
-                        className="px-8 py-2 bg-oms-blue text-white rounded-xl font-medium  disabled:opacity-50 flex items-center gap-2"
+                        className="px-8 py-2 bg-gray-900 text-white rounded-md font-medium  disabled:opacity-50 flex items-center gap-2"
                     >
                         {saving ? (
                             <>

@@ -113,6 +113,10 @@ export interface Client extends BaseEntity {
   assigned_to?: string;  // Marketing person assigned to this client
   created_by?: string;
   brand_name?: string;  // Searchable brand names (hashtag format: #tiger #cobra)
+  referred_by?: string;  // UUID of the client who referred this client
+
+  // Joined data
+  referrer?: Client;  // The client who referred this one
 }
 
 // Vendor
@@ -174,6 +178,7 @@ export interface Job extends BaseEntity {
   product_category?: string; // Legacy field
   description?: string;
   quantity: number;
+  actual_quantity?: number;  // Actual produced qty (for overrun/underrun tracking)
 
   // Financial fields
   quote_per_piece: number;
@@ -488,6 +493,10 @@ export interface Expense extends BaseEntity {
   expense_date: string;
   receipt_url?: string;
   created_by?: string;
+  job_id?: string;  // Optional link to a specific job
+
+  // Joined data
+  job?: Job;
 }
 
 
@@ -801,6 +810,10 @@ export interface UserCalendarEvent {
   created_at: string;
   updated_at: string;
   tagged_users?: string[];  // Array of user IDs who are tagged/mentioned
+  visibility?: 'private' | 'team' | 'all';  // Who can see this event
+  source?: 'manual' | 'auto';  // Auto = system-generated
+  source_type?: 'job' | 'followup' | 'dispatch' | 'invoice' | 'task';  // Origin entity
+  source_id?: string;  // Link back to source entity
 }
 
 export interface CalendarEventMention {
@@ -918,6 +931,9 @@ export interface PrintRunJob extends BaseEntity {
   qty_on_sheet?: number;
   quantity_needed?: number;
   ups_in_sheet?: number;
+  sheets_to_print?: number;    // How many sheets to print for this job
+  expected_output?: number;    // Auto: ups_in_sheet × sheets_to_print
+  actual_output?: number;      // Actual produced (for overrun tracking)
   file_version?: string;
   notes?: string;
   added_at: string;
@@ -937,6 +953,34 @@ export interface ProductionSummary {
   total_active: number;
 }
 
+// Payment Split (for tracking multi-mode payments)
+export interface PaymentSplit extends BaseEntity {
+  payment_id: string;     // FK to payments_received
+  amount: number;
+  payment_mode: PaymentMode;
+  bank_account_id?: string;
+  reference_number?: string;
+  has_gst: boolean;       // Whether GST applies to this split
+
+  // Joined data
+  payment?: PaymentReceived;
+  bank_account?: BankAccount;
+}
+
+// User Note (dashboard sticky notes)
+export interface UserNote extends BaseEntity {
+  user_id: string;
+  content: string;
+  note_type: 'personal' | 'pinned' | 'shared';
+  tagged_users?: string[];   // Who can see shared notes
+  job_id?: string;           // Optional link to a job
+  is_archived: boolean;
+
+  // Joined data
+  creator?: Profile;
+  job?: Job;
+}
+
 // Input types for new tables
 export type MachineInput = Omit<Machine, 'id' | 'created_at' | 'updated_at'>;
 export type SheetSizeInput = Omit<SheetSize, 'id' | 'created_at' | 'updated_at'>;
@@ -944,3 +988,5 @@ export type MaterialInput = Omit<Material, 'id' | 'created_at' | 'updated_at'>;
 export type ProductCategoryInput = Omit<ProductCategory, 'id' | 'created_at' | 'updated_at'>;
 export type PrintRunInput = Omit<PrintRun, 'id' | 'created_at' | 'updated_at' | 'print_run_number' | 'machine' | 'sheet_size' | 'material' | 'jobs'>;
 export type PrintRunJobInput = Omit<PrintRunJob, 'id' | 'created_at' | 'updated_at' | 'added_at' | 'print_run' | 'job'>;
+export type PaymentSplitInput = Omit<PaymentSplit, 'id' | 'created_at' | 'updated_at' | 'payment' | 'bank_account'>;
+export type UserNoteInput = Omit<UserNote, 'id' | 'created_at' | 'updated_at' | 'creator' | 'job'>;

@@ -11,6 +11,8 @@ import { useJobs, useClients } from '@/lib/hooks';
 import { Job, Client } from '@/types/database';
 import { useAuth } from '@/lib/auth-context';
 import { formatDate } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function OrdersPage() {
   const { user, profile } = useAuth();
@@ -205,10 +207,10 @@ export default function OrdersPage() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      'new': 'bg-blue-100 text-blue-700',
-      'designing': 'bg-oms-blue text-white',
+      'new': 'bg-muted text-foreground',
+      'designing': 'bg-gray-900 text-white',
       'approval': 'bg-amber-100 text-amber-700',
-      'printing': 'bg-oms-blue text-white',
+      'printing': 'bg-gray-900 text-white',
       'finishing': 'bg-pink-100 text-pink-700',
       'quality_check': 'bg-orange-100 text-orange-700',
       'ready': 'bg-gray-100 text-gray-900',
@@ -240,7 +242,7 @@ export default function OrdersPage() {
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </Link>
           <div>
-            <h1 className="text-2xl lg:text-page-title text-gray-900 tracking-tight">Orders</h1>
+            <h1 className="text-page-title text-gray-900 tracking-tight">Orders</h1>
             <p className="text-sm text-gray-500 mt-1">{filteredJobs.length} orders found</p>
           </div>
         </div>
@@ -248,7 +250,7 @@ export default function OrdersPage() {
           {profile?.role !== 'marketing' && (
             <button
               onClick={handleAddNew}
-              className="flex items-center justify-center gap-2 bg-[#0000FF] hover:bg-[#0000CC] text-white px-4 py-2 rounded-lg transition-all hover:scale-105 active:scale-95 font-semibold shadow-sm"
+              className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-md transition-all hover:scale-105 active:scale-95 font-semibold shadow-sm"
             >
               <Plus className="w-5 h-5" />
               <span>New Order</span>
@@ -259,27 +261,28 @@ export default function OrdersPage() {
 
       <div className="flex flex-col sm:flex-row gap-3 bg-white p-3 sm:p-4 rounded-2xl border border-gray-100">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 md:w-5 md:h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Input
             type="text"
             placeholder="Search orders, clients..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-oms-blue/20 text-gray-900 placeholder-gray-400 transition-all font-medium"
+            className="pl-10"
           />
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-oms-blue/20 font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-        >
-          <option value="all">All Status</option>
-          <option value="new">New</option>
-          <option value="designing">Designing</option>
-          <option value="printing">Printing</option>
-          <option value="ready">Ready</option>
-          <option value="delivered">Delivered</option>
-        </select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-auto min-w-[120px] h-9 text-sm">
+            <SelectValue placeholder="All Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="new">New</SelectItem>
+            <SelectItem value="designing">Designing</SelectItem>
+            <SelectItem value="printing">Printing</SelectItem>
+            <SelectItem value="ready">Ready</SelectItem>
+            <SelectItem value="delivered">Delivered</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-4">
@@ -296,8 +299,8 @@ export default function OrdersPage() {
               {filteredJobs.map((job) => {
                 // Determine header color based on status
                 const headerColors = {
-                  'new': 'bg-gradient-to-r from-blue-500 to-blue-600',
-                  'designing': 'bg-gradient-to-r from-oms-blue to-blue-600',
+                  'new': 'bg-gradient-to-r from-gray-700 to-gray-800',
+                  'designing': 'bg-gradient-to-r from-gray-800 to-gray-900',
                   'approval': 'bg-gradient-to-r from-yellow-400 to-yellow-500',
                   'printing': 'bg-gradient-to-r from-purple-500 to-purple-600',
                   'finishing': 'bg-gradient-to-r from-pink-500 to-pink-600',
@@ -398,7 +401,7 @@ export default function OrdersPage() {
                       <td className="px-6 py-4 align-top">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-bold text-gray-900 font-mono text-sm bg-gray-100 px-2 py-1 rounded-md">{job.job_number}</span>
-                          {job.priority === 'urgent' && <span className="text-[10px] font-bold uppercase text-oms-orange bg-white px-2 py-0.5 rounded-full">Urgent</span>}
+                          {job.priority === 'urgent' && <span className="text-xs font-bold uppercase text-destructive bg-white px-2 py-0.5 rounded-full">Urgent</span>}
                         </div>
                         <div className="font-semibold text-gray-800">{job.project_name}</div>
                         <div className="text-xs text-gray-500 mt-1">{job.quantity} items</div>
@@ -412,14 +415,14 @@ export default function OrdersPage() {
                       <td className="px-6 py-4 align-top">
                         <div className="font-bold text-gray-900">{formatCurrency(job.total_amount)}</div>
                         {job.payment_status !== 'paid' && (
-                          <span className="text-label text-oms-orange bg-white px-2 py-0.5 rounded-full mt-1 inline-block">
+                          <span className="text-label text-destructive bg-white px-2 py-0.5 rounded-full mt-1 inline-block">
                             Due: {formatCurrency(job.total_amount - job.amount_received)}
                           </span>
                         )}
                       </td>
                       <td className="px-6 py-4 align-top">
                         <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg w-fit">
-                          <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                          <Calendar className="w-4 h-4 text-gray-400" />
                           {job.client_deadline ? formatDate(job.client_deadline) : '-'}
                         </div>
                       </td>
@@ -430,12 +433,12 @@ export default function OrdersPage() {
                       </td>
                       <td className="px-6 py-4 align-middle text-right">
                         <div className="flex items-center justify-end gap-2 text-gray-500">
-                          <button onClick={() => { setSelectedJob(job); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-lg hover:text-oms-blue transition-colors">
+                          <button onClick={() => { setSelectedJob(job); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-lg hover:text-gray-900 transition-colors">
                             <Eye className="w-4 h-4 md:w-4.5 md:h-4.5" />
                           </button>
                           {profile?.role !== 'marketing' && (
                             <>
-                              <button onClick={() => handleEdit(job)} className="p-2 hover:bg-gray-100 rounded-lg hover:text-oms-blue transition-colors">
+                              <button onClick={() => handleEdit(job)} className="p-2 hover:bg-gray-100 rounded-lg hover:text-gray-900 transition-colors">
                                 <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
                               </button>
                               <button onClick={(e) => handleDelete(job.id, e)} className="p-2 hover:bg-red-50 rounded-lg hover:text-red-500 transition-colors">
@@ -476,7 +479,7 @@ export default function OrdersPage() {
                     placeholder="e.g. Wedding Invitation Cards, Corporate Brochure"
                     value={formData.projectName}
                     onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
                   />
                 </div>
 
@@ -486,7 +489,7 @@ export default function OrdersPage() {
                     required
                     value={formData.clientId}
                     onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue bg-white"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white"
                   >
                     <option value="">Select Client</option>
                     {clients.map(c => (
@@ -501,7 +504,7 @@ export default function OrdersPage() {
                     type="date"
                     value={formData.clientDeadline}
                     onChange={(e) => setFormData({ ...formData, clientDeadline: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
                   />
                 </div>
 
@@ -512,7 +515,7 @@ export default function OrdersPage() {
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Paper type, size, finishing details, etc."
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue resize-none"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 resize-none"
                   />
                 </div>
 
@@ -525,7 +528,7 @@ export default function OrdersPage() {
                       required
                       value={formData.quantity}
                       onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-oms-blue"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400"
                     />
                   </div>
                   <div>
@@ -537,7 +540,7 @@ export default function OrdersPage() {
                       required
                       value={formData.ratePerPiece}
                       onChange={(e) => handleRateChange(parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-oms-blue"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400"
                     />
                   </div>
                   <div>
@@ -545,7 +548,7 @@ export default function OrdersPage() {
                     <select
                       value={formData.gstRate}
                       onChange={(e) => handleGstRateChange(parseInt(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-oms-blue bg-white"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400 bg-white"
                     >
                       <option value="0">0%</option>
                       <option value="5">5%</option>
@@ -567,7 +570,7 @@ export default function OrdersPage() {
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-oms-blue bg-white"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 bg-white"
                   >
                     <option value="normal">Normal</option>
                     <option value="urgent">Urgent</option>
@@ -580,7 +583,7 @@ export default function OrdersPage() {
                   <select
                     value={formData.currentStage}
                     onChange={(e) => setFormData({ ...formData, currentStage: e.target.value as any })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-oms-blue bg-white"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 bg-white"
                   >
                     <option value="new">New</option>
                     <option value="designing">Designing</option>
@@ -604,7 +607,7 @@ export default function OrdersPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 px-4 py-2.5 bg-[#0000FF] text-white font-semibold rounded-lg hover:bg-[#0000CC] transition-colors shadow-sm disabled:opacity-50"
+                  className="flex-1 px-4 py-2.5 bg-gray-900 text-white font-semibold rounded-md hover:bg-gray-800 transition-colors shadow-sm disabled:opacity-50"
                 >
                   {submitting ? 'Saving...' : (isEditing ? 'Update Order' : 'Create Order')}
                 </button>
@@ -632,7 +635,7 @@ export default function OrdersPage() {
 
             <div className="p-4 space-y-6">
               <div className="flex items-center gap-2 md:gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div className="w-12 h-12 rounded-full bg-oms-blue flex items-center justify-center text-white text-section">
+                <div className="w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center text-white text-section">
                   {selectedJob.client?.company?.charAt(0) || 'C'}
                 </div>
                 <div>
@@ -667,7 +670,7 @@ export default function OrdersPage() {
                 </p>
               </div>
 
-              <div className="p-4 bg-[rgba(0,0,255,0.05)]/50 rounded-xl border border-[rgba(0,0,255,0.1)]">
+              <div className="p-4 bg-muted/50 rounded-xl border border-gray-200">
                 <div className="flex justify-between mb-2 text-sm">
                   <span className="text-gray-600">Subtotal</span>
                   <span className="font-medium">{formatCurrency(selectedJob.subtotal)}</span>
@@ -676,17 +679,17 @@ export default function OrdersPage() {
                   <span className="text-gray-600">GST ({selectedJob.gst_rate}%)</span>
                   <span className="font-medium">{formatCurrency(selectedJob.gst_amount)}</span>
                 </div>
-                <div className="flex justify-between pt-2 border-t border-[rgba(0,0,255,0.1)] mt-2">
+                <div className="flex justify-between pt-2 border-t border-gray-200 mt-2">
                   <span className="font-bold text-gray-900">Total</span>
-                  <span className="font-bold text-oms-blue text-lg">{formatCurrency(selectedJob.total_amount)}</span>
+                  <span className="font-bold text-gray-900 text-lg">{formatCurrency(selectedJob.total_amount)}</span>
                 </div>
               </div>
 
               <div className="flex gap-3">
-                <button onClick={() => { setShowViewModal(false); handleEdit(selectedJob); }} className="flex-1 py-3 border border-[rgba(0,0,255,0.2)] text-oms-blue font-semibold rounded-xl hover:bg-[rgba(0,0,255,0.05)] transition-colors">
+                <button onClick={() => { setShowViewModal(false); handleEdit(selectedJob); }} className="flex-1 py-3 border border-border text-gray-900 font-semibold rounded-xl hover:bg-muted transition-colors">
                   Edit Order
                 </button>
-                <button onClick={() => setShowViewModal(false)} className="flex-1 py-3 bg-[#0000FF] text-white font-semibold rounded-lg hover:bg-[#0000CC] transition-colors shadow-sm">
+                <button onClick={() => setShowViewModal(false)} className="flex-1 py-3 bg-gray-900 text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors shadow-sm">
                   Close
                 </button>
               </div>

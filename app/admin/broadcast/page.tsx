@@ -95,7 +95,7 @@ export default function BroadcastPage() {
             {/* Header */}
             <div className="mb-1.5">
                 <h1 className="text-page-title text-gray-900 flex items-center gap-3">
-                    <Bell className="text-oms-blue" size={32} />
+                    <Bell className="text-primary" size={32} />
                     Broadcast Notifications
                 </h1>
                 <p className="text-gray-600 mt-2">
@@ -116,7 +116,7 @@ export default function BroadcastPage() {
                         <textarea
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-oms-blue focus:border-oms-blue"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
                             rows={4}
                             placeholder="Type your announcement here..."
                             required
@@ -138,7 +138,7 @@ export default function BroadcastPage() {
                                 className={`
                   px-4 py-3 rounded-xl font-medium transition-all
                   ${priority === 'normal'
-                                        ? 'bg-blue-100 border-2 border-blue-500 text-blue-900'
+                                        ? 'bg-muted border-2 border-primary text-foreground'
                                         : 'bg-gray-100 border-2 border-gray-300 text-gray-700'
                                     }
                 `}
@@ -170,7 +170,7 @@ export default function BroadcastPage() {
                         <select
                             value={targetAudience}
                             onChange={(e) => setTargetAudience(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-oms-blue focus:border-oms-blue"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
                         >
                             {audiences.map((aud) => (
                                 <option key={aud.value} value={aud.value}>
@@ -184,7 +184,7 @@ export default function BroadcastPage() {
                     <button
                         type="submit"
                         disabled={sending || !message.trim()}
-                        className="w-full px-4 py-2 bg-oms-blue text-white rounded-xl font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                        className="w-full px-4 py-2 bg-gray-900 text-white rounded-md font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                     >
                         <Send size={20} />
                         {sending ? 'Sending...' : 'Send Broadcast'}
@@ -214,7 +214,7 @@ export default function BroadcastPage() {
                   p-4 rounded-lg border-l-4
                   ${notif.priority === 'urgent'
                                         ? 'border-red-500 bg-red-50'
-                                        : 'border-blue-500 bg-blue-50'
+                                        : 'border-primary bg-muted'
                                     }
                 `}
                             >
@@ -224,14 +224,14 @@ export default function BroadcastPage() {
                                             {notif.priority === 'urgent' ? (
                                                 <AlertCircle size={16} className="text-red-600" />
                                             ) : (
-                                                <Bell size={16} className="text-blue-600" />
+                                                <Bell size={16} className="text-foreground" />
                                             )}
                                             <span
                                                 className={`
                         text-xs font-bold uppercase
                         ${notif.priority === 'urgent'
                                                         ? 'text-red-900'
-                                                        : 'text-blue-900'
+                                                        : 'text-foreground'
                                                     }
                       `}
                                             >

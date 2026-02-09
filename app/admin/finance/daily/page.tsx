@@ -74,7 +74,7 @@ export default function DailyFinancePage() {
                 </div>
                 <button
                     onClick={loadData}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] font-semibold transition-colors shadow-sm"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-semibold transition-colors shadow-sm"
                     disabled={loading}
                 >
                     <RefreshCw className={`w-4 h-4 md:w-4.5 md:h-4.5 ${loading ? 'animate-spin' : ''}`} />
@@ -83,7 +83,7 @@ export default function DailyFinancePage() {
             </div>
 
             {/* Total Balance Card */}
-            <div className="bg-oms-blue rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+            <div className="bg-gray-900 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
                 <div className="flex justify-between items-start mb-4">
                     <div>
                         <p className="text-sm opacity-90">Total Available Balance</p>
@@ -93,7 +93,7 @@ export default function DailyFinancePage() {
                         href="/admin/finance/accounts"
                         className="text-sm bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg flex items-center gap-1"
                     >
-                        <Wallet className="w-3.5 h-3.5" />Accounts →
+                        <Wallet className="w-4 h-4" />Accounts →
                     </Link>
                 </div>
 
@@ -141,15 +141,15 @@ export default function DailyFinancePage() {
                         <p className="text-xs text-red-600 mt-1">{todayExpenses.length} payments made</p>
                     </div>
 
-                    <div className={`rounded-xl p-4 ${netChange >= 0 ? 'bg-blue-50' : 'bg-orange-50'}`}>
-                        <div className={`flex items-center gap-2 mb-2 ${netChange >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+                    <div className={`rounded-xl p-4 ${netChange >= 0 ? 'bg-muted' : 'bg-orange-50'}`}>
+                        <div className={`flex items-center gap-2 mb-2 ${netChange >= 0 ? 'text-foreground' : 'text-orange-600'}`}>
                             <TrendingUp className="w-5 h-5" />
                             <p className="text-sm font-medium">Net Change</p>
                         </div>
-                        <p className={`text-page-title ${netChange >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
+                        <p className={`text-page-title ${netChange >= 0 ? 'text-foreground' : 'text-orange-700'}`}>
                             {netChange >= 0 ? '+' : ''}₹{netChange.toLocaleString()}
                         </p>
-                        <p className={`text-xs mt-1 ${netChange >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+                        <p className={`text-xs mt-1 ${netChange >= 0 ? 'text-foreground' : 'text-orange-600'}`}>
                             {netChange >= 0 ? 'Profit' : 'Loss'} today
                         </p>
                     </div>
@@ -161,7 +161,7 @@ export default function DailyFinancePage() {
                 {/* Bank Accounts */}
                 <div className="bg-white rounded-2xl border p-5">
                     <h3 className="font-bold mb-4 flex items-center gap-2">
-                        <Building2 className="w-3.5 h-3.5" />
+                        <Building2 className="w-4 h-4" />
                         Bank Accounts
                     </h3>
                     <div className="space-y-3">
@@ -244,7 +244,7 @@ export default function DailyFinancePage() {
             <div className="grid grid-cols-3 gap-2 md:gap-4">
                 <Link
                     href="/admin/finance/payments?new=true"
-                    className="bg-[#0000FF] hover:bg-[#0000CC] text-white rounded-lg p-4 text-center font-semibold shadow-sm"
+                    className="bg-gray-900 hover:bg-gray-800 text-white rounded-lg p-4 text-center font-semibold shadow-sm"
                 >
                     Record Payment
                 </Link>

@@ -200,7 +200,7 @@ export default function PaymentsPage() {
             <p className="text-sm text-gray-500">{filteredPayments.length} transactions</p>
           </div>
         </div>
-        <button onClick={handleAddNew} className="flex items-center justify-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-xl hover:bg-blue-600">
+        <button onClick={handleAddNew} className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-md hover:bg-gray-800">
           <Plus size={18} /> Record Payment
         </button>
       </div>
@@ -256,7 +256,7 @@ export default function PaymentsPage() {
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-gray-500">{p.display_company}</p>
                     {p.attachment_url && (
-                      <a href={p.attachment_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[10px] bg-oms-blue text-white px-2 py-1 rounded-md font-medium">
+                      <a href={p.attachment_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs bg-gray-900 text-white px-2 py-1 rounded-md font-medium">
                         <FileText size={10} /> Proof
                       </a>
                     )}
@@ -312,7 +312,7 @@ export default function PaymentsPage() {
                     <td className="px-6 py-4">
                       <p className="font-medium text-gray-900">{p.display_name}</p>
                       {p.attachment_url && (
-                        <a href={p.attachment_url} target="_blank" rel="noreferrer" className="text-xs text-oms-blue flex items-center gap-1 hover:underline mt-1">
+                        <a href={p.attachment_url} target="_blank" rel="noreferrer" className="text-xs text-primary flex items-center gap-1 hover:underline mt-1">
                           <FileText size={12} /> View Proof
                         </a>
                       )}
@@ -355,7 +355,7 @@ export default function PaymentsPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Client *</label>
                   {clients.length === 0 ? (
-                    <div className="p-3 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-xl text-sm">
+                    <div className="p-3 bg-muted text-muted-foreground border border-yellow-200 rounded-xl text-sm">
                       No clients found. Please add a client in CRM first or check permissions.
                     </div>
                   ) : (
@@ -369,7 +369,7 @@ export default function PaymentsPage() {
 
                   {/* PENDING INVOICES LIST (New) */}
                   {formData.clientId && invoices && (
-                    <div className="mt-3 bg-blue-50 p-3 rounded-xl border border-blue-100 animate-fade-in">
+                    <div className="mt-3 bg-muted p-3 rounded-xl border border-border animate-fade-in">
                       <label className="text-xs font-semibold text-blue-800 mb-1 flex items-center gap-1">
                         <FileText size={12} /> Allocate to Pending Invoice (Optional)
                       </label>
@@ -383,7 +383,7 @@ export default function PaymentsPage() {
                             amount: inv ? inv.balance_due : prev.amount
                           }));
                         }}
-                        className="w-full text-sm p-2 rounded-lg border border-blue-200 bg-white"
+                        className="w-full text-sm p-2 rounded-lg border border-border bg-white"
                       >
                         <option value="">-- General Payment (On Account) --</option>
                         {invoices
@@ -401,7 +401,7 @@ export default function PaymentsPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Vendor *</label>
                   {vendors.length === 0 ? (
-                    <div className="p-3 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-xl text-sm">
+                    <div className="p-3 bg-muted text-muted-foreground border border-yellow-200 rounded-xl text-sm">
                       No vendors found. Please add a vendor in CRM first or check permissions.
                     </div>
                   ) : (
@@ -415,7 +415,7 @@ export default function PaymentsPage() {
 
                   {/* PENDING BILLS LIST (New) */}
                   {formData.vendorId && purchaseBills && (
-                    <div className="mt-3 bg-blue-50 p-3 rounded-xl border border-blue-100 animate-fade-in">
+                    <div className="mt-3 bg-muted p-3 rounded-xl border border-border animate-fade-in">
                       <label className="text-xs font-semibold text-blue-800 mb-1 flex items-center gap-1">
                         <FileText size={12} /> Allocate to Pending Bill (Optional)
                       </label>
@@ -429,7 +429,7 @@ export default function PaymentsPage() {
                             amount: bill ? (bill.total_amount - (bill.amount_paid || 0)) : prev.amount
                           }));
                         }}
-                        className="w-full text-sm p-2 rounded-lg border border-blue-200 bg-white"
+                        className="w-full text-sm p-2 rounded-lg border border-border bg-white"
                       >
                         <option value="">-- General Payment (On Account) --</option>
                         {purchaseBills
@@ -503,7 +503,7 @@ export default function PaymentsPage() {
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
                   <div className="flex flex-col items-center gap-2 text-gray-500">
-                    {uploading ? <Loader2 className="animate-spin text-oms-blue" /> : <Upload size={24} />}
+                    {uploading ? <Loader2 className="animate-spin text-primary" /> : <Upload size={24} />}
                     <span className="text-sm">
                       {uploading ? 'Uploading...' : formData.attachmentUrl ? 'File Attached (Click to Change)' : 'Tap to Upload'}
                     </span>
@@ -512,10 +512,10 @@ export default function PaymentsPage() {
                 {formData.attachmentUrl && (
                   <div className="mt-3 p-3 bg-gray-50 rounded-xl border flex items-center justify-between">
                     <div className="flex items-center gap-2 text-sm text-gray-700 truncate max-w-[200px]">
-                      <FileText size={16} className="text-oms-blue shrink-0" />
+                      <FileText size={16} className="text-primary shrink-0" />
                       <span className="truncate">Proof Attached</span>
                     </div>
-                    <a href={formData.attachmentUrl} target="_blank" rel="noreferrer" className="text-xs bg-white border px-2 py-1 rounded hover:bg-gray-50 text-oms-blue">
+                    <a href={formData.attachmentUrl} target="_blank" rel="noreferrer" className="text-xs bg-white border px-2 py-1 rounded hover:bg-gray-50 text-primary">
                       View
                     </a>
                   </div>
@@ -524,7 +524,7 @@ export default function PaymentsPage() {
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2 border rounded-xl">Cancel</button>
-                <button type="submit" disabled={submitting || uploading} className="flex-1 px-4 py-2 bg-oms-blue text-white rounded-xl">
+                <button type="submit" disabled={submitting || uploading} className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-md">
                   {submitting ? 'Saving...' : 'Record'}
                 </button>
               </div>

@@ -7,12 +7,14 @@ import {
   AlertCircle, Users, Briefcase, ChevronDown, ExternalLink, BarChart3, Loader2
 } from 'lucide-react';
 import { useDesignProjects, useClients, useDesigners } from '@/lib/hooks';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Static statuses for UI consistency
 const projectStatuses = [
   { id: 'planning', name: 'Planning', color: 'bg-gray-100 text-gray-700' },
-  { id: 'in_progress', name: 'In Progress', color: 'bg-blue-100 text-blue-700' },
-  { id: 'review', name: 'Review', color: 'bg-oms-blue text-white' },
+  { id: 'in_progress', name: 'In Progress', color: 'bg-muted text-foreground' },
+  { id: 'review', name: 'Review', color: 'bg-gray-900 text-white' },
   { id: 'on_hold', name: 'On Hold', color: 'bg-orange-100 text-orange-700' },
   { id: 'completed', name: 'Completed', color: 'bg-gray-100 text-gray-900' },
 ];
@@ -188,7 +190,7 @@ export default function DesignerProjectsPage() {
         </div>
         <div className="flex gap-2">
           <button onClick={() => setShowGanttModal(true)}
-            className="flex items-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-lg hover:bg-[rgba(0,0,255,0.15)] font-medium">
+            className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-lg hover:bg-gray-800 font-medium">
             <BarChart3 size={18} />
             <span className="hidden sm:inline">Gantt View</span>
           </button>
@@ -198,7 +200,7 @@ export default function DesignerProjectsPage() {
             <span className="hidden sm:inline">Tasks</span>
           </Link>
           <button onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-lg hover:bg-oms-blue font-medium">
+            className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-lg hover:bg-gray-900 font-medium">
             <Plus size={18} />
             <span>New Project</span>
           </button>
@@ -209,19 +211,19 @@ export default function DesignerProjectsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Projects</p>
-          <p className="text-xl sm:text-page-title text-gray-900">{totalProjects}</p>
+          <p className="text-page-title text-gray-900">{totalProjects}</p>
         </div>
         <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">In Progress</p>
-          <p className="text-xl sm:text-page-title text-blue-600">{inProgress}</p>
+          <p className="text-page-title text-foreground">{inProgress}</p>
         </div>
         <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Completed</p>
-          <p className="text-xl sm:text-page-title text-gray-900">{completed}</p>
+          <p className="text-page-title text-gray-900">{completed}</p>
         </div>
         <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">On Hold</p>
-          <p className="text-xl sm:text-page-title text-orange-600">{onHold}</p>
+          <p className="text-page-title text-orange-600">{onHold}</p>
         </div>
       </div>
 
@@ -229,16 +231,24 @@ export default function DesignerProjectsPage() {
       <div className="bg-white rounded-xl border p-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <input type="text" placeholder="Search projects..." value={searchTerm}
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Search projects..."
+              value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue" />
+              className="pl-10"
+            />
           </div>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue">
-            <option value="all">All Status</option>
-            {projectStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-auto min-w-[120px] h-9 text-sm">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              {projectStatuses.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -252,7 +262,7 @@ export default function DesignerProjectsPage() {
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 md:gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span className="font-mono text-sm text-oms-blue font-medium">{project.projectId}</span>
+                    <span className="font-mono text-sm text-primary font-medium">{project.projectId}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusBadge(project.status)}`}>
                       {projectStatuses.find(s => s.id === project.status)?.name}
                     </span>
@@ -289,14 +299,14 @@ export default function DesignerProjectsPage() {
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div className={`h-full rounded-full ${project.progress >= 100 ? 'bg-white0' :
-                        project.progress >= 50 ? 'bg-blue-500' : 'bg-orange-500'}`}
+                        project.progress >= 50 ? 'bg-primary' : 'bg-orange-500'}`}
                         style={{ width: `${project.progress}%` }} />
                     </div>
                   </div>
 
                   <div className="flex items-center gap-1">
                     <button onClick={() => { setSelectedProject(project); setShowDetailModal(true); }}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Eye size={18} /></button>
+                      className="p-2 text-foreground hover:bg-muted rounded-lg"><Eye size={18} /></button>
                     <button onClick={() => handleEdit(project)}
                       className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"><Edit size={18} /></button>
                     <button onClick={() => handleDelete(project.id)}
@@ -312,8 +322,8 @@ export default function DesignerProjectsPage() {
                   <div className="flex flex-wrap gap-2">
                     {project.tasks.map((task: any) => (
                       <span key={task.id} className={`text-xs px-2 py-1 rounded-lg ${task.status === 'completed' ? 'bg-gray-100 text-gray-900' :
-                        task.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
-                          task.status === 'review' ? 'bg-oms-blue text-white' :
+                        task.status === 'in_progress' ? 'bg-muted text-foreground' :
+                          task.status === 'review' ? 'bg-gray-900 text-white' :
                             'bg-gray-100 text-gray-600'}`}>
                         {task.name}
                       </span>
@@ -340,7 +350,7 @@ export default function DesignerProjectsPage() {
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
               <h2 className="text-page-title">{editingProject ? 'Edit Project' : 'Create Project'}</h2>
-              <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+              <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-md"><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div>
@@ -369,7 +379,7 @@ export default function DesignerProjectsPage() {
                   {(designers || []).map((d: any) => (
                     <button key={d.id} type="button" onClick={() => handleTeamMemberToggle(d.id)}
                       className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${formData.teamMembers.includes(d.id)
-                        ? 'bg-oms-blue text-white'
+                        ? 'bg-gray-900 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
                       {d.name}
                     </button>
@@ -398,9 +408,9 @@ export default function DesignerProjectsPage() {
                   className="w-full px-3 py-2.5 border rounded-lg" placeholder="https://drive.google.com/..." />
               </div>
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-lg font-medium">Cancel</button>
+                <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-md font-medium">Cancel</button>
                 <button type="submit" disabled={submitting}
-                  className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-lg font-medium hover:bg-oms-blue disabled:opacity-50">
+                  className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-900 disabled:opacity-50">
                   {submitting ? 'Saving...' : (editingProject ? 'Update' : 'Create')}
                 </button>
               </div>
@@ -446,7 +456,7 @@ export default function DesignerProjectsPage() {
                   <div key={project.id} className="flex items-center">
                     <div className="w-48 flex-shrink-0 pr-4 truncate">{project.name}</div>
                     <div className="flex-1 relative h-8 bg-gray-100 rounded">
-                      <div className="absolute h-full bg-blue-500 rounded"
+                      <div className="absolute h-full bg-gray-900 rounded"
                         style={{ left: `${project.left}%`, width: `${project.width}%` }}>
                       </div>
                     </div>

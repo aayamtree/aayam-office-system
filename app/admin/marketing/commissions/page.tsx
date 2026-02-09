@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import {
-    DollarSign, Plus, Download, Calculator,
+    IndianRupee, Plus, Download, Calculator,
     CheckCircle, Clock, TrendingUp, AlertCircle
 } from 'lucide-react';
 import { calculateCommission, COMMON_GST_RATES, formatCurrency, CommissionInput } from '@/lib/commission-calculator';
@@ -38,14 +38,14 @@ export default function CommissionsPage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-page-title text-gray-900 flex items-center gap-3">
-                                <DollarSign className="text-oms-blue" size={32} />
+                                <IndianRupee className="text-primary" size={32} />
                                 Commission Management
                             </h1>
                             <p className="text-gray-500 mt-1">Track and manage marketing commissions with flexible GST</p>
                         </div>
                         <button
                             onClick={() => setShowAddModal(true)}
-                            className="px-4 py-2 bg-oms-blue text-white rounded-xl font-semibold hover:bg-oms-blue/90 transition-all flex items-center gap-2">
+                            className="px-4 py-2 bg-gray-900 text-white rounded-md font-semibold hover:bg-gray-800 transition-all flex items-center gap-2">
                             <Plus size={20} />
                             Add Commission
                         </button>
@@ -56,27 +56,27 @@ export default function CommissionsPage() {
             <div className="max-w-7xl mx-auto p-4 space-y-6">
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
-                    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+                    <div className="bg-white rounded-md p-3 md:p-4 border border-gray-200">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-blue-50 rounded-lg">
-                                <Clock className="text-blue-600" size={20} />
+                            <div className="p-2 bg-muted rounded-lg">
+                                <Clock className="text-foreground" size={20} />
                             </div>
                             <p className="text-sm text-gray-500 font-medium">Pending</p>
                         </div>
                         <p className="text-page-title text-gray-900">₹0</p>
                         <p className="text-xs text-gray-400 mt-1">0 projects</p>
                     </div>
-                    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+                    <div className="bg-white rounded-md p-3 md:p-4 border border-gray-200">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-oms-blue rounded-lg">
-                                <CheckCircle className="text-oms-blue" size={20} />
+                            <div className="p-2 bg-muted rounded-md">
+                                <CheckCircle className="text-foreground" size={20} />
                             </div>
                             <p className="text-sm text-gray-500 font-medium">Approved</p>
                         </div>
                         <p className="text-page-title text-gray-900">₹0</p>
                         <p className="text-xs text-gray-400 mt-1">0 projects</p>
                     </div>
-                    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+                    <div className="bg-white rounded-md p-3 md:p-4 border border-gray-200">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-white rounded-lg">
                                 <TrendingUp className="text-gray-900" size={20} />
@@ -86,10 +86,10 @@ export default function CommissionsPage() {
                         <p className="text-page-title text-gray-900">₹0</p>
                         <p className="text-xs text-gray-400 mt-1">0 projects</p>
                     </div>
-                    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-2 border-gray-100">
+                    <div className="bg-white rounded-md p-3 md:p-4 border border-gray-200">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-[rgba(0,0,255,0.05)] rounded-lg">
-                                <DollarSign className="text-oms-blue" size={20} />
+                            <div className="p-2 bg-muted rounded-md">
+                                <IndianRupee className="text-primary" size={20} />
                             </div>
                             <p className="text-sm text-gray-500 font-medium">Total This Month</p>
                         </div>
@@ -99,7 +99,7 @@ export default function CommissionsPage() {
                 </div>
 
                 {/* Filters */}
-                <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+                <div className="bg-white rounded-md p-3 md:p-4 border border-gray-200">
                     <div className="flex items-center justify-between gap-2 md:gap-4">
                         <div className="flex items-center gap-3">
                             {(['all', 'pending', 'approved', 'paid'] as const).map((f) => (
@@ -107,14 +107,14 @@ export default function CommissionsPage() {
                                     key={f}
                                     onClick={() => setFilter(f)}
                                     className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all capitalize ${filter === f
-                                        ? 'bg-oms-blue text-white'
+                                        ? 'bg-gray-900 text-white'
                                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                         }`}>
                                     {f}
                                 </button>
                             ))}
                         </div>
-                        <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all text-sm font-bold flex items-center gap-2">
+                        <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-all text-sm font-bold flex items-center gap-2">
                             <Download size={16} />
                             Export
                         </button>
@@ -122,7 +122,7 @@ export default function CommissionsPage() {
                 </div>
 
                 {/* Commissions List */}
-                <div className="bg-white rounded-2xl border border-gray-100">
+                <div className="bg-white rounded-md border border-gray-200">
                     <div className="p-4 border-b border-gray-100">
                         <h2 className="text-page-title text-gray-900">Commission Records</h2>
                         <p className="text-sm text-gray-500 mt-1">All commission calculations with GST breakdown</p>
@@ -130,18 +130,18 @@ export default function CommissionsPage() {
                     <div className="p-4">
                         {loading ? (
                             <div className="text-center py-12">
-                                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[rgba(0,0,255,0.2)]-600"></div>
+                                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-border-600"></div>
                             </div>
                         ) : commissions.length === 0 ? (
                             <div className="text-center py-12">
-                                <DollarSign className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                                <IndianRupee className="mx-auto h-12 w-12 text-gray-300 mb-4" />
                                 <p className="text-gray-500 font-medium">No commissions added yet</p>
                                 <p className="text-sm text-gray-400 mt-1">Click &quot;Add Commission&quot; to create your first entry</p>
                             </div>
                         ) : (
                             <div className="space-y-4">
                                 {commissions.map((commission) => (
-                                    <div key={commission.id} className="border border-gray-100 rounded-xl p-4 hover:border-oms-blue/20 transition-all">
+                                    <div key={commission.id} className="border border-gray-100 rounded-xl p-4 hover:border-primary/20 transition-all">
                                         {/* Commission card content */}
                                     </div>
                                 ))}
@@ -189,9 +189,9 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-3xl w-full max-w-3xl  overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-md w-full max-w-3xl overflow-hidden max-h-[90vh] overflow-y-auto">
                 {/* Header */}
-                <div className="bg-oms-blue p-4 text-white">
+                <div className="bg-gray-900 p-4 text-white">
                     <h3 className="text-page-title flex items-center gap-3">
                         <Calculator size={28} />
                         Add Commission with GST Calculator
@@ -248,7 +248,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                         }
                                     }}
                                     className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${formData.gstPercentage === rate.value.toString()
-                                        ? 'bg-oms-blue text-white'
+                                        ? 'bg-gray-900 text-white'
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                         }`}
                                 >
@@ -328,14 +328,14 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                     <span className="text-sm font-bold text-gray-700">Base Amount (excl. GST)</span>
                                     <span className="font-bold text-gray-900">{formatCurrency(calculationResult.baseAmount)}</span>
                                 </div>
-                                <div className="flex justify-between items-center text-blue-600">
+                                <div className="flex justify-between items-center text-foreground">
                                     <span className="text-sm">
                                         Commission ({formData.commissionType === 'percentage' ? `${calculationResult.commissionValue}%` : 'Fixed'})
                                     </span>
                                     <span className="font-bold">× {formData.commissionType === 'percentage' ? `${calculationResult.commissionValue}%` : formatCurrency(calculationResult.commissionValue)}</span>
                                 </div>
                                 <div className="border-t-2 border-green-300 pt-3 mt-3"></div>
-                                <div className="flex justify-between items-center bg-green-600 text-white rounded-xl p-3">
+                                <div className="flex justify-between items-center bg-gray-900 text-white rounded-xl p-3">
                                     <span className="font-bold">Final Commission</span>
                                     <span className="text-page-title">{formatCurrency(calculationResult.commissionAmount)}</span>
                                 </div>
@@ -349,7 +349,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                 <div className="p-4 border-t-2 border-gray-100 bg-gray-50 flex gap-2 md:gap-4 justify-end">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-100 transition-all"
+                        className="px-4 py-2 border-2 border-gray-300 rounded-md font-bold text-gray-700 hover:bg-gray-100 transition-all"
                     >
                         Cancel
                     </button>
@@ -358,7 +358,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                             alert('Commission saving feature coming soon - database table creation needed!');
                             onClose();
                         }}
-                        className="px-8 py-3 bg-oms-blue text-white rounded-xl font-semibold hover:bg-oms-blue/90 transition-all">
+                        className="px-8 py-2 bg-gray-900 text-white rounded-md font-semibold hover:bg-gray-800 transition-all">
                         Save Commission
                     </button>
                 </div>

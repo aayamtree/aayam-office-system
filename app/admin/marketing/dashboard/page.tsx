@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useLeads, useFollowUps, useJobs } from '@/lib/hooks';
 import {
     Users, TrendingUp, AlertCircle, CheckCircle, Clock, Calendar,
-    DollarSign, FileText, ArrowRight, Activity
+    IndianRupee, FileText, ArrowRight, Activity
 } from 'lucide-react';
 
 export default function AdminMarketingDashboard() {
@@ -34,9 +34,9 @@ export default function AdminMarketingDashboard() {
             title: "Today's Follow Ups",
             value: stats.todayFollowUps,
             icon: Calendar,
-            color: 'bg-blue-500',
-            textColor: 'text-blue-600',
-            bgColor: 'bg-blue-50',
+            color: 'bg-primary',
+            textColor: 'text-foreground',
+            bgColor: 'bg-muted',
             link: '/admin/marketing/follow-ups?filter=today'
         },
         {
@@ -61,9 +61,9 @@ export default function AdminMarketingDashboard() {
             title: 'Converted',
             value: stats.convertedLeads,
             icon: CheckCircle,
-            color: 'bg-oms-blue',
-            textColor: 'text-oms-blue',
-            bgColor: 'bg-oms-blue',
+            color: 'bg-gray-900',
+            textColor: 'text-white',
+            bgColor: 'bg-gray-900',
             link: '/admin/marketing/leads?filter=converted'
         },
         {
@@ -71,7 +71,7 @@ export default function AdminMarketingDashboard() {
             value: stats.leadsWaiting,
             icon: Clock,
             color: 'bg-white0',
-            textColor: 'text-oms-orange',
+            textColor: 'text-gray-600',
             bgColor: 'bg-white',
             link: '/admin/marketing/leads?filter=waiting'
         },
@@ -79,10 +79,10 @@ export default function AdminMarketingDashboard() {
             title: 'Active Quotations',
             value: stats.activeQuotations,
             icon: FileText,
-            color: 'bg-oms-blue',
-            textColor: 'text-oms-blue',
-            bgColor: 'bg-oms-blue',
-            link: '/admin/marketing/quotations?filter=active'
+            color: 'bg-gray-900',
+            textColor: 'text-white',
+            bgColor: 'bg-gray-900',
+            link: '/admin/quotations?filter=active'
         },
     ];
 
@@ -130,7 +130,7 @@ export default function AdminMarketingDashboard() {
             <div className="bg-white border-b border-gray-200 px-6 py-6">
                 <div className="max-w-7xl mx-auto">
                     <h1 className="text-page-title text-gray-900 flex items-center gap-3">
-                        <Activity className="text-oms-blue" size={32} />
+                        <Activity className="text-gray-900" size={28} />
                         Marketing Team Overview
                     </h1>
                     <p className="text-gray-500 mt-1">Monitor team performance and key metrics</p>
@@ -144,13 +144,13 @@ export default function AdminMarketingDashboard() {
                         <button
                             key={stat.title}
                             onClick={() => router.push(stat.link)}
-                            className="bg-white rounded-2xl p-4 border border-gray-100  transition-all hover:scale-105 text-left group"
+                            className="bg-white rounded-md p-4 border border-gray-200 transition-all hover:shadow-sm text-left group"
                         >
                             <div className="flex items-start justify-between mb-4">
-                                <div className={`p-3 rounded-xl ${stat.bgColor}`}>
-                                    <stat.icon className={stat.textColor} size={24} />
+                                <div className={`p-3 rounded-md ${stat.bgColor}`}>
+                                    <stat.icon className={stat.textColor} size={20} />
                                 </div>
-                                <ArrowRight className="text-gray-400 group-hover:text-oms-blue transition-colors" size={20} />
+                                <ArrowRight className="text-gray-400 group-hover:text-gray-900 transition-colors" size={16} />
                             </div>
                             <h3 className="text-gray-500 text-sm font-medium mb-1">{stat.title}</h3>
                             <p className="text-page-title text-gray-900">{loading ? '...' : stat.value}</p>
@@ -159,11 +159,11 @@ export default function AdminMarketingDashboard() {
                 </div>
 
                 {/* Team Activity Section */}
-                <div className="bg-white rounded-2xl p-4 border border-gray-100">
+                <div className="bg-white rounded-md p-4 border border-gray-200">
                     <div className="flex items-center justify-between mb-1.5">
                         <div>
                             <h2 className="text-page-title text-gray-900 flex items-center gap-2">
-                                <Users className="text-oms-blue" size={24} />
+                                <Users className="text-gray-900" size={20} />
                                 Team Activity
                             </h2>
                             <p className="text-gray-500 text-sm mt-1">Performance breakdown by marketing person</p>
@@ -172,16 +172,16 @@ export default function AdminMarketingDashboard() {
 
                     {loading ? (
                         <div className="text-center py-8">
-                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[rgba(0,0,255,0.2)]-600"></div>
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
                         </div>
                     ) : teamMembers.length === 0 ? (
                         <p className="text-center text-gray-400 py-8">No activity data available</p>
                     ) : (
                         <div className="space-y-4">
                             {teamMembers.map((member: any, idx: number) => (
-                                <div key={idx} className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-oms-blue/20 transition-colors">
+                                <div key={idx} className="flex items-center justify-between p-4 rounded-md border border-gray-200 hover:border-gray-300 transition-colors">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-oms-blue flex items-center justify-center font-bold text-white">
+                                        <div className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center font-bold text-white">
                                             {member.name.charAt(0)}
                                         </div>
                                         <div>
@@ -199,38 +199,37 @@ export default function AdminMarketingDashboard() {
                     )}
                 </div>
 
-                {/* Commission Overview */}
-                <div className="bg-oms-blue rounded-2xl p-4 border border-[rgba(0,0,255,0.2)]-100">
-                    <div className="flex items-center justify-between mb-1.5">
+                <div className="bg-white rounded-md p-4 border border-gray-200">
+                    <div className="flex items-center justify-between mb-4">
                         <div>
                             <h2 className="text-page-title text-gray-900 flex items-center gap-2">
-                                <DollarSign className="text-oms-blue" size={24} />
+                                <IndianRupee className="text-gray-900" size={24} />
                                 Commission Overview
                             </h2>
                             <p className="text-gray-500 text-sm mt-1">This month&apos;s earnings summary</p>
                         </div>
                         <button
                             onClick={() => router.push('/admin/marketing/commissions')}
-                            className="px-4 py-2 bg-oms-blue text-white rounded-lg hover:bg-oms-blue transition-colors text-sm font-bold"
+                            className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-md hover:bg-gray-50 hover:border-gray-300 transition-colors text-sm font-medium"
                         >
                             View All
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-white rounded-xl p-4 border border-[rgba(0,0,255,0.2)]-100">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="bg-gray-50 rounded-md p-4 border border-gray-200">
                             <p className="text-sm text-gray-500 mb-1">Total This Month</p>
                             <p className="text-page-title text-gray-900">₹0</p>
                             <p className="text-xs text-gray-400 mt-1">0 eligible projects</p>
                         </div>
-                        <div className="bg-white rounded-xl p-4 border border-green-100">
+                        <div className="bg-gray-50 rounded-md p-4 border border-gray-200">
                             <p className="text-sm text-gray-500 mb-1">Paid Out</p>
                             <p className="text-page-title text-gray-900">₹0</p>
                             <p className="text-xs text-gray-400 mt-1">Last month</p>
                         </div>
-                        <div className="bg-white rounded-xl p-4 border border-gray-100">
+                        <div className="bg-gray-50 rounded-md p-4 border border-gray-200">
                             <p className="text-sm text-gray-500 mb-1">Pending</p>
-                            <p className="text-page-title text-oms-orange">₹0</p>
+                            <p className="text-page-title text-destructive">₹0</p>
                             <p className="text-xs text-gray-400 mt-1">Awaiting payment</p>
                         </div>
                     </div>

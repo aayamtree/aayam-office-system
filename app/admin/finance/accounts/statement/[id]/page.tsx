@@ -208,21 +208,21 @@ export default function AccountStatementPage() {
                 <div className="flex gap-3">
                     <button
                         onClick={handlePrint}
-                        className="flex items-center gap-2 px-4 py-2 border rounded-xl hover:bg-gray-50"
+                        className="flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-gray-50"
                     >
                         <Printer size={18} />
                         Print
                     </button>
                     <button
                         onClick={handleExportExcel}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700"
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-green-700"
                     >
                         <FileSpreadsheet size={18} />
                         Export Excel
                     </button>
                     <button
                         onClick={handleExportCSV}
-                        className="flex items-center gap-2 px-4 py-2 border rounded-xl hover:bg-gray-50"
+                        className="flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-gray-50"
                     >
                         <Download size={18} />
                         Export CSV
@@ -256,7 +256,7 @@ export default function AccountStatementPage() {
                         {(startDate || endDate) && (
                             <button
                                 onClick={() => { setStartDate(''); setEndDate(''); }}
-                                className="text-sm text-blue-600 hover:text-blue-700"
+                                className="text-sm text-foreground hover:text-foreground"
                             >
                                 Clear filters
                             </button>

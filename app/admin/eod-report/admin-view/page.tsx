@@ -110,7 +110,7 @@ export default function AdminEODDashboard() {
 
                 <div className="bg-white rounded-xl p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-2">
-                        <AlertCircle className="w-4 h-4 md:w-4.5 md:h-4.5 text-oms-orange" />
+                        <AlertCircle className="w-4 h-4 md:w-4.5 md:h-4.5 text-destructive" />
                         <span className="text-sm text-gray-500">Pending Today</span>
                     </div>
                     <p className="text-page-title text-gray-900">{todayPending}</p>
@@ -119,7 +119,7 @@ export default function AdminEODDashboard() {
 
                 <div className="bg-white rounded-xl p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-2">
-                        <TrendingUp className="w-4 h-4 md:w-4.5 md:h-4.5 text-blue-600" />
+                        <TrendingUp className="w-4 h-4 md:w-4.5 md:h-4.5 text-foreground" />
                         <span className="text-sm text-gray-500">Total Submissions</span>
                     </div>
                     <p className="text-page-title text-gray-900">{totalSubmissions}</p>
@@ -128,7 +128,7 @@ export default function AdminEODDashboard() {
 
                 <div className="bg-white rounded-xl p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-2">
-                        <Clock className="w-4 h-4 md:w-4.5 md:h-4.5 text-oms-blue" />
+                        <Clock className="w-4 h-4 md:w-4.5 md:h-4.5 text-primary" />
                         <span className="text-sm text-gray-500">Avg Work Hours</span>
                     </div>
                     <p className="text-page-title text-gray-900">{avgWorkHours}</p>
@@ -212,7 +212,7 @@ export default function AdminEODDashboard() {
             <div className="bg-white rounded-xl border border-gray-200">
                 <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                     <h2 className="font-semibold text-gray-900">Reports ({reports.length})</h2>
-                    <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">
+                    <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 rounded-md">
                         <Download className="w-4 h-4" />
                         Export
                     </button>
@@ -220,7 +220,7 @@ export default function AdminEODDashboard() {
 
                 {loading ? (
                     <div className="p-12 text-center">
-                        <Loader2 className="w-8 h-8 animate-spin text-oms-blue mx-auto" />
+                        <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
                         <p className="mt-3 text-gray-500">Loading reports...</p>
                     </div>
                 ) : reports.length === 0 ? (
@@ -246,11 +246,11 @@ export default function AdminEODDashboard() {
                                     </div>
                                     <div className="flex items-center gap-2 md:gap-4 text-sm text-gray-600">
                                         <span className="flex items-center gap-1">
-                                            <Calendar className="w-3.5 h-3.5" />
+                                            <Calendar className="w-4 h-4" />
                                             {new Date(report.report_date).toLocaleDateString()}
                                         </span>
                                         <span className="flex items-center gap-1">
-                                            <Clock className="w-3.5 h-3.5" />
+                                            <Clock className="w-4 h-4" />
                                             {report.work_hours}h
                                         </span>
                                         <span className="text-xs text-gray-400">
@@ -282,7 +282,7 @@ export default function AdminEODDashboard() {
                                                                 <span>Progress: {update.completion_percentage}%</span>
                                                                 <span>Time: {update.time_spent}h</span>
                                                                 {update.client_approval_received && <span className="text-gray-900 font-medium">✓ Client Approved</span>}
-                                                                {update.print_file_ready && <span className="text-blue-600 font-medium">✓ Print Ready</span>}
+                                                                {update.print_file_ready && <span className="text-foreground font-medium">✓ Print Ready</span>}
                                                             </div>
                                                             {update.client_comments && (
                                                                 <p className="text-xs text-gray-500 mt-2 italic">Client: {update.client_comments}</p>
@@ -313,7 +313,7 @@ export default function AdminEODDashboard() {
                                         {report.tomorrow_plan && (
                                             <div>
                                                 <h4 className="text-sm font-semibold text-gray-700 mb-1">Tomorrow&apos;s Plan</h4>
-                                                <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">{report.tomorrow_plan}</p>
+                                                <p className="text-sm text-gray-600 bg-muted p-3 rounded-lg border border-border">{report.tomorrow_plan}</p>
                                             </div>
                                         )}
 
@@ -322,7 +322,7 @@ export default function AdminEODDashboard() {
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <span className="text-label text-gray-500">Tags:</span>
                                                 {report.tags.map((tag: string) => (
-                                                    <span key={tag} className="px-2 py-0.5 bg-oms-blue text-white text-xs rounded-full">
+                                                    <span key={tag} className="px-2 py-0.5 bg-gray-900 text-white text-xs rounded-full">
                                                         {tag}
                                                     </span>
                                                 ))}

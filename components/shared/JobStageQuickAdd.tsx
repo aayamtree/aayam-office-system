@@ -31,7 +31,7 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
         { main: 'bg-red-500', light: 'bg-red-50', border: 'border-red-200', name: 'Red' },
         { main: 'bg-[rgba(0,0,255,0.1)]', light: 'bg-[rgba(0,0,255,0.1)]', border: 'border-purple-200', name: 'Purple' },
         { main: 'bg-pink-500', light: 'bg-pink-50', border: 'border-pink-200', name: 'Pink' },
-        { main: 'bg-[rgba(0,0,255,0.1)]', light: 'bg-[rgba(0,0,255,0.1)]', border: 'border-oms-blue/20', name: 'Indigo' },
+        { main: 'bg-[rgba(0,0,255,0.1)]', light: 'bg-[rgba(0,0,255,0.1)]', border: 'border-primary/20', name: 'Indigo' },
         { main: 'bg-teal-500', light: 'bg-teal-50', border: 'border-teal-200', name: 'Teal' },
         { main: 'bg-cyan-500', light: 'bg-cyan-50', border: 'border-cyan-200', name: 'Cyan' },
         { main: 'bg-emerald-500', light: 'bg-emerald-50', border: 'border-emerald-200', name: 'Emerald' },
@@ -106,7 +106,7 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
                             <p className="text-sm text-gray-600">Create new workflow stage</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-lg transition-colors">
+                    <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-md transition-colors">
                         <X size={20} />
                     </button>
                 </div>
@@ -184,14 +184,14 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50"
+                            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={saving}
-                            className="px-8 py-2 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-xl font-medium  disabled:opacity-50 flex items-center gap-2"
+                            className="px-8 py-2 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-md font-medium  disabled:opacity-50 flex items-center gap-2"
                         >
                             {saving ? (
                                 <>

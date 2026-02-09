@@ -6,6 +6,7 @@ import {
   Plus, Search, ArrowLeft, Building, Edit, Trash2, Eye, X, IndianRupee,
   ArrowUpRight, ArrowDownLeft, Loader2
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { useBankAccounts } from '@/lib/hooks';
 import { BankAccount } from '@/types/database';
 
@@ -119,7 +120,7 @@ export default function BankAccountsPage() {
   const activeAccounts = banks?.filter(b => b.is_active).length || 0;
 
   if (loading) {
-    return <div className="p-10 flex justify-center"><Loader2 className="animate-spin text-oms-blue" /></div>;
+    return <div className="p-10 flex justify-center"><Loader2 className="animate-spin text-primary" /></div>;
   }
 
   return (
@@ -138,7 +139,7 @@ export default function BankAccountsPage() {
         <div className="flex gap-2">
           {/* Record Transaction Button Removed for Simplicity/Refactor needed if connected to real data */}
           <button onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-lg hover:bg-oms-blue font-medium">
+            className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-lg hover:bg-gray-900 font-medium">
             <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
             <span>Add Bank</span>
           </button>
@@ -149,47 +150,51 @@ export default function BankAccountsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Balance</p>
-          <p className="text-lg sm:text-page-title text-oms-blue">{formatCurrency(totalBalance)}</p>
+          <p className="text-page-title text-primary">{formatCurrency(totalBalance)}</p>
         </div>
         <div className="bg-white rounded-xl border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Active Accounts</p>
-          <p className="text-lg sm:text-page-title text-gray-900">{activeAccounts}</p>
+          <p className="text-page-title text-gray-900">{activeAccounts}</p>
         </div>
         {/* Placeholder stats */}
         <div className="bg-white rounded-xl border p-3 sm:p-4 opacity-50">
           <p className="text-xs sm:text-sm text-gray-500">Total Inflow</p>
-          <p className="text-lg sm:text-page-title text-gray-900">--</p>
+          <p className="text-page-title text-gray-900">--</p>
         </div>
         <div className="bg-white rounded-xl border p-3 sm:p-4 opacity-50">
           <p className="text-xs sm:text-sm text-gray-500">Total Outflow</p>
-          <p className="text-lg sm:text-page-title text-red-600">--</p>
+          <p className="text-page-title text-red-600">--</p>
         </div>
       </div>
 
       {/* Search */}
       <div className="bg-white rounded-xl border p-4">
         <div className="relative">
-          <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <input type="text" placeholder="Search by bank name or account number..." value={searchTerm}
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Input
+            type="text"
+            placeholder="Search by bank name or account number..."
+            value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue" />
+            className="pl-10"
+          />
         </div>
       </div>
 
       {/* Bank Accounts List */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-4">
         {filteredBanks.map(bank => (
-          <div key={bank.id} className={`bg-white rounded-xl border p-4  transition-shadow ${!bank.is_active ? 'opacity-60' : ''} ${bank.is_default ? 'ring-2 ring-oms-blue' : ''}`}>
+          <div key={bank.id} className={`bg-white rounded-xl border p-4  transition-shadow ${!bank.is_active ? 'opacity-60' : ''} ${bank.is_default ? 'ring-2 ring-primary' : ''}`}>
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <Building className="w-6 h-6 text-blue-600" />
+                <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center">
+                  <Building className="w-6 h-6 text-foreground" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-gray-900">{bank.name}</h3>
                     {bank.is_default && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-oms-blue text-white">Default</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-gray-900 text-white">Default</span>
                     )}
                   </div>
                   <p className="text-sm text-gray-500">{bank.account_type} • {bank.account_number}</p>
@@ -197,7 +202,7 @@ export default function BankAccountsPage() {
               </div>
               <div className="flex items-center gap-1">
                 <button onClick={() => { setSelectedBank(bank); setShowDetailModal(true); }}
-                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Eye className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
+                  className="p-2 text-foreground hover:bg-muted rounded-lg"><Eye className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
                 <button onClick={() => handleEdit(bank)}
                   className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"><Edit className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
                 <button onClick={() => handleDelete(bank.id, bank.current_balance)}
@@ -212,7 +217,7 @@ export default function BankAccountsPage() {
               </div>
               <div>
                 <p className="text-xs text-gray-500">Current</p>
-                <p className="font-bold text-oms-blue">{formatCurrency(bank.current_balance)}</p>
+                <p className="font-bold text-primary">{formatCurrency(bank.current_balance)}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500">Change</p>
@@ -227,7 +232,7 @@ export default function BankAccountsPage() {
                 IFSC: {bank.ifsc_code}
               </div>
               {!bank.is_default && bank.is_active && (
-                <button onClick={() => handleSetDefault(bank.id)} className="text-oms-blue hover:underline text-xs font-semibold">
+                <button onClick={() => handleSetDefault(bank.id)} className="text-primary hover:underline text-xs font-semibold">
                   Set as Default
                 </button>
               )}
@@ -241,7 +246,7 @@ export default function BankAccountsPage() {
           <Building className="mx-auto h-12 w-12 text-gray-300" />
           <h3 className="mt-3 text-lg font-medium text-gray-900">No bank accounts found</h3>
           <p className="mt-1 text-gray-500">Add your first bank account to enable reconciliation</p>
-          <button onClick={() => setShowModal(true)} className="mt-4 px-4 py-2 bg-oms-blue text-white rounded-lg">
+          <button onClick={() => setShowModal(true)} className="mt-4 px-4 py-2 bg-gray-900 text-white rounded-lg">
             Add Account
           </button>
         </div>
@@ -253,7 +258,7 @@ export default function BankAccountsPage() {
           <div className="bg-white rounded-2xl w-full max-w-md animate-scale-in">
             <div className="p-5 border-b flex items-center justify-between">
               <h2 className="text-page-title">{editingBank ? 'Edit Bank Account' : 'Add Bank Account'}</h2>
-              <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
+              <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div>
@@ -300,8 +305,8 @@ export default function BankAccountsPage() {
                 </div>
               )}
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-lg font-medium">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-lg font-medium hover:bg-oms-blue disabled:opacity-50">
+                <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-md font-medium">Cancel</button>
+                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-900 disabled:opacity-50">
                   {submitting ? 'Saving...' : (editingBank ? 'Update' : 'Add') + ' Bank'}
                 </button>
               </div>
@@ -319,9 +324,9 @@ export default function BankAccountsPage() {
               <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
-              <div className="text-center bg-oms-blue rounded-xl p-4">
+              <div className="text-center bg-gray-900 rounded-xl p-4">
                 <p className="text-sm text-gray-600">Current Balance</p>
-                <p className="text-page-title text-oms-blue">{formatCurrency(selectedBank.current_balance)}</p>
+                <p className="text-page-title text-primary">{formatCurrency(selectedBank.current_balance)}</p>
               </div>
               <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>

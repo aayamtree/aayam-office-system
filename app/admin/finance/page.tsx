@@ -7,7 +7,7 @@ export default function FinancePage() {
   const stats = [
     { label: 'Total Revenue', value: '₹12,45,000', change: '+18%', trend: 'up', icon: TrendingUp, color: 'bg-white0' },
     { label: 'Outstanding', value: '₹2,85,000', change: '12 invoices', trend: 'warning', icon: AlertTriangle, color: 'bg-white0' },
-    { label: 'Received This Month', value: '₹4,50,000', change: '+12%', trend: 'up', icon: ArrowDownRight, color: 'bg-blue-500' },
+    { label: 'Received This Month', value: '₹4,50,000', change: '+12%', trend: 'up', icon: ArrowDownRight, color: 'bg-primary' },
     { label: 'Pending Payments', value: '₹95,000', change: '5 vendors', trend: 'down', icon: ArrowUpRight, color: 'bg-red-500' },
   ];
 
@@ -30,20 +30,20 @@ export default function FinancePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div>
-          <h1 className="text-2xl lg:text-page-title text-gray-900 tracking-tight">Finance</h1>
+          <h1 className="text-page-title text-gray-900 tracking-tight">Finance</h1>
           <p className="text-gray-500 mt-1">Manage invoices, payments & transactions</p>
         </div>
         <div className="flex gap-3">
           <Link
             href="/admin/finance/payments?new=true"
-            className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium"
+            className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 hover:border-gray-300 transition-colors font-medium"
           >
             <CreditCard className="w-5 h-5" />
             <span>Record Payment</span>
           </Link>
           <Link
             href="/admin/finance/invoices?new=true"
-            className="flex items-center justify-center gap-2 bg-[#0000FF] hover:bg-[#0000CC] text-white px-4 py-2 rounded-lg shadow-sm transition-all hover:scale-105 active:scale-95 font-semibold"
+            className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-md shadow-sm transition-colors font-semibold"
           >
             <FileText className="w-5 h-5" />
             <span>New Invoice</span>
@@ -54,9 +54,9 @@ export default function FinancePage() {
       {/* Quick Actions - Finance Tools */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2 md:gap-4">
         <Link href="/admin/finance/opening-balance"
-          className="flex items-center gap-2 md:gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
-          <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <IndianRupee className="w-6 h-6 text-oms-blue" />
+          className="flex items-center gap-2 md:gap-4 bg-white border border-gray-200 rounded-md p-5 hover:border-gray-300 transition-colors group">
+          <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center">
+            <IndianRupee className="w-6 h-6 text-primary" />
           </div>
           <div>
             <p className="font-semibold text-gray-900 text-base">Opening Balance</p>
@@ -64,9 +64,9 @@ export default function FinancePage() {
           </div>
         </Link>
         <Link href="/admin/finance/banks"
-          className="flex items-center gap-2 md:gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
-          <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <CreditCard className="w-6 h-6 text-oms-blue" />
+          className="flex items-center gap-2 md:gap-4 bg-white border border-gray-200 rounded-md p-5 hover:border-gray-300 transition-colors group">
+          <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center">
+            <CreditCard className="w-6 h-6 text-primary" />
           </div>
           <div>
             <p className="font-semibold text-gray-900 text-base">Bank Accounts</p>
@@ -74,9 +74,9 @@ export default function FinancePage() {
           </div>
         </Link>
         <Link href="/admin/finance/banking"
-          className="flex items-center gap-2 md:gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
-          <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <RefreshCw className="w-6 h-6 text-oms-blue" />
+          className="flex items-center gap-2 md:gap-4 bg-white border border-gray-200 rounded-md p-5 hover:border-gray-300 transition-colors group">
+          <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center">
+            <RefreshCw className="w-6 h-6 text-primary" />
           </div>
           <div>
             <p className="font-semibold text-gray-900 text-base">Reconciliation</p>
@@ -84,9 +84,9 @@ export default function FinancePage() {
           </div>
         </Link>
         <Link href="/admin/finance/expenses/quick"
-          className="flex items-center gap-2 md:gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
-          <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <TrendingDown className="w-6 h-6 text-oms-blue" />
+          className="flex items-center gap-2 md:gap-4 bg-white border border-gray-200 rounded-md p-5 hover:border-gray-300 transition-colors group">
+          <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center">
+            <TrendingDown className="w-6 h-6 text-primary" />
           </div>
           <div>
             <p className="font-semibold text-gray-900 text-base">Quick Expense</p>
@@ -94,9 +94,9 @@ export default function FinancePage() {
           </div>
         </Link>
         <Link href="/admin/finance/reports/cashbook"
-          className="flex items-center gap-2 md:gap-4 bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-oms-blue/20 transition-colors group">
-          <div className="w-12 h-12 bg-[rgba(0,0,255,0.05)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <FileText className="w-6 h-6 text-oms-blue" />
+          className="flex items-center gap-2 md:gap-4 bg-white border border-gray-200 rounded-md p-5 hover:border-gray-300 transition-colors group">
+          <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center">
+            <FileText className="w-6 h-6 text-primary" />
           </div>
           <div>
             <p className="font-semibold text-gray-900 text-base">Cash Book</p>
@@ -108,16 +108,16 @@ export default function FinancePage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-2xl p-5 border border-gray-100 transition-shadow  group">
+          <div key={stat.label} className="bg-white rounded-md p-5 border border-gray-200 transition-shadow group">
             <div className="flex items-center gap-3 mb-3">
-              <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+              <div className={`w-12 h-12 ${stat.color} rounded-md flex items-center justify-center`}>
                 <stat.icon className="w-5 h-5 md:w-5.5 md:h-5.5 text-white" />
               </div>
             </div>
             <p className="text-page-title text-gray-900">{stat.value}</p>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-1">{stat.label}</p>
             <p className={`text-xs mt-2 font-bold px-2 py-1 rounded-full w-fit ${stat.trend === 'up' ? 'text-gray-900 bg-white' :
-              stat.trend === 'warning' ? 'text-amber-700 bg-white' : 'text-red-700 bg-red-50'
+              stat.trend === 'warning' ? 'text-gray-700 bg-gray-100' : 'text-gray-900 bg-gray-200'
               }`}>{stat.change}</p>
           </div>
         ))}
@@ -125,10 +125,10 @@ export default function FinancePage() {
 
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-        <Link href="/admin/finance/invoices" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
+        <Link href="/admin/finance/invoices" className="bg-white rounded-md p-3 md:p-4 border border-gray-200 hover:border-gray-300 transition-colors group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
-            <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <FileText className="w-7 h-7 text-blue-600" />
+            <div className="w-14 h-14 bg-muted rounded-md flex items-center justify-center">
+              <FileText className="w-7 h-7 text-foreground" />
             </div>
             <div>
               <h2 className="text-section text-gray-900">Invoices</h2>
@@ -137,15 +137,15 @@ export default function FinancePage() {
           </div>
           <div className="flex items-center gap-3 text-label">
             <span className="text-gray-900 bg-white px-2.5 py-1 rounded-full">132 Paid</span>
-            <span className="text-amber-700 bg-white px-2.5 py-1 rounded-full">12 Pending</span>
-            <span className="text-red-700 bg-red-50 px-2.5 py-1 rounded-full">12 Overdue</span>
+            <span className="text-gray-700 bg-gray-100 px-2.5 py-1 rounded-full">12 Pending</span>
+            <span className="text-gray-900 bg-gray-200 px-2.5 py-1 rounded-full">12 Overdue</span>
           </div>
         </Link>
 
-        <Link href="/admin/finance/vendors" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
+        <Link href="/admin/finance/vendors" className="bg-white rounded-md p-3 md:p-4 border border-gray-200 hover:border-gray-300 transition-colors group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
-            <div className="w-14 h-14 bg-oms-blue rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <CreditCard className="w-7 h-7 text-oms-blue" />
+            <div className="w-14 h-14 bg-muted rounded-md flex items-center justify-center">
+              <CreditCard className="w-7 h-7 text-foreground" />
             </div>
             <div>
               <h2 className="text-section text-gray-900">Purchases</h2>
@@ -153,14 +153,14 @@ export default function FinancePage() {
             </div>
           </div>
           <div className="flex items-center gap-3 text-label">
-            <span className="text-oms-blue bg-oms-blue px-2.5 py-1 rounded-full">34 Vendors</span>
+            <span className="text-gray-900 bg-gray-100 px-2.5 py-1 rounded-full">34 Vendors</span>
             <span className="text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">Manage Bills</span>
           </div>
         </Link>
 
-        <Link href="/admin/finance/payments" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
+        <Link href="/admin/finance/payments" className="bg-white rounded-md p-3 md:p-4 border border-gray-200 hover:border-gray-300 transition-colors group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
-            <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div className="w-14 h-14 bg-gray-100 rounded-md flex items-center justify-center">
               <CreditCard className="w-7 h-7 text-gray-900" />
             </div>
             <div>
@@ -178,21 +178,21 @@ export default function FinancePage() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         {/* Recent Transactions */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+        <div className="bg-white rounded-md p-3 md:p-4 border border-gray-200">
           <div className="flex items-center justify-between mb-3 md:mb-1.5">
             <div className="flex items-center gap-3">
-              <div className="w-1 h-6 bg-oms-blue rounded-full"></div>
+              <div className="w-1 h-6 bg-gray-900 rounded-full"></div>
               <h2 className="text-section text-gray-900">Recent Transactions</h2>
             </div>
-            <Link href="/admin/finance/payments" className="text-sm font-medium text-oms-blue hover:text-oms-blue bg-oms-blue px-3 py-1.5 rounded-lg transition-colors">
+            <Link href="/admin/finance/payments" className="text-sm font-medium text-gray-700 hover:text-gray-900 bg-white border border-gray-200 hover:border-gray-300 px-3 py-1.5 rounded-md transition-colors">
               View All
             </Link>
           </div>
           <div className="space-y-3">
             {recentTransactions.map((tx) => (
-              <div key={tx.id} className="flex items-center justify-between p-3.5 bg-gray-50/80 rounded-xl hover:bg-gray-100 transition-colors border border-gray-100">
+              <div key={tx.id} className="flex items-center justify-between p-3.5 bg-gray-50/80 rounded-md hover:bg-gray-100 transition-colors border border-gray-100">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === 'received' ? 'bg-gray-100' : 'bg-red-100'
+                  <div className={`w-10 h-10 rounded-md flex items-center justify-center ${tx.type === 'received' ? 'bg-gray-100' : 'bg-red-100'
                     }`}>
                     {tx.type === 'received' ? (
                       <ArrowDownRight className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-900" />
@@ -215,7 +215,7 @@ export default function FinancePage() {
         </div>
 
         {/* Overdue Invoices */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+        <div className="bg-white rounded-md p-3 md:p-4 border border-gray-200">
           <div className="flex items-center justify-between mb-3 md:mb-1.5">
             <div className="flex items-center gap-3">
               <div className="w-1 h-6 bg-red-500 rounded-full"></div>
@@ -227,7 +227,7 @@ export default function FinancePage() {
           </div>
           <div className="space-y-3">
             {overdueInvoices.map((inv) => (
-              <div key={inv.id} className="flex items-center justify-between p-4 bg-red-50/50 border border-red-100 rounded-xl hover:bg-red-50 transition-colors">
+              <div key={inv.id} className="flex items-center justify-between p-4 bg-red-50/50 border border-red-100 rounded-md hover:bg-red-50 transition-colors">
                 <div>
                   <p className="font-bold text-gray-900">{inv.id}</p>
                   <p className="text-sm font-medium text-gray-600">{inv.client}</p>
@@ -242,32 +242,32 @@ export default function FinancePage() {
           </div>
           <Link
             href="/admin/finance/invoices?status=overdue"
-            className="block w-full mt-5 text-center py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl text-sm font-semibold hover:border-oms-blue hover:text-oms-blue transition-colors">
+            className="block w-full mt-5 text-center py-3 bg-white border border-gray-200 text-gray-700 rounded-md text-sm font-semibold hover:border-gray-400 hover:text-gray-900 transition-colors">
             Send Payment Reminders
           </Link>
         </div>
       </div>
 
       {/* Monthly Summary */}
-      <div className="bg-white rounded-2xl p-5 sm:p-4 border border-gray-100">
+      <div className="bg-white rounded-md p-5 sm:p-4 border border-gray-200">
         <div className="flex items-center gap-3 mb-3 md:mb-1.5">
-          <div className="w-1 h-6 bg-oms-blue rounded-full"></div>
+          <div className="w-1 h-6 bg-gray-900 rounded-full"></div>
           <h2 className="text-section text-gray-900">Monthly Summary</h2>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-          <div className="p-4 bg-white border-2 border-gray-100 rounded-2xl hover:border-gray-200 transition-colors">
+          <div className="p-4 bg-white border border-gray-200 rounded-md hover:border-gray-300 transition-colors">
             <p className="text-xs sm:text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wider">Total Invoiced</p>
             <p className="text-xl sm:text-page-title text-gray-900 font-semibold">₹5,25,000</p>
           </div>
-          <div className="p-4 bg-white border-2 border-gray-100 rounded-2xl hover:border-gray-200 transition-colors">
+          <div className="p-4 bg-white border border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
             <p className="text-xs sm:text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wider">Collected</p>
             <p className="text-xl sm:text-page-title text-gray-900 font-semibold">₹4,50,000</p>
           </div>
-          <div className="p-4 bg-white border-2 border-gray-100 rounded-2xl hover:border-gray-200 transition-colors">
+          <div className="p-4 bg-white border border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
             <p className="text-xs sm:text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wider">Pending</p>
-            <p className="text-xl sm:text-page-title text-oms-orange font-semibold">₹75,000</p>
+            <p className="text-xl sm:text-page-title text-destructive font-semibold">₹75,000</p>
           </div>
-          <div className="p-4 bg-white border-2 border-gray-100 rounded-2xl hover:border-gray-200 transition-colors">
+          <div className="p-4 bg-white border border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
             <p className="text-xs sm:text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wider">Expenses</p>
             <p className="text-xl sm:text-page-title text-gray-900 font-semibold">₹1,85,000</p>
           </div>

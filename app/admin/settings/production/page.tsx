@@ -142,7 +142,7 @@ export default function ProductionSettings() {
                         <button
                             onClick={() => setActiveCategory('design')}
                             className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeCategory === 'design'
-                                ? 'bg-white text-oms-blue'
+                                ? 'bg-white text-primary'
                                 : 'text-gray-500 hover:text-gray-700'
                                 }`}
                         >
@@ -163,7 +163,7 @@ export default function ProductionSettings() {
 
                     <button
                         onClick={() => setIsAddingNew(true)}
-                        className={`text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors ${activeCategory === 'design' ? 'bg-[#0000FF] hover:bg-[#0000CC]' : 'bg-orange-600 hover:bg-orange-700'
+                        className={`text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors ${activeCategory === 'design' ? 'bg-gray-900 hover:bg-gray-800' : 'bg-orange-600 hover:bg-orange-700'
                             }`}
                     >
                         <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" /> Add {activeCategory === 'design' ? 'Design' : 'QC'} Checklist
@@ -173,7 +173,7 @@ export default function ProductionSettings() {
                 {isAddingNew && (
                     <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-1.5 animate-in fade-in slide-in-from-top-2">
                         <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                            <Plus className={`w-4 h-4 md:w-4.5 md:h-4.5 ${activeCategory === 'design' ? 'text-oms-blue' : 'text-orange-600'}`} />
+                            <Plus className={`w-4 h-4 md:w-4.5 md:h-4.5 ${activeCategory === 'design' ? 'text-primary' : 'text-orange-600'}`} />
                             Add New {activeCategory === 'design' ? 'Pre-Print' : 'Dispatch QC'} Logic
                         </h3>
                         <div className="flex gap-2 md:gap-4">
@@ -183,7 +183,7 @@ export default function ProductionSettings() {
                                     placeholder="e.g. Wedding Card, Acrylic Board..."
                                     value={newJobType}
                                     onChange={e => setNewJobType(e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-oms-blue/20 focus:border-oms-blue"
+                                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-gray-400/20 focus:border-gray-400"
                                     autoFocus
                                 />
                                 <p className="text-xs text-gray-500 mt-2 ml-1">
@@ -194,7 +194,7 @@ export default function ProductionSettings() {
                                 <button
                                     onClick={createNewChecklist}
                                     disabled={!newJobType.trim()}
-                                    className="bg-[#0000FF] text-white px-6 py-2.5 rounded-lg font-bold hover:bg-[#0000CC] disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                                    className="bg-gray-900 text-white px-4 py-2.5 rounded-md font-bold hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                                 >
                                     Create
                                 </button>
@@ -211,7 +211,7 @@ export default function ProductionSettings() {
 
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-3">
-                        <div className="w-8 h-8 border-4 border-[rgba(0,0,255,0.2)] border-t-oms-blue rounded-full animate-spin"></div>
+                        <div className="w-8 h-8 border-4 border-border border-t-primary rounded-full animate-spin"></div>
                         <p>Loading configurations...</p>
                     </div>
                 ) : checklists.length === 0 ? (
@@ -221,7 +221,7 @@ export default function ProductionSettings() {
                         <p className="text-gray-500">No checklist templates defined for {activeCategory} yet.</p>
                         <button
                             onClick={() => setIsAddingNew(true)}
-                            className="mt-4 text-oms-blue font-bold hover:underline"
+                            className="mt-4 text-primary font-bold hover:underline"
                         >
                             Create your first one
                         </button>
@@ -229,12 +229,12 @@ export default function ProductionSettings() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                         {checklists.map(checklist => (
-                            <div key={checklist.id} className={`bg-white rounded-xl border transition-all ${editingId === checklist.id ? 'border-oms-blue ring-4 ring-oms-blue/10 relative z-10' : 'border-gray-200  hover:border-[rgba(0,0,255,0.2)]'}`}>
+                            <div key={checklist.id} className={`bg-white rounded-xl border transition-all ${editingId === checklist.id ? 'border-primary ring-4 ring-primary/10 relative z-10' : 'border-gray-200  hover:border-border'}`}>
 
                                 {/* Header */}
-                                <div className={`p-4 border-b flex justify-between items-center rounded-t-xl ${editingId === checklist.id ? 'bg-[rgba(0,0,255,0.05)]/50' : 'bg-gray-50/50'}`}>
+                                <div className={`p-4 border-b flex justify-between items-center rounded-t-xl ${editingId === checklist.id ? 'bg-muted/50' : 'bg-gray-50/50'}`}>
                                     <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-lg ${activeCategory === 'design' ? 'bg-oms-blue text-white' : 'bg-orange-100 text-orange-600'}`}>
+                                        <div className={`p-2 rounded-lg ${activeCategory === 'design' ? 'bg-gray-900 text-white' : 'bg-orange-100 text-orange-600'}`}>
                                             <Check className="w-4 h-4" strokeWidth={3} />
                                         </div>
                                         <h3 className="font-bold text-gray-800">{checklist.job_type}</h3>
@@ -242,12 +242,12 @@ export default function ProductionSettings() {
                                     <div className="flex gap-2">
                                         {editingId === checklist.id ? (
                                             <>
-                                                <button onClick={handleSaveEdit} className="p-2 bg-white0 text-white rounded-lg hover:bg-green-600" title="Save Changes"><Save className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
+                                                <button onClick={handleSaveEdit} className="p-2 bg-white0 text-white rounded-md hover:bg-gray-800" title="Save Changes"><Save className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
                                                 <button onClick={() => setEditingId(null)} className="p-2 bg-white border text-gray-600 rounded-lg hover:bg-gray-50" title="Cancel Edit"><X className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
                                             </>
                                         ) : (
                                             <>
-                                                <button onClick={() => handleStartEdit(checklist)} className="p-2 bg-white border hover:bg-[rgba(0,0,255,0.05)] text-gray-600 hover:text-oms-blue rounded-lg transition-colors" title="Edit Items"><Edit2 className="w-4 h-4" /></button>
+                                                <button onClick={() => handleStartEdit(checklist)} className="p-2 bg-white border hover:bg-muted text-gray-600 hover:text-primary rounded-lg transition-colors" title="Edit Items"><Edit2 className="w-4 h-4" /></button>
                                                 <button onClick={() => deleteChecklist(checklist.id)} className="p-2 bg-white border hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-lg transition-colors" title="Delete Checklist"><Trash2 className="w-4 h-4" /></button>
                                             </>
                                         )}
@@ -267,7 +267,7 @@ export default function ProductionSettings() {
                                                             type="text"
                                                             value={item}
                                                             onChange={e => updateEditItem(idx, e.target.value)}
-                                                            className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:ring-2 focus:ring-oms-blue/20 focus:border-oms-blue"
+                                                            className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:ring-2 focus:ring-gray-400/20 focus:border-gray-400"
                                                             autoFocus={idx === editItems.length - 1} // Auto focus new item
                                                             placeholder="e.g. Check spelling..."
                                                         />
@@ -275,7 +275,7 @@ export default function ProductionSettings() {
                                                     <button onClick={() => removeEditItem(idx)} className="text-gray-400 hover:text-red-500 p-2 hover:bg-red-50 rounded-lg"><X className="w-4 h-4" /></button>
                                                 </div>
                                             ))}
-                                            <button onClick={addItemToEdit} className="w-full py-2.5 border-2 border-dashed border-gray-200 rounded-lg text-sm font-bold text-gray-500 hover:border-oms-blue/30 hover:text-oms-blue hover:bg-[rgba(0,0,255,0.05)] flex items-center justify-center gap-2 transition-all mt-4">
+                                            <button onClick={addItemToEdit} className="w-full py-2.5 border-2 border-dashed border-gray-200 rounded-md text-sm font-bold text-gray-500 hover:border-primary/30 hover:text-primary hover:bg-muted flex items-center justify-center gap-2 transition-all mt-4">
                                                 <Plus className="w-4 h-4" /> Add Another Item
                                             </button>
                                         </div>
@@ -285,12 +285,12 @@ export default function ProductionSettings() {
                                             <ul className="space-y-2.5">
                                                 {checklist.items && checklist.items.length > 0 ? checklist.items.map((item: string, idx: number) => (
                                                     <li key={idx} className="flex items-start gap-3 text-sm text-gray-600 group">
-                                                        <div className={`w-1.5 h-1.5 rounded-full mt-1.5 group-hover:scale-125 transition-transform ${activeCategory === 'design' ? 'bg-oms-blue' : 'bg-orange-400'}`}></div>
+                                                        <div className={`w-1.5 h-1.5 rounded-full mt-1.5 group-hover:scale-125 transition-transform ${activeCategory === 'design' ? 'bg-primary' : 'bg-orange-400'}`}></div>
                                                         <span className="leading-tight">{item}</span>
                                                     </li>
                                                 )) : (
                                                     <li className="text-sm text-gray-400 italic flex items-center gap-2">
-                                                        <AlertCircle className="w-3.5 h-3.5" />
+                                                        <AlertCircle className="w-4 h-4" />
                                                         No checklist items configured.
                                                     </li>
                                                 )}

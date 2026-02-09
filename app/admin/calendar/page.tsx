@@ -29,7 +29,7 @@ export default function CalendarPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-page-title text-gray-900">📅 My Calendar</h1>
+                    <h1 className="text-page-title text-gray-900">My Calendar</h1>
                     <p className="text-gray-600 mt-1">Manage your personal schedule and tasks</p>
                 </div>
 
@@ -37,20 +37,20 @@ export default function CalendarPage() {
                     <GoogleConnectionStatus />
                     <button
                         onClick={() => setShowBriefing(true)}
-                        className="px-4 py-2 bg-oms-blue text-white rounded-lg hover:bg-oms-blue transition-colors"
+                        className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-md transition-colors"
                     >
-                        📋 Daily Briefing
+                        Daily Briefing
                     </button>
                 </div>
             </div>
 
             {/* Week Planner */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
                 <div className="flex items-center justify-between mb-3 md:mb-1.5">
                     <h2 className="text-section text-gray-900">This Week</h2>
                     <button
                         onClick={() => setShowNewEvent(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-oms-blue text-white rounded-lg hover:bg-oms-blue transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-md transition-colors"
                     >
                         <Plus className="w-4 h-4" />
                         New Event
@@ -68,12 +68,12 @@ export default function CalendarPage() {
                         return (
                             <div
                                 key={dayOffset}
-                                className={`border rounded-lg p-3 ${isToday ? 'border-oms-blue bg-[rgba(0,0,255,0.05)]' : 'border-gray-200'
+                                className={`border rounded-lg p-3 ${isToday ? 'border-gray-400 bg-gray-100' : 'border-gray-200'
                                     }`}
                             >
                                 <div className="text-center mb-2">
                                     <div className="text-xs text-gray-500">{format(day, 'EEE')}</div>
-                                    <div className={`text-section ${isToday ? 'text-oms-blue' : 'text-gray-900'}`}>
+                                    <div className={`text-section ${isToday ? 'text-gray-900' : 'text-gray-900'}`}>
                                         {format(day, 'd')}
                                     </div>
                                 </div>
@@ -98,7 +98,7 @@ export default function CalendarPage() {
             </div>
 
             {/* All Events List */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
                 <h2 className="text-section text-gray-900 mb-4">All Events</h2>
                 {loading ? (
                     <div className="text-center py-8 text-gray-500">Loading...</div>
@@ -148,23 +148,23 @@ function EventCard({ event, showDate, onToggle, onDelete }: {
     const isCompleted = event.status === 'completed';
     const priorityColors = {
         low: 'bg-gray-100 text-gray-700',
-        normal: 'bg-blue-100 text-blue-700',
-        high: 'bg-orange-100 text-orange-700',
-        urgent: 'bg-red-100 text-red-700'
+        normal: 'bg-gray-200 text-gray-800',
+        high: 'bg-gray-300 text-gray-900',
+        urgent: 'bg-gray-400 text-gray-900'
     };
 
     return (
-        <div className={`p-3 rounded-lg border-l-4 ${isCompleted ? 'bg-white border-l-green-500 opacity-60' : 'bg-gray-50 border-l-oms-blue'
+        <div className={`p-3 rounded-lg border-l-4 ${isCompleted ? 'bg-white border-l-gray-400 opacity-60' : 'bg-gray-50 border-l-gray-300'
             }`}>
             <div className="flex items-start gap-2">
                 <button
                     onClick={onToggle}
                     className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${isCompleted
-                        ? 'bg-white0 border-green-500'
-                        : 'border-gray-300 hover:border-oms-blue'
+                        ? 'bg-gray-200 border-gray-400'
+                        : 'border-gray-300 hover:border-gray-400'
                         }`}
                 >
-                    {isCompleted && <CheckCircle className="w-4 h-4 text-white" />}
+                    {isCompleted && <CheckCircle className="w-4 h-4 text-gray-600" />}
                 </button>
 
                 <div className="flex-1 min-w-0">
@@ -248,7 +248,7 @@ function NewEventModal({ profile, onClose, onCreate }: {
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl  max-w-md w-full p-4">
+            <div className="bg-white rounded-lg max-w-md w-full p-4">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-section text-gray-900">New Event</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -265,7 +265,7 @@ function NewEventModal({ profile, onClose, onCreate }: {
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oms-blue"
+                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400"
                             required
                         />
                     </div>
@@ -280,7 +280,7 @@ function NewEventModal({ profile, onClose, onCreate }: {
                                 setDescription(val);
                                 setTaggedUsers(users);
                             }}
-                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oms-blue"
+                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400"
                         />
                     </div>
 
@@ -293,7 +293,7 @@ function NewEventModal({ profile, onClose, onCreate }: {
                                 type="date"
                                 value={date}
                                 onChange={(e) => setDate(e.target.value)}
-                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oms-blue"
+                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400"
                                 required
                             />
                         </div>
@@ -305,7 +305,7 @@ function NewEventModal({ profile, onClose, onCreate }: {
                             <select
                                 value={priority}
                                 onChange={(e) => setPriority(e.target.value as any)}
-                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oms-blue"
+                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400"
                             >
                                 <option value="low">Low</option>
                                 <option value="normal">Normal</option>
@@ -331,7 +331,7 @@ function NewEventModal({ profile, onClose, onCreate }: {
                                 type="time"
                                 value={time}
                                 onChange={(e) => setTime(e.target.value)}
-                                className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oms-blue"
+                                className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400"
                             />
                         )}
                     </div>
@@ -340,13 +340,13 @@ function NewEventModal({ profile, onClose, onCreate }: {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 px-4 py-2 bg-oms-blue text-white rounded-lg hover:bg-oms-blue"
+                            className="flex-1 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-md"
                         >
                             Create Event
                         </button>

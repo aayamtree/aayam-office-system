@@ -172,21 +172,21 @@ export default function CashBookPage() {
                 <div className="flex flex-wrap gap-2">
                     <button
                         onClick={handlePrint}
-                        className="flex items-center gap-1.5 px-3 py-2 border rounded-xl hover:bg-gray-50 text-sm font-medium whitespace-nowrap"
+                        className="flex items-center gap-1.5 px-3 py-2 border rounded-md hover:bg-gray-50 text-sm font-medium whitespace-nowrap"
                     >
                         <Printer className="w-4 h-4" />
                         Print
                     </button>
                     <button
                         onClick={handleExportExcel}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 text-sm font-medium whitespace-nowrap"
+                        className="flex items-center gap-1.5 px-3 py-2 bg-gray-900 text-white rounded-md hover:bg-green-700 text-sm font-medium whitespace-nowrap"
                     >
                         <FileSpreadsheet className="w-4 h-4" />
                         Export Excel
                     </button>
                     <button
                         onClick={handleExportCSV}
-                        className="flex items-center gap-1.5 px-3 py-2 border rounded-xl hover:bg-gray-50 text-sm font-medium whitespace-nowrap"
+                        className="flex items-center gap-1.5 px-3 py-2 border rounded-md hover:bg-gray-50 text-sm font-medium whitespace-nowrap"
                     >
                         <Download className="w-4 h-4" />
                         CSV
@@ -196,12 +196,12 @@ export default function CashBookPage() {
 
             {/* Summary Cards - Responsive grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 md:p-4 border border-blue-200">
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-3 md:p-4 border border-border">
                     <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
-                        <Wallet className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                        <p className="text-xs md:text-sm font-medium text-blue-900 truncate">Current Balance</p>
+                        <Wallet className="w-4 h-4 text-foreground flex-shrink-0" />
+                        <p className="text-xs md:text-sm font-medium text-foreground truncate">Current Balance</p>
                     </div>
-                    <p className="text-lg md:text-page-title text-blue-900 truncate">₹{currentCashBalance.toLocaleString()}</p>
+                    <p className="text-lg md:text-page-title text-foreground truncate">₹{currentCashBalance.toLocaleString()}</p>
                 </div>
 
                 <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-3 md:p-4 border border-green-200">
@@ -222,12 +222,12 @@ export default function CashBookPage() {
                     <p className="text-xs text-red-700 mt-1 truncate">{transactions.filter(t => t.transaction_type === 'out').length} txns</p>
                 </div>
 
-                <div className={`bg-gradient-to-br rounded-xl p-3 md:p-4 border ${netCash >= 0 ? 'bg-oms-blue border-[rgba(0,0,255,0.2)]-200' : 'from-orange-50 to-orange-100 border-orange-200'}`}>
+                <div className={`bg-gradient-to-br rounded-xl p-3 md:p-4 border ${netCash >= 0 ? 'bg-gray-900 border-gray-300' : 'from-orange-50 to-orange-100 border-orange-200'}`}>
                     <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
-                        <TrendingUp className={`w-4 h-4 flex-shrink-0 ${netCash >= 0 ? 'text-oms-blue' : 'text-orange-600'}`} />
-                        <p className={`text-xs md:text-sm font-medium truncate ${netCash >= 0 ? 'text-indigo-900' : 'text-orange-900'}`}>Net Change</p>
+                        <TrendingUp className={`w-4 h-4 flex-shrink-0 ${netCash >= 0 ? 'text-primary' : 'text-orange-600'}`} />
+                        <p className={`text-xs md:text-sm font-medium truncate ${netCash >= 0 ? 'text-gray-900' : 'text-orange-900'}`}>Net Change</p>
                     </div>
-                    <p className={`text-lg md:text-page-title truncate ${netCash >= 0 ? 'text-indigo-900' : 'text-orange-900'}`}>
+                    <p className={`text-lg md:text-page-title truncate ${netCash >= 0 ? 'text-gray-900' : 'text-orange-900'}`}>
                         {netCash >= 0 ? '+' : ''}₹{netCash.toLocaleString()}
                     </p>
                 </div>
@@ -292,7 +292,7 @@ export default function CashBookPage() {
                             setSelectedAccount('all');
                             setTransactionType('all');
                         }}
-                        className="text-sm text-blue-600 hover:text-blue-700 mt-3"
+                        className="text-sm text-foreground hover:text-foreground mt-3"
                     >
                         Clear all filters
                     </button>

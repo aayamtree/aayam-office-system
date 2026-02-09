@@ -171,7 +171,7 @@ export default function PaperStockPage() {
         </div>
         <button
           onClick={handleAddNew}
-          className="flex items-center justify-center gap-2 bg-[#0000FF] text-white px-4 py-2.5 rounded-lg hover:bg-[#0000CC] shadow-sm font-semibold transition-colors"
+          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-md hover:bg-gray-800 shadow-sm font-semibold transition-colors"
         >
           <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
           <span>Add Item</span>
@@ -191,8 +191,8 @@ export default function PaperStockPage() {
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-1">
-            <TrendingDown className="w-4 h-4 text-oms-orange" />
-            <span className="text-xs text-oms-orange font-medium">Low Stock</span>
+            <TrendingDown className="w-4 h-4 text-destructive" />
+            <span className="text-xs text-destructive font-medium">Low Stock</span>
           </div>
           <p className="text-page-title text-amber-700">{loading ? '...' : lowStockCount}</p>
         </div>
@@ -203,12 +203,12 @@ export default function PaperStockPage() {
           </div>
           <p className="text-page-title text-red-700">{loading ? '...' : outOfStockCount}</p>
         </div>
-        <div className="bg-oms-blue border border-[rgba(0,0,255,0.2)]-200 rounded-xl p-3">
+        <div className="bg-gray-900 border border-border-200 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-1">
-            <TrendingUp className="w-4 h-4 text-oms-blue" />
-            <span className="text-xs text-oms-blue font-medium">Stock Value</span>
+            <TrendingUp className="w-4 h-4 text-primary" />
+            <span className="text-xs text-primary font-medium">Stock Value</span>
           </div>
-          <p className="text-page-title text-oms-blue">
+          <p className="text-page-title text-primary">
             {loading ? '...' : `₹${totalValue.toLocaleString()}`}
           </p>
         </div>
@@ -223,13 +223,13 @@ export default function PaperStockPage() {
             placeholder="Search items..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
         </div>
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
         >
           {categories.map(cat => (
             <option key={cat} value={cat}>{cat}</option>
@@ -238,7 +238,7 @@ export default function PaperStockPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
         >
           <option value="all">All Status</option>
           <option value="in_stock">In Stock</option>
@@ -282,7 +282,7 @@ export default function PaperStockPage() {
                     onClick={() => handleRestock(item)}
                     className="flex items-center gap-1 px-3 py-2 bg-gray-100 text-gray-900 rounded-xl hover:bg-green-200 text-sm font-medium transition-colors"
                   >
-                    <Plus className="w-3.5 h-3.5" /> Restock
+                    <Plus className="w-4 h-4" /> Restock
                   </button>
                   <button
                     onClick={() => handleEdit(item)}
@@ -324,7 +324,7 @@ export default function PaperStockPage() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
                 />
               </div>
 
@@ -336,7 +336,7 @@ export default function PaperStockPage() {
                     placeholder="e.g. A4"
                     value={formData.size}
                     onChange={(e) => setFormData({ ...formData, size: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
                   />
                 </div>
                 <div>
@@ -345,7 +345,7 @@ export default function PaperStockPage() {
                     type="number"
                     value={formData.gsm}
                     onChange={(e) => setFormData({ ...formData, gsm: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
                   />
                 </div>
               </div>
@@ -356,7 +356,7 @@ export default function PaperStockPage() {
                   <select
                     value={formData.unit}
                     onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
                   >
                     <option value="pcs">pcs</option>
                     <option value="reams">reams</option>
@@ -373,7 +373,7 @@ export default function PaperStockPage() {
                     step="0.01"
                     value={formData.cost_per_unit}
                     onChange={(e) => setFormData({ ...formData, cost_per_unit: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
                   />
                 </div>
               </div>
@@ -385,7 +385,7 @@ export default function PaperStockPage() {
                     type="number"
                     value={formData.quantity}
                     onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
                   />
                 </div>
                 <div>
@@ -394,7 +394,7 @@ export default function PaperStockPage() {
                     type="number"
                     value={formData.reorder_level}
                     onChange={(e) => setFormData({ ...formData, reorder_level: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
                   />
                 </div>
               </div>
@@ -405,7 +405,7 @@ export default function PaperStockPage() {
                   type="text"
                   value={formData.supplier}
                   onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
                 />
               </div>
 
@@ -416,7 +416,7 @@ export default function PaperStockPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm font-semibold"
+                  className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm font-semibold"
                 >
                   {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   {isEditing ? 'Update' : 'Add Item'}
@@ -469,7 +469,7 @@ export default function PaperStockPage() {
                 <button
                   onClick={handleRestockSubmit}
                   disabled={submitting || !restockQty}
-                  className="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   Restock

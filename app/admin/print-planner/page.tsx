@@ -83,13 +83,13 @@ export default function PrintPlannerPage() {
             </div>
 
             {/* Info Banner - Clear separation from grid above */}
-            <div className="p-4 bg-[rgba(0,0,255,0.05)] border-2 border-[rgba(0,0,255,0.2)] rounded-xl max-w-7xl">
+            <div className="p-4 bg-muted border-2 border-border rounded-md max-w-7xl">
                 <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-oms-blue rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-white text-sm font-bold">ℹ</span>
+                    <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-white text-sm font-bold">i</span>
                     </div>
                     <div>
-                        <p className="font-bold text-oms-blue mb-1">Job Type Batching Rule</p>
+                        <p className="font-bold text-gray-900 mb-1">Job Type Batching Rule</p>
                         <p className="text-sm text-gray-700">
                             Only jobs with the <strong>same job type</strong> can be added to a print run.
                             For example: STICKER jobs cannot be batched with POUCH jobs as they use different vendors and processes.

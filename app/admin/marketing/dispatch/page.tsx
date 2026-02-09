@@ -43,7 +43,7 @@ export default function MarketingDispatchPage() {
                 <td className="p-4">{job.project_name}</td>
                 <td className="p-4">
                   <span className={`px-2 py-1 rounded-full text-xs font-bold capitalize 
-                    ${job.current_stage === 'delivered' ? 'bg-gray-100 text-gray-900' : 'bg-blue-100 text-blue-700'}`}>
+                    ${job.current_stage === 'delivered' ? 'bg-gray-100 text-gray-900' : 'bg-muted text-foreground'}`}>
                     {job.current_stage.replace('_', ' ')}
                   </span>
                 </td>

@@ -7,12 +7,13 @@ import {
   IndianRupee, Edit, Trash2, X,
   AlertCircle, ChevronDown, LayoutGrid,
   List, Building2, UserPlus, Loader2,
-  Layers, Printer, ArrowRight
+  Layers, Printer, ArrowRight, Download, Clock, Copy
 } from 'lucide-react';
 import {
   useJobs, useClients, useVendors, useDesigners, usePaymentsReceived
 } from '@/lib/hooks';
 import { formatDate } from '@/lib/utils';
+import { exportToCSV, JOB_COLUMNS } from '@/lib/csv-export';
 import { Job, Client, Vendor, Designer, JobStatus, PaymentMode } from '@/types/database';
 import { supabase } from '@/lib/supabase';
 import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
@@ -22,6 +23,15 @@ import JobTypeQuickAdd from '@/components/shared/JobTypeQuickAdd';
 import ProductTypeQuickAdd from '@/components/shared/ProductTypeQuickAdd';
 import PriorityQuickAdd from '@/components/shared/PriorityQuickAdd';
 import JobStageQuickAdd from '@/components/shared/JobStageQuickAdd';
+import JobTimeline from '@/components/shared/JobTimeline';
+import JobFileAttachments from '@/components/shared/JobFileAttachments';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // ✅ ALL DROPDOWNS NOW DATABASE-DRIVEN - NO HARDCODED VALUES!
 
@@ -183,7 +193,7 @@ export default function JobsPage() {
 
   const formatCurrency = (amount: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount || 0);
   const getPriorityBadge = (priority: string) => priorities.find(p => p.id === priority)?.color || 'bg-gray-100 text-gray-600';
-  const getPaymentBadge = (status: string) => status === 'paid' ? 'bg-gray-100 text-gray-900' : status === 'partial' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700';
+  const getPaymentBadge = (status: string) => status === 'paid' ? 'bg-gray-100 text-gray-900' : status === 'partial' ? 'bg-gray-100 text-gray-700' : 'bg-destructive/10 text-destructive';
   const isOverdue = (deadline: string | undefined, stage: string) => deadline && stage !== 'delivered' && new Date(deadline) < new Date();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -328,10 +338,31 @@ export default function JobsPage() {
     setShowModal(true);
   };
 
+  // Repeat Order — copies job data into a new job
+  const handleRepeatOrder = (job: Job) => {
+    setFormData({
+      project_name: `${job.project_name} (Repeat)`,
+      client_id: job.client_id || '',
+      job_type: job.job_type || 'Design + Print',
+      product_category: job.product_category || 'Other',
+      product_type: job.job_type || 'STICKER',
+      quantity: job.quantity,
+      vendor_id: job.vendor_id || '',
+      designer_id: job.designer_id || '',
+      client_deadline: '',
+      priority: job.priority || 'normal',
+      quote_per_piece: job.quote_per_piece || 0,
+      gst_rate: job.gst_rate || 18,
+      current_stage: 'new'
+    });
+    setEditingJob(null); // This is a NEW job, not editing
+    setShowModal(true);
+  };
+
   if (loading && !forceShow) {
     return (
       <div className="flex items-center justify-center p-44">
-        <Loader2 className="w-8 h-8 animate-spin text-oms-blue" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
         <span className="ml-2">Loading jobs...</span>
       </div>
     );
@@ -350,51 +381,69 @@ export default function JobsPage() {
       )}
 
       <div className="flex items-start justify-between mb-3">
-        <div className={`px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide ${getPriorityBadge(job.priority)}`}>
+        <Badge className={getPriorityBadge(job.priority)}>
           {job.priority.toUpperCase()}
-        </div>
-        <span className="font-mono text-xs text-white font-medium bg-oms-blue px-2 py-1 rounded-md">
+        </Badge>
+        <Badge variant="default" className="font-mono">
           {job.job_number}
-        </span>
+        </Badge>
       </div>
 
-      <h4 className="font-semibold text-gray-900 mb-1 line-clamp-2 leading-snug group-hover:text-oms-blue transition-colors">
+      <h4 className="font-semibold text-gray-900 mb-1 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
         {job.project_name}
       </h4>
 
       <div className="flex items-center gap-2 mb-4">
-        <Building2 className="w-3.5 h-3.5 text-gray-400" />
+        <Building2 className="w-4 h-4 text-gray-400" />
         <p className="text-sm text-gray-500 truncate">{job.client?.name || 'No client'}</p>
       </div>
 
       <div className="flex items-center justify-between text-xs pt-3 border-t border-gray-100 text-gray-500">
-        <span className={`px-2 py-1 rounded-md font-medium ${getPaymentBadge(job.payment_status)}`}>
+        <Badge variant="outline" className={getPaymentBadge(job.payment_status)}>
           {formatCurrency(job.amount_received)} / {formatCurrency(job.total_amount)}
-        </span>
+        </Badge>
 
         {job.client_deadline && (
           <span className={`flex items-center gap-1.5 font-medium ${isOverdue(job.client_deadline, job.current_stage) ? 'text-red-600' : 'text-gray-400'}`}>
-            <Calendar className="w-3.5 h-3.5" />
+            <Calendar className="w-4 h-4" />
             {formatDate(job.client_deadline)}
           </span>
         )}
       </div>
 
       <div className="flex items-center justify-end gap-2 mt-3 pt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button
+        <Button
+          size="icon"
+          variant="ghost"
           onClick={(e) => { e.stopPropagation(); handleEdit(job); }}
-          className="p-2 bg-white hover:bg-gray-100 text-gray-600 rounded-lg transition-colors"
           title="Edit"
         >
-          <Edit className="w-3.5 h-3.5" />
-        </button>
-        <button
+          <Edit />
+        </Button>
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={(e) => { e.stopPropagation(); handleRepeatOrder(job); }}
+          title="Repeat Order"
+        >
+          <Copy />
+        </Button>
+        <Button
+          size="icon"
+          variant="ghost"
           onClick={(e) => { e.stopPropagation(); handleAddPayment(job); }}
-          className="p-2 bg-white hover:bg-gray-100 text-gray-900 rounded-lg transition-colors"
           title="Add Payment"
         >
-          <IndianRupee className="w-3.5 h-3.5" />
-        </button>
+          <IndianRupee />
+        </Button>
+        <Button
+          size="icon"
+          variant="destructive"
+          onClick={(e) => { e.stopPropagation(); handleDelete(job.id); }}
+          title="Delete"
+        >
+          <Trash2 />
+        </Button>
       </div>
     </div>
   );
@@ -407,35 +456,37 @@ export default function JobsPage() {
           <h1 className="text-page-title text-gray-900 tracking-tight">Jobs</h1>
           <p className="text-sm text-gray-500 mt-1">{activeJobs} active of {totalJobs} total jobs</p>
         </div>
-        <button
-          onClick={handleAddNew}
-          className="flex items-center justify-center gap-2 bg-oms-blue hover:bg-blue-600 text-white px-4 md:px-5 py-2.5 md:py-3 rounded-xl transition-all hover:scale-105 active:scale-95 text-sm md:text-base"
-        >
-          <Plus className="w-4 h-4 md:w-4.5 md:h-4.5 md:hidden" />
-          <Plus className="w-5 h-5 hidden md:block" />
-          <span className="font-medium">New Job</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredJobs, JOB_COLUMNS, 'jobs_export')} title="Export as CSV">
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Export</span>
+          </Button>
+          <Button onClick={handleAddNew}>
+            <Plus />
+            New Job
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <div className="bg-white rounded-xl md:rounded-2xl p-3 md:p-5 border border-gray-100 ">
-          <p className="text-[10px] md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Total Jobs</p>
-          <p className="text-2xl md:text-page-title text-gray-900">{totalJobs}</p>
+        <div className="bg-white rounded-lg p-3 md:p-5 border border-gray-100 ">
+          <p className="text-xs md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Total Jobs</p>
+          <p className="text-page-title text-gray-900">{totalJobs}</p>
         </div>
-        <div className="bg-white rounded-xl md:rounded-2xl p-3 md:p-5 border border-gray-100 ">
-          <p className="text-[10px] md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Active</p>
-          <p className="text-2xl md:text-page-title text-oms-blue">{activeJobs}</p>
+        <div className="bg-white rounded-lg p-3 md:p-5 border border-gray-100 ">
+          <p className="text-xs md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Active</p>
+          <p className="text-page-title text-primary">{activeJobs}</p>
         </div>
-        <div className="bg-white rounded-xl md:rounded-2xl p-3 md:p-5 border border-gray-100 ">
-          <p className="text-[10px] md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Revenue</p>
-          <p className="text-xl md:text-page-title text-gray-900 truncate" title={formatCurrency(totalRevenue)}>
+        <div className="bg-white rounded-lg p-3 md:p-5 border border-gray-100 ">
+          <p className="text-xs md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Revenue</p>
+          <p className="text-page-title text-gray-900 truncate" title={formatCurrency(totalRevenue)}>
             {formatCurrency(totalRevenue)}
           </p>
         </div>
-        <div className="bg-white rounded-xl md:rounded-2xl p-3 md:p-5 border border-gray-100 ">
-          <p className="text-[10px] md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Pending</p>
-          <p className="text-xl md:text-page-title text-oms-orange truncate" title={formatCurrency(pendingPayments)}>
+        <div className="bg-white rounded-lg p-3 md:p-5 border border-gray-100 ">
+          <p className="text-xs md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Pending</p>
+          <p className="text-page-title text-destructive truncate" title={formatCurrency(pendingPayments)}>
             {formatCurrency(pendingPayments)}
           </p>
         </div>
@@ -444,87 +495,85 @@ export default function JobsPage() {
 
       {/* Print Production Links */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
-        <Link href="/admin/print-planner" className="flex items-center gap-2 md:gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-oms-blue/20 transition-all group">
-          <div className="w-12 h-12 bg-oms-blue rounded-xl flex items-center justify-center transition-colors">
+        <Link href="/admin/print-planner" className="flex items-center gap-2 md:gap-4 bg-white p-5 rounded-lg border border-gray-100 hover:border-primary/20 transition-all group">
+          <div className="w-12 h-12 bg-gray-900 rounded-lg flex items-center justify-center transition-colors">
             <Layers className="w-6 h-6 text-white" />
           </div>
           <div>
             <h3 className="font-bold text-gray-900">Print Planner</h3>
             <p className="text-sm text-gray-500">Create production batches</p>
           </div>
-          <ArrowRight className="w-5 h-5 ml-auto text-gray-300 group-hover:text-oms-blue" />
+          <ArrowRight className="w-5 h-5 ml-auto text-gray-300 group-hover:text-primary" />
         </Link>
-        <Link href="/admin/production-queue" className="flex items-center gap-2 md:gap-4 bg-white p-5 rounded-2xl border border-gray-100 hover:border-oms-blue/20 transition-all group">
-          <div className="w-12 h-12 bg-oms-blue rounded-xl flex items-center justify-center transition-colors">
+        <Link href="/admin/production-queue" className="flex items-center gap-2 md:gap-4 bg-white p-5 rounded-lg border border-gray-100 hover:border-primary/20 transition-all group">
+          <div className="w-12 h-12 bg-gray-900 rounded-lg flex items-center justify-center transition-colors">
             <Printer className="w-6 h-6 text-white" />
           </div>
           <div>
             <h3 className="font-bold text-gray-900">Production Queue</h3>
             <p className="text-sm text-gray-500">Track job status</p>
           </div>
-          <ArrowRight className="w-5 h-5 ml-auto text-gray-300 group-hover:text-oms-blue" />
+          <ArrowRight className="w-5 h-5 ml-auto text-gray-300 group-hover:text-primary" />
         </Link>
       </div>
 
       {/* Filters & Controls */}
-      <div className="flex flex-col xl:flex-row gap-3 md:gap-4 bg-white p-3 md:p-4 rounded-xl md:rounded-2xl  border border-gray-100">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search jobs, clients, or numbers..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border-0 rounded-lg md:rounded-xl focus:ring-2 focus:ring-oms-blue/20 text-sm md:text-base text-gray-900 placeholder-gray-400 transition-all font-medium"
-          />
+      <div className="flex flex-col xl:flex-row gap-3 md:gap-4 bg-white p-3 md:p-4 rounded-lg border border-gray-100">
+        <div className="flex-1">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Search jobs, clients, or numbers..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
-          <div className="flex gap-2 min-w-max">
-            <select
-              value={stageFilter}
-              onChange={(e) => setStageFilter(e.target.value)}
-              className="px-3 md:px-4 py-2.5 md:py-3 bg-white border-0 rounded-lg md:rounded-xl focus:ring-2 focus:ring-oms-blue/20 font-medium text-sm md:text-base text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-            >
-              <option value="all">All Stages</option>
-              {stages.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+          <Select value={stageFilter} onValueChange={setStageFilter}>
+            <SelectTrigger className="w-auto min-w-[120px] h-9 text-sm">
+              <SelectValue placeholder="All Stages" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Stages</SelectItem>
+              {stages.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
 
-            <select
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-              className="px-3 md:px-4 py-2.5 md:py-3 bg-white border-0 rounded-lg md:rounded-xl focus:ring-2 focus:ring-oms-blue/20 font-medium text-sm md:text-base text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-            >
-              <option value="all">All Priority</option>
-              {priorities.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-          </div>
+          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <SelectTrigger className="w-auto min-w-[120px] h-9 text-sm">
+              <SelectValue placeholder="All Priority" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Priority</SelectItem>
+              {priorities.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
 
-          <div className="flex gap-1 bg-gray-100 p-1 rounded-lg md:rounded-xl sm:ml-auto">
-            <button
-              onClick={() => setViewMode('kanban')}
-              className={`p-2 md:p-2.5 rounded-md md:rounded-lg transition-all ${viewMode === 'kanban' ? 'bg-white shadow text-oms-blue' : 'text-gray-500 hover:text-gray-700'}`}
-              title="Board View"
-            >
-              <LayoutGrid className="w-4 h-4 md:w-4.5 md:h-4.5 md:hidden" />
-              <LayoutGrid className="w-5 h-5 hidden md:block" />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-2 md:p-2.5 rounded-md md:rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow text-oms-blue' : 'text-gray-500 hover:text-gray-700'}`}
-              title="List View"
-            >
-              <List className="w-4 h-4 md:w-4.5 md:h-4.5 md:hidden" />
-              <List className="w-5 h-5 hidden md:block" />
-            </button>
-          </div>
+          <ToggleGroup
+            type="single"
+            value={viewMode}
+            onValueChange={(value) => value && setViewMode(value as 'kanban' | 'list')}
+            size="sm"
+            className="gap-0"
+          >
+            <ToggleGroupItem value="kanban" aria-label="Grid view" className="h-9 w-9 p-0">
+              <LayoutGrid />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="list" aria-label="List view" className="h-9 w-9 p-0">
+              <List />
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
       </div>
 
       {/* Empty State */}
       {
         filteredJobs.length === 0 && (
-          <div className="text-center py-24 bg-white rounded-3xl border border-dashed border-gray-300">
+          <div className="text-center py-24 bg-white rounded-lg border border-dashed border-gray-300">
             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
               <Briefcase className="w-8 h-8 text-gray-400" />
             </div>
@@ -532,13 +581,10 @@ export default function JobsPage() {
             <p className="text-gray-500 mb-3 md:mb-1.5 max-w-sm mx-auto">
               {searchTerm ? 'Try adjusting your search terms or filters.' : 'Get started by creating your first job.'}
             </p>
-            <button
-              onClick={handleAddNew}
-              className="inline-flex items-center gap-2 bg-oms-blue hover:opacity-90 text-white px-4 py-2 rounded-xl font-medium transition-colors -200"
-            >
-              <Plus className="w-5 h-5" />
-              <span>Create New Job</span>
-            </button>
+            <Button onClick={handleAddNew}>
+              <Plus />
+              Create New Job
+            </Button>
           </div>
         )
       }
@@ -598,7 +644,7 @@ export default function JobsPage() {
                     <tr key={job.id} className="hover:bg-white cursor-pointer" onClick={() => handleViewDetail(job)}>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-sm text-oms-blue">{job.job_number}</span>
+                          <span className="font-mono text-sm text-primary">{job.job_number}</span>
                           <span className={`text-xs px-2 py-0.5 rounded-full ${getPriorityBadge(job.priority)}`}>{job.priority}</span>
                         </div>
                         <p className="text-sm font-medium">{job.project_name}</p>
@@ -623,8 +669,12 @@ export default function JobsPage() {
                       </td>
                       <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
-                          <button onClick={() => handleEdit(job)} className="p-2 hover:bg-gray-100 rounded-lg"><Edit className="w-4 h-4 text-gray-500" /></button>
-                          <button onClick={() => handleDelete(job.id)} className="p-2 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4 text-red-500" /></button>
+                          <Button size="icon" variant="ghost" onClick={() => handleEdit(job)}>
+                            <Edit />
+                          </Button>
+                          <Button size="icon" variant="destructive" onClick={() => handleDelete(job.id)}>
+                            <Trash2 />
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -638,179 +688,241 @@ export default function JobsPage() {
 
       {/* Add/Edit Job Modal */}
       {
-        showModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto animate-scale-in">
-              <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white rounded-t-2xl z-10">
-                <h2 className="text-section">{editingJob ? 'Edit Job' : 'New Job'}</h2>
-                <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
+        <Dialog open={showModal} onOpenChange={setShowModal}>
+          <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{editingJob ? 'Edit Job' : 'New Job'}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="project_name">Project Name *</Label>
+                <Input
+                  id="project_name"
+                  type="text"
+                  required
+                  value={formData.project_name}
+                  onChange={(e) => setFormData({ ...formData, project_name: e.target.value })}
+                  placeholder="e.g., Wedding Invitation Cards"
+                />
               </div>
-              <form onSubmit={handleSubmit} className="p-4 space-y-4">
+
+              {/* Client Selection */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Client</label>
+                <div className="flex gap-2">
+                  <select value={formData.client_id} onChange={(e) => setFormData({ ...formData, client_id: e.target.value })} className="flex-1 px-3 py-2 border rounded-md">
+                    <option value="">Select Client</option>
+                    {clients.map(c => <option key={c.id} value={c.id}>{c.name} {c.company && `(${c.company})`}</option>)}
+                  </select>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => setShowAddClientModal(true)}
+                  >
+                    <Plus />
+                    <span className="hidden sm:inline">Add</span>
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Job Type</label>
+                <div className="flex gap-2">
+                  <select value={formData.job_type} onChange={(e) => setFormData({ ...formData, job_type: e.target.value })} className="flex-1 px-3 py-2 border rounded-md">
+                    {jobTypes.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
+                  </select>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => setShowAddJobTypeModal(true)}
+                  >
+                    <Plus />
+                    <span className="hidden sm:inline">Add</span>
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Product Category *</label>
+                <div className="flex gap-2">
+                  <select value={formData.product_category} onChange={(e) => setFormData({ ...formData, product_category: e.target.value })} className="flex-1 px-3 py-2 border rounded-md">
+                    {productCategories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                  </select>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => setShowAddCategoryModal(true)}
+                  >
+                    <Plus />
+                    <span className="hidden sm:inline">Add</span>
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Used for production checklists in EOD reports</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Product Type (for Print Planner) *</label>
+                <div className="flex gap-2">
+                  <select value={formData.product_type} onChange={(e) => setFormData({ ...formData, product_type: e.target.value })} className="flex-1 px-3 py-2 border rounded-md">
+                    {productTypes.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
+                  </select>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => setShowAddProductTypeModal(true)}
+                  >
+                    <Plus />
+                    <span className="hidden sm:inline">Add</span>
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-600 mt-1">⚡ Jobs with same type can be batched together in print runs</p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 md:gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Project Name *</label>
-                  <input type="text" required value={formData.project_name} onChange={(e) => setFormData({ ...formData, project_name: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-xl" placeholder="e.g., Wedding Invitation Cards" />
+                  <label className="block text-sm font-medium mb-1">Quantity</label>
+                  <input type="number" min="1" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
+                    className="w-full px-3 py-2 border rounded-md" />
                 </div>
-
-                {/* Client Selection */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Client</label>
-                  <div className="flex gap-2">
-                    <select value={formData.client_id} onChange={(e) => setFormData({ ...formData, client_id: e.target.value })} className="flex-1 px-3 py-2 border rounded-xl">
-                      <option value="">Select Client</option>
-                      {clients.map(c => <option key={c.id} value={c.id}>{c.name} {c.company && `(${c.company})`}</option>)}
-                    </select>
-                    <button type="button" onClick={() => setShowAddClientModal(true)}
-                      className="px-3 py-2 bg-oms-blue text-white rounded-xl hover:bg-oms-blue flex items-center gap-1">
-                      <Plus className="w-4 h-4" /><span className="hidden sm:inline">Add</span>
-                    </button>
-                  </div>
+                  <label className="block text-sm font-medium mb-1">Rate/Pc (₹)</label>
+                  <input type="number" min="0" step="0.01" value={formData.quote_per_piece} onChange={(e) => setFormData({ ...formData, quote_per_piece: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border rounded-md" />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium mb-1">Job Type</label>
-                  <div className="flex gap-2">
-                    <select value={formData.job_type} onChange={(e) => setFormData({ ...formData, job_type: e.target.value })} className="flex-1 px-3 py-2 border rounded-xl">
-                      {jobTypes.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
-                    </select>
-                    <button type="button" onClick={() => setShowAddJobTypeModal(true)}
-                      className="px-3 py-2 bg-oms-blue text-white rounded-xl hover:bg-oms-blue flex items-center gap-1">
-                      <Plus size={16} /><span className="hidden sm:inline">Add</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Product Category *</label>
-                  <div className="flex gap-2">
-                    <select value={formData.product_category} onChange={(e) => setFormData({ ...formData, product_category: e.target.value })} className="flex-1 px-3 py-2 border rounded-xl bg-oms-blue">
-                      {productCategories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                    </select>
-                    <button type="button" onClick={() => setShowAddCategoryModal(true)}
-                      className="px-3 py-2 bg-oms-blue text-white rounded-xl hover:bg-oms-blue flex items-center gap-1">
-                      <Plus size={16} /><span className="hidden sm:inline">Add</span>
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">Used for production checklists in EOD reports</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Product Type (for Print Planner) *</label>
-                  <div className="flex gap-2">
-                    <select value={formData.product_type} onChange={(e) => setFormData({ ...formData, product_type: e.target.value })} className="flex-1 px-3 py-2 border rounded-xl bg-orange-50">
-                      {productTypes.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
-                    </select>
-                    <button type="button" onClick={() => setShowAddProductTypeModal(true)}
-                      className="px-3 py-2 bg-orange-100 text-orange-700 rounded-xl hover:bg-orange-200 flex items-center gap-1">
-                      <Plus size={16} /><span className="hidden sm:inline">Add</span>
-                    </button>
-                  </div>
-                  <p className="text-xs text-orange-600 mt-1">⚡ Jobs with same type can be batched together in print runs</p>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 md:gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Quantity</label>
-                    <input type="number" min="1" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
-                      className="w-full px-3 py-2 border rounded-xl" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Rate/Pc (₹)</label>
-                    <input type="number" min="0" step="0.01" value={formData.quote_per_piece} onChange={(e) => setFormData({ ...formData, quote_per_piece: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-3 py-2 border rounded-xl" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">GST %</label>
-                    <select value={formData.gst_rate} onChange={(e) => setFormData({ ...formData, gst_rate: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-xl">
-                      <option value={0}>0%</option>
-                      <option value={5}>5%</option>
-                      <option value={12}>12%</option>
-                      <option value={18}>18%</option>
-                      <option value={28}>28%</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Amount Preview */}
-                <div className="bg-white rounded-xl p-4 grid grid-cols-3 gap-2 md:gap-4 text-center">
-                  <div><p className="text-xs text-gray-500">Subtotal</p><p className="font-semibold">{formatCurrency(formData.quantity * formData.quote_per_piece)}</p></div>
-                  <div><p className="text-xs text-gray-500">GST ({formData.gst_rate}%)</p><p className="font-semibold text-blue-600">{formatCurrency(formData.quantity * formData.quote_per_piece * formData.gst_rate / 100)}</p></div>
-                  <div><p className="text-xs text-gray-500">Total</p><p className="font-bold text-oms-blue">{formatCurrency(formData.quantity * formData.quote_per_piece * (1 + formData.gst_rate / 100))}</p></div>
-                </div>
-
-                {/* Designer Selection */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">Designer</label>
-                  <select value={formData.designer_id} onChange={(e) => setFormData({ ...formData, designer_id: e.target.value })} className="w-full px-3 py-2 border rounded-xl bg-white focus:ring-2 focus:ring-oms-blue">
-                    <option value="">Select Designer</option>
-                    {designers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  <label className="block text-sm font-medium mb-1">GST %</label>
+                  <select value={formData.gst_rate} onChange={(e) => setFormData({ ...formData, gst_rate: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-md">
+                    <option value={0}>0%</option>
+                    <option value={5}>5%</option>
+                    <option value={12}>12%</option>
+                    <option value={18}>18%</option>
+                    <option value={28}>28%</option>
                   </select>
                 </div>
+              </div>
 
-                {/* Vendor Selection */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">Vendor</label>
-                  <div className="flex gap-2">
-                    <select value={formData.vendor_id} onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })} className="flex-1 px-3 py-2 border rounded-xl">
-                      <option value="">Select Vendor</option>
-                      {vendors.map(v => <option key={v.id} value={v.id}>{v.name} {v.category && `(${v.category})`}</option>)}
-                    </select>
-                    <button type="button" onClick={() => setShowAddVendorModal(true)}
-                      className="px-3 py-2 bg-orange-100 text-orange-700 rounded-xl hover:bg-orange-200 flex items-center gap-1">
-                      <Plus className="w-4 h-4" /><span className="hidden sm:inline">Add</span>
-                    </button>
-                  </div>
-                </div>
+              {/* Amount Preview */}
+              <div className="bg-white rounded-lg p-4 grid grid-cols-3 gap-2 md:gap-4 text-center">
+                <div><p className="text-xs text-gray-500">Subtotal</p><p className="font-semibold">{formatCurrency(formData.quantity * formData.quote_per_piece)}</p></div>
+                <div><p className="text-xs text-gray-500">GST ({formData.gst_rate}%)</p><p className="font-semibold text-foreground">{formatCurrency(formData.quantity * formData.quote_per_piece * formData.gst_rate / 100)}</p></div>
+                <div><p className="text-xs text-gray-500">Total</p><p className="font-bold text-primary">{formatCurrency(formData.quantity * formData.quote_per_piece * (1 + formData.gst_rate / 100))}</p></div>
+              </div>
 
-                <div className="grid grid-cols-2 gap-2 md:gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Priority</label>
-                    <div className="flex gap-2">
-                      <select value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: e.target.value })} className="flex-1 px-3 py-2 border rounded-xl">
-                        {priorities.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                      </select>
-                      <button type="button" onClick={() => setShowAddPriorityModal(true)}
-                        className="px-3 py-2 bg-yellow-100 text-yellow-700 rounded-xl hover:bg-yellow-200 flex items-center gap-1">
-                        <Plus size={16} />
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Current Stage</label>
-                    <div className="flex gap-2">
-                      <select value={formData.current_stage} onChange={(e) => setFormData({ ...formData, current_stage: e.target.value })} className="flex-1 px-3 py-2 border rounded-xl">
-                        {stages.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                      </select>
-                      <button type="button" onClick={() => setShowAddStageModal(true)}
-                        className="px-3 py-2 bg-teal-100 text-teal-700 rounded-xl hover:bg-teal-200 flex items-center gap-1">
-                        <Plus size={16} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+              {/* Designer Selection */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Designer</label>
+                <select value={formData.designer_id} onChange={(e) => setFormData({ ...formData, designer_id: e.target.value })} className="w-full px-3 py-2 border rounded-md bg-white focus:ring-2 focus:ring-gray-400">
+                  <option value="">Select Designer</option>
+                  {designers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Deadline</label>
-                  <input type="date" value={formData.client_deadline} onChange={(e) => setFormData({ ...formData, client_deadline: e.target.value })} className="w-full px-3 py-2 border rounded-xl" />
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-white focus:outline-none focus:ring-2 focus:ring-gray-200">
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:opacity-50 flex items-center justify-center gap-2"
+              {/* Vendor Selection */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Vendor</label>
+                <div className="flex gap-2">
+                  <select value={formData.vendor_id} onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })} className="flex-1 px-3 py-2 border rounded-md">
+                    <option value="">Select Vendor</option>
+                    {vendors.map(v => <option key={v.id} value={v.id}>{v.name} {v.category && `(${v.category})`}</option>)}
+                  </select>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => setShowAddVendorModal(true)}
                   >
-                    {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                    {editingJob ? 'Update Job' : 'Create Job'}
-                  </button>
+                    <Plus />
+                    <span className="hidden sm:inline">Add</span>
+                  </Button>
                 </div>
-              </form>
-            </div>
-          </div >
-        )
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 md:gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Priority</label>
+                  <div className="flex gap-2">
+                    <select value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: e.target.value })} className="flex-1 px-3 py-2 border rounded-md">
+                      {priorities.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="secondary"
+                      onClick={() => setShowAddPriorityModal(true)}
+                    >
+                      <Plus />
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Current Stage</label>
+                  <div className="flex gap-2">
+                    <select value={formData.current_stage} onChange={(e) => setFormData({ ...formData, current_stage: e.target.value })} className="flex-1 px-3 py-2 border rounded-md">
+                      {stages.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="secondary"
+                      onClick={() => setShowAddStageModal(true)}
+                    >
+                      <Plus />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Deadline</label>
+                <input type="date" value={formData.client_deadline} onChange={(e) => setFormData({ ...formData, client_deadline: e.target.value })} className="w-full px-3 py-2 border rounded-md" />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1"
+                >
+                  {saving && <Loader2 className="animate-spin" />}
+                  {editingJob ? 'Update Job' : 'Create Job'}
+                </Button>
+              </div>
+            </form>
+
+            {/* File Attachments - only when editing */}
+            {editingJob && (
+              <div className="mt-6 pt-4 border-t">
+                <JobFileAttachments
+                  jobId={editingJob.id}
+                  files={editingJob.files || []}
+                  onFilesUpdated={(updatedFiles) => {
+                    setEditingJob({ ...editingJob, files: updatedFiles });
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Timeline - only show when editing */}
+            {editingJob && (
+              <div className="mt-6 pt-4 border-t">
+                <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Stage History
+                </h3>
+                <JobTimeline jobId={editingJob.id} stages={stages} />
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       }
 
       {/* Payment Modal */}
@@ -836,7 +948,7 @@ export default function JobsPage() {
                     <select
                       value={paymentMode}
                       onChange={(e) => setPaymentMode(e.target.value as PaymentMode)}
-                      className="w-1/3 px-3 py-3 border rounded-xl bg-white focus:ring-2 focus:ring-oms-blue"
+                      className="w-1/3 px-3 py-3 border rounded-xl bg-white focus:ring-2 focus:ring-gray-400"
                     >
                       <option value="cash">Cash</option>
                       <option value="upi">UPI / GPay</option>
@@ -851,8 +963,12 @@ export default function JobsPage() {
                   </p>
                 </div>
                 <div className="flex gap-3">
-                  <button onClick={() => setShowPaymentModal(false)} className="flex-1 px-4 py-2 text-gray-600 border rounded-xl">Cancel</button>
-                  <button onClick={submitPayment} className="flex-1 px-4 py-2 btn-primary">Confirm</button>
+                  <Button variant="outline" onClick={() => setShowPaymentModal(false)} className="flex-1">
+                    Cancel
+                  </Button>
+                  <Button onClick={submitPayment} className="flex-1">
+                    Confirm
+                  </Button>
                 </div>
               </div>
             </div>

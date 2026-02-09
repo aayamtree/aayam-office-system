@@ -56,7 +56,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
             <div className="bg-white rounded-2xl  max-w-3xl w-full max-h-[90vh] overflow-hidden">
                 {/* Header */}
-                <div className="bg-oms-blue p-6 text-white">
+                <div className="bg-gray-900 p-6 text-white">
                     <div className="flex items-start justify-between">
                         <div className="flex-1">
                             <h2 className="text-page-title mb-1">
@@ -68,24 +68,24 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                         </div>
                         <button
                             onClick={onClose}
-                            className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                            className="p-2 hover:bg-white/20 rounded-md transition-colors"
                         >
-                            <X className="w-5 h-5" />
+                            <X className="w-4 h-4" />
                         </button>
                     </div>
 
                     {/* Quick Stats */}
                     <div className="grid grid-cols-3 gap-2 md:gap-4 mt-3 md:mt-6">
-                        <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
+                        <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
                             <div className="text-page-title">{todayEvents.length}</div>
                             <div className="text-xs text-white/80">Tasks Today</div>
                         </div>
-                        <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-                            <div className="text-page-title text-orange-200">{overdueEvents.length}</div>
+                        <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                            <div className="text-page-title">{overdueEvents.length}</div>
                             <div className="text-xs text-white/80">Overdue</div>
                         </div>
-                        <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-                            <div className="text-page-title text-red-200">{urgentEvents.length}</div>
+                        <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                            <div className="text-page-title">{urgentEvents.length}</div>
                             <div className="text-xs text-white/80">Urgent</div>
                         </div>
                     </div>
@@ -95,7 +95,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                 <div className="p-6 overflow-y-auto max-h-[calc(90vh-280px)]">
                     {totalPending === 0 ? (
                         <div className="text-center py-12">
-                            <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                            <CheckCircle className="w-16 h-16 text-gray-600 mx-auto mb-4" />
                             <h3 className="text-section text-gray-900 mb-2">
                                 All Caught Up! 🎉
                             </h3>
@@ -109,8 +109,8 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                             {overdueEvents.length > 0 && (
                                 <div>
                                     <div className="flex items-center gap-2 mb-3">
-                                        <AlertTriangle className="w-5 h-5 text-red-600" />
-                                        <h3 className="font-bold text-red-900">Overdue ({overdueEvents.length})</h3>
+                                        <AlertTriangle className="w-5 h-5 text-gray-700" />
+                                        <h3 className="font-bold text-gray-900">Overdue ({overdueEvents.length})</h3>
                                     </div>
                                     <div className="space-y-2">
                                         {overdueEvents.slice(0, 5).map(event => (
@@ -124,7 +124,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                             {todayEvents.length > 0 && (
                                 <div>
                                     <div className="flex items-center gap-2 mb-3">
-                                        <Calendar className="w-5 h-5 text-oms-blue" />
+                                        <Calendar className="w-5 h-5 text-gray-900" />
                                         <h3 className="font-bold text-gray-900">Today&apos;s Tasks ({todayEvents.length})</h3>
                                     </div>
                                     <div className="space-y-2">
@@ -139,7 +139,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                             {taggedEvents.length > 0 && (
                                 <div>
                                     <div className="flex items-center gap-2 mb-3">
-                                        <User className="w-5 h-5 text-blue-600" />
+                                        <User className="w-5 h-5 text-gray-700" />
                                         <h3 className="font-bold text-gray-900">You&apos;re Tagged ({taggedEvents.length})</h3>
                                     </div>
                                     <div className="space-y-2">
@@ -166,7 +166,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                             onClose();
                             window.location.href = '/admin/calendar';
                         }}
-                        className="px-4 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-lg hover:bg-[rgba(0,0,255,0.1)] transition-colors"
+                        className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-md transition-colors"
                     >
                         View Full Calendar →
                     </button>
@@ -179,9 +179,9 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
 function TaskCard({ event, isOverdue, isTagged }: { event: any; isOverdue?: boolean; isTagged?: boolean }) {
     const priorityColors = {
         low: 'bg-gray-100 text-gray-700',
-        normal: 'bg-blue-100 text-blue-700',
-        high: 'bg-orange-100 text-orange-700',
-        urgent: 'bg-red-100 text-red-700'
+        normal: 'bg-gray-200 text-gray-800',
+        high: 'bg-gray-300 text-gray-900',
+        urgent: 'bg-gray-400 text-gray-900'
     };
 
     const isCompleted = event.status === 'completed';

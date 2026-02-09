@@ -62,7 +62,7 @@ export default function SharedCalendarView({ events, loading }: SharedCalendarVi
     return (
         <div className="bg-white rounded-2xl border border-gray-100">
             {/* FILTER HEADER - TOP INDEXING */}
-            <div className="p-4 border-b border-gray-100 bg-oms-blue">
+            <div className="p-4 border-b border-gray-100 bg-gray-900">
                 <div className="flex flex-col md:flex-row md:items-center gap-3">
                     {/* Title */}
                     <div className="flex-1">
@@ -81,7 +81,7 @@ export default function SharedCalendarView({ events, loading }: SharedCalendarVi
                             onClick={() => setFilterMode('my')}
                             className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${filterMode === 'my'
                                     ? 'bg-[rgba(0,0,255,0.1)] text-white'
-                                    : 'bg-white border border-gray-200 text-gray-700 hover:border-oms-blue-300'
+                                    : 'bg-white border border-gray-200 text-gray-700 hover:border-primary-300'
                                 }`}
                         >
                             <User className="w-4 h-4" />
@@ -98,7 +98,7 @@ export default function SharedCalendarView({ events, loading }: SharedCalendarVi
                             onClick={() => setFilterMode('all')}
                             className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${filterMode === 'all'
                                     ? 'bg-[rgba(0,0,255,0.1)] text-white'
-                                    : 'bg-white border border-gray-200 text-gray-700 hover:border-oms-blue-300'
+                                    : 'bg-white border border-gray-200 text-gray-700 hover:border-primary-300'
                                 }`}
                         >
                             <Users className="w-4 h-4" />
@@ -112,7 +112,7 @@ export default function SharedCalendarView({ events, loading }: SharedCalendarVi
                                 setSelectedUser(e.target.value);
                                 if (e.target.value) setFilterMode('user');
                             }}
-                            className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:border-oms-blue-300 cursor-pointer"
+                            className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:border-primary-300 cursor-pointer"
                         >
                             <option value="">Filter by User...</option>
                             {allUsers.map(user => (
@@ -127,16 +127,16 @@ export default function SharedCalendarView({ events, loading }: SharedCalendarVi
                 {/* Active Filter Badge */}
                 {filterMode !== 'all' && (
                     <div className="mt-2 flex items-center gap-2 text-sm">
-                        <Filter className="w-4 h-4 text-oms-blue" />
+                        <Filter className="w-4 h-4 text-primary" />
                         <span className="text-gray-700">
                             Showing events by:{' '}
-                            <span className="font-semibold text-oms-blue">
+                            <span className="font-semibold text-primary">
                                 {filterMode === 'my' ? profile?.full_name : selectedUser}
                             </span>
                         </span>
                         <button
                             onClick={() => setFilterMode('all')}
-                            className="text-oms-blue hover:underline"
+                            className="text-primary hover:underline"
                         >
                             Clear filter
                         </button>
@@ -213,7 +213,7 @@ function EventCard({ event, currentUser }: { event: any; currentUser: string }) 
                     {/* User Badge & Date */}
                     <div className="flex items-center gap-2 mb-2">
                         <span className={`px-2 py-1 rounded text-label ${isMyEvent
-                                ? 'bg-[rgba(0,0,255,0.1)] text-oms-blue'
+                                ? 'bg-[rgba(0,0,255,0.1)] text-primary'
                                 : 'bg-gray-200 text-gray-700'
                             }`}>
                             {isMyEvent ? '👤 You' : `👤 ${createdBy}`}
@@ -252,7 +252,7 @@ function EventCard({ event, currentUser }: { event: any; currentUser: string }) 
                             href={event.htmlLink}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-oms-blue hover:underline"
+                            className="text-xs text-primary hover:underline"
                         >
                             View in Google Calendar →
                         </a>
@@ -262,7 +262,7 @@ function EventCard({ event, currentUser }: { event: any; currentUser: string }) 
                 {/* Actions */}
                 {isMyEvent && (
                     <div className="flex flex-col gap-1">
-                        <button className="text-oms-blue hover:text-oms-blue text-xs">
+                        <button className="text-primary hover:text-primary text-xs">
                             Edit
                         </button>
                         <button className="text-red-600 hover:text-red-700 text-xs">

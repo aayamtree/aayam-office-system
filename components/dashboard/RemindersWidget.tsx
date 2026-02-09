@@ -91,7 +91,7 @@ export default function RemindersWidget() {
                             <button
                                 type="submit"
                                 disabled={saving}
-                                className="px-3 py-1 bg-gray-900 text-white text-xs rounded-lg hover:bg-gray-800 disabled:opacity-50"
+                                className="px-3 py-2 bg-gray-900 text-white text-xs rounded-md hover:bg-gray-800 disabled:opacity-50"
                             >
                                 {saving ? 'Adding...' : 'Add'}
                             </button>
@@ -110,7 +110,7 @@ export default function RemindersWidget() {
                         <div key={reminder.id} className="group flex items-center gap-2 p-1.5 hover:bg-gray-50 rounded-lg transition-colors">
                             <button
                                 onClick={() => toggleComplete(reminder)}
-                                className="text-gray-400 hover:text-oms-blue transition-colors flex-shrink-0"
+                                className="text-gray-400 hover:text-primary transition-colors flex-shrink-0"
                             >
                                 <Circle size={16} />
                             </button>
@@ -140,7 +140,7 @@ export default function RemindersWidget() {
                                     <div key={reminder.id} className="group flex items-center gap-2 p-1.5 rounded-lg">
                                         <button
                                             onClick={() => toggleComplete(reminder)}
-                                            className="text-gray-400 hover:text-oms-blue transition-colors flex-shrink-0"
+                                            className="text-gray-400 hover:text-primary transition-colors flex-shrink-0"
                                         >
                                             <CheckCircle2 size={16} className="text-green-500" />
                                         </button>

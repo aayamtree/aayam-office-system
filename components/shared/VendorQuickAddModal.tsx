@@ -105,7 +105,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                             <p className="text-sm text-gray-600">Add a new vendor to the system</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-lg transition-colors">
+                    <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-md transition-colors">
                         <X size={20} />
                     </button>
                 </div>
@@ -172,7 +172,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                                     ))}
                                 </select>
                                 <button type="button" onClick={() => setShowAddCategoryModal(true)}
-                                    className="px-3 py-2 bg-green-100 text-oms-blue rounded-xl hover:bg-[rgba(0,0,255,0.2)] flex items-center gap-1">
+                                    className="px-3 py-2 bg-green-100 text-primary rounded-xl hover:bg-[rgba(0,0,255,0.2)] flex items-center gap-1">
                                     <Plus size={16} /><span className="hidden sm:inline">Add</span>
                                 </button>
                             </div>
@@ -254,14 +254,14 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50"
+                            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={saving}
-                            className="px-8 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium  disabled:opacity-50 flex items-center gap-2"
+                            className="px-8 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-md font-medium  disabled:opacity-50 flex items-center gap-2"
                         >
                             {saving ? (
                                 <>

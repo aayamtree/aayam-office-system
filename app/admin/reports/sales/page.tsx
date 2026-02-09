@@ -80,7 +80,7 @@ export default function SalesReportPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-xl lg:text-page-title text-gray-900">Sales Report</h1>
+            <h1 className="text-page-title text-gray-900">Sales Report</h1>
             <p className="text-sm text-gray-500">Revenue & order analytics</p>
           </div>
         </div>
@@ -156,14 +156,14 @@ export default function SalesReportPage() {
           </div>
           <p className="text-page-title">₹{(totalRevenue / 1000).toFixed(1)}K</p>
         </div>
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+        <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <Package size={18} />
             <span className="text-sm opacity-90">Total Orders</span>
           </div>
           <p className="text-page-title">{totalOrders}</p>
         </div>
-        <div className="bg-oms-blue rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+        <div className="bg-gray-900 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp size={18} />
             <span className="text-sm opacity-90">Avg Order Value</span>
@@ -236,7 +236,7 @@ export default function SalesReportPage() {
                 </div>
                 <div className="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-oms-blue rounded-full"
+                    className="h-full bg-gray-900 rounded-full"
                     style={{ width: `${(revenue / topClients[0][1]) * 100}%` }}
                   />
                 </div>

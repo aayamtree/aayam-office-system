@@ -1,73 +1,179 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  theme: {
-    extend: {
-      // Design System Colors
-      colors: {
-        'oms': {
-          'blue': '#0000FF',      // Primary Blue - actions, links, active items
-          'orange': '#FF6600',    // Accent Orange - urgent, attention
-          'dark': '#3A3F4F',      // Dark Grey - structure, sidebar, primary text
-          'light': '#D5D5D6',     // Light Grey - disabled, secondary areas
-          'white': '#FFFFFF',     // White - main surfaces
-        },
-        'oms-text': {
-          'primary': '#3A3F4F',   // Primary text color
-          'secondary': '#6B6F7A', // Secondary text color
-          'disabled': '#9AA0A6',  // Disabled text color
-        }
-      },
-
-      // Typography - Design System
-      fontFamily: {
-        sans: ['"Google Sans"', '"Product Sans"', 'Roboto', 'Arial', 'sans-serif'],
-      },
-      fontSize: {
-        // Design System Typography
-        'page-title': ['20px', { lineHeight: '1.4', fontWeight: '600' }],  // Semibold 20px
-        'section': ['16px', { lineHeight: '1.5', fontWeight: '600' }],     // Semibold 16px
-        'body': ['14px', { lineHeight: '1.5', fontWeight: '400' }],        // Regular 14px
-        'label': ['12px', { lineHeight: '1.4', fontWeight: '400' }],       // Regular 12px
-        'button': ['14px', { lineHeight: '1.4', fontWeight: '500' }],      // Medium 14px
-
-        // Keep existing for compatibility
-        'xs': ['0.75rem', { lineHeight: '1.5' }],
-        'sm': ['0.875rem', { lineHeight: '1.5' }],
-        'base': ['0.875rem', { lineHeight: '1.5' }],
-        'lg': ['1rem', { lineHeight: '1.5' }],
-        'xl': ['1.125rem', { lineHeight: '1.4' }],
-        '2xl': ['1.25rem', { lineHeight: '1.3' }],
-        '3xl': ['1.5rem', { lineHeight: '1.3' }],
-        '4xl': ['1.875rem', { lineHeight: '1.2' }],
-      },
-
-      // Spacing - 8px Grid System
-      spacing: {
-        '1': '8px',
-        '2': '16px',
-        '3': '24px',
-        '4': '32px',
-        '5': '40px',
-      },
-
-      // DESIGN SYSTEM: No drop shadows - use borders instead
-      boxShadow: {
-        'sm': 'none',
-        'DEFAULT': 'none',
-        'md': 'none',
-        'lg': 'none',
-        'xl': 'none',
-        '2xl': 'none',
-        'inner': 'none',
-        'none': 'none',
-      },
-    },
-  },
-  plugins: [],
+	darkMode: ['class'],
+	content: [
+		'./pages/**/*.{js,ts,jsx,tsx,mdx}',
+		'./components/**/*.{js,ts,jsx,tsx,mdx}',
+		'./app/**/*.{js,ts,jsx,tsx,mdx}',
+	],
+	theme: {
+		extend: {
+			colors: {
+				oms: {
+					blue: '#0000FF',
+					orange: '#FF6600',
+					dark: '#3A3F4F',
+					light: '#D5D5D6',
+					white: '#FFFFFF'
+				},
+				'oms-text': {
+					primary: '#3A3F4F',
+					secondary: '#6B6F7A',
+					disabled: '#9AA0A6'
+				},
+				background: 'hsl(var(--background))',
+				foreground: 'hsl(var(--foreground))',
+				card: {
+					DEFAULT: 'hsl(var(--card))',
+					foreground: 'hsl(var(--card-foreground))'
+				},
+				popover: {
+					DEFAULT: 'hsl(var(--popover))',
+					foreground: 'hsl(var(--popover-foreground))'
+				},
+				primary: {
+					DEFAULT: 'hsl(var(--primary))',
+					foreground: 'hsl(var(--primary-foreground))'
+				},
+				secondary: {
+					DEFAULT: 'hsl(var(--secondary))',
+					foreground: 'hsl(var(--secondary-foreground))'
+				},
+				muted: {
+					DEFAULT: 'hsl(var(--muted))',
+					foreground: 'hsl(var(--muted-foreground))'
+				},
+				accent: {
+					DEFAULT: 'hsl(var(--accent))',
+					foreground: 'hsl(var(--accent-foreground))'
+				},
+				destructive: {
+					DEFAULT: 'hsl(var(--destructive))',
+					foreground: 'hsl(var(--destructive-foreground))'
+				},
+				border: 'hsl(var(--border))',
+				input: 'hsl(var(--input))',
+				ring: 'hsl(var(--ring))',
+				chart: {
+					'1': 'hsl(var(--chart-1))',
+					'2': 'hsl(var(--chart-2))',
+					'3': 'hsl(var(--chart-3))',
+					'4': 'hsl(var(--chart-4))',
+					'5': 'hsl(var(--chart-5))'
+				}
+			},
+			fontFamily: {
+				sans: [
+					'Google Sans"',
+					'Product Sans"',
+					'Roboto',
+					'Arial',
+					'sans-serif'
+				]
+			},
+			fontSize: {
+				'page-title': [
+					'20px',
+					{
+						lineHeight: '1.4',
+						fontWeight: '600'
+					}
+				],
+				section: [
+					'16px',
+					{
+						lineHeight: '1.5',
+						fontWeight: '600'
+					}
+				],
+				body: [
+					'14px',
+					{
+						lineHeight: '1.5',
+						fontWeight: '400'
+					}
+				],
+				label: [
+					'12px',
+					{
+						lineHeight: '1.4',
+						fontWeight: '400'
+					}
+				],
+				button: [
+					'14px',
+					{
+						lineHeight: '1.4',
+						fontWeight: '500'
+					}
+				],
+				xs: [
+					'0.75rem',
+					{
+						lineHeight: '1.5'
+					}
+				],
+				sm: [
+					'0.875rem',
+					{
+						lineHeight: '1.5'
+					}
+				],
+				base: [
+					'0.875rem',
+					{
+						lineHeight: '1.5'
+					}
+				],
+				lg: [
+					'1rem',
+					{
+						lineHeight: '1.5'
+					}
+				],
+				xl: [
+					'1.125rem',
+					{
+						lineHeight: '1.4'
+					}
+				],
+				'2xl': [
+					'1.25rem',
+					{
+						lineHeight: '1.3'
+					}
+				],
+				'3xl': [
+					'1.5rem',
+					{
+						lineHeight: '1.3'
+					}
+				],
+				'4xl': [
+					'1.875rem',
+					{
+						lineHeight: '1.2'
+					}
+				]
+			},
+			/* spacing: default Tailwind scale (1 unit = 4px) */
+			boxShadow: {
+				sm: 'none',
+				DEFAULT: 'none',
+				md: 'none',
+				lg: 'none',
+				xl: 'none',
+				'2xl': 'none',
+				inner: 'none',
+				none: 'none'
+			},
+			borderRadius: {
+				lg: 'var(--radius)',
+				md: 'calc(var(--radius) - 2px)',
+				sm: 'calc(var(--radius) - 4px)'
+			}
+		}
+	},
+	plugins: [require("tailwindcss-animate")],
 }
 

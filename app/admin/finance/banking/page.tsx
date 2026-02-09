@@ -212,8 +212,8 @@ export default function BankingPage() {
                 <div>
                     <h1 className="text-xl md:text-page-title text-gray-900">Bank Reconciliation</h1>
                     <p className="text-sm md:text-base text-gray-500">Sync HDFC Bank with Aayam System</p>
-                    {loadingTxns && <span className="text-xs text-oms-blue ml-2">Loading Txns...</span>}
-                    {loadingAccounts && <span className="text-xs text-oms-blue ml-2">Loading Accounts...</span>}
+                    {loadingTxns && <span className="text-xs text-primary ml-2">Loading Txns...</span>}
+                    {loadingAccounts && <span className="text-xs text-primary ml-2">Loading Accounts...</span>}
                     {errorAccounts && <div className="text-red-500 text-sm mt-1">Error: {errorAccounts}</div>}
                 </div>
 
@@ -235,7 +235,7 @@ export default function BankingPage() {
                     <button
                         onClick={() => setShowImportModal(true)}
                         disabled={!selectedAccountId}
-                        className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] disabled:opacity-50 whitespace-nowrap text-sm font-semibold shadow-sm"
+                        className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap text-sm font-semibold shadow-sm"
                     >
                         <Upload className="w-4 h-4" /> Import Statement
                     </button>
@@ -279,8 +279,8 @@ export default function BankingPage() {
                 <button
                     onClick={() => setStatusFilter('all')}
                     className={`px-4 py-2 rounded-xl font-medium text-sm whitespace-nowrap transition-colors ${statusFilter === 'all'
-                        ? 'bg-oms-blue text-white'
-                        : 'bg-white border border-gray-200 text-gray-600 hover:border-oms-blue/30'
+                        ? 'bg-gray-900 text-white'
+                        : 'bg-white border border-gray-200 text-gray-600 hover:border-primary/30'
                         }`}
                 >
                     All ({reconciledData.length})
@@ -297,7 +297,7 @@ export default function BankingPage() {
                 <button
                     onClick={() => setStatusFilter('verified')}
                     className={`px-4 py-2 rounded-xl font-medium text-sm whitespace-nowrap transition-colors ${statusFilter === 'verified'
-                        ? 'bg-green-600 text-white'
+                        ? 'bg-gray-900 text-white'
                         : 'bg-white border border-gray-200 text-gray-600 hover:border-green-300'
                         }`}
                 >
@@ -359,13 +359,13 @@ export default function BankingPage() {
                                                     <CheckCircle className="w-3 h-3" /> Verified
                                                 </span>
                                                 {getCategoryName(txn) && (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-oms-blue text-white rounded-full text-xs">
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-900 text-white rounded-full text-xs">
                                                         <Tag className="w-2.5 h-2.5" /> {getCategoryName(txn)}
                                                     </span>
                                                 )}
                                             </div>
                                         ) : txn.status === 'matched' ? (
-                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-label">
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-muted text-foreground rounded-full text-label">
                                                 <CheckCircle className="w-3 h-3" /> Matched
                                             </span>
                                         ) : txn.status === 'ignored' ? (
@@ -396,7 +396,7 @@ export default function BankingPage() {
                                             {!txn.is_verified && txn.status !== 'ignored' && (
                                                 <button
                                                     onClick={() => handleCategorize(txn)}
-                                                    className="p-1.5 hover:bg-oms-blue text-gray-600 hover:text-oms-blue rounded-lg transition-colors"
+                                                    className="p-1.5 hover:bg-gray-900 text-gray-600 hover:text-primary rounded-lg transition-colors"
                                                     title="Categorize Transaction"
                                                 >
                                                     <Edit3 className="w-4 h-4" />
@@ -407,7 +407,7 @@ export default function BankingPage() {
                                             {txn.status === 'ignored' ? (
                                                 <button
                                                     onClick={() => updateTransaction(txn.id, { reference_type: null })}
-                                                    className="p-1.5 hover:bg-blue-50 text-gray-400 hover:text-blue-500 rounded-lg transition-colors"
+                                                    className="p-1.5 hover:bg-muted text-gray-400 hover:text-foreground rounded-lg transition-colors"
                                                     title="Un-ignore (Track again)"
                                                 >
                                                     <Eye className="w-4 h-4" />
@@ -462,7 +462,7 @@ export default function BankingPage() {
                             <button onClick={() => setShowImportModal(false)} className="text-gray-500 hover:text-black">✕</button>
                         </div>
                         <div className="p-5">
-                            <div className="bg-blue-50 p-4 rounded-xl text-sm text-blue-700 mb-4">
+                            <div className="bg-muted p-4 rounded-xl text-sm text-foreground mb-4">
                                 <strong>Instructions:</strong> Open your Bank Statement in Excel. Copy the rows (Date, Description, Ref, Value Date, Withdrawal, Deposit) and paste them below.
                             </div>
                             <div className="flex justify-between items-center mb-2">
@@ -476,13 +476,13 @@ export default function BankingPage() {
                                             alert('Clipboard access denied. Please use Ctrl+V / Cmd+V to paste manually.');
                                         }
                                     }}
-                                    className="text-xs text-oms-blue font-medium hover:underline flex items-center gap-1"
+                                    className="text-xs text-primary font-medium hover:underline flex items-center gap-1"
                                 >
                                     <ClipboardCopy className="w-3 h-3" /> Paste from Clipboard
                                 </button>
                             </div>
                             <textarea
-                                className="w-full h-60 p-4 border rounded-xl font-mono text-xs bg-gray-50 focus:ring-2 ring-oms-blue outline-none"
+                                className="w-full h-60 p-4 border rounded-xl font-mono text-xs bg-gray-50 focus:ring-2 ring-primary outline-none"
                                 placeholder={`Paste Excel Content here...\nExample:\n17/10/25\tMBALAL KUNDHANI...\t0000529...\t17/10/25\t0\t30,356.00\t188,201.00`}
                                 value={importText}
                                 onChange={e => setImportText(e.target.value)}
@@ -492,7 +492,7 @@ export default function BankingPage() {
                                 <button
                                     onClick={handleParse}
                                     disabled={!importText || parsing}
-                                    className="px-6 py-2 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] disabled:opacity-50 font-semibold shadow-sm"
+                                    className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 disabled:opacity-50 font-semibold shadow-sm"
                                 >
                                     {parsing ? 'Parsing...' : 'Process & Import'}
                                 </button>

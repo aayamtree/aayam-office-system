@@ -89,7 +89,7 @@ export default function FinanceReportPage() {
   };
 
   const getExpenseColor = (index: number) => {
-    const colors = ['bg-red-500', 'bg-white0', 'bg-blue-500', 'bg-oms-blue', 'bg-white0', 'bg-pink-500'];
+    const colors = ['bg-red-500', 'bg-white0', 'bg-primary', 'bg-primary', 'bg-white0', 'bg-pink-500'];
     return colors[index % colors.length];
   };
 
@@ -102,16 +102,16 @@ export default function FinanceReportPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-xl lg:text-page-title text-gray-900">Finance Report</h1>
+            <h1 className="text-page-title text-gray-900">Finance Report</h1>
             <p className="text-sm text-gray-500">Income, expenses & profit analysis</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => handleExport('pdf')} className="flex items-center gap-2 px-3 py-2 bg-red-50 text-red-700 rounded-xl hover:bg-red-100">
+          <button onClick={() => handleExport('pdf')} className="flex items-center gap-2 px-3 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100">
             <Download size={16} />
             <span>PDF</span>
           </button>
-          <button onClick={() => handleExport('excel')} className="flex items-center gap-2 px-3 py-2 bg-white text-gray-900 rounded-xl hover:bg-gray-100">
+          <button onClick={() => handleExport('excel')} className="flex items-center gap-2 px-3 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-100 border border-gray-200">
             <Download size={16} />
             <span>Excel</span>
           </button>
@@ -119,7 +119,7 @@ export default function FinanceReportPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+      <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-100">
         <div className="flex items-center gap-2 mb-3">
           <Filter size={16} className="text-gray-500" />
           <span className="font-medium text-gray-700">Filters</span>
@@ -131,7 +131,7 @@ export default function FinanceReportPage() {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+              className="w-full px-3 py-2 border border-gray-200 rounded-md"
             />
           </div>
           <div>
@@ -140,7 +140,7 @@ export default function FinanceReportPage() {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+              className="w-full px-3 py-2 border border-gray-200 rounded-md"
             />
           </div>
           <div>
@@ -148,7 +148,7 @@ export default function FinanceReportPage() {
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+              className="w-full px-3 py-2 border border-gray-200 rounded-md"
             >
               <option value="all">All</option>
               <option value="income">Income</option>
@@ -160,28 +160,28 @@ export default function FinanceReportPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp size={18} />
             <span className="text-sm opacity-90">Total Income</span>
           </div>
           <p className="text-page-title">₹{(totalIncome / 1000).toFixed(1)}K</p>
         </div>
-        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-lg p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <TrendingDown size={18} />
             <span className="text-sm opacity-90">Total Expense</span>
           </div>
           <p className="text-page-title">₹{(totalExpense / 1000).toFixed(1)}K</p>
         </div>
-        <div className={`bg-gradient-to-br ${netProfit >= 0 ? 'from-blue-500 to-blue-600' : 'from-orange-500 to-orange-600'} rounded-lg md:rounded-2xl p-3 md:p-4 text-white`}>
+        <div className={`bg-gradient-to-br ${netProfit >= 0 ? 'from-gray-700 to-gray-800' : 'from-orange-500 to-orange-600'} rounded-lg p-3 md:p-4 text-white`}>
           <div className="flex items-center gap-2 mb-2">
             <IndianRupee size={18} />
             <span className="text-sm opacity-90">Net Profit</span>
           </div>
           <p className="text-page-title">₹{(netProfit / 1000).toFixed(1)}K</p>
         </div>
-        <div className="bg-oms-blue rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+        <div className="bg-gray-900 rounded-lg p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <PieChart size={18} />
             <span className="text-sm opacity-90">Profit Margin</span>
@@ -192,7 +192,7 @@ export default function FinanceReportPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
         {/* Transactions Table */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="lg:col-span-2 bg-white rounded-lg border border-gray-100 overflow-hidden">
           <div className="p-4 border-b border-gray-100">
             <h2 className="font-semibold text-gray-900">Transactions</h2>
           </div>
@@ -232,7 +232,7 @@ export default function FinanceReportPage() {
 
         {/* Expense Breakdown */}
         <div className="space-y-4">
-          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+          <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-100">
             <h2 className="font-semibold text-gray-900 mb-4">Expense Breakdown</h2>
             <div className="space-y-3">
               {expenseData.map(([category, amount], index) => (
@@ -252,11 +252,11 @@ export default function FinanceReportPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+          <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-100">
             <h2 className="font-semibold text-gray-900 mb-4">Payment Modes</h2>
             <div className="space-y-3">
               {Object.entries(paymentBreakdown).map(([mode, amount]) => (
-                <div key={mode} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div key={mode} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
                   <span className="text-gray-600">{mode}</span>
                   <span className="font-semibold text-gray-900">₹{amount.toLocaleString()}</span>
                 </div>

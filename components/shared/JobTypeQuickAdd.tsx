@@ -57,17 +57,17 @@ export default function JobTypeQuickAdd({ isOpen, onClose, onSuccess }: JobTypeQ
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
             <div className="bg-white rounded-2xl  w-full max-w-md">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b bg-oms-blue">
+                <div className="flex items-center justify-between p-6 border-b bg-gray-900">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg">
-                            <Briefcase size={24} className="text-oms-blue" />
+                            <Briefcase size={24} className="text-primary" />
                         </div>
                         <div>
                             <h3 className="text-page-title text-gray-900">Add Job Type</h3>
                             <p className="text-sm text-gray-600">Create new job type</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-lg transition-colors">
+                    <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-md transition-colors">
                         <X size={20} />
                     </button>
                 </div>
@@ -79,7 +79,7 @@ export default function JobTypeQuickAdd({ isOpen, onClose, onSuccess }: JobTypeQ
                         <input
                             required
                             type="text"
-                            className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-oms-blue/20 focus:border-oms-blue"
+                            className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-primary/20 focus:border-gray-400"
                             placeholder="e.g., Design Only, Print Only"
                             value={formData.name}
                             onChange={e => setFormData({ ...formData, name: e.target.value })}
@@ -90,7 +90,7 @@ export default function JobTypeQuickAdd({ isOpen, onClose, onSuccess }: JobTypeQ
                         <label className="block text-sm font-medium mb-1">Description</label>
                         <textarea
                             rows={2}
-                            className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-oms-blue/20 focus:border-oms-blue"
+                            className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-primary/20 focus:border-gray-400"
                             placeholder="Brief description of this job type..."
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
@@ -102,14 +102,14 @@ export default function JobTypeQuickAdd({ isOpen, onClose, onSuccess }: JobTypeQ
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50"
+                            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={saving}
-                            className="px-8 py-2 bg-gradient-to-r bg-oms-blue text-white rounded-xl font-medium  disabled:opacity-50 flex items-center gap-2"
+                            className="px-8 py-2 bg-gradient-to-r bg-gray-900 text-white rounded-md font-medium  disabled:opacity-50 flex items-center gap-2"
                         >
                             {saving ? (
                                 <>

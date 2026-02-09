@@ -2,13 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useDashboardStats } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import {
   LayoutDashboard,
   Users,
-  ShoppingCart,
   Truck,
   Printer,
   FileText,
@@ -16,15 +15,29 @@ import {
   ChevronDown,
   IndianRupee,
   Activity,
-  LogOut,
-  Search,
-  X,
   Palette,
   Briefcase,
   Megaphone,
   Bell,
   Calendar,
+  LogOut,
+  User,
 } from 'lucide-react';
+
+// Shadcn Components
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/Button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/Badge';
+import { Separator } from '@/components/ui/separator';
 
 interface MenuItem {
   name: string;
@@ -84,7 +97,6 @@ const menuItems: MenuItem[] = [
       { name: 'Commissions', href: '/admin/marketing/commissions' },
     ]
   },
-
   {
     name: 'CRM',
     icon: Users,
@@ -94,7 +106,6 @@ const menuItems: MenuItem[] = [
       { name: 'Clients', href: '/admin/crm/clients' },
     ]
   },
-
   {
     name: 'Sales & Finance',
     icon: IndianRupee,
@@ -156,13 +167,13 @@ const menuItems: MenuItem[] = [
     name: 'Calendar',
     icon: Calendar,
     href: '/admin/calendar',
-    allowedRoles: ['admin', 'finance', 'designer', 'marketing', 'dispatch'], // All roles
+    allowedRoles: ['admin', 'finance', 'designer', 'marketing', 'dispatch'],
   },
   {
     name: 'EOD Report',
     icon: FileText,
     href: '/admin/eod-report',
-    allowedRoles: ['admin', 'finance', 'designer', 'marketing', 'dispatch'], // All roles - accountability for everyone
+    allowedRoles: ['admin', 'finance', 'designer', 'marketing', 'dispatch'],
   },
   {
     name: 'Broadcast',
@@ -174,7 +185,7 @@ const menuItems: MenuItem[] = [
     name: 'My Profile',
     icon: Settings,
     href: '/admin/settings/profile',
-    allowedRoles: ['admin', 'finance', 'designer', 'marketing', 'dispatch', 'cmyk'], // All roles can access their own profile
+    allowedRoles: ['admin', 'finance', 'designer', 'marketing', 'dispatch', 'cmyk'],
   },
   {
     name: 'Settings',
@@ -201,11 +212,9 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { profile, signOut } = useAuth();
   const [expandedItems, setExpandedItems] = useState<string[]>(['Design Studio', 'Marketing', 'Sales & Finance', 'CRM', 'Dispatch']);
-
-  const { stats } = useDashboardStats(); // Fetch stats for badges
+  const { stats } = useDashboardStats();
 
   const toggleExpanded = (name: string) => {
     setExpandedItems(prev =>
@@ -217,12 +226,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const handleLogout = async () => {
     await signOut();
-    router.push('/login');
+    window.location.href = '/login';
   };
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
-  // Helper to check if a submenu link is active (handling query params)
   const isSubActive = (href: string) => {
     if (href.includes('?')) {
       const [path, query] = href.split('?');
@@ -235,101 +243,53 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       return true;
     }
     return pathname === href;
-  }
+  };
 
   const handleLinkClick = () => {
-    // Close sidebar on mobile when clicking a link
     onClose();
   };
 
   return (
     <aside className={`
-      fixed left-0 top-0 h-screen w-64 bg-oms-dark flex flex-col z-40
+      fixed left-0 top-0 h-screen w-64 bg-background border-r border-border flex flex-col z-40
       transform transition-transform duration-300 ease-in-out
-      ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-      lg:translate-x-0
+      ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
     `}>
-      {/* Logo & Close Button */}
-      <div className="p-6 flex items-center justify-between">
+      {/* Logo */}
+      <div className="p-6 border-b border-border">
         <Link
           href={profile?.role === 'designer' ? '/admin/designers/tasks' : '/admin/dashboard'}
-          className="flex items-center gap-3"
+          className="flex items-center gap-2"
           onClick={handleLinkClick}
         >
-          <div className="w-10 h-10 bg-oms-blue rounded-xl flex items-center justify-center">
-            <span className="text-white text-section">A</span>
+          <div className="w-8 h-8 bg-foreground rounded flex items-center justify-center">
+            <span className="text-background font-bold text-lg">A</span>
           </div>
-          <span className="font-bold text-white text-xl">Aayam</span>
+          <span className="font-bold text-foreground text-xl">Aayam</span>
         </Link>
-
-        {/* Close button - mobile only */}
-        <button
-          onClick={onClose}
-          className="lg:hidden p-2 text-gray-400 hover:text-white"
-        >
-          <X size={20} />
-        </button>
-      </div>
-
-      {/* Search */}
-      <div className="px-4 mb-4">
-        <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input
-            type="text"
-            placeholder="Search..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-oms-blue"
-          />
-        </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 scrollbar-minimal">
-        <div className="space-y-1">
+      <ScrollArea className="flex-1 px-3 py-4">
+        <nav className="space-y-1">
           {!profile ? (
-            // Loading skeleton while profile loads
+            // Loading skeleton
             <div className="space-y-2">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-12 bg-white/5 rounded-xl animate-pulse" />
+                <div key={i} className="h-10 bg-muted rounded-md animate-pulse" />
               ))}
             </div>
           ) : !profile.role ? (
-            // User has no role assigned - show error state
-            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20">
-              <p className="text-sm text-red-400 font-medium">⚠️ No Role Assigned</p>
-              <p className="text-xs text-gray-400 mt-1">Contact admin to assign your role</p>
-              <p className="text-xs text-gray-500 mt-2">Email: {profile.email}</p>
+            // No role assigned
+            <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+              <p className="text-sm text-destructive font-medium">⚠️ No Role Assigned</p>
+              <p className="text-xs text-muted-foreground mt-1">Contact admin to assign your role</p>
             </div>
           ) : (
             menuItems.filter(item => {
-              // Get the user's role - no defaults, no fallbacks
               const userRole = profile.role;
-
-              // Debug logging to help diagnose role issues  
-              if (process.env.NODE_ENV === 'development') {
-                console.log('[Sidebar Debug]', {
-                  userRole,
-                  itemName: item.name,
-                  allowedRoles: item.allowedRoles,
-                  profileEmail: profile.email,
-                  will_show: item.allowedRoles ? item.allowedRoles.includes(userRole) : true
-                });
-              }
-
-              // If no allowed roles specified, show to everyone
-              // (Note: All sensitive menu items should ALWAYS have allowedRoles defined)
-              if (!item.allowedRoles || item.allowedRoles.length === 0) {
-                return true;
-              }
-
-              // Check if user's role is in the allowed list
-              const isAllowed = item.allowedRoles.includes(userRole);
-
-              if (!isAllowed && process.env.NODE_ENV === 'development') {
-                console.log(`[Sidebar] Hiding "${item.name}" from ${userRole} (allowed: ${item.allowedRoles.join(', ')})`);
-              }
-
-              return isAllowed;
+              if (!item.allowedRoles || item.allowedRoles.length === 0) return true;
+              return item.allowedRoles.includes(userRole);
             }).map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href);
@@ -341,46 +301,43 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   {hasSubmenu && item.name !== 'Design Studio' ? (
                     <button
                       onClick={() => toggleExpanded(item.name)}
-                      className={`w-full flex items-center justify-between px-4 py-2 rounded-xl transition-all text-body
-                      ${active
-                          ? 'bg-[rgba(0,0,255,0.15)] text-white border-l-4 border-oms-blue'
-                          : 'text-white/70 hover:bg-white/5 hover:text-white'
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors text-sm font-medium
+                        ${active
+                          ? 'bg-accent text-accent-foreground'
+                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                         }`}
                     >
                       <div className="flex items-center gap-2">
-                        <Icon size={18} />
-                        <span className="text-body font-medium">{item.name}</span>
+                        <Icon className="h-4 w-4" strokeWidth={1} />
+                        <span>{item.name}</span>
                       </div>
                       <ChevronDown
-                        size={14}
-                        className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                        className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                        strokeWidth={1}
                       />
                     </button>
                   ) : (
                     <Link
                       href={item.href}
                       onClick={handleLinkClick}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all
-                      ${active
-                          ? 'bg-[rgba(0,0,255,0.15)] border-l-4 border-oms-blue text-white'
-                          : 'text-white/70 hover:bg-white/5 hover:text-white'
+                      className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-sm font-medium
+                        ${active
+                          ? 'bg-accent text-accent-foreground'
+                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                         }`}
                     >
-                      <Icon size={18} />
-                      <span className="text-body font-medium">{item.name}</span>
+                      <Icon className="h-4 w-4" strokeWidth={1} />
+                      <span>{item.name}</span>
                     </Link>
                   )}
 
                   {/* Submenu */}
                   {hasSubmenu && (isExpanded || item.name === 'Design Studio') && (
-                    <div className="ml-4 mt-0.5 space-y-0.5 border-l border-white/10 pl-4">
+                    <div className="ml-6 mt-1 space-y-1 border-l border-border pl-3">
                       {item.submenu!.map((sub) => {
                         let badge = 0;
                         if (sub.name === 'Leads') badge = stats?.leadsThisMonth || 0;
-                        // Follow-ups counter removed - was showing incorrect numbers
-                        // if (sub.name === 'Follow-ups') badge = stats?.alerts?.followUpsDue || 0;
                         if (sub.name === 'Production Queue') badge = (stats?.pipeline?.printing || 0) + (stats?.pipeline?.finishing || 0);
-                        // if (sub.name === 'My Queue' && profile?.id && stats?.myTasks) badge = stats.myTasks; 
 
                         const showBadge = badge > 0;
 
@@ -389,20 +346,20 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                             key={sub.href}
                             href={sub.href}
                             onClick={handleLinkClick}
-                            className={`group flex items-center justify-between px-3 py-1.5 rounded-lg text-sm transition-all
-                          ${isSubActive(sub.href)
-                                ? 'bg-white/10 text-white font-medium'
-                                : 'text-gray-300 hover:text-white'
+                            className={`flex items-center justify-between px-3 py-1.5 rounded-md text-sm transition-colors
+                              ${isSubActive(sub.href)
+                                ? 'bg-accent text-accent-foreground font-medium'
+                                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                               }`}
                           >
                             <span>{sub.name}</span>
                             {showBadge && (
-                              <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${isSubActive(sub.href) ? 'bg-white text-oms-blue' : 'bg-white/10 text-gray-400 group-hover:bg-[rgba(0,0,255,0.1)] group-hover:text-white'}`}>
+                              <Badge variant="secondary" className="ml-auto text-xs">
                                 {badge}
-                              </span>
+                              </Badge>
                             )}
                           </Link>
-                        )
+                        );
                       })}
                     </div>
                   )}
@@ -410,26 +367,46 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               );
             })
           )}
-        </div>
-      </nav>
+        </nav>
+      </ScrollArea>
 
-      {/* User Profile - Compact */}
-      <div className="px-3 py-2 border-t border-white/10">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-oms-blue rounded-full flex items-center justify-center text-white font-semibold text-xs">
-            {profile?.full_name?.charAt(0) || 'A'}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-medium text-white text-xs truncate">{profile?.full_name}</p>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="p-1.5 bg-oms-orange hover:bg-orange-600 rounded-lg transition-colors flex items-center justify-center"
-            title="Logout"
-          >
-            <LogOut size={14} className="text-white" />
-          </button>
-        </div>
+      {/* User Profile */}
+      <div className="p-4 border-t border-border">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="w-full justify-start px-2 h-auto py-2">
+              <Avatar className="h-8 w-8 mr-2">
+                <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} />
+                <AvatarFallback>{profile?.full_name?.charAt(0) || 'A'}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col items-start text-left flex-1 min-w-0">
+                <span className="text-sm font-medium truncate w-full">{profile?.full_name}</span>
+                <span className="text-xs text-muted-foreground capitalize">{profile?.role}</span>
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end">
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/admin/settings/profile" onClick={handleLinkClick}>
+                <User className="mr-2 h-4 w-4" strokeWidth={1} />
+                <span>Profile</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/admin/settings" onClick={handleLinkClick}>
+                <Settings className="mr-2 h-4 w-4" strokeWidth={1} />
+                <span>Settings</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+              <LogOut className="mr-2 h-4 w-4" strokeWidth={1} />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </aside>
   );

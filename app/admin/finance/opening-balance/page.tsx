@@ -76,13 +76,13 @@ export default function OpeningBalancePage() {
         </div>
         {openingBalance.isLocked ? (
           <button onClick={handleUnlock}
-            className="flex items-center gap-2 bg-amber-100 text-amber-700 px-4 py-2.5 rounded-lg hover:bg-amber-200 font-medium">
+            className="flex items-center gap-2 bg-amber-100 text-amber-700 px-4 py-2.5 rounded-md hover:bg-amber-200 font-medium">
             <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
             <span>Unlock to Edit</span>
           </button>
         ) : (
           <button onClick={handleSave}
-            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 font-medium">
+            className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-md hover:bg-green-700 font-medium">
             <Save className="w-4 h-4 md:w-4.5 md:h-4.5" />
             <span>Save & Lock</span>
           </button>
@@ -101,7 +101,7 @@ export default function OpeningBalancePage() {
           </>
         ) : (
           <>
-            <AlertCircle className="w-5 h-5 text-oms-orange flex-shrink-0" />
+            <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
             <div>
               <p className="font-medium text-amber-900">Editing Mode</p>
               <p className="text-sm text-amber-700">Make changes and save to lock the balances</p>
@@ -123,21 +123,21 @@ export default function OpeningBalancePage() {
         </div>
         <div className="bg-white rounded-xl border p-4">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Building className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+              <Building className="w-5 h-5 text-foreground" />
             </div>
             <span className="text-gray-600">Bank Opening</span>
           </div>
-          <p className="text-page-title text-blue-600">{formatCurrency(totalBankBalance)}</p>
+          <p className="text-page-title text-foreground">{formatCurrency(totalBankBalance)}</p>
         </div>
         <div className="bg-white rounded-xl border p-4">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-oms-blue rounded-lg flex items-center justify-center">
-              <IndianRupee className="w-5 h-5 text-oms-blue" />
+            <div className="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center">
+              <IndianRupee className="w-5 h-5 text-primary" />
             </div>
             <span className="text-gray-600">Total Opening</span>
           </div>
-          <p className="text-page-title text-oms-blue">{formatCurrency(totalOpeningBalance)}</p>
+          <p className="text-page-title text-primary">{formatCurrency(totalOpeningBalance)}</p>
         </div>
       </div>
 
@@ -165,12 +165,12 @@ export default function OpeningBalancePage() {
       <div className="bg-white rounded-xl border p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Building className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+              <Building className="w-5 h-5 text-foreground" />
             </div>
             <h2 className="text-section text-gray-900">Bank Opening Balances</h2>
           </div>
-          <Link href="/admin/finance/banks" className="text-sm text-oms-blue hover:underline">
+          <Link href="/admin/finance/banks" className="text-sm text-primary hover:underline">
             Manage Bank Accounts →
           </Link>
         </div>
@@ -185,9 +185,9 @@ export default function OpeningBalancePage() {
               {isEditing ? (
                 <input type="number" value={editData.banks.find(b => b.id === bank.id)?.balance || 0}
                   onChange={(e) => handleBankBalanceChange(bank.id, parseFloat(e.target.value) || 0)}
-                  className="w-40 px-3 py-2 border rounded-lg text-right font-semibold focus:ring-2 focus:ring-blue-500" />
+                  className="w-40 px-3 py-2 border rounded-lg text-right font-semibold focus:ring-2 focus:ring-gray-400" />
               ) : (
-                <span className="text-section text-blue-600">{formatCurrency(bank.balance)}</span>
+                <span className="text-section text-foreground">{formatCurrency(bank.balance)}</span>
               )}
             </div>
           ))}
@@ -195,7 +195,7 @@ export default function OpeningBalancePage() {
 
         <div className="mt-4 pt-4 border-t flex justify-between">
           <span className="font-semibold text-gray-700">Total Bank Balance</span>
-          <span className="text-page-title text-blue-600">
+          <span className="text-page-title text-foreground">
             {formatCurrency(isEditing
               ? editData.banks.reduce((sum, b) => sum + b.balance, 0)
               : totalBankBalance)}
@@ -204,12 +204,12 @@ export default function OpeningBalancePage() {
       </div>
 
       {/* Info Note */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+      <div className="bg-muted border border-border rounded-xl p-4">
         <div className="flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-foreground flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-medium text-blue-900">Important Note</p>
-            <p className="text-sm text-blue-700 mt-1">
+            <p className="font-medium text-foreground">Important Note</p>
+            <p className="text-sm text-foreground mt-1">
               Opening balances are the starting point for financial year {openingBalance.financialYear}.
               All transactions, reports, and profit calculations are based on these balances.
               Please ensure accuracy before locking.

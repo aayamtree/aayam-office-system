@@ -145,7 +145,7 @@ export default function GoogleDriveSettings() {
 
     if (profile?.role !== 'admin') {
         return (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
                 <p className="text-sm text-amber-800">
                     Only admins can manage Google Drive settings.
                 </p>
@@ -155,9 +155,9 @@ export default function GoogleDriveSettings() {
 
     if (loading) {
         return (
-            <div className="bg-white rounded-2xl border border-gray-200 p-6">
+            <div className="bg-white rounded-md border border-gray-200 p-4">
                 <div className="flex items-center gap-2">
-                    <RefreshCw className="w-5 h-5 text-gray-400 animate-spin" />
+                    <RefreshCw className="w-4 h-4 text-gray-400 animate-spin" />
                     <span className="text-sm text-gray-600">Loading Drive status...</span>
                 </div>
             </div>
@@ -165,20 +165,20 @@ export default function GoogleDriveSettings() {
     }
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-3 md:mb-6">
-                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
-                    <Cloud className="w-6 h-6 text-blue-600" />
+        <div className="bg-white rounded-md border border-gray-200 p-4">
+            <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center">
+                    <Cloud className="w-5 h-5 text-gray-600" />
                 </div>
                 <div>
-                    <h3 className="font-bold text-gray-900">Google Drive Integration</h3>
-                    <p className="text-sm text-gray-500">Organization-wide file storage</p>
+                    <h3 className="font-semibold text-gray-900 text-sm">Google Drive Integration</h3>
+                    <p className="text-xs text-gray-500">Organization-wide file storage</p>
                 </div>
             </div>
 
             {/* Status Display */}
             {driveStatus?.connected ? (
-                <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
+                <div className="bg-green-50 border border-green-200 rounded-md p-3 mb-3">
                     <div className="flex items-start gap-3">
                         <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
                         <div className="flex-1">
@@ -214,14 +214,14 @@ export default function GoogleDriveSettings() {
                             <button
                                 onClick={() => { setConnecting(true); handleConnect(); }}
                                 disabled={connecting}
-                                className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50"
+                                className="px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 disabled:opacity-50"
                             >
                                 {connecting ? 'Connecting...' : 'Reconnect'}
                             </button>
                             <button
                                 onClick={handleDisconnect}
                                 disabled={disconnecting}
-                                className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50"
+                                className="px-4 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 disabled:opacity-50"
                             >
                                 {disconnecting ? 'Disconnecting...' : 'Disconnect'}
                             </button>
@@ -229,7 +229,7 @@ export default function GoogleDriveSettings() {
                     </div>
                 </div>
             ) : (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-3">
                     <div className="flex items-start gap-3">
                         <XCircle className="w-5 h-5 text-amber-600 mt-0.5" />
                         <div className="flex-1">
@@ -241,7 +241,7 @@ export default function GoogleDriveSettings() {
                         <button
                             onClick={() => { setConnecting(true); handleConnect(); }}
                             disabled={connecting}
-                            className="px-4 py-2 bg-amber-600 text-white text-sm rounded-lg hover:bg-amber-700 disabled:opacity-50 flex items-center gap-2"
+                            className="px-3 py-2 bg-amber-600 text-white text-sm rounded-md hover:bg-amber-700 disabled:opacity-50 flex items-center gap-2"
                         >
                             {connecting && <RefreshCw className="w-4 h-4 animate-spin" />}
                             Connect Drive
@@ -253,19 +253,19 @@ export default function GoogleDriveSettings() {
             {/* Info */}
             <div className="space-y-3">
                 <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2" />
+                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2" />
                     <p className="text-sm text-gray-600">
                         You&apos;ll authenticate with your Google account that has access to your Shared Drive
                     </p>
                 </div>
                 <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2" />
+                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2" />
                     <p className="text-sm text-gray-600">
                         All employees will use this connection to upload files - no individual logins required
                     </p>
                 </div>
                 <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2" />
+                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2" />
                     <p className="text-sm text-gray-600">
                         Files will be uploaded to your configured Shared Drive folders
                     </p>

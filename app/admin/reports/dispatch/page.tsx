@@ -73,7 +73,7 @@ export default function DispatchReportPage() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      'dispatched': 'bg-blue-100 text-blue-700',
+      'dispatched': 'bg-muted text-foreground',
       'in_transit': 'bg-amber-100 text-amber-700',
       'delivered': 'bg-gray-100 text-gray-900',
       'returned': 'bg-red-100 text-red-700',
@@ -90,16 +90,16 @@ export default function DispatchReportPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-xl lg:text-page-title text-gray-900">Dispatch Report</h1>
+            <h1 className="text-page-title text-gray-900">Dispatch Report</h1>
             <p className="text-sm text-gray-500">Delivery & logistics tracking</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => handleExport('pdf')} className="flex items-center gap-2 px-3 py-2 bg-red-50 text-red-700 rounded-xl hover:bg-red-100">
+          <button onClick={() => handleExport('pdf')} className="flex items-center gap-2 px-3 py-2 bg-red-50 text-gray-900 rounded-md hover:bg-red-100">
             <Download size={16} />
             <span>PDF</span>
           </button>
-          <button onClick={() => handleExport('excel')} className="flex items-center gap-2 px-3 py-2 bg-white text-gray-900 rounded-xl hover:bg-gray-100">
+          <button onClick={() => handleExport('excel')} className="flex items-center gap-2 px-3 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-100">
             <Download size={16} />
             <span>Excel</span>
           </button>
@@ -119,7 +119,7 @@ export default function DispatchReportPage() {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+              className="w-full px-3 py-2 border border-gray-200 rounded-md"
             />
           </div>
           <div>
@@ -128,7 +128,7 @@ export default function DispatchReportPage() {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+              className="w-full px-3 py-2 border border-gray-200 rounded-md"
             />
           </div>
           <div>
@@ -136,7 +136,7 @@ export default function DispatchReportPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+              className="w-full px-3 py-2 border border-gray-200 rounded-md"
             >
               <option value="all">All Status</option>
               <option value="dispatched">Dispatched</option>
@@ -152,7 +152,7 @@ export default function DispatchReportPage() {
               placeholder="Search..."
               value={transporterFilter}
               onChange={(e) => setTransporterFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+              className="w-full px-3 py-2 border border-gray-200 rounded-md"
             />
           </div>
         </div>
@@ -160,7 +160,7 @@ export default function DispatchReportPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 md:gap-4">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+        <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <Truck size={18} />
             <span className="text-sm opacity-90">Total</span>
@@ -188,7 +188,7 @@ export default function DispatchReportPage() {
           </div>
           <p className="text-page-title">{returned}</p>
         </div>
-        <div className="bg-oms-blue rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+        <div className="bg-gray-900 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <Clock size={18} />
             <span className="text-sm opacity-90">Avg Days</span>
@@ -243,7 +243,7 @@ export default function DispatchReportPage() {
               {topDestinations.map(([city, count]) => (
                 <div key={city} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                   <span className="text-gray-700">{city}</span>
-                  <span className="font-semibold text-oms-blue">{count}</span>
+                  <span className="font-semibold text-primary">{count}</span>
                 </div>
               ))}
             </div>
@@ -255,7 +255,7 @@ export default function DispatchReportPage() {
               {transporterData.map(([transporter, count]) => (
                 <div key={transporter} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                   <span className="text-gray-700 text-sm">{transporter}</span>
-                  <span className="font-semibold text-oms-blue">{count}</span>
+                  <span className="font-semibold text-primary">{count}</span>
                 </div>
               ))}
             </div>

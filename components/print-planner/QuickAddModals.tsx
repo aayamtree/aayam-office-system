@@ -41,11 +41,11 @@ export function QuickAddMachine({
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
-            <div className="bg-white rounded-2xl w-full max-w-md  p-6">
+            <div className="bg-white rounded-md w-full max-w-md  p-6">
                 <h4 className="text-section text-gray-900 mb-4">Add New Machine</h4>
 
                 {error && (
-                    <div className="bg-red-50 border-2 border-red-200 rounded-xl p-3 text-red-700 mb-4 text-sm">
+                    <div className="bg-gray-50 border border-gray-200 rounded-md p-3 text-gray-700 mb-4 text-sm">
                         {error}
                     </div>
                 )}
@@ -60,7 +60,7 @@ export function QuickAddMachine({
                             required
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
+                            className="w-full border border-gray-200 rounded-md px-4 py-2 focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all outline-none"
                             placeholder="e.g., Offset Printer, Digital Press"
                             autoFocus
                         />
@@ -70,14 +70,14 @@ export function QuickAddMachine({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-100 transition-all"
+                            className="px-4 py-2 border border-gray-300 rounded-md font-medium text-gray-700 hover:bg-gray-100 transition-all"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={loading || !name.trim()}
-                            className="px-6 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-xl font-bold hover:bg-[rgba(0,0,255,0.1)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? 'Adding...' : 'Add Machine'}
                         </button>
@@ -125,11 +125,11 @@ export function QuickAddSheetSize({
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
-            <div className="bg-white rounded-2xl w-full max-w-md  p-6">
+            <div className="bg-white rounded-md w-full max-w-md  p-6">
                 <h4 className="text-section text-gray-900 mb-4">Add New Sheet Size</h4>
 
                 {error && (
-                    <div className="bg-red-50 border-2 border-red-200 rounded-xl p-3 text-red-700 mb-4 text-sm">
+                    <div className="bg-gray-50 border border-gray-200 rounded-md p-3 text-gray-700 mb-4 text-sm">
                         {error}
                     </div>
                 )}
@@ -144,7 +144,7 @@ export function QuickAddSheetSize({
                             required
                             value={size}
                             onChange={(e) => setSize(e.target.value)}
-                            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
+                            className="w-full border border-gray-200 rounded-md px-4 py-2 focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all outline-none"
                             placeholder="e.g., 18x24, 20x30, Custom"
                             autoFocus
                         />
@@ -155,14 +155,14 @@ export function QuickAddSheetSize({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-100 transition-all"
+                            className="px-4 py-2 border border-gray-300 rounded-md font-medium text-gray-700 hover:bg-gray-100 transition-all"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={loading || !size.trim()}
-                            className="px-6 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-xl font-bold hover:bg-[rgba(0,0,255,0.1)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? 'Adding...' : 'Add Size'}
                         </button>
@@ -210,11 +210,11 @@ export function QuickAddMaterial({
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
-            <div className="bg-white rounded-2xl w-full max-w-md  p-6">
+            <div className="bg-white rounded-md w-full max-w-md  p-6">
                 <h4 className="text-section text-gray-900 mb-4">Add New Material</h4>
 
                 {error && (
-                    <div className="bg-red-50 border-2 border-red-200 rounded-xl p-3 text-red-700 mb-4 text-sm">
+                    <div className="bg-gray-50 border border-gray-200 rounded-md p-3 text-gray-700 mb-4 text-sm">
                         {error}
                     </div>
                 )}
@@ -229,7 +229,7 @@ export function QuickAddMaterial({
                             required
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
+                            className="w-full border border-gray-200 rounded-md px-4 py-2 focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all outline-none"
                             placeholder="e.g., Vinyl, Paper, Canvas, Sticker"
                             autoFocus
                         />
@@ -239,14 +239,14 @@ export function QuickAddMaterial({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-100 transition-all"
+                            className="px-4 py-2 border border-gray-300 rounded-md font-medium text-gray-700 hover:bg-gray-100 transition-all"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={loading || !name.trim()}
-                            className="px-6 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-xl font-bold hover:bg-[rgba(0,0,255,0.1)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? 'Adding...' : 'Add Material'}
                         </button>

@@ -154,11 +154,11 @@ export default function ComponentDemoPage() {
             render: (lead) => (
                 <div className="text-sm space-y-1">
                     <div className="flex items-center gap-1 text-gray-600">
-                        <Phone className="w-3.5 h-3.5" />
+                        <Phone className="w-4 h-4" />
                         <span>{lead.phone}</span>
                     </div>
                     <div className="flex items-center gap-1 text-gray-500 text-xs">
-                        <Mail className="w-3.5 h-3.5" />
+                        <Mail className="w-4 h-4" />
                         <span>{lead.email}</span>
                     </div>
                 </div>
@@ -279,7 +279,7 @@ export default function ComponentDemoPage() {
                                 Responsive List View Components - Mobile & Desktop
                             </p>
                         </div>
-                        <button className="inline-flex items-center gap-2 px-4 py-2 bg-[#0000FF] text-white font-semibold rounded-lg hover:bg-[#0000CC] transition-colors">
+                        <button className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white font-semibold rounded-md hover:bg-gray-800 transition-colors">
                             <Plus className="w-4 h-4 md:w-5 md:h-5" />
                             Add Lead
                         </button>
@@ -314,7 +314,7 @@ export default function ComponentDemoPage() {
                         },
                     ]}
                     toolbarActions={
-                        <button className="w-full md:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                        <button className="w-full md:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
                             Export
                         </button>
                     }

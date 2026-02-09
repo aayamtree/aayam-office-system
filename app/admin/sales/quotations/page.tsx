@@ -11,6 +11,8 @@ import { useQuotations, useClients, useJobs, useLeads, useFollowUps } from '@/li
 import { Quotation, Client, QuotationItem, JobStatus } from '@/types/database';
 import { downloadQuotationPDF, defaultCompanyData } from '@/components/quotation/QuotationPDF';
 import { formatDate } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function QuotationsPage() {
   const { user, profile } = useAuth();
@@ -103,8 +105,8 @@ export default function QuotationsPage() {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'draft': 'bg-gray-100 text-gray-700',
-      'sent': 'bg-blue-100 text-blue-700',
-      'viewed': 'bg-oms-blue text-white',
+      'sent': 'bg-muted text-foreground',
+      'viewed': 'bg-gray-900 text-white',
       'accepted': 'bg-gray-100 text-gray-900',
       'rejected': 'bg-red-100 text-red-700',
       'expired': 'bg-amber-100 text-amber-700',
@@ -116,7 +118,7 @@ export default function QuotationsPage() {
     switch (status) {
       case 'accepted': return <CheckCircle size={14} className="text-gray-900" />;
       case 'rejected': return <XCircle size={14} className="text-red-600" />;
-      case 'expired': return <Clock size={14} className="text-oms-orange" />;
+      case 'expired': return <Clock size={14} className="text-destructive" />;
       default: return null;
     }
   };
@@ -388,8 +390,8 @@ export default function QuotationsPage() {
     const pdfData = {
       ...defaultCompanyData,
       quoteNumber: q.quote_number,
-      date: formatDate(new Date(q.created_at)),
-      validUntil: q.valid_until ? formatDate(new Date(q.valid_until)) : '-',
+      date: formatDate(q.created_at),
+      validUntil: q.valid_until ? formatDate(q.valid_until) : '-',
       clientName: q.client?.name || q.lead?.name || 'Unknown',
       clientCompany: q.client?.company || q.lead?.company,
       clientAddress: q.client?.address,
@@ -439,7 +441,7 @@ export default function QuotationsPage() {
         </div>
         <button
           onClick={handleAddNew}
-          className="flex items-center justify-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-xl hover:bg-blue-600 transition-colors"
+          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-md hover:bg-gray-800 transition-colors"
         >
           <Plus size={18} />
           <span>New Quotation</span>
@@ -450,12 +452,12 @@ export default function QuotationsPage() {
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
           { status: 'draft', bg: 'bg-gray-200 border-gray-300', text: 'text-gray-700' },
-          { status: 'sent', bg: 'bg-blue-100 border-blue-200', text: 'text-blue-700' },
+          { status: 'sent', bg: 'bg-muted border-border', text: 'text-foreground' },
           { status: 'accepted', bg: 'bg-gray-100 border-green-200', text: 'text-gray-900' },
           { status: 'rejected', bg: 'bg-red-100 border-red-200', text: 'text-red-700' },
           { status: 'expired', bg: 'bg-amber-100 border-gray-200', text: 'text-amber-700' },
         ].map((item) => (
-          <div key={item.status} className={`rounded-xl p-3 text-center border ${item.bg}`}>
+          <div key={item.status} className={`rounded-md p-3 text-center border ${item.bg}`}>
             <p className={`text-page-title ${item.text}`}>{quotations.filter(q => q.status === item.status).length}</p>
             <p className={`text-xs capitalize font-medium ${item.text}`}>{item.status}</p>
           </div>
@@ -465,35 +467,36 @@ export default function QuotationsPage() {
       {/* Search & Filter */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Input
             type="text"
             placeholder="Search quotations by number, client..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+            className="pl-10"
           />
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
-        >
-          <option value="all">All Status</option>
-          <option value="draft">Draft</option>
-          <option value="sent">Sent</option>
-          <option value="accepted">Accepted</option>
-          <option value="rejected">Rejected</option>
-          <option value="expired">Expired</option>
-        </select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-auto min-w-[120px] h-9 text-sm">
+            <SelectValue placeholder="All Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="draft">Draft</SelectItem>
+            <SelectItem value="sent">Sent</SelectItem>
+            <SelectItem value="accepted">Accepted</SelectItem>
+            <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value="expired">Expired</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* List */}
       <div className="space-y-4">
         {quotationsLoading ? (
-          <div className="p-12 text-center text-gray-500 bg-white rounded-2xl border border-gray-100">Loading quotations...</div>
+          <div className="p-12 text-center text-gray-500 bg-white rounded-md border border-gray-200">Loading quotations...</div>
         ) : filteredQuotations.length === 0 ? (
-          <div className="p-12 text-center text-gray-400 bg-white rounded-2xl border border-gray-100">
+          <div className="p-12 text-center text-gray-400 bg-white rounded-md border border-gray-200">
             No quotations found matching your criteria.
           </div>
         ) : (
@@ -503,20 +506,20 @@ export default function QuotationsPage() {
               {filteredQuotations.map((q) => {
                 // Determine header color based on status
                 const headerColors = {
-                  'sent': 'bg-gradient-to-r from-green-500 to-green-600',
-                  'viewed': 'bg-gradient-to-r from-oms-blue to-blue-600',
-                  'accepted': 'bg-gradient-to-r from-green-500 to-green-600',
-                  'rejected': 'bg-gradient-to-r from-red-500 to-red-600',
-                  'expired': 'bg-gradient-to-r from-gray-400 to-gray-500',
-                  'draft': 'bg-gradient-to-r from-yellow-400 to-yellow-500',
+                  'sent': 'bg-gray-700',
+                  'viewed': 'bg-gray-800',
+                  'accepted': 'bg-gray-900',
+                  'rejected': 'bg-red-600',
+                  'expired': 'bg-gray-400',
+                  'draft': 'bg-gray-500',
                 };
-                const headerBg = headerColors[q.status as keyof typeof headerColors] || 'bg-gradient-to-r from-gray-400 to-gray-500';
-                const headerTextColor = q.status === 'draft' ? 'text-gray-900' : 'text-white';
+                const headerBg = headerColors[q.status as keyof typeof headerColors] || 'bg-gray-500';
+                const headerTextColor = 'text-white';
 
                 return (
-                  <div key={q.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
+                  <div key={q.id} className="bg-white rounded-md overflow-hidden hover:shadow-sm transition-all border border-gray-200">
                     {/* Colored Header Tab */}
-                    <div className={`${headerBg} px-5 py-3 flex items-center justify-between`}>
+                    <div className={`${headerBg} px-4 py-2.5 flex items-center justify-between`}>
                       <span className={`${headerTextColor} font-semibold text-sm md:text-base`}>
                         {q.quote_number}
                       </span>
@@ -538,7 +541,7 @@ export default function QuotationsPage() {
                       </h3>
 
                       {/* Items Preview */}
-                      <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-4">
+                      <div className="bg-gray-50 p-3 rounded-md border border-gray-200 mb-4">
                         <p className="text-xs text-gray-600 line-clamp-2">
                           {q.items?.map(i => `${i.description} (${i.quantity})`).join(', ') || 'No items'}
                         </p>
@@ -549,7 +552,7 @@ export default function QuotationsPage() {
                         <span className="text-gray-900 font-bold text-2xl md:text-3xl">
                           {formatCurrency(q.total_amount)}
                         </span>
-                        <span className={`px-3 py-1.5 text-xs font-semibold rounded-full flex items-center gap-1 ${getStatusColor(q.status)}`}>
+                        <span className={`px-3 py-1.5 text-xs font-semibold rounded-md flex items-center gap-1 ${getStatusColor(q.status)}`}>
                           {getStatusIcon(q.status)}
                           {q.status}
                         </span>
@@ -568,7 +571,7 @@ export default function QuotationsPage() {
                         {(q.status === 'sent' || q.status === 'viewed' || q.status === 'draft' || q.status === 'accepted') && (
                           <button
                             onClick={() => handleConvertToOrder(q)}
-                            className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                            className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
                           >
                             <CheckCircle size={18} />
                             <span className="hidden sm:inline">{q.status === 'accepted' ? 'Create Order' : 'Accept'}</span>
@@ -576,13 +579,13 @@ export default function QuotationsPage() {
                         )}
                         <button
                           onClick={() => handleEdit(q)}
-                          className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                          className="px-4 py-2.5 border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors"
                         >
                           <Edit size={18} />
                         </button>
                         <button
                           onClick={() => handleDownloadPDF(q)}
-                          className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                          className="px-4 py-2.5 border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors"
                         >
                           <Download size={18} />
                         </button>
@@ -594,7 +597,7 @@ export default function QuotationsPage() {
             </div>
 
             {/* Desktop View: Table */}
-            <div className="hidden lg:block bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="hidden lg:block bg-white rounded-md border border-gray-200 overflow-hidden">
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
@@ -622,7 +625,7 @@ export default function QuotationsPage() {
                       <td className="px-6 py-4 font-semibold text-gray-900">{formatCurrency(q.total_amount)}</td>
                       <td className="px-6 py-4 text-gray-600">{q.valid_until ? formatDate(q.valid_until) : '-'}</td>
                       <td className="px-6 py-4">
-                        <span className={`flex items-center gap-1 w-fit px-3 py-1 text-xs rounded-full ${getStatusColor(q.status)}`}>
+                        <span className={`flex items-center gap-1 w-fit px-3 py-1 text-xs rounded-md ${getStatusColor(q.status)}`}>
                           {getStatusIcon(q.status)}
                           {q.status}
                         </span>
@@ -640,7 +643,7 @@ export default function QuotationsPage() {
                           {(q.status === 'sent' || q.status === 'viewed' || q.status === 'draft') && (
                             <button
                               onClick={() => handleConvertToOrder(q)}
-                              className="p-2 hover:bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-lg"
+                              className="p-2 hover:bg-muted text-primary rounded-lg"
                               title="Convert to Order"
                             >
                               <CheckCircle size={18} />
@@ -669,7 +672,7 @@ export default function QuotationsPage() {
       {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-md w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b border-gray-100 sticky top-0 bg-white z-10">
               <h2 className="text-section text-gray-900">
                 {isEditing ? 'Edit Quotation' : 'New Quotation'}
@@ -698,7 +701,7 @@ export default function QuotationsPage() {
                         setFormData({ ...formData, leadId: val.replace('lead_', ''), clientId: '' });
                       }
                     }}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue bg-white"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white"
                   >
                     <option value="">Select Client or Lead</option>
                     <optgroup label="Leads (Potential)">
@@ -719,7 +722,7 @@ export default function QuotationsPage() {
                     type="date"
                     value={formData.validUntil}
                     onChange={(e) => setFormData({ ...formData, validUntil: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-oms-blue focus:border-oms-blue transition-all"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all"
                   />
                 </div>
 
@@ -729,7 +732,7 @@ export default function QuotationsPage() {
                     required
                     value={formData.orderType}
                     onChange={(e) => setFormData({ ...formData, orderType: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-oms-blue focus:border-oms-blue transition-all"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all"
                   >
                     <option value="print">Print Only</option>
                     <option value="design">Design Only</option>
@@ -749,7 +752,7 @@ export default function QuotationsPage() {
                       required
                       value={formData.productCategory}
                       onChange={(e) => setFormData({ ...formData, productCategory: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-oms-blue focus:border-oms-blue transition-all"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all"
                     >
                       <option value="">Select Product</option>
                       <option value="box">Box / Packaging</option>
@@ -766,11 +769,11 @@ export default function QuotationsPage() {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <label className="block text-sm font-semibold text-gray-700">Items</label>
-                  <button type="button" onClick={addItem} className="text-sm font-medium text-oms-blue hover:text-oms-blue">+ Add Item</button>
+                  <button type="button" onClick={addItem} className="text-sm font-medium text-primary hover:text-primary">+ Add Item</button>
                 </div>
                 <div className="space-y-3">
                   {formData.items.map((item, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-2 items-start bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <div key={index} className="grid grid-cols-12 gap-2 items-start bg-gray-50 p-3 rounded-md border border-gray-200">
                       <div className="col-span-12 sm:col-span-5">
                         <input
                           type="text"
@@ -815,7 +818,7 @@ export default function QuotationsPage() {
               </div>
 
               {/* Financials */}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Subtotal</label>
@@ -845,7 +848,7 @@ export default function QuotationsPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Total</label>
-                    <div className="font-bold text-oms-blue text-lg">{formatCurrency(formData.totalAmount)}</div>
+                    <div className="font-bold text-primary text-lg">{formatCurrency(formData.totalAmount)}</div>
                   </div>
                 </div>
               </div>
@@ -855,7 +858,7 @@ export default function QuotationsPage() {
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
                 >
                   <option value="draft">Draft</option>
                   <option value="sent">Sent</option>
@@ -872,7 +875,7 @@ export default function QuotationsPage() {
                     rows={2}
                     value={formData.terms}
                     onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
                     placeholder="Payment terms, delivery timeline..."
                   />
                 </div>
@@ -882,7 +885,7 @@ export default function QuotationsPage() {
                     rows={1}
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
                   />
                 </div>
               </div>
@@ -891,14 +894,14 @@ export default function QuotationsPage() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50"
+                  className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-md hover:bg-gray-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-xl hover:bg-blue-600 disabled:opacity-50"
+                  className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 disabled:opacity-50"
                 >
                   {submitting ? 'Saving...' : (isEditing ? 'Update' : 'Create')}
                 </button>

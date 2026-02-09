@@ -148,7 +148,7 @@ export default function PaymentsPageNew() {
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
-                    className="flex items-center gap-2 bg-black text-white px-4 py-2.5 rounded-xl hover:bg-blue-600 w-full sm:w-auto justify-center text-sm font-medium"
+                    className="flex items-center gap-2 bg-black text-white px-4 py-2.5 rounded-xl hover:bg-gray-800 w-full sm:w-auto justify-center text-sm font-medium"
                 >
                     <Plus size={18} />
                     Record Payment

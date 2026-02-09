@@ -249,7 +249,7 @@ export default function DesignersManager() {
         const badges: Record<string, string> = {
             'full-time': 'bg-green-100 text-green-700',
             'part-time': 'bg-blue-100 text-blue-700',
-            'freelance': 'bg-[rgba(0,0,255,0.1)] text-oms-blue'
+            'freelance': 'bg-[rgba(0,0,255,0.1)] text-primary'
         };
         return badges[type] || 'bg-gray-100 text-gray-700';
     };
@@ -271,7 +271,7 @@ export default function DesignersManager() {
             {/* Stats - Mini */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="bg-white p-3 rounded-xl border flex items-center gap-3">
-                    <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg text-oms-blue"><Users size={18} /></div>
+                    <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg text-primary"><Users size={18} /></div>
                     <div><p className="text-xs text-gray-500">Total</p><p className="text-section">{totalDesigners}</p></div>
                 </div>
                 <div className="bg-white p-3 rounded-xl border flex items-center gap-3">
@@ -294,12 +294,12 @@ export default function DesignersManager() {
                     <div key={designer.id} className="bg-white rounded-xl border p-4  transition-shadow group">
                         <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center text-oms-blue text-section">
+                                <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center text-primary text-section">
                                     {designer.name?.charAt(0)}
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-gray-900">{designer.name}</h3>
-                                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${getEmploymentBadge(designer.employment_type)}`}>{designer.employment_type}</span>
+                                    <span className={`text-xs uppercase font-bold px-2 py-0.5 rounded-full ${getEmploymentBadge(designer.employment_type)}`}>{designer.employment_type}</span>
                                 </div>
                             </div>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -314,12 +314,12 @@ export default function DesignersManager() {
                         </div>
 
                         <div className="flex flex-wrap gap-1 mb-3 h-6 overflow-hidden">
-                            {designer.skills?.slice(0, 3).map(s => <span key={s} className="text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-600">{s}</span>)}
+                            {designer.skills?.slice(0, 3).map(s => <span key={s} className="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-600">{s}</span>)}
                         </div>
 
                         <div className="pt-3 border-t flex justify-between items-center text-sm">
                             <span className="text-gray-500">Rate: <span className="text-gray-900 font-bold">{formatCurrency(designer.hourly_rate)}/hr</span></span>
-                            <button onClick={() => handleViewDetail(designer)} className="text-oms-blue hover:text-oms-blue font-medium text-xs flex items-center gap-1"><Eye size={12} /> View Profile</button>
+                            <button onClick={() => handleViewDetail(designer)} className="text-primary hover:text-primary font-medium text-xs flex items-center gap-1"><Eye size={12} /> View Profile</button>
                         </div>
                     </div>
                 ))}
@@ -331,7 +331,7 @@ export default function DesignersManager() {
                     <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
                         <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white z-10">
                             <h2 className="text-section">{editingDesigner ? 'Edit Designer' : 'Add Designer'}</h2>
-                            <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+                            <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-md"><X size={20} /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-5 space-y-4">
                             {/* Form fields same as original but tighter */}
@@ -379,14 +379,14 @@ export default function DesignersManager() {
                                 <label className="text-xs font-bold text-gray-500 mb-1 block">Identity Document</label>
                                 <div className="flex items-center gap-2">
                                     <input type="file" onChange={handleFileUpload} className="text-xs w-full" disabled={uploadingDoc} />
-                                    {uploadingDoc && <Loader2 className="animate-spin text-oms-blue" size={16} />}
+                                    {uploadingDoc && <Loader2 className="animate-spin text-primary" size={16} />}
                                 </div>
                                 {formData.document_url && <a href={formData.document_url} target="_blank" className="text-xs text-blue-600 underline mt-1 block">View Uploaded Doc</a>}
                             </div>
 
                             <div className="pt-4 flex gap-3">
-                                <button type="button" onClick={resetForm} className="flex-1 py-2 border rounded-lg text-sm font-bold text-gray-600">Cancel</button>
-                                <button type="submit" disabled={saving} className="flex-1 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold">{saving ? 'Saving...' : 'Save Designer'}</button>
+                                <button type="button" onClick={resetForm} className="flex-1 py-2 border rounded-md text-sm font-bold text-gray-600">Cancel</button>
+                                <button type="submit" disabled={saving} className="flex-1 py-2 bg-gray-900 text-white rounded-md text-sm font-bold">{saving ? 'Saving...' : 'Save Designer'}</button>
                             </div>
                         </form>
                     </div>
@@ -399,7 +399,7 @@ export default function DesignersManager() {
                     <div className="bg-white rounded-2xl w-full max-w-md p-6 relative">
                         <button onClick={() => setShowDetailModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={20} /></button>
                         <div className="flex items-center gap-2 md:gap-4 mb-3 md:mb-6">
-                            <div className="w-16 h-16 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center text-page-title text-oms-blue">{selectedDesigner.name.charAt(0)}</div>
+                            <div className="w-16 h-16 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center text-page-title text-primary">{selectedDesigner.name.charAt(0)}</div>
                             <div>
                                 <h2 className="text-page-title">{selectedDesigner.name}</h2>
                                 <p className="text-gray-500">{selectedDesigner.employment_type}</p>
@@ -422,7 +422,7 @@ export default function DesignersManager() {
                                 </div>
                             </div>
                             {selectedDesigner.document_url && (
-                                <a href={selectedDesigner.document_url} target="_blank" className="block text-center py-2 border border-blue-200 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold">View ID Document</a>
+                                <a href={selectedDesigner.document_url} target="_blank" className="block text-center py-2 border border-blue-200 bg-blue-50 text-blue-600 rounded-md text-sm font-bold">View ID Document</a>
                             )}
                         </div>
                     </div>

@@ -53,10 +53,11 @@ export async function logActivity({
         await supabase.from('activity_logs').insert({
             user_id: user.id,
             action,
-            resource_type: resourceType,
-            resource_id: resourceId,
-            details: details || {},
-            ip_address: null, // Can be added if needed
+            entity_type: resourceType,
+            entity_id: resourceId,
+            description: details?.description || `${action} ${resourceType || 'system'}`,
+            metadata: details || {},
+            ip_address: null,
             user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : null
         });
     } catch (error) {

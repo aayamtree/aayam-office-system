@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-import { ActivityLog } from '@/types/database';
 
 export async function logActivity(
     action: string,
@@ -10,14 +9,16 @@ export async function logActivity(
 ) {
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) return; // Or log as 'system'
+    if (!user) return;
 
     try {
         await supabase.from('activity_logs').insert([{
             user_id: user.id,
             action,
-            module: entityType,
-            details: description,
+            entity_type: entityType,
+            entity_id: entityId,
+            description: description || `${action}`,
+            metadata: metadata || {},
         }]);
     } catch (error) {
         console.error('Failed to log activity:', error);

@@ -170,7 +170,7 @@ export default function ManualJournalPage() {
                                     <td className="py-2 pr-2">
                                         <input
                                             list="accounts"
-                                            className="w-full p-2 border rounded hover:border-oms-blue-400 focus:border-oms-blue focus:ring-1 focus:ring-oms-blue outline-none transition-colors"
+                                            className="w-full p-2 border rounded hover:border-primary-400 focus:border-gray-400 focus:ring-1 focus:ring-gray-400 outline-none transition-colors"
                                             placeholder="Select Account"
                                             value={line.account}
                                             onChange={e => updateLine(line.id, 'account', e.target.value)}
@@ -219,7 +219,7 @@ export default function ManualJournalPage() {
                         </tbody>
                     </table>
 
-                    <button onClick={addLine} className="mt-4 flex items-center gap-2 text-sm text-oms-blue font-medium hover:text-indigo-800">
+                    <button onClick={addLine} className="mt-4 flex items-center gap-2 text-sm text-primary font-medium hover:text-gray-700">
                         <Plus className="w-4 h-4" /> Add Line
                     </button>
                 </div>
@@ -242,7 +242,7 @@ export default function ManualJournalPage() {
                     <button
                         onClick={handleSave}
                         disabled={!isBalanced || loading}
-                        className={`ml-4 px-4 py-2 rounded-xl font-bold text-white flex items-center gap-2 ${isBalanced ? 'bg-oms-blue hover:bg-oms-blue -200' : 'bg-gray-300 cursor-not-allowed'
+                        className={`ml-4 px-4 py-2 rounded-xl font-bold text-white flex items-center gap-2 ${isBalanced ? 'bg-gray-900 hover:bg-gray-900 -200' : 'bg-gray-300 cursor-not-allowed'
                             }`}
                     >
                         {loading ? 'Saving...' : <><Save className="w-4 h-4 md:w-4.5 md:h-4.5" /> Save Journal</>}

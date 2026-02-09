@@ -190,7 +190,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
             <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
                 <div className="bg-white rounded-3xl w-full max-w-4xl  overflow-hidden max-h-[90vh] overflow-y-auto">
                     {/* Header */}
-                    <div className="bg-oms-blue p-6 text-white flex items-center justify-between">
+                    <div className="bg-gray-900 p-6 text-white flex items-center justify-between">
                         <div>
                             <h3 className="text-page-title flex items-center gap-3">
                                 <FolderOpen size={28} />
@@ -200,7 +200,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                 {isDesigner ? 'Designer View - Financial fields hidden' : 'Complete project details with financial info'}
                             </p>
                         </div>
-                        <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-lg transition-all">
+                        <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-md transition-all">
                             <X size={24} />
                         </button>
                     </div>
@@ -226,7 +226,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                         required
                                         value={formData.project_name}
                                         onChange={(e) => setFormData({ ...formData, project_name: e.target.value })}
-                                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
+                                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
                                         placeholder="e.g., Visiting Card for ABC Corp"
                                     />
                                 </div>
@@ -241,7 +241,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                                 required
                                                 value={formData.client_id}
                                                 onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
-                                                className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
+                                                className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
                                             >
                                                 <option value="">Select Client</option>
                                                 {clients.map(client => (
@@ -267,7 +267,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                             required
                                             value={formData.job_type}
                                             onChange={(e) => setFormData({ ...formData, job_type: e.target.value as 'print_only' | 'design_only' | 'design_print' })}
-                                            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
+                                            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
                                         >
                                             {JOB_TYPES.map(type => (
                                                 <option key={type.value} value={type.value}>{type.label}</option>
@@ -283,7 +283,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                     <textarea
                                         value={formData.description}
                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all resize-none"
+                                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all resize-none"
                                         rows={3}
                                         placeholder="Project details and requirements"
                                     />
@@ -305,7 +305,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                     <select
                                         value={formData.designer_id}
                                         onChange={(e) => setFormData({ ...formData, designer_id: e.target.value })}
-                                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
+                                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
                                     >
                                         <option value="">Unassigned</option>
                                         {designers.map(designer => (
@@ -323,7 +323,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                         type="date"
                                         value={formData.client_deadline}
                                         onChange={(e) => setFormData({ ...formData, client_deadline: e.target.value })}
-                                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
+                                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
                                     />
                                 </div>
 
@@ -334,7 +334,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                     <select
                                         value={formData.priority}
                                         onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
-                                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
+                                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
                                     >
                                         <option value="low">Low</option>
                                         <option value="normal">Normal</option>
@@ -379,7 +379,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
 
                         {/* Section 4: Financial (ADMIN ONLY - HIDDEN FROM DESIGNERS) */}
                         {!isDesigner && (
-                            <div className="bg-oms-blue rounded-lg md:rounded-2xl p-4 md:p-6 border-2 border-[rgba(0,0,255,0.2)]-200">
+                            <div className="bg-gray-900 rounded-lg md:rounded-2xl p-4 md:p-6 border-2 border-[rgba(0,0,255,0.2)]-200">
                                 <div className="flex items-center justify-between mb-4">
                                     <h4 className="font-bold text-indigo-900 text-lg flex items-center gap-2">
                                         <DollarSign size={20} />
@@ -399,7 +399,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                             <select
                                                 value={formData.product_category_id}
                                                 onChange={(e) => setFormData({ ...formData, product_category_id: e.target.value })}
-                                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
+                                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
                                             >
                                                 <option value="">Select Category</option>
                                                 {productCategories.map(cat => (
@@ -416,7 +416,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                                 type="number"
                                                 value={formData.quantity}
                                                 onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
-                                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
+                                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
                                                 min="1"
                                             />
                                         </div>
@@ -428,7 +428,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                             <select
                                                 value={formData.current_stage}
                                                 onChange={(e) => setFormData({ ...formData, current_stage: e.target.value as any })}
-                                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
+                                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
                                             >
                                                 <option value="new">New</option>
                                                 <option value="designing">Designing</option>
@@ -450,7 +450,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                                 step="0.01"
                                                 value={formData.base_price}
                                                 onChange={(e) => setFormData({ ...formData, base_price: parseFloat(e.target.value) || 0 })}
-                                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
+                                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
                                             />
                                         </div>
 
@@ -463,7 +463,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                                 step="0.01"
                                                 value={formData.gst_rate}
                                                 onChange={(e) => setFormData({ ...formData, gst_rate: parseFloat(e.target.value) || 0 })}
-                                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
+                                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
                                             />
                                         </div>
 
@@ -487,7 +487,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                                 <select
                                                     value={formData.vendor_id}
                                                     onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })}
-                                                    className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
+                                                    className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
                                                 >
                                                     <option value="">None</option>
                                                     {vendors.map(vendor => (
@@ -514,14 +514,14 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-4 py-2 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-100 transition-all"
+                                className="px-4 py-2 border-2 border-gray-300 rounded-md font-bold text-gray-700 hover:bg-gray-100 transition-all"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="px-8 py-3 bg-oms-blue text-white rounded-xl font-bold  transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-8 py-2 bg-gray-900 text-white rounded-md font-bold  transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? 'Saving...' : existingJob ? 'Update Project' : 'Create Project'}
                             </button>

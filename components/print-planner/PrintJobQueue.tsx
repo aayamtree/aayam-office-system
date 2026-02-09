@@ -59,22 +59,22 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
 
     const getUrgencyColor = (urgency?: string) => {
         switch (urgency) {
-            case 'urgent': return 'bg-red-100 text-red-700 border-red-300';
-            case 'high': return 'bg-orange-100 text-orange-700 border-orange-300';
-            case 'normal': return 'bg-blue-100 text-blue-700 border-blue-300';
+            case 'urgent': return 'bg-gray-900 text-white border-gray-900';
+            case 'high': return 'bg-gray-700 text-white border-gray-700';
+            case 'normal': return 'bg-gray-200 text-gray-700 border-gray-300';
             default: return 'bg-gray-100 text-gray-700 border-gray-300';
         }
     };
 
     const getJobTypeColor = (type: string) => {
         const colors: Record<string, string> = {
-            STICKER: 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
-            POUCH: 'bg-green-100 text-green-700',
-            BOX: 'bg-amber-100 text-amber-700',
-            BANNER: 'bg-blue-100 text-blue-700',
-            FLEX: 'bg-pink-100 text-pink-700',
-            VINYL: 'bg-[rgba(0,0,255,0.1)] text-oms-blue',
-            LABEL: 'bg-cyan-100 text-cyan-700',
+            STICKER: 'bg-gray-900 text-white',
+            POUCH: 'bg-gray-700 text-white',
+            BOX: 'bg-gray-500 text-white',
+            BANNER: 'bg-gray-300 text-gray-900',
+            FLEX: 'bg-gray-200 text-gray-800',
+            VINYL: 'bg-gray-800 text-white',
+            LABEL: 'bg-gray-400 text-white',
         };
         return colors[type] || 'bg-gray-100 text-gray-700';
     };
@@ -86,12 +86,12 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
     };
 
     return (
-        <div className="h-full flex flex-col bg-white rounded-2xl border border-gray-200">
+        <div className="h-full flex flex-col bg-white rounded-md border border-gray-200">
             {/* Header */}
             <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-[rgba(0,0,255,0.1)] rounded-xl flex items-center justify-center">
-                        <Package className="text-oms-blue" size={20} />
+                    <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center">
+                        <Package className="text-gray-700" size={20} />
                     </div>
                     <div>
                         <h2 className="text-page-title text-gray-900">Pending Print Jobs</h2>
@@ -105,7 +105,7 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                     placeholder="Search jobs or clients..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all outline-none"
                 />
             </div>
 
@@ -116,9 +116,9 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                         <button
                             key={type}
                             onClick={() => setFilter(type)}
-                            className={`px-4 py-1.5 rounded-lg text-xs font-bold border-2 whitespace-nowrap transition-all ${filter === type
-                                ? 'bg-[rgba(0,0,255,0.1)] text-white border-[rgba(0,0,255,0.2)]-600'
-                                : 'bg-white text-gray-600 border-gray-200 hover:border-oms-blue-300'
+                            className={`px-4 py-2 rounded-md text-xs font-medium border whitespace-nowrap transition-all ${filter === type
+                                ? 'bg-gray-900 text-white border-gray-900'
+                                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
                                 }`}
                         >
                             {type}
@@ -131,7 +131,7 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {loading ? (
                     <div className="text-center py-12">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[rgba(0,0,255,0.2)]-600"></div>
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                     </div>
                 ) : filteredJobs.length === 0 ? (
                     <div className="text-center py-12">
@@ -145,15 +145,15 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                         return (
                             <div
                                 key={job.id}
-                                className={`p-4 rounded-xl border-2 transition-all ${disabled
+                                className={`p-4 rounded-md border transition-all ${disabled
                                     ? 'bg-gray-50 border-gray-200 opacity-50'
-                                    : 'bg-white border-gray-200 hover:border-oms-blue-300 '
+                                    : 'bg-white border-gray-200 hover:border-gray-400'
                                     }`}
                             >
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <span className="font-mono text-sm font-bold text-oms-blue">
+                                            <span className="font-mono text-sm font-bold text-gray-900">
                                                 {job.job_number}
                                             </span>
                                             {job.job_type && (
@@ -169,16 +169,16 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                                         </div>
                                         <p className="text-sm font-medium text-gray-900 mb-1">{job.project_name}</p>
                                         <p className="text-xs text-gray-500">
-                                            👤 {job.client_name}
+                                            {job.client_name}
                                             {job.quantity && ` • ${job.quantity.toLocaleString()} qty`}
                                         </p>
                                     </div>
                                     <button
                                         onClick={() => onAddJob(job)}
                                         disabled={disabled}
-                                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${disabled
+                                        className={`px-4 py-2 rounded-md text-xs font-medium transition-all ${disabled
                                             ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                            : 'bg-[rgba(0,0,255,0.1)] text-white hover:bg-[rgba(0,0,255,0.1)]'
+                                            : 'bg-gray-900 text-white hover:bg-gray-800'
                                             }`}
                                         title={disabled && selectedJobType ? `Only ${selectedJobType} jobs can be added` : ''}
                                     >
@@ -193,10 +193,10 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
 
             {/* Job Type Lock Warning */}
             {selectedJobType && (
-                <div className="p-4 border-t border-gray-200 bg-[rgba(0,0,255,0.1)]">
+                <div className="p-4 border-t border-gray-200 bg-gray-100">
                     <div className="flex items-center gap-2 text-sm">
-                        <Layers size={16} className="text-oms-blue" />
-                        <span className="font-medium text-purple-900">
+                        <Layers size={16} className="text-gray-700" />
+                        <span className="font-medium text-gray-900">
                             Locked to: <span className="font-bold">{selectedJobType}</span> jobs only
                         </span>
                     </div>

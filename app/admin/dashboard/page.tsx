@@ -5,601 +5,479 @@ import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  TrendingUp,
-  Package,
-  Printer,
-  Truck,
-  ArrowUpRight,
-  Plus,
-  AlertCircle,
-  Check,
-  Clock,
-  CheckCircle,
-  Receipt,
-  Phone,
-  Ban,
-  IndianRupee
+    Package,
+    ArrowUpRight,
+    CreditCard,
+    IndianRupee,
+    Users,
+    AlertTriangle,
+    Clock,
+    CheckCircle2,
+    TrendingUp,
+    ArrowRight,
+    Activity,
+    Zap,
+    Target,
+    CircleDot,
 } from 'lucide-react';
-import { useDashboardStats, useJobs } from '@/lib/hooks';
-import NotesWidget from '@/components/dashboard/NotesWidget';
-import RemindersWidget from '@/components/dashboard/RemindersWidget';
-import ActivityFeed from '@/components/dashboard/ActivityFeed';
-import { usePageVisibility } from '@/lib/usePageVisibility';
-import DriveConnectionStatus from '@/components/drive/DriveConnectionStatus';
+import { useDashboardStats, useJobs, useActivityFeed } from '@/lib/hooks';
 
-export default function AdminDashboard() {
-  const { profile } = useAuth();
-  const router = useRouter();
-  const { stats: dashboardStats, loading: statsLoading } = useDashboardStats();
-  const { jobs: recentJobs, loading: jobsLoading } = useJobs({
-    limit: 5,
-    orderBy: { column: 'created_at', ascending: false }
-  });
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import OverdueAlertsWidget from '@/components/dashboard/OverdueAlertsWidget';
 
-  // Redirect non-admin users to their specific dashboards
-  useEffect(() => {
-    if (profile?.role === 'designer') {
-      router.replace('/admin/designers/tasks');
-    } else if (profile?.role === 'dispatch') {
-      router.replace('/admin/dispatch');
-    } else if (profile?.role === 'marketing') {
-      router.replace('/admin/marketing');
-    } else if (profile?.role === 'cmyk') {
-      router.replace('/admin/cmyk-print');
+export default function AdminDashboardShadcn() {
+    const { profile } = useAuth();
+    const router = useRouter();
+    const { stats: dashboardStats, loading: statsLoading } = useDashboardStats();
+    const { jobs: recentJobs, loading: jobsLoading } = useJobs({
+        limit: 5,
+        orderBy: { column: 'created_at', ascending: false }
+    });
+    const { activities, loading: activitiesLoading } = useActivityFeed(15);
+
+    // Redirect non-admin users
+    useEffect(() => {
+        if (profile?.role === 'designer') {
+            router.replace('/admin/designers/tasks');
+        } else if (profile?.role === 'dispatch') {
+            router.replace('/admin/dispatch');
+        } else if (profile?.role === 'marketing') {
+            router.replace('/admin/marketing');
+        } else if (profile?.role === 'cmyk') {
+            router.replace('/admin/cmyk-print');
+        }
+    }, [profile, router]);
+
+    if (profile?.role && profile.role !== 'admin') {
+        return (
+            <div className="h-screen flex items-center justify-center">
+                <p className="text-muted-foreground">Redirecting to your dashboard...</p>
+            </div>
+        );
     }
-  }, [profile, router]);
 
-  // Prevent flash of admin content for non-admin users
-  if (profile?.role && profile.role !== 'admin') {
-    return <div className="h-screen flex items-center justify-center bg-gray-50 text-gray-500">Redirecting to your dashboard...</div>;
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
-
-  const today = new Date();
-  const dateStr = today.toLocaleDateString('en-IN', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  });
-
-  // Stat Cards Data
-  const stats = [
-    { label: 'Total Revenue', value: formatCurrency(dashboardStats.totalRevenue), subtext: 'Lifetime Invoice Total', positive: true, icon: TrendingUp },
-    { label: 'Active Jobs', value: dashboardStats.activeJobs.toString(), change: '', positive: true, icon: Package },
-    { label: 'Pending Payments', value: formatCurrency(dashboardStats.pendingPayments), subtext: 'Outstanding', icon: Printer },
-    { label: 'Leads This Month', value: dashboardStats.leadsThisMonth.toString(), subtext: 'New Opportunities', urgent: false, icon: Truck },
-  ];
-
-  // Pipeline Data - Dynamic
-  const pipeline = [
-    { label: 'In Design', count: (dashboardStats.pipeline?.designing || 0) + (dashboardStats.pipeline?.approval || 0), color: 'bg-oms-blue', href: '/admin/designers/tasks?view=team_tasks', thresh: 10 },
-    { label: 'Production', count: (dashboardStats.pipeline?.printing || 0) + (dashboardStats.pipeline?.finishing || 0), color: 'bg-white0', href: '/admin/jobs/queue', thresh: 15 },
-    { label: 'QC Check', count: dashboardStats.pipeline?.quality_check || 0, color: 'bg-oms-blue', href: '/admin/jobs?status=quality_check', thresh: 5 },
-    { label: 'Ready/Packed', count: (dashboardStats.pipeline?.ready || 0) + (dashboardStats.pipeline?.packed || 0), color: 'bg-white0', href: '/admin/dispatch', thresh: 20 },
-    { label: 'Dispatched', count: (dashboardStats.pipeline?.dispatched || 0) + (dashboardStats.pipeline?.in_transit || 0), color: 'bg-blue-500', href: '/admin/dispatch/history', thresh: 999 },
-  ];
-
-  const totalPipeline = pipeline.reduce((acc, item) => acc + item.count, 0) || 1; // Avoid div by zero
-
-  // Alerts - Dynamic with Sorting
-  const alertsData = [
-    {
-      id: 'blocked',
-      label: 'Blocked Jobs',
-      count: dashboardStats.alerts?.blockedJobs || 0,
-      priority: 0,
-      href: '/admin/jobs?status=approval',
-      activeText: `blocked (${dashboardStats.alerts?.blockedBreakdown?.feedback || 0} feedback, ${dashboardStats.alerts?.blockedBreakdown?.payment || 0} payment)`,
-      emptyText: 'No blocked jobs',
-      icon: <Ban className="w-3 h-3 md:w-5 md:h-5" />
-    },
-    {
-      id: 'payments',
-      label: 'Overdue Payments',
-      count: dashboardStats.alerts?.overduePayments || 0,
-      priority: 1,
-      href: '/admin/finance/invoices',
-      activeText: 'invoices are overdue',
-      emptyText: 'All payments clear',
-      icon: '₹'
-    },
-    {
-      id: 'stock',
-      label: 'Low Stock Items',
-      count: dashboardStats.alerts?.lowStock || 0,
-      priority: 2,
-      href: '/admin/cmyk-print/paper-stock',
-      activeText: 'items below threshold',
-      emptyText: 'Stock levels healthy',
-      icon: '⚠'
-    },
-    {
-      id: 'followups',
-      label: 'Follow-ups Due',
-      count: dashboardStats.alerts?.followUpsDue || 0,
-      priority: 3,
-      href: '/admin/marketing/follow-ups',
-      activeText: 'follow-ups due today',
-      emptyText: 'No pending follow-ups',
-      icon: '!'
-    },
-  ];
-
-  const sortedAlerts = [...alertsData].sort((a, b) => {
-    // 1. Alerting items first (count > 0)
-    if (a.count > 0 && b.count === 0) return -1;
-    if (a.count === 0 && b.count > 0) return 1;
-
-    // 2. Then by Priority
-    return a.priority - b.priority;
-  });
-
-  const getStatusColor = (stage: string) => {
-    const map: any = {
-      'new': 'bg-blue-100 text-blue-700',
-      'designing': 'bg-oms-blue text-white',
-      'approval': 'bg-oms-blue text-white',
-      'printing': 'bg-amber-100 text-amber-700',
-      'finishing': 'bg-orange-100 text-orange-700',
-      'quality_check': 'bg-pink-100 text-pink-700',
-      'ready': 'bg-gray-100 text-gray-900',
-      'dispatched': 'bg-cyan-100 text-cyan-700',
-      'delivered': 'bg-gray-100 text-gray-700'
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            maximumFractionDigits: 0
+        }).format(amount);
     };
-    return map[stage] || 'bg-gray-100 text-gray-700';
-  };
 
-  return (
-    <div className="space-y-4 md:space-y-6 animate-fade-in pb-6 md:pb-10">
-      {/* Welcome Header */}
-      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-5 border border-gray-100">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4 mb-3 md:mb-1.5">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">
-              Welcome back, {profile?.full_name?.split(' ')[0] || 'Admin'}
-            </h1>
-            <p className="text-body text-gray-500 mt-1 md:mt-2 leading-tight">{dateStr}</p>
-          </div>
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
-            <DriveConnectionStatus />
-            <div className="flex items-center gap-1.5 md:gap-2 bg-oms-blue/10 backdrop-blur-sm rounded-full px-3 md:px-5 py-1.5 md:py-2.5 w-fit border border-oms-blue/10">
-              <span className="w-2 h-2 md:w-2.5 md:h-2.5 bg-green-400 rounded-full animate-pulse-soft"></span>
-              <span className="text-xs md:text-base font-medium text-gray-900">Live Dashboard</span>
-            </div>
-          </div>
-        </div>
+    const timeAgo = (dateStr: string) => {
+        const now = new Date();
+        const then = new Date(dateStr);
+        const diffMs = now.getTime() - then.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        if (diffMins < 1) return 'just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        const diffHours = Math.floor(diffMins / 60);
+        if (diffHours < 24) return `${diffHours}h ago`;
+        const diffDays = Math.floor(diffHours / 24);
+        if (diffDays === 1) return 'yesterday';
+        return `${diffDays}d ago`;
+    };
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <div key={stat.label} className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-2 border-gray-100 hover:border-oms-blue/20 transition-all duration-150">
-                <div className="flex items-start justify-between mb-1 md:mb-3">
-                  <p className="text-gray-600 text-xs md:text-sm font-medium">{stat.label}</p>
-                  <Icon className="w-4 h-4 text-oms-blue md:hidden" />
-                  <Icon className="w-3 h-3 md:w-5 md:h-5 text-oms-blue hidden md:block" />
-                </div>
-                <p className="text-xl md:text-3xl lg:text-page-title tracking-tight text-gray-900 font-semibold">
-                  {statsLoading ? '...' : stat.value}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+    // Pipeline stages in order
+    const pipelineStages = [
+        { key: 'design', label: 'Design', color: 'bg-violet-500' },
+        { key: 'approval', label: 'Approval', color: 'bg-amber-500' },
+        { key: 'printing', label: 'Printing', color: 'bg-gray-800' },
+        { key: 'finishing', label: 'Finishing', color: 'bg-cyan-500' },
+        { key: 'ready', label: 'Ready', color: 'bg-emerald-500' },
+        { key: 'packed', label: 'Packed', color: 'bg-teal-500' },
+        { key: 'dispatched', label: 'Dispatched', color: 'bg-gray-400' },
+    ];
 
-      {/* Daily Briefing Panel (Focus + Activity) */}
-      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100 animate-fade-in-up">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Left: Today's Focus Stats */}
-          <div className="lg:col-span- 2 space-y-4 md:space-y-5">
-            <div className="min-w-[120px]">
-              <h2 className="text-section text-gray-900 flex items-center gap-2">
-                <span className="w-2 h-8 bg-oms-blue rounded-full"></span>
-                Today
-              </h2>
-              <p className="text-xs text-gray-400 pl-4 mt-1">Daily Focus</p>
+    const totalPipelineJobs = Object.values(dashboardStats.pipeline).reduce((a, b) => a + b, 0);
+
+    const hasAlerts = dashboardStats.alerts.overduePayments > 0 ||
+        dashboardStats.alerts.followUpsDue > 0 ||
+        dashboardStats.alerts.blockedJobs > 0;
+
+    // Activity feed icon/color based on action
+    const getActivityStyle = (action: string) => {
+        if (action?.includes('Create') || action?.includes('create')) return { icon: '➕', color: 'text-green-600 bg-green-50' };
+        if (action?.includes('Update') || action?.includes('Stage') || action?.includes('update')) return { icon: '✏️', color: 'text-gray-700 bg-gray-100' };
+        if (action?.includes('Delete') || action?.includes('delete')) return { icon: '🗑️', color: 'text-red-600 bg-red-50' };
+        if (action?.includes('login')) return { icon: '🔑', color: 'text-gray-600 bg-gray-50' };
+        return { icon: '📋', color: 'text-gray-600 bg-gray-50' };
+    };
+
+    return (
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 overflow-x-hidden">
+            {/* Page Header */}
+            <div className="flex items-center justify-between">
+                <h2 className="text-page-title tracking-tight">Dashboard</h2>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 w-full">
-              {/* Jobs Due */}
-              <div className={`flex flex-col items-center justify-center gap-2 md:gap-3 p-2 md:p-4 rounded-lg md:rounded-xl border ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <AlertCircle className={`w-6 h-6 md:w-7 md:h-7 ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'text-red-600' : 'text-gray-400'}`} />
-                <div className="text-center">
-                  <div className={`text-2xl font-bold leading-none mb-1 ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'text-red-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsDue || 0}</div>
-                  <div className="text-xs text-gray-600 font-medium whitespace-nowrap">Jobs Due</div>
-                </div>
-              </div>
+            {/* Row 1: KPI Cards */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                        <IndianRupee className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-page-title">
+                            {statsLoading ? '...' : formatCurrency(dashboardStats.totalRevenue)}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Lifetime invoice total
+                        </p>
+                    </CardContent>
+                </Card>
 
-              {/* Jobs Delayed */}
-              <div className={`flex flex-col items-center justify-center gap-2 md:gap-3 p-2 md:p-4 rounded-lg md:rounded-xl border ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-[rgba(255,102,0,0.08)] border-[rgba(255,102,0,0.15)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <Clock className={`w-6 h-6 md:w-7 md:h-7 ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'text-oms-orange' : 'text-gray-400'}`} />
-                <div className="text-center">
-                  <div className={`text-2xl font-bold leading-none mb-1 ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'text-oms-orange' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsDelayed || 0}</div>
-                  <div className="text-xs text-gray-600 font-medium whitespace-nowrap">Delayed</div>
-                </div>
-              </div>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
+                        <Package className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-page-title">
+                            {statsLoading ? '...' : dashboardStats.activeJobs}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Currently in production
+                        </p>
+                    </CardContent>
+                </Card>
 
-              {/* Jobs Completed */}
-              <div className={`flex flex-col items-center justify-center gap-2 md:gap-3 p-2 md:p-4 rounded-lg md:rounded-xl border transition-colors ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-gray-50 border-gray-200 hover:bg-gray-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <CheckCircle className={`w-6 h-6 md:w-7 md:h-7 ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'text-gray-600' : 'text-gray-400'}`} />
-                <div className="text-center">
-                  <div className={`text-2xl font-bold leading-none mb-1 ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'text-gray-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsCompleted || 0}</div>
-                  <div className="text-xs text-gray-600 font-medium whitespace-nowrap">Completed</div>
-                </div>
-              </div>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
+                        <CreditCard className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-page-title">
+                            {statsLoading ? '...' : formatCurrency(dashboardStats.pendingPayments)}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Outstanding invoices
+                        </p>
+                    </CardContent>
+                </Card>
 
-              {/* Payments Due */}
-              <div className={`flex flex-col items-center justify-center gap-2 md:gap-3 p-2 md:p-4 rounded-lg md:rounded-xl border ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <IndianRupee className={`w-6 h-6 md:w-7 md:h-7 ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'text-oms-blue' : 'text-gray-400'}`} />
-                <div className="text-center">
-                  <div className={`text-2xl font-bold leading-none mb-1 ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'text-oms-blue' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.paymentsDue || 0}</div>
-                  <div className="text-xs text-gray-600 font-medium whitespace-nowrap">Payments</div>
-                </div>
-              </div>
-
-              {/* Follow-ups */}
-              <Link href="/admin/marketing/follow-ups" className={`flex flex-col items-center justify-center gap-2 md:gap-3 p-2 md:p-4 rounded-lg md:rounded-xl border transition-all hover:scale-105 ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)] cursor-pointer' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <Phone className={`w-6 h-6 md:w-7 md:h-7 ${dashboardStats.alerts?.followUpsDue > 0 ? 'text-oms-blue' : 'text-gray-400'}`} />
-                <div className="text-center">
-                  <div className={`text-2xl font-bold leading-none mb-1 ${dashboardStats.alerts?.followUpsDue > 0 ? 'text-oms-blue' : 'text-gray-500'}`}>{dashboardStats.alerts?.followUpsDue || 0}</div>
-                  <div className="text-xs text-gray-600 font-medium whitespace-nowrap">Follow-ups</div>
-                </div>
-              </Link>
-
-              {/* --- VENDOR SNAPSHOT --- */}
-
-              {/* Jobs At Vendor */}
-              <div className={`flex flex-col items-center justify-center gap-2 md:gap-3 p-2 md:p-4 rounded-lg md:rounded-xl border ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <Printer className={`w-6 h-6 md:w-7 md:h-7 ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'text-oms-blue' : 'text-gray-400'}`} />
-                <div className="text-center">
-                  <div className={`text-2xl font-bold leading-none mb-1 ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'text-oms-blue' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.jobsAtVendor || 0}</div>
-                  <div className="text-xs text-gray-600 font-medium whitespace-nowrap">At Process</div>
-                </div>
-              </div>
-
-              {/* Return Today */}
-              <div className={`flex flex-col items-center justify-center gap-2 md:gap-3 p-2 md:p-4 rounded-lg md:rounded-xl border ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-[rgba(0,0,255,0.05)] border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <Truck className={`w-6 h-6 md:w-7 md:h-7 ${dashboardStats.vendorStats?.dueToday > 0 ? 'text-oms-blue' : 'text-gray-400'}`} />
-                <div className="text-center">
-                  <div className={`text-2xl font-bold leading-none mb-1 ${dashboardStats.vendorStats?.dueToday > 0 ? 'text-oms-blue' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.dueToday || 0}</div>
-                  <div className="text-xs text-gray-600 font-medium whitespace-nowrap">Return Today</div>
-                </div>
-              </div>
-
-              {/* Vendor Delayed */}
-              <div className={`flex flex-col items-center justify-center gap-2 md:gap-3 p-2 md:p-4 rounded-lg md:rounded-xl border ${dashboardStats.vendorStats?.delayed > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-transparent opacity-60'}`}>
-                <AlertCircle className={`w-6 h-6 md:w-7 md:h-7 ${dashboardStats.vendorStats?.delayed > 0 ? 'text-red-600' : 'text-gray-400'}`} />
-                <div className="text-center">
-                  <div className={`text-2xl font-bold leading-none mb-1 ${dashboardStats.vendorStats?.delayed > 0 ? 'text-red-700' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.delayed || 0}</div>
-                  <div className="text-xs text-gray-600 font-medium whitespace-nowrap">Vendor Late</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Activity Feed (Merged) */}
-          <div className="lg:col-span-1 border-t lg:border-t-0 lg:border-l border-gray-100 pt-6 lg:pt-0 lg:pl-8 h-full">
-            <ActivityFeed variant="minimal" />
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-4">
-
-        {/* Needs Attention */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100 flex flex-col h-full">
-          <div className="flex items-center gap-2.5 mb-1.5">
-            <AlertCircle className="w-3 h-3 md:w-5 md:h-5 text-oms-orange" />
-            <h2 className="text-section text-gray-900">Needs Attention</h2>
-          </div>
-
-          <div className="space-y-2 md:space-y-4 flex-1 overflow-y-auto max-h-[400px] pr-1">
-            {sortedAlerts.map((alert) => {
-              const isSafe = alert.count === 0;
-              let colors = isSafe ? 'bg-gray-50 text-gray-700 border-gray-200' : 'bg-[rgba(255,102,0,0.05)] text-oms-orange border-[rgba(255,102,0,0.1)]';
-              let iconColors = isSafe ? 'bg-gray-200 text-gray-500' : 'bg-[rgba(255,102,0,0.1)] text-oms-orange';
-
-              // Specific Alert Colors
-              if (!isSafe) {
-                if (alert.id === 'blocked') { colors = 'bg-[rgba(0,0,255,0.05)] text-oms-blue border-[rgba(0,0,255,0.1)]'; iconColors = 'bg-oms-blue text-white'; }
-                if (alert.id === 'payments') { colors = 'bg-red-50 text-red-700 border-red-200'; iconColors = 'bg-red-100 text-red-600'; }
-                if (alert.id === 'stock') { colors = 'bg-[rgba(255,102,0,0.1)] text-oms-orange border-[rgba(255,102,0,0.2)]'; iconColors = 'bg-[rgba(255,102,0,0.15)] text-oms-orange'; }
-                if (alert.id === 'followups') { colors = 'bg-[rgba(255,102,0,0.08)] text-oms-orange border-[rgba(255,102,0,0.15)]'; iconColors = 'bg-[rgba(255,102,0,0.12)] text-oms-orange'; }
-              }
-
-              return (
-                <Link key={alert.label} href={alert.href} className={`flex items-center justify-between p-3 md:p-4 rounded-lg md:rounded-xl border transition-all  ${colors}`}>
-                  <div className="flex items-center gap-4">
-                    <span className={`w-10 h-10 ${iconColors} rounded-lg flex items-center justify-center text-section`}>
-                      {isSafe ? <Check className="w-3 h-3 md:w-5 md:h-5" /> : alert.icon}
-                    </span>
-                    <div>
-                      <h4 className="text-base font-bold leading-tight">{alert.label}</h4>
-                      <p className={`text-xs mt-0.5 font-medium opacity-80`}>
-                        {isSafe ? alert.emptyText : `${alert.count} ${alert.activeText}`}
-                      </p>
-                    </div>
-                  </div>
-
-                  {!isSafe && (
-                    <span className="font-bold text-xl">{alert.count}</span>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Notes */}
-        <NotesWidget />
-
-        {/* Reminders */}
-        <RemindersWidget />
-
-        {/* Row 2: Main Business Data */}
-        {/* Left Column - 2/3 width */}
-        <div className="lg:col-span-2 space-y-3 md:space-y-6 lg:space-y-8">
-
-          {/* Sales Performance */}
-          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-5 border border-gray-100">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0 mb-1.5">
-              <div>
-                <h2 className="text-lg md:text-section text-gray-900">Sales Performance</h2>
-                <p className="text-xs md:text-sm text-gray-500 mt-1">Monthly revenue overview</p>
-              </div>
-              <div className="flex items-center gap-2 md:gap-3">
-                <button className="px-4 md:px-5 py-2 text-sm bg-oms-blue text-white rounded-lg font-semibold transition-colors hover:bg-blue-700">Monthly</button>
-                <button className="px-4 md:px-5 py-2 text-sm text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg font-medium transition-colors">Yearly</button>
-              </div>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Leads This Month</CardTitle>
+                        <Users className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-page-title">
+                            {statsLoading ? '...' : dashboardStats.leadsThisMonth}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            New opportunities
+                        </p>
+                    </CardContent>
+                </Card>
             </div>
 
-            {/* Chart */}
-            <div className="flex items-end justify-between gap-3 h-56 mb-1.5">
-              {dashboardStats.salesPerformance?.map((item) => (
-                <div key={item.month} className="flex flex-col items-center flex-1 group h-full justify-end">
-                  <div className="relative w-full flex items-end justify-center h-full">
-                    {item.active && (
-                      <div className="absolute -top-10 bg-oms-blue text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transform transition-all z-10">
-                        {formatCurrency(item.value)}
-                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-oms-blue rotate-45"></div>
-                      </div>
+            {/* Row 2: Today's Focus + Pipeline | Activity Feed */}
+            <div className="grid gap-4 lg:grid-cols-5">
+                {/* Left Column (3/5) */}
+                <div className="lg:col-span-3 space-y-4">
+                    {/* Today's Focus */}
+                    <Card>
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <Target className="h-4 w-4" strokeWidth={1.5} />
+                                Today&apos;s Focus
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div className="flex flex-col items-center p-3 rounded-md bg-amber-50 border border-amber-100">
+                                    <Clock className="h-4 w-4 text-amber-600 mb-1" strokeWidth={1.5} />
+                                    <span className="text-xl font-bold text-amber-700">
+                                        {statsLoading ? '-' : dashboardStats.todaysFocus.jobsDue}
+                                    </span>
+                                    <span className="text-xs text-amber-600">Jobs Due</span>
+                                </div>
+                                <div className="flex flex-col items-center p-3 rounded-md bg-red-50 border border-red-100">
+                                    <AlertTriangle className="h-4 w-4 text-red-600 mb-1" strokeWidth={1.5} />
+                                    <span className="text-xl font-bold text-red-700">
+                                        {statsLoading ? '-' : dashboardStats.todaysFocus.jobsDelayed}
+                                    </span>
+                                    <span className="text-xs text-red-600">Delayed</span>
+                                </div>
+                                <div className="flex flex-col items-center p-3 rounded-md bg-green-50 border border-green-100">
+                                    <CheckCircle2 className="h-4 w-4 text-green-600 mb-1" strokeWidth={1.5} />
+                                    <span className="text-xl font-bold text-green-700">
+                                        {statsLoading ? '-' : dashboardStats.todaysFocus.jobsCompleted}
+                                    </span>
+                                    <span className="text-xs text-green-600">Completed</span>
+                                </div>
+                                <div className="flex flex-col items-center p-3 rounded-md bg-gray-50 border border-gray-200">
+                                    <IndianRupee className="h-4 w-4 text-gray-600 mb-1" strokeWidth={1.5} />
+                                    <span className="text-xl font-bold text-gray-900">
+                                        {statsLoading ? '-' : dashboardStats.todaysFocus.paymentsDue}
+                                    </span>
+                                    <span className="text-xs text-gray-600">Payments Due</span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Alerts Banner - only if there are alerts */}
+                    {!statsLoading && hasAlerts && (
+                        <Card className="border-amber-200 bg-amber-50/50">
+                            <CardContent className="pt-4 pb-3">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Zap className="h-4 w-4 text-amber-600" strokeWidth={1.5} />
+                                    <span className="text-sm font-medium text-amber-800">Needs Attention</span>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {dashboardStats.alerts.overduePayments > 0 && (
+                                        <Link href="/admin/finance">
+                                            <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100 cursor-pointer gap-1">
+                                                <span className="font-bold">{dashboardStats.alerts.overduePayments}</span> Overdue Payments
+                                            </Badge>
+                                        </Link>
+                                    )}
+                                    {dashboardStats.alerts.followUpsDue > 0 && (
+                                        <Link href="/admin/marketing/follow-ups">
+                                            <Badge variant="outline" className="border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 cursor-pointer gap-1">
+                                                <span className="font-bold">{dashboardStats.alerts.followUpsDue}</span> Follow-ups Due
+                                            </Badge>
+                                        </Link>
+                                    )}
+                                    {dashboardStats.alerts.blockedJobs > 0 && (
+                                        <Link href="/admin/jobs">
+                                            <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 cursor-pointer gap-1">
+                                                <span className="font-bold">{dashboardStats.alerts.blockedJobs}</span> Blocked Jobs
+                                                {dashboardStats.alerts.blockedBreakdown.feedback > 0 &&
+                                                    <span className="text-xs opacity-70">({dashboardStats.alerts.blockedBreakdown.feedback} feedback)</span>
+                                                }
+                                            </Badge>
+                                        </Link>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
                     )}
-                    <div
-                      className={`w-full max-w-[40px] rounded-t-lg transition-all duration-300 ${item.active
-                        ? 'bg-oms-blue -200'
-                        : 'bg-gray-100 group-hover:bg-gray-200'
-                        }`}
-                      style={{
-                        height: `${Math.max(5, Math.min(100, (item.value / ((dashboardStats.totalRevenue || 1) / 6)) * 60))}%`
-                      }}
-                    />
-                  </div>
-                  <span className={`text-xs mt-4 font-semibold ${item.active ? 'text-gray-900' : 'text-gray-400'}`}>
-                    {item.month}
-                  </span>
+
+                    {/* Job Pipeline */}
+                    <Card>
+                        <CardHeader className="pb-3">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-base flex items-center gap-2">
+                                    <Activity className="h-4 w-4" strokeWidth={1.5} />
+                                    Job Pipeline
+                                </CardTitle>
+                                <span className="text-sm text-muted-foreground">
+                                    {statsLoading ? '...' : `${totalPipelineJobs} active`}
+                                </span>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            {statsLoading ? (
+                                <div className="text-sm text-muted-foreground text-center py-4">Loading...</div>
+                            ) : totalPipelineJobs === 0 ? (
+                                <div className="text-sm text-muted-foreground text-center py-4">No active jobs in pipeline</div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {pipelineStages.map((stage) => {
+                                        const count = dashboardStats.pipeline[stage.key] || 0;
+                                        const overdue = dashboardStats.pipelineOverdue[stage.key] || 0;
+                                        const percentage = totalPipelineJobs > 0 ? (count / totalPipelineJobs) * 100 : 0;
+
+                                        if (count === 0) return null;
+
+                                        return (
+                                            <div key={stage.key} className="flex items-center gap-3">
+                                                <span className="text-xs w-16 text-right text-muted-foreground truncate">{stage.label}</span>
+                                                <div className="flex-1 h-6 bg-gray-100 rounded-sm overflow-hidden relative">
+                                                    <div
+                                                        className={`h-full ${stage.color} rounded-sm transition-all duration-500`}
+                                                        style={{ width: `${Math.max(percentage, 8)}%` }}
+                                                    />
+                                                    <span className="absolute inset-0 flex items-center px-2 text-xs font-medium">
+                                                        <span className={percentage > 15 ? 'text-white' : 'text-gray-700'}>
+                                                            {count}
+                                                        </span>
+                                                    </span>
+                                                </div>
+                                                {overdue > 0 && (
+                                                    <span className="text-xs text-red-600 font-medium whitespace-nowrap">
+                                                        {overdue} late
+                                                    </span>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
-              ))}
-              {(!dashboardStats.salesPerformance || dashboardStats.salesPerformance.length === 0) && (
-                <div className="w-full flex items-center justify-center text-gray-400 text-sm">No sales data available</div>
-              )}
-            </div>
 
-            <div className="flex items-center justify-between pt-6 border-t border-gray-100">
-              <div className="flex items-baseline gap-3">
-                <span className="text-page-title text-gray-900">{formatCurrency(dashboardStats.totalRevenue)}</span>
-                <span className="text-base text-gray-500 font-medium">YTD Revenue</span>
-              </div>
-              <Link href="/admin/sales/orders" className="flex items-center gap-2 text-sm text-oms-blue hover:opacity-80 font-bold bg-[rgba(0,0,255,0.05)] px-4 py-2 rounded-xl transition-colors">
-                View Report
-                <ArrowUpRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
+                {/* Right Column (2/5): Overdue Alerts + Activity Feed */}
+                <div className="lg:col-span-2 space-y-4">
+                    {/* Overdue Alerts */}
+                    <OverdueAlertsWidget />
 
-          {/* Recent Jobs */}
-          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-5 border border-gray-100">
-            <div className="flex items-center justify-between mb-1.5">
-              <h2 className="text-section text-gray-900">Recent Jobs</h2>
-              <Link href="/admin/sales/orders" className="flex items-center gap-1 text-sm text-oms-blue hover:text-oms-blue font-bold">
-                View All
-                <ArrowUpRight className="w-4 h-4" />
-              </Link>
-            </div>
-
-            {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left border-b border-gray-100">
-                    <th className="pb-4 text-xs font-bold text-gray-500 uppercase tracking-wider pl-4">Order</th>
-                    <th className="pb-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Project</th>
-                    <th className="pb-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Dept</th>
-                    <th className="pb-4 text-xs font-bold text-gray-500 uppercase tracking-wider">SLA / Time</th>
-                    <th className="pb-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Amount</th>
-                    <th className="pb-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right pr-4">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {recentJobs.length === 0 ? (
-                    <tr><td colSpan={6} className="text-center py-8 text-gray-500">No recent jobs found</td></tr>
-                  ) : recentJobs.map((job) => {
-                    // Logic for Dept
-                    let dept = 'Design';
-                    if (['printing', 'finishing', 'ready'].includes(job.current_stage)) dept = 'Print';
-                    if (['dispatched', 'delivered'].includes(job.current_stage)) dept = 'Dispatch';
-
-                    // Logic for SLA
-                    const deadline = job.client_deadline ? new Date(job.client_deadline) : null;
-                    const diffDays = deadline ? Math.ceil((deadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                    let slaText = '-';
-                    let slaColor = 'text-gray-400';
-
-                    if (diffDays !== null) {
-                      if (diffDays < 0) { slaText = `${Math.abs(diffDays)}d Overdue`; slaColor = 'text-red-600 font-bold'; }
-                      else if (diffDays === 0) { slaText = 'Due Today'; slaColor = 'text-orange-600 font-bold'; }
-                      else { slaText = `⏳ ${diffDays} days left`; slaColor = 'text-oms-blue font-medium'; }
-                    }
-
-                    // Row Class
-                    let rowClass = 'hover:bg-gray-50/80 transition-colors group';
-                    if (job.current_stage === 'new') rowClass = 'bg-blue-50/40 hover:bg-blue-50/60 transition-colors group';
-                    if (diffDays !== null && diffDays < 0 && job.current_stage !== 'delivered') rowClass = 'bg-red-50/40 hover:bg-red-50/60 transition-colors group';
-
-                    return (
-                      <tr key={job.id} className={rowClass}>
-                        <td className="py-4 pl-4"><span className="font-bold text-indigo-900 bg-oms-blue px-2 py-1 rounded-md text-xs">{job.job_number}</span></td>
-                        <td className="py-4">
-                          <div className="font-bold text-gray-800 text-sm">{job.project_name}</div>
-                          <div className="text-xs text-gray-500">{job.client?.company || '-'}</div>
-                        </td>
-                        <td className="py-4">
-                          <span className="text-xs font-bold uppercase tracking-wider text-gray-500 border border-gray-200 px-2 py-0.5 rounded-full bg-white">{dept}</span>
-                        </td>
-                        <td className={`py-4 text-xs ${slaColor}`}>
-                          {slaText}
-                        </td>
-                        <td className="py-4 text-right font-bold text-gray-900 text-sm">{formatCurrency(job.total_amount)}</td>
-                        <td className="py-4 text-right pr-4">
-                          <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wide rounded-full ${getStatusColor(job.current_stage)}`}>
-                            {job.current_stage.replace(/_/g, ' ')}
-                          </span>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile Card View */}
-            <div className="md:hidden space-y-2">
-              {recentJobs.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">No recent jobs found</div>
-              ) : recentJobs.map((job) => (
-                <div key={job.id} className="border border-gray-100 p-3 rounded-lg bg-gray-50/30">
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="font-bold text-indigo-900 bg-oms-blue px-3 py-1 rounded-lg text-sm">{job.job_number}</span>
-                    <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wide rounded-full ${getStatusColor(job.current_stage)}`}>
-                      {job.current_stage}
-                    </span>
-                  </div>
-
-                  <h3 className="font-bold text-gray-800 mb-1 leading-snug">{job.project_name}</h3>
-                  <p className="text-sm text-gray-500 mb-3">{job.client?.company || '-'}</p>
-
-                  <div className="flex justify-between items-center border-t border-gray-200 pt-3">
-                    <span className="text-xs text-gray-400 font-medium uppercase">Total Amount</span>
-                    <span className="font-bold text-gray-900">{formatCurrency(job.total_amount)}</span>
-                  </div>
+                    <Card className="h-full">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <CircleDot className="h-4 w-4" strokeWidth={1.5} />
+                                Activity Feed
+                            </CardTitle>
+                            <CardDescription>Recent system activity</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {activitiesLoading ? (
+                                <div className="text-sm text-muted-foreground text-center py-8">Loading...</div>
+                            ) : activities.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <p className="text-sm text-muted-foreground">No activity yet</p>
+                                    <p className="text-xs text-muted-foreground mt-1">Actions like creating jobs, leads, and invoices will appear here</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                                    {activities.map((activity) => {
+                                        const style = getActivityStyle(activity.action);
+                                        const userName = activity.profiles?.name || activity.profiles?.username || 'System';
+                                        return (
+                                            <div key={activity.id} className="flex items-start gap-3">
+                                                <div className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 text-xs ${style.color}`}>
+                                                    {style.icon}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm leading-tight">
+                                                        <span className="font-medium">{userName}</span>
+                                                        <span className="text-muted-foreground"> · {activity.description || activity.action}</span>
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                                        {timeAgo(activity.created_at)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
-              ))}
             </div>
-          </div>
+
+            {/* Row 3: Recent Orders + Sales Performance */}
+            <div className="grid gap-4 lg:grid-cols-5">
+                {/* Recent Orders (3/5) */}
+                <Card className="lg:col-span-3 overflow-hidden">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle>Recent Orders</CardTitle>
+                                <CardDescription>
+                                    You have {dashboardStats.activeJobs || 0} active orders.
+                                </CardDescription>
+                            </div>
+                            <Button variant="ghost" size="sm" asChild>
+                                <Link href="/admin/jobs" className="flex items-center gap-1 text-xs">
+                                    View all <ArrowRight className="h-3 w-3" />
+                                </Link>
+                            </Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="overflow-x-auto">
+                        <Table className="min-w-[500px] md:min-w-0">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Order ID</TableHead>
+                                    <TableHead>Client</TableHead>
+                                    <TableHead>Project</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-right">Amount</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {jobsLoading ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                                            Loading...
+                                        </TableCell>
+                                    </TableRow>
+                                ) : recentJobs.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                                            No recent orders
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    recentJobs.map((job) => (
+                                        <TableRow key={job.id}>
+                                            <TableCell className="font-medium">
+                                                #{job.job_number}
+                                            </TableCell>
+                                            <TableCell>{job.client?.name || '-'}</TableCell>
+                                            <TableCell>{job.project_name || '-'}</TableCell>
+                                            <TableCell>
+                                                <Badge variant={
+                                                    job.current_stage === 'delivered' ? 'default' :
+                                                        job.current_stage === 'dispatched' ? 'secondary' :
+                                                            'outline'
+                                                }>
+                                                    {job.current_stage?.replace('_', ' ')}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {formatCurrency(job.total_amount || 0)}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+
+                {/* Sales Performance (2/5) */}
+                <Card className="lg:col-span-2">
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-base flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4" strokeWidth={1.5} />
+                            Sales Performance
+                        </CardTitle>
+                        <CardDescription>Monthly revenue this year</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {statsLoading ? (
+                            <div className="text-sm text-muted-foreground text-center py-8">Loading...</div>
+                        ) : dashboardStats.salesPerformance.length === 0 ? (
+                            <div className="text-sm text-muted-foreground text-center py-8">No sales data yet</div>
+                        ) : (
+                            <div className="space-y-3">
+                                {dashboardStats.salesPerformance.map((month) => {
+                                    const maxVal = Math.max(...dashboardStats.salesPerformance.map(m => m.value), 1);
+                                    const percentage = (month.value / maxVal) * 100;
+                                    return (
+                                        <div key={month.month} className="flex items-center gap-3">
+                                            <span className={`text-xs w-8 text-right ${month.active ? 'font-bold text-foreground' : 'text-muted-foreground'}`}>
+                                                {month.month}
+                                            </span>
+                                            <div className="flex-1 h-5 bg-gray-100 rounded-sm overflow-hidden relative">
+                                                <div
+                                                    className={`h-full rounded-sm transition-all duration-500 ${month.active ? 'bg-foreground' : 'bg-gray-300'}`}
+                                                    style={{ width: `${Math.max(percentage, 3)}%` }}
+                                                />
+                                            </div>
+                                            <span className={`text-xs w-14 md:w-20 text-right tabular-nums ${month.active ? 'font-bold' : 'text-muted-foreground'}`}>
+                                                {formatCurrency(month.value)}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
         </div>
-
-        {/* Right Column - 1/3 width */}
-        <div className="lg:col-span-1 space-y-3 md:space-y-6 lg:space-y-8">
-
-          {/* Quick Actions */}
-          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-5 border border-gray-100">
-            <h2 className="text-base md:text-section text-gray-900 mb-3 md:mb-5">Quick Actions</h2>
-            <div className="grid grid-cols-2 gap-3 md:gap-4">
-              <Link href="/admin/sales/orders" className="px-4 py-3 bg-[#0000FF] text-white rounded-lg text-center text-sm font-semibold hover:bg-[#0000CC] transition-colors shadow-sm">
-                + New Order
-              </Link>
-              <Link href="/admin/cmyk-print" className="px-4 py-3 bg-white border-2 border-gray-200 text-[#0000FF] rounded-lg text-center text-sm font-semibold hover:bg-gray-50 transition-colors">
-                Print Job
-              </Link>
-              <Link href="/admin/dispatch" className="px-4 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-lg text-center text-sm font-semibold hover:bg-gray-50 transition-colors">
-                QC Check
-              </Link>
-              <Link href="/admin/crm/clients" className="px-4 py-3 bg-white border-2 border-gray-200 text-[#0000FF] rounded-lg text-center text-sm font-semibold hover:bg-gray-50 transition-colors">
-                Clients
-              </Link>
-            </div>
-          </div>
-
-          {/* Work Pipeline */}
-          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-5 border border-gray-100">
-            <h2 className="text-base md:text-section text-gray-900 mb-1.5">Work Pipeline</h2>
-
-            <div className="relative w-48 h-48 mx-auto mb-1.5">
-              <svg viewBox="0 0 120 120" className="w-full h-full transform -rotate-90 drop-">
-                <circle cx="60" cy="60" r="45" fill="none" stroke="#f3f4f6" strokeWidth="10" />
-                <circle cx="60" cy="60" r="45" fill="none" stroke="#4f46e5" strokeWidth="10"
-                  strokeDasharray={`${(dashboardStats.activeJobs > 0 ? 283 : 0)} 283`} strokeDashoffset="0" strokeLinecap="round" className="transition-all duration-1000 ease-out" />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <span className="text-4xl font-extrabold text-gray-900">{dashboardStats.activeJobs}</span>
-                  <p className="text-sm text-gray-500 font-medium mt-1">Active Jobs</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2 md:space-y-4">
-              {pipeline.map((item) => {
-                const percent = Math.round((item.count / totalPipeline) * 100);
-                const isBottleneck = item.count > item.thresh;
-
-                // Calculate Overdue for this stage group
-                let overdueCount = 0;
-                if (item.label === 'In Design') overdueCount = (dashboardStats.pipelineOverdue?.designing || 0) + (dashboardStats.pipelineOverdue?.approval || 0);
-                if (item.label === 'Production') overdueCount = (dashboardStats.pipelineOverdue?.printing || 0) + (dashboardStats.pipelineOverdue?.finishing || 0);
-                if (item.label === 'QC Check') overdueCount = (dashboardStats.pipelineOverdue?.quality_check || 0);
-                if (item.label === 'Ready/Packed') overdueCount = (dashboardStats.pipelineOverdue?.ready || 0) + (dashboardStats.pipelineOverdue?.packed || 0);
-
-                return (
-                  <Link key={item.label} href={item.href} className={`block group`}>
-                    <div className={`flex items-center justify-between p-3 rounded-xl transition-all border 
-                      ${isBottleneck || overdueCount > 0 ? 'bg-red-50/50 border-red-100' : 'hover:bg-gray-50 border-transparent hover:border-gray-100'}
-                  `}>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`w-2 h-2 rounded-full ${item.color.split(' ')[0]}`}></span>
-                          <span className={`text-sm font-bold ${isBottleneck || overdueCount > 0 ? 'text-gray-900' : 'text-gray-700'}`}>{item.label}</span>
-                        </div>
-
-                        {/* Health Status */}
-                        <div className="text-xs font-medium mb-2 pl-4">
-                          {overdueCount > 0 ? (
-                            <span className="text-red-600 flex items-center gap-1">⚠️ {overdueCount} overdue</span>
-                          ) : isBottleneck ? (
-                            <span className="text-oms-orange flex items-center gap-1">🟡 High Load</span>
-                          ) : (
-                            <span className="text-gray-900 flex items-center gap-1">✅ On Track</span>
-                          )}
-                        </div>
-
-                        {/* Prorgess Bar */}
-                        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                          <div className={`h-full rounded-full ${item.color.replace('text-', 'bg-')} transition-all duration-500`} style={{ width: `${percent}%` }}></div>
-                        </div>
-                      </div>
-
-                      <div className="ml-4 text-right">
-                        <span className={`text-section ${isBottleneck || overdueCount > 0 ? 'text-red-600' : 'text-gray-900 group-hover:text-oms-blue'}`}>{item.count}</span>
-                        <p className="text-xs text-gray-400 font-medium">{percent}%</p>
-                      </div>
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }

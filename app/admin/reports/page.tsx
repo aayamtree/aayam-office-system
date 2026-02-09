@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { BarChart3, TrendingUp, Truck, FileText, Download, Loader2, Search, Printer, Calendar, ArrowRightLeft, DollarSign } from 'lucide-react';
 import { useDashboardStats, useClients, useJobs, usePaymentsReceived, useVendors, usePurchaseBills, useVendorPayments, useExpenses } from '@/lib/hooks';
 import { useState } from 'react';
+import { exportToCSV } from '@/lib/csv-export';
 
 export default function ReportsPage() {
   const { stats, loading } = useDashboardStats();
@@ -23,7 +24,7 @@ export default function ReportsPage() {
           <button
             onClick={() => setActiveTab('client')}
             className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'client'
-              ? 'border-oms-blue text-oms-blue'
+              ? 'border-primary text-primary'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
           >
@@ -32,7 +33,7 @@ export default function ReportsPage() {
           <button
             onClick={() => setActiveTab('vendor')}
             className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'vendor'
-              ? 'border-oms-blue text-oms-blue'
+              ? 'border-primary text-primary'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
           >
@@ -41,7 +42,7 @@ export default function ReportsPage() {
           <button
             onClick={() => setActiveTab('cashflow')}
             className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'cashflow'
-              ? 'border-oms-blue text-oms-blue'
+              ? 'border-primary text-primary'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
           >
@@ -110,7 +111,7 @@ function ClientStatementGenerator() {
     <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100 animate-scale-in">
       {/* ... Header UI ... */}
       <div className="flex items-center gap-3 mb-3 md:mb-1.5">
-        <div className="w-10 h-10 bg-oms-blue rounded-xl flex items-center justify-center text-white">
+        <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white">
           <FileText size={20} />
         </div>
         <div>
@@ -137,7 +138,7 @@ function ClientStatementGenerator() {
           <input type="date" className="w-full px-3 py-2 border rounded-xl" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
         </div>
       </div>
-      <button onClick={generateStatement} className="px-6 py-2 bg-oms-blue text-white rounded-xl hover:bg-oms-blue font-medium w-full md:w-auto">
+      <button onClick={generateStatement} className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-900 font-medium w-full md:w-auto">
         Generate Statement
       </button>
 
@@ -190,7 +191,7 @@ function VendorStatementGenerator() {
   return (
     <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100 animate-scale-in">
       <div className="flex items-center gap-3 mb-3 md:mb-1.5">
-        <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-oms-orange">
+        <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-destructive">
           <Truck size={20} />
         </div>
         <div>
@@ -215,7 +216,7 @@ function VendorStatementGenerator() {
           <input type="date" className="w-full px-3 py-2 border rounded-xl" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
         </div>
       </div>
-      <button onClick={() => selectedVendorId && setShowStatement(true)} className="px-6 py-2 bg-oms-blue text-white rounded-xl hover:bg-oms-blue font-medium w-full md:w-auto">
+      <button onClick={() => selectedVendorId && setShowStatement(true)} className="px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-900 font-medium w-full md:w-auto">
         Generate Statement
       </button>
 
@@ -307,16 +308,26 @@ function CashFlowStatement() {
           <p className="text-sm text-red-600 font-medium">Total Outflow</p>
           <p className="text-page-title text-red-700">₹{totalOut.toLocaleString()}</p>
         </div>
-        <div className={`p-4 rounded-xl border ${netFlow >= 0 ? 'bg-oms-blue border-[rgba(0,0,255,0.2)]-100' : 'bg-white border-gray-100'}`}>
-          <p className={`text-sm font-medium ${netFlow >= 0 ? 'text-oms-blue' : 'text-oms-orange'}`}>Net Cash Flow</p>
-          <p className={`text-page-title ${netFlow >= 0 ? 'text-oms-blue' : 'text-amber-700'}`}>
+        <div className={`p-4 rounded-xl border ${netFlow >= 0 ? 'bg-gray-900 border-gray-300' : 'bg-white border-gray-100'}`}>
+          <p className={`text-sm font-medium ${netFlow >= 0 ? 'text-primary' : 'text-destructive'}`}>Net Cash Flow</p>
+          <p className={`text-page-title ${netFlow >= 0 ? 'text-primary' : 'text-amber-700'}`}>
             {netFlow >= 0 ? '+' : ''}₹{netFlow.toLocaleString()}
           </p>
         </div>
       </div>
 
       {/* Print Button */}
-      <div className="mt-4 flex justify-end">
+      <div className="mt-4 flex justify-end gap-2">
+        <button onClick={() => exportToCSV(filteredFlow.map(f => ({ ...f, amount_display: f.amount })), [
+          { header: 'Date', accessor: (r: any) => new Date(r.date).toLocaleDateString('en-IN') },
+          { header: 'Description', accessor: (r: any) => r.desc },
+          { header: 'Reference', accessor: (r: any) => r.ref },
+          { header: 'Type', accessor: (r: any) => r.type },
+          { header: 'Mode', accessor: (r: any) => r.mode },
+          { header: 'Amount', accessor: (r: any) => r.amount },
+        ], 'cashflow_report')} className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 border">
+          <Download size={16} /> Export CSV
+        </button>
         <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
           <Printer size={16} /> Print Report
         </button>
@@ -341,7 +352,7 @@ function CashFlowStatement() {
                 <td className="py-3 px-4 text-gray-500">{new Date(flow.date).toLocaleDateString()}</td>
                 <td className="py-3 px-4 font-medium">{flow.desc} <span className="text-xs text-gray-400">({flow.ref})</span></td>
                 <td className="py-3 px-4">
-                  <span className={`px-2 py-0.5 rounded textxs font-bold uppercase text-[10px] ${flow.type === 'INFLOW' ? 'bg-gray-100 text-gray-900' : 'bg-red-100 text-red-700'
+                  <span className={`px-2 py-0.5 rounded textxs font-bold uppercase text-xs ${flow.type === 'INFLOW' ? 'bg-gray-100 text-gray-900' : 'bg-red-100 text-red-700'
                     }`}>{flow.type}</span>
                 </td>
                 <td className={`py-3 px-4 text-right font-mono font-medium ${flow.amount > 0 ? 'text-gray-900' : 'text-red-600'}`}>
@@ -374,10 +385,20 @@ function StatementModal({ title, entity, period, ledger, onClose, columns, rever
             <p className="text-gray-500 mt-1">Aayam Office System</p>
           </div>
           <div className="text-right flex gap-2 print:hidden">
-            <button onClick={() => window.print()} className="px-4 py-2 bg-oms-blue text-white rounded-lg flex items-center gap-2 hover:bg-blue-600">
+            <button onClick={() => exportToCSV(ledger, [
+              { header: 'Date', accessor: (r: any) => new Date(r.date).toLocaleDateString('en-IN') },
+              { header: 'Reference', accessor: (r: any) => r.ref },
+              { header: 'Description', accessor: (r: any) => r.desc },
+              { header: 'Mode', accessor: (r: any) => r.mode !== '-' ? r.mode : '' },
+              { header: 'Debit', accessor: (r: any) => r.debit || '' },
+              { header: 'Credit', accessor: (r: any) => r.credit || '' },
+            ], `statement_${entity.name}`)} className="px-4 py-2 bg-white text-gray-700 rounded-lg flex items-center gap-2 hover:bg-gray-50 border">
+              <Download size={16} /> CSV
+            </button>
+            <button onClick={() => window.print()} className="px-4 py-2 bg-gray-900 text-white rounded-lg flex items-center gap-2 hover:bg-gray-800">
               <Printer size={16} /> Print
             </button>
-            <button onClick={onClose} className="px-4 py-2 text-gray-500 hover:text-red-500 border rounded-lg">Close</button>
+            <button onClick={onClose} className="px-4 py-2 text-gray-500 hover:text-red-500 border rounded-md">Close</button>
           </div>
         </div>
 
@@ -424,7 +445,7 @@ function StatementModal({ title, entity, period, ledger, onClose, columns, rever
                   <td className={`py-3 text-right font-bold pr-2 ${reverseBalanceColor
                     ? (runningBalance < 0 ? 'text-red-600' : 'text-gray-900') // Vendor: Negative is Payable (Red?) Wait. Payable = Bad (Red)? No Payable is standard. 
                     // Let's stick to: Negative balance = Credit Balance (Payable).
-                    : (runningBalance > 0 ? 'text-oms-blue' : 'text-red-700')
+                    : (runningBalance > 0 ? 'text-primary' : 'text-red-700')
                     }`}>
                     {Math.abs(runningBalance).toLocaleString()} {runningBalance < 0 ? 'Cr' : 'Dr'}
                   </td>

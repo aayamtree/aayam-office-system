@@ -27,9 +27,9 @@ export default function PriorityQuickAdd({ isOpen, onClose, onSuccess }: Priorit
         { value: 'bg-yellow-100 text-yellow-600', label: 'Yellow', preview: 'bg-yellow-100' },
         { value: 'bg-orange-100 text-orange-600', label: 'Orange', preview: 'bg-orange-100' },
         { value: 'bg-red-100 text-red-600', label: 'Red', preview: 'bg-red-100' },
-        { value: 'bg-[rgba(0,0,255,0.1)] text-oms-blue', label: 'Purple', preview: 'bg-[rgba(0,0,255,0.1)]' },
+        { value: 'bg-[rgba(0,0,255,0.1)] text-primary', label: 'Purple', preview: 'bg-[rgba(0,0,255,0.1)]' },
         { value: 'bg-pink-100 text-pink-600', label: 'Pink', preview: 'bg-pink-100' },
-        { value: 'bg-[rgba(0,0,255,0.1)] text-oms-blue', label: 'Indigo', preview: 'bg-[rgba(0,0,255,0.1)]' },
+        { value: 'bg-[rgba(0,0,255,0.1)] text-primary', label: 'Indigo', preview: 'bg-[rgba(0,0,255,0.1)]' },
         { value: 'bg-teal-100 text-teal-600', label: 'Teal', preview: 'bg-teal-100' },
     ];
 
@@ -94,7 +94,7 @@ export default function PriorityQuickAdd({ isOpen, onClose, onSuccess }: Priorit
                             <p className="text-sm text-gray-600">Create new priority level</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-lg transition-colors">
+                    <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-md transition-colors">
                         <X size={20} />
                     </button>
                 </div>
@@ -154,14 +154,14 @@ export default function PriorityQuickAdd({ isOpen, onClose, onSuccess }: Priorit
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50"
+                            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={saving}
-                            className="px-8 py-2 bg-gradient-to-r from-yellow-600 to-amber-600 text-white rounded-xl font-medium  disabled:opacity-50 flex items-center gap-2"
+                            className="px-8 py-2 bg-gradient-to-r from-yellow-600 to-amber-600 text-white rounded-md font-medium  disabled:opacity-50 flex items-center gap-2"
                         >
                             {saving ? (
                                 <>

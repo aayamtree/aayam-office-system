@@ -45,14 +45,14 @@ export default function CMYKPrintPage() {
   const stats = [
     { label: 'Recent POS Sales', value: formatCurrency(todaysSalesTotal), change: 'Last 10 sales', icon: TrendingUp, color: 'bg-white0' },
     { label: 'Pending Jobs', value: pendingJobs.length.toString(), change: 'In Queue', icon: Clock, color: 'bg-white0' },
-    { label: 'Completed Recently', value: completedTodayJobs.length.toString(), change: 'Jobs done', icon: CheckCircle, color: 'bg-blue-500' },
+    { label: 'Completed Recently', value: completedTodayJobs.length.toString(), change: 'Jobs done', icon: CheckCircle, color: 'bg-primary' },
     { label: 'Stock Alerts', value: lowStockItems.length.toString(), change: 'Items low', icon: Package, color: 'bg-red-500' },
   ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'printing': return 'bg-blue-100 text-blue-700';
-      case 'finishing': return 'bg-oms-blue text-white';
+      case 'printing': return 'bg-muted text-foreground';
+      case 'finishing': return 'bg-gray-900 text-white';
       case 'ready': return 'bg-gray-100 text-gray-900';
       default: return 'bg-gray-100 text-gray-700';
     }
@@ -72,13 +72,13 @@ export default function CMYKPrintPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-4 border border-gray-100">
+          <div key={stat.label} className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 lg:p-4 border border-gray-100">
             <div className="flex items-center gap-3 mb-3">
-              <div className={`w-10 h-10 ${stat.color} rounded-xl flex items-center justify-center`}>
+              <div className={`w-10 h-10 ${stat.color} rounded-lg flex items-center justify-center`}>
                 <stat.icon className="w-5 h-5 text-white" />
               </div>
             </div>
-            <p className="text-2xl lg:text-page-title text-gray-900">
+            <p className="text-page-title text-gray-900">
               {loading ? '...' : stat.value}
             </p>
             <p className="text-xs lg:text-sm text-gray-500 mt-1">{stat.label}</p>
@@ -90,9 +90,9 @@ export default function CMYKPrintPage() {
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
 
-        <Link href="/admin/cmyk-print/retail-pos" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  transition-shadow group">
+        <Link href="/admin/cmyk-print/retail-pos" className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100  transition-shadow group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
-            <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
               <ShoppingCart className="w-6 h-6 text-gray-900" />
             </div>
             <div>
@@ -103,10 +103,10 @@ export default function CMYKPrintPage() {
           <div className="text-sm text-gray-900">● Open Counter →</div>
         </Link>
 
-        <Link href="/admin/cmyk-print/paper-stock" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  transition-shadow group">
+        <Link href="/admin/cmyk-print/paper-stock" className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100  transition-shadow group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Package className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Package className="w-6 h-6 text-foreground" />
             </div>
             <div>
               <h2 className="text-section text-gray-900">Paper Stock</h2>
@@ -124,10 +124,10 @@ export default function CMYKPrintPage() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         {/* Recent Sales */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-section text-gray-900">Recent Sales</h2>
-            <Link href="/admin/cmyk-print/retail-pos" className="text-sm text-oms-blue hover:underline">
+            <Link href="/admin/cmyk-print/retail-pos" className="text-sm text-primary hover:underline">
               View All →
             </Link>
           </div>
@@ -135,7 +135,7 @@ export default function CMYKPrintPage() {
             {sales.length === 0 ? (
               <div className="text-center text-gray-400 py-4">No recent sales.</div>
             ) : sales.slice(0, 5).map((sale) => (
-              <div key={sale.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+              <div key={sale.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-gray-900">{sale.sale_number}</span>
@@ -150,10 +150,10 @@ export default function CMYKPrintPage() {
         </div>
 
         {/* Pending Jobs */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-section text-gray-900">Pending Jobs</h2>
-            <Link href="/admin/jobs/queue" className="text-sm text-oms-blue hover:underline">
+            <Link href="/admin/jobs/queue" className="text-sm text-primary hover:underline">
               View All →
             </Link>
           </div>
@@ -161,7 +161,7 @@ export default function CMYKPrintPage() {
             {pendingJobs.length === 0 ? (
               <div className="text-center text-gray-400 py-4">No pending jobs.</div>
             ) : pendingJobs.map((job) => (
-              <div key={job.id} className={`p-3 rounded-xl border ${job.priority === 'urgent' ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'
+              <div key={job.id} className={`p-3 rounded-lg border ${job.priority === 'urgent' ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'
                 }`}>
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
@@ -183,10 +183,10 @@ export default function CMYKPrintPage() {
       </div>
 
       {/* Low Stock Alert */}
-      <div className={`rounded-lg md:rounded-2xl p-3 md:p-4 sm:p-4 border ${lowStockItems.length > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-green-200'}`}>
+      <div className={`rounded-lg md:rounded-lg p-3 md:p-4 sm:p-4 border ${lowStockItems.length > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-green-200'}`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${lowStockItems.length > 0 ? 'bg-red-100' : 'bg-gray-100'}`}>
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${lowStockItems.length > 0 ? 'bg-red-100' : 'bg-gray-100'}`}>
               <Package className={`w-5 h-5 ${lowStockItems.length > 0 ? 'text-red-600' : 'text-gray-900'}`} />
             </div>
             <div>
@@ -205,7 +205,7 @@ export default function CMYKPrintPage() {
         {lowStockItems.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {lowStockItems.map((item, idx) => (
-              <div key={idx} className="p-3 bg-white rounded-xl">
+              <div key={idx} className="p-3 bg-white rounded-lg">
                 <p className="font-medium text-gray-900">{item.name}</p>
                 <p className="text-sm text-red-600">
                   {item.quantity} {item.unit} left

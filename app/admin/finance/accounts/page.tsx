@@ -35,7 +35,7 @@ export default function AccountsPage() {
             </div>
 
             {/* Total Balance Summary */}
-            <div className="bg-oms-blue rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+            <div className="bg-gray-900 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
                 <h2 className="text-sm font-medium opacity-90 mb-2">Total Available Balance</h2>
                 <p className="text-page-title">₹{grandTotal.toLocaleString()}</p>
                 <div className="mt-4 flex gap-3 md:gap-4 text-sm">
@@ -54,8 +54,8 @@ export default function AccountsPage() {
             <div className="bg-white rounded-2xl border border-gray-200">
                 <div className="p-5 border-b flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                            <Building2 className="w-5 h-5 text-blue-600" />
+                        <div className="w-10 h-10 bg-muted rounded-xl flex items-center justify-center">
+                            <Building2 className="w-5 h-5 text-foreground" />
                         </div>
                         <div>
                             <h2 className="text-section text-gray-900">Bank Accounts</h2>
@@ -64,7 +64,7 @@ export default function AccountsPage() {
                     </div>
                     <button
                         onClick={() => setShowAddBank(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800"
                     >
                         <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
                         Add Bank Account
@@ -86,7 +86,7 @@ export default function AccountsPage() {
                                         <div className="flex items-center gap-2 mb-1">
                                             <h3 className="font-bold text-gray-900">{account.name}</h3>
                                             {account.is_default && (
-                                                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-label rounded-full">
+                                                <span className="px-2 py-0.5 bg-muted text-foreground text-label rounded-full">
                                                     Default
                                                 </span>
                                             )}
@@ -111,7 +111,7 @@ export default function AccountsPage() {
                                         </p>
                                         <a
                                             href={`/admin/finance/accounts/statement/${account.id}`}
-                                            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                                            className="text-sm text-foreground hover:text-foreground font-medium"
                                         >
                                             View Statement →
                                         </a>
@@ -137,7 +137,7 @@ export default function AccountsPage() {
                     </div>
                     <button
                         onClick={() => setShowAddCash(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700"
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-green-700"
                     >
                         <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
                         Add Cash Account
@@ -331,14 +331,14 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-4 py-2 border rounded-xl hover:bg-gray-50"
+                            className="flex-1 px-4 py-2 border rounded-md hover:bg-gray-50"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={saving}
-                            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50"
+                            className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-900 disabled:opacity-50"
                         >
                             {saving ? 'Adding...' : 'Add Account'}
                         </button>
@@ -434,14 +434,14 @@ function AddCashAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-4 py-2 border rounded-xl hover:bg-gray-50"
+                            className="flex-1 px-4 py-2 border rounded-md hover:bg-gray-50"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={saving}
-                            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50"
+                            className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
                         >
                             {saving ? 'Adding...' : 'Add Account'}
                         </button>

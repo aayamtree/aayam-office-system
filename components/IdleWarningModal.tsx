@@ -36,13 +36,13 @@ export function IdleWarningModal({ show, onStayLoggedIn, onLogout }: IdleWarning
                 <div className="flex gap-3">
                     <button
                         onClick={onLogout}
-                        className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-medium transition-colors"
+                        className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium transition-colors"
                     >
                         Logout Now
                     </button>
                     <button
                         onClick={onStayLoggedIn}
-                        className="flex-1 px-4 py-3 bg-[rgba(0,0,255,0.1)] text-white rounded-xl hover:bg-[rgba(0,0,255,0.1)] font-medium transition-colors"
+                        className="flex-1 px-4 py-3 bg-[rgba(0,0,255,0.1)] text-white rounded-md hover:bg-[rgba(0,0,255,0.1)] font-medium transition-colors"
                     >
                         Stay Logged In
                     </button>

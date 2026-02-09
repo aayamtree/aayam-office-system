@@ -145,13 +145,13 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
     };
 
     return (
-        <div className="h-full flex flex-col bg-white rounded-2xl border border-gray-200">
+        <div className="h-full flex flex-col bg-white rounded-md border border-gray-200">
             {/* Header */}
             <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[rgba(0,0,255,0.1)] rounded-xl flex items-center justify-center">
-                            <Printer className="text-oms-blue" size={20} />
+                        <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center">
+                            <Printer className="text-gray-700" size={20} />
                         </div>
                         <div>
                             <h2 className="text-page-title text-gray-900">Create Print Run</h2>
@@ -161,7 +161,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                     {selectedJobs.length > 0 && (
                         <button
                             onClick={onClear}
-                            className="px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-md transition-all"
                         >
                             Clear All
                         </button>
@@ -170,19 +170,19 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
 
                 {/* Job Type Lock Badge */}
                 {lockedJobType && (
-                    <div className={`p-3 rounded-xl border-2 ${isMultiClient
-                        ? 'bg-oms-blue border-[rgba(0,0,255,0.2)]-300'
-                        : 'bg-blue-50 border-blue-300'
+                    <div className={`p-3 rounded-md border ${isMultiClient
+                        ? 'bg-gray-100 border-gray-300'
+                        : 'bg-gray-50 border-gray-300'
                         }`}>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 {isMultiClient ? (
                                     <>
-                                        <Users size={16} className="text-oms-blue" />
-                                        <span className="text-sm font-bold text-purple-900">MULTI-CLIENT BATCH</span>
+                                        <Users size={16} className="text-gray-700" />
+                                        <span className="text-sm font-bold text-gray-900">MULTI-CLIENT BATCH</span>
                                     </>
                                 ) : (
-                                    <span className="text-sm font-bold text-blue-900">SINGLE CLIENT</span>
+                                    <span className="text-sm font-bold text-gray-900">SINGLE CLIENT</span>
                                 )}
                                 <span className="px-2 py-0.5 bg-white rounded text-xs font-bold text-gray-700">
                                     {lockedJobType}
@@ -207,7 +207,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                         required
                         value={vendorId}
                         onChange={(e) => setVendorId(e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 ring-oms-blue/20 focus:border-oms-blue transition-all"
+                        className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all outline-none"
                     >
                         <option value="">Select vendor...</option>
                         {vendors.map(v => (
@@ -224,15 +224,15 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                             <button
                                 type="button"
                                 onClick={() => setShowMachineModal(true)}
-                                className="px-2 py-1 text-xs font-bold text-oms-blue hover:bg-[rgba(0,0,255,0.1)] rounded flex items-center gap-1"
+                                className="px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100 rounded-md flex items-center gap-1"
                             >
-                                <Plus size={14} /> Add
+                                <Plus size={16} /> Add
                             </button>
                         </div>
                         <select
                             value={machineId}
                             onChange={(e) => setMachineId(e.target.value)}
-                            className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl focus:ring-4 ring-oms-blue/20 focus:border-oms-blue"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none"
                         >
                             <option value="">Select...</option>
                             {machines.map(m => (
@@ -246,15 +246,15 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                             <button
                                 type="button"
                                 onClick={() => setShowSheetModal(true)}
-                                className="px-2 py-1 text-xs font-bold text-oms-blue hover:bg-[rgba(0,0,255,0.1)] rounded flex items-center gap-1"
+                                className="px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100 rounded-md flex items-center gap-1"
                             >
-                                <Plus size={14} /> Add
+                                <Plus size={16} /> Add
                             </button>
                         </div>
                         <select
                             value={sheetSizeId}
                             onChange={(e) => setSheetSizeId(e.target.value)}
-                            className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl focus:ring-4 ring-oms-blue/20 focus:border-oms-blue"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none"
                         >
                             <option value="">Select...</option>
                             {sheetSizes.map(s => (
@@ -268,15 +268,15 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                             <button
                                 type="button"
                                 onClick={() => setShowMaterialModal(true)}
-                                className="px-2 py-1 text-xs font-bold text-oms-blue hover:bg-[rgba(0,0,255,0.1)] rounded flex items-center gap-1"
+                                className="px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100 rounded-md flex items-center gap-1"
                             >
-                                <Plus size={14} /> Add
+                                <Plus size={16} /> Add
                             </button>
                         </div>
                         <select
                             value={materialId}
                             onChange={(e) => setMaterialId(e.target.value)}
-                            className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl focus:ring-4 ring-oms-blue/20 focus:border-oms-blue"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none"
                         >
                             <option value="">Select...</option>
                             {materials.map(m => (
@@ -290,19 +290,19 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                 <div className="grid grid-cols-2 gap-2 md:gap-4">
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">
-                            <Calendar size={14} className="inline mr-1" />
+                            <Calendar size={16} className="inline mr-1" />
                             Deadline
                         </label>
                         <input
                             type="date"
                             value={deadline}
                             onChange={(e) => setDeadline(e.target.value)}
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 ring-oms-blue/20 focus:border-oms-blue"
+                            className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none"
                         />
                     </div>
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">
-                            <IndianRupee size={14} className="inline mr-1" />
+                            <IndianRupee size={16} className="inline mr-1" />
                             Total Amount
                         </label>
                         <input
@@ -311,7 +311,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                             value={totalAmount}
                             onChange={(e) => setTotalAmount(e.target.value)}
                             placeholder="0.00"
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 ring-oms-blue/20 focus:border-oms-blue"
+                            className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none"
                         />
                     </div>
                 </div>
@@ -324,7 +324,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                         onChange={(e) => setNotes(e.target.value)}
                         rows={3}
                         placeholder="Special instructions..."
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 ring-oms-blue/20 focus:border-oms-blue resize-none"
+                        className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 resize-none outline-none"
                     />
                 </div>
 
@@ -336,17 +336,17 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                         </label>
                         <div className="space-y-2 max-h-64 overflow-y-auto">
                             {selectedJobs.map(job => (
-                                <div key={job.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                                <div key={job.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
                                     <div className="flex-1">
                                         <p className="text-sm font-medium text-gray-900">{job.job_number}</p>
                                         <p className="text-xs text-gray-500">
-                                            👤 {job.client_name} • {job.project_name}
+                                            {job.client_name} • {job.project_name}
                                         </p>
                                     </div>
                                     <button
                                         type="button"
                                         onClick={() => onRemoveJob(job.id)}
-                                        className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition-all"
+                                        className="p-1.5 text-gray-500 hover:bg-gray-200 rounded-md transition-all"
                                     >
                                         <X size={16} />
                                     </button>
@@ -360,7 +360,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                 <button
                     type="submit"
                     disabled={loading || selectedJobs.length === 0}
-                    className="w-full py-4 bg-oms-blue text-white rounded-xl font-bold hover:from-purple-700 hover:opacity-90-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full py-4 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                     {loading ? (
                         <>

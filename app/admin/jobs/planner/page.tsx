@@ -96,7 +96,7 @@ export default function PrintPlannerPage() {
         return (
             <div
                 className={`p-3 rounded-xl border mb-2 cursor-pointer transition-all 
-          ${inBatch ? 'bg-oms-blue border-[rgba(0,0,255,0.2)]-200' : 'bg-white border-gray-200'}
+          ${inBatch ? 'bg-gray-50 border-gray-300' : 'bg-white border-gray-200'}
         `}
                 onClick={() => !inBatch && addToBatch(job)}
             >
@@ -130,7 +130,7 @@ export default function PrintPlannerPage() {
                     </Link>
                     <div>
                         <h1 className="text-page-title text-gray-900 flex items-center gap-2">
-                            <Layers className="text-oms-blue" />
+                            <Layers className="text-gray-900" />
                             Print Planner
                         </h1>
                         <p className="text-gray-500 text-sm hidden sm:block">Group approved designs into optimized production batches</p>
@@ -138,7 +138,7 @@ export default function PrintPlannerPage() {
                 </div>
                 <div className="flex gap-2">
                     {/* Filters placeholder */}
-                    <button className="px-4 py-2 border rounded-xl flex items-center gap-2 text-sm font-medium hover:bg-gray-50">
+                    <button className="px-4 py-2 border rounded-md flex items-center gap-2 text-sm font-medium hover:bg-gray-50">
                         <Filter className="w-4 h-4" /> Filter Queue
                     </button>
                 </div>
@@ -165,19 +165,19 @@ export default function PrintPlannerPage() {
                 </div>
 
                 {/* MIDDLE: Batch Composer */}
-                <div className="w-full md:flex-1 flex flex-col bg-white rounded-2xl border-2 border-dashed border-[rgba(0,0,255,0.2)]-200 overflow-hidden relative h-2/3 md:h-auto">
+                <div className="w-full md:flex-1 flex flex-col bg-white rounded-2xl border-2 border-dashed border-gray-300 overflow-hidden relative h-2/3 md:h-auto">
 
                     {/* Batch Config Header */}
-                    <div className="p-4 border-b bg-oms-blue/50">
+                    <div className="p-4 border-b bg-gray-100">
                         <div className="flex justify-between items-start mb-1.5">
                             <div>
-                                <label className="text-xs font-bold text-oms-blue uppercase tracking-wider">New Batch Configuration</label>
+                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">New Batch Configuration</label>
                                 <h2 className="text-page-title text-gray-900 mt-1">Untitled Batch #{Math.floor(Math.random() * 1000)}</h2>
                             </div>
                             <select
                                 value={selectedWorkflow}
                                 onChange={(e) => setSelectedWorkflow(e.target.value as any)}
-                                className="px-4 py-2 rounded-xl border border-[rgba(0,0,255,0.2)]-200 bg-white font-medium text-gray-700 focus:ring-2 focus:ring-oms-blue"
+                                className="px-4 py-2 rounded-xl border border-gray-300 bg-white font-medium text-gray-700 focus:ring-2 focus:ring-gray-400"
                             >
                                 {Object.entries(WORKFLOWS).map(([key, wf]) => (
                                     <option key={key} value={key}>{wf.name} Workflow</option>
@@ -189,11 +189,11 @@ export default function PrintPlannerPage() {
                         <div className="flex items-center gap-2 overflow-x-auto pb-2">
                             {WORKFLOWS[selectedWorkflow].stages.map((stage, i) => (
                                 <div key={stage} className="flex items-center">
-                                    <div className="px-3 py-1.5 bg-white border border-[rgba(0,0,255,0.2)]-100 rounded-lg text-xs font-bold text-oms-blue whitespace-nowrap">
+                                    <div className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-bold text-gray-900 whitespace-nowrap">
                                         {stage}
                                     </div>
                                     {i < WORKFLOWS[selectedWorkflow].stages.length - 1 && (
-                                        <div className="h-0.5 w-4 bg-oms-blue"></div>
+                                        <div className="h-0.5 w-4 bg-gray-400"></div>
                                     )}
                                 </div>
                             ))}
@@ -223,7 +223,7 @@ export default function PrintPlannerPage() {
                         <button
                             onClick={createBatch}
                             disabled={selectedJobs.length === 0}
-                            className="bg-oms-blue hover:bg-oms-blue disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 -200 transition-all"
+                            className="bg-gray-900 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md font-bold flex items-center gap-2 transition-all"
                         >
                             <Printer className="w-4 h-4 md:w-4.5 md:h-4.5" />
                             Start Production Run

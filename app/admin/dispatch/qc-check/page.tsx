@@ -55,7 +55,7 @@ export default function QCCheckPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'finishing': return 'bg-gray-100 text-gray-700 border-gray-200'; // Pending QC start
-      case 'quality_check': return 'bg-blue-100 text-blue-700 border-blue-200'; // In Progress
+      case 'quality_check': return 'bg-muted text-foreground border-border'; // In Progress
       case 'ready': return 'bg-gray-100 text-gray-900 border-green-200'; // Passed
       default: return 'bg-gray-100 text-gray-700';
     }
@@ -64,7 +64,7 @@ export default function QCCheckPage() {
   const getPriorityColor = (priority: string) => {
     if (priority === 'urgent' || priority === 'high') return 'bg-red-100 text-red-700';
     if (priority === 'low') return 'bg-gray-100 text-gray-600';
-    return 'bg-blue-50 text-blue-600';
+    return 'bg-muted text-foreground';
   };
 
   const handleStartQC = async (job: Job) => {
@@ -102,7 +102,7 @@ export default function QCCheckPage() {
     setShowQCModal(false);
   };
 
-  if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-oms-blue" /></div>;
+  if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary" /></div>;
 
   return (
     <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 px-2 animate-fade-in">
@@ -121,11 +121,11 @@ export default function QCCheckPage() {
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white border border-gray-200 rounded-xl p-3 text-center">
           <p className="text-page-title text-amber-700">{jobs.filter(j => j.current_stage === 'finishing').length}</p>
-          <p className="text-xs text-oms-orange font-medium">Pending (Finishing)</p>
+          <p className="text-xs text-destructive font-medium">Pending (Finishing)</p>
         </div>
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
-          <p className="text-page-title text-blue-700">{jobs.filter(j => j.current_stage === 'quality_check').length}</p>
-          <p className="text-xs text-blue-600 font-medium">In Progress</p>
+        <div className="bg-muted border border-border rounded-xl p-3 text-center">
+          <p className="text-page-title text-foreground">{jobs.filter(j => j.current_stage === 'quality_check').length}</p>
+          <p className="text-xs text-foreground font-medium">In Progress</p>
         </div>
         <div className="bg-white border border-green-200 rounded-xl p-3 text-center">
           <p className="text-page-title text-gray-900">{jobs.filter(j => j.current_stage === 'ready').length}</p>
@@ -142,13 +142,13 @@ export default function QCCheckPage() {
             placeholder="Search orders..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue"
+          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
         >
           <option value="all">All Status</option>
           <option value="pending">Pending</option>
@@ -195,7 +195,7 @@ export default function QCCheckPage() {
                 ) : (
                   <button
                     onClick={() => handleStartQC(job)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white ${job.current_stage === 'quality_check' ? 'bg-[#0000FF] hover:opacity-90' : 'bg-[#0000FF] hover:bg-[#0000CC]'
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white ${job.current_stage === 'quality_check' ? 'bg-gray-900 hover:opacity-90' : 'bg-gray-900 hover:bg-gray-800'
                       }`}
                   >
                     <ClipboardCheck className="w-4 h-4" />
@@ -227,13 +227,13 @@ export default function QCCheckPage() {
             <div className="flex border-b border-gray-200">
               <button
                 onClick={() => setActiveTab('checklist')}
-                className={`flex-1 py-3 text-sm font-medium border-b-2 ${activeTab === 'checklist' ? 'text-oms-blue border-oms-blue' : 'text-gray-500 border-transparent'}`}
+                className={`flex-1 py-3 text-sm font-medium border-b-2 ${activeTab === 'checklist' ? 'text-primary border-primary' : 'text-gray-500 border-transparent'}`}
               >
                 Checklist
               </button>
               <button
                 onClick={() => setActiveTab('notes')}
-                className={`flex-1 py-3 text-sm font-medium border-b-2 ${activeTab === 'notes' ? 'text-oms-blue border-oms-blue' : 'text-gray-500 border-transparent'}`}
+                className={`flex-1 py-3 text-sm font-medium border-b-2 ${activeTab === 'notes' ? 'text-primary border-primary' : 'text-gray-500 border-transparent'}`}
               >
                 Notes
               </button>
@@ -291,7 +291,7 @@ export default function QCCheckPage() {
               </button>
               <button
                 onClick={() => handleQCSubmit('passed')}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors -200"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-green-700 transition-colors -200"
               >
                 <CheckCircle className="w-4 h-4" /> Pass
               </button>

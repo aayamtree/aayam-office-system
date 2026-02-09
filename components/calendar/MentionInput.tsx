@@ -126,7 +126,7 @@ export default function MentionInput({ value, onChange, placeholder, className }
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder || 'Type @ to mention team members...'}
-                className={className || 'w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oms-blue focus:border-transparent'}
+                className={className || 'w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent'}
                 rows={3}
             />
 

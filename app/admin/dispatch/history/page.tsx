@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { useDispatches } from '@/lib/hooks';
 import { Dispatch, DispatchStatus } from '@/types/database';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function DispatchHistoryPage() {
   const { dispatches, loading, updateDispatch } = useDispatches();
@@ -37,8 +39,8 @@ export default function DispatchHistoryPage() {
     const colors: Record<string, string> = {
       'pending': 'bg-gray-100 text-gray-700 border-gray-200',
       'packed': 'bg-amber-100 text-amber-700 border-gray-200',
-      'dispatched': 'bg-oms-blue text-white border-[rgba(0,0,255,0.2)]',
-      'in_transit': 'bg-oms-blue text-white border-[rgba(0,0,255,0.2)]',
+      'dispatched': 'bg-gray-900 text-white border-border',
+      'in_transit': 'bg-gray-900 text-white border-border',
       'delivered': 'bg-gray-100 text-gray-900 border-green-200',
       'returned': 'bg-red-100 text-red-700 border-red-200',
     };
@@ -79,12 +81,12 @@ export default function DispatchHistoryPage() {
   const inTransitCount = dispatches.filter(d => ['dispatched', 'in_transit'].includes(d.status)).length;
   const deliveredCount = dispatches.filter(d => d.status === 'delivered').length;
 
-  if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-oms-blue" /></div>;
+  if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary" /></div>;
 
   return (
-    <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 px-2 animate-fade-in">
+    <div className="space-y-3 md:space-y-4 px-2 animate-fade-in">
       <div className="flex items-center gap-3">
-        <Link href="/admin/dispatch" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden"><ArrowLeft className="w-5 h-5" /></Link>
+        <Link href="/admin/dispatch" className="p-2 hover:bg-gray-100 rounded-md lg:hidden"><ArrowLeft className="w-5 h-5" /></Link>
         <div>
           <h1 className="text-xl lg:text-page-title text-gray-900">Dispatch History</h1>
           <p className="text-sm text-gray-500">{filteredDispatches.length} records</p>
@@ -92,15 +94,15 @@ export default function DispatchHistoryPage() {
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white border border-gray-200 rounded-xl p-3 text-center">
+        <div className="bg-white border border-gray-200 rounded-md p-3 text-center">
           <p className="text-page-title text-amber-700">{qcPassedCount}</p>
-          <p className="text-xs text-oms-orange font-medium">Pending / Packed</p>
+          <p className="text-xs text-destructive font-medium">Pending / Packed</p>
         </div>
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
-          <p className="text-page-title text-blue-700">{inTransitCount}</p>
-          <p className="text-xs text-blue-600 font-medium">In Transit</p>
+        <div className="bg-muted border border-border rounded-md p-3 text-center">
+          <p className="text-page-title text-foreground">{inTransitCount}</p>
+          <p className="text-xs text-foreground font-medium">In Transit</p>
         </div>
-        <div className="bg-white border border-green-200 rounded-xl p-3 text-center">
+        <div className="bg-white border border-green-200 rounded-md p-3 text-center">
           <p className="text-page-title text-gray-900">{deliveredCount}</p>
           <p className="text-xs text-gray-900 font-medium">Delivered</p>
         </div>
@@ -108,62 +110,75 @@ export default function DispatchHistoryPage() {
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
         </div>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-oms-blue">
-          <option value="all">All Status</option>
-          <option value="dispatched">Dispatched</option>
-          <option value="in_transit">In Transit</option>
-          <option value="delivered">Delivered</option>
-          <option value="returned">Returned</option>
-        </select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-auto min-w-[120px] h-9 text-sm">
+            <SelectValue placeholder="All Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="dispatched">Dispatched</SelectItem>
+            <SelectItem value="in_transit">In Transit</SelectItem>
+            <SelectItem value="delivered">Delivered</SelectItem>
+            <SelectItem value="returned">Returned</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      <div className="space-y-3">
-        {filteredDispatches.length === 0 && <div className="text-center py-12 text-gray-500">No dispatch history found.</div>}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {filteredDispatches.length === 0 && <div className="col-span-full text-center py-12 text-gray-500">No dispatch history found.</div>}
         {filteredDispatches.map((dispatch) => (
-          <div key={dispatch.id} className="bg-white rounded-xl p-4 border border-gray-100">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className="font-semibold text-gray-900">{dispatch.dispatch_number}</span>
-                    <span className="text-xs text-gray-400">• Order: {dispatch.job?.job_number}</span>
-                    <span className={`px-2 py-0.5 text-xs rounded-full border ${getStatusColor(dispatch.status)}`}>{getStatusLabel(dispatch.status)}</span>
-                  </div>
-                  <p className="text-sm text-gray-600">{dispatch.client?.company || dispatch.client?.name}</p>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  {dispatch.packages > 0 && <span className="px-2 py-1 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded-lg">📦 {dispatch.packages} Pkgs</span>}
-                </div>
+          <div key={dispatch.id} className="bg-white rounded-md border border-gray-200 overflow-hidden">
+            {/* Header strip */}
+            <div className={`px-3 py-2 flex items-center justify-between ${dispatch.status === 'delivered' ? 'bg-gray-900' : dispatch.status === 'returned' ? 'bg-red-600' : 'bg-gray-700'}`}>
+              <span className="text-white font-semibold text-sm">{dispatch.dispatch_number}</span>
+              <span className={`px-2 py-0.5 text-xs rounded-md border font-medium ${dispatch.status === 'delivered' ? 'bg-white/15 text-white border-white/20' : getStatusColor(dispatch.status)}`}>{getStatusLabel(dispatch.status)}</span>
+            </div>
+
+            <div className="p-3">
+              {/* Client & Order */}
+              <div className="mb-2">
+                <p className="text-sm font-medium text-gray-900">{dispatch.client?.company || dispatch.client?.name}</p>
+                <p className="text-xs text-gray-400">Order: {dispatch.job?.job_number}</p>
               </div>
 
+              {/* Packages */}
+              {dispatch.packages > 0 && (
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Package className="w-3.5 h-3.5 text-gray-500" />
+                  <span className="text-sm font-medium text-gray-700">{dispatch.packages} Pkgs</span>
+                </div>
+              )}
+
+              {/* Transporter Info */}
               {dispatch.transporter_name && (
-                <div className="p-3 bg-gray-50 rounded-xl text-sm grid grid-cols-2 gap-2">
-                  <div><span className="text-gray-500">Transporter:</span> <span className="font-medium">{dispatch.transporter_name || '-'}</span></div>
+                <div className="p-2 bg-gray-50 rounded-md text-xs space-y-1 mb-2">
+                  <div><span className="text-gray-500">Transporter:</span> <span className="font-medium">{dispatch.transporter_name}</span></div>
                   {dispatch.tracking_number && <div><span className="text-gray-500">LR/Track:</span> <span className="font-medium text-gray-900">{dispatch.tracking_number}</span></div>}
                   {dispatch.vehicle_number && <div><span className="text-gray-500">Vehicle:</span> <span className="font-medium">{dispatch.vehicle_number}</span></div>}
                 </div>
               )}
 
-              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                <div className="text-sm text-gray-500">
-                  {dispatch.dispatch_date && <span>Dispatched: {new Date(dispatch.dispatch_date).toLocaleDateString()}</span>}
-                  {dispatch.actual_delivery && <span className="ml-3 text-gray-900">Delivered: {new Date(dispatch.actual_delivery).toLocaleDateString()}</span>}
-                </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => handleWhatsAppShare(dispatch)} className="px-3 py-1.5 text-sm text-gray-900 hover:bg-white rounded-lg flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> WhatsApp</button>
+              {/* Dates */}
+              <div className="text-xs text-gray-500 mb-3">
+                {dispatch.dispatch_date && <span>Dispatched: {new Date(dispatch.dispatch_date).toLocaleDateString()}</span>}
+                {dispatch.actual_delivery && <span className="ml-2 text-gray-900">Delivered: {new Date(dispatch.actual_delivery).toLocaleDateString()}</span>}
+              </div>
 
-                  {dispatch.status === 'dispatched' || dispatch.status === 'in_transit' ? (
-                    <>
-                      <button onClick={() => handleView(dispatch)} className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg flex items-center gap-1"><Eye className="w-3.5 h-3.5" /> View</button>
-                      <button onClick={() => handleMarkDelivered(dispatch)} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm shadow-sm font-semibold"><CheckCircle className="w-3.5 h-3.5" /> Delivered</button>
-                    </>
-                  ) : (
-                    <button onClick={() => handleView(dispatch)} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-semibold"><Eye className="w-4 h-4" /> View</button>
-                  )}
-                </div>
+              {/* Actions */}
+              <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+                <button onClick={() => handleWhatsAppShare(dispatch)} className="px-2.5 py-1.5 text-xs text-gray-700 hover:bg-gray-50 rounded-md border border-gray-200 flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> WhatsApp</button>
+
+                {dispatch.status === 'dispatched' || dispatch.status === 'in_transit' ? (
+                  <>
+                    <button onClick={() => handleView(dispatch)} className="px-2.5 py-1.5 text-xs text-gray-600 hover:bg-gray-50 rounded-md border border-gray-200 flex items-center gap-1"><Eye className="w-3.5 h-3.5" /> View</button>
+                    <button onClick={() => handleMarkDelivered(dispatch)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 text-xs font-semibold ml-auto"><CheckCircle className="w-3.5 h-3.5" /> Delivered</button>
+                  </>
+                ) : (
+                  <button onClick={() => handleView(dispatch)} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-xs font-medium"><Eye className="w-3.5 h-3.5" /> View</button>
+                )}
               </div>
             </div>
           </div>
@@ -172,54 +187,54 @@ export default function DispatchHistoryPage() {
 
       {showViewModal && selectedDispatch && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto animate-scale-in">
-            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+          <div className="bg-white rounded-md w-full max-w-md max-h-[90vh] overflow-y-auto animate-scale-in">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <h2 className="text-section text-gray-900">Dispatch Details</h2>
-              <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
+              <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-4 space-y-4">
-              <div className={`p-4 rounded-xl text-center ${selectedDispatch.status === 'delivered' ? 'bg-white' : 'bg-blue-50'}`}>
-                {selectedDispatch.status === 'delivered' ? <CheckCircle className="w-8 h-8 mx-auto mb-2 text-gray-900" /> : <Truck className="w-8 h-8 mx-auto mb-2 text-blue-600" />}
+              <div className={`p-4 rounded-md text-center ${selectedDispatch.status === 'delivered' ? 'bg-white' : 'bg-muted'}`}>
+                {selectedDispatch.status === 'delivered' ? <CheckCircle className="w-8 h-8 mx-auto mb-2 text-gray-900" /> : <Truck className="w-8 h-8 mx-auto mb-2 text-foreground" />}
                 <p className="text-section">{getStatusLabel(selectedDispatch.status)}</p>
               </div>
 
               <div className="space-y-2">
-                <div className="flex justify-between p-3 bg-gray-50 rounded-xl"><span className="text-gray-500">ID</span><span className="font-medium">{selectedDispatch.dispatch_number}</span></div>
-                <div className="flex justify-between p-3 bg-gray-50 rounded-xl"><span className="text-gray-500">Client</span><span className="font-medium">{selectedDispatch.client?.company || selectedDispatch.client?.name}</span></div>
-                <div className="flex justify-between p-3 bg-gray-50 rounded-xl"><span className="text-gray-500">Packages</span><span className="font-medium">📦 {selectedDispatch.packages}</span></div>
+                <div className="flex justify-between p-3 bg-gray-50 rounded-md"><span className="text-gray-500">ID</span><span className="font-medium">{selectedDispatch.dispatch_number}</span></div>
+                <div className="flex justify-between p-3 bg-gray-50 rounded-md"><span className="text-gray-500">Client</span><span className="font-medium">{selectedDispatch.client?.company || selectedDispatch.client?.name}</span></div>
+                <div className="flex justify-between p-3 bg-gray-50 rounded-md"><span className="text-gray-500">Packages</span><span className="font-medium flex items-center gap-1.5"><Package className="w-4 h-4 text-gray-500" /> {selectedDispatch.packages}</span></div>
               </div>
 
               {selectedDispatch.transporter_name && (
-                <div className="p-3 bg-[rgba(0,0,255,0.05)] rounded-xl">
-                  <p className="text-sm text-oms-blue">Transporter</p>
-                  <p className="font-medium text-indigo-900">{selectedDispatch.transporter_name}</p>
+                <div className="p-3 bg-muted rounded-md">
+                  <p className="text-sm text-primary">Transporter</p>
+                  <p className="font-medium text-gray-900">{selectedDispatch.transporter_name}</p>
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-3">
-                {selectedDispatch.tracking_number && <div className="p-3 bg-gray-50 rounded-xl"><p className="text-xs text-gray-500">Tracking Info</p><p className="font-medium text-gray-900">{selectedDispatch.tracking_number}</p></div>}
+                {selectedDispatch.tracking_number && <div className="p-3 bg-gray-50 rounded-md"><p className="text-xs text-gray-500">Tracking Info</p><p className="font-medium text-gray-900">{selectedDispatch.tracking_number}</p></div>}
               </div>
 
               {selectedDispatch.proof_of_delivery_url && (
                 <div>
                   <p className="text-sm font-medium text-gray-700 mb-2">Proof of Delivery</p>
-                  <img src={selectedDispatch.proof_of_delivery_url} alt="POD" className="w-full rounded-xl" />
+                  <img src={selectedDispatch.proof_of_delivery_url} alt="POD" className="w-full rounded-md" />
                 </div>
               )}
 
               {(selectedDispatch.vehicle_number || selectedDispatch.driver_name) && (
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 bg-gray-50 rounded-xl"><p className="text-xs text-gray-500">Vehicle</p><p className="font-medium">{selectedDispatch.vehicle_number || '-'}</p></div>
-                  <div className="p-3 bg-gray-50 rounded-xl"><p className="text-xs text-gray-500">Driver</p><p className="font-medium">{selectedDispatch.driver_name || '-'}</p><a href={`tel:${selectedDispatch.driver_phone}`} className="text-xs text-oms-blue">{selectedDispatch.driver_phone}</a></div>
+                  <div className="p-3 bg-gray-50 rounded-md"><p className="text-xs text-gray-500">Vehicle</p><p className="font-medium">{selectedDispatch.vehicle_number || '-'}</p></div>
+                  <div className="p-3 bg-gray-50 rounded-md"><p className="text-xs text-gray-500">Driver</p><p className="font-medium">{selectedDispatch.driver_name || '-'}</p><a href={`tel:${selectedDispatch.driver_phone}`} className="text-xs text-primary">{selectedDispatch.driver_phone}</a></div>
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-3">
-                {selectedDispatch.dispatch_date && <div className="p-3 bg-gray-50 rounded-xl"><p className="text-xs text-gray-500">Dispatched</p><p className="font-medium">{new Date(selectedDispatch.dispatch_date).toLocaleDateString()}</p></div>}
-                {selectedDispatch.actual_delivery && <div className="p-3 bg-white rounded-xl"><p className="text-xs text-gray-900">Delivered</p><p className="font-medium text-gray-900">{new Date(selectedDispatch.actual_delivery).toLocaleDateString()}</p></div>}
+                {selectedDispatch.dispatch_date && <div className="p-3 bg-gray-50 rounded-md"><p className="text-xs text-gray-500">Dispatched</p><p className="font-medium">{new Date(selectedDispatch.dispatch_date).toLocaleDateString()}</p></div>}
+                {selectedDispatch.actual_delivery && <div className="p-3 bg-white rounded-md"><p className="text-xs text-gray-900">Delivered</p><p className="font-medium text-gray-900">{new Date(selectedDispatch.actual_delivery).toLocaleDateString()}</p></div>}
               </div>
 
-              <button onClick={() => setShowViewModal(false)} className="w-full px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] shadow-sm font-semibold">Close</button>
+              <button onClick={() => setShowViewModal(false)} className="w-full px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold">Close</button>
             </div>
           </div>
         </div>

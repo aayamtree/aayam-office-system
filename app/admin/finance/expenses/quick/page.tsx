@@ -223,7 +223,7 @@ export default function QuickExpensePage() {
                                     <select
                                         value={formData.category}
                                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue text-sm"
+                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-gray-400 text-sm"
                                         required
                                     >
                                         <option value="">Select category</option>
@@ -243,7 +243,7 @@ export default function QuickExpensePage() {
                                         value={formData.amount}
                                         onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                                         placeholder="0.00"
-                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue text-sm"
+                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-gray-400 text-sm"
                                         required
                                         min="0"
                                         step="0.01"
@@ -260,7 +260,7 @@ export default function QuickExpensePage() {
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     placeholder="Enter expense details..."
-                                    className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue text-sm"
+                                    className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-gray-400 text-sm"
                                     rows={3}
                                     required
                                 />
@@ -276,7 +276,7 @@ export default function QuickExpensePage() {
                                     <select
                                         value={formData.payment_mode}
                                         onChange={(e) => handlePaymentModeChange(e.target.value)}
-                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue text-sm"
+                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-gray-400 text-sm"
                                         required
                                     >
                                         <option value="cash">Cash</option>
@@ -294,7 +294,7 @@ export default function QuickExpensePage() {
                                     <select
                                         value={formData.account_id}
                                         onChange={(e) => setFormData({ ...formData, account_id: e.target.value })}
-                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue text-sm"
+                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-gray-400 text-sm"
                                         required
                                     >
                                         <option value="">Select account</option>
@@ -317,7 +317,7 @@ export default function QuickExpensePage() {
                                     <select
                                         value={formData.vendor_id}
                                         onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })}
-                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue text-sm"
+                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-gray-400 text-sm"
                                     >
                                         <option value="">None (Petty Expense)</option>
                                         {vendors.map((vendor) => (
@@ -337,7 +337,7 @@ export default function QuickExpensePage() {
                                         type="date"
                                         value={formData.payment_date}
                                         onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })}
-                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue text-sm"
+                                        className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-gray-400 text-sm"
                                         required
                                     />
                                 </div>
@@ -353,7 +353,7 @@ export default function QuickExpensePage() {
                                     value={formData.reference_number}
                                     onChange={(e) => setFormData({ ...formData, reference_number: e.target.value })}
                                     placeholder="Invoice/Receipt number..."
-                                    className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-oms-blue text-sm"
+                                    className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-gray-400 text-sm"
                                 />
                             </div>
 
@@ -362,7 +362,7 @@ export default function QuickExpensePage() {
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="flex-1 bg-oms-blue hover:bg-oms-blue text-white font-medium py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+                                    className="flex-1 bg-gray-900 hover:bg-gray-900 text-white font-medium py-3 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
                                 >
                                     {loading ? (
                                         <>Processing...</>

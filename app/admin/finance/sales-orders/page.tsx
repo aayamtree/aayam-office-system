@@ -110,8 +110,8 @@ export default function SalesOrdersPage() {
     // Helper to get status color
     const getStatusColor = (status: string) => {
         if (status === 'draft') return 'bg-gray-100 text-gray-700';
-        if (status === 'confirmed') return 'bg-blue-100 text-blue-700';
-        if (status === 'in_progress') return 'bg-oms-blue text-white';
+        if (status === 'confirmed') return 'bg-muted text-foreground';
+        if (status === 'in_progress') return 'bg-gray-900 text-white';
         if (status === 'ready_for_invoice') return 'bg-gray-100 text-gray-900';
         return 'bg-gray-100 text-gray-500';
     };
@@ -123,7 +123,7 @@ export default function SalesOrdersPage() {
                     <h1 className="text-page-title text-gray-900">Sales Orders</h1>
                     <p className="text-gray-500">Manage incoming orders and initiate workflows.</p>
                 </div>
-                <button onClick={handleAddNew} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] shadow-sm font-semibold transition-colors">
+                <button onClick={handleAddNew} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold transition-colors">
                     <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" /> New Sales Order
                 </button>
             </div>
@@ -137,7 +137,7 @@ export default function SalesOrdersPage() {
                         placeholder="Search orders..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border rounded-xl focus:ring-2 focus:ring-oms-blue focus:outline-none"
+                        className="w-full pl-10 pr-4 py-2 border rounded-xl focus:ring-2 focus:ring-gray-400 focus:outline-none"
                     />
                 </div>
             </div>
@@ -171,9 +171,9 @@ export default function SalesOrdersPage() {
                                     <td className="p-4">
                                         <p className="text-sm text-gray-900 font-medium">{so.project_name}</p>
                                         <div className="flex gap-2 mt-1">
-                                            {so.work_type === 'design_only' && <span className="inline-flex items-center gap-1 text-[10px] bg-oms-blue text-white px-1.5 py-0.5 rounded border border-[rgba(0,0,255,0.2)]-100"><Palette className="w-2.5 h-2.5" /> Design</span>}
-                                            {so.work_type === 'print_only' && <span className="inline-flex items-center gap-1 text-[10px] bg-oms-blue text-white px-1.5 py-0.5 rounded border border-[rgba(0,0,255,0.2)]-100"><Printer className="w-2.5 h-2.5" /> Print</span>}
-                                            {so.work_type === 'design_and_print' && <span className="inline-flex items-center gap-1 text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100"><Layers className="w-2.5 h-2.5" /> Full</span>}
+                                            {so.work_type === 'design_only' && <span className="inline-flex items-center gap-1 text-xs bg-gray-900 text-white px-1.5 py-0.5 rounded border border-border-100"><Palette className="w-2.5 h-2.5" /> Design</span>}
+                                            {so.work_type === 'print_only' && <span className="inline-flex items-center gap-1 text-xs bg-gray-900 text-white px-1.5 py-0.5 rounded border border-border-100"><Printer className="w-2.5 h-2.5" /> Print</span>}
+                                            {so.work_type === 'design_and_print' && <span className="inline-flex items-center gap-1 text-xs bg-muted text-foreground px-1.5 py-0.5 rounded border border-border"><Layers className="w-2.5 h-2.5" /> Full</span>}
                                         </div>
                                     </td>
                                     <td className="p-4 font-medium text-gray-900">₹{so.total_amount}</td>
@@ -185,7 +185,7 @@ export default function SalesOrdersPage() {
                                     <td className="p-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             {so.status === 'draft' && (
-                                                <button onClick={() => handleConfirmOrder(so)} className="text-xs px-3 py-1 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] font-semibold flex items-center gap-1 shadow-sm transition-colors">
+                                                <button onClick={() => handleConfirmOrder(so)} className="text-xs px-3 py-1 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-semibold flex items-center gap-1 shadow-sm transition-colors">
                                                     Confirm <ArrowRight className="w-3 h-3" />
                                                 </button>
                                             )}
@@ -195,12 +195,12 @@ export default function SalesOrdersPage() {
                                             {(so.status !== 'draft') && (
                                                 <>
                                                     {so.work_type.includes('design') && (
-                                                        <Link href="/admin/designers" className="p-1.5 text-oms-blue hover:bg-oms-blue rounded-lg" title="View Design">
+                                                        <Link href="/admin/designers" className="p-1.5 text-primary hover:bg-gray-900 rounded-lg" title="View Design">
                                                             <Palette className="w-4 h-4" />
                                                         </Link>
                                                     )}
                                                     {(so.work_type === 'print_only' || so.status === 'completed') && (
-                                                        <Link href="/admin/jobs" className="p-1.5 text-oms-blue hover:bg-oms-blue rounded-lg" title="View Job">
+                                                        <Link href="/admin/jobs" className="p-1.5 text-primary hover:bg-gray-900 rounded-lg" title="View Job">
                                                             <Printer className="w-4 h-4" />
                                                         </Link>
                                                     )}
@@ -232,7 +232,7 @@ export default function SalesOrdersPage() {
                             {/* Client Selection */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Client</label>
-                                <select required value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })} className="w-full px-3 py-2 border rounded-xl bg-white focus:ring-2 focus:ring-oms-blue">
+                                <select required value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })} className="w-full px-3 py-2 border rounded-xl bg-white focus:ring-2 focus:ring-gray-400">
                                     <option value="">Select Client</option>
                                     {clients.map(c => <option key={c.id} value={c.id}>{c.company || c.name}</option>)}
                                 </select>
@@ -250,8 +250,8 @@ export default function SalesOrdersPage() {
                                         type="button"
                                         onClick={() => setFormData({ ...formData, workType: type.id as any })}
                                         className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${formData.workType === type.id
-                                            ? 'border-oms-blue bg-oms-blue text-white'
-                                            : 'border-gray-200 hover:border-oms-blue/20 text-gray-600'
+                                            ? 'border-primary bg-gray-900 text-white'
+                                            : 'border-gray-200 hover:border-primary/20 text-gray-600'
                                             }`}
                                     >
                                         <type.icon className="w-5 h-5 mb-1" />
@@ -291,7 +291,7 @@ export default function SalesOrdersPage() {
 
                             <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
                                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">Cancel</button>
-                                <button type="submit" disabled={submitting} className="px-6 py-2 bg-oms-blue text-white rounded-xl hover:bg-oms-blue transition-colors disabled:opacity-50">
+                                <button type="submit" disabled={submitting} className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-900 transition-colors disabled:opacity-50">
                                     {submitting ? 'Saving...' : 'Create Sales Order'}
                                 </button>
                             </div>

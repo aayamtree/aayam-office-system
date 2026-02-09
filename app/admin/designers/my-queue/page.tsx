@@ -40,7 +40,7 @@ export default function MyQueue() {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-oms-blue"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
         );
     }
@@ -50,7 +50,7 @@ export default function MyQueue() {
             <div className="max-w-6xl mx-auto">
                 {/* Header */}
                 <div className="mb-4 md:mb-1.5">
-                    <h1 className="text-2xl md:text-page-title text-gray-900 mb-1 md:mb-2">My Queue</h1>
+                    <h1 className="text-page-title text-gray-900 mb-1 md:mb-2">My Queue</h1>
                     <p className="text-sm md:text-base text-gray-600">{filteredTasks.length} active tasks</p>
                 </div>
 
@@ -151,8 +151,8 @@ export default function MyQueue() {
                     {normalTasks.length > 0 && (
                         <div>
                             <div className="flex items-center gap-2 mb-3 md:mb-4">
-                                <Calendar className="text-blue-600" size={20} />
-                                <h2 className="text-lg md:text-page-title text-blue-600">All Tasks ({normalTasks.length})</h2>
+                                <Calendar className="text-foreground" size={20} />
+                                <h2 className="text-lg md:text-page-title text-foreground">All Tasks ({normalTasks.length})</h2>
                             </div>
                             <div className="grid gap-3 md:gap-4">
                                 {normalTasks.map(task => (

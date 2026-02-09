@@ -77,14 +77,14 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                 <div className="flex items-center justify-between p-6 border-b bg-[rgba(0,0,255,0.05)]">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg">
-                            <UserPlus size={24} className="text-oms-blue" />
+                            <UserPlus size={24} className="text-primary" />
                         </div>
                         <div>
                             <h3 className="text-page-title text-gray-900">Quick Add Client</h3>
                             <p className="text-sm text-gray-600">Add a new client to the system</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-lg transition-colors">
+                    <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-md transition-colors">
                         <X size={20} />
                     </button>
                 </div>
@@ -237,7 +237,7 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50"
+                            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                         >
                             Cancel
                         </button>

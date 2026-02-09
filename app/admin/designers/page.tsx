@@ -8,6 +8,8 @@ import {
   CheckCircle, TrendingUp, Users, Loader2, Upload
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Designer {
   id: string;
@@ -262,8 +264,8 @@ export default function DesignersPage() {
   const getEmploymentBadge = (type: string) => {
     const badges: Record<string, string> = {
       'full-time': 'bg-gray-100 text-gray-900',
-      'part-time': 'bg-blue-100 text-blue-700',
-      'freelance': 'bg-oms-blue text-white'
+      'part-time': 'bg-muted text-foreground',
+      'freelance': 'bg-gray-900 text-white'
     };
     return badges[type] || 'bg-gray-100 text-gray-700';
   };
@@ -271,7 +273,7 @@ export default function DesignersPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-oms-blue" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
         <span className="ml-2">Loading designers...</span>
       </div>
     );
@@ -282,11 +284,11 @@ export default function DesignersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div>
-          <h1 className="text-xl lg:text-page-title text-gray-900">Designers</h1>
+          <h1 className="text-page-title text-gray-900">Designers</h1>
           <p className="text-sm text-gray-500">{activeDesigners} active of {totalDesigners} total</p>
         </div>
         <button onClick={() => { resetForm(); setShowModal(true); }}
-          className="flex items-center justify-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-xl hover:bg-blue-600">
+          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800">
           <Plus size={18} /><span>Add Designer</span>
         </button>
       </div>
@@ -295,7 +297,7 @@ export default function DesignersPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white rounded-xl p-4 border">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-oms-blue rounded-lg"><Users size={20} className="text-white" /></div>
+            <div className="p-2 bg-gray-900 rounded-lg"><Users size={20} className="text-white" /></div>
             <div><p className="text-xs text-gray-500">Total</p><p className="text-page-title">{totalDesigners}</p></div>
           </div>
         </div>
@@ -307,8 +309,8 @@ export default function DesignersPage() {
         </div>
         <div className="bg-white rounded-xl p-4 border">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg"><Briefcase size={20} className="text-blue-600" /></div>
-            <div><p className="text-xs text-gray-500">Full-time</p><p className="text-page-title text-blue-600">{designers.filter(d => d.employment_type === 'full-time').length}</p></div>
+            <div className="p-2 bg-muted rounded-lg"><Briefcase size={20} className="text-foreground" /></div>
+            <div><p className="text-xs text-gray-500">Full-time</p><p className="text-page-title text-foreground">{designers.filter(d => d.employment_type === 'full-time').length}</p></div>
           </div>
         </div>
         <div className="bg-white rounded-xl p-4 border">
@@ -322,22 +324,34 @@ export default function DesignersPage() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input type="text" placeholder="Search designers..." value={searchTerm}
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Input
+            type="text"
+            placeholder="Search designers..."
+            value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl" />
+            className="pl-10"
+          />
         </div>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2.5 bg-white border rounded-xl">
-          <option value="all">All Status</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
-        <select value={skillFilter} onChange={(e) => setSkillFilter(e.target.value)}
-          className="px-3 py-2.5 bg-white border rounded-xl">
-          <option value="all">All Skills</option>
-          {skillOptions.map(skill => <option key={skill} value={skill}>{skill}</option>)}
-        </select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-auto min-w-[120px] h-9 text-sm">
+            <SelectValue placeholder="All Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={skillFilter} onValueChange={setSkillFilter}>
+          <SelectTrigger className="w-auto min-w-[120px] h-9 text-sm">
+            <SelectValue placeholder="All Skills" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Skills</SelectItem>
+            {skillOptions.map(skill => <SelectItem key={skill} value={skill}>{skill}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Empty State */}
@@ -346,7 +360,7 @@ export default function DesignersPage() {
           <Palette size={48} className="mx-auto text-gray-300 mb-4" />
           <h3 className="text-lg font-medium mb-2">No designers found</h3>
           <button onClick={() => setShowModal(true)}
-            className="inline-flex items-center gap-2 bg-oms-blue text-white px-4 py-2 rounded-lg">
+            className="inline-flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg">
             <Plus size={18} />Add Designer
           </button>
         </div>
@@ -358,7 +372,7 @@ export default function DesignersPage() {
           <div key={designer.id} className="bg-white rounded-xl border p-4  transition-shadow">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-oms-blue rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-gray-900 rounded-full flex items-center justify-center">
                   <span className="text-white text-section">{designer.name?.charAt(0)}</span>
                 </div>
                 <div>
@@ -380,7 +394,7 @@ export default function DesignersPage() {
             {designer.skills && designer.skills.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-3">
                 {designer.skills.slice(0, 3).map((skill, i) => (
-                  <span key={i} className="px-2 py-0.5 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded text-xs">{skill}</span>
+                  <span key={i} className="px-2 py-0.5 bg-muted text-primary rounded text-xs">{skill}</span>
                 ))}
                 {designer.skills.length > 3 && (
                   <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">+{designer.skills.length - 3}</span>
@@ -415,7 +429,7 @@ export default function DesignersPage() {
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
               <h2 className="text-section">{editingDesigner ? 'Edit Designer' : 'Add Designer'}</h2>
-              <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+              <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-md"><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-2 md:gap-4">
@@ -502,13 +516,13 @@ export default function DesignersPage() {
                       type="file"
                       accept="image/*,application/pdf"
                       onChange={handleFileUpload}
-                      className="w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[rgba(0,0,255,0.05)] file:text-oms-blue hover:file:bg-oms-blue"
+                      className="w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-muted file:text-primary hover:file:bg-primary"
                       disabled={uploadingDoc}
                     />
-                    {uploadingDoc && <div className="absolute right-3 top-1/2 -translate-y-1/2"><Loader2 size={16} className="animate-spin text-oms-blue" /></div>}
+                    {uploadingDoc && <div className="absolute right-3 top-1/2 -translate-y-1/2"><Loader2 size={16} className="animate-spin text-primary" /></div>}
                   </div>
                   {formData.document_url && (
-                    <a href={formData.document_url} target="_blank" rel="noopener noreferrer" className="p-2 bg-white text-gray-900 rounded-lg hover:bg-gray-100" title="View Document">
+                    <a href={formData.document_url} target="_blank" rel="noopener noreferrer" className="p-2 bg-white text-gray-900 rounded-md hover:bg-gray-100" title="View Document">
                       <Eye size={20} />
                     </a>
                   )}
@@ -521,7 +535,7 @@ export default function DesignersPage() {
                   {skillOptions.map(skill => (
                     <button key={skill} type="button" onClick={() => toggleSkill(skill)}
                       className={`px-3 py-1 rounded-full text-sm transition-colors ${formData.skills.includes(skill)
-                        ? 'bg-oms-blue text-white'
+                        ? 'bg-gray-900 text-white'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}>
                       {skill}
@@ -531,9 +545,9 @@ export default function DesignersPage() {
               </div>
 
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-xl font-medium">Cancel</button>
+                <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-md font-medium">Cancel</button>
                 <button type="submit" disabled={saving}
-                  className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-xl font-medium flex items-center justify-center gap-2">
+                  className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md font-medium flex items-center justify-center gap-2">
                   {saving && <Loader2 size={18} className="animate-spin" />}
                   {editingDesigner ? 'Update' : 'Add'}
                 </button>
@@ -552,7 +566,7 @@ export default function DesignersPage() {
               <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 md:gap-4">
-                    <div className="w-14 h-14 bg-oms-blue rounded-full flex items-center justify-center">
+                    <div className="w-14 h-14 bg-gray-900 rounded-full flex items-center justify-center">
                       <span className="text-white font-bold text-xl">{selectedDesigner.name?.charAt(0)}</span>
                     </div>
                     <div>
@@ -579,9 +593,9 @@ export default function DesignersPage() {
 
                 {/* Rate */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-[rgba(0,0,255,0.05)] rounded-xl p-4">
+                  <div className="bg-muted rounded-xl p-4">
                     <p className="text-xs text-gray-500 mb-1">Hourly Rate</p>
-                    <p className="text-page-title text-oms-blue">{formatCurrency(selectedDesigner.hourly_rate)}</p>
+                    <p className="text-page-title text-primary">{formatCurrency(selectedDesigner.hourly_rate)}</p>
                   </div>
                   <div className="bg-white rounded-xl p-4">
                     <p className="text-xs text-gray-500 mb-1">Monthly Salary</p>
@@ -594,7 +608,7 @@ export default function DesignersPage() {
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-3">Identity Document</h3>
                     <a href={selectedDesigner.document_url} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-2 p-3 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 transition-colors border border-blue-100">
+                      className="flex items-center gap-2 p-3 bg-muted text-foreground rounded-md hover:bg-muted transition-colors border border-border">
                       <Eye size={18} />
                       <span className="font-medium">View Uploaded Document</span>
                     </a>
@@ -607,7 +621,7 @@ export default function DesignersPage() {
                     <h3 className="font-semibold text-gray-900 mb-3">Skills</h3>
                     <div className="flex flex-wrap gap-2">
                       {selectedDesigner.skills.map((skill, i) => (
-                        <span key={i} className="px-3 py-1 bg-oms-blue text-white rounded-full text-sm">{skill}</span>
+                        <span key={i} className="px-3 py-1 bg-gray-900 text-white rounded-full text-sm">{skill}</span>
                       ))}
                     </div>
                   </div>
@@ -618,7 +632,7 @@ export default function DesignersPage() {
                   <button onClick={() => { setShowDetailModal(false); handleEdit(selectedDesigner); }}
                     className="flex-1 px-4 py-2.5 border rounded-xl font-medium">Edit</button>
                   <button onClick={() => setShowDetailModal(false)}
-                    className="flex-1 px-4 py-2.5 bg-oms-blue text-white rounded-xl font-medium">Close</button>
+                    className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium">Close</button>
                 </div>
               </div>
             </div>

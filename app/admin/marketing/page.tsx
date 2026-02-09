@@ -51,7 +51,7 @@ export default function MarketingDashboard() {
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
         <div>
-          <h1 className="text-2xl lg:text-page-title text-gray-900">Marketing Dashboard</h1>
+          <h1 className="text-page-title text-gray-900">Marketing Dashboard</h1>
           <p className="text-gray-500 mt-1">Welcome back, {profile?.full_name || 'Marketer'}. Here is your daily focus.</p>
         </div>
         <DriveConnectionStatus />
@@ -60,7 +60,7 @@ export default function MarketingDashboard() {
       {/* Hero Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
         {/* Today's Focus */}
-        <div className="bg-oms-blue rounded-lg md:rounded-2xl p-3 md:p-4 text-white -200">
+        <div className="bg-gray-900 rounded-lg md:rounded-2xl p-3 md:p-4 text-white -200">
           <div className="flex items-center gap-3 mb-2 opacity-90">
             <Calendar size={20} />
             <span className="font-medium">Today&apos;s Follow-ups</span>
@@ -87,8 +87,8 @@ export default function MarketingDashboard() {
         </div>
 
         {/* New Leads */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-blue-100">
-          <div className="flex items-center gap-3 mb-2 text-blue-600">
+        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-border">
+          <div className="flex items-center gap-3 mb-2 text-foreground">
             <Users size={20} />
             <span className="font-medium">New Leads</span>
           </div>
@@ -112,7 +112,7 @@ export default function MarketingDashboard() {
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col">
           <div className="p-4 border-b border-gray-100 flex justify-between items-center">
             <h2 className="text-section text-gray-900 flex items-center gap-2">
-              <Calendar size={18} className="text-oms-blue" /> Today&apos;s Calls
+              <Calendar size={18} className="text-primary" /> Today&apos;s Calls
             </h2>
             <span className="text-sm text-gray-500">{today}</span>
           </div>
@@ -120,7 +120,7 @@ export default function MarketingDashboard() {
             {todayFollowUps.length === 0 ? (
               <div className="p-10 text-center text-gray-400">
                 <p>No follow-ups scheduled for today.</p>
-                <Link href="/admin/marketing/leads" className="text-oms-blue text-sm font-medium mt-2 inline-block">
+                <Link href="/admin/marketing/leads" className="text-primary text-sm font-medium mt-2 inline-block">
                   Browse All Leads
                 </Link>
               </div>
@@ -134,7 +134,7 @@ export default function MarketingDashboard() {
                       {lead.notes && <p className="text-xs text-gray-600 mt-1 line-clamp-1 italic">&quot;{lead.notes}&quot;</p>}
                     </div>
                     <div className="flex gap-2">
-                      <a href={`tel:${lead.phone}`} className="p-2 bg-oms-blue text-white rounded-lg hover:bg-oms-blue transition-colors">
+                      <a href={`tel:${lead.phone}`} className="p-2 bg-gray-900 text-white rounded-md hover:bg-gray-900 transition-colors">
                         <Phone size={16} />
                       </a>
                       <Link href="/admin/marketing/leads" className="p-2 border text-gray-500 rounded-lg hover:bg-gray-100 transition-colors">
@@ -158,7 +158,7 @@ export default function MarketingDashboard() {
           <div className="flex-1 overflow-y-auto max-h-[400px]">
             {overdueFollowUps.length === 0 ? (
               <div className="p-10 text-center text-gray-400">
-                <CheckCircle size={40} className="mx-auto mb-2 text-green-100" />
+                <CheckCircle size={40} className="mx-auto mb-2 text-muted-foreground" />
                 <p>All caught up! No overdue tasks.</p>
               </div>
             ) : (
@@ -186,17 +186,17 @@ export default function MarketingDashboard() {
 
       {/* New Leads Strip */}
       {newLeads.length > 0 && (
-        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-center justify-between">
+        <div className="bg-muted border border-border rounded-xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+            <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center text-foreground">
               <Users size={20} />
             </div>
             <div>
-              <h3 className="font-bold text-blue-900">{newLeads.length} New Leads Waiting</h3>
-              <p className="text-sm text-blue-700">These leads haven&apos;t been contacted yet.</p>
+              <h3 className="font-bold text-foreground">{newLeads.length} New Leads Waiting</h3>
+              <p className="text-sm text-foreground">These leads haven&apos;t been contacted yet.</p>
             </div>
           </div>
-          <Link href="/admin/marketing/leads?status=new" className="bg-blue-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+          <Link href="/admin/marketing/leads?status=new" className="bg-gray-900 text-white px-5 py-2 rounded-lg font-medium hover:bg-gray-900 transition-colors">
             Start Call List
           </Link>
         </div>

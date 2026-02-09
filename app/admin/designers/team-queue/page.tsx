@@ -46,14 +46,14 @@ export default function TeamQueue() {
     // Group by status for Kanban
     const statuses = [
         { id: 'new', name: 'To Do', color: 'bg-gray-100' },
-        { id: 'designing', name: 'Designing', color: 'bg-blue-100' },
-        { id: 'approval', name: 'Approval', color: 'bg-oms-blue' },
-        { id: 'printing', name: 'Printing', color: 'bg-oms-blue' },
+        { id: 'designing', name: 'Designing', color: 'bg-muted' },
+        { id: 'approval', name: 'Approval', color: 'bg-primary' },
+        { id: 'printing', name: 'Printing', color: 'bg-primary' },
     ];
 
     if (loading) {
         return <div className="min-h-screen flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-oms-blue"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>;
     }
 
@@ -62,7 +62,7 @@ export default function TeamQueue() {
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="mb-4 md:mb-1.5">
-                    <h1 className="text-2xl md:text-page-title text-gray-900 mb-1 md:mb-2">Team Queue</h1>
+                    <h1 className="text-page-title text-gray-900 mb-1 md:mb-2">Team Queue</h1>
                     <p className="text-sm md:text-base text-gray-600">{filteredTasks.length} active tasks</p>
                 </div>
 
@@ -70,7 +70,7 @@ export default function TeamQueue() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-1.5">
                     {designerCounts.map(d => (
                         <div key={d.id} className="bg-white p-4 rounded-xl border text-center">
-                            <div className="text-page-title text-oms-blue">{d.count}</div>
+                            <div className="text-page-title text-primary">{d.count}</div>
                             <div className="text-sm text-gray-600 mt-1">{d.name}</div>
                         </div>
                     ))}
@@ -105,14 +105,14 @@ export default function TeamQueue() {
                         <div className="flex border rounded-xl overflow-hidden bg-white flex-shrink-0">
                             <button
                                 onClick={() => setViewMode('board')}
-                                className={`px-3 md:px-4 py-2.5 md:py-3 flex items-center gap-1.5 md:gap-2 ${viewMode === 'board' ? 'bg-oms-blue text-white' : 'text-gray-600'}`}
+                                className={`px-3 md:px-4 py-2.5 md:py-3 flex items-center gap-1.5 md:gap-2 ${viewMode === 'board' ? 'bg-gray-900 text-white' : 'text-gray-600'}`}
                             >
                                 <LayoutGrid size={18} />
                                 <span className="text-xs md:text-sm font-medium">Board</span>
                             </button>
                             <button
                                 onClick={() => setViewMode('table')}
-                                className={`px-3 md:px-4 py-2.5 md:py-3 flex items-center gap-1.5 md:gap-2 border-l ${viewMode === 'table' ? 'bg-oms-blue text-white' : 'text-gray-600'}`}
+                                className={`px-3 md:px-4 py-2.5 md:py-3 flex items-center gap-1.5 md:gap-2 border-l ${viewMode === 'table' ? 'bg-gray-900 text-white' : 'text-gray-600'}`}
                             >
                                 <List size={18} />
                                 <span className="text-xs md:text-sm font-medium">Table</span>

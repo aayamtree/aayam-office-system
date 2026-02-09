@@ -60,7 +60,7 @@ export default function UserManagementPage() {
           <h1 className="text-page-title text-gray-900">Team Management</h1>
           <p className="text-gray-500">Assign roles and manage access for your employees.</p>
         </div>
-        <div className="text-sm text-gray-500 bg-yellow-50 p-2 rounded border border-yellow-200">
+        <div className="text-sm text-gray-500 bg-muted p-2 rounded border border-yellow-200">
           Note: To add a new user, ask them to Sign Up, then assign their role here.
         </div>
       </div>
@@ -82,7 +82,7 @@ export default function UserManagementPage() {
               <tr key={profile.id} className="hover:bg-gray-50 transition-colors">
                 <td className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-oms-blue rounded-full flex items-center justify-center text-white font-bold">
+                    <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-white font-bold">
                       {profile.full_name?.charAt(0).toUpperCase() || '?'}
                     </div>
                     <div>
@@ -96,7 +96,7 @@ export default function UserManagementPage() {
                     value={profile.role}
                     disabled={updating === profile.id}
                     onChange={(e) => handleRoleChange(profile.id, e.target.value)}
-                    className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-oms-blue focus:border-oms-blue block w-full p-2.5"
+                    className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-gray-400 focus:border-gray-400 block w-full p-2.5"
                   >
                     {roles.map(r => (
                       <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>

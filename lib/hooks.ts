@@ -8,9 +8,11 @@ import {
   Client, Vendor, Designer, Job, Invoice, Lead,
   Quotation, Dispatch, BankAccount, DesignTask, DesignProject,
   PurchaseBill, VendorPayment, PaymentReceived, POSCategory, POSProduct,
-  PaperStock, POSSale, Note, Reminder, BankTransaction, SalesOrder, ActivityLog, JobChecklist, UserCalendarEvent, Commission
+  PaperStock, POSSale, Note, Reminder, BankTransaction, SalesOrder, ActivityLog, JobChecklist, UserCalendarEvent, Commission, UserNote
 } from '@/types/database';
 import { logActivity } from './logger';
+import { autoProgressJob } from './job-auto-progress';
+import { upsertAutoCalendarEvent } from './calendar-auto-events';
 
 // Generic hook for fetching data
 export interface UseSupabaseQueryOptions {
@@ -280,6 +282,7 @@ export function useSalesOrders() {
 // JOBS HOOK
 // =============================================
 export function useJobs(options?: UseSupabaseQueryOptions) {
+  const { profile } = useAuth();
   const { data, loading, error, refetch } = useSupabaseQuery<Job>('jobs', {
     select: '*, client:clients(*), vendor:vendors(*), invoices(*)',
     orderBy: { column: 'created_at', ascending: false },
@@ -308,7 +311,24 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
       .select()
       .single();
 
-    if (!error) refetch();
+    if (!error && data) {
+      logActivity('Created Job', 'job', data.id, `New job ${jobNumber} created for ${data.client_name || 'client'}`);
+
+      // Auto-create calendar event for deadline
+      if (data.client_deadline && profile?.id) {
+        await upsertAutoCalendarEvent({
+          userId: profile.id,
+          sourceType: 'job',
+          sourceId: data.id,
+          title: `📋 Deadline: ${data.project_name}`,
+          date: data.client_deadline,
+          description: `Job ${jobNumber} deadline`,
+          visibility: 'team',
+        });
+      }
+
+      refetch();
+    }
     return { data, error: error?.message };
   };
 
@@ -322,7 +342,21 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
       .select()
       .single();
 
-    if (!error) refetch();
+    if (!error && data) {
+      // Auto-update calendar event if deadline changed
+      if (updates.client_deadline && profile?.id) {
+        await upsertAutoCalendarEvent({
+          userId: profile.id,
+          sourceType: 'job',
+          sourceId: id,
+          title: `📋 Deadline: ${data.project_name}`,
+          date: updates.client_deadline,
+          description: `Job ${data.job_number} deadline`,
+          visibility: 'team',
+        });
+      }
+      refetch();
+    }
     return { data, error: error?.message };
   };
 
@@ -497,7 +531,10 @@ export function useLeads() {
       .select()
       .single();
 
-    if (!error) refetch();
+    if (!error && data) {
+      logActivity('Created Lead', 'lead', data.id, `New lead ${data.lead_number} - ${data.name}`);
+      refetch();
+    }
     return { data, error: error?.message };
   };
 
@@ -784,10 +821,16 @@ export function useDesignTasks() {
       .from('design_tasks')
       .update(updates)
       .eq('id', id)
-      .select()
+      .select('*, job:jobs(id)')
       .single();
 
-    if (!error) refetch();
+    if (!error) {
+      // Auto-progress: design completed → job moves to approval
+      if (updates.status === 'completed' && data?.job_id) {
+        await autoProgressJob(data.job_id, 'design_completed');
+      }
+      refetch();
+    }
     return { data, error: error?.message };
   };
 
@@ -892,6 +935,10 @@ export function useDispatches() {
       .single();
 
     if (!error && data) {
+      // Auto-progress: dispatch created → job moves to dispatched
+      if (dispatch.job_id) {
+        await autoProgressJob(dispatch.job_id, 'dispatch_created');
+      }
       // Log activity
       await logActivity(
         'Created Dispatch',
@@ -2483,5 +2530,127 @@ export function useCommissions() {
     deleteCommission,
     markAsPaid,
     approveCommission
+  };
+}
+
+// =============================================
+// ACTIVITY FEED HOOK
+// =============================================
+export function useActivityFeed(limit: number = 20) {
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchActivities = async () => {
+      if (!isSupabaseConfigured()) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('activity_logs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(limit);
+
+        if (!error && data && data.length > 0) {
+          // Batch fetch profile names for all unique user_ids
+          const userIds = Array.from(new Set(data.map(a => a.user_id).filter(Boolean)));
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, name, username, role')
+            .in('id', userIds);
+
+          const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+          const enriched = data.map(a => ({
+            ...a,
+            profiles: profileMap.get(a.user_id) || null
+          }));
+
+          setActivities(enriched);
+        } else if (!error) {
+          setActivities([]);
+        }
+      } catch (error) {
+        console.error('Error fetching activity feed:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchActivities();
+
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchActivities, 30000);
+    return () => clearInterval(interval);
+  }, [limit]);
+
+  return { activities, loading };
+}
+
+// =============================================
+// USER NOTES HOOK (Dashboard Sticky Notes)
+// =============================================
+export function useUserNotes() {
+  const { profile } = useAuth();
+  const userId = profile?.id;
+
+  const { data, loading, error, refetch } = useSupabaseQuery<UserNote>('user_notes', {
+    select: '*',
+    orderBy: { column: 'created_at', ascending: false }
+  });
+
+  // Filter client-side: my notes + shared notes tagging me
+  const notes = (data || []).filter(n =>
+    n.user_id === userId ||
+    (n.note_type === 'shared' && n.tagged_users?.includes(userId || '')) ||
+    n.note_type === 'pinned'
+  );
+
+  const createNote = async (content: string, noteType: 'personal' | 'pinned' | 'shared' = 'personal', taggedUsers?: string[], jobId?: string) => {
+    if (!isSupabaseConfigured() || !userId) return { error: 'Not configured' };
+
+    const { data, error } = await supabase
+      .from('user_notes')
+      .insert([{
+        user_id: userId,
+        content,
+        note_type: noteType,
+        tagged_users: taggedUsers || [],
+        job_id: jobId || null,
+        is_archived: false
+      }])
+      .select()
+      .single();
+
+    if (!error) refetch();
+    return { data, error: error?.message };
+  };
+
+  const updateNote = async (id: string, updates: { content?: string; note_type?: string; is_archived?: boolean }) => {
+    if (!isSupabaseConfigured()) return { error: 'Not configured' };
+
+    const { error } = await supabase
+      .from('user_notes')
+      .update(updates)
+      .eq('id', id);
+
+    if (!error) refetch();
+    return { error: error?.message };
+  };
+
+  const archiveNote = async (id: string) => updateNote(id, { is_archived: true });
+
+  return {
+    notes: notes.filter(n => !n.is_archived),
+    archivedNotes: notes.filter(n => n.is_archived),
+    loading,
+    error,
+    refetch,
+    createNote,
+    updateNote,
+    archiveNote
   };
 }

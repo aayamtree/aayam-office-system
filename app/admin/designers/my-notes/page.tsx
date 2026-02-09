@@ -103,7 +103,7 @@ export default function MyNotes() {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-oms-blue"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
         );
     }
@@ -113,10 +113,10 @@ export default function MyNotes() {
             <div className="max-w-7xl mx-auto p-4">
                 {/* Header - Responsive */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 md:mb-1.5">
-                    <h1 className="text-2xl md:text-page-title text-gray-900">My Notes</h1>
+                    <h1 className="text-page-title text-gray-900">My Notes</h1>
                     <button
                         onClick={createNote}
-                        className="flex items-center gap-2 bg-oms-blue text-white px-4 py-2.5 rounded-xl hover:bg-oms-blue text-sm font-medium w-full sm:w-auto justify-center"
+                        className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-md hover:bg-gray-900 text-sm font-medium w-full sm:w-auto justify-center"
                     >
                         <Plus size={18} />
                         New Note
@@ -143,7 +143,7 @@ export default function MyNotes() {
                         {allHashtags.length > 0 && (
                             <div className="bg-white rounded-lg p-3 border">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <Hash size={16} className="text-oms-blue" />
+                                    <Hash size={16} className="text-primary" />
                                     <span className="text-sm font-semibold text-gray-700">Popular Tags</span>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
@@ -151,7 +151,7 @@ export default function MyNotes() {
                                         <button
                                             key={tag}
                                             onClick={() => setSearchQuery(tag)}
-                                            className="px-2 py-1 bg-[rgba(0,0,255,0.05)] text-oms-blue rounded text-xs hover:bg-oms-blue"
+                                            className="px-2 py-1 bg-muted text-primary rounded text-xs hover:bg-gray-800"
                                         >
                                             {tag}
                                         </button>
@@ -172,7 +172,7 @@ export default function MyNotes() {
                                             setTitle(note.title || '');
                                             setContent(note.content || '');
                                         }}
-                                        className={`p-4 rounded-lg border cursor-pointer  transition-shadow ${selectedNote?.id === note.id ? 'bg-[rgba(0,0,255,0.05)] border-purple-300' : 'bg-white'
+                                        className={`p-4 rounded-lg border cursor-pointer  transition-shadow ${selectedNote?.id === note.id ? 'bg-muted border-purple-300' : 'bg-white'
                                             }`}
                                     >
                                         <h3 className="font-semibold text-gray-900 mb-1 text-sm">{note.title || 'Untitled'}</h3>
@@ -180,7 +180,7 @@ export default function MyNotes() {
                                         {hashtags.length > 0 && (
                                             <div className="flex flex-wrap gap-1">
                                                 {hashtags.slice(0, 3).map((tag, idx) => (
-                                                    <span key={idx} className="text-xs text-oms-blue font-medium">
+                                                    <span key={idx} className="text-xs text-primary font-medium">
                                                         {tag}
                                                     </span>
                                                 ))}
@@ -225,11 +225,11 @@ export default function MyNotes() {
                                         value={title}
                                         onChange={(e) => setTitle(e.target.value)}
                                         placeholder="Note title..."
-                                        className="text-lg md:text-section text-gray-900 border-b-2 border-transparent hover:border-gray-200 focus:border-oms-blue outline-none flex-1 mr-2 md:mr-4"
+                                        className="text-lg md:text-section text-gray-900 border-b-2 border-transparent hover:border-gray-200 focus:border-gray-400 outline-none flex-1 mr-2 md:mr-4"
                                     />
                                     <button
                                         onClick={saveNote}
-                                        className="flex items-center gap-1.5 md:gap-2 bg-oms-blue text-white px-3 md:px-4 py-2 md:py-2.5 rounded-xl hover:bg-oms-blue text-sm font-medium flex-shrink-0"
+                                        className="flex items-center gap-1.5 md:gap-2 bg-gray-900 text-white px-3 md:px-4 py-2 md:py-2.5 rounded-md hover:bg-gray-900 text-sm font-medium flex-shrink-0"
                                     >
                                         <Save size={16} />
                                         <span className="hidden sm:inline">Save</span>
