@@ -7,6 +7,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  themeColor: '#4f46e5',
 };
 
 export const metadata: Metadata = {
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'Aayam',
   },
-  themeColor: '#4f46e5',
+
 };
 
 export default function RootLayout({
@@ -28,6 +29,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+      </head>
       <body>
         <Providers>
           {children}

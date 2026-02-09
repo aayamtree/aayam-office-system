@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useDashboardStats } from '@/lib/hooks';
@@ -249,12 +249,26 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     onClose();
   };
 
+  // Determine if we're on desktop (lg breakpoint = 1024px)
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024);
+    checkDesktop();
+    window.addEventListener('resize', checkDesktop);
+    return () => window.removeEventListener('resize', checkDesktop);
+  }, []);
+
+  // On mobile: only render sidebar when explicitly opened
+  // On desktop: always render sidebar
+  if (!isDesktop && !isOpen) {
+    return null;
+  }
+
   return (
-    <aside className={`
-      fixed left-0 top-0 h-screen w-64 bg-background border-r border-border flex flex-col z-40
-      transform transition-transform duration-300 ease-in-out
-      ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-    `}>
+    <aside
+      className="fixed left-0 top-0 h-screen w-64 bg-background border-r border-border flex flex-col z-40"
+    >
       {/* Logo */}
       <div className="p-6 border-b border-border">
         <Link
@@ -272,22 +286,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Navigation */}
       <ScrollArea className="flex-1 px-3 py-4">
         <nav className="space-y-1">
-          {!profile ? (
-            // Loading skeleton
-            <div className="space-y-2">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-10 bg-muted rounded-md animate-pulse" />
-              ))}
-            </div>
-          ) : !profile.role ? (
-            // No role assigned
+          {profile && !profile.role ? (
             <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
               <p className="text-sm text-destructive font-medium">⚠️ No Role Assigned</p>
               <p className="text-xs text-muted-foreground mt-1">Contact admin to assign your role</p>
             </div>
           ) : (
             menuItems.filter(item => {
-              const userRole = profile.role;
+              const userRole = profile?.role || 'admin';
               if (!item.allowedRoles || item.allowedRoles.length === 0) return true;
               return item.allowedRoles.includes(userRole);
             }).map((item) => {
