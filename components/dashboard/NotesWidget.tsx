@@ -8,10 +8,10 @@ import { Plus, X, Pin, Trash2, Check, Loader2, Link as LinkIcon } from 'lucide-r
 import { Note } from '@/types/database';
 
 const colors = [
-    { name: 'blue', bg: 'bg-[rgba(0,0,255,0.05)]', border: 'border-[rgba(0,0,255,0.1)]' },
-    { name: 'sky', bg: 'bg-[rgba(0,0,255,0.1)]', border: 'border-[rgba(0,0,255,0.2)]' },
-    { name: 'navy', bg: 'bg-[rgba(0,0,255,0.15)]', border: 'border-[rgba(0,0,255,0.25)]' },
-    { name: 'orange', bg: 'bg-[rgba(255,102,0,0.1)]', border: 'border-[rgba(255,102,0,0.2)]' },
+    { name: 'blue', bg: 'bg-blue-50', border: 'border-blue-200' },
+    { name: 'sky', bg: 'bg-sky-50', border: 'border-sky-200' },
+    { name: 'navy', bg: 'bg-indigo-50', border: 'border-indigo-200' },
+    { name: 'orange', bg: 'bg-orange-50', border: 'border-orange-200' },
     { name: 'gray', bg: 'bg-gray-50', border: 'border-gray-200' },
 ];
 
@@ -74,7 +74,7 @@ export default function NotesWidget() {
         return colors.find(c => c.name === colorName) || colors[0];
     };
 
-    if (loading) return <div className="h-64 flex items-center justify-center bg-gray-50 rounded-xl"><Loader2 className="animate-spin text-gray-400" /></div>;
+    if (loading) return <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg"><Loader2 className="animate-spin text-gray-400" /></div>;
 
     // Sort: Pinned first, then by date
     const sortedNotes = [...notes].sort((a, b) => {
@@ -83,7 +83,7 @@ export default function NotesWidget() {
     });
 
     return (
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 h-full flex flex-col">
+        <div className="bg-white p-6 rounded-lg border border-gray-100 h-full flex flex-col">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-900">Notes</h3>
                 <button
@@ -96,7 +96,7 @@ export default function NotesWidget() {
 
             <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
                 {isAdding && (
-                    <div className={`p-4 rounded-xl border-2 border-dashed border-gray-200 animate-in fade-in slide-in-from-top-2 bg-gray-50`}>
+                    <div className={`p-4 rounded-lg border-2 border-dashed border-gray-200 animate-in fade-in slide-in-from-top-2 bg-gray-50`}>
                         <textarea
                             autoFocus
                             value={newNoteContent}
@@ -154,7 +154,7 @@ export default function NotesWidget() {
                 {sortedNotes.map(note => {
                     const style = getStyle(note.color);
                     return (
-                        <div key={note.id} className={`group relative p-3 rounded-xl ${style.bg} border ${style.border} transition-all`}>
+                        <div key={note.id} className={`group relative p-3 rounded-lg ${style.bg} border ${style.border} transition-all`}>
                             <p className="text-sm text-gray-800 whitespace-pre-wrap pr-16">{note.content}</p>
 
                             {note.job && (

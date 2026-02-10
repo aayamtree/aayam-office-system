@@ -261,7 +261,7 @@ export default function LeadsPage() {
             </div>
 
             {/* FILTERS */}
-            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 bg-white p-3 md:p-4 rounded-xl md:rounded-2xl border border-gray-100">
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 bg-white p-3 md:p-4 rounded-lg md:rounded-lg border border-gray-100">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                     <Input
@@ -291,7 +291,7 @@ export default function LeadsPage() {
             {/* LEAD LIST */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-5">
                 {filteredLeads.length === 0 ? (
-                    <div className="col-span-full py-8 md:py-12 text-center text-sm md:text-base text-gray-400 bg-gray-50 rounded-xl md:rounded-2xl border-2 border-dashed border-gray-200">
+                    <div className="col-span-full py-8 md:py-12 text-center text-sm md:text-base text-gray-400 bg-gray-50 rounded-lg md:rounded-lg border-2 border-dashed border-gray-200">
                         No leads found matching your search.
                         <br /><span className="text-xs text-gray-300">If you just added a lead, try refreshing the page manually.</span>
                     </div>
@@ -302,7 +302,7 @@ export default function LeadsPage() {
                         const headerTextColor = 'text-foreground';
 
                         return (
-                            <div key={lead.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
+                            <div key={lead.id} className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
                                 {/* Colored Header */}
                                 <div className={`${headerBg} px-3 py-2.5 flex items-center justify-between`}>
                                     <span className={`${headerTextColor} font-mono text-sm font-bold`}>
@@ -425,7 +425,7 @@ export default function LeadsPage() {
             {/* EDIT/CREATE MODAL */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto ">
+                    <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto ">
                         <div className="sticky top-0 bg-white p-5 border-b border-gray-100 flex justify-between items-center z-10">
                             <h2 className="text-page-title text-gray-900">{isEditing ? 'Edit Lead' : 'New Lead Card'}</h2>
                             <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
@@ -438,11 +438,11 @@ export default function LeadsPage() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-1.5">Lead Name *</label>
-                                    <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all font-medium" />
+                                    <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all font-medium" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-1.5">Mobile Number *</label>
-                                    <input required type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })} className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 transition-all font-medium font-mono" />
+                                    <input required type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })} className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400 transition-all font-medium font-mono" />
                                 </div>
                             </div>
 
@@ -454,13 +454,13 @@ export default function LeadsPage() {
                                         type="date"
                                         value={formData.leadDate}
                                         onChange={(e) => setFormData({ ...formData, leadDate: e.target.value })}
-                                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 transition-all font-medium"
+                                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400 transition-all font-medium"
                                     />
                                     <p className="text-xs text-gray-400 mt-1 ml-1">Example: &quot;When Lead Created&quot;</p>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-600 mb-1.5">Source</label>
-                                    <select value={formData.source} onChange={e => setFormData({ ...formData, source: e.target.value as any })} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400">
+                                    <select value={formData.source} onChange={e => setFormData({ ...formData, source: e.target.value as any })} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400">
                                         <option value="website">Website</option>
                                         <option value="walk_in">Walk-in</option>
                                         <option value="referral">Referral</option>
@@ -474,7 +474,7 @@ export default function LeadsPage() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-600 mb-1.5">Service Req.</label>
-                                    <select value={formData.leadType} onChange={e => setFormData({ ...formData, leadType: e.target.value as any })} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400">
+                                    <select value={formData.leadType} onChange={e => setFormData({ ...formData, leadType: e.target.value as any })} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400">
                                         <option value="printing_only">Printing Only</option>
                                         <option value="designing_only">Designing Only</option>
                                         <option value="design_printing">Design + Printing</option>
@@ -483,7 +483,7 @@ export default function LeadsPage() {
                             </div>
 
                             {/* Status Section */}
-                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Current Status</label>
                                     <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value as any })} className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium">
@@ -518,7 +518,7 @@ export default function LeadsPage() {
                                     </select>
                                     <input type="number" placeholder="Expected Value (₹)" value={formData.value} onChange={e => setFormData({ ...formData, value: e.target.value })} className="border-b border-gray-200 py-2 focus:border-gray-400 focus:outline-none bg-transparent placeholder-gray-400" />
                                 </div>
-                                <textarea placeholder="Requirement details / Notes..." rows={3} value={formData.requirement} onChange={e => setFormData({ ...formData, requirement: e.target.value })} className="w-full p-3 bg-gray-50 rounded-xl border-0 focus:ring-2 focus:ring-gray-400/20 text-sm resize-none"></textarea>
+                                <textarea placeholder="Requirement details / Notes..." rows={3} value={formData.requirement} onChange={e => setFormData({ ...formData, requirement: e.target.value })} className="w-full p-3 bg-gray-50 rounded-lg border-0 focus:ring-2 focus:ring-gray-400/20 text-sm resize-none"></textarea>
                             </div>
 
                             <div className="sticky bottom-0 bg-white pt-4 border-t border-gray-100 flex gap-3">
@@ -536,7 +536,7 @@ export default function LeadsPage() {
             {/* VIEW MODAL - Simplified for read-only view */}
             {showViewModal && selectedLead && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl w-full max-w-lg p-4 relative ">
+                    <div className="bg-white rounded-lg w-full max-w-lg p-4 relative ">
                         <button onClick={() => setShowViewModal(false)} className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full"><X className="w-4 h-4" /></button>
                         <h2 className="text-page-title text-gray-900 mb-1">{selectedLead.name}</h2>
                         <p className="text-gray-500 font-mono text-sm mb-3 md:mb-1.5">{selectedLead.lead_number}</p>
@@ -546,7 +546,7 @@ export default function LeadsPage() {
                             <div className="flex justify-between border-b pb-2"><span className="text-gray-500">Company</span> <span className="font-medium">{selectedLead.company || '-'}</span></div>
                             <div className="flex justify-between border-b pb-2"><span className="text-gray-500">Status</span> <span className="font-bold capitalize text-primary">{selectedLead.status}</span></div>
 
-                            <div className="bg-gray-50 p-4 rounded-xl mt-4">
+                            <div className="bg-gray-50 p-4 rounded-lg mt-4">
                                 <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">Requirement</h4>
                                 <p className="text-gray-700 italic">{selectedLead.requirement || 'No notes provided.'}</p>
                             </div>

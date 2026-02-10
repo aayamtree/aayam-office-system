@@ -29,9 +29,9 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
         { main: 'bg-yellow-500', light: 'bg-yellow-50', border: 'border-yellow-200', name: 'Yellow' },
         { main: 'bg-orange-500', light: 'bg-orange-50', border: 'border-orange-200', name: 'Orange' },
         { main: 'bg-red-500', light: 'bg-red-50', border: 'border-red-200', name: 'Red' },
-        { main: 'bg-[rgba(0,0,255,0.1)]', light: 'bg-[rgba(0,0,255,0.1)]', border: 'border-purple-200', name: 'Purple' },
+        { main: 'bg-purple-500', light: 'bg-purple-50', border: 'border-purple-200', name: 'Purple' },
         { main: 'bg-pink-500', light: 'bg-pink-50', border: 'border-pink-200', name: 'Pink' },
-        { main: 'bg-[rgba(0,0,255,0.1)]', light: 'bg-[rgba(0,0,255,0.1)]', border: 'border-primary/20', name: 'Indigo' },
+        { main: 'bg-indigo-500', light: 'bg-indigo-50', border: 'border-indigo-200', name: 'Indigo' },
         { main: 'bg-teal-500', light: 'bg-teal-50', border: 'border-teal-200', name: 'Teal' },
         { main: 'bg-cyan-500', light: 'bg-cyan-50', border: 'border-cyan-200', name: 'Cyan' },
         { main: 'bg-emerald-500', light: 'bg-emerald-50', border: 'border-emerald-200', name: 'Emerald' },
@@ -93,21 +93,21 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-            <div className="bg-white rounded-2xl  w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+            <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-teal-50 to-cyan-50 sticky top-0">
+                <div className="flex items-center justify-between p-6 border-b bg-muted/50 sticky top-0">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-teal-100 rounded-lg">
-                            <Layers size={24} className="text-teal-600" />
+                        <div className="p-2 bg-muted rounded-lg">
+                            <Layers size={24} className="text-foreground" />
                         </div>
                         <div>
                             <h3 className="text-page-title text-gray-900">Add Job Stage</h3>
                             <p className="text-sm text-gray-600">Create new workflow stage</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-md transition-colors">
-                        <X size={20} />
+                    <button onClick={onClose} className="h-8 w-8 flex items-center justify-center hover:bg-gray-200 rounded-md transition-colors">
+                        <X size={16} />
                     </button>
                 </div>
 
@@ -118,7 +118,7 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
                         <input
                             required
                             type="text"
-                            className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-teal-500/20 focus:border-teal-500 lowercase"
+                            className="w-full px-3 py-2 border rounded-md focus:ring-2 ring-ring/20 focus:border-gray-400 lowercase"
                             placeholder="e.g., quality_check, ready"
                             value={formData.id}
                             onChange={e => setFormData({ ...formData, id: e.target.value })}
@@ -131,7 +131,7 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
                         <input
                             required
                             type="text"
-                            className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-teal-500/20 focus:border-teal-500"
+                            className="w-full px-3 py-2 border rounded-md focus:ring-2 ring-ring/20 focus:border-gray-400"
                             placeholder="e.g., Quality Check, Ready"
                             value={formData.name}
                             onChange={e => setFormData({ ...formData, name: e.target.value })}
@@ -152,8 +152,8 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
                                         border: colorSet.border
                                     })}
                                     className={`h-12 rounded-lg border-2 transition-all ${formData.color === colorSet.main
-                                            ? 'border-teal-500 scale-105'
-                                            : 'border-gray-200 hover:border-teal-300'
+                                        ? 'border-primary scale-105'
+                                        : 'border-gray-200 hover:border-gray-300'
                                         } ${colorSet.light}`}
                                     title={colorSet.name}
                                 >
@@ -163,7 +163,7 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
                         </div>
                     </div>
 
-                    <div className={`rounded-xl p-4 border-2 ${formData.border} ${formData.bgLight}`}>
+                    <div className={`rounded-lg p-4 border-2 ${formData.border} ${formData.bgLight}`}>
                         <p className="text-xs text-gray-500 mb-2">Preview:</p>
                         <div className="flex items-center justify-between">
                             <span className={`text-xs px-3 py-1 rounded-full text-white ${formData.color}`}>
@@ -173,8 +173,8 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
                         </div>
                     </div>
 
-                    <div className="bg-teal-50 rounded-xl p-3">
-                        <p className="text-xs text-teal-700">
+                    <div className="bg-muted rounded-lg p-3">
+                        <p className="text-xs text-muted-foreground">
                             ℹ️ <strong>Note:</strong> New stage will be added at the end of workflow. You can reorder stages later.
                         </p>
                     </div>
@@ -191,7 +191,7 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
                         <button
                             type="submit"
                             disabled={saving}
-                            className="px-8 py-2 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-md font-medium  disabled:opacity-50 flex items-center gap-2"
+                            className="px-8 py-2 bg-primary text-primary-foreground rounded-md font-medium disabled:opacity-50 flex items-center gap-2"
                         >
                             {saving ? (
                                 <>

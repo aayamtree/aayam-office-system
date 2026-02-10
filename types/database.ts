@@ -192,6 +192,11 @@ export interface Job extends BaseEntity {
   payment_status: PaymentStatus;
   amount_received: number;
 
+  // Advance payment tracking
+  advance_required?: boolean;
+  advance_collected?: boolean;
+  advance_amount?: number;
+
   // Dates
   order_date: string;
   client_deadline?: string;
@@ -205,6 +210,9 @@ export interface Job extends BaseEntity {
   // Print-specific fields (new)
   client_approval?: boolean;
   approval_date?: string;
+  approval_by?: string;       // Who from our side got the approval (user ID)
+  approval_remark?: string;   // What client said / final direction
+  approval_status?: 'pending' | 'sent' | 'approved' | 'changes_requested';
   print_ready?: boolean;
   file_version?: string;
 
@@ -719,10 +727,12 @@ export interface GoogleDriveCredentials extends BaseEntity {
 
 // Note
 export interface Note extends BaseEntity {
+  title?: string;
   content: string;
   color: string;
   is_pinned: boolean;
   user_id?: string;
+  tagged_users?: string[];
   linked_job_id?: string;
   job?: Job; // For joined data
 }

@@ -180,7 +180,7 @@ export default function PaperStockPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white border border-green-200 rounded-xl p-3">
+        <div className="bg-white border border-green-200 rounded-lg p-3">
           <div className="flex items-center gap-2 mb-1">
             <Package className="w-4 h-4 text-gray-900" />
             <span className="text-xs text-gray-900 font-medium">In Stock</span>
@@ -189,21 +189,21 @@ export default function PaperStockPage() {
             {loading ? '...' : stock.length - lowStockCount - outOfStockCount}
           </p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-3">
+        <div className="bg-white border border-gray-200 rounded-lg p-3">
           <div className="flex items-center gap-2 mb-1">
             <TrendingDown className="w-4 h-4 text-destructive" />
             <span className="text-xs text-destructive font-medium">Low Stock</span>
           </div>
           <p className="text-page-title text-amber-700">{loading ? '...' : lowStockCount}</p>
         </div>
-        <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
           <div className="flex items-center gap-2 mb-1">
             <AlertTriangle className="w-4 h-4 text-red-600" />
             <span className="text-xs text-red-600 font-medium">Out of Stock</span>
           </div>
           <p className="text-page-title text-red-700">{loading ? '...' : outOfStockCount}</p>
         </div>
-        <div className="bg-gray-900 border border-border-200 rounded-xl p-3">
+        <div className="bg-gray-900 border border-border-200 rounded-lg p-3">
           <div className="flex items-center gap-2 mb-1">
             <TrendingUp className="w-4 h-4 text-primary" />
             <span className="text-xs text-primary font-medium">Stock Value</span>
@@ -223,13 +223,13 @@ export default function PaperStockPage() {
             placeholder="Search items..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
         </div>
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
+          className="px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
         >
           {categories.map(cat => (
             <option key={cat} value={cat}>{cat}</option>
@@ -238,7 +238,7 @@ export default function PaperStockPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
+          className="px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
         >
           <option value="all">All Status</option>
           <option value="in_stock">In Stock</option>
@@ -256,7 +256,7 @@ export default function PaperStockPage() {
         ) : filteredStock.map((item) => {
           const status = getStatus(item);
           return (
-            <div key={item.id} className={`bg-white rounded-xl p-4 border ${status === 'out_of_stock' ? 'border-red-200' :
+            <div key={item.id} className={`bg-white rounded-lg p-4 border ${status === 'out_of_stock' ? 'border-red-200' :
               status === 'low_stock' ? 'border-gray-200' : 'border-gray-100'
               }`}>
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 md:gap-4">
@@ -280,7 +280,7 @@ export default function PaperStockPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleRestock(item)}
-                    className="flex items-center gap-1 px-3 py-2 bg-gray-100 text-gray-900 rounded-xl hover:bg-green-200 text-sm font-medium transition-colors"
+                    className="flex items-center gap-1 px-3 py-2 bg-gray-100 text-gray-900 rounded-lg hover:bg-green-200 text-sm font-medium transition-colors"
                   >
                     <Plus className="w-4 h-4" /> Restock
                   </button>
@@ -306,7 +306,7 @@ export default function PaperStockPage() {
       {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md animate-scale-in">
+          <div className="bg-white rounded-lg w-full max-w-md animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <h2 className="text-section text-gray-900">
                 {isEditing ? 'Edit Item' : 'Add New Item'}
@@ -324,7 +324,7 @@ export default function PaperStockPage() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
                 />
               </div>
 
@@ -336,7 +336,7 @@ export default function PaperStockPage() {
                     placeholder="e.g. A4"
                     value={formData.size}
                     onChange={(e) => setFormData({ ...formData, size: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
                   />
                 </div>
                 <div>
@@ -345,7 +345,7 @@ export default function PaperStockPage() {
                     type="number"
                     value={formData.gsm}
                     onChange={(e) => setFormData({ ...formData, gsm: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
                   />
                 </div>
               </div>
@@ -356,7 +356,7 @@ export default function PaperStockPage() {
                   <select
                     value={formData.unit}
                     onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
                   >
                     <option value="pcs">pcs</option>
                     <option value="reams">reams</option>
@@ -373,7 +373,7 @@ export default function PaperStockPage() {
                     step="0.01"
                     value={formData.cost_per_unit}
                     onChange={(e) => setFormData({ ...formData, cost_per_unit: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
                   />
                 </div>
               </div>
@@ -385,7 +385,7 @@ export default function PaperStockPage() {
                     type="number"
                     value={formData.quantity}
                     onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
                   />
                 </div>
                 <div>
@@ -394,7 +394,7 @@ export default function PaperStockPage() {
                     type="number"
                     value={formData.reorder_level}
                     onChange={(e) => setFormData({ ...formData, reorder_level: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
                   />
                 </div>
               </div>
@@ -405,12 +405,12 @@ export default function PaperStockPage() {
                   type="text"
                   value={formData.supplier}
                   onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
                 />
               </div>
 
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200">
+                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200">
                   Cancel
                 </button>
                 <button
@@ -430,7 +430,7 @@ export default function PaperStockPage() {
       {/* Restock Modal */}
       {showRestockModal && selectedItem && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm animate-scale-in">
+          <div className="bg-white rounded-lg w-full max-w-sm animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <h2 className="text-section text-gray-900">Restock Item</h2>
               <button onClick={() => setShowRestockModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
@@ -439,7 +439,7 @@ export default function PaperStockPage() {
             </div>
 
             <div className="p-4 space-y-4">
-              <div className="p-4 bg-gray-50 rounded-xl">
+              <div className="p-4 bg-gray-50 rounded-lg">
                 <p className="font-medium text-gray-900">{selectedItem.name}</p>
                 <p className="text-sm text-gray-500">Current: {selectedItem.quantity} {selectedItem.unit}</p>
               </div>
@@ -450,7 +450,7 @@ export default function PaperStockPage() {
                   type="number"
                   value={restockQty}
                   onChange={(e) => setRestockQty(e.target.value)}
-                  className="w-full px-4 py-3 text-page-title border border-gray-200 rounded-xl text-center focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 text-page-title border border-gray-200 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="0"
                   autoFocus
                 />
@@ -463,7 +463,7 @@ export default function PaperStockPage() {
               )}
 
               <div className="flex gap-3">
-                <button onClick={() => setShowRestockModal(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200">
+                <button onClick={() => setShowRestockModal(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200">
                   Cancel
                 </button>
                 <button

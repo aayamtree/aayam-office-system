@@ -85,11 +85,11 @@ export default function SalesReportPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => handleExport('pdf')} className="flex items-center gap-2 px-3 py-2 bg-red-50 text-red-700 rounded-xl hover:bg-red-100">
+          <button onClick={() => handleExport('pdf')} className="flex items-center gap-2 px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100">
             <Download size={16} />
             <span>PDF</span>
           </button>
-          <button onClick={() => handleExport('excel')} className="flex items-center gap-2 px-3 py-2 bg-white text-gray-900 rounded-xl hover:bg-gray-100">
+          <button onClick={() => handleExport('excel')} className="flex items-center gap-2 px-3 py-2 bg-white text-gray-900 rounded-lg hover:bg-gray-100">
             <Download size={16} />
             <span>Excel</span>
           </button>
@@ -97,7 +97,7 @@ export default function SalesReportPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+      <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
         <div className="flex items-center gap-2 mb-3">
           <Filter size={16} className="text-gray-500" />
           <span className="font-medium text-gray-700">Filters</span>
@@ -109,7 +109,7 @@ export default function SalesReportPage() {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg"
             />
           </div>
           <div>
@@ -118,7 +118,7 @@ export default function SalesReportPage() {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg"
             />
           </div>
           <div>
@@ -126,7 +126,7 @@ export default function SalesReportPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg"
             >
               <option value="all">All Status</option>
               <option value="completed">Completed</option>
@@ -141,7 +141,7 @@ export default function SalesReportPage() {
               placeholder="Search client..."
               value={clientFilter}
               onChange={(e) => setClientFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg"
             />
           </div>
         </div>
@@ -149,28 +149,28 @@ export default function SalesReportPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg md:rounded-lg p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <IndianRupee size={18} />
             <span className="text-sm opacity-90">Total Revenue</span>
           </div>
           <p className="text-page-title">₹{(totalRevenue / 1000).toFixed(1)}K</p>
         </div>
-        <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+        <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg md:rounded-lg p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <Package size={18} />
             <span className="text-sm opacity-90">Total Orders</span>
           </div>
           <p className="text-page-title">{totalOrders}</p>
         </div>
-        <div className="bg-gray-900 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+        <div className="bg-gray-900 rounded-lg md:rounded-lg p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp size={18} />
             <span className="text-sm opacity-90">Avg Order Value</span>
           </div>
           <p className="text-page-title">₹{(avgOrderValue / 1000).toFixed(1)}K</p>
         </div>
-        <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+        <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg md:rounded-lg p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <Users size={18} />
             <span className="text-sm opacity-90">Unique Clients</span>
@@ -181,7 +181,7 @@ export default function SalesReportPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
         {/* Sales Table */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="lg:col-span-2 bg-white rounded-lg border border-gray-100 overflow-hidden">
           <div className="p-4 border-b border-gray-100">
             <h2 className="font-semibold text-gray-900">Sales Details</h2>
           </div>
@@ -221,7 +221,7 @@ export default function SalesReportPage() {
         </div>
 
         {/* Top Clients */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
           <h2 className="font-semibold text-gray-900 mb-4">Top Clients</h2>
           <div className="space-y-3">
             {topClients.map(([client, revenue], index) => (

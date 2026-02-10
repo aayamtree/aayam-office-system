@@ -50,13 +50,13 @@ export default function RemindersWidget() {
         return 'text-gray-500';
     };
 
-    if (loading) return <div className="h-64 flex items-center justify-center bg-gray-50 rounded-xl"><Loader2 className="animate-spin text-gray-400" /></div>;
+    if (loading) return <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg"><Loader2 className="animate-spin text-gray-400" /></div>;
 
     const activeReminders = reminders.filter(r => !r.is_completed);
     const completedReminders = reminders.filter(r => r.is_completed);
 
     return (
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 h-full flex flex-col">
+        <div className="bg-white p-6 rounded-lg border border-gray-100 h-full flex flex-col">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-900">Reminders</h3>
                 <button
@@ -69,7 +69,7 @@ export default function RemindersWidget() {
 
             <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
                 {isAdding && (
-                    <form onSubmit={handleAdd} className="mb-4 bg-gray-50 p-3 rounded-xl border border-gray-200 animate-in fade-in slide-in-from-top-2">
+                    <form onSubmit={handleAdd} className="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200 animate-in fade-in slide-in-from-top-2">
                         <input
                             autoFocus
                             type="text"

@@ -104,7 +104,7 @@ export default function VendorsPage() {
           <div><h1 className="text-page-title text-gray-900">Vendors</h1><p className="text-sm text-gray-500">{filteredVendors.length} vendors</p></div>
         </div>
         <div className="flex gap-2">
-          <Link href="/admin/finance/vendors/purchases" className="flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-200 px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-colors">
+          <Link href="/admin/finance/vendors/purchases" className="flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-200 px-4 py-2.5 rounded-lg hover:bg-gray-50 transition-colors">
             <Package className="w-4 h-4 md:w-4.5 md:h-4.5" />
             <span className="hidden sm:inline">Purchases & Bills</span>
           </Link>
@@ -158,7 +158,7 @@ export default function VendorsPage() {
               const headerBg = categoryGradients[vendor.category || 'Paper'] || 'bg-gradient-to-r from-gray-400 to-gray-500';
 
               return (
-                <div key={vendor.id} className={`bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border ${!vendor.is_active ? 'border-gray-300 opacity-60' : 'border-gray-100'}`}>
+                <div key={vendor.id} className={`bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all border ${!vendor.is_active ? 'border-gray-300 opacity-60' : 'border-gray-100'}`}>
                   {/* Colored Header */}
                   <div className={`${headerBg} px-4 py-3 flex items-center justify-between`}>
                     <div className="flex items-center gap-2">
@@ -218,7 +218,7 @@ export default function VendorsPage() {
               );
             })}
             {filteredVendors.length === 0 && (
-              <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
+              <div className="text-center py-12 bg-white rounded-lg border border-gray-100">
                 <Package className="w-12 h-12 mx-auto text-gray-300 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-1">No vendors found</h3>
                 <p className="text-sm text-gray-500 mb-4">Try adjusting your filters</p>
@@ -230,7 +230,7 @@ export default function VendorsPage() {
           </div>
 
           {/* Desktop View: Table */}
-          <div className="hidden lg:block bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="hidden lg:block bg-white rounded-lg border border-gray-100 overflow-hidden">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
@@ -302,15 +302,15 @@ export default function VendorsPage() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b"><h2 className="text-section">{isEditing ? 'Edit Vendor' : 'Add Vendor'}</h2><button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button></div>
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
-              <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1">Name *</label><input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border rounded-xl" /></div><div><label className="block text-sm font-medium mb-1">Company</label><input type="text" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} className="w-full px-3 py-2 border rounded-xl" /></div></div>
-              <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1">Phone *</label><input type="tel" required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })} className="w-full px-3 py-2 border rounded-xl" /></div><div><label className="block text-sm font-medium mb-1">Email</label><input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border rounded-xl" /></div></div>
-              <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1">Category</label><select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full px-3 py-2 border rounded-xl">{categories.map(c => <option key={c} value={c}>{c}</option>)}</select></div><div><label className="block text-sm font-medium mb-1">GSTIN</label><input type="text" value={formData.gstin} onChange={(e) => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })} className="w-full px-3 py-2 border rounded-xl" maxLength={15} /></div></div>
-              <div><label className="block text-sm font-medium mb-1">Address</label><textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full px-3 py-2 border rounded-xl" rows={2} /></div>
-              <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1">City</label><input type="text" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="w-full px-3 py-2 border rounded-xl" /></div><div><label className="block text-sm font-medium mb-1">Status</label><select value={formData.is_active ? 'active' : 'inactive'} onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'active' })} className="w-full px-3 py-2 border rounded-xl"><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div>
-              <div className="flex gap-3 pt-4"><button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 border rounded-xl">Cancel</button><button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 flex items-center justify-center gap-2 shadow-sm font-semibold">{saving && <Loader2 className="w-4 h-4 md:w-4.5 md:h-4.5 animate-spin" />}{isEditing ? 'Update' : 'Add'}</button></div>
+              <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1">Name *</label><input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg" /></div><div><label className="block text-sm font-medium mb-1">Company</label><input type="text" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} className="w-full px-3 py-2 border rounded-lg" /></div></div>
+              <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1">Phone *</label><input type="tel" required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })} className="w-full px-3 py-2 border rounded-lg" /></div><div><label className="block text-sm font-medium mb-1">Email</label><input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border rounded-lg" /></div></div>
+              <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1">Category</label><select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full px-3 py-2 border rounded-lg">{categories.map(c => <option key={c} value={c}>{c}</option>)}</select></div><div><label className="block text-sm font-medium mb-1">GSTIN</label><input type="text" value={formData.gstin} onChange={(e) => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })} className="w-full px-3 py-2 border rounded-lg" maxLength={15} /></div></div>
+              <div><label className="block text-sm font-medium mb-1">Address</label><textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full px-3 py-2 border rounded-lg" rows={2} /></div>
+              <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1">City</label><input type="text" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="w-full px-3 py-2 border rounded-lg" /></div><div><label className="block text-sm font-medium mb-1">Status</label><select value={formData.is_active ? 'active' : 'inactive'} onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'active' })} className="w-full px-3 py-2 border rounded-lg"><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div>
+              <div className="flex gap-3 pt-4"><button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 border rounded-lg">Cancel</button><button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 flex items-center justify-center gap-2 shadow-sm font-semibold">{saving && <Loader2 className="w-4 h-4 md:w-4.5 md:h-4.5 animate-spin" />}{isEditing ? 'Update' : 'Add'}</button></div>
             </form>
           </div>
         </div>
@@ -318,17 +318,17 @@ export default function VendorsPage() {
 
       {showViewModal && selectedVendor && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg">
+          <div className="bg-white rounded-lg w-full max-w-lg">
             <div className="flex items-center justify-between p-4 border-b"><h2 className="text-section">Vendor Details</h2><button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button></div>
             <div className="p-4 space-y-4">
               <div className="flex items-center gap-2 md:gap-4"><div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center"><span className="text-orange-600 font-bold text-2xl">{selectedVendor.name?.charAt(0)}</span></div><div><h3 className="text-section">{selectedVendor.name}</h3><p className="text-gray-500">{selectedVendor.company}</p><span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${getCategoryColor(selectedVendor.category || 'Paper')}`}>{selectedVendor.category}</span></div></div>
-              <div className="space-y-3 p-4 bg-gray-50 rounded-xl"><div className="flex items-center gap-3"><Phone className="w-4 h-4 text-gray-400" /><span>{selectedVendor.phone}</span></div>{selectedVendor.email && <div className="flex items-center gap-3"><Mail className="w-4 h-4 text-gray-400" /><span>{selectedVendor.email}</span></div>}{selectedVendor.address && <div className="flex items-center gap-3"><MapPin className="w-4 h-4 text-gray-400" /><span>{selectedVendor.address}, {selectedVendor.city}</span></div>}{selectedVendor.gstin && <div className="flex items-center gap-3"><Building2 className="w-4 h-4 text-gray-400" /><span>GSTIN: {selectedVendor.gstin}</span></div>}</div>
+              <div className="space-y-3 p-4 bg-gray-50 rounded-lg"><div className="flex items-center gap-3"><Phone className="w-4 h-4 text-gray-400" /><span>{selectedVendor.phone}</span></div>{selectedVendor.email && <div className="flex items-center gap-3"><Mail className="w-4 h-4 text-gray-400" /><span>{selectedVendor.email}</span></div>}{selectedVendor.address && <div className="flex items-center gap-3"><MapPin className="w-4 h-4 text-gray-400" /><span>{selectedVendor.address}, {selectedVendor.city}</span></div>}{selectedVendor.gstin && <div className="flex items-center gap-3"><Building2 className="w-4 h-4 text-gray-400" /><span>GSTIN: {selectedVendor.gstin}</span></div>}</div>
               <div className="flex gap-3">
                 <Link href={`/admin/finance/vendors/purchases?vendor=${selectedVendor.id}`} className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 shadow-sm font-semibold">
                   <Package className="w-4 h-4 md:w-4.5 md:h-4.5" /> Record Bill
                 </Link>
-                <button onClick={() => { setShowViewModal(false); handleEdit(selectedVendor); }} className="flex-1 px-4 py-2.5 border rounded-xl font-medium">Edit</button>
-                <button onClick={() => setShowViewModal(false)} className="flex-1 px-4 py-2.5 border rounded-xl font-medium">Close</button>
+                <button onClick={() => { setShowViewModal(false); handleEdit(selectedVendor); }} className="flex-1 px-4 py-2.5 border rounded-lg font-medium">Edit</button>
+                <button onClick={() => setShowViewModal(false)} className="flex-1 px-4 py-2.5 border rounded-lg font-medium">Close</button>
               </div>
             </div>
           </div>

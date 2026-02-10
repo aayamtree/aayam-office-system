@@ -69,7 +69,7 @@ export default function TeamQueue() {
                 {/* Designer Summary Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-1.5">
                     {designerCounts.map(d => (
-                        <div key={d.id} className="bg-white p-4 rounded-xl border text-center">
+                        <div key={d.id} className="bg-white p-4 rounded-lg border text-center">
                             <div className="text-page-title text-primary">{d.count}</div>
                             <div className="text-sm text-gray-600 mt-1">{d.name}</div>
                         </div>
@@ -85,7 +85,7 @@ export default function TeamQueue() {
                             placeholder="Search tasks..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 md:py-3 border rounded-xl text-sm"
+                            className="w-full pl-10 pr-4 py-2.5 md:py-3 border rounded-lg text-sm"
                         />
                     </div>
 
@@ -93,7 +93,7 @@ export default function TeamQueue() {
                         <select
                             value={filterDesigner}
                             onChange={(e) => setFilterDesigner(e.target.value)}
-                            className="flex-1 md:flex-none px-3 md:px-4 py-2.5 md:py-3 border rounded-xl bg-white text-sm"
+                            className="flex-1 md:flex-none px-3 md:px-4 py-2.5 md:py-3 border rounded-lg bg-white text-sm"
                         >
                             <option value="all">All Designers</option>
                             {designers.map(d => (
@@ -102,7 +102,7 @@ export default function TeamQueue() {
                         </select>
 
                         {/* View Toggle */}
-                        <div className="flex border rounded-xl overflow-hidden bg-white flex-shrink-0">
+                        <div className="flex border rounded-lg overflow-hidden bg-white flex-shrink-0">
                             <button
                                 onClick={() => setViewMode('board')}
                                 className={`px-3 md:px-4 py-2.5 md:py-3 flex items-center gap-1.5 md:gap-2 ${viewMode === 'board' ? 'bg-gray-900 text-white' : 'text-gray-600'}`}
@@ -127,7 +127,7 @@ export default function TeamQueue() {
                         {statuses.map(status => {
                             const tasksInStatus = filteredTasks.filter(t => t.status === status.id);
                             return (
-                                <div key={status.id} className="bg-white rounded-xl p-4 border">
+                                <div key={status.id} className="bg-white rounded-lg p-4 border">
                                     <div className={`${status.color} rounded-lg p-3 mb-4`}>
                                         <h3 className="font-bold text-gray-900">{status.name}</h3>
                                         <p className="text-sm text-gray-600">{tasksInStatus.length} tasks</p>
@@ -177,7 +177,7 @@ export default function TeamQueue() {
 
                 {/* Table View */}
                 {viewMode === 'table' && (
-                    <div className="bg-white rounded-lg md:rounded-xl border overflow-hidden">
+                    <div className="bg-white rounded-lg md:rounded-lg border overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[800px]">
                                 <thead className="bg-gray-50 border-b">

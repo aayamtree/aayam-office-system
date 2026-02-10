@@ -64,21 +64,21 @@ export default function ProductCategoryQuickAdd({ isOpen, onClose, onSuccess }: 
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-            <div className="bg-white rounded-2xl  w-full max-w-md">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+            <div className="bg-white rounded-lg w-full max-w-md">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b bg-gray-900">
+                <div className="flex items-center justify-between p-6 border-b bg-muted/50">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg">
-                            <Tag size={24} className="text-primary" />
+                        <div className="p-2 bg-muted rounded-lg">
+                            <Tag size={24} className="text-foreground" />
                         </div>
                         <div>
                             <h3 className="text-page-title text-gray-900">Add Product Category</h3>
                             <p className="text-sm text-gray-600">Create new category for jobs</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-md transition-colors">
-                        <X size={20} />
+                    <button onClick={onClose} className="h-8 w-8 flex items-center justify-center hover:bg-gray-200 rounded-md transition-colors">
+                        <X size={16} />
                     </button>
                 </div>
 
@@ -89,7 +89,7 @@ export default function ProductCategoryQuickAdd({ isOpen, onClose, onSuccess }: 
                         <input
                             required
                             type="text"
-                            className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-primary/20 focus:border-gray-400"
+                            className="w-full px-3 py-2 border rounded-md focus:ring-2 ring-ring/20 focus:border-gray-400"
                             placeholder="e.g. Visiting Card, Flyer, Packaging"
                             value={formData.name}
                             onChange={e => setFormData({ ...formData, name: e.target.value })}
@@ -100,7 +100,7 @@ export default function ProductCategoryQuickAdd({ isOpen, onClose, onSuccess }: 
                         <label className="block text-sm font-medium mb-1">Description</label>
                         <textarea
                             rows={2}
-                            className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-primary/20 focus:border-gray-400"
+                            className="w-full px-3 py-2 border rounded-md focus:ring-2 ring-ring/20 focus:border-gray-400"
                             placeholder="Brief description of this category..."
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
@@ -110,7 +110,7 @@ export default function ProductCategoryQuickAdd({ isOpen, onClose, onSuccess }: 
                     <div>
                         <label className="block text-sm font-medium mb-1">Production Checklist Type</label>
                         <select
-                            className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-primary/20 focus:border-gray-400"
+                            className="w-full px-3 py-2 border rounded-md focus:ring-2 ring-ring/20 focus:border-gray-400"
                             value={formData.checklist_type}
                             onChange={e => setFormData({ ...formData, checklist_type: e.target.value })}
                         >
@@ -134,7 +134,7 @@ export default function ProductCategoryQuickAdd({ isOpen, onClose, onSuccess }: 
                         <button
                             type="submit"
                             disabled={saving}
-                            className="px-8 py-2 bg-gray-900 text-white rounded-md font-medium  disabled:opacity-50 flex items-center gap-2"
+                            className="px-8 py-2 bg-primary text-primary-foreground rounded-md font-medium disabled:opacity-50 flex items-center gap-2"
                         >
                             {saving ? (
                                 <>

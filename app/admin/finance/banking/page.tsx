@@ -227,7 +227,7 @@ export default function BankingPage() {
                     <select
                         value={selectedAccountId}
                         onChange={e => setSelectedAccountId(e.target.value)}
-                        className="flex-1 sm:flex-none px-3 md:px-4 py-2 md:py-2.5 bg-white border rounded-xl text-sm"
+                        className="flex-1 sm:flex-none px-3 md:px-4 py-2 md:py-2.5 bg-white border rounded-lg text-sm"
                     >
                         <option value="">Select Account</option>
                         {bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name} - {b.account_number}</option>)}
@@ -244,7 +244,7 @@ export default function BankingPage() {
 
             {/* Success Message */}
             {successMessage && (
-                <div className="bg-white border border-green-200 rounded-xl p-4 flex items-center justify-between">
+                <div className="bg-white border border-green-200 rounded-lg p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <CheckCircle className="w-6 h-6 text-gray-900" />
                         <p className="text-green-800 font-medium">{successMessage}</p>
@@ -260,7 +260,7 @@ export default function BankingPage() {
 
             {/* Error Message */}
             {errorMessage && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <AlertTriangle className="w-6 h-6 text-red-600" />
                         <p className="text-red-800 font-medium">{errorMessage}</p>
@@ -278,7 +278,7 @@ export default function BankingPage() {
             <div className="flex gap-2 overflow-x-auto pb-2">
                 <button
                     onClick={() => setStatusFilter('all')}
-                    className={`px-4 py-2 rounded-xl font-medium text-sm whitespace-nowrap transition-colors ${statusFilter === 'all'
+                    className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${statusFilter === 'all'
                         ? 'bg-gray-900 text-white'
                         : 'bg-white border border-gray-200 text-gray-600 hover:border-primary/30'
                         }`}
@@ -287,7 +287,7 @@ export default function BankingPage() {
                 </button>
                 <button
                     onClick={() => setStatusFilter('missing')}
-                    className={`px-4 py-2 rounded-xl font-medium text-sm whitespace-nowrap transition-colors ${statusFilter === 'missing'
+                    className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${statusFilter === 'missing'
                         ? 'bg-red-600 text-white'
                         : 'bg-white border border-gray-200 text-gray-600 hover:border-red-300'
                         }`}
@@ -296,7 +296,7 @@ export default function BankingPage() {
                 </button>
                 <button
                     onClick={() => setStatusFilter('verified')}
-                    className={`px-4 py-2 rounded-xl font-medium text-sm whitespace-nowrap transition-colors ${statusFilter === 'verified'
+                    className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${statusFilter === 'verified'
                         ? 'bg-gray-900 text-white'
                         : 'bg-white border border-gray-200 text-gray-600 hover:border-green-300'
                         }`}
@@ -307,17 +307,17 @@ export default function BankingPage() {
 
             {/* Main Stats - Better mobile layout */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-                <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-100">
+                <div className="bg-white p-4 md:p-5 rounded-lg border border-gray-100">
                     <p className="text-xs md:text-sm text-gray-500">Bank Balance (System)</p>
                     <p className="text-xl md:text-page-title text-gray-900 truncate">₹{(bankAccounts.find(b => b.id === selectedAccountId)?.current_balance || 0).toLocaleString()}</p>
                 </div>
-                <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-100">
+                <div className="bg-white p-4 md:p-5 rounded-lg border border-gray-100">
                     <p className="text-xs md:text-sm text-gray-500">Need Categorization</p>
                     <p className="text-xl md:text-page-title text-orange-600">
                         {reconciledData.filter(r => !r.is_verified && r.status === 'unmatched_bank').length}
                     </p>
                 </div>
-                <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-100">
+                <div className="bg-white p-4 md:p-5 rounded-lg border border-gray-100">
                     <p className="text-xs md:text-sm text-gray-500">Verified</p>
                     <p className="text-xl md:text-page-title text-gray-900">
                         {reconciledData.filter(r => r.is_verified).length}
@@ -326,7 +326,7 @@ export default function BankingPage() {
             </div>
 
             {/* Reconciliation Grid - Responsive table */}
-            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-xs md:text-sm min-w-[800px]">
                         <thead className="bg-gray-50 border-b">
@@ -456,13 +456,13 @@ export default function BankingPage() {
             {/* Import Modal */}
             {showImportModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-2xl  animate-scale-in">
+                    <div className="bg-white rounded-lg w-full max-w-2xl  animate-scale-in">
                         <div className="p-5 border-b flex justify-between">
                             <h2 className="text-section">Import HDFC Statement</h2>
                             <button onClick={() => setShowImportModal(false)} className="text-gray-500 hover:text-black">✕</button>
                         </div>
                         <div className="p-5">
-                            <div className="bg-muted p-4 rounded-xl text-sm text-foreground mb-4">
+                            <div className="bg-muted p-4 rounded-lg text-sm text-foreground mb-4">
                                 <strong>Instructions:</strong> Open your Bank Statement in Excel. Copy the rows (Date, Description, Ref, Value Date, Withdrawal, Deposit) and paste them below.
                             </div>
                             <div className="flex justify-between items-center mb-2">
@@ -482,7 +482,7 @@ export default function BankingPage() {
                                 </button>
                             </div>
                             <textarea
-                                className="w-full h-60 p-4 border rounded-xl font-mono text-xs bg-gray-50 focus:ring-2 ring-primary outline-none"
+                                className="w-full h-60 p-4 border rounded-lg font-mono text-xs bg-gray-50 focus:ring-2 ring-primary outline-none"
                                 placeholder={`Paste Excel Content here...\nExample:\n17/10/25\tMBALAL KUNDHANI...\t0000529...\t17/10/25\t0\t30,356.00\t188,201.00`}
                                 value={importText}
                                 onChange={e => setImportText(e.target.value)}

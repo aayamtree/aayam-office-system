@@ -27,6 +27,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import OverdueAlertsWidget from '@/components/dashboard/OverdueAlertsWidget';
+import MiniCalendarWidget from '@/components/dashboard/MiniCalendarWidget';
+import QuickNotesWidget from '@/components/dashboard/QuickNotesWidget';
+import TeamWorkloadWidget from '@/components/dashboard/TeamWorkloadWidget';
+import DailySummaryWidget from '@/components/dashboard/DailySummaryWidget';
 
 export default function AdminDashboardShadcn() {
     const { profile } = useAuth();
@@ -321,6 +325,9 @@ export default function AdminDashboardShadcn() {
                     {/* Overdue Alerts */}
                     <OverdueAlertsWidget />
 
+                    {/* Daily Summary */}
+                    <DailySummaryWidget />
+
                     <Card className="h-full">
                         <CardHeader className="pb-3">
                             <CardTitle className="text-base flex items-center gap-2">
@@ -366,7 +373,20 @@ export default function AdminDashboardShadcn() {
                 </div>
             </div>
 
-            {/* Row 3: Recent Orders + Sales Performance */}
+            {/* Row 3: Calendar + Team Workload + Quick Notes */}
+            <div className="grid gap-4 lg:grid-cols-3">
+                <div>
+                    <MiniCalendarWidget />
+                </div>
+                <div>
+                    <TeamWorkloadWidget />
+                </div>
+                <div>
+                    <QuickNotesWidget />
+                </div>
+            </div>
+
+            {/* Row 4: Recent Orders + Sales Performance */}
             <div className="grid gap-4 lg:grid-cols-5">
                 {/* Recent Orders (3/5) */}
                 <Card className="lg:col-span-3 overflow-hidden">

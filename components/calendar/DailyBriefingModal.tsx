@@ -45,7 +45,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
     if (loading) {
         return (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-2xl p-8 max-w-2xl w-full">
+                <div className="bg-white rounded-lg p-8 max-w-2xl w-full">
                     <div className="text-center text-gray-500">Loading your daily briefing...</div>
                 </div>
             </div>
@@ -54,7 +54,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
-            <div className="bg-white rounded-2xl  max-w-3xl w-full max-h-[90vh] overflow-hidden">
+            <div className="bg-white rounded-lg  max-w-3xl w-full max-h-[90vh] overflow-hidden">
                 {/* Header */}
                 <div className="bg-gray-900 p-6 text-white">
                     <div className="flex items-start justify-between">

@@ -26,7 +26,7 @@ export default function AccountsPage() {
                 <div className="flex gap-3">
                     <button
                         onClick={() => { refreshBanks(); refreshCash(); }}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border rounded-xl hover:bg-gray-50"
+                        className="flex items-center gap-2 px-4 py-2 bg-white border rounded-lg hover:bg-gray-50"
                     >
                         <RefreshCw className="w-4 h-4 md:w-4.5 md:h-4.5" />
                         Refresh
@@ -35,7 +35,7 @@ export default function AccountsPage() {
             </div>
 
             {/* Total Balance Summary */}
-            <div className="bg-gray-900 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+            <div className="bg-gray-900 rounded-lg md:rounded-lg p-3 md:p-4 text-white">
                 <h2 className="text-sm font-medium opacity-90 mb-2">Total Available Balance</h2>
                 <p className="text-page-title">₹{grandTotal.toLocaleString()}</p>
                 <div className="mt-4 flex gap-3 md:gap-4 text-sm">
@@ -51,10 +51,10 @@ export default function AccountsPage() {
             </div>
 
             {/* Bank Accounts */}
-            <div className="bg-white rounded-2xl border border-gray-200">
+            <div className="bg-white rounded-lg border border-gray-200">
                 <div className="p-5 border-b flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-muted rounded-xl flex items-center justify-center">
+                        <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
                             <Building2 className="w-5 h-5 text-foreground" />
                         </div>
                         <div>
@@ -64,7 +64,7 @@ export default function AccountsPage() {
                     </div>
                     <button
                         onClick={() => setShowAddBank(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800"
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
                     >
                         <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
                         Add Bank Account
@@ -124,10 +124,10 @@ export default function AccountsPage() {
             </div>
 
             {/* Cash Accounts */}
-            <div className="bg-white rounded-2xl border border-gray-200">
+            <div className="bg-white rounded-lg border border-gray-200">
                 <div className="p-5 border-b flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
                             <Wallet className="w-5 h-5 text-gray-900" />
                         </div>
                         <div>
@@ -137,7 +137,7 @@ export default function AccountsPage() {
                     </div>
                     <button
                         onClick={() => setShowAddCash(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-green-700"
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-green-700"
                     >
                         <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
                         Add Cash Account
@@ -247,7 +247,7 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl w-full max-w-md ">
+            <div className="bg-white rounded-lg w-full max-w-md ">
                 <div className="p-5 border-b flex justify-between items-center">
                     <h2 className="text-page-title">Add Bank Account</h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-black">✕</button>
@@ -261,7 +261,7 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             placeholder="e.g., HDFC Current Account"
-                            className="w-full px-4 py-2 border rounded-xl"
+                            className="w-full px-4 py-2 border rounded-lg"
                             required
                         />
                     </div>
@@ -273,7 +273,7 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                             value={formData.bankName}
                             onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
                             placeholder="e.g., HDFC Bank"
-                            className="w-full px-4 py-2 border rounded-xl"
+                            className="w-full px-4 py-2 border rounded-lg"
                         />
                     </div>
 
@@ -284,7 +284,7 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                             value={formData.accountNumber}
                             onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
                             placeholder="XXXX1234"
-                            className="w-full px-4 py-2 border rounded-xl"
+                            className="w-full px-4 py-2 border rounded-lg"
                             required
                         />
                     </div>
@@ -296,7 +296,7 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                             value={formData.ifscCode}
                             onChange={(e) => setFormData({ ...formData, ifscCode: e.target.value })}
                             placeholder="HDFC0000123"
-                            className="w-full px-4 py-2 border rounded-xl"
+                            className="w-full px-4 py-2 border rounded-lg"
                         />
                     </div>
 
@@ -305,7 +305,7 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                         <select
                             value={formData.accountType}
                             onChange={(e) => setFormData({ ...formData, accountType: e.target.value })}
-                            className="w-full px-4 py-2 border rounded-xl"
+                            className="w-full px-4 py-2 border rounded-lg"
                         >
                             <option value="current">Current Account</option>
                             <option value="savings">Savings Account</option>
@@ -322,7 +322,7 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                             value={formData.openingBalance}
                             onChange={(e) => setFormData({ ...formData, openingBalance: e.target.value })}
                             placeholder="0.00"
-                            className="w-full px-4 py-2 border rounded-xl"
+                            className="w-full px-4 py-2 border rounded-lg"
                         />
                         <p className="text-xs text-gray-500 mt-1">Current balance in this account</p>
                     </div>
@@ -387,7 +387,7 @@ function AddCashAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl w-full max-w-md ">
+            <div className="bg-white rounded-lg w-full max-w-md ">
                 <div className="p-5 border-b flex justify-between items-center">
                     <h2 className="text-page-title">Add Cash Account</h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-black">✕</button>
@@ -401,7 +401,7 @@ function AddCashAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             placeholder="e.g., Main Cash Register, Petty Cash"
-                            className="w-full px-4 py-2 border rounded-xl"
+                            className="w-full px-4 py-2 border rounded-lg"
                             required
                         />
                     </div>
@@ -413,7 +413,7 @@ function AddCashAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                             value={formData.location}
                             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                             placeholder="e.g., Front Desk, Office Safe"
-                            className="w-full px-4 py-2 border rounded-xl"
+                            className="w-full px-4 py-2 border rounded-lg"
                         />
                     </div>
 
@@ -425,7 +425,7 @@ function AddCashAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                             value={formData.openingBalance}
                             onChange={(e) => setFormData({ ...formData, openingBalance: e.target.value })}
                             placeholder="0.00"
-                            className="w-full px-4 py-2 border rounded-xl"
+                            className="w-full px-4 py-2 border rounded-lg"
                         />
                         <p className="text-xs text-gray-500 mt-1">Current cash in this register</p>
                     </div>

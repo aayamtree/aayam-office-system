@@ -161,7 +161,7 @@ export default function MarketingFollowUpsPage() {
     const headerBg = isOverdue ? headerColors.overdue : isToday ? headerColors.today : headerColors.upcoming;
 
     return (
-      <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
+      <div className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
         {/* Colored Header */}
         <div className={`${headerBg} px-4 py-3 flex items-center justify-between`}>
           <div className="flex items-center gap-2">
@@ -204,7 +204,7 @@ export default function MarketingFollowUpsPage() {
             {followUp.quotation ? (
               <button
                 onClick={() => handleViewQuote(followUp)}
-                className="px-4 py-2 bg-gray-900 text-white rounded-xl font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
               >
                 <CheckCircle className="w-4 h-4" /> View Quote {followUp.quotationNumber}
               </button>
@@ -251,22 +251,22 @@ export default function MarketingFollowUpsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-        <div className="bg-white rounded-lg md:rounded-xl border p-3 md:p-4">
+        <div className="bg-white rounded-lg md:rounded-lg border p-3 md:p-4">
           <p className="text-xs md:text-sm text-gray-500">Today</p>
           <p className="text-page-title text-foreground">{todayFollowUps.length}</p>
         </div>
-        <div className="bg-white rounded-lg md:rounded-xl border p-3 md:p-4">
+        <div className="bg-white rounded-lg md:rounded-lg border p-3 md:p-4">
           <p className="text-xs md:text-sm text-gray-500">Upcoming</p>
           <p className="text-page-title text-gray-900">{upcomingFollowUps.length}</p>
         </div>
-        <div className="bg-white rounded-lg md:rounded-xl border p-3 md:p-4">
+        <div className="bg-white rounded-lg md:rounded-lg border p-3 md:p-4">
           <p className="text-xs md:text-sm text-gray-500">Overdue</p>
           <p className="text-page-title text-red-600">{overdueFollowUps.length}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border p-4">
+      <div className="bg-white rounded-lg border p-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -292,7 +292,7 @@ export default function MarketingFollowUpsPage() {
 
       {/* Overdue Section */}
       {overdueFollowUps.length > 0 && (
-        <div className="bg-red-50 rounded-xl border border-red-200 p-4">
+        <div className="bg-red-50 rounded-lg border border-red-200 p-4">
           <div className="flex items-center gap-2 mb-3">
             <AlertCircle className="text-red-600 w-5 h-5" />
             <h2 className="font-semibold text-red-900">Overdue ({overdueFollowUps.length})</h2>
@@ -305,12 +305,12 @@ export default function MarketingFollowUpsPage() {
 
       {/* Lists */}
       <div className="space-y-4">
-        {todayFollowUps.length > 0 && <div className="bg-muted p-4 rounded-xl border border-border">
+        {todayFollowUps.length > 0 && <div className="bg-muted p-4 rounded-lg border border-border">
           <h2 className="font-bold text-gray-900 mb-2">Today</h2>
           <div className="space-y-2">{todayFollowUps.map((f: any) => <FollowUpCard key={f.id} followUp={f} />)}</div>
         </div>}
 
-        {upcomingFollowUps.length > 0 && <div className="p-4 border rounded-xl bg-gray-50">
+        {upcomingFollowUps.length > 0 && <div className="p-4 border rounded-lg bg-gray-50">
           <h2 className="font-bold text-gray-700 mb-2">Upcoming</h2>
           <div className="space-y-2">{upcomingFollowUps.map((f: any) => <FollowUpCard key={f.id} followUp={f} showDate />)}</div>
         </div>}
@@ -318,7 +318,7 @@ export default function MarketingFollowUpsPage() {
 
 
       {filteredFollowUps.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-xl border">
+        <div className="text-center py-12 bg-white rounded-lg border">
           <Calendar className="mx-auto h-12 w-12 text-gray-300" />
           <h3 className="mt-3 text-lg font-medium text-gray-900">No follow-ups found</h3>
         </div>
@@ -327,7 +327,7 @@ export default function MarketingFollowUpsPage() {
       {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md">
+          <div className="bg-white rounded-lg w-full max-w-md">
             <div className="p-5 border-b flex items-center justify-between">
               <h2 className="text-page-title">{editingFollowUp ? 'Edit Follow-up' : 'Add Follow-up'}</h2>
               <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>

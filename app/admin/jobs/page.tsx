@@ -5,9 +5,9 @@ import Link from 'next/link';
 import {
   Plus, Search, Briefcase, Calendar,
   IndianRupee, Edit, Trash2, X,
-  AlertCircle, ChevronDown, LayoutGrid,
+  AlertCircle, AlertTriangle, ChevronDown, LayoutGrid,
   List, Building2, UserPlus, Loader2,
-  Layers, Printer, ArrowRight, Download, Clock, Copy
+  Layers, Printer, ArrowRight, Download, Clock, Copy, Send
 } from 'lucide-react';
 import {
   useJobs, useClients, useVendors, useDesigners, usePaymentsReceived
@@ -25,6 +25,7 @@ import PriorityQuickAdd from '@/components/shared/PriorityQuickAdd';
 import JobStageQuickAdd from '@/components/shared/JobStageQuickAdd';
 import JobTimeline from '@/components/shared/JobTimeline';
 import JobFileAttachments from '@/components/shared/JobFileAttachments';
+import JobProfitabilityCard from '@/components/shared/JobProfitabilityCard';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -52,6 +53,26 @@ export default function JobsPage() {
     return () => clearTimeout(t);
   }, []);
 
+  // Fallback defaults when database tables are empty
+  const DEFAULT_STAGES = [
+    { id: 'new', name: 'New', color: 'bg-gray-500', bg_light: 'bg-gray-50', border: 'border-gray-200', order_index: 1, is_active: true },
+    { id: 'designing', name: 'Design', color: 'bg-purple-500', bg_light: 'bg-purple-50', border: 'border-purple-200', order_index: 2, is_active: true },
+    { id: 'approval', name: 'Approval', color: 'bg-yellow-500', bg_light: 'bg-yellow-50', border: 'border-yellow-200', order_index: 3, is_active: true },
+    { id: 'printing', name: 'Print', color: 'bg-blue-500', bg_light: 'bg-blue-50', border: 'border-blue-200', order_index: 4, is_active: true },
+    { id: 'finishing', name: 'Post Print', color: 'bg-cyan-500', bg_light: 'bg-cyan-50', border: 'border-cyan-200', order_index: 5, is_active: true },
+    { id: 'quality_check', name: 'QC Check', color: 'bg-emerald-500', bg_light: 'bg-emerald-50', border: 'border-emerald-200', order_index: 6, is_active: true },
+    { id: 'ready', name: 'Ready', color: 'bg-indigo-500', bg_light: 'bg-indigo-50', border: 'border-indigo-200', order_index: 7, is_active: true },
+    { id: 'dispatched', name: 'Dispatched', color: 'bg-orange-500', bg_light: 'bg-orange-50', border: 'border-orange-200', order_index: 8, is_active: true },
+    { id: 'delivered', name: 'Delivered', color: 'bg-green-500', bg_light: 'bg-green-50', border: 'border-green-200', order_index: 9, is_active: true },
+  ];
+
+  const DEFAULT_PRIORITIES = [
+    { id: 'low', name: 'Low', color: 'bg-gray-100 text-gray-600', order_index: 1, is_active: true },
+    { id: 'normal', name: 'Normal', color: 'bg-blue-100 text-blue-600', order_index: 2, is_active: true },
+    { id: 'high', name: 'High', color: 'bg-orange-100 text-orange-600', order_index: 3, is_active: true },
+    { id: 'urgent', name: 'Urgent', color: 'bg-red-100 text-red-600', order_index: 4, is_active: true },
+  ];
+
   // Load ALL configuration tables from database
   useEffect(() => {
     loadAllConfig();
@@ -59,25 +80,32 @@ export default function JobsPage() {
 
   const loadAllConfig = async () => {
     try {
-      const [categoriesRes, jobTypesRes, productTypesRes, prioritiesRes, stagesRes] = await Promise.all([
+      const [categoriesRes, jobTypesRes, productTypesRes, prioritiesRes, stagesRes, machinesRes] = await Promise.all([
         supabase.from('product_categories').select('*').eq('is_active', true).order('name'),
         supabase.from('job_types').select('*').eq('is_active', true).order('name'),
         supabase.from('product_types').select('*').eq('is_active', true).order('name'),
         supabase.from('priorities').select('*').eq('is_active', true).order('order_index'),
         supabase.from('job_stages').select('*').eq('is_active', true).order('order_index'),
+        supabase.from('machines').select('*').eq('is_active', true).order('name'),
       ]);
 
       if (categoriesRes.data) setProductCategories(categoriesRes.data);
       if (jobTypesRes.data) setJobTypes(jobTypesRes.data);
       if (productTypesRes.data) setProductTypes(productTypesRes.data);
-      if (prioritiesRes.data) setPriorities(prioritiesRes.data);
-      if (stagesRes.data) setStages(stagesRes.data);
+      if (machinesRes.data) setMachines(machinesRes.data);
+
+      // Use DB data if available, otherwise use hardcoded fallbacks
+      setPriorities(prioritiesRes.data?.length ? prioritiesRes.data : DEFAULT_PRIORITIES);
+      setStages(stagesRes.data?.length ? stagesRes.data : DEFAULT_STAGES);
 
       // Set initial form defaults
       if (jobTypesRes.data?.[0]) setFormData(prev => ({ ...prev, job_type: jobTypesRes.data[0].name }));
       if (productTypesRes.data?.[0]) setFormData(prev => ({ ...prev, product_type: productTypesRes.data[0].name }));
     } catch (error) {
       console.error('Error loading configuration:', error);
+      // On error, still set fallback data so UI works
+      setStages(DEFAULT_STAGES);
+      setPriorities(DEFAULT_PRIORITIES);
     }
   };
 
@@ -96,6 +124,7 @@ export default function JobsPage() {
   const [showAddProductTypeModal, setShowAddProductTypeModal] = useState(false);
   const [showAddPriorityModal, setShowAddPriorityModal] = useState(false);
   const [showAddStageModal, setShowAddStageModal] = useState(false);
+  const [showSendToPrinterModal, setShowSendToPrinterModal] = useState(false);
 
   // Database-driven configuration state
   const [productCategories, setProductCategories] = useState<any[]>([]);
@@ -103,6 +132,7 @@ export default function JobsPage() {
   const [productTypes, setProductTypes] = useState<any[]>([]);
   const [priorities, setPriorities] = useState<any[]>([]);
   const [stages, setStages] = useState<any[]>([]);
+  const [machines, setMachines] = useState<any[]>([]);
 
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -110,10 +140,13 @@ export default function JobsPage() {
   const [paymentAmount, setPaymentAmount] = useState(0);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('cash');
   const [saving, setSaving] = useState(false);
+  const [sendToPrinterData, setSendToPrinterData] = useState({ vendor_id: '', machine_id: '', notes: '' });
+  const [sendingToPrinter, setSendingToPrinter] = useState(false);
 
   const [formData, setFormData] = useState({
     project_name: '', client_id: '', job_type: 'Design + Print', product_category: 'Other', product_type: 'STICKER', quantity: 1, vendor_id: '',
-    designer_id: '', client_deadline: '', priority: 'normal', quote_per_piece: 0, gst_rate: 18, current_stage: 'new'
+    designer_id: '', client_deadline: '', priority: 'normal', quote_per_piece: 0, gst_rate: 18, current_stage: 'new',
+    advance_required: true, advance_amount: 0
   });
 
   // Quick add forms
@@ -223,9 +256,12 @@ export default function JobsPage() {
         priority: formData.priority as any,
         payment_status: 'pending' as const,
         amount_received: 0,
+        advance_required: formData.advance_required,
+        advance_collected: formData.advance_amount > 0,
+        advance_amount: formData.advance_amount,
         files: [],
-        order_date: new Date().toISOString(), // Required by base entity? No, but useful
-        discount_amount: 0, // Should be calculated if we add discount field
+        order_date: new Date().toISOString(),
+        discount_amount: 0,
         is_active: true
       };
 
@@ -258,7 +294,8 @@ export default function JobsPage() {
   const resetForm = () => {
     setFormData({
       project_name: '', client_id: '', job_type: 'Design + Print', product_category: 'Other', product_type: 'STICKER', quantity: 1, vendor_id: '',
-      designer_id: '', client_deadline: '', priority: 'normal', quote_per_piece: 0, gst_rate: 18, current_stage: 'new'
+      designer_id: '', client_deadline: '', priority: 'normal', quote_per_piece: 0, gst_rate: 18, current_stage: 'new',
+      advance_required: true, advance_amount: 0
     });
   };
 
@@ -276,7 +313,9 @@ export default function JobsPage() {
       priority: job.priority || 'normal',
       quote_per_piece: job.quote_per_piece || 0,
       gst_rate: job.gst_rate || 18,
-      current_stage: job.current_stage || 'new'
+      current_stage: job.current_stage || 'new',
+      advance_required: job.advance_required !== false,
+      advance_amount: job.advance_amount || 0
     });
     setEditingJob(job);
     setShowModal(true);
@@ -338,6 +377,35 @@ export default function JobsPage() {
     setShowModal(true);
   };
 
+  // Send to Printer — quick assign vendor + machine without creating a print run
+  const handleOpenSendToPrinter = (job: Job) => {
+    setSelectedJob(job);
+    setSendToPrinterData({ vendor_id: job.vendor_id || '', machine_id: '', notes: '' });
+    setShowSendToPrinterModal(true);
+  };
+
+  const handleSendToPrinter = async () => {
+    if (!selectedJob || !sendToPrinterData.vendor_id) return;
+    setSendingToPrinter(true);
+    try {
+      // Update job with vendor, and move to printing stage
+      await updateJob(selectedJob.id, {
+        vendor_id: sendToPrinterData.vendor_id,
+      });
+      // Move to printing stage with note
+      const machineName = machines.find(m => m.id === sendToPrinterData.machine_id)?.name || '';
+      const vendorName = vendors.find(v => v.id === sendToPrinterData.vendor_id)?.name || '';
+      const note = `Sent to printer: ${vendorName}${machineName ? ` (Machine: ${machineName})` : ''}${sendToPrinterData.notes ? `. Note: ${sendToPrinterData.notes}` : ''}`;
+      await updateJobStage(selectedJob.id, 'printing' as JobStatus, note);
+      setShowSendToPrinterModal(false);
+    } catch (error) {
+      console.error('Error sending to printer:', error);
+      alert('Error sending to printer');
+    } finally {
+      setSendingToPrinter(false);
+    }
+  };
+
   // Repeat Order — copies job data into a new job
   const handleRepeatOrder = (job: Job) => {
     setFormData({
@@ -353,7 +421,9 @@ export default function JobsPage() {
       priority: job.priority || 'normal',
       quote_per_piece: job.quote_per_piece || 0,
       gst_rate: job.gst_rate || 18,
-      current_stage: 'new'
+      current_stage: 'new',
+      advance_required: true,
+      advance_amount: 0
     });
     setEditingJob(null); // This is a NEW job, not editing
     setShowModal(true);
@@ -371,7 +441,7 @@ export default function JobsPage() {
   // JobCard Component 
   const JobCard = ({ job }: { job: Job }) => (
     <div
-      className={`group bg-white rounded-lg md:rounded-2xl p-3 md:p-4   transition-all duration-300 hover:-translate-y-1 border border-transparent hover:border-gray-100 ring-1 ring-black/5 cursor-pointer relative overflow-hidden ${isOverdue(job.client_deadline, job.current_stage) ? 'ring-red-100 bg-red-50/30' : ''
+      className={`group bg-white rounded-lg md:rounded-lg p-3 md:p-4   transition-all duration-300 hover:-translate-y-1 border border-transparent hover:border-gray-100 ring-1 ring-black/5 cursor-pointer relative overflow-hidden ${isOverdue(job.client_deadline, job.current_stage) ? 'ring-red-100 bg-red-50/30' : ''
         }`}
       onClick={() => handleViewDetail(job)}
     >
@@ -393,10 +463,18 @@ export default function JobsPage() {
         {job.project_name}
       </h4>
 
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-2">
         <Building2 className="w-4 h-4 text-gray-400" />
         <p className="text-sm text-gray-500 truncate">{job.client?.name || 'No client'}</p>
       </div>
+
+      {/* Advance Warning Badge */}
+      {job.advance_required !== false && !job.advance_collected && job.current_stage !== 'new' && (
+        <div className="flex items-center gap-1.5 mb-3 px-2 py-1.5 bg-amber-50 border border-amber-200 rounded-md">
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+          <span className="text-xs font-medium text-amber-700">No advance collected</span>
+        </div>
+      )}
 
       <div className="flex items-center justify-between text-xs pt-3 border-t border-gray-100 text-gray-500">
         <Badge variant="outline" className={getPaymentBadge(job.payment_status)}>
@@ -428,6 +506,17 @@ export default function JobsPage() {
         >
           <Copy />
         </Button>
+        {!['printing', 'finishing', 'quality_check', 'ready', 'dispatched', 'delivered'].includes(job.current_stage) && (
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={(e) => { e.stopPropagation(); handleOpenSendToPrinter(job); }}
+            title="Send to Printer"
+            className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+          >
+            <Send />
+          </Button>
+        )}
         <Button
           size="icon"
           variant="ghost"
@@ -596,7 +685,7 @@ export default function JobsPage() {
             {stages.map(stage => {
               const stageJobs = jobsByStage[stage.id] || [];
               return (
-                <div key={stage.id} className="min-w-[300px] w-80 flex-shrink-0 bg-white/50 rounded-xl border border-gray-200 flex flex-col max-h-full ">
+                <div key={stage.id} className="min-w-[300px] w-80 flex-shrink-0 bg-white/50 rounded-lg border border-gray-200 flex flex-col max-h-full ">
                   {/* Column Header */}
                   <div className="p-3 border-b border-gray-100 flex items-center justify-between bg-white rounded-t-xl sticky top-0 z-10">
                     <div className="flex items-center gap-2">
@@ -626,7 +715,7 @@ export default function JobsPage() {
       {/* List View */}
       {
         viewMode === 'list' && filteredJobs.length > 0 && (
-          <div className="bg-white rounded-xl border overflow-hidden">
+          <div className="bg-white rounded-lg border overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[800px]">
                 <thead className="bg-white border-b">
@@ -669,10 +758,21 @@ export default function JobsPage() {
                       </td>
                       <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
-                          <Button size="icon" variant="ghost" onClick={() => handleEdit(job)}>
+                          <Button size="icon" variant="ghost" onClick={() => handleEdit(job)} title="Edit">
                             <Edit />
                           </Button>
-                          <Button size="icon" variant="destructive" onClick={() => handleDelete(job.id)}>
+                          <Button size="icon" variant="ghost" onClick={() => handleRepeatOrder(job)} title="Repeat Order">
+                            <Copy />
+                          </Button>
+                          {!['printing', 'finishing', 'quality_check', 'ready', 'dispatched', 'delivered'].includes(job.current_stage) && (
+                            <Button size="icon" variant="ghost" onClick={() => handleOpenSendToPrinter(job)} title="Send to Printer" className="text-orange-600 hover:text-orange-700 hover:bg-orange-50">
+                              <Send />
+                            </Button>
+                          )}
+                          <Button size="icon" variant="ghost" onClick={() => handleAddPayment(job)} title="Add Payment">
+                            <IndianRupee />
+                          </Button>
+                          <Button size="icon" variant="destructive" onClick={() => handleDelete(job.id)} title="Delete">
                             <Trash2 />
                           </Button>
                         </div>
@@ -878,6 +978,44 @@ export default function JobsPage() {
                 <input type="date" value={formData.client_deadline} onChange={(e) => setFormData({ ...formData, client_deadline: e.target.value })} className="w-full px-3 py-2 border rounded-md" />
               </div>
 
+              {/* Advance Payment Section */}
+              <div className="bg-amber-50/50 border border-amber-100 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <IndianRupee className="w-4 h-4 text-amber-600" />
+                    Advance Payment Required
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, advance_required: !formData.advance_required })}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${formData.advance_required ? 'bg-amber-500' : 'bg-gray-300'
+                      }`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${formData.advance_required ? 'translate-x-5' : 'translate-x-0'
+                      }`} />
+                  </button>
+                </div>
+                {formData.advance_required && (
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Advance Amount (₹)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={formData.advance_amount}
+                      onChange={(e) => setFormData({ ...formData, advance_amount: parseFloat(e.target.value) || 0 })}
+                      placeholder="Enter advance amount collected"
+                      className="w-full px-3 py-2 border rounded-md"
+                    />
+                    {formData.quantity > 0 && formData.quote_per_piece > 0 && (
+                      <p className="text-xs text-amber-600 mt-1">
+                        50% of total = {formatCurrency(formData.quantity * formData.quote_per_piece * (1 + formData.gst_rate / 100) * 0.5)}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div className="flex gap-3 pt-4">
                 <Button
                   type="button"
@@ -911,6 +1049,17 @@ export default function JobsPage() {
               </div>
             )}
 
+            {/* Job Profitability - only when editing */}
+            {editingJob && (
+              <div className="mt-6 pt-4 border-t">
+                <JobProfitabilityCard
+                  jobId={editingJob.id}
+                  totalAmount={editingJob.total_amount || 0}
+                  amountReceived={editingJob.amount_received || 0}
+                />
+              </div>
+            )}
+
             {/* Timeline - only show when editing */}
             {editingJob && (
               <div className="mt-6 pt-4 border-t">
@@ -929,7 +1078,7 @@ export default function JobsPage() {
       {
         showPaymentModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl w-full max-w-sm animate-scale-in">
+            <div className="bg-white rounded-lg w-full max-w-sm animate-scale-in">
               <div className="p-4 border-b">
                 <h3 className="font-bold text-gray-900">Add Payment</h3>
                 <p className="text-sm text-gray-500">{selectedJob?.project_name}</p>
@@ -943,12 +1092,12 @@ export default function JobsPage() {
                       autoFocus
                       value={paymentAmount}
                       onChange={e => setPaymentAmount(parseFloat(e.target.value) || 0)}
-                      className="flex-1 px-4 py-3 text-section border rounded-xl focus:ring-2 focus:ring-green-500"
+                      className="flex-1 px-4 py-3 text-section border rounded-lg focus:ring-2 focus:ring-green-500"
                     />
                     <select
                       value={paymentMode}
                       onChange={(e) => setPaymentMode(e.target.value as PaymentMode)}
-                      className="w-1/3 px-3 py-3 border rounded-xl bg-white focus:ring-2 focus:ring-gray-400"
+                      className="w-1/3 px-3 py-3 border rounded-lg bg-white focus:ring-2 focus:ring-gray-400"
                     >
                       <option value="cash">Cash</option>
                       <option value="upi">UPI / GPay</option>
@@ -975,6 +1124,83 @@ export default function JobsPage() {
           </div>
         )
       }
+
+      {/* Send to Printer Modal */}
+      {showSendToPrinterModal && selectedJob && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-md animate-scale-in">
+            <div className="p-4 border-b flex items-center gap-3">
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <Send className="w-5 h-5 text-orange-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900">Send to Printer</h3>
+                <p className="text-sm text-gray-500">{selectedJob.job_number} — {selectedJob.project_name}</p>
+              </div>
+            </div>
+            <div className="p-4 space-y-4">
+              {/* Vendor Selection */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Vendor / Printer *</label>
+                <select
+                  value={sendToPrinterData.vendor_id}
+                  onChange={(e) => setSendToPrinterData({ ...sendToPrinterData, vendor_id: e.target.value })}
+                  className="w-full px-3 py-2.5 border rounded-lg bg-white focus:ring-2 focus:ring-orange-400"
+                >
+                  <option value="">Select Vendor</option>
+                  {vendors.map(v => <option key={v.id} value={v.id}>{v.name} {v.category && `(${v.category})`}</option>)}
+                </select>
+              </div>
+
+              {/* Machine Selection */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Machine (optional)</label>
+                <select
+                  value={sendToPrinterData.machine_id}
+                  onChange={(e) => setSendToPrinterData({ ...sendToPrinterData, machine_id: e.target.value })}
+                  className="w-full px-3 py-2.5 border rounded-lg bg-white focus:ring-2 focus:ring-orange-400"
+                >
+                  <option value="">Select Machine</option>
+                  {machines.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                </select>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Notes (optional)</label>
+                <textarea
+                  value={sendToPrinterData.notes}
+                  onChange={(e) => setSendToPrinterData({ ...sendToPrinterData, notes: e.target.value })}
+                  placeholder="Any special instructions..."
+                  className="w-full px-3 py-2.5 border rounded-lg h-20 focus:ring-2 focus:ring-orange-400"
+                />
+              </div>
+
+              {/* Job Info */}
+              <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-600">
+                <div className="flex justify-between"><span>Client:</span><span className="font-medium text-gray-900">{selectedJob.client?.name || 'N/A'}</span></div>
+                <div className="flex justify-between mt-1"><span>Quantity:</span><span className="font-medium text-gray-900">{selectedJob.quantity}</span></div>
+                <div className="flex justify-between mt-1"><span>Current Stage:</span><span className="font-medium text-gray-900">{stages.find(s => s.id === selectedJob.current_stage)?.name || selectedJob.current_stage}</span></div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button variant="outline" onClick={() => setShowSendToPrinterModal(false)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSendToPrinter}
+                  disabled={!sendToPrinterData.vendor_id || sendingToPrinter}
+                  className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
+                >
+                  {sendingToPrinter && <Loader2 className="animate-spin" />}
+                  <Send className="w-4 h-4" />
+                  Send to Print
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Centralized Client/Vendor Quick Add Modals */}
       <ClientQuickAddModal

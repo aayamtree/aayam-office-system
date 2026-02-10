@@ -154,6 +154,7 @@ const menuItems: MenuItem[] = [
       { name: 'Overview', href: '/admin/reports' },
       { name: 'Finance Reports', href: '/admin/reports/finance' },
       { name: 'Sales Reports', href: '/admin/reports/sales' },
+      { name: 'Vendor Reports', href: '/admin/finance/reports/vendor-reports' },
       { name: 'Dispatch Reports', href: '/admin/reports/dispatch' },
     ]
   },

@@ -218,7 +218,7 @@ export default function MyNotes() {
                     {/* Editor - Full width on mobile, 2/3 on desktop, shows first on mobile */}
                     <div className="lg:col-span-2 order-1 lg:order-2">
                         {selectedNote ? (
-                            <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border h-full">
+                            <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border h-full">
                                 <div className="flex justify-between items-center mb-4">
                                     <input
                                         type="text"
@@ -246,7 +246,7 @@ export default function MyNotes() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="bg-white rounded-xl p-12 border h-full flex items-center justify-center">
+                            <div className="bg-white rounded-lg p-12 border h-full flex items-center justify-center">
                                 <div className="text-center text-gray-400">
                                     <StickyNote className="mx-auto mb-4" size={64} />
                                     <p className="text-lg">Select a note or create a new one</p>

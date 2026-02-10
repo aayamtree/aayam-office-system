@@ -23,7 +23,7 @@ export default function MarketingDispatchPage() {
       <h1 className="text-page-title text-gray-900">My Dispatched Orders</h1>
       <p className="text-gray-500">Track delivery status and commissions for your orders.</p>
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
         <table className="w-full text-left">
           <thead className="bg-gray-50 border-b border-gray-100">
             <tr>

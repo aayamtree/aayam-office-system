@@ -259,15 +259,15 @@ export default function FinancePage() {
             <p className="text-xs sm:text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wider">Total Invoiced</p>
             <p className="text-xl sm:text-page-title text-gray-900 font-semibold">₹5,25,000</p>
           </div>
-          <div className="p-4 bg-white border border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
+          <div className="p-4 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
             <p className="text-xs sm:text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wider">Collected</p>
             <p className="text-xl sm:text-page-title text-gray-900 font-semibold">₹4,50,000</p>
           </div>
-          <div className="p-4 bg-white border border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
+          <div className="p-4 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
             <p className="text-xs sm:text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wider">Pending</p>
             <p className="text-xl sm:text-page-title text-destructive font-semibold">₹75,000</p>
           </div>
-          <div className="p-4 bg-white border border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
+          <div className="p-4 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
             <p className="text-xs sm:text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wider">Expenses</p>
             <p className="text-xl sm:text-page-title text-gray-900 font-semibold">₹1,85,000</p>
           </div>

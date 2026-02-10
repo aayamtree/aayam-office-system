@@ -155,7 +155,7 @@ export default function SmartReminders() {
                     <span className="font-medium text-sm">{activeReminders.length} Reminders</span>
                 </button>
             ) : (
-                <div className="bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
+                <div className="bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden">
                     {/* Header */}
                     <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b">
                         <div className="flex items-center gap-2">

@@ -25,7 +25,7 @@ export default function Error({
                         // Attempt to recover by trying to re-render the segment
                         () => reset()
                     }
-                    className="px-4 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-lg hover:bg-[rgba(0,0,255,0.1)]"
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
                 >
                     Try again
                 </button>

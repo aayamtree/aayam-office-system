@@ -423,13 +423,13 @@ export default function RetailPOSPage() {
       {/* Payment Modal */}
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md animate-scale-in">
+          <div className="bg-white rounded-lg w-full max-w-md animate-scale-in">
             <div className="p-5 border-b flex items-center justify-between">
               <h2 className="text-page-title">Payment</h2>
               <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
-              <div className="text-center bg-gray-900 rounded-xl p-4">
+              <div className="text-center bg-gray-900 rounded-lg p-4">
                 <p className="text-sm text-gray-600">Total Amount</p>
                 <p className="text-page-title text-primary">{formatCurrency(grandTotal)}</p>
               </div>
@@ -472,7 +472,7 @@ export default function RetailPOSPage() {
       {/* Settings Modal (CRUD) */}
       {showSettingsModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
             <div className="p-5 border-b bg-white flex items-center justify-between">
               <div className="flex items-center gap-2 md:gap-4">
                 <h2 className="text-page-title">Manage Items</h2>
@@ -489,7 +489,7 @@ export default function RetailPOSPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
                   {/* Product List */}
                   <div className="lg:col-span-2 space-y-4">
-                    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+                    <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
                       <table className="w-full">
                         <thead className="bg-gray-50 border-b border-gray-100">
                           <tr>
@@ -520,7 +520,7 @@ export default function RetailPOSPage() {
                   </div>
 
                   {/* Add/Edit Product Form */}
-                  <div className="bg-white rounded-xl border border-gray-100 p-5 h-fit">
+                  <div className="bg-white rounded-lg border border-gray-100 p-5 h-fit">
                     <h3 className="font-bold text-gray-900 mb-4">{isEditingProduct ? 'Edit Product' : 'Add New Product'}</h3>
                     <form onSubmit={handleSaveProduct} className="space-y-4">
                       <div>
@@ -551,7 +551,7 @@ export default function RetailPOSPage() {
                   <div className="lg:col-span-2 space-y-4">
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       {categories?.map(c => (
-                        <div key={c.id} className={`p-4 rounded-xl border flex items-center justify-between ${c.color}`}>
+                        <div key={c.id} className={`p-4 rounded-lg border flex items-center justify-between ${c.color}`}>
                           <span className="font-semibold">{c.name}</span>
                           <button onClick={() => handleDeleteCategoryReq(c.id)} className="p-1.5 bg-white/50 rounded-lg hover:bg-white text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
                         </div>
@@ -560,7 +560,7 @@ export default function RetailPOSPage() {
                   </div>
 
                   {/* Add Category Form */}
-                  <div className="bg-white rounded-xl border border-gray-100 p-5 h-fit">
+                  <div className="bg-white rounded-lg border border-gray-100 p-5 h-fit">
                     <h3 className="font-bold text-gray-900 mb-4">Add New Category</h3>
                     <form onSubmit={handleSaveCategory} className="space-y-4">
                       <div>

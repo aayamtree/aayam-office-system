@@ -78,7 +78,7 @@ export default function MyQueue() {
                             <div className="grid gap-3 md:gap-4">
                                 {urgentTasks.map(task => (
                                     <Link key={task.id} href="/admin/designers/tasks">
-                                        <div className="bg-white p-4 md:p-4 rounded-lg md:rounded-xl border-2 border-red-200  transition-shadow cursor-pointer">
+                                        <div className="bg-white p-4 md:p-4 rounded-lg md:rounded-lg border-2 border-red-200  transition-shadow cursor-pointer">
                                             <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2 md:gap-0 mb-2 md:mb-3">
                                                 <div className="flex-1">
                                                     <h3 className="text-base md:text-section text-gray-900 line-clamp-2">{task.title}</h3>
@@ -118,7 +118,7 @@ export default function MyQueue() {
                             <div className="grid gap-3 md:gap-4">
                                 {highTasks.map(task => (
                                     <Link key={task.id} href="/admin/designers/tasks">
-                                        <div className="bg-white p-4 md:p-4 rounded-lg md:rounded-xl border-2 border-orange-200  transition-shadow cursor-pointer">
+                                        <div className="bg-white p-4 md:p-4 rounded-lg md:rounded-lg border-2 border-orange-200  transition-shadow cursor-pointer">
                                             <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2 md:gap-0 mb-2 md:mb-3">
                                                 <div className="flex-1">
                                                     <h3 className="text-base md:text-section text-gray-900 line-clamp-2">{task.title}</h3>
@@ -157,7 +157,7 @@ export default function MyQueue() {
                             <div className="grid gap-3 md:gap-4">
                                 {normalTasks.map(task => (
                                     <Link key={task.id} href="/admin/designers/tasks">
-                                        <div className="bg-white p-4 rounded-xl border  transition-shadow cursor-pointer">
+                                        <div className="bg-white p-4 rounded-lg border  transition-shadow cursor-pointer">
                                             <div className="flex justify-between items-start mb-3">
                                                 <div>
                                                     <h3 className="text-section text-gray-900">{task.title}</h3>
@@ -185,7 +185,7 @@ export default function MyQueue() {
                     )}
 
                     {filteredTasks.length === 0 && (
-                        <div className="bg-white rounded-xl p-12 text-center">
+                        <div className="bg-white rounded-lg p-12 text-center">
                             <p className="text-gray-500 text-lg">No tasks found</p>
                         </div>
                     )}

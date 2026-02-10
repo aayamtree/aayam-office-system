@@ -44,6 +44,12 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                 credit_limit: 0
             });
 
+            if (newClient?.error) {
+                alert('❌ Failed to add client: ' + newClient.error);
+                setSaving(false);
+                return;
+            }
+
             alert('✅ Client added successfully!');
             if (newClient?.data) {
                 onSuccess?.(newClient.data.id);
@@ -71,21 +77,21 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl  w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+            <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b bg-[rgba(0,0,255,0.05)]">
+                <div className="flex items-center justify-between p-6 border-b bg-muted/50">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg">
-                            <UserPlus size={24} className="text-primary" />
+                        <div className="p-2 bg-muted rounded-lg">
+                            <UserPlus size={24} className="text-foreground" />
                         </div>
                         <div>
                             <h3 className="text-page-title text-gray-900">Quick Add Client</h3>
                             <p className="text-sm text-gray-600">Add a new client to the system</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-md transition-colors">
-                        <X size={20} />
+                    <button onClick={onClose} className="h-8 w-8 flex items-center justify-center hover:bg-gray-200 rounded-md transition-colors">
+                        <X size={16} />
                     </button>
                 </div>
 

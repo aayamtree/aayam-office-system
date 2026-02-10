@@ -107,7 +107,7 @@ export default function DispatchReportPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+      <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
         <div className="flex items-center gap-2 mb-3">
           <Filter size={16} className="text-gray-500" />
           <span className="font-medium text-gray-700">Filters</span>
@@ -160,35 +160,35 @@ export default function DispatchReportPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 md:gap-4">
-        <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+        <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg md:rounded-lg p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <Truck size={18} />
             <span className="text-sm opacity-90">Total</span>
           </div>
           <p className="text-page-title">{totalDispatched}</p>
         </div>
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg md:rounded-lg p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle size={18} />
             <span className="text-sm opacity-90">Delivered</span>
           </div>
           <p className="text-page-title">{delivered}</p>
         </div>
-        <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+        <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg md:rounded-lg p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <Package size={18} />
             <span className="text-sm opacity-90">In Transit</span>
           </div>
           <p className="text-page-title">{inTransit}</p>
         </div>
-        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-lg md:rounded-lg p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <Package size={18} />
             <span className="text-sm opacity-90">Returned</span>
           </div>
           <p className="text-page-title">{returned}</p>
         </div>
-        <div className="bg-gray-900 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+        <div className="bg-gray-900 rounded-lg md:rounded-lg p-3 md:p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <Clock size={18} />
             <span className="text-sm opacity-90">Avg Days</span>
@@ -199,7 +199,7 @@ export default function DispatchReportPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
         {/* Dispatch Table */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="lg:col-span-2 bg-white rounded-lg border border-gray-100 overflow-hidden">
           <div className="p-4 border-b border-gray-100">
             <h2 className="font-semibold text-gray-900">Dispatch Details</h2>
           </div>
@@ -237,11 +237,11 @@ export default function DispatchReportPage() {
 
         {/* Breakdown */}
         <div className="space-y-4">
-          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+          <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
             <h2 className="font-semibold text-gray-900 mb-4">Top Destinations</h2>
             <div className="space-y-3">
               {topDestinations.map(([city, count]) => (
-                <div key={city} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div key={city} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <span className="text-gray-700">{city}</span>
                   <span className="font-semibold text-primary">{count}</span>
                 </div>
@@ -249,11 +249,11 @@ export default function DispatchReportPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+          <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
             <h2 className="font-semibold text-gray-900 mb-4">By Transporter</h2>
             <div className="space-y-3">
               {transporterData.map(([transporter, count]) => (
-                <div key={transporter} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div key={transporter} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <span className="text-gray-700 text-sm">{transporter}</span>
                   <span className="font-semibold text-primary">{count}</span>
                 </div>

@@ -131,7 +131,7 @@ export default function ProductionSettings() {
 
     return (
         <div className="p-1 space-y-6">
-            <div className="bg-white p-4 rounded-2xl border border-gray-100">
+            <div className="bg-white p-4 rounded-lg border border-gray-100">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4 mb-3 md:mb-1.5">
                     <div>
                         <h2 className="text-section text-gray-900">Production Checklists</h2>
@@ -171,7 +171,7 @@ export default function ProductionSettings() {
                 </div>
 
                 {isAddingNew && (
-                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-1.5 animate-in fade-in slide-in-from-top-2">
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-1.5 animate-in fade-in slide-in-from-top-2">
                         <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
                             <Plus className={`w-4 h-4 md:w-4.5 md:h-4.5 ${activeCategory === 'design' ? 'text-primary' : 'text-orange-600'}`} />
                             Add New {activeCategory === 'design' ? 'Pre-Print' : 'Dispatch QC'} Logic
@@ -215,7 +215,7 @@ export default function ProductionSettings() {
                         <p>Loading configurations...</p>
                     </div>
                 ) : checklists.length === 0 ? (
-                    <div className="text-center py-20 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                    <div className="text-center py-20 bg-gray-50 rounded-lg border border-dashed border-gray-300">
                         <AlertCircle className="mx-auto h-12 w-12 text-gray-300 mb-3" />
                         <h3 className="text-lg font-medium text-gray-900">No Checklists Found</h3>
                         <p className="text-gray-500">No checklist templates defined for {activeCategory} yet.</p>
@@ -229,7 +229,7 @@ export default function ProductionSettings() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                         {checklists.map(checklist => (
-                            <div key={checklist.id} className={`bg-white rounded-xl border transition-all ${editingId === checklist.id ? 'border-primary ring-4 ring-primary/10 relative z-10' : 'border-gray-200  hover:border-border'}`}>
+                            <div key={checklist.id} className={`bg-white rounded-lg border transition-all ${editingId === checklist.id ? 'border-primary ring-4 ring-primary/10 relative z-10' : 'border-gray-200  hover:border-border'}`}>
 
                                 {/* Header */}
                                 <div className={`p-4 border-b flex justify-between items-center rounded-t-xl ${editingId === checklist.id ? 'bg-muted/50' : 'bg-gray-50/50'}`}>

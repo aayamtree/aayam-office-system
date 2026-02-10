@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Palette, Printer, AlertCircle, Clock, CheckCircle2, TrendingUp } from 'lucide-react';
+import { Palette, Printer, AlertCircle, Clock, CheckCircle2, TrendingUp, Package } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import type { Job, ProductionSummary } from '@/types/database';
@@ -19,6 +19,8 @@ export default function ProductionQueuePage() {
     });
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<string | null>(null);
+    const [categoryFilter, setCategoryFilter] = useState<string>('all');
+    const [categories, setCategories] = useState<string[]>([]);
 
     useEffect(() => {
         fetchData();
@@ -51,6 +53,12 @@ export default function ProductionQueuePage() {
 
             if (error) throw error;
             setJobs(jobsData || []);
+
+            // Extract unique product categories from jobs
+            const cats = Array.from(new Set(
+                (jobsData || []).map((j: any) => (j.product_category as any)?.name).filter(Boolean)
+            )) as string[];
+            setCategories(cats.sort());
         } catch (error) {
             console.error('Error fetching production data:', error);
         } finally {
@@ -78,7 +86,10 @@ export default function ProductionQueuePage() {
         }
     };
 
-    const filteredJobs = getFilteredJobs();
+    const filteredJobs = getFilteredJobs().filter(job => {
+        if (categoryFilter === 'all') return true;
+        return (job.product_category as any)?.name === categoryFilter;
+    });
 
     const getStageBadge = (job: Job) => {
         if (job.print_ready && job.client_approval) {
@@ -125,7 +136,7 @@ export default function ProductionQueuePage() {
                     {/* Design Stage */}
                     <button
                         onClick={() => setFilter(filter === 'design_stage' ? null : 'design_stage')}
-                        className={`bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-2 transition-all  text-left ${filter === 'design_stage' ? 'border-purple-400 ring-4 ring-primary' : 'border-gray-100 hover:border-border'
+                        className={`bg-white rounded-lg md:rounded-lg p-3 md:p-4 border-2 transition-all  text-left ${filter === 'design_stage' ? 'border-purple-400 ring-4 ring-primary' : 'border-gray-100 hover:border-border'
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
@@ -140,7 +151,7 @@ export default function ProductionQueuePage() {
                     {/* Print Ready */}
                     <button
                         onClick={() => setFilter(filter === 'print_ready' ? null : 'print_ready')}
-                        className={`bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-2 transition-all  text-left relative ${filter === 'print_ready' ? 'border-green-400 ring-4 ring-green-100' : 'border-gray-100 hover:border-green-200'
+                        className={`bg-white rounded-lg md:rounded-lg p-3 md:p-4 border-2 transition-all  text-left relative ${filter === 'print_ready' ? 'border-green-400 ring-4 ring-green-100' : 'border-gray-100 hover:border-green-200'
                             }`}
                     >
                         {summary.print_ready > 0 && (
@@ -158,7 +169,7 @@ export default function ProductionQueuePage() {
                     {/* Awaiting Approval */}
                     <button
                         onClick={() => setFilter(filter === 'awaiting_approval' ? null : 'awaiting_approval')}
-                        className={`bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-2 transition-all  text-left ${filter === 'awaiting_approval' ? 'border-gray-400 ring-4 ring-amber-100' : 'border-gray-100 hover:border-gray-200'
+                        className={`bg-white rounded-lg md:rounded-lg p-3 md:p-4 border-2 transition-all  text-left ${filter === 'awaiting_approval' ? 'border-gray-400 ring-4 ring-amber-100' : 'border-gray-100 hover:border-gray-200'
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
@@ -173,7 +184,7 @@ export default function ProductionQueuePage() {
                     {/* High Priority */}
                     <button
                         onClick={() => setFilter(filter === 'high_priority' ? null : 'high_priority')}
-                        className={`bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-2 transition-all  text-left relative ${filter === 'high_priority' ? 'border-red-400 ring-4 ring-red-100' : 'border-gray-100 hover:border-red-200'
+                        className={`bg-white rounded-lg md:rounded-lg p-3 md:p-4 border-2 transition-all  text-left relative ${filter === 'high_priority' ? 'border-red-400 ring-4 ring-red-100' : 'border-gray-100 hover:border-red-200'
                             }`}
                     >
                         {summary.high_priority > 0 && (
@@ -193,7 +204,7 @@ export default function ProductionQueuePage() {
                     {/* In Production */}
                     <button
                         onClick={() => setFilter(filter === 'in_production' ? null : 'in_production')}
-                        className={`bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-2 transition-all  text-left ${filter === 'in_production' ? 'border-gray-400 ring-4 ring-gray-100' : 'border-gray-100 hover:border-border'}
+                        className={`bg-white rounded-lg md:rounded-lg p-3 md:p-4 border-2 transition-all  text-left ${filter === 'in_production' ? 'border-gray-400 ring-4 ring-gray-100' : 'border-gray-100 hover:border-border'}
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
@@ -208,7 +219,7 @@ export default function ProductionQueuePage() {
                     {/* Total Active */}
                     <button
                         onClick={() => setFilter(null)}
-                        className={`bg-gray-900 rounded-lg md:rounded-2xl p-3 md:p-4 border-2 transition-all  text-left ${!filter ? 'border-primary-400 ring-4 ring-primary' : 'border-gray-200 hover:border-border'
+                        className={`bg-gray-900 rounded-lg md:rounded-lg p-3 md:p-4 border-2 transition-all  text-left ${!filter ? 'border-primary-400 ring-4 ring-primary' : 'border-gray-200 hover:border-border'
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
@@ -223,7 +234,7 @@ export default function ProductionQueuePage() {
 
                 {/* Active Filter Indicator */}
                 {filter && (
-                    <div className="bg-muted border-2 border-border rounded-xl p-4 flex items-center justify-between">
+                    <div className="bg-muted border-2 border-border rounded-lg p-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-2 h-2 bg-gray-900 rounded-full animate-pulse"></div>
                             <p className="text-sm font-bold text-foreground">
@@ -242,8 +253,37 @@ export default function ProductionQueuePage() {
                     </div>
                 )}
 
+                {/* Product Category Tabs */}
+                <div className="bg-white rounded-lg border border-gray-100 p-3">
+                    <div className="flex items-center gap-2 overflow-x-auto">
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap mr-1">
+                            <Package size={14} className="inline mr-1" />Type:
+                        </span>
+                        <button
+                            onClick={() => setCategoryFilter('all')}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${categoryFilter === 'all'
+                                    ? 'bg-gray-900 text-white'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                        >
+                            All Types
+                        </button>
+                        {categories.map(cat => (
+                            <button
+                                key={cat}
+                                onClick={() => setCategoryFilter(categoryFilter === cat ? 'all' : cat)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${categoryFilter === cat
+                                        ? 'bg-gray-900 text-white'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
+                            >
+                                {cat}
+                            </button>
+                        ))}
+                    </div>
+                </div>
                 {/* Jobs Table */}
-                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
                     <div className="p-4 border-b border-gray-100">
                         <h2 className="text-section text-gray-900">
                             {filter ? `Filtered Jobs (${filteredJobs.length})` : `All Active Jobs (${jobs.length})`}

@@ -2,10 +2,11 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
   Calendar, User, Package, IndianRupee, Truck, CheckCircle,
-  AlertCircle, ChevronRight
+  AlertCircle, ChevronRight, Briefcase, ExternalLink
 } from 'lucide-react';
 import { useJobs, useClients } from '@/lib/hooks';
 import { Job, Client } from '@/types/database';
@@ -17,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 export default function OrdersPage() {
   const { user, profile } = useAuth();
   const { jobs: allJobs, loading: jobsLoading, createJob, updateJob, deleteJob } = useJobs();
+  const router = useRouter();
 
   // Filter jobs for Marketing role
   const jobs = useMemo(() => {
@@ -238,7 +240,7 @@ export default function OrdersPage() {
     <div className="space-y-3 md:space-y-6 lg:space-y-8 pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin/sales" className="p-2 hover:bg-white rounded-xl border border-gray-100 lg:hidden bg-gray-50 transition-colors">
+          <Link href="/admin/sales" className="p-2 hover:bg-white rounded-lg border border-gray-100 lg:hidden bg-gray-50 transition-colors">
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </Link>
           <div>
@@ -259,7 +261,7 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 bg-white p-3 sm:p-4 rounded-2xl border border-gray-100">
+      <div className="flex flex-col sm:flex-row gap-3 bg-white p-3 sm:p-4 rounded-lg border border-gray-100">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
@@ -287,9 +289,9 @@ export default function OrdersPage() {
 
       <div className="space-y-4">
         {jobsLoading ? (
-          <div className="p-12 text-center text-gray-500 bg-white rounded-2xl border border-gray-100">Loading orders...</div>
+          <div className="p-12 text-center text-gray-500 bg-white rounded-lg border border-gray-100">Loading orders...</div>
         ) : filteredJobs.length === 0 ? (
-          <div className="p-12 text-center text-gray-400 bg-white rounded-2xl border border-gray-100">
+          <div className="p-12 text-center text-gray-400 bg-white rounded-lg border border-gray-100">
             No orders found matching your criteria.
           </div>
         ) : (
@@ -314,7 +316,7 @@ export default function OrdersPage() {
                 const headerTextColor = job.current_stage === 'approval' ? 'text-gray-900' : 'text-white';
 
                 return (
-                  <div key={job.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
+                  <div key={job.id} className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
                     {/* Colored Header Tab */}
                     <div className={`${headerBg} px-5 py-3 flex items-center justify-between`}>
                       <span className={`${headerTextColor} font-semibold text-sm md:text-base`}>
@@ -362,7 +364,7 @@ export default function OrdersPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => { setSelectedJob(job); setShowViewModal(true); }}
-                          className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                          className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
                         >
                           <Eye className="w-4 h-4 md:w-4.5 md:h-4.5" />
                           <span className="hidden sm:inline">View</span>
@@ -370,7 +372,7 @@ export default function OrdersPage() {
                         {profile?.role !== 'marketing' && (
                           <button
                             onClick={() => handleEdit(job)}
-                            className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                            className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-lg font-medium hover:bg-gray-50 transition-colors"
                           >
                             <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
                           </button>
@@ -383,7 +385,7 @@ export default function OrdersPage() {
             </div>
 
             {/* Desktop View: Table */}
-            <div className="hidden lg:block bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="hidden lg:block bg-white rounded-lg border border-gray-100 overflow-hidden">
               <table className="w-full">
                 <thead className="bg-gray-50/50 border-b border-gray-100">
                   <tr>
@@ -459,7 +461,7 @@ export default function OrdersPage() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-5 border-b border-gray-100 sticky top-0 bg-white z-10">
               <h2 className="text-section text-gray-900">
                 {isEditing ? 'Edit Order' : 'New Order'}
@@ -479,7 +481,7 @@ export default function OrdersPage() {
                     placeholder="e.g. Wedding Invitation Cards, Corporate Brochure"
                     value={formData.projectName}
                     onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
                   />
                 </div>
 
@@ -489,7 +491,7 @@ export default function OrdersPage() {
                     required
                     value={formData.clientId}
                     onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white"
                   >
                     <option value="">Select Client</option>
                     {clients.map(c => (
@@ -504,7 +506,7 @@ export default function OrdersPage() {
                     type="date"
                     value={formData.clientDeadline}
                     onChange={(e) => setFormData({ ...formData, clientDeadline: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
                   />
                 </div>
 
@@ -515,11 +517,11 @@ export default function OrdersPage() {
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Paper type, size, finishing details, etc."
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 resize-none"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 resize-none"
                   />
                 </div>
 
-                <div className="col-span-1 sm:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <div className="col-span-1 sm:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4 bg-gray-50 p-4 rounded-lg border border-gray-100">
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Quantity</label>
                     <input
@@ -570,7 +572,7 @@ export default function OrdersPage() {
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 bg-white"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400 bg-white"
                   >
                     <option value="normal">Normal</option>
                     <option value="urgent">Urgent</option>
@@ -583,7 +585,7 @@ export default function OrdersPage() {
                   <select
                     value={formData.currentStage}
                     onChange={(e) => setFormData({ ...formData, currentStage: e.target.value as any })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-400 bg-white"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400 bg-white"
                   >
                     <option value="new">New</option>
                     <option value="designing">Designing</option>
@@ -619,7 +621,7 @@ export default function OrdersPage() {
 
       {showViewModal && selectedJob && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center p-4 border-b border-gray-100">
               <div>
                 <div className="flex items-center gap-3">
@@ -634,7 +636,7 @@ export default function OrdersPage() {
             </div>
 
             <div className="p-4 space-y-6">
-              <div className="flex items-center gap-2 md:gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+              <div className="flex items-center gap-2 md:gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
                 <div className="w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center text-white text-section">
                   {selectedJob.client?.company?.charAt(0) || 'C'}
                 </div>
@@ -645,19 +647,19 @@ export default function OrdersPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-2 md:gap-4">
-                <div className="p-3 border rounded-xl">
+                <div className="p-3 border rounded-lg">
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Status</p>
                   <p className="font-medium text-gray-900 capitalize mt-1">{selectedJob.current_stage.replace('_', ' ')}</p>
                 </div>
-                <div className="p-3 border rounded-xl">
+                <div className="p-3 border rounded-lg">
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Priority</p>
                   <p className={`font-medium capitalize mt-1 ${selectedJob.priority === 'urgent' ? 'text-red-600' : 'text-gray-900'}`}>{selectedJob.priority}</p>
                 </div>
-                <div className="p-3 border rounded-xl">
+                <div className="p-3 border rounded-lg">
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Deadline</p>
                   <p className="font-medium text-gray-900 mt-1">{selectedJob.client_deadline ? formatDate(selectedJob.client_deadline) : '-'}</p>
                 </div>
-                <div className="p-3 border rounded-xl">
+                <div className="p-3 border rounded-lg">
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Quantity</p>
                   <p className="font-medium text-gray-900 mt-1">{selectedJob.quantity}</p>
                 </div>
@@ -665,12 +667,12 @@ export default function OrdersPage() {
 
               <div>
                 <h4 className="font-semibold text-gray-900 mb-2">Description / Specifications</h4>
-                <p className="text-gray-600 text-sm leading-relaxed p-4 bg-gray-50 rounded-xl border border-gray-100 min-h-[80px]">
+                <p className="text-gray-600 text-sm leading-relaxed p-4 bg-gray-50 rounded-lg border border-gray-100 min-h-[80px]">
                   {selectedJob.description || 'No description provided.'}
                 </p>
               </div>
 
-              <div className="p-4 bg-muted/50 rounded-xl border border-gray-200">
+              <div className="p-4 bg-muted/50 rounded-lg border border-gray-200">
                 <div className="flex justify-between mb-2 text-sm">
                   <span className="text-gray-600">Subtotal</span>
                   <span className="font-medium">{formatCurrency(selectedJob.subtotal)}</span>
@@ -686,11 +688,19 @@ export default function OrdersPage() {
               </div>
 
               <div className="flex gap-3">
-                <button onClick={() => { setShowViewModal(false); handleEdit(selectedJob); }} className="flex-1 py-3 border border-border text-gray-900 font-semibold rounded-xl hover:bg-muted transition-colors">
+                <button onClick={() => { setShowViewModal(false); handleEdit(selectedJob); }} className="flex-1 py-3 border border-border text-gray-900 font-semibold rounded-lg hover:bg-muted transition-colors">
                   Edit Order
                 </button>
-                <button onClick={() => setShowViewModal(false)} className="flex-1 py-3 bg-gray-900 text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors shadow-sm">
-                  Close
+                <button
+                  onClick={() => {
+                    setShowViewModal(false);
+                    router.push(`/admin/jobs?highlight=${selectedJob.id}`);
+                  }}
+                  className="flex-1 py-3 bg-gray-900 text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors shadow-sm flex items-center justify-center gap-2"
+                >
+                  <Briefcase className="w-4 h-4" />
+                  Open in Jobs
+                  <ExternalLink className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>

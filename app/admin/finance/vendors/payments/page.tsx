@@ -127,26 +127,26 @@ export default function VendorPaymentsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl border p-3 sm:p-4">
+        <div className="bg-white rounded-lg border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Paid</p>
           <p className="text-page-title text-gray-900">{formatCurrency(totalPaid)}</p>
         </div>
-        <div className="bg-white rounded-xl border p-3 sm:p-4">
+        <div className="bg-white rounded-lg border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Cash Payments</p>
           <p className="text-page-title text-emerald-600">{formatCurrency(cashPayments)}</p>
         </div>
-        <div className="bg-white rounded-xl border p-3 sm:p-4">
+        <div className="bg-white rounded-lg border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Bank Payments</p>
           <p className="text-page-title text-foreground">{formatCurrency(bankPayments)}</p>
         </div>
-        <div className="bg-white rounded-xl border p-3 sm:p-4">
+        <div className="bg-white rounded-lg border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Outstanding</p>
           <p className="text-page-title text-red-600">{formatCurrency(totalOutstanding)}</p>
         </div>
       </div>
 
       {/* Vendor Outstanding Summary */}
-      <div className="bg-white rounded-xl border p-4">
+      <div className="bg-white rounded-lg border p-4">
         <h3 className="font-semibold text-gray-900 mb-3">Vendor Outstanding</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {vendors.filter(v => v.outstanding > 0).map(vendor => (
@@ -162,7 +162,7 @@ export default function VendorPaymentsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border p-4">
+      <div className="bg-white rounded-lg border p-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -189,10 +189,10 @@ export default function VendorPaymentsPage() {
       {/* Payments List */}
       <div className="space-y-3">
         {filteredPayments.map(payment => (
-          <div key={payment.id} className="bg-white rounded-xl border p-4  transition-shadow">
+          <div key={payment.id} className="bg-white rounded-lg border p-4  transition-shadow">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   <ArrowUpRight className="w-5 h-5 text-gray-900" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -229,7 +229,7 @@ export default function VendorPaymentsPage() {
       </div>
 
       {filteredPayments.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-xl border">
+        <div className="text-center py-12 bg-white rounded-lg border">
           <IndianRupee className="mx-auto h-12 w-12 text-gray-300" />
           <h3 className="mt-3 text-lg font-medium text-gray-900">No payments found</h3>
           <p className="mt-1 text-gray-500">Record vendor payments to track expenses</p>
@@ -239,7 +239,7 @@ export default function VendorPaymentsPage() {
       {/* Add Payment Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md">
+          <div className="bg-white rounded-lg w-full max-w-md">
             <div className="p-5 border-b flex items-center justify-between">
               <h2 className="text-page-title">Record Payment</h2>
               <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
@@ -312,7 +312,7 @@ export default function VendorPaymentsPage() {
       {/* Detail Modal */}
       {showDetailModal && selectedPayment && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md">
+          <div className="bg-white rounded-lg w-full max-w-md">
             <div className="p-5 border-b flex items-center justify-between">
               <div>
                 <span className="font-mono text-gray-900">{selectedPayment.paymentNo}</span>
@@ -321,7 +321,7 @@ export default function VendorPaymentsPage() {
               <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
-              <div className="text-center bg-white rounded-xl p-4">
+              <div className="text-center bg-white rounded-lg p-4">
                 <p className="text-sm text-gray-600">Amount Paid</p>
                 <p className="text-page-title text-gray-900">{formatCurrency(selectedPayment.amount)}</p>
               </div>

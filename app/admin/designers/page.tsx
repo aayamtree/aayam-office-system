@@ -288,32 +288,32 @@ export default function DesignersPage() {
           <p className="text-sm text-gray-500">{activeDesigners} active of {totalDesigners} total</p>
         </div>
         <button onClick={() => { resetForm(); setShowModal(true); }}
-          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800">
+          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-lg hover:bg-gray-800">
           <Plus size={18} /><span>Add Designer</span>
         </button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl p-4 border">
+        <div className="bg-white rounded-lg p-4 border">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gray-900 rounded-lg"><Users size={20} className="text-white" /></div>
             <div><p className="text-xs text-gray-500">Total</p><p className="text-page-title">{totalDesigners}</p></div>
           </div>
         </div>
-        <div className="bg-white rounded-xl p-4 border">
+        <div className="bg-white rounded-lg p-4 border">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gray-100 rounded-lg"><CheckCircle size={20} className="text-gray-900" /></div>
             <div><p className="text-xs text-gray-500">Active</p><p className="text-page-title text-gray-900">{activeDesigners}</p></div>
           </div>
         </div>
-        <div className="bg-white rounded-xl p-4 border">
+        <div className="bg-white rounded-lg p-4 border">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-muted rounded-lg"><Briefcase size={20} className="text-foreground" /></div>
             <div><p className="text-xs text-gray-500">Full-time</p><p className="text-page-title text-foreground">{designers.filter(d => d.employment_type === 'full-time').length}</p></div>
           </div>
         </div>
-        <div className="bg-white rounded-xl p-4 border">
+        <div className="bg-white rounded-lg p-4 border">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-orange-100 rounded-lg"><Palette size={20} className="text-orange-600" /></div>
             <div><p className="text-xs text-gray-500">Freelance</p><p className="text-page-title text-orange-600">{designers.filter(d => d.employment_type === 'freelance').length}</p></div>
@@ -356,7 +356,7 @@ export default function DesignersPage() {
 
       {/* Empty State */}
       {filteredDesigners.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-xl border">
+        <div className="text-center py-12 bg-white rounded-lg border">
           <Palette size={48} className="mx-auto text-gray-300 mb-4" />
           <h3 className="text-lg font-medium mb-2">No designers found</h3>
           <button onClick={() => setShowModal(true)}
@@ -369,7 +369,7 @@ export default function DesignersPage() {
       {/* Designer Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
         {filteredDesigners.map(designer => (
-          <div key={designer.id} className="bg-white rounded-xl border p-4  transition-shadow">
+          <div key={designer.id} className="bg-white rounded-lg border p-4  transition-shadow">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gray-900 rounded-full flex items-center justify-center">
@@ -426,7 +426,7 @@ export default function DesignersPage() {
       {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
               <h2 className="text-section">{editingDesigner ? 'Edit Designer' : 'Add Designer'}</h2>
               <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-md"><X size={20} /></button>
@@ -437,13 +437,13 @@ export default function DesignersPage() {
                   <label className="block text-sm font-medium mb-1">Name *</label>
                   <input type="text" required value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-xl" />
+                    className="w-full px-3 py-2 border rounded-lg" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Phone *</label>
                   <input type="tel" required value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-xl" />
+                    className="w-full px-3 py-2 border rounded-lg" />
                 </div>
               </div>
 
@@ -451,7 +451,7 @@ export default function DesignersPage() {
                 <label className="block text-sm font-medium mb-1">Email</label>
                 <input type="email" value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-xl" />
+                  className="w-full px-3 py-2 border rounded-lg" />
               </div>
 
               <div className="grid grid-cols-2 gap-2 md:gap-4">
@@ -459,7 +459,7 @@ export default function DesignersPage() {
                   <label className="block text-sm font-medium mb-1">Employment Type</label>
                   <select value={formData.employment_type}
                     onChange={(e) => setFormData({ ...formData, employment_type: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-xl">
+                    className="w-full px-3 py-2 border rounded-lg">
                     <option value="full-time">Full-time</option>
                     <option value="part-time">Part-time</option>
                     <option value="freelance">Freelance</option>
@@ -469,7 +469,7 @@ export default function DesignersPage() {
                   <label className="block text-sm font-medium mb-1">Joining Date</label>
                   <input type="date" value={formData.joining_date}
                     onChange={(e) => setFormData({ ...formData, joining_date: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-xl" />
+                    className="w-full px-3 py-2 border rounded-lg" />
                 </div>
               </div>
 
@@ -478,13 +478,13 @@ export default function DesignersPage() {
                   <label className="block text-sm font-medium mb-1">Hourly Rate (₹)</label>
                   <input type="number" min="0" value={formData.hourly_rate}
                     onChange={(e) => setFormData({ ...formData, hourly_rate: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border rounded-xl" />
+                    className="w-full px-3 py-2 border rounded-lg" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Monthly Salary (₹)</label>
                   <input type="number" min="0" value={formData.monthly_salary}
                     onChange={(e) => setFormData({ ...formData, monthly_salary: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border rounded-xl" />
+                    className="w-full px-3 py-2 border rounded-lg" />
                 </div>
               </div>
 
@@ -493,13 +493,13 @@ export default function DesignersPage() {
                   <label className="block text-sm font-medium mb-1">City</label>
                   <input type="text" value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-xl" />
+                    className="w-full px-3 py-2 border rounded-lg" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Status</label>
                   <select value={formData.is_active ? 'active' : 'inactive'}
                     onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'active' })}
-                    className="w-full px-3 py-2 border rounded-xl">
+                    className="w-full px-3 py-2 border rounded-lg">
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
                   </select>
@@ -516,7 +516,7 @@ export default function DesignersPage() {
                       type="file"
                       accept="image/*,application/pdf"
                       onChange={handleFileUpload}
-                      className="w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-muted file:text-primary hover:file:bg-primary"
+                      className="w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-muted file:text-primary hover:file:bg-primary"
                       disabled={uploadingDoc}
                     />
                     {uploadingDoc && <div className="absolute right-3 top-1/2 -translate-y-1/2"><Loader2 size={16} className="animate-spin text-primary" /></div>}
@@ -562,7 +562,7 @@ export default function DesignersPage() {
       {
         showDetailModal && selectedDesigner && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
               <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 md:gap-4">
@@ -583,7 +583,7 @@ export default function DesignersPage() {
                 {/* Contact */}
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-3">Contact Information</h3>
-                  <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                     <div className="flex items-center gap-3"><Phone size={16} className="text-gray-400" />{selectedDesigner.phone}</div>
                     {selectedDesigner.email && <div className="flex items-center gap-3"><Mail size={16} className="text-gray-400" />{selectedDesigner.email}</div>}
                     {selectedDesigner.city && <div className="flex items-center gap-3"><MapPin size={16} className="text-gray-400" />{selectedDesigner.city}, {selectedDesigner.state}</div>}
@@ -593,11 +593,11 @@ export default function DesignersPage() {
 
                 {/* Rate */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-muted rounded-xl p-4">
+                  <div className="bg-muted rounded-lg p-4">
                     <p className="text-xs text-gray-500 mb-1">Hourly Rate</p>
                     <p className="text-page-title text-primary">{formatCurrency(selectedDesigner.hourly_rate)}</p>
                   </div>
-                  <div className="bg-white rounded-xl p-4">
+                  <div className="bg-white rounded-lg p-4">
                     <p className="text-xs text-gray-500 mb-1">Monthly Salary</p>
                     <p className="text-page-title text-gray-900">{formatCurrency(selectedDesigner.monthly_salary)}</p>
                   </div>
@@ -630,9 +630,9 @@ export default function DesignersPage() {
                 {/* Actions */}
                 <div className="flex gap-3 pt-2">
                   <button onClick={() => { setShowDetailModal(false); handleEdit(selectedDesigner); }}
-                    className="flex-1 px-4 py-2.5 border rounded-xl font-medium">Edit</button>
+                    className="flex-1 px-4 py-2.5 border rounded-lg font-medium">Edit</button>
                   <button onClick={() => setShowDetailModal(false)}
-                    className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-medium">Close</button>
+                    className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-lg font-medium">Close</button>
                 </div>
               </div>
             </div>

@@ -265,7 +265,7 @@ export default function JobQueuePage() {
             </div>
 
             <div className="p-4 space-y-4">
-              <div className="p-4 rounded-xl text-center capitalize bg-gray-100 text-gray-900">
+              <div className="p-4 rounded-lg text-center capitalize bg-gray-100 text-gray-900">
                 <p className="text-section">{selectedJob.current_stage}</p>
               </div>
 
@@ -308,7 +308,7 @@ export default function JobQueuePage() {
                 </div>
               </div>
 
-              <button onClick={() => setShowViewModal(false)} className="w-full px-4 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800">Close</button>
+              <button onClick={() => setShowViewModal(false)} className="w-full px-4 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800">Close</button>
             </div>
           </div>
         </div>

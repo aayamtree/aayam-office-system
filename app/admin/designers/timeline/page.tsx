@@ -39,7 +39,7 @@ export default function Timeline() {
                         const isOverdue = daysLeft < 0;
 
                         return (
-                            <div key={task.id} className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border-l-4" style={{
+                            <div key={task.id} className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border-l-4" style={{
                                 borderLeftColor: isOverdue ? '#ef4444' : task.priority === 'urgent' ? '#f97316' : '#8b5cf6'
                             }}>
                                 <div className="flex justify-between items-start mb-3">
@@ -69,7 +69,7 @@ export default function Timeline() {
                     })}
 
                     {activeTasks.length === 0 && (
-                        <div className="bg-white rounded-xl p-12 text-center">
+                        <div className="bg-white rounded-lg p-12 text-center">
                             <Calendar className="mx-auto mb-4 text-gray-400" size={48} />
                             <p className="text-gray-500">No tasks with deadlines</p>
                         </div>

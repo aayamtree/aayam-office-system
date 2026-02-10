@@ -249,7 +249,7 @@ export default function DesignersManager() {
         const badges: Record<string, string> = {
             'full-time': 'bg-green-100 text-green-700',
             'part-time': 'bg-blue-100 text-blue-700',
-            'freelance': 'bg-[rgba(0,0,255,0.1)] text-primary'
+            'freelance': 'bg-primary/10 text-primary'
         };
         return badges[type] || 'bg-gray-100 text-gray-700';
     };
@@ -263,26 +263,26 @@ export default function DesignersManager() {
                     <p className="text-sm text-gray-500">{activeDesigners} active of {totalDesigners} total</p>
                 </div>
                 <button onClick={() => { resetForm(); setShowModal(true); }}
-                    className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-colors">
+                    className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-md hover:bg-primary/90 transition-colors">
                     <Plus size={18} /><span>Add Designer</span>
                 </button>
             </div>
 
             {/* Stats - Mini */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="bg-white p-3 rounded-xl border flex items-center gap-3">
-                    <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg text-primary"><Users size={18} /></div>
+                <div className="bg-white p-3 rounded-lg border flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg text-primary"><Users size={18} /></div>
                     <div><p className="text-xs text-gray-500">Total</p><p className="text-section">{totalDesigners}</p></div>
                 </div>
-                <div className="bg-white p-3 rounded-xl border flex items-center gap-3">
+                <div className="bg-white p-3 rounded-lg border flex items-center gap-3">
                     <div className="p-2 bg-green-100 rounded-lg text-green-600"><CheckCircle size={18} /></div>
                     <div><p className="text-xs text-gray-500">Active</p><p className="text-section">{activeDesigners}</p></div>
                 </div>
-                <div className="bg-white p-3 rounded-xl border flex items-center gap-3">
+                <div className="bg-white p-3 rounded-lg border flex items-center gap-3">
                     <div className="p-2 bg-blue-100 rounded-lg text-blue-600"><Briefcase size={18} /></div>
                     <div><p className="text-xs text-gray-500">Full-time</p><p className="text-section">{designers.filter(d => d.employment_type === 'full-time').length}</p></div>
                 </div>
-                <div className="bg-white p-3 rounded-xl border flex items-center gap-3">
+                <div className="bg-white p-3 rounded-lg border flex items-center gap-3">
                     <div className="p-2 bg-orange-100 rounded-lg text-orange-600"><Palette size={18} /></div>
                     <div><p className="text-xs text-gray-500">Freelance</p><p className="text-section">{designers.filter(d => d.employment_type === 'freelance').length}</p></div>
                 </div>
@@ -291,10 +291,10 @@ export default function DesignersManager() {
             {/* Cards Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2 md:gap-4">
                 {filteredDesigners.map(designer => (
-                    <div key={designer.id} className="bg-white rounded-xl border p-4  transition-shadow group">
+                    <div key={designer.id} className="bg-white rounded-lg border p-4 transition-shadow group">
                         <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center text-primary text-section">
+                                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary text-section">
                                     {designer.name?.charAt(0)}
                                 </div>
                                 <div>
@@ -328,7 +328,7 @@ export default function DesignersManager() {
             {/* Add/Edit Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
                         <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white z-10">
                             <h2 className="text-section">{editingDesigner ? 'Edit Designer' : 'Add Designer'}</h2>
                             <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-md"><X size={20} /></button>
@@ -367,7 +367,7 @@ export default function DesignersManager() {
                                 <div className="flex flex-wrap gap-2">
                                     {skillOptions.map(skill => (
                                         <button key={skill} type="button" onClick={() => toggleSkill(skill)}
-                                            className={`px-2 py-1 rounded text-xs transition-colors border ${formData.skills.includes(skill) ? 'bg-[rgba(0,0,255,0.1)] text-white border-[rgba(0,0,255,0.2)]-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+                                            className={`px-2 py-1 rounded text-xs transition-colors border ${formData.skills.includes(skill) ? 'bg-primary text-primary-foreground border-primary' : 'bg-white text-gray-600 border-gray-200'}`}>
                                             {skill}
                                         </button>
                                     ))}
@@ -386,7 +386,7 @@ export default function DesignersManager() {
 
                             <div className="pt-4 flex gap-3">
                                 <button type="button" onClick={resetForm} className="flex-1 py-2 border rounded-md text-sm font-bold text-gray-600">Cancel</button>
-                                <button type="submit" disabled={saving} className="flex-1 py-2 bg-gray-900 text-white rounded-md text-sm font-bold">{saving ? 'Saving...' : 'Save Designer'}</button>
+                                <button type="submit" disabled={saving} className="flex-1 py-2 bg-primary text-primary-foreground rounded-md text-sm font-bold">{saving ? 'Saving...' : 'Save Designer'}</button>
                             </div>
                         </form>
                     </div>
@@ -396,10 +396,10 @@ export default function DesignersManager() {
             {/* Detail Modal */}
             {showDetailModal && selectedDesigner && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-md p-6 relative">
+                    <div className="bg-white rounded-lg w-full max-w-md p-6 relative">
                         <button onClick={() => setShowDetailModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={20} /></button>
                         <div className="flex items-center gap-2 md:gap-4 mb-3 md:mb-6">
-                            <div className="w-16 h-16 bg-[rgba(0,0,255,0.1)] rounded-full flex items-center justify-center text-page-title text-primary">{selectedDesigner.name.charAt(0)}</div>
+                            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-page-title text-primary">{selectedDesigner.name.charAt(0)}</div>
                             <div>
                                 <h2 className="text-page-title">{selectedDesigner.name}</h2>
                                 <p className="text-gray-500">{selectedDesigner.employment_type}</p>

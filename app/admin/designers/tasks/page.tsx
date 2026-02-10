@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
@@ -8,7 +8,7 @@ import DriveConnectionStatus from '@/components/drive/DriveConnectionStatus';
 import { useJobs, useClients, useDesigners } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
 import {
-  Plus, Search, Calendar, Clock, Edit, Trash2, Eye, X, ArrowLeft, ArrowRight, CheckCircle,
+  Plus, Search, Calendar, Clock, Edit, Trash2, Eye, X, ArrowLeft, ArrowRight, CheckCircle, XCircle,
   AlertCircle, User, Briefcase, MessageSquare, Paperclip, ExternalLink,
   FileText, Image, Video, Music, File, ChevronRight, Save, Send, MoreHorizontal,
   ChevronLeft, Loader2, Folder, GanttChart, Layout, Monitor, AlertTriangle, Palette, Printer
@@ -50,7 +50,7 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl  w-full max-w-lg overflow-hidden border border-gray-100">
+      <div className="bg-white rounded-lg  w-full max-w-lg overflow-hidden border border-gray-100">
         <div className="bg-gray-900 p-4 text-white">
           <h2 className="text-page-title flex items-center gap-2">
             <Monitor size={24} /> Good Morning, {userName || 'Designer'}!
@@ -135,6 +135,12 @@ export default function DesignerWorkspace() {
   const [logs, setLogs] = useState(initialLogs);
   const [newLog, setNewLog] = useState('');
   const [newFeedback, setNewFeedback] = useState('');
+
+  // Approval State
+  const [approvalRemark, setApprovalRemark] = useState('');
+  const [approvalLogs, setApprovalLogs] = useState<any[]>([]);
+  const [loadingApprovalLogs, setLoadingApprovalLogs] = useState(false);
+  const [savingApproval, setSavingApproval] = useState(false);
 
   // UI State
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
@@ -400,10 +406,15 @@ export default function DesignerWorkspace() {
             driveLink: job.files?.[0] || '',
             orderId: job.id,
             designerId: job.designer_id,
-            designerName: designer?.name || 'Unassigned',  // Name resolved!
+            designerName: designer?.name || 'Unassigned',
             createdAt: job.created_at,
             current_stage: job.current_stage,
-            jobType: job.job_type || 'Design'
+            jobType: job.job_type || 'Design',
+            approval_status: job.approval_status || 'pending',
+            approval_by: job.approval_by,
+            approval_date: job.approval_date,
+            approval_remark: job.approval_remark,
+            client_approval: job.client_approval
           };
         })
         .sort((a, b) => {
@@ -608,9 +619,92 @@ export default function DesignerWorkspace() {
 
   const handleAddFeedback = (e: React.FormEvent) => {
     e.preventDefault();
-    // In real app, write to Supabase 'comments' table
     alert("Message sent! (Simulated)");
     setNewFeedback('');
+  };
+
+  // --- APPROVAL HANDLERS ---
+  const fetchApprovalLogs = useCallback(async (jobId: string) => {
+    setLoadingApprovalLogs(true);
+    try {
+      const { data } = await supabase
+        .from('job_stage_history')
+        .select('*')
+        .eq('job_id', jobId)
+        .or('notes.ilike.%approval%,notes.ilike.%sent for%,notes.ilike.%changes%')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      setApprovalLogs(data || []);
+    } catch (e) {
+      console.error('Error fetching approval logs:', e);
+    } finally {
+      setLoadingApprovalLogs(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedTask?.realId) {
+      fetchApprovalLogs(selectedTask.realId);
+    }
+  }, [selectedTask?.realId]);
+
+  const handleApprovalAction = async (action: 'sent' | 'approved' | 'changes_requested') => {
+    if (!selectedTask?.realId || !updateJob) return;
+    setSavingApproval(true);
+    try {
+      const userName = profile?.full_name || profile?.email || 'Unknown';
+      const now = new Date().toISOString();
+
+      if (action === 'sent') {
+        const noteText = `\u{1F4E4} Sent for Approval by ${userName}${approvalRemark ? '. Note: ' + approvalRemark : ''}`;
+        await updateJob(selectedTask.realId, {
+          approval_status: 'sent',
+          approval_by: profile?.id,
+        } as any);
+        if (updateJobStage) await updateJobStage(selectedTask.realId, 'approval' as any, noteText);
+      } else if (action === 'approved') {
+        if (!approvalRemark.trim()) {
+          alert('Please enter what the client said (remark is required for accountability)');
+          setSavingApproval(false);
+          return;
+        }
+        const noteText = `\u2705 Client Approved \u2014 recorded by ${userName}. Client said: \"${approvalRemark}\"`;
+        await updateJob(selectedTask.realId, {
+          approval_status: 'approved',
+          client_approval: true,
+          approval_date: now,
+          approval_by: profile?.id,
+          approval_remark: approvalRemark,
+        } as any);
+        await supabase.from('job_stage_history').insert([{
+          job_id: selectedTask.realId,
+          from_stage: selectedTask.current_stage,
+          to_stage: selectedTask.current_stage,
+          notes: noteText
+        }]);
+      } else if (action === 'changes_requested') {
+        if (!approvalRemark.trim()) {
+          alert('Please describe what changes the client wants');
+          setSavingApproval(false);
+          return;
+        }
+        const noteText = `\u{1F504} Changes Requested \u2014 recorded by ${userName}. Client wants: \"${approvalRemark}\"`;
+        await updateJob(selectedTask.realId, {
+          approval_status: 'changes_requested',
+          client_approval: false,
+          approval_by: profile?.id,
+          approval_remark: approvalRemark,
+        } as any);
+        if (updateJobStage) await updateJobStage(selectedTask.realId, 'designing' as any, noteText);
+      }
+
+      setApprovalRemark('');
+      await fetchApprovalLogs(selectedTask.realId);
+    } catch (e: any) {
+      alert('Error: ' + e.message);
+    } finally {
+      setSavingApproval(false);
+    }
   };
 
   const updateStatus = async (realId: string, newStatusId: string) => {
@@ -634,7 +728,7 @@ export default function DesignerWorkspace() {
 
         {activeTab === 'board' ? (
           <div className="flex-1 overflow-x-auto overflow-y-hidden p-4 bg-gray-50">
-            <div className="flex bg-white p-4 rounded-xl mb-4 justify-between items-center sticky left-0 min-w-[768px]">
+            <div className="flex bg-white p-4 rounded-lg mb-4 justify-between items-center sticky left-0 min-w-[768px]">
               <div className="flex items-center gap-2 md:gap-4">
                 <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2"><Layout size={20} /> Kanban Team Board</h2>
                 <div className="flex bg-gray-100 p-1 rounded-lg">
@@ -656,7 +750,7 @@ export default function DesignerWorkspace() {
                 });
 
                 return (
-                  <div key={col.id} className="w-80 flex flex-col bg-gray-100/50 rounded-2xl border border-gray-200/50">
+                  <div key={col.id} className="w-80 flex flex-col bg-gray-100/50 rounded-lg border border-gray-200/50">
                     <div className={`p-4 font-bold text-sm uppercase tracking-wide flex justify-between items-center ${col.textColor}`}>
                       {col.title}
                       <span className="bg-gray-900 text-white px-2 py-0.5 rounded text-xs font-bold">{colTasks.length}</span>
@@ -677,7 +771,7 @@ export default function DesignerWorkspace() {
                         return (
                           <div key={task.id}
                             onClick={() => { setView('my_tasks'); setSelectedTaskId(task.id); }}
-                            className={`bg-white p-4 rounded-xl border border-gray-100  transition-shadow cursor-pointer group relative ${borderClass}`}
+                            className={`bg-white p-4 rounded-lg border border-gray-100  transition-shadow cursor-pointer group relative ${borderClass}`}
                           >
                             {/* Revision Badge (Mocked based on description or random) */}
                             <div className="absolute top-4 right-4 text-xs font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border">Rev {(task.id % 3) + 1}</div>
@@ -740,7 +834,7 @@ export default function DesignerWorkspace() {
             {/* Gantt Chart Body */}
             {/* Gantt Chart Body */}
             <div className="flex-1 overflow-x-auto overflow-y-auto p-2 md:p-4 bg-gray-50">
-              <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden min-w-[800px]">
+              <div className="bg-white rounded-lg border border-gray-100 overflow-hidden min-w-[800px]">
                 {/* Header Row */}
                 <div className="grid grid-cols-12 bg-gray-50 border-b text-xs font-bold text-gray-500 uppercase tracking-wider h-10 items-center px-4">
                   <div className="col-span-3">Task / Designer</div>
@@ -856,7 +950,7 @@ export default function DesignerWorkspace() {
                 {(!forceShow && jobsLoading) ? (
                   <div className="flex justify-center py-10"><Loader2 className="animate-spin text-primary" /></div>
                 ) : jobsError ? (
-                  <div className="p-4 m-2 bg-red-50 text-red-600 text-xs rounded-xl border border-red-100 flex flex-col items-center gap-2">
+                  <div className="p-4 m-2 bg-red-50 text-red-600 text-xs rounded-lg border border-red-100 flex flex-col items-center gap-2">
                     <AlertCircle size={20} />
                     <p className="font-bold underline">Error Loading Tasks</p>
                     <p>{String(jobsError)}</p>
@@ -882,7 +976,7 @@ export default function DesignerWorkspace() {
                       const isOverdue = now > end && task.status !== 'completed' && task.status !== 'delivered';
 
                       return (
-                        <div key={task.id} className="bg-white p-4 rounded-xl border border-gray-100  transition-shadow">
+                        <div key={task.id} className="bg-white p-4 rounded-lg border border-gray-100  transition-shadow">
                           <div className="flex justify-between items-center mb-3">
                             <div className="flex items-center gap-3">
                               <div className={`p-2 rounded-lg ${isOverdue ? 'bg-red-100 text-red-600' : 'bg-muted text-primary'}`}>
@@ -916,7 +1010,7 @@ export default function DesignerWorkspace() {
                 ) : activeTab === 'notes' ? (
                   <div className="space-y-4">
                     {currentDate && (
-                      <div className="bg-white p-4 rounded-xl border border-gray-100">
+                      <div className="bg-white p-4 rounded-lg border border-gray-100">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Calendar size={14} /> Calendar</h3>
                         <div className="grid grid-cols-7 gap-1 text-center mb-1">
                           {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <span key={d} className="text-xs text-gray-400 font-bold">{d}</span>)}
@@ -940,7 +1034,7 @@ export default function DesignerWorkspace() {
                     <button onClick={handleCreateNote} className="w-full py-2 bg-gray-900 text-white rounded-md text-sm font-bold flex items-center justify-center gap-2 hover:bg-gray-800"><Plus size={16} /> New Note</button>
 
                     {(notes || []).length === 0 ? <p className="text-center text-gray-400 text-xs py-4">No notes created.</p> : (notes || []).map((note, i) => (
-                      <div key={note?.id || `note-${i}`} onClick={() => selectNoteForEdit(note)} className={`p-3 rounded-xl border cursor-pointer  transition-all bg-white ${selectedNote?.id === note?.id ? 'border-primary ring-1 ring-primary' : 'border-gray-100'}`}>
+                      <div key={note?.id || `note-${i}`} onClick={() => selectNoteForEdit(note)} className={`p-3 rounded-lg border cursor-pointer  transition-all bg-white ${selectedNote?.id === note?.id ? 'border-primary ring-1 ring-primary' : 'border-gray-100'}`}>
                         <div className="flex justify-between items-start mb-1"><h4 className="font-bold text-sm text-gray-800 line-clamp-1">{note?.title || 'Untitled'}</h4><span className="text-xs text-gray-400">{note?.note_date || ''}</span></div>
                         <p className="text-xs text-gray-500 line-clamp-2">{note?.content || ''}</p>
                       </div>
@@ -950,7 +1044,7 @@ export default function DesignerWorkspace() {
                   <div
                     key={task.id}
                     onClick={() => setSelectedTaskId(task.id)}
-                    className={`p-4 rounded-xl border cursor-pointer transition-all  group relative overflow-hidden
+                    className={`p-4 rounded-lg border cursor-pointer transition-all  group relative overflow-hidden
                 ${selectedTaskId === task.id ? 'bg-muted border-border ring-1 ring-primary' : 'bg-white border-gray-100 hover:border-gray-300'}`}
                   >
                     {selectedTaskId === task.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-muted0"></div>}
@@ -1066,7 +1160,7 @@ export default function DesignerWorkspace() {
                   <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-gray-50/30">
 
                     {/* 1. Brief / Description */}
-                    <section className="bg-white p-4 rounded-2xl border border-gray-100">
+                    <section className="bg-white p-4 rounded-lg border border-gray-100">
                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                         <FileText size={16} className="text-primary" /> Design Brief & Instructions
                       </h4>
@@ -1076,7 +1170,7 @@ export default function DesignerWorkspace() {
                     </section>
 
                     {/* 2. Assets & Assignment */}
-                    <section className="bg-white p-4 rounded-2xl border border-gray-100 space-y-6">
+                    <section className="bg-white p-4 rounded-lg border border-gray-100 space-y-6">
                       {/* Google Drive Link */}
                       <div>
                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -1114,14 +1208,14 @@ export default function DesignerWorkspace() {
                           <MessageSquare size={16} className="text-orange-500" /> Feedback & Corrections
                         </h4>
                       </div>
-                      <div className="bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden h-[320px]">
+                      <div className="bg-white border border-gray-200 rounded-lg flex flex-col overflow-hidden h-[320px]">
                         <div className="flex-1 overflow-y-auto p-4 space-y-3 md:space-y-6 bg-gray-50/30">
                           {/* Simulated Threaded Comments */}
                           {/* In a real app, map through 'remarks' joined to task */}
                           <div className="space-y-4">
                             <div className="flex gap-3">
                               <div className="min-w-8 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-foreground">M</div>
-                              <div className="bg-white p-3 rounded-2xl rounded-tl-none border max-w-[80%]">
+                              <div className="bg-white p-3 rounded-lg rounded-tl-none border max-w-[80%]">
                                 <div className="flex justify-between items-center mb-1 gap-2 md:gap-4">
                                   <span className="text-xs font-bold text-gray-900">Manager</span>
                                   <span className="text-[9px] font-bold bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded">Correction ❌</span>
@@ -1131,7 +1225,7 @@ export default function DesignerWorkspace() {
                             </div>
                             <div className="flex gap-3 flex-row-reverse">
                               <div className="min-w-8 w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center text-xs font-bold text-white">Me</div>
-                              <div className="bg-gray-900 p-3 rounded-2xl rounded-tr-none border border-border-600  max-w-[80%] text-white">
+                              <div className="bg-gray-900 p-3 rounded-lg rounded-tr-none border border-border-600  max-w-[80%] text-white">
                                 <div className="flex justify-between items-center mb-1 gap-2 md:gap-4">
                                   <span className="text-xs font-bold text-white/80">You</span>
                                 </div>
@@ -1141,20 +1235,107 @@ export default function DesignerWorkspace() {
                           </div>
                         </div>
                         <form onSubmit={handleAddFeedback} className="p-4 border-t bg-white flex gap-3 items-center">
-                          <input type="text" value={newFeedback} onChange={(e) => setNewFeedback(e.target.value)} placeholder="Type reply (tag: #correction, #approved)..." className="flex-1 border rounded-xl px-4 py-2 text-sm focus:ring-2 ring-primary/20 outline-none" />
+                          <input type="text" value={newFeedback} onChange={(e) => setNewFeedback(e.target.value)} placeholder="Type reply (tag: #correction, #approved)..." className="flex-1 border rounded-lg px-4 py-2 text-sm focus:ring-2 ring-primary/20 outline-none" />
                           <button type="submit" disabled={!newFeedback.trim()} className="p-2 bg-gray-900 text-white rounded-md hover:bg-gray-900 transition-colors"><Send size={18} /></button>
                         </form>
                       </div>
                     </section>
 
-                    {/* 4. Final Review & Checklist */}
-                    <section className="bg-gradient-to-br bg-white p-4 rounded-2xl border border-gray-200 space-y-4">
+                    {/* 4. Client Approval Tracking */}
+                    <section className="bg-white p-4 rounded-lg border border-green-100 space-y-4">
+                      <h4 className="text-xs font-bold text-green-700 uppercase tracking-widest flex items-center gap-2">
+                        <CheckCircle size={16} /> Client Approval (WhatsApp)
+                      </h4>
+
+                      {/* Current Status Badge */}
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`px-3 py-1.5 rounded-full text-xs font-bold border ${selectedTask.approval_status === 'approved' ? 'bg-green-50 text-green-700 border-green-200' :
+                            selectedTask.approval_status === 'sent' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                              selectedTask.approval_status === 'changes_requested' ? 'bg-red-50 text-red-700 border-red-200' :
+                                'bg-gray-50 text-gray-500 border-gray-200'
+                          }`}>
+                          {selectedTask.approval_status === 'approved' ? '\u2705 Client Approved' :
+                            selectedTask.approval_status === 'sent' ? '\u{1F4E4} Sent for Approval' :
+                              selectedTask.approval_status === 'changes_requested' ? '\u{1F504} Changes Requested' :
+                                '\u23F3 Not Sent Yet'}
+                        </span>
+                        {selectedTask.approval_date && (
+                          <span className="text-xs text-gray-400">
+                            on {new Date(selectedTask.approval_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Remark Input */}
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1.5">Remark / Client Response / Final Direction</label>
+                        <textarea
+                          value={approvalRemark}
+                          onChange={(e) => setApprovalRemark(e.target.value)}
+                          placeholder="Paste what client said on WhatsApp, or note any final direction before print..."
+                          className="w-full px-3 py-2.5 border rounded-lg text-sm h-20 focus:ring-2 focus:ring-green-400 bg-gray-50 focus:bg-white"
+                        />
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 flex-wrap">
+                        {selectedTask.approval_status !== 'sent' && selectedTask.approval_status !== 'approved' && (
+                          <button
+                            onClick={() => handleApprovalAction('sent')}
+                            disabled={savingApproval}
+                            className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-bold hover:bg-amber-600 disabled:opacity-50"
+                          >
+                            <Send size={14} /> Send for Approval
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleApprovalAction('approved')}
+                          disabled={savingApproval}
+                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 disabled:opacity-50"
+                        >
+                          <CheckCircle size={14} /> Client Approved
+                        </button>
+                        <button
+                          onClick={() => handleApprovalAction('changes_requested')}
+                          disabled={savingApproval}
+                          className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-bold hover:bg-red-200 disabled:opacity-50"
+                        >
+                          <XCircle size={14} /> Changes Requested
+                        </button>
+                      </div>
+
+                      {/* Approval History Log */}
+                      {approvalLogs.length > 0 && (
+                        <div className="border-t pt-3 mt-3">
+                          <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Approval History</h5>
+                          <div className="space-y-2 max-h-48 overflow-y-auto">
+                            {approvalLogs.map((log: any, idx: number) => (
+                              <div key={idx} className="flex gap-3 items-start">
+                                <div className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${(log.notes || '').includes('Approved') ? 'bg-green-500' :
+                                    (log.notes || '').includes('Changes') ? 'bg-red-400' :
+                                      'bg-amber-400'
+                                  }`} />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm text-gray-700">{log.notes}</p>
+                                  <p className="text-[10px] text-gray-400 mt-0.5">
+                                    {new Date(log.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </section>
+
+                    {/* 5. Final Review & Checklist */}
+                    <section className="bg-gradient-to-br bg-white p-4 rounded-lg border border-gray-200 space-y-4">
                       <h4 className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-2">
                         <CheckCircle size={16} /> Pre-Print Checklist (Mandatory)
                       </h4>
                       <div className="grid grid-cols-2 gap-3">
                         {(checklistConfig[selectedTask.jobType] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed']).map((label, i) => (
-                          <label key={i} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl cursor-pointer hover:border-border transition-colors">
+                          <label key={i} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg cursor-pointer hover:border-border transition-colors">
                             <input type="checkbox"
                               checked={!!checklist[`item_${i}`]}
                               onChange={e => setChecklist(prev => ({ ...prev, [`item_${i}`]: e.target.checked }))}
@@ -1163,7 +1344,7 @@ export default function DesignerWorkspace() {
                             <span className="text-sm font-bold text-gray-600">{label}</span>
                           </label>
                         ))}
-                        <label className="col-span-2 flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl cursor-pointer hover:border-border transition-colors">
+                        <label className="col-span-2 flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg cursor-pointer hover:border-border transition-colors">
                           <input type="checkbox"
                             checked={checklist.approval || false}
                             onChange={e => setChecklist(prev => ({ ...prev, approval: e.target.checked }))}
@@ -1187,7 +1368,7 @@ export default function DesignerWorkspace() {
                                   updateStatus(selectedTask.realId, 'completed');
                                 }
                               }}
-                              className="w-full py-4 rounded-xl font-bold text-white -200 flex items-center justify-center gap-2 transition-all
+                              className="w-full py-4 rounded-lg font-bold text-white -200 flex items-center justify-center gap-2 transition-all
                              disabled:bg-gray-300 disabled: disabled:cursor-not-allowed bg-gray-900 hover:bg-gray-900 hover:scale-[1.01]"
                             >
                               {isComplete ? <><Printer size={20} /> Client Approved - Ready for Print</> : 'Complete Checklist to Finish'}
@@ -1230,7 +1411,7 @@ export default function DesignerWorkspace() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+                <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
                   <div className="grid grid-cols-7 mb-3 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">
                     <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
                   </div>
@@ -1295,7 +1476,7 @@ export default function DesignerWorkspace() {
                       type="text"
                       value={newLog}
                       onChange={(e) => setNewLog(e.target.value)}
-                      className="flex-1 text-xs border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-gray-400 bg-white"
+                      className="flex-1 text-xs border border-gray-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-gray-400 bg-white"
                       placeholder="Finished logo design..."
                     />
                     <button type="submit" disabled={!newLog.trim()} className="p-3 bg-gray-900 text-white rounded-md hover:bg-gray-800 disabled:opacity-50 transition-all hover:-translate-y-0.5">
@@ -1313,13 +1494,13 @@ export default function DesignerWorkspace() {
       {
         isNewTaskModalOpen && (
           <div className="fixed inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60 flex items-center justify-center z-50 p-4 animate-in fade-in zoom-in duration-300 backdrop-blur-sm">
-            <div className="bg-white rounded-3xl w-full max-w-4xl  overflow-hidden flex flex-col max-h-[90vh] border border-gray-100">
+            <div className="bg-white rounded-lg w-full max-w-4xl  overflow-hidden flex flex-col max-h-[90vh] border border-gray-100">
               {/* Premium Gradient Header */}
               <div className="relative p-4 bg-gray-900 overflow-hidden">
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30"></div>
                 <div className="relative flex justify-between items-start">
                   <div className="flex items-start gap-2 md:gap-4">
-                    <div className="p-3 bg-white/20 backdrop-blur-lg rounded-2xl">
+                    <div className="p-3 bg-white/20 backdrop-blur-lg rounded-lg">
                       <Briefcase size={28} className="text-white" />
                     </div>
                     <div>
@@ -1329,7 +1510,7 @@ export default function DesignerWorkspace() {
                   </div>
                   <button
                     onClick={() => setIsNewTaskModalOpen(false)}
-                    className="text-white/80 hover:text-white hover:bg-white/20 p-2.5 rounded-xl transition-all"
+                    className="text-white/80 hover:text-white hover:bg-white/20 p-2.5 rounded-lg transition-all"
                   >
                     <X size={22} />
                   </button>
@@ -1341,9 +1522,9 @@ export default function DesignerWorkspace() {
                 <form id="create-project-form" onSubmit={handleCreateTask} className="space-y-8">
 
                   {/* 1. Project Basics */}
-                  <div className="space-y-5 bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+                  <div className="space-y-5 bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
                     <div className="flex items-center gap-3 pb-3 border-b-2 border-primary">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gray-900 text-white text-sm font-bold -200">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-900 text-white text-sm font-bold -200">
                         1
                       </div>
                       <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Project Basics</h4>
@@ -1357,7 +1538,7 @@ export default function DesignerWorkspace() {
                         <input
                           required
                           type="text"
-                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all font-medium hover:border-gray-300"
+                          className="w-full border-2 border-gray-200 rounded-lg px-4 py-3.5 text-sm focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all font-medium hover:border-gray-300"
                           placeholder="e.g. Wedding Invitation - Sharma Family"
                           value={newTaskData.title}
                           onChange={e => setNewTaskData({ ...newTaskData, title: e.target.value })}
@@ -1370,7 +1551,7 @@ export default function DesignerWorkspace() {
                         </label>
                         <select
                           required
-                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all bg-white hover:border-gray-300"
+                          className="w-full border-2 border-gray-200 rounded-lg px-4 py-3.5 text-sm focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all bg-white hover:border-gray-300"
                           value={newTaskData.clientId}
                           onChange={e => setNewTaskData({ ...newTaskData, clientId: e.target.value })}
                         >
@@ -1384,7 +1565,7 @@ export default function DesignerWorkspace() {
                           🎨 Assign Designer
                         </label>
                         <select
-                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all bg-white hover:border-gray-300"
+                          className="w-full border-2 border-gray-200 rounded-lg px-4 py-3.5 text-sm focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all bg-white hover:border-gray-300"
                           value={newTaskData.designerId}
                           onChange={e => setNewTaskData({ ...newTaskData, designerId: e.target.value })}
                         >
@@ -1398,9 +1579,9 @@ export default function DesignerWorkspace() {
                   </div>
 
                   {/* 2. Parameters */}
-                  <div className="space-y-5 bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+                  <div className="space-y-5 bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
                     <div className="flex items-center gap-3 pb-3 border-b-2 border-gradient-to-r from-orange-500 to-red-500">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 text-white text-sm font-bold -200">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 text-white text-sm font-bold -200">
                         2
                       </div>
                       <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Project Parameters</h4>
@@ -1412,7 +1593,7 @@ export default function DesignerWorkspace() {
                           📋 Job Type
                         </label>
                         <select
-                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-4 ring-orange-500/20 focus:border-orange-500 bg-white hover:border-gray-300 transition-all"
+                          className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-sm focus:ring-4 ring-orange-500/20 focus:border-orange-500 bg-white hover:border-gray-300 transition-all"
                           value={newTaskData.jobType}
                           onChange={e => setNewTaskData({ ...newTaskData, jobType: e.target.value })}
                         >
@@ -1428,7 +1609,7 @@ export default function DesignerWorkspace() {
                         </label>
                         <input
                           type="date"
-                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-4 ring-orange-500/20 focus:border-orange-500 font-medium text-gray-600 hover:border-gray-300 transition-all"
+                          className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-sm focus:ring-4 ring-orange-500/20 focus:border-orange-500 font-medium text-gray-600 hover:border-gray-300 transition-all"
                           value={newTaskData.deadline}
                           onChange={e => setNewTaskData({ ...newTaskData, deadline: e.target.value })}
                         />
@@ -1439,7 +1620,7 @@ export default function DesignerWorkspace() {
                           ⚡ Priority
                         </label>
                         <select
-                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-4 ring-orange-500/20 focus:border-orange-500 bg-white hover:border-gray-300 transition-all"
+                          className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-sm focus:ring-4 ring-orange-500/20 focus:border-orange-500 bg-white hover:border-gray-300 transition-all"
                           value={newTaskData.priority}
                           onChange={e => setNewTaskData({ ...newTaskData, priority: e.target.value })}
                         >
@@ -1452,22 +1633,22 @@ export default function DesignerWorkspace() {
                   </div>
 
                   {/* 3. Assets & Brief */}
-                  <div className="space-y-5 bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+                  <div className="space-y-5 bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
                     <div className="flex items-center gap-3 pb-3 border-b-2 border-gray-300">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-gray-700 to-gray-800 text-white text-sm font-bold -200">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-gray-700 to-gray-800 text-white text-sm font-bold -200">
                         3
                       </div>
                       <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Assets & Brief</h4>
                     </div>
 
-                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-5 rounded-xl border-2 border-border space-y-3">
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-5 rounded-lg border-2 border-border space-y-3">
                       <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                         <Folder size={18} className="text-foreground" />
                         Design Assets (Drive Link or File Upload)
                       </label>
                       <input
                         type="url"
-                        className="w-full border-2 border-border rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-gray-400/20 focus:border-gray-400 placeholder:text-gray-300 bg-white hover:border-border transition-all"
+                        className="w-full border-2 border-border rounded-lg px-4 py-3.5 text-sm focus:ring-4 ring-gray-400/20 focus:border-gray-400 placeholder:text-gray-300 bg-white hover:border-border transition-all"
                         placeholder="https://drive.google.com/drive/folders/..."
                         value={newTaskData.driveLink}
                         onChange={e => setNewTaskData({ ...newTaskData, driveLink: e.target.value })}
@@ -1481,7 +1662,7 @@ export default function DesignerWorkspace() {
                               setNewTaskData({ ...newTaskData, file: e.target.files[0] });
                             }
                           }}
-                          className="text-xs text-gray-600 file:mr-3 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-gray-900 file:text-white hover:file:bg-gray-900 file: file:-200 file:transition-all"
+                          className="text-xs text-gray-600 file:mr-3 file:py-2.5 file:px-5 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-gray-900 file:text-white hover:file:bg-gray-900 file: file:-200 file:transition-all"
                         />
                       </div>
                     </div>
@@ -1492,7 +1673,7 @@ export default function DesignerWorkspace() {
                       </label>
                       <textarea
                         rows={4}
-                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:ring-4 ring-gray-400/20 focus:border-gray-400 leading-relaxed hover:border-gray-300 transition-all"
+                        className="w-full border-2 border-gray-200 rounded-lg px-4 py-3.5 text-sm focus:ring-4 ring-gray-400/20 focus:border-gray-400 leading-relaxed hover:border-gray-300 transition-all"
                         placeholder="Describe specific requirements, items to print, size, quantity, special instructions..."
                         value={newTaskData.description}
                         onChange={e => setNewTaskData({ ...newTaskData, description: e.target.value })}
@@ -1508,7 +1689,7 @@ export default function DesignerWorkspace() {
                 <button
                   type="button"
                   onClick={() => setIsNewTaskModalOpen(false)}
-                  className="px-4 py-2 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all text-sm"
+                  className="px-4 py-2 border-2 border-gray-300 rounded-lg font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all text-sm"
                 >
                   Cancel
                 </button>

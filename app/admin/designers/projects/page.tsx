@@ -209,26 +209,26 @@ export default function DesignerProjectsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl border p-3 sm:p-4">
+        <div className="bg-white rounded-lg border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Projects</p>
           <p className="text-page-title text-gray-900">{totalProjects}</p>
         </div>
-        <div className="bg-white rounded-xl border p-3 sm:p-4">
+        <div className="bg-white rounded-lg border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">In Progress</p>
           <p className="text-page-title text-foreground">{inProgress}</p>
         </div>
-        <div className="bg-white rounded-xl border p-3 sm:p-4">
+        <div className="bg-white rounded-lg border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Completed</p>
           <p className="text-page-title text-gray-900">{completed}</p>
         </div>
-        <div className="bg-white rounded-xl border p-3 sm:p-4">
+        <div className="bg-white rounded-lg border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">On Hold</p>
           <p className="text-page-title text-orange-600">{onHold}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border p-4">
+      <div className="bg-white rounded-lg border p-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -257,7 +257,7 @@ export default function DesignerProjectsPage() {
         {filteredProjects.map((project: any) => {
           const daysRemaining = getDaysRemaining(project.endDate);
           return (
-            <div key={project.id} className={`bg-white rounded-xl border p-4  transition-shadow ${daysRemaining < 0 && project.status !== 'completed' ? 'border-l-4 border-l-red-500' :
+            <div key={project.id} className={`bg-white rounded-lg border p-4  transition-shadow ${daysRemaining < 0 && project.status !== 'completed' ? 'border-l-4 border-l-red-500' :
               daysRemaining <= 3 && project.status !== 'completed' ? 'border-l-4 border-l-orange-400' : ''}`}>
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 md:gap-4">
                 <div className="flex-1 min-w-0">
@@ -337,7 +337,7 @@ export default function DesignerProjectsPage() {
       </div>
 
       {filteredProjects.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-xl border">
+        <div className="text-center py-12 bg-white rounded-lg border">
           <Briefcase className="mx-auto h-12 w-12 text-gray-300" />
           <h3 className="mt-3 text-lg font-medium text-gray-900">No projects found</h3>
           <p className="mt-1 text-gray-500">Create projects to manage design work</p>
@@ -347,7 +347,7 @@ export default function DesignerProjectsPage() {
       {/* Create/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
               <h2 className="text-page-title">{editingProject ? 'Edit Project' : 'Create Project'}</h2>
               <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-md"><X size={20} /></button>
@@ -424,7 +424,7 @@ export default function DesignerProjectsPage() {
       {showDetailModal && selectedProject && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           {/* Same Modal UI using selectedProject data */}
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
               <h2 className="text-page-title">{selectedProject.name}</h2>
               <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
@@ -443,7 +443,7 @@ export default function DesignerProjectsPage() {
       {/* Gantt Chart Modal */}
       {showGanttModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-auto">
+          <div className="bg-white rounded-lg w-full max-w-5xl max-h-[90vh] overflow-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between z-10">
               <h2 className="text-page-title">Gantt Chart View</h2>
               <button onClick={() => setShowGanttModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>

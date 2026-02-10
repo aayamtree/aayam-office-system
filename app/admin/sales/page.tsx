@@ -76,7 +76,7 @@ export default function SalesPage() {
         </div>
         <Link
           href="/admin/sales/orders?new=true"
-          className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-xl -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
+          className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
         >
           <ShoppingCart size={20} />
           <span>New Order</span>
@@ -86,9 +86,9 @@ export default function SalesPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-2xl p-5 border border-gray-100 transition-shadow  group">
+          <div key={stat.label} className="bg-white rounded-lg p-5 border border-gray-100 transition-shadow  group">
             <div className="flex items-center gap-3 mb-3">
-              <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+              <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
                 <stat.icon size={22} className="text-white" />
               </div>
             </div>
@@ -103,9 +103,9 @@ export default function SalesPage() {
 
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-        <Link href="/admin/sales/leads" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
+        <Link href="/admin/sales/leads" className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
-            <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div className="w-14 h-14 bg-amber-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
               <Users size={28} className="text-destructive" />
             </div>
             <div>
@@ -118,9 +118,9 @@ export default function SalesPage() {
           </div>
         </Link>
 
-        <Link href="/admin/sales/quotations" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
+        <Link href="/admin/sales/quotations" className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
-            <div className="w-14 h-14 bg-gray-900 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div className="w-14 h-14 bg-gray-900 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
               <FileText size={28} className="text-primary" />
             </div>
             <div>
@@ -133,9 +133,9 @@ export default function SalesPage() {
           </div>
         </Link>
 
-        <Link href="/admin/sales/orders" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
+        <Link href="/admin/sales/orders" className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
-            <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div className="w-14 h-14 bg-muted rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
               <ShoppingCart size={28} className="text-foreground" />
             </div>
             <div>
@@ -152,7 +152,7 @@ export default function SalesPage() {
       {/* Order Pipeline & Recent Orders */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         {/* Order Pipeline */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
           <div className="flex items-center gap-3 mb-3 md:mb-1.5">
             <div className="w-1 h-6 bg-muted0 rounded-full"></div>
             <h2 className="text-section text-gray-900">Order Pipeline</h2>
@@ -173,7 +173,7 @@ export default function SalesPage() {
         </div>
 
         {/* Recent Orders */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
           <div className="flex items-center justify-between mb-3 md:mb-1.5">
             <div className="flex items-center gap-3">
               <div className="w-1 h-6 bg-gray-900 rounded-full"></div>
@@ -185,7 +185,7 @@ export default function SalesPage() {
           </div>
           <div className="space-y-3">
             {recentJobs.length === 0 ? <p className="text-gray-500 text-center py-4">No recent orders</p> : recentJobs.map((order) => (
-              <div key={order.id} className="flex items-center justify-between p-3.5 bg-gray-50/80 rounded-xl hover:bg-gray-100 transition-colors border border-gray-100">
+              <div key={order.id} className="flex items-center justify-between p-3.5 bg-gray-50/80 rounded-lg hover:bg-gray-100 transition-colors border border-gray-100">
                 <div className="flex items-center gap-3">
                   <div className="bg-white p-2 rounded-lg border border-gray-100">
                     <ShoppingCart size={16} className="text-gray-400" />
@@ -208,14 +208,14 @@ export default function SalesPage() {
       </div>
 
       {/* Pending Actions */}
-      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+      <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
         <div className="flex items-center gap-3 mb-3 md:mb-1.5">
           <div className="w-1 h-6 bg-white0 rounded-full"></div>
           <h2 className="text-section text-gray-900">Pending Actions</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
-          <Link href="/admin/sales/leads" className="flex items-center gap-2 md:gap-4 p-4 bg-white/80 rounded-2xl border border-gray-100 transition-colors hover:bg-amber-100 cursor-pointer">
-            <div className="bg-white p-3 rounded-xl">
+          <Link href="/admin/sales/leads" className="flex items-center gap-2 md:gap-4 p-4 bg-white/80 rounded-lg border border-gray-100 transition-colors hover:bg-amber-100 cursor-pointer">
+            <div className="bg-white p-3 rounded-lg">
               <Clock size={24} className="text-destructive" />
             </div>
             <div>
@@ -223,8 +223,8 @@ export default function SalesPage() {
               <p className="text-sm font-medium text-amber-700 mt-0.5">{followUpsDue} due today</p>
             </div>
           </Link>
-          <Link href="/admin/sales/quotations" className="flex items-center gap-2 md:gap-4 p-4 bg-muted/80 rounded-2xl border border-gray-200 transition-colors hover:bg-gray-900 cursor-pointer">
-            <div className="bg-white p-3 rounded-xl">
+          <Link href="/admin/sales/quotations" className="flex items-center gap-2 md:gap-4 p-4 bg-muted/80 rounded-lg border border-gray-200 transition-colors hover:bg-gray-900 cursor-pointer">
+            <div className="bg-white p-3 rounded-lg">
               <AlertCircle size={24} className="text-primary" />
             </div>
             <div>
@@ -232,8 +232,8 @@ export default function SalesPage() {
               <p className="text-sm font-medium text-primary mt-0.5">{pendingQuotesCount} pending review</p>
             </div>
           </Link>
-          <Link href="/admin/dispatch" className="flex items-center gap-2 md:gap-4 p-4 bg-white/80 rounded-2xl border border-green-100 transition-colors hover:bg-gray-100 cursor-pointer">
-            <div className="bg-white p-3 rounded-xl">
+          <Link href="/admin/dispatch" className="flex items-center gap-2 md:gap-4 p-4 bg-white/80 rounded-lg border border-green-100 transition-colors hover:bg-gray-100 cursor-pointer">
+            <div className="bg-white p-3 rounded-lg">
               <CheckCircle size={24} className="text-gray-900" />
             </div>
             <div>

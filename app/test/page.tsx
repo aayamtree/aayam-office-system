@@ -48,7 +48,7 @@ export default function TestConnectionPage() {
         <div className="p-8 max-w-2xl mx-auto">
             <h1 className="text-page-title mb-3 md:mb-6">Database Connection Test</h1>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-4">
                 <div>
                     <h3 className="font-semibold text-gray-700">Configuration</h3>
                     <p className="text-sm">Configured: {config.isConfigured ? '✅ Yes' : '❌ No'}</p>

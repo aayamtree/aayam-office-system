@@ -107,7 +107,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-oms-blue rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <div className="w-16 h-16 bg-oms-blue rounded-lg flex items-center justify-center mx-auto mb-4 shadow-lg">
             <span className="text-white font-bold text-2xl">A</span>
           </div>
           <h1 className="text-page-title text-gray-900">Aayam Office</h1>
@@ -115,10 +115,10 @@ export default function LoginPage() {
         </div>
 
         {/* Login Form */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white rounded-lg shadow-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
                 <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
                 <p className="text-sm text-red-600">{error}</p>
               </div>
@@ -134,7 +134,7 @@ export default function LoginPage() {
                   type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-oms-blue/20 focus:border-oms-blue transition-all"
+                  className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oms-blue/20 focus:border-oms-blue transition-all"
                   placeholder="designer1, admin1, etc."
                   required
                   disabled={isLoading}
@@ -154,7 +154,7 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-oms-blue/20 focus:border-oms-blue transition-all"
+                  className="w-full pl-11 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oms-blue/20 focus:border-oms-blue transition-all"
                   placeholder="••••••••"
                   required
                   disabled={isLoading}

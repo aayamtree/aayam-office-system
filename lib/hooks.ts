@@ -1,7 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase, isSupabaseConfigured } from './supabase';
 import { useAuth } from './auth-context';
 import {
@@ -1532,6 +1532,105 @@ export function useNotes() {
     updateNote,
     deleteNote
   };
+}
+
+// =============================================
+// DASHBOARD NOTES HOOK (personal + tagged)
+// =============================================
+export function useDashboardNotes() {
+  const { profile } = useAuth();
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchNotes = useCallback(async () => {
+    if (!profile?.id) { setLoading(false); return; }
+
+    try {
+      // Fetch notes where user is creator OR tagged
+      const { data: myNotes } = await supabase
+        .from('notes')
+        .select('*')
+        .eq('user_id', profile.id)
+        .order('is_pinned', { ascending: false })
+        .order('updated_at', { ascending: false })
+        .limit(20);
+
+      const { data: taggedNotes } = await supabase
+        .from('notes')
+        .select('*')
+        .contains('tagged_users', [profile.id])
+        .neq('user_id', profile.id)
+        .order('updated_at', { ascending: false })
+        .limit(10);
+
+      const combined = [...(myNotes || []), ...(taggedNotes || [])];
+      const unique = combined.filter((n, i, arr) => arr.findIndex(x => x.id === n.id) === i);
+      unique.sort((a, b) => {
+        if (a.is_pinned && !b.is_pinned) return -1;
+        if (!a.is_pinned && b.is_pinned) return 1;
+        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      });
+
+      setNotes(unique as Note[]);
+    } catch (err) {
+      console.error('Error fetching notes:', err);
+    }
+    setLoading(false);
+  }, [profile?.id]);
+
+  useEffect(() => { fetchNotes(); }, [fetchNotes]);
+
+  const createNote = async (note: { title?: string; content: string; color?: string; is_pinned?: boolean; tagged_users?: string[] }) => {
+    if (!profile?.id) return { error: 'User not loaded yet. Please wait and try again.' };
+
+    // Build insert object — only include columns that exist
+    const insertData: Record<string, any> = {
+      content: note.content,
+      user_id: profile.id,
+      color: note.color || 'yellow',
+      is_pinned: note.is_pinned || false,
+    };
+    if (note.title) insertData.title = note.title;
+    if (note.tagged_users && note.tagged_users.length > 0) insertData.tagged_users = note.tagged_users;
+
+    const { data, error } = await supabase
+      .from('notes')
+      .insert([insertData])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Note create error:', error);
+      return { data: null, error: error.message };
+    }
+
+    fetchNotes();
+    return { data, error: null };
+  };
+
+  const updateNote = async (id: string, updates: Partial<Note>) => {
+    const { data, error } = await supabase
+      .from('notes')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (!error) fetchNotes();
+    return { data, error: error?.message };
+  };
+
+  const deleteNote = async (id: string) => {
+    const { error } = await supabase.from('notes').delete().eq('id', id);
+    if (!error) fetchNotes();
+    return { error: error?.message };
+  };
+
+  const togglePin = async (id: string, pinned: boolean) => {
+    return updateNote(id, { is_pinned: !pinned });
+  };
+
+  return { notes, loading, createNote, updateNote, deleteNote, togglePin, refetch: fetchNotes };
 }
 
 // =============================================

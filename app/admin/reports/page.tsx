@@ -56,12 +56,12 @@ export default function ReportsPage() {
       {activeTab === 'cashflow' && <CashFlowStatement />}
 
       {/* Manual Journal Link */}
-      <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-lg md:rounded-2xl p-3 md:p-4 text-white flex justify-between items-center">
+      <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-lg md:rounded-lg p-3 md:p-4 text-white flex justify-between items-center">
         <div>
           <h3 className="text-section mb-1">Manual Journal Entry</h3>
           <p className="text-gray-300 text-sm">Record accounting adjustments and non-cash transactions</p>
         </div>
-        <Link href="/admin/finance/journal" className="px-4 py-2 bg-white text-gray-900 rounded-xl font-bold hover:bg-gray-100 transition-colors">
+        <Link href="/admin/finance/journal" className="px-4 py-2 bg-white text-gray-900 rounded-lg font-bold hover:bg-gray-100 transition-colors">
           Open Journal
         </Link>
       </div>
@@ -108,10 +108,10 @@ function ClientStatementGenerator() {
   });
 
   return (
-    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100 animate-scale-in">
+    <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100 animate-scale-in">
       {/* ... Header UI ... */}
       <div className="flex items-center gap-3 mb-3 md:mb-1.5">
-        <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white">
+        <div className="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center text-white">
           <FileText size={20} />
         </div>
         <div>
@@ -124,18 +124,18 @@ function ClientStatementGenerator() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4 items-end mb-3 md:mb-1.5">
         <div className="md:col-span-2">
           <label className="block text-sm font-medium mb-1">Select Client</label>
-          <select value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)} className="w-full px-3 py-2 border rounded-xl bg-white">
+          <select value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)} className="w-full px-3 py-2 border rounded-lg bg-white">
             <option value="">-- Choose Client --</option>
             {clients?.map(c => <option key={c.id} value={c.id}>{c.name} {c.company ? `(${c.company})` : ''}</option>)}
           </select>
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">From Date</label>
-          <input type="date" className="w-full px-3 py-2 border rounded-xl" onChange={e => setDateRange({ ...dateRange, start: e.target.value })} />
+          <input type="date" className="w-full px-3 py-2 border rounded-lg" onChange={e => setDateRange({ ...dateRange, start: e.target.value })} />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">To Date</label>
-          <input type="date" className="w-full px-3 py-2 border rounded-xl" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
+          <input type="date" className="w-full px-3 py-2 border rounded-lg" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
         </div>
       </div>
       <button onClick={generateStatement} className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-900 font-medium w-full md:w-auto">
@@ -189,9 +189,9 @@ function VendorStatementGenerator() {
   });
 
   return (
-    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100 animate-scale-in">
+    <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100 animate-scale-in">
       <div className="flex items-center gap-3 mb-3 md:mb-1.5">
-        <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-destructive">
+        <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center text-destructive">
           <Truck size={20} />
         </div>
         <div>
@@ -202,21 +202,21 @@ function VendorStatementGenerator() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4 items-end mb-3 md:mb-1.5">
         <div className="md:col-span-2">
           <label className="block text-sm font-medium mb-1">Select Vendor</label>
-          <select value={selectedVendorId} onChange={e => setSelectedVendorId(e.target.value)} className="w-full px-3 py-2 border rounded-xl bg-white">
+          <select value={selectedVendorId} onChange={e => setSelectedVendorId(e.target.value)} className="w-full px-3 py-2 border rounded-lg bg-white">
             <option value="">-- Choose Vendor --</option>
             {vendors?.map(v => <option key={v.id} value={v.id}>{v.name} {v.company ? `(${v.company})` : ''}</option>)}
           </select>
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">From Date</label>
-          <input type="date" className="w-full px-3 py-2 border rounded-xl" onChange={e => setDateRange({ ...dateRange, start: e.target.value })} />
+          <input type="date" className="w-full px-3 py-2 border rounded-lg" onChange={e => setDateRange({ ...dateRange, start: e.target.value })} />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">To Date</label>
-          <input type="date" className="w-full px-3 py-2 border rounded-xl" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
+          <input type="date" className="w-full px-3 py-2 border rounded-lg" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
         </div>
       </div>
-      <button onClick={() => selectedVendorId && setShowStatement(true)} className="px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-900 font-medium w-full md:w-auto">
+      <button onClick={() => selectedVendorId && setShowStatement(true)} className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-900 font-medium w-full md:w-auto">
         Generate Statement
       </button>
 
@@ -276,9 +276,9 @@ function CashFlowStatement() {
   const netFlow = totalIn - totalOut;
 
   return (
-    <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100 animate-scale-in">
+    <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100 animate-scale-in">
       <div className="flex items-center gap-3 mb-3 md:mb-1.5">
-        <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-900">
+        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-gray-900">
           <ArrowRightLeft size={20} />
         </div>
         <div>
@@ -290,25 +290,25 @@ function CashFlowStatement() {
       <div className="flex flex-wrap gap-2 md:gap-4 mb-3 md:mb-1.5">
         <div>
           <label className="block text-sm font-medium mb-1">From</label>
-          <input type="date" value={dateRange.start} className="px-3 py-2 border rounded-xl" onChange={e => setDateRange({ ...dateRange, start: e.target.value })} />
+          <input type="date" value={dateRange.start} className="px-3 py-2 border rounded-lg" onChange={e => setDateRange({ ...dateRange, start: e.target.value })} />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">To</label>
-          <input type="date" value={dateRange.end} className="px-3 py-2 border rounded-xl" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
+          <input type="date" value={dateRange.end} className="px-3 py-2 border rounded-lg" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
         </div>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4 mb-3 md:mb-1.5">
-        <div className="bg-white p-4 rounded-xl border border-green-100">
+        <div className="bg-white p-4 rounded-lg border border-green-100">
           <p className="text-sm text-gray-900 font-medium">Total Inflow</p>
           <p className="text-page-title text-gray-900">₹{totalIn.toLocaleString()}</p>
         </div>
-        <div className="bg-red-50 p-4 rounded-xl border border-red-100">
+        <div className="bg-red-50 p-4 rounded-lg border border-red-100">
           <p className="text-sm text-red-600 font-medium">Total Outflow</p>
           <p className="text-page-title text-red-700">₹{totalOut.toLocaleString()}</p>
         </div>
-        <div className={`p-4 rounded-xl border ${netFlow >= 0 ? 'bg-gray-900 border-gray-300' : 'bg-white border-gray-100'}`}>
+        <div className={`p-4 rounded-lg border ${netFlow >= 0 ? 'bg-gray-900 border-gray-300' : 'bg-white border-gray-100'}`}>
           <p className={`text-sm font-medium ${netFlow >= 0 ? 'text-primary' : 'text-destructive'}`}>Net Cash Flow</p>
           <p className={`text-page-title ${netFlow >= 0 ? 'text-primary' : 'text-amber-700'}`}>
             {netFlow >= 0 ? '+' : ''}₹{netFlow.toLocaleString()}
@@ -334,7 +334,7 @@ function CashFlowStatement() {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto border rounded-xl mt-4">
+      <div className="overflow-x-auto border rounded-lg mt-4">
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-50 border-b">
             <tr>

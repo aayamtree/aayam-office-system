@@ -65,7 +65,7 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white rounded-2xl w-full max-w-lg  overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-white rounded-lg w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
                 {/* Header */}
                 <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                     <div>
@@ -90,7 +90,7 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
                             <p>Loading checklist templates...</p>
                         </div>
                     ) : !matchedChecklist ? (
-                        <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                        <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
                             <AlertCircle className="mx-auto h-12 w-12 text-gray-300 mb-3" />
                             <h3 className="text-lg font-medium text-gray-900">No Checklist Found</h3>
                             <p className="text-gray-500">No checklist template found for &quot;{job.job_type}&quot;.</p>
@@ -100,7 +100,7 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
                             {/* Progress Bar */}
                             <div className="bg-gray-100 rounded-full h-2.5 overflow-hidden">
                                 <div
-                                    className={`h-full transition-all duration-500 ${isComplete ? 'bg-green-500' : 'bg-[rgba(0,0,255,0.1)]'}`}
+                                    className={`h-full transition-all duration-500 ${isComplete ? 'bg-green-500' : 'bg-primary'}`}
                                     style={{ width: `${(completedCount / totalCount) * 100}%` }}
                                 />
                             </div>
@@ -116,7 +116,7 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
                                         key={idx}
                                         onClick={() => toggleItem(item)}
                                         className={`
-                      flex items-center gap-2 md:gap-4 p-4 rounded-xl border transition-all cursor-pointer group select-none
+                      flex items-center gap-2 md:gap-4 p-4 rounded-lg border transition-all cursor-pointer group select-none
                       ${progress[item]
                                                 ? 'bg-green-50 border-green-200'
                                                 : 'bg-white border-gray-200 hover:border-primary/20 hover:bg-gray-50'
@@ -153,7 +153,7 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
                     <button
                         onClick={handleSave}
                         disabled={saving || loadingChecklists || !matchedChecklist}
-                        className="px-5 py-2.5 bg-[rgba(0,0,255,0.1)] text-white rounded-md font-semibold hover:bg-[rgba(0,0,255,0.1)] transition-colors -200 disabled:opacity-50 flex items-center gap-2"
+                        className="px-5 py-2.5 bg-primary text-primary-foreground rounded-md font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
                     >
                         {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
                         {saving ? 'Saving...' : 'Save Progress'}

@@ -468,8 +468,7 @@ td {
 
 /* Table Row Selected State */
 .table-row-selected {
-  @apply border-l-oms-blue;
-  background: rgba(0, 0, 255, 0.08);
+  @apply border-l-oms-blue bg-primary/10;
 }
 
 /* Hover effect for table rows */
@@ -493,8 +492,7 @@ td {
 
 /* Sidebar Active Item */
 .sidebar-item-active {
-  background: rgba(0, 0, 255, 0.15);
-  @apply text-white border-l-4 border-oms-blue;
+  @apply bg-primary/15 text-white border-l-4 border-oms-blue;
 }
 
 /* =============================================
@@ -503,7 +501,7 @@ td {
 
 /* Primary Card */
 .card-primary {
-  @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6;
+  @apply bg-white rounded-lg shadow-sm border border-gray-100 p-6;
 }
 
 /* Card Header */
@@ -546,7 +544,7 @@ td {
 
 /* Form Input */
 .form-input {
-  @apply w-full px-3 py-2 border border-gray-300 rounded-xl text-body text-oms-text-primary;
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md text-body text-oms-text-primary;
   @apply focus:outline-none focus:ring-2 focus:ring-oms-blue/20 focus:border-oms-blue;
 }
 
@@ -557,7 +555,7 @@ td {
 
 /* Form Select */
 .form-select {
-  @apply w-full px-3 py-2 border border-gray-300 rounded-xl text-body text-oms-text-primary bg-white;
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md text-body text-oms-text-primary bg-white;
   @apply focus:outline-none focus:ring-2 focus:ring-oms-blue/20 focus:border-oms-blue;
 }
 

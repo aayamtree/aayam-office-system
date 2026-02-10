@@ -65,6 +65,12 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                 is_active: true
             });
 
+            if (newVendor?.error) {
+                alert('❌ Failed to add vendor: ' + newVendor.error);
+                setSaving(false);
+                return;
+            }
+
             alert('✅ Vendor added successfully!');
             if (newVendor?.data) {
                 onSuccess?.(newVendor.data.id);
@@ -92,21 +98,21 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl  w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+            <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-green-50 to-emerald-50">
+                <div className="flex items-center justify-between p-6 border-b bg-muted/50">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-[rgba(0,0,255,0.1)] rounded-lg">
-                            <Building2 size={24} className="text-green-600" />
+                        <div className="p-2 bg-muted rounded-lg">
+                            <Building2 size={24} className="text-foreground" />
                         </div>
                         <div>
                             <h3 className="text-page-title text-gray-900">Quick Add Vendor</h3>
                             <p className="text-sm text-gray-600">Add a new vendor to the system</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-md transition-colors">
-                        <X size={20} />
+                    <button onClick={onClose} className="h-8 w-8 flex items-center justify-center hover:bg-gray-200 rounded-md transition-colors">
+                        <X size={16} />
                     </button>
                 </div>
 
@@ -118,7 +124,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                             <input
                                 required
                                 type="text"
-                                className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-green-500/20 focus:border-green-500"
+                                className="w-full px-3 py-2 border rounded-md focus:ring-2 ring-ring/20 focus:border-gray-400"
                                 placeholder="Vendor Name"
                                 value={formData.name}
                                 onChange={e => setFormData({ ...formData, name: e.target.value })}
@@ -129,7 +135,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                             <label className="block text-sm font-medium mb-1">Company</label>
                             <input
                                 type="text"
-                                className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-green-500/20 focus:border-green-500"
+                                className="w-full px-3 py-2 border rounded-md focus:ring-2 ring-ring/20 focus:border-gray-400"
                                 placeholder="Company Name"
                                 value={formData.company}
                                 onChange={e => setFormData({ ...formData, company: e.target.value })}
@@ -141,7 +147,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                             <input
                                 required
                                 type="tel"
-                                className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-green-500/20 focus:border-green-500"
+                                className="w-full px-3 py-2 border rounded-md focus:ring-2 ring-ring/20 focus:border-gray-400"
                                 placeholder="+91 98765 43210"
                                 value={formData.phone}
                                 onChange={e => setFormData({ ...formData, phone: e.target.value })}
@@ -152,7 +158,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                             <label className="block text-sm font-medium mb-1">Email</label>
                             <input
                                 type="email"
-                                className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-green-500/20 focus:border-green-500"
+                                className="w-full px-3 py-2 border rounded-md focus:ring-2 ring-ring/20 focus:border-gray-400"
                                 placeholder="vendor@example.com"
                                 value={formData.email}
                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
@@ -163,7 +169,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                             <label className="block text-sm font-medium mb-1">Category</label>
                             <div className="flex gap-2">
                                 <select
-                                    className="flex-1 px-3 py-2 border rounded-xl focus:ring-2 ring-green-500/20 focus:border-green-500"
+                                    className="flex-1 px-3 py-2 border rounded-md focus:ring-2 ring-ring/20 focus:border-gray-400"
                                     value={formData.category}
                                     onChange={e => setFormData({ ...formData, category: e.target.value })}
                                 >
@@ -172,7 +178,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                                     ))}
                                 </select>
                                 <button type="button" onClick={() => setShowAddCategoryModal(true)}
-                                    className="px-3 py-2 bg-green-100 text-primary rounded-xl hover:bg-[rgba(0,0,255,0.2)] flex items-center gap-1">
+                                    className="px-3 py-2 bg-muted text-foreground rounded-md hover:bg-muted/80 flex items-center gap-1">
                                     <Plus size={16} /><span className="hidden sm:inline">Add</span>
                                 </button>
                             </div>
@@ -182,7 +188,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                             <label className="block text-sm font-medium mb-1">City</label>
                             <input
                                 type="text"
-                                className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-green-500/20 focus:border-green-500"
+                                className="w-full px-3 py-2 border rounded-md focus:ring-2 ring-ring/20 focus:border-gray-400"
                                 placeholder="City"
                                 value={formData.city}
                                 onChange={e => setFormData({ ...formData, city: e.target.value })}
@@ -194,7 +200,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                             <input
                                 list="vendor-states"
                                 type="text"
-                                className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-green-500/20 focus:border-green-500"
+                                className="w-full px-3 py-2 border rounded-md focus:ring-2 ring-ring/20 focus:border-gray-400"
                                 placeholder="Select or type state/province"
                                 value={formData.state}
                                 onChange={e => setFormData({ ...formData, state: e.target.value })}
@@ -241,7 +247,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                             <label className="block text-sm font-medium mb-1">GSTIN</label>
                             <input
                                 type="text"
-                                className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-green-500/20 focus:border-green-500"
+                                className="w-full px-3 py-2 border rounded-md focus:ring-2 ring-ring/20 focus:border-gray-400"
                                 placeholder="22AAAAA0000A1Z5"
                                 value={formData.gstin}
                                 onChange={e => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })}
@@ -261,7 +267,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                         <button
                             type="submit"
                             disabled={saving}
-                            className="px-8 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-md font-medium  disabled:opacity-50 flex items-center gap-2"
+                            className="px-8 py-2 bg-primary text-primary-foreground rounded-md font-medium disabled:opacity-50 flex items-center gap-2"
                         >
                             {saving ? (
                                 <>

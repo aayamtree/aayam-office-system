@@ -31,11 +31,11 @@ export default function ActivityFeed({ variant = 'card' }: { variant?: 'card' | 
         return null;
     }
 
-    if (loading) return <div className="h-48 animate-pulse bg-gray-50 rounded-2xl"></div>;
+    if (loading) return <div className="h-48 animate-pulse bg-gray-50 rounded-lg"></div>;
 
     const Container = variant === 'card' ? 'div' : 'div';
     const containerClasses = variant === 'card'
-        ? "bg-white rounded-lg md:rounded-2xl p-4 md:p-6 border border-gray-100 h-full"
+        ? "bg-white rounded-lg md:rounded-lg p-4 md:p-6 border border-gray-100 h-full"
         : "h-full";
 
     return (
@@ -63,7 +63,7 @@ export default function ActivityFeed({ variant = 'card' }: { variant?: 'card' | 
                                 {isUpload ? (
                                     <Upload className="w-2.5 h-2.5 text-green-600" />
                                 ) : (
-                                    <div className="w-2 h-2 bg-[rgba(0,0,255,0.1)] rounded-full"></div>
+                                    <div className="w-2 h-2 bg-primary rounded-full"></div>
                                 )}
                             </div>
 

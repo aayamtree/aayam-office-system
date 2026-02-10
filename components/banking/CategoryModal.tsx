@@ -146,7 +146,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
+            <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
                     <div>
@@ -196,7 +196,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                             <button
                                 type="button"
                                 onClick={() => setTransactionType('expense')}
-                                className={`flex-1 px-4 py-3 rounded-xl border-2 font-medium transition-all ${transactionType === 'expense'
+                                className={`flex-1 px-4 py-3 rounded-md border-2 font-medium transition-all ${transactionType === 'expense'
                                     ? 'border-red-500 bg-red-50 text-red-700'
                                     : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                                     }`}
@@ -206,7 +206,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                             <button
                                 type="button"
                                 onClick={() => setTransactionType('income')}
-                                className={`flex-1 px-4 py-3 rounded-xl border-2 font-medium transition-all ${transactionType === 'income'
+                                className={`flex-1 px-4 py-3 rounded-md border-2 font-medium transition-all ${transactionType === 'income'
                                     ? 'border-green-500 bg-green-50 text-green-700'
                                     : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                                     }`}
@@ -225,7 +225,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                             required
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white"
+                            className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ring/20 bg-white"
                         >
                             <option value="">Select category...</option>
                             {parentCategories.map((cat) => (
@@ -248,20 +248,20 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
 
                         {/* New Category Form */}
                         {showNewCategoryForm && (
-                            <div className="mt-3 p-3 bg-[rgba(0,0,255,0.1)] rounded-xl border border-[rgba(0,0,255,0.2)]-200">
+                            <div className="mt-3 p-3 bg-muted rounded-md border border-border">
                                 <div className="flex gap-2">
                                     <input
                                         type="text"
                                         value={newCategoryName}
                                         onChange={(e) => setNewCategoryName(e.target.value)}
                                         placeholder="New category name..."
-                                        className="flex-1 px-3 py-2 border border-[rgba(0,0,255,0.2)]-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                                        className="flex-1 px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring/20"
                                     />
                                     <button
                                         type="button"
                                         onClick={handleCreateNewCategory}
                                         disabled={creatingCategory}
-                                        className="px-3 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-md text-sm font-medium hover:bg-[rgba(0,0,255,0.1)] disabled:bg-gray-400"
+                                        className="px-3 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 disabled:bg-gray-400"
                                     >
                                         {creatingCategory ? <Loader2 size={16} className="animate-spin" /> : 'Add'}
                                     </button>
@@ -271,7 +271,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                                             setShowNewCategoryForm(false);
                                             setNewCategoryName('');
                                         }}
-                                        className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                        className="px-3 py-2 border border-gray-200 rounded-md text-sm"
                                     >
                                         Cancel
                                     </button>
@@ -289,7 +289,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                             <select
                                 value={selectedSubcategory}
                                 onChange={(e) => setSelectedSubcategory(e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ring/20 bg-white"
                             >
                                 <option value="">None (use main category)</option>
                                 {subcategories.map((cat) => (
@@ -311,8 +311,8 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                                 <button
                                     type="button"
                                     onClick={() => setExpenseType('goods')}
-                                    className={`flex-1 px-4 py-2.5 rounded-xl border-2 font-medium transition-all ${expenseType === 'goods'
-                                        ? 'border-primary bg-[rgba(0,0,255,0.1)] text-primary'
+                                    className={`flex-1 px-4 py-2.5 rounded-md border-2 font-medium transition-all ${expenseType === 'goods'
+                                        ? 'border-primary bg-primary/10 text-primary'
                                         : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                                         }`}
                                 >
@@ -321,8 +321,8 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                                 <button
                                     type="button"
                                     onClick={() => setExpenseType('services')}
-                                    className={`flex-1 px-4 py-2.5 rounded-xl border-2 font-medium transition-all ${expenseType === 'services'
-                                        ? 'border-primary bg-[rgba(0,0,255,0.1)] text-primary'
+                                    className={`flex-1 px-4 py-2.5 rounded-md border-2 font-medium transition-all ${expenseType === 'services'
+                                        ? 'border-primary bg-primary/10 text-primary'
                                         : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                                         }`}
                                 >
@@ -340,7 +340,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                         <select
                             value={paymentMethod}
                             onChange={(e) => setPaymentMethod(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white"
+                            className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ring/20 bg-white"
                         >
                             <option value="bank_transfer">Bank Transfer</option>
                             <option value="cash">Cash</option>
@@ -359,7 +359,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                             type="date"
                             value={transactionDate}
                             onChange={(e) => setTransactionDate(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
+                            className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ring/20"
                         />
                     </div>
 
@@ -373,7 +373,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                             onChange={(e) => setNotes(e.target.value)}
                             rows={3}
                             placeholder="Add any additional details..."
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 resize-none"
+                            className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ring/20 resize-none"
                         />
                     </div>
 
@@ -389,7 +389,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                         <button
                             type="submit"
                             disabled={saving}
-                            className="flex-1 px-4 py-2 bg-[rgba(0,0,255,0.1)] text-white rounded-md font-medium hover:bg-[rgba(0,0,255,0.1)] transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
+                            className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
                         >
                             {saving && <Loader2 size={18} className="animate-spin" />}
                             {saving ? 'Saving...' : 'Save & Verify'}

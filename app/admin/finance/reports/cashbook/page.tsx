@@ -196,7 +196,7 @@ export default function CashBookPage() {
 
             {/* Summary Cards - Responsive grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-3 md:p-4 border border-border">
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-3 md:p-4 border border-border">
                     <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
                         <Wallet className="w-4 h-4 text-foreground flex-shrink-0" />
                         <p className="text-xs md:text-sm font-medium text-foreground truncate">Current Balance</p>
@@ -204,7 +204,7 @@ export default function CashBookPage() {
                     <p className="text-lg md:text-page-title text-foreground truncate">₹{currentCashBalance.toLocaleString()}</p>
                 </div>
 
-                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-3 md:p-4 border border-green-200">
+                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 md:p-4 border border-green-200">
                     <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
                         <TrendingDown className="w-4 h-4 text-gray-900 flex-shrink-0" />
                         <p className="text-xs md:text-sm font-medium text-green-900 truncate">Total Cash In</p>
@@ -213,7 +213,7 @@ export default function CashBookPage() {
                     <p className="text-xs text-gray-900 mt-1 truncate">{transactions.filter(t => t.transaction_type === 'in').length} txns</p>
                 </div>
 
-                <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-3 md:p-4 border border-red-200">
+                <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-3 md:p-4 border border-red-200">
                     <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
                         <TrendingUp className="w-4 h-4 text-red-600 flex-shrink-0" />
                         <p className="text-xs md:text-sm font-medium text-red-900 truncate">Total Cash Out</p>
@@ -222,7 +222,7 @@ export default function CashBookPage() {
                     <p className="text-xs text-red-700 mt-1 truncate">{transactions.filter(t => t.transaction_type === 'out').length} txns</p>
                 </div>
 
-                <div className={`bg-gradient-to-br rounded-xl p-3 md:p-4 border ${netCash >= 0 ? 'bg-gray-900 border-gray-300' : 'from-orange-50 to-orange-100 border-orange-200'}`}>
+                <div className={`bg-gradient-to-br rounded-lg p-3 md:p-4 border ${netCash >= 0 ? 'bg-gray-900 border-gray-300' : 'from-orange-50 to-orange-100 border-orange-200'}`}>
                     <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
                         <TrendingUp className={`w-4 h-4 flex-shrink-0 ${netCash >= 0 ? 'text-primary' : 'text-orange-600'}`} />
                         <p className={`text-xs md:text-sm font-medium truncate ${netCash >= 0 ? 'text-gray-900' : 'text-orange-900'}`}>Net Change</p>
@@ -234,7 +234,7 @@ export default function CashBookPage() {
             </div>
 
             {/* Filters - Responsive - Hide on print */}
-            <div className="bg-white rounded-xl border p-4 print:hidden">
+            <div className="bg-white rounded-lg border p-4 print:hidden">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                     <div>
                         <label className="text-xs md:text-sm text-gray-600 mb-1 block">Cash Account</label>
@@ -300,7 +300,7 @@ export default function CashBookPage() {
             </div>
 
             {/* Cash Book Table - Horizontal scroll on mobile */}
-            <div className="bg-white rounded-xl border print: overflow-hidden">
+            <div className="bg-white rounded-lg border print: overflow-hidden">
                 <div className="p-4 md:p-4 border-b print:text-center">
                     <h2 className="text-lg md:text-page-title">Cash Book</h2>
                     {(startDate || endDate) && (

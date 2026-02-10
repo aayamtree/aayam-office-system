@@ -219,7 +219,7 @@ export default function UnifiedJobForm({
     };
 
     const containerClass = mode === 'modal'
-        ? 'bg-white rounded-lg md:rounded-2xl p-4 md:p-6 max-h-[85vh] overflow-y-auto'
+        ? 'bg-white rounded-lg p-4 md:p-6 max-h-[85vh] overflow-y-auto'
         : 'space-y-6';
 
     return (
@@ -241,9 +241,9 @@ export default function UnifiedJobForm({
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* SECTION 1: Project Basics - ALL ROLES */}
-                <div className="space-y-2 md:space-y-4 bg-gray-900 rounded-lg md:rounded-2xl p-4 md:p-6 border-2 border-[rgba(0,0,255,0.2)]-200">
+                <div className="space-y-2 md:space-y-4 bg-muted/50 rounded-lg p-4 md:p-6 border border-border">
                     <h3 className="text-section text-gray-900 flex items-center gap-2">
-                        <span className="bg-[rgba(0,0,255,0.1)] text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">1</span>
+                        <span className="bg-primary text-primary-foreground w-8 h-8 rounded-lg flex items-center justify-center text-sm">1</span>
                         Project Basics
                     </h3>
 
@@ -253,7 +253,7 @@ export default function UnifiedJobForm({
                             <input
                                 required
                                 type="text"
-                                className="w-full px-3 py-2 border rounded-xl"
+                                className="w-full px-3 py-2 border rounded-md"
                                 placeholder="e.g. Wedding Invitation - Sharma Family"
                                 value={formData.project_name}
                                 onChange={e => setFormData({ ...formData, project_name: e.target.value })}
@@ -265,7 +265,7 @@ export default function UnifiedJobForm({
                             <div className="flex gap-2">
                                 <select
                                     required
-                                    className="flex-1 px-3 py-2 border rounded-xl"
+                                    className="flex-1 px-3 py-2 border rounded-md"
                                     value={formData.client_id}
                                     onChange={e => setFormData({ ...formData, client_id: e.target.value })}
                                 >
@@ -277,7 +277,7 @@ export default function UnifiedJobForm({
                                 <button
                                     type="button"
                                     onClick={() => setShowAddClient(true)}
-                                    className="px-3 py-2 bg-[rgba(0,0,255,0.1)] text-primary rounded-xl hover:bg-[rgba(0,0,255,0.1)]"
+                                    className="px-3 py-2 bg-muted text-foreground rounded-md hover:bg-muted/80"
                                 >
                                     <Plus size={20} />
                                 </button>
@@ -287,7 +287,7 @@ export default function UnifiedJobForm({
                         <div>
                             <label className="block text-sm font-medium mb-1">Designer</label>
                             <select
-                                className="w-full px-3 py-2 border rounded-xl"
+                                className="w-full px-3 py-2 border rounded-md"
                                 value={formData.designer_id}
                                 onChange={e => setFormData({ ...formData, designer_id: e.target.value })}
                             >
@@ -301,9 +301,9 @@ export default function UnifiedJobForm({
                 </div>
 
                 {/* SECTION 2: Project Parameters - ALL ROLES */}
-                <div className="space-y-2 md:space-y-4 bg-gradient-to-br from-orange-50 to-red-50 rounded-lg md:rounded-2xl p-4 md:p-6 border-2 border-orange-200">
+                <div className="space-y-2 md:space-y-4 bg-muted/50 rounded-lg p-4 md:p-6 border border-border">
                     <h3 className="text-section text-gray-900 flex items-center gap-2">
-                        <span className="bg-orange-600 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">2</span>
+                        <span className="bg-primary text-primary-foreground w-8 h-8 rounded-lg flex items-center justify-center text-sm">2</span>
                         Project Parameters
                     </h3>
 
@@ -311,7 +311,7 @@ export default function UnifiedJobForm({
                         <div>
                             <label className="block text-sm font-medium mb-1">Job Type</label>
                             <select
-                                className="w-full px-3 py-2 border rounded-xl"
+                                className="w-full px-3 py-2 border rounded-md"
                                 value={formData.job_type}
                                 onChange={e => setFormData({ ...formData, job_type: e.target.value })}
                             >
@@ -322,7 +322,7 @@ export default function UnifiedJobForm({
                         <div>
                             <label className="block text-sm font-medium mb-1">Product Category</label>
                             <select
-                                className="w-full px-3 py-2 border rounded-xl"
+                                className="w-full px-3 py-2 border rounded-md"
                                 value={formData.product_category}
                                 onChange={e => setFormData({ ...formData, product_category: e.target.value })}
                             >
@@ -334,7 +334,7 @@ export default function UnifiedJobForm({
                         <div>
                             <label className="block text-sm font-medium mb-1">Product Type (Print Planner)</label>
                             <select
-                                className="w-full px-3 py-2 border rounded-xl bg-[rgba(0,0,255,0.1)]"
+                                className="w-full px-3 py-2 border rounded-md bg-muted"
                                 value={formData.product_type}
                                 onChange={e => setFormData({ ...formData, product_type: e.target.value })}
                             >
@@ -346,7 +346,7 @@ export default function UnifiedJobForm({
                         <div>
                             <label className="block text-sm font-medium mb-1">Priority</label>
                             <select
-                                className="w-full px-3 py-2 border rounded-xl"
+                                className="w-full px-3 py-2 border rounded-md"
                                 value={formData.priority}
                                 onChange={e => setFormData({ ...formData, priority: e.target.value })}
                             >
@@ -358,7 +358,7 @@ export default function UnifiedJobForm({
                             <label className="block text-sm font-medium mb-1">Deadline</label>
                             <input
                                 type="date"
-                                className="w-full px-3 py-2 border rounded-xl"
+                                className="w-full px-3 py-2 border rounded-md"
                                 value={formData.client_deadline}
                                 onChange={e => setFormData({ ...formData, client_deadline: e.target.value })}
                             />
@@ -368,9 +368,9 @@ export default function UnifiedJobForm({
 
                 {/* SECTION 3: Financial Details - ADMIN ONLY */}
                 {isAdmin && (
-                    <div className="space-y-2 md:space-y-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg md:rounded-2xl p-4 md:p-6 border-2 border-green-200">
+                    <div className="space-y-2 md:space-y-4 bg-muted/50 rounded-lg p-4 md:p-6 border border-border">
                         <h3 className="text-section text-gray-900 flex items-center gap-2">
-                            <span className="bg-green-600 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">3</span>
+                            <span className="bg-primary text-primary-foreground w-8 h-8 rounded-lg flex items-center justify-center text-sm">3</span>
                             Financial Details
                             <span className="ml-auto text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full">Admin Only</span>
                         </h3>
@@ -381,7 +381,7 @@ export default function UnifiedJobForm({
                                 <input
                                     type="number"
                                     min="1"
-                                    className="w-full px-3 py-2 border rounded-xl"
+                                    className="w-full px-3 py-2 border rounded-md"
                                     value={formData.quantity}
                                     onChange={e => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
                                 />
@@ -393,7 +393,7 @@ export default function UnifiedJobForm({
                                     type="number"
                                     min="0"
                                     step="0.01"
-                                    className="w-full px-3 py-2 border rounded-xl"
+                                    className="w-full px-3 py-2 border rounded-md"
                                     value={formData.quote_per_piece}
                                     onChange={e => setFormData({ ...formData, quote_per_piece: parseFloat(e.target.value) || 0 })}
                                 />
@@ -402,7 +402,7 @@ export default function UnifiedJobForm({
                             <div>
                                 <label className="block text-sm font-medium mb-1">GST %</label>
                                 <select
-                                    className="w-full px-3 py-2 border rounded-xl"
+                                    className="w-full px-3 py-2 border rounded-md"
                                     value={formData.gst_rate}
                                     onChange={e => setFormData({ ...formData, gst_rate: parseInt(e.target.value) })}
                                 >
@@ -434,7 +434,7 @@ export default function UnifiedJobForm({
                             <label className="block text-sm font-medium mb-1">Vendor</label>
                             <div className="flex gap-2">
                                 <select
-                                    className="flex-1 px-3 py-2 border rounded-xl"
+                                    className="flex-1 px-3 py-2 border rounded-md"
                                     value={formData.vendor_id}
                                     onChange={e => setFormData({ ...formData, vendor_id: e.target.value })}
                                 >
@@ -446,7 +446,7 @@ export default function UnifiedJobForm({
                                 <button
                                     type="button"
                                     onClick={() => setShowAddVendor(true)}
-                                    className="px-3 py-2 bg-green-100 text-green-700 rounded-xl hover:bg-green-200"
+                                    className="px-3 py-2 bg-muted text-foreground rounded-md hover:bg-muted/80"
                                 >
                                     <Plus size={20} />
                                 </button>
@@ -456,7 +456,7 @@ export default function UnifiedJobForm({
                         <div>
                             <label className="block text-sm font-medium mb-1">Current Stage</label>
                             <select
-                                className="w-full px-3 py-2 border rounded-xl"
+                                className="w-full px-3 py-2 border rounded-md"
                                 value={formData.current_stage}
                                 onChange={e => setFormData({ ...formData, current_stage: e.target.value })}
                             >
@@ -471,9 +471,9 @@ export default function UnifiedJobForm({
                 )}
 
                 {/* SECTION 4: Assets & Description - ALL ROLES */}
-                <div className="space-y-2 md:space-y-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg md:rounded-2xl p-4 md:p-6 border-2 border-blue-200">
+                <div className="space-y-2 md:space-y-4 bg-muted/50 rounded-lg p-4 md:p-6 border border-border">
                     <h3 className="text-section text-gray-900 flex items-center gap-2">
-                        <span className="bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">{isAdmin ? '4' : '3'}</span>
+                        <span className="bg-primary text-primary-foreground w-8 h-8 rounded-lg flex items-center justify-center text-sm">{isAdmin ? '4' : '3'}</span>
                         Assets & Brief
                     </h3>
 
@@ -484,7 +484,7 @@ export default function UnifiedJobForm({
                         </label>
                         <input
                             type="url"
-                            className="w-full px-3 py-2 border rounded-xl"
+                            className="w-full px-3 py-2 border rounded-md"
                             placeholder="https://drive.google.com/..."
                             value={formData.drive_link}
                             onChange={e => handleDriveLinkChange(e.target.value)}
@@ -519,7 +519,7 @@ export default function UnifiedJobForm({
                         <label className="block text-sm font-medium mb-1">Description / Work Items</label>
                         <textarea
                             rows={4}
-                            className="w-full px-3 py-2 border rounded-xl"
+                            className="w-full px-3 py-2 border rounded-md"
                             placeholder="Describe specific requirements, items to print, size, quantity, special instructions..."
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
@@ -556,7 +556,7 @@ export default function UnifiedJobForm({
                     <button
                         type="submit"
                         disabled={saving}
-                        className="px-8 py-2 bg-gray-900 text-white rounded-md font-medium  disabled:opacity-50 flex items-center gap-2"
+                        className="px-8 py-2 bg-primary text-primary-foreground rounded-md font-medium disabled:opacity-50 flex items-center gap-2"
                     >
                         {saving ? (
                             <>
@@ -576,18 +576,18 @@ export default function UnifiedJobForm({
             {/* Quick Add Modals - Placeholder for now */}
             {showAddClient && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-2xl">
+                    <div className="bg-white p-6 rounded-lg">
                         <p>Client Quick Add Modal - To be implemented</p>
-                        <button onClick={() => setShowAddClient(false)} className="mt-4 px-4 py-2 bg-gray-200 rounded-lg">Close</button>
+                        <button onClick={() => setShowAddClient(false)} className="mt-4 px-4 py-2 bg-gray-200 rounded-md">Close</button>
                     </div>
                 </div>
             )}
 
             {showAddVendor && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-2xl">
+                    <div className="bg-white p-6 rounded-lg">
                         <p>Vendor Quick Add Modal - To be implemented</p>
-                        <button onClick={() => setShowAddVendor(false)} className="mt-4 px-4 py-2 bg-gray-200 rounded-lg">Close</button>
+                        <button onClick={() => setShowAddVendor(false)} className="mt-4 px-4 py-2 bg-gray-200 rounded-md">Close</button>
                     </div>
                 </div>
             )}

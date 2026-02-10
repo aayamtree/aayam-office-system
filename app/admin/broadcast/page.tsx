@@ -104,7 +104,7 @@ export default function BroadcastPage() {
             </div>
 
             {/* Send Form */}
-            <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 mb-1.5">
+            <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 mb-1.5">
                 <h2 className="text-page-title text-gray-900 mb-4">Send Broadcast</h2>
 
                 <form onSubmit={handleSend} className="space-y-4">
@@ -116,7 +116,7 @@ export default function BroadcastPage() {
                         <textarea
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
                             rows={4}
                             placeholder="Type your announcement here..."
                             required
@@ -136,7 +136,7 @@ export default function BroadcastPage() {
                                 type="button"
                                 onClick={() => setPriority('normal')}
                                 className={`
-                  px-4 py-3 rounded-xl font-medium transition-all
+                  px-4 py-3 rounded-lg font-medium transition-all
                   ${priority === 'normal'
                                         ? 'bg-muted border-2 border-primary text-foreground'
                                         : 'bg-gray-100 border-2 border-gray-300 text-gray-700'
@@ -149,7 +149,7 @@ export default function BroadcastPage() {
                                 type="button"
                                 onClick={() => setPriority('urgent')}
                                 className={`
-                  px-4 py-3 rounded-xl font-medium transition-all
+                  px-4 py-3 rounded-lg font-medium transition-all
                   ${priority === 'urgent'
                                         ? 'bg-red-100 border-2 border-red-500 text-red-900'
                                         : 'bg-gray-100 border-2 border-gray-300 text-gray-700'
@@ -170,7 +170,7 @@ export default function BroadcastPage() {
                         <select
                             value={targetAudience}
                             onChange={(e) => setTargetAudience(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
                         >
                             {audiences.map((aud) => (
                                 <option key={aud.value} value={aud.value}>
@@ -193,7 +193,7 @@ export default function BroadcastPage() {
             </div>
 
             {/* Notification History */}
-            <div className="bg-white rounded-xl p-4">
+            <div className="bg-white rounded-lg p-4">
                 <h2 className="text-page-title text-gray-900 mb-4 flex items-center gap-2">
                     <Clock size={20} />
                     Recent Broadcasts

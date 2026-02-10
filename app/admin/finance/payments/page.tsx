@@ -148,7 +148,7 @@ export default function PaymentsPageNew() {
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
-                    className="flex items-center gap-2 bg-black text-white px-4 py-2.5 rounded-xl hover:bg-gray-800 w-full sm:w-auto justify-center text-sm font-medium"
+                    className="flex items-center gap-2 bg-black text-white px-4 py-2.5 rounded-lg hover:bg-gray-800 w-full sm:w-auto justify-center text-sm font-medium"
                 >
                     <Plus size={18} />
                     Record Payment
@@ -162,7 +162,7 @@ export default function PaymentsPageNew() {
             )}
 
             {/* Table - Horizontal scroll on mobile */}
-            <div className="bg-white rounded-xl shadow overflow-hidden">
+            <div className="bg-white rounded-lg shadow overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-[640px]">
                         <thead className="bg-gray-50 border-b">

@@ -137,13 +137,13 @@ export default function SalesOrdersPage() {
                         placeholder="Search orders..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border rounded-xl focus:ring-2 focus:ring-gray-400 focus:outline-none"
+                        className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-gray-400 focus:outline-none"
                     />
                 </div>
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
@@ -218,7 +218,7 @@ export default function SalesOrdersPage() {
             {/* Modal - Create/Edit */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl w-full max-w-lg  overflow-hidden animate-scale-in">
+                    <div className="bg-white rounded-lg w-full max-w-lg  overflow-hidden animate-scale-in">
                         <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
                             <h3 className="text-section text-gray-900">
                                 {isEditing ? 'Edit Order' : 'New Sales Order'}
@@ -232,7 +232,7 @@ export default function SalesOrdersPage() {
                             {/* Client Selection */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Client</label>
-                                <select required value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })} className="w-full px-3 py-2 border rounded-xl bg-white focus:ring-2 focus:ring-gray-400">
+                                <select required value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })} className="w-full px-3 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-gray-400">
                                     <option value="">Select Client</option>
                                     {clients.map(c => <option key={c.id} value={c.id}>{c.company || c.name}</option>)}
                                 </select>
@@ -249,7 +249,7 @@ export default function SalesOrdersPage() {
                                         key={type.id}
                                         type="button"
                                         onClick={() => setFormData({ ...formData, workType: type.id as any })}
-                                        className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${formData.workType === type.id
+                                        className={`flex flex-col items-center justify-center p-3 rounded-lg border transition-all ${formData.workType === type.id
                                             ? 'border-primary bg-gray-900 text-white'
                                             : 'border-gray-200 hover:border-primary/20 text-gray-600'
                                             }`}
@@ -263,23 +263,23 @@ export default function SalesOrdersPage() {
                             {/* Project Details */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
-                                <input required type="text" value={formData.projectName} onChange={e => setFormData({ ...formData, projectName: e.target.value })} className="w-full px-3 py-2 border rounded-xl" placeholder="e.g. Summer Campaign Flyers" />
+                                <input required type="text" value={formData.projectName} onChange={e => setFormData({ ...formData, projectName: e.target.value })} className="w-full px-3 py-2 border rounded-lg" placeholder="e.g. Summer Campaign Flyers" />
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                <textarea rows={2} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-3 py-2 border rounded-xl" placeholder="Specs, Notes..." />
+                                <textarea rows={2} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-3 py-2 border rounded-lg" placeholder="Specs, Notes..." />
                             </div>
 
                             {/* Money */}
                             <div className="grid grid-cols-2 gap-2 md:gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Amount (Excl. Tax)</label>
-                                    <input required type="number" min="0" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} className="w-full px-3 py-2 border rounded-xl" />
+                                    <input required type="number" min="0" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">GST Rate (%)</label>
-                                    <select value={formData.gstRate} onChange={e => setFormData({ ...formData, gstRate: Number(e.target.value) })} className="w-full px-3 py-2 border rounded-xl bg-white">
+                                    <select value={formData.gstRate} onChange={e => setFormData({ ...formData, gstRate: Number(e.target.value) })} className="w-full px-3 py-2 border rounded-lg bg-white">
                                         <option value="0">0%</option>
                                         <option value="5">5%</option>
                                         <option value="12">12%</option>
@@ -290,7 +290,7 @@ export default function SalesOrdersPage() {
                             </div>
 
                             <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
-                                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">Cancel</button>
+                                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">Cancel</button>
                                 <button type="submit" disabled={submitting} className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-900 transition-colors disabled:opacity-50">
                                     {submitting ? 'Saving...' : 'Create Sales Order'}
                                 </button>

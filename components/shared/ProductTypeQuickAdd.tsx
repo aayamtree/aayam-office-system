@@ -54,21 +54,21 @@ export default function ProductTypeQuickAdd({ isOpen, onClose, onSuccess }: Prod
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-            <div className="bg-white rounded-2xl  w-full max-w-md">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+            <div className="bg-white rounded-lg w-full max-w-md">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-orange-50 to-amber-50">
+                <div className="flex items-center justify-between p-6 border-b bg-muted/50">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-orange-100 rounded-lg">
-                            <Package size={24} className="text-orange-600" />
+                        <div className="p-2 bg-muted rounded-lg">
+                            <Package size={24} className="text-foreground" />
                         </div>
                         <div>
                             <h3 className="text-page-title text-gray-900">Add Product Type</h3>
                             <p className="text-sm text-gray-600">For print planner job batching</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-md transition-colors">
-                        <X size={20} />
+                    <button onClick={onClose} className="h-8 w-8 flex items-center justify-center hover:bg-gray-200 rounded-md transition-colors">
+                        <X size={16} />
                     </button>
                 </div>
 
@@ -79,7 +79,7 @@ export default function ProductTypeQuickAdd({ isOpen, onClose, onSuccess }: Prod
                         <input
                             required
                             type="text"
-                            className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-orange-500/20 focus:border-orange-500 uppercase"
+                            className="w-full px-3 py-2 border rounded-md focus:ring-2 ring-ring/20 focus:border-gray-400 uppercase"
                             placeholder="e.g., STICKER, BANNER"
                             value={formData.name}
                             onChange={e => setFormData({ ...formData, name: e.target.value })}
@@ -91,15 +91,15 @@ export default function ProductTypeQuickAdd({ isOpen, onClose, onSuccess }: Prod
                         <label className="block text-sm font-medium mb-1">Description</label>
                         <textarea
                             rows={2}
-                            className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-orange-500/20 focus:border-orange-500"
+                            className="w-full px-3 py-2 border rounded-md focus:ring-2 ring-ring/20 focus:border-gray-400"
                             placeholder="Brief description..."
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
                         />
                     </div>
 
-                    <div className="bg-orange-50 rounded-xl p-3">
-                        <p className="text-xs text-orange-700">
+                    <div className="bg-muted rounded-lg p-3">
+                        <p className="text-xs text-muted-foreground">
                             ⚡ <strong>Print Planner:</strong> Jobs with same product type can be batched together in print runs
                         </p>
                     </div>
@@ -116,7 +116,7 @@ export default function ProductTypeQuickAdd({ isOpen, onClose, onSuccess }: Prod
                         <button
                             type="submit"
                             disabled={saving}
-                            className="px-8 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-md font-medium  disabled:opacity-50 flex items-center gap-2"
+                            className="px-8 py-2 bg-primary text-primary-foreground rounded-md font-medium disabled:opacity-50 flex items-center gap-2"
                         >
                             {saving ? (
                                 <>

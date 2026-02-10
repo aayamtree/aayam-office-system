@@ -90,7 +90,7 @@ export default function OpeningBalancePage() {
       </div>
 
       {/* Status Banner */}
-      <div className={`rounded-xl p-4 flex items-center gap-3 ${openingBalance.isLocked ? 'bg-white border border-green-200' : 'bg-white border border-gray-200'}`}>
+      <div className={`rounded-lg p-4 flex items-center gap-3 ${openingBalance.isLocked ? 'bg-white border border-green-200' : 'bg-white border border-gray-200'}`}>
         {openingBalance.isLocked ? (
           <>
             <CheckCircle className="w-5 h-5 text-gray-900 flex-shrink-0" />
@@ -112,7 +112,7 @@ export default function OpeningBalancePage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-4">
-        <div className="bg-white rounded-xl border p-4">
+        <div className="bg-white rounded-lg border p-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
               <Wallet className="w-5 h-5 text-gray-900" />
@@ -121,7 +121,7 @@ export default function OpeningBalancePage() {
           </div>
           <p className="text-page-title text-gray-900">{formatCurrency(openingBalance.cash)}</p>
         </div>
-        <div className="bg-white rounded-xl border p-4">
+        <div className="bg-white rounded-lg border p-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
               <Building className="w-5 h-5 text-foreground" />
@@ -130,7 +130,7 @@ export default function OpeningBalancePage() {
           </div>
           <p className="text-page-title text-foreground">{formatCurrency(totalBankBalance)}</p>
         </div>
-        <div className="bg-white rounded-xl border p-4">
+        <div className="bg-white rounded-lg border p-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center">
               <IndianRupee className="w-5 h-5 text-primary" />
@@ -142,7 +142,7 @@ export default function OpeningBalancePage() {
       </div>
 
       {/* Cash Opening Balance */}
-      <div className="bg-white rounded-xl border p-5">
+      <div className="bg-white rounded-lg border p-5">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
             <Wallet className="w-5 h-5 text-gray-900" />
@@ -162,7 +162,7 @@ export default function OpeningBalancePage() {
       </div>
 
       {/* Bank Opening Balances */}
-      <div className="bg-white rounded-xl border p-5">
+      <div className="bg-white rounded-lg border p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
@@ -177,7 +177,7 @@ export default function OpeningBalancePage() {
 
         <div className="space-y-3">
           {(isEditing ? editData.banks : openingBalance.banks).map(bank => (
-            <div key={bank.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+            <div key={bank.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
                 <p className="font-semibold text-gray-900">{bank.name}</p>
                 <p className="text-sm text-gray-500">A/c: {bank.accountNo}</p>
@@ -204,7 +204,7 @@ export default function OpeningBalancePage() {
       </div>
 
       {/* Info Note */}
-      <div className="bg-muted border border-border rounded-xl p-4">
+      <div className="bg-muted border border-border rounded-lg p-4">
         <div className="flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-foreground flex-shrink-0 mt-0.5" />
           <div>

@@ -16,7 +16,7 @@ export function IdleWarningModal({ show, onStayLoggedIn, onLogout }: IdleWarning
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl  max-w-md w-full mx-4 p-6">
+            <div className="bg-white rounded-lg max-w-md w-full mx-4 p-6">
                 {/* Icon */}
                 <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <AlertCircle className="text-yellow-600" size={32} />
@@ -42,7 +42,7 @@ export function IdleWarningModal({ show, onStayLoggedIn, onLogout }: IdleWarning
                     </button>
                     <button
                         onClick={onStayLoggedIn}
-                        className="flex-1 px-4 py-3 bg-[rgba(0,0,255,0.1)] text-white rounded-md hover:bg-[rgba(0,0,255,0.1)] font-medium transition-colors"
+                        className="flex-1 px-4 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-medium transition-colors"
                     >
                         Stay Logged In
                     </button>

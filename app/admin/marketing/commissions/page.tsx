@@ -141,7 +141,7 @@ export default function CommissionsPage() {
                         ) : (
                             <div className="space-y-4">
                                 {commissions.map((commission) => (
-                                    <div key={commission.id} className="border border-gray-100 rounded-xl p-4 hover:border-primary/20 transition-all">
+                                    <div key={commission.id} className="border border-gray-100 rounded-lg p-4 hover:border-primary/20 transition-all">
                                         {/* Commission card content */}
                                     </div>
                                 ))}
@@ -207,7 +207,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                             type="text"
                             value={formData.projectName}
                             onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
-                            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
+                            className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
                             placeholder="e.g., Pouch - ABC Company"
                         />
                     </div>
@@ -226,7 +226,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                     setFormData({ ...formData, projectTotal: e.target.value });
                                     setTimeout(handleCalculate, 100);
                                 }}
-                                className="w-full border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-section focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
+                                className="w-full border-2 border-gray-200 rounded-lg pl-10 pr-4 py-3 text-section focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
                                 placeholder="56000"
                             />
                         </div>
@@ -265,7 +265,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                     setFormData({ ...formData, gstPercentage: e.target.value });
                                     setTimeout(handleCalculate, 100);
                                 }}
-                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-section focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
+                                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-section focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
                                 placeholder="18"
                             />
                             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">%</span>
@@ -283,7 +283,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                     setFormData({ ...formData, commissionType: e.target.value as any });
                                     setTimeout(handleCalculate, 100);
                                 }}
-                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 font-bold focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
+                                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 font-bold focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
                             >
                                 <option value="percentage">Percentage (%)</option>
                                 <option value="fixed">Fixed Amount (₹)</option>
@@ -301,7 +301,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                     setFormData({ ...formData, commissionValue: e.target.value });
                                     setTimeout(handleCalculate, 100);
                                 }}
-                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-section focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
+                                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-section focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
                                 placeholder="5"
                             />
                         </div>
@@ -309,7 +309,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
 
                     {/* Live Calculation Result */}
                     {calculationResult && (
-                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg md:rounded-2xl p-3 md:p-4 border-2 border-green-200">
+                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg md:rounded-lg p-3 md:p-4 border-2 border-green-200">
                             <h4 className="font-bold text-green-900 mb-4 flex items-center gap-2">
                                 <Calculator size={20} />
                                 Live Calculation
@@ -335,7 +335,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                     <span className="font-bold">× {formData.commissionType === 'percentage' ? `${calculationResult.commissionValue}%` : formatCurrency(calculationResult.commissionValue)}</span>
                                 </div>
                                 <div className="border-t-2 border-green-300 pt-3 mt-3"></div>
-                                <div className="flex justify-between items-center bg-gray-900 text-white rounded-xl p-3">
+                                <div className="flex justify-between items-center bg-gray-900 text-white rounded-lg p-3">
                                     <span className="font-bold">Final Commission</span>
                                     <span className="text-page-title">{formatCurrency(calculationResult.commissionAmount)}</span>
                                 </div>

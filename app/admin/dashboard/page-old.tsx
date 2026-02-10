@@ -160,7 +160,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-3 md:space-y-4 animate-fade-in pb-6 md:pb-10">
       {/* Welcome Header */}
-      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-3.5 border border-gray-100">
+      <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-3.5 border border-gray-100">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4 mb-3 md:mb-1.5">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">
@@ -182,7 +182,7 @@ export default function AdminDashboard() {
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <div key={stat.label} className="bg-white rounded-lg md:rounded-2xl p-2.5 md:p-3 border-2 border-gray-100 hover:border-primary/20 transition-all duration-150">
+              <div key={stat.label} className="bg-white rounded-lg md:rounded-lg p-2.5 md:p-3 border-2 border-gray-100 hover:border-primary/20 transition-all duration-150">
                 <div className="flex items-start justify-between mb-1 md:mb-3">
                   <p className="text-gray-600 text-xs md:text-sm font-medium">{stat.label}</p>
                   <Icon className="w-4 h-4 text-primary md:hidden" />
@@ -198,7 +198,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Daily Briefing Panel (Focus + Activity) */}
-      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100 animate-fade-in-up">
+      <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100 animate-fade-in-up">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Left: Today's Focus Stats */}
           <div className="lg:col-span- 2 space-y-4 md:space-y-5">
@@ -212,7 +212,7 @@ export default function AdminDashboard() {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 w-full">
               {/* Jobs Due */}
-              <div className={`flex items-center gap-2 p-2 md:p-2.5 rounded-lg md:rounded-xl border ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex items-center gap-2 p-2 md:p-2.5 rounded-lg md:rounded-lg border ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <AlertCircle className={`w-5 h-5 md:w-5.5 md:h-5.5 flex-shrink-0 ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'text-red-600' : 'text-gray-400'}`} />
                 <div className="flex flex-col min-w-0">
                   <div className={`text-base md:text-lg font-bold leading-none ${dashboardStats.todaysFocus?.jobsDue > 0 ? 'text-red-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsDue || 0}</div>
@@ -221,7 +221,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Jobs Delayed */}
-              <div className={`flex items-center gap-2 p-2 md:p-2.5 rounded-lg md:rounded-xl border ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-[rgba(255,102,0,0.08)] border-[rgba(255,102,0,0.15)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex items-center gap-2 p-2 md:p-2.5 rounded-lg md:rounded-lg border ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'bg-[rgba(255,102,0,0.08)] border-[rgba(255,102,0,0.15)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <Clock className={`w-5 h-5 md:w-5.5 md:h-5.5 flex-shrink-0 ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'text-destructive' : 'text-gray-400'}`} />
                 <div className="flex flex-col min-w-0">
                   <div className={`text-base md:text-lg font-bold leading-none ${dashboardStats.todaysFocus?.jobsDelayed > 0 ? 'text-destructive' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsDelayed || 0}</div>
@@ -230,7 +230,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Jobs Completed */}
-              <div className={`flex items-center gap-2 p-2 md:p-2.5 rounded-lg md:rounded-xl border transition-colors ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-gray-50 border-gray-200 hover:bg-gray-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex items-center gap-2 p-2 md:p-2.5 rounded-lg md:rounded-lg border transition-colors ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'bg-gray-50 border-gray-200 hover:bg-gray-100' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <CheckCircle className={`w-5 h-5 md:w-5.5 md:h-5.5 flex-shrink-0 ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'text-gray-600' : 'text-gray-400'}`} />
                 <div className="flex flex-col min-w-0">
                   <div className={`text-base md:text-lg font-bold leading-none ${dashboardStats.todaysFocus?.jobsCompleted > 0 ? 'text-gray-700' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.jobsCompleted || 0}</div>
@@ -239,7 +239,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Payments Due */}
-              <div className={`flex items-center gap-2 p-2 md:p-2.5 rounded-lg md:rounded-xl border ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-muted border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex items-center gap-2 p-2 md:p-2.5 rounded-lg md:rounded-lg border ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'bg-muted border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <IndianRupee className={`w-5 h-5 md:w-5.5 md:h-5.5 flex-shrink-0 ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'text-primary' : 'text-gray-400'}`} />
                 <div className="flex flex-col min-w-0">
                   <div className={`text-base md:text-lg font-bold leading-none ${dashboardStats.todaysFocus?.paymentsDue > 0 ? 'text-primary' : 'text-gray-500'}`}>{dashboardStats.todaysFocus?.paymentsDue || 0}</div>
@@ -248,7 +248,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Follow-ups */}
-              <Link href="/admin/marketing/follow-ups" className={`flex items-center gap-2 p-2 md:p-2.5 rounded-lg md:rounded-xl border transition-all hover:scale-105 ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-muted border-[rgba(0,0,255,0.1)] cursor-pointer' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <Link href="/admin/marketing/follow-ups" className={`flex items-center gap-2 p-2 md:p-2.5 rounded-lg md:rounded-lg border transition-all hover:scale-105 ${dashboardStats.alerts?.followUpsDue > 0 ? 'bg-muted border-[rgba(0,0,255,0.1)] cursor-pointer' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <Phone className={`w-5 h-5 md:w-5.5 md:h-5.5 flex-shrink-0 ${dashboardStats.alerts?.followUpsDue > 0 ? 'text-primary' : 'text-gray-400'}`} />
                 <div className="flex flex-col min-w-0">
                   <div className={`text-base md:text-lg font-bold leading-none ${dashboardStats.alerts?.followUpsDue > 0 ? 'text-primary' : 'text-gray-500'}`}>{dashboardStats.alerts?.followUpsDue || 0}</div>
@@ -259,7 +259,7 @@ export default function AdminDashboard() {
               {/* --- VENDOR SNAPSHOT --- */}
 
               {/* Jobs At Vendor */}
-              <div className={`flex items-center gap-2 p-2 md:p-2.5 rounded-lg md:rounded-xl border ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-muted border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex items-center gap-2 p-2 md:p-2.5 rounded-lg md:rounded-lg border ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'bg-muted border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <Printer className={`w-5 h-5 md:w-5.5 md:h-5.5 flex-shrink-0 ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'text-primary' : 'text-gray-400'}`} />
                 <div className="flex flex-col min-w-0">
                   <div className={`text-base md:text-lg font-bold leading-none ${dashboardStats.vendorStats?.jobsAtVendor > 0 ? 'text-primary' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.jobsAtVendor || 0}</div>
@@ -268,7 +268,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Return Today */}
-              <div className={`flex items-center gap-2 p-2 md:p-2.5 rounded-lg md:rounded-xl border ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-muted border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex items-center gap-2 p-2 md:p-2.5 rounded-lg md:rounded-lg border ${dashboardStats.vendorStats?.dueToday > 0 ? 'bg-muted border-[rgba(0,0,255,0.1)]' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <Truck className={`w-5 h-5 md:w-5.5 md:h-5.5 flex-shrink-0 ${dashboardStats.vendorStats?.dueToday > 0 ? 'text-primary' : 'text-gray-400'}`} />
                 <div className="flex flex-col min-w-0">
                   <div className={`text-base md:text-lg font-bold leading-none ${dashboardStats.vendorStats?.dueToday > 0 ? 'text-primary' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.dueToday || 0}</div>
@@ -277,7 +277,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Vendor Delayed */}
-              <div className={`flex items-center gap-2 p-2 md:p-2.5 rounded-lg md:rounded-xl border ${dashboardStats.vendorStats?.delayed > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-transparent opacity-60'}`}>
+              <div className={`flex items-center gap-2 p-2 md:p-2.5 rounded-lg md:rounded-lg border ${dashboardStats.vendorStats?.delayed > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-transparent opacity-60'}`}>
                 <AlertCircle className={`w-5 h-5 md:w-5.5 md:h-5.5 flex-shrink-0 ${dashboardStats.vendorStats?.delayed > 0 ? 'text-red-600' : 'text-gray-400'}`} />
                 <div className="flex flex-col min-w-0">
                   <div className={`text-base md:text-lg font-bold leading-none ${dashboardStats.vendorStats?.delayed > 0 ? 'text-red-700' : 'text-gray-500'}`}>{dashboardStats.vendorStats?.delayed || 0}</div>
@@ -298,7 +298,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-4">
 
         {/* Needs Attention */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-3.5 border border-gray-100 flex flex-col h-full">
+        <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-3.5 border border-gray-100 flex flex-col h-full">
           <div className="flex items-center gap-2.5 mb-1.5">
             <AlertCircle className="w-3 h-3 md:w-5 md:h-5 text-destructive" />
             <h2 className="text-section text-gray-900">Needs Attention</h2>
@@ -319,7 +319,7 @@ export default function AdminDashboard() {
               }
 
               return (
-                <Link key={alert.label} href={alert.href} className={`flex items-center justify-between p-3 md:p-4 rounded-lg md:rounded-xl border transition-all  ${colors}`}>
+                <Link key={alert.label} href={alert.href} className={`flex items-center justify-between p-3 md:p-4 rounded-lg md:rounded-lg border transition-all  ${colors}`}>
                   <div className="flex items-center gap-4">
                     <span className={`w-10 h-10 ${iconColors} rounded-lg flex items-center justify-center text-section`}>
                       {isSafe ? <Check className="w-3 h-3 md:w-5 md:h-5" /> : alert.icon}
@@ -352,7 +352,7 @@ export default function AdminDashboard() {
         <div className="lg:col-span-2 space-y-3 md:space-y-4">
 
           {/* Sales Performance */}
-          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-3.5 border border-gray-100">
+          <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-3.5 border border-gray-100">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0 mb-1.5">
               <div>
                 <h2 className="text-lg md:text-section text-gray-900">Sales Performance</h2>
@@ -400,7 +400,7 @@ export default function AdminDashboard() {
                 <span className="text-page-title text-gray-900">{formatCurrency(dashboardStats.totalRevenue)}</span>
                 <span className="text-base text-gray-500 font-medium">YTD Revenue</span>
               </div>
-              <Link href="/admin/sales/orders" className="flex items-center gap-2 text-sm text-primary hover:opacity-80 font-bold bg-muted px-4 py-2 rounded-xl transition-colors">
+              <Link href="/admin/sales/orders" className="flex items-center gap-2 text-sm text-primary hover:opacity-80 font-bold bg-muted px-4 py-2 rounded-lg transition-colors">
                 View Report
                 <ArrowUpRight className="w-4 h-4" />
               </Link>
@@ -408,7 +408,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Recent Jobs */}
-          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-3.5 border border-gray-100">
+          <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-3.5 border border-gray-100">
             <div className="flex items-center justify-between mb-1.5">
               <h2 className="text-section text-gray-900">Recent Jobs</h2>
               <Link href="/admin/sales/orders" className="flex items-center gap-1 text-sm text-primary hover:text-primary font-bold">
@@ -512,7 +512,7 @@ export default function AdminDashboard() {
         <div className="lg:col-span-1 space-y-3 md:space-y-6 lg:space-y-8">
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-5 border border-gray-100">
+          <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 lg:p-5 border border-gray-100">
             <h2 className="text-base md:text-section text-gray-900 mb-3 md:mb-5">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-3 md:gap-4">
               <Link href="/admin/sales/orders" className="px-4 py-3 bg-gray-900 text-white rounded-lg text-center text-sm font-semibold hover:bg-gray-800 transition-colors shadow-sm">
@@ -531,7 +531,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Work Pipeline */}
-          <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-5 border border-gray-100">
+          <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 lg:p-5 border border-gray-100">
             <h2 className="text-base md:text-section text-gray-900 mb-1.5">Work Pipeline</h2>
 
             <div className="relative w-48 h-48 mx-auto mb-1.5">
@@ -562,7 +562,7 @@ export default function AdminDashboard() {
 
                 return (
                   <Link key={item.label} href={item.href} className={`block group`}>
-                    <div className={`flex items-center justify-between p-3 rounded-xl transition-all border 
+                    <div className={`flex items-center justify-between p-3 rounded-lg transition-all border 
                       ${isBottleneck || overdueCount > 0 ? 'bg-red-50/50 border-red-100' : 'hover:bg-gray-50 border-transparent hover:border-gray-100'}
                   `}>
                       <div className="flex-1">

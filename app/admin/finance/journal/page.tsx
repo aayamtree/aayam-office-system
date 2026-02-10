@@ -118,7 +118,7 @@ export default function ManualJournalPage() {
             </div>
 
             {/* Form */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
                 {/* Top Info */}
                 <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 border-b bg-gray-50">
                     <div>
@@ -242,7 +242,7 @@ export default function ManualJournalPage() {
                     <button
                         onClick={handleSave}
                         disabled={!isBalanced || loading}
-                        className={`ml-4 px-4 py-2 rounded-xl font-bold text-white flex items-center gap-2 ${isBalanced ? 'bg-gray-900 hover:bg-gray-900 -200' : 'bg-gray-300 cursor-not-allowed'
+                        className={`ml-4 px-4 py-2 rounded-lg font-bold text-white flex items-center gap-2 ${isBalanced ? 'bg-gray-900 hover:bg-gray-900 -200' : 'bg-gray-300 cursor-not-allowed'
                             }`}
                     >
                         {loading ? 'Saving...' : <><Save className="w-4 h-4 md:w-4.5 md:h-4.5" /> Save Journal</>}
@@ -256,7 +256,7 @@ export default function ManualJournalPage() {
 
             {/* Success / Error Messages */}
             {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex gap-3 items-start">
+                <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg flex gap-3 items-start">
                     <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
                     <div>
                         <h3 className="font-bold">Error Saving Journal</h3>
@@ -290,7 +290,7 @@ export default function ManualJournalPage() {
             )}
 
             {success && (
-                <div className="bg-white border border-green-200 text-gray-900 p-4 rounded-xl">
+                <div className="bg-white border border-green-200 text-gray-900 p-4 rounded-lg">
                     <h3 className="font-bold">Success!</h3>
                     <p>Journal Entry saved successfully.</p>
                 </div>

@@ -83,7 +83,7 @@ export default function DailyFinancePage() {
             </div>
 
             {/* Total Balance Card */}
-            <div className="bg-gray-900 rounded-lg md:rounded-2xl p-3 md:p-4 text-white">
+            <div className="bg-gray-900 rounded-lg md:rounded-lg p-3 md:p-4 text-white">
                 <div className="flex justify-between items-start mb-4">
                     <div>
                         <p className="text-sm opacity-90">Total Available Balance</p>
@@ -98,7 +98,7 @@ export default function DailyFinancePage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 md:gap-4">
-                    <div className="bg-white/10 rounded-xl p-4">
+                    <div className="bg-white/10 rounded-lg p-4">
                         <div className="flex items-center gap-2 mb-2">
                             <Building2 className="w-4 h-4 md:w-4.5 md:h-4.5" />
                             <p className="text-sm opacity-90">Bank Accounts</p>
@@ -107,7 +107,7 @@ export default function DailyFinancePage() {
                         <p className="text-xs opacity-75 mt-1">{bankAccounts.length} accounts</p>
                     </div>
 
-                    <div className="bg-white/10 rounded-xl p-4">
+                    <div className="bg-white/10 rounded-lg p-4">
                         <div className="flex items-center gap-2 mb-2">
                             <Wallet className="w-4 h-4 md:w-4.5 md:h-4.5" />
                             <p className="text-sm opacity-90">Cash</p>
@@ -119,11 +119,11 @@ export default function DailyFinancePage() {
             </div>
 
             {/* Today's Activity */}
-            <div className="bg-white rounded-2xl border p-4">
+            <div className="bg-white rounded-lg border p-4">
                 <h2 className="text-section mb-4">Today&apos;s Activity</h2>
 
                 <div className="grid grid-cols-3 gap-2 md:gap-4">
-                    <div className="bg-white rounded-xl p-4">
+                    <div className="bg-white rounded-lg p-4">
                         <div className="flex items-center gap-2 text-gray-900 mb-2">
                             <ArrowDownRight className="w-5 h-5" />
                             <p className="text-sm font-medium">Money IN</p>
@@ -132,7 +132,7 @@ export default function DailyFinancePage() {
                         <p className="text-xs text-gray-900 mt-1">{todayPayments.length} payments received</p>
                     </div>
 
-                    <div className="bg-red-50 rounded-xl p-4">
+                    <div className="bg-red-50 rounded-lg p-4">
                         <div className="flex items-center gap-2 text-red-600 mb-2">
                             <ArrowUpRight className="w-5 h-5" />
                             <p className="text-sm font-medium">Money OUT</p>
@@ -141,7 +141,7 @@ export default function DailyFinancePage() {
                         <p className="text-xs text-red-600 mt-1">{todayExpenses.length} payments made</p>
                     </div>
 
-                    <div className={`rounded-xl p-4 ${netChange >= 0 ? 'bg-muted' : 'bg-orange-50'}`}>
+                    <div className={`rounded-lg p-4 ${netChange >= 0 ? 'bg-muted' : 'bg-orange-50'}`}>
                         <div className={`flex items-center gap-2 mb-2 ${netChange >= 0 ? 'text-foreground' : 'text-orange-600'}`}>
                             <TrendingUp className="w-5 h-5" />
                             <p className="text-sm font-medium">Net Change</p>
@@ -159,7 +159,7 @@ export default function DailyFinancePage() {
             {/* Account Breakdown */}
             <div className="grid grid-cols-2 gap-3 md:gap-4">
                 {/* Bank Accounts */}
-                <div className="bg-white rounded-2xl border p-5">
+                <div className="bg-white rounded-lg border p-5">
                     <h3 className="font-bold mb-4 flex items-center gap-2">
                         <Building2 className="w-4 h-4" />
                         Bank Accounts
@@ -181,7 +181,7 @@ export default function DailyFinancePage() {
                 </div>
 
                 {/* Cash Accounts */}
-                <div className="bg-white rounded-2xl border p-5">
+                <div className="bg-white rounded-lg border p-5">
                     <h3 className="font-bold mb-4 flex items-center gap-2">
                         <Wallet className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-900" />
                         Cash Registers
@@ -204,7 +204,7 @@ export default function DailyFinancePage() {
             </div>
 
             {/* Today's Transactions */}
-            <div className="bg-white rounded-2xl border p-5">
+            <div className="bg-white rounded-lg border p-5">
                 <h3 className="font-bold mb-4">Today&apos;s Transactions</h3>
 
                 <div className="space-y-2">
@@ -250,13 +250,13 @@ export default function DailyFinancePage() {
                 </Link>
                 <Link
                     href="/admin/finance/expenses/quick"
-                    className="bg-orange-600 hover:bg-orange-700 text-white rounded-xl p-4 text-center font-medium"
+                    className="bg-orange-600 hover:bg-orange-700 text-white rounded-lg p-4 text-center font-medium"
                 >
                     Quick Expense
                 </Link>
                 <Link
                     href="/admin/finance/accounts"
-                    className="bg-white border hover:bg-gray-50 rounded-xl p-4 text-center font-medium"
+                    className="bg-white border hover:bg-gray-50 rounded-lg p-4 text-center font-medium"
                 >
                     Manage Accounts
                 </Link>

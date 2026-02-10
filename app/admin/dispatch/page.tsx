@@ -138,9 +138,9 @@ export default function DispatchPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 lg:p-4 border border-gray-100">
+          <div key={stat.label} className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 lg:p-4 border border-gray-100">
             <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
-              <div className={`w-8 h-8 md:w-10 md:h-10 ${stat.color} rounded-lg md:rounded-xl flex items-center justify-center`}>
+              <div className={`w-8 h-8 md:w-10 md:h-10 ${stat.color} rounded-lg md:rounded-lg flex items-center justify-center`}>
                 <stat.icon className="w-4 h-4 text-white md:hidden" />
                 <stat.icon className="w-5 h-5 text-white hidden md:block" />
               </div>
@@ -157,7 +157,7 @@ export default function DispatchPage() {
       {/* QC & Ready Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         {/* Pending QC */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-section text-gray-900">Pending QC</h2>
             <Link href="/admin/dispatch/qc-check" className="text-sm text-primary hover:underline">
@@ -168,7 +168,7 @@ export default function DispatchPage() {
             {pendingQC.length === 0 ? (
               <div className="text-center text-gray-400 py-4">No jobs pending QC.</div>
             ) : pendingQC.slice(0, 5).map((job) => (
-              <div key={job.id} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl">
+              <div key={job.id} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg">
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-gray-900">{job.job_number}</p>
@@ -187,7 +187,7 @@ export default function DispatchPage() {
         </div>
 
         {/* Ready to Dispatch - NOW WITH ACTION */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-section text-gray-900">Ready to Dispatch</h2>
             <span className="px-3 py-1 bg-gray-100 text-gray-900 text-xs rounded-full font-medium">
@@ -198,7 +198,7 @@ export default function DispatchPage() {
             {readyToDispatch.length === 0 ? (
               <div className="text-center text-gray-400 py-4">No jobs ready for dispatch.</div>
             ) : readyToDispatch.map((job) => (
-              <div key={job.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-white border border-green-100 rounded-xl gap-3">
+              <div key={job.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-white border border-green-100 rounded-lg gap-3">
                 <div>
                   <p className="font-medium text-gray-900">{job.job_number}</p>
                   <p className="text-sm text-gray-600">{job.client?.company || job.client?.name}</p>
@@ -231,7 +231,7 @@ export default function DispatchPage() {
       </div>
 
       {/* Recent Dispatches */}
-      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+      <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-section text-gray-900">Recent Dispatches</h2>
           <Link href="/admin/dispatch/history" className="text-sm text-primary hover:underline">
@@ -242,7 +242,7 @@ export default function DispatchPage() {
           {sentDispatches.length === 0 ? (
             <div className="col-span-3 text-center text-gray-400 py-4">No recent dispatches.</div>
           ) : sentDispatches.map((dispatch) => (
-            <div key={dispatch.id} className="p-4 bg-gray-50 rounded-xl">
+            <div key={dispatch.id} className="p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <p className="font-medium text-gray-900">{dispatch.dispatch_number}</p>
                 <span className={`px-2 py-0.5 text-xs rounded-full ${getStatusColor(dispatch.status)}`}>
@@ -263,7 +263,7 @@ export default function DispatchPage() {
       {/* Create Dispatch Modal */}
       {showDispatchModal && selectedJob && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
+          <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b">
               <div>
                 <h2 className="text-section">Create Dispatch</h2>
@@ -278,13 +278,13 @@ export default function DispatchPage() {
                   <label className="block text-sm font-medium mb-1">Transporter Name</label>
                   <input type="text" placeholder="e.g. DTDC, Self"
                     value={dispatchForm.transporter_name} onChange={e => setDispatchForm({ ...dispatchForm, transporter_name: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-xl" />
+                    className="w-full px-3 py-2 border rounded-lg" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Tracking / LR No</label>
                   <input type="text" placeholder="Optional"
                     value={dispatchForm.tracking_number} onChange={e => setDispatchForm({ ...dispatchForm, tracking_number: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-xl" />
+                    className="w-full px-3 py-2 border rounded-lg" />
                 </div>
               </div>
 
@@ -293,13 +293,13 @@ export default function DispatchPage() {
                   <label className="block text-sm font-medium mb-1">Vehicle No</label>
                   <input type="text" placeholder="e.g. OD-02-AA-1234"
                     value={dispatchForm.vehicle_number} onChange={e => setDispatchForm({ ...dispatchForm, vehicle_number: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-xl" />
+                    className="w-full px-3 py-2 border rounded-lg" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Packages Count</label>
                   <input type="number" min="1"
                     value={dispatchForm.packages} onChange={e => setDispatchForm({ ...dispatchForm, packages: parseInt(e.target.value) || 1 })}
-                    className="w-full px-3 py-2 border rounded-xl" />
+                    className="w-full px-3 py-2 border rounded-lg" />
                 </div>
               </div>
 
@@ -308,13 +308,13 @@ export default function DispatchPage() {
                   <label className="block text-sm font-medium mb-1">Driver Name</label>
                   <input type="text" placeholder="Optional"
                     value={dispatchForm.driver_name} onChange={e => setDispatchForm({ ...dispatchForm, driver_name: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-xl" />
+                    className="w-full px-3 py-2 border rounded-lg" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Driver Phone</label>
                   <input type="text" placeholder="Optional"
                     value={dispatchForm.driver_phone} onChange={e => setDispatchForm({ ...dispatchForm, driver_phone: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-xl" />
+                    className="w-full px-3 py-2 border rounded-lg" />
                 </div>
               </div>
 
@@ -322,7 +322,7 @@ export default function DispatchPage() {
                 <label className="block text-sm font-medium mb-1">Notes</label>
                 <textarea rows={3} placeholder="Any delivery instructions..."
                   value={dispatchForm.notes} onChange={e => setDispatchForm({ ...dispatchForm, notes: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-xl" />
+                  className="w-full px-3 py-2 border rounded-lg" />
               </div>
 
               <div>
@@ -338,7 +338,7 @@ export default function DispatchPage() {
                       setDispatchForm({ ...dispatchForm, attachmentUrl: file.name });
                     }
                   }}
-                  className="w-full px-3 py-2 border rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
+                  className="w-full px-3 py-2 border rounded-lg text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
                 />
                 {dispatchForm.attachmentUrl && (
                   <p className="text-xs text-gray-900 mt-1">✓ {dispatchForm.attachmentUrl}</p>
@@ -352,7 +352,7 @@ export default function DispatchPage() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowDispatchModal(false)} className="flex-1 px-4 py-2 border rounded-xl">Cancel</button>
+                <button type="button" onClick={() => setShowDispatchModal(false)} className="flex-1 px-4 py-2 border rounded-lg">Cancel</button>
                 <button type="submit" disabled={submitting} className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold">
                   {submitting ? 'Creating...' : 'Create Dispatch'}
                 </button>

@@ -167,7 +167,7 @@ export default function PrintRunDetailPage() {
                             {printRun.status === 'planned' && (
                                 <button
                                     onClick={() => updateStatus('printed')}
-                                    className="px-4 py-2 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-900 transition-all flex items-center gap-2"
+                                    className="px-4 py-2 bg-gray-900 text-white rounded-lg font-bold hover:bg-gray-900 transition-all flex items-center gap-2"
                                 >
                                     <CheckCircle size={20} />
                                     Mark as Printed
@@ -176,7 +176,7 @@ export default function PrintRunDetailPage() {
                             {printRun.status === 'printed' && (
                                 <button
                                     onClick={() => updateStatus('delivered')}
-                                    className="px-4 py-2 bg-gray-900 text-white rounded-xl font-bold hover:bg-green-700 transition-all flex items-center gap-2"
+                                    className="px-4 py-2 bg-gray-900 text-white rounded-lg font-bold hover:bg-green-700 transition-all flex items-center gap-2"
                                 >
                                     <CheckCircle size={20} />
                                     Mark as Delivered
@@ -184,7 +184,7 @@ export default function PrintRunDetailPage() {
                             )}
                             <button
                                 onClick={() => setShowAddJobsModal(true)}
-                                className="px-4 py-2 bg-gray-900 text-white rounded-xl font-bold  transition-all flex items-center gap-2"
+                                className="px-4 py-2 bg-gray-900 text-white rounded-lg font-bold  transition-all flex items-center gap-2"
                             >
                                 <Plus size={20} />
                                 Add Jobs
@@ -197,7 +197,7 @@ export default function PrintRunDetailPage() {
             {/* Content */}
             <div className="max-w-7xl mx-auto p-4 space-y-6">
                 {/* Summary */}
-                <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+                <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
                     <h2 className="text-section text-gray-900 mb-4">Print Run Summary</h2>
                     <div className="grid grid-cols-5 gap-3 md:gap-4">
                         <div>
@@ -231,7 +231,7 @@ export default function PrintRunDetailPage() {
                 </div>
 
                 {/* Jobs Table */}
-                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
                     <div className="p-4 border-b border-gray-100">
                         <h2 className="text-section text-gray-900">Jobs in This Print Run</h2>
                     </div>
@@ -459,7 +459,7 @@ function AddJobsModal({
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-3xl w-full max-w-4xl  overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-lg w-full max-w-4xl  overflow-hidden max-h-[90vh] overflow-y-auto">
                 <div className="bg-gray-900 p-4 text-white flex items-center justify-between sticky top-0">
                     <div>
                         <h3 className="text-page-title">Add Jobs to Print Run</h3>
@@ -496,7 +496,7 @@ function AddJobsModal({
                                     return (
                                         <div
                                             key={job.id}
-                                            className={`p-4 rounded-xl border-2 transition-all ${isSelected
+                                            className={`p-4 rounded-lg border-2 transition-all ${isSelected
                                                 ? 'bg-gray-900 border-gray-300'
                                                 : 'bg-white border-gray-200'
                                                 }`}

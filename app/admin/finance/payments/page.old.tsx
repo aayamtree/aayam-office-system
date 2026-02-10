@@ -206,13 +206,13 @@ export default function PaymentsPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white border border-green-200 rounded-xl p-4">
+        <div className="bg-white border border-green-200 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2 text-gray-900 font-medium">
             <ArrowDownRight size={20} /> Total Received
           </div>
           <p className="text-page-title text-gray-900">{formatCurrency(totalReceived)}</p>
         </div>
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2 text-red-700 font-medium">
             <ArrowUpRight size={20} /> Total Paid
           </div>
@@ -224,9 +224,9 @@ export default function PaymentsPage() {
         <div className="relative flex-1">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl" />
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg" />
         </div>
-        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as any)} className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl">
+        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as any)} className="px-4 py-2.5 bg-white border border-gray-200 rounded-lg">
           <option value="all">All Transactions</option>
           <option value="received">Received</option>
           <option value="paid">Paid</option>
@@ -238,7 +238,7 @@ export default function PaymentsPage() {
           {/* Mobile View: Cards */}
           <div className="lg:hidden space-y-4">
             {filteredPayments.map((p) => (
-              <div key={p.id} className="bg-white p-4 rounded-2xl border border-gray-100 relative">
+              <div key={p.id} className="bg-white p-4 rounded-lg border border-gray-100 relative">
                 {/* Row 1: Type & Amount */}
                 <div className="flex justify-between items-start mb-3">
                   <span className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-full uppercase tracking-wide border ${p.type === 'received' ? 'bg-white text-gray-900 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
@@ -281,14 +281,14 @@ export default function PaymentsPage() {
               </div>
             ))}
             {filteredPayments.length === 0 && (
-              <div className="text-center py-10 text-gray-400 bg-white rounded-2xl border border-gray-100">
+              <div className="text-center py-10 text-gray-400 bg-white rounded-lg border border-gray-100">
                 No payments found.
               </div>
             )}
           </div>
 
           {/* Desktop View: Table */}
-          <div className="hidden lg:block bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="hidden lg:block bg-white rounded-lg border border-gray-100 overflow-hidden">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
@@ -334,7 +334,7 @@ export default function PaymentsPage() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
+          <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b">
               <h2 className="text-section">Record Payment</h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
@@ -342,11 +342,11 @@ export default function PaymentsPage() {
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <button type="button" onClick={() => setFormData({ ...formData, type: 'received' })}
-                  className={`p-3 rounded-xl border-2 flex flex-col items-center gap-1 ${formData.type === 'received' ? 'border-green-500 bg-white text-gray-900' : 'border-gray-200'}`}>
+                  className={`p-3 rounded-lg border-2 flex flex-col items-center gap-1 ${formData.type === 'received' ? 'border-green-500 bg-white text-gray-900' : 'border-gray-200'}`}>
                   <ArrowDownRight size={20} /> <span className="font-medium">Received</span>
                 </button>
                 <button type="button" onClick={() => setFormData({ ...formData, type: 'paid' })}
-                  className={`p-3 rounded-xl border-2 flex flex-col items-center gap-1 ${formData.type === 'paid' ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200'}`}>
+                  className={`p-3 rounded-lg border-2 flex flex-col items-center gap-1 ${formData.type === 'paid' ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200'}`}>
                   <ArrowUpRight size={20} /> <span className="font-medium">Paid</span>
                 </button>
               </div>
@@ -355,12 +355,12 @@ export default function PaymentsPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Client *</label>
                   {clients.length === 0 ? (
-                    <div className="p-3 bg-muted text-muted-foreground border border-yellow-200 rounded-xl text-sm">
+                    <div className="p-3 bg-muted text-muted-foreground border border-yellow-200 rounded-lg text-sm">
                       No clients found. Please add a client in CRM first or check permissions.
                     </div>
                   ) : (
                     <select required value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-xl bg-white">
+                      className="w-full px-3 py-2 border rounded-lg bg-white">
                       <option value="">Select Client ({clients.length})</option>
                       {clients.map(c => <option key={c.id} value={c.id}>{c.name} - {c.company}</option>)}
                     </select>
@@ -369,7 +369,7 @@ export default function PaymentsPage() {
 
                   {/* PENDING INVOICES LIST (New) */}
                   {formData.clientId && invoices && (
-                    <div className="mt-3 bg-muted p-3 rounded-xl border border-border animate-fade-in">
+                    <div className="mt-3 bg-muted p-3 rounded-lg border border-border animate-fade-in">
                       <label className="text-xs font-semibold text-blue-800 mb-1 flex items-center gap-1">
                         <FileText size={12} /> Allocate to Pending Invoice (Optional)
                       </label>
@@ -401,12 +401,12 @@ export default function PaymentsPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Vendor *</label>
                   {vendors.length === 0 ? (
-                    <div className="p-3 bg-muted text-muted-foreground border border-yellow-200 rounded-xl text-sm">
+                    <div className="p-3 bg-muted text-muted-foreground border border-yellow-200 rounded-lg text-sm">
                       No vendors found. Please add a vendor in CRM first or check permissions.
                     </div>
                   ) : (
                     <select required value={formData.vendorId} onChange={(e) => setFormData({ ...formData, vendorId: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-xl bg-white">
+                      className="w-full px-3 py-2 border rounded-lg bg-white">
                       <option value="">Select Vendor ({vendors.length})</option>
                       {vendors.map(v => <option key={v.id} value={v.id}>{v.name} - {v.company}</option>)}
                     </select>
@@ -415,7 +415,7 @@ export default function PaymentsPage() {
 
                   {/* PENDING BILLS LIST (New) */}
                   {formData.vendorId && purchaseBills && (
-                    <div className="mt-3 bg-muted p-3 rounded-xl border border-border animate-fade-in">
+                    <div className="mt-3 bg-muted p-3 rounded-lg border border-border animate-fade-in">
                       <label className="text-xs font-semibold text-blue-800 mb-1 flex items-center gap-1">
                         <FileText size={12} /> Allocate to Pending Bill (Optional)
                       </label>
@@ -452,20 +452,20 @@ export default function PaymentsPage() {
                     value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                     placeholder="0.00"
-                    className="w-full px-3 py-2 border rounded-xl" />
+                    className="w-full px-3 py-2 border rounded-lg" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Date *</label>
                   <input type="date" required value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-xl" />
+                    className="w-full px-3 py-2 border rounded-lg" />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-1">Payment Method</label>
                 <select value={formData.method} onChange={(e) => setFormData({ ...formData, method: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-xl bg-white">
+                  className="w-full px-3 py-2 border rounded-lg bg-white">
                   <option value="bank_transfer">Bank Transfer</option>
                   <option value="cash">Cash</option>
                   <option value="upi">UPI</option>
@@ -478,7 +478,7 @@ export default function PaymentsPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Bank Account *</label>
                   <select required value={formData.bankAccountId} onChange={(e) => setFormData({ ...formData, bankAccountId: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-xl bg-white">
+                    className="w-full px-3 py-2 border rounded-lg bg-white">
                     <option value="">Select Bank Account</option>
                     {bankAccounts.map(b => (
                       <option key={b.id} value={b.id}>{b.name} ({b.account_number})</option>
@@ -490,12 +490,12 @@ export default function PaymentsPage() {
               <div>
                 <label className="block text-sm font-medium mb-1">Reference / Note</label>
                 <input type="text" value={formData.reference} onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
-                  placeholder="Cheque No / TXN ID" className="w-full px-3 py-2 border rounded-xl" />
+                  placeholder="Cheque No / TXN ID" className="w-full px-3 py-2 border rounded-lg" />
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-1">Proof of Payment (Screenshot/PDF)</label>
-                <div className="relative border-2 border-dashed border-gray-200 rounded-xl p-4 text-center hover:bg-gray-50 transition-colors">
+                <div className="relative border-2 border-dashed border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors">
                   <input
                     type="file"
                     accept="image/*,application/pdf"
@@ -510,7 +510,7 @@ export default function PaymentsPage() {
                   </div>
                 </div>
                 {formData.attachmentUrl && (
-                  <div className="mt-3 p-3 bg-gray-50 rounded-xl border flex items-center justify-between">
+                  <div className="mt-3 p-3 bg-gray-50 rounded-lg border flex items-center justify-between">
                     <div className="flex items-center gap-2 text-sm text-gray-700 truncate max-w-[200px]">
                       <FileText size={16} className="text-primary shrink-0" />
                       <span className="truncate">Proof Attached</span>
@@ -523,7 +523,7 @@ export default function PaymentsPage() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2 border rounded-xl">Cancel</button>
+                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2 border rounded-lg">Cancel</button>
                 <button type="submit" disabled={submitting || uploading} className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-md">
                   {submitting ? 'Saving...' : 'Record'}
                 </button>

@@ -195,7 +195,7 @@ export default function QuickExpensePage() {
             <div className="flex flex-col lg:grid lg:grid-cols-3 gap-2 md:gap-4 md:gap-4">
                 {/* Main Form */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white rounded-xl border p-4 md:p-4">
+                    <div className="bg-white rounded-lg border p-4 md:p-4">
                         <h2 className="text-section mb-4">Add New Expense</h2>
 
                         {success && (
@@ -387,7 +387,7 @@ export default function QuickExpensePage() {
 
                 {/* Recent Expenses Sidebar */}
                 <div className="lg:col-span-1">
-                    <div className="bg-white rounded-xl border p-4 md:p-5">
+                    <div className="bg-white rounded-lg border p-4 md:p-5">
                         <h3 className="font-bold mb-4">Recent Expenses</h3>
                         <div className="space-y-3">
                             {recentExpenses.length === 0 ? (

@@ -69,10 +69,10 @@ export default function CompanyPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
         {/* Logo Section */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Company Logo</h2>
           <div className="flex flex-col items-center">
-            <label className="w-32 h-32 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 overflow-hidden">
+            <label className="w-32 h-32 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 overflow-hidden">
               {logo ? (
                 <img src={logo} alt="Logo" className="w-full h-full object-contain" />
               ) : (
@@ -90,7 +90,7 @@ export default function CompanyPage() {
         </div>
 
         {/* Basic Info */}
-        <div className="lg:col-span-2 bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+        <div className="lg:col-span-2 bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Basic Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
             <div>
@@ -99,7 +99,7 @@ export default function CompanyPage() {
                 type="text"
                 value={formData.companyName}
                 onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
               />
             </div>
             <div>
@@ -108,7 +108,7 @@ export default function CompanyPage() {
                 type="text"
                 value={formData.tagline}
                 onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
               />
             </div>
             <div>
@@ -117,7 +117,7 @@ export default function CompanyPage() {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
               />
             </div>
             <div>
@@ -126,7 +126,7 @@ export default function CompanyPage() {
                 type="text"
                 value={formData.website}
                 onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
               />
             </div>
             <div>
@@ -135,7 +135,7 @@ export default function CompanyPage() {
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
               />
             </div>
             <div>
@@ -144,14 +144,14 @@ export default function CompanyPage() {
                 type="tel"
                 value={formData.altPhone}
                 onChange={(e) => setFormData({ ...formData, altPhone: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
               />
             </div>
           </div>
         </div>
 
         {/* Tax Info */}
-        <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+        <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Tax Information</h2>
           <div className="space-y-4">
             <div>
@@ -160,7 +160,7 @@ export default function CompanyPage() {
                 type="text"
                 value={formData.gstNumber}
                 onChange={(e) => setFormData({ ...formData, gstNumber: e.target.value.toUpperCase() })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
                 placeholder="22AAAAA0000A1Z5"
               />
             </div>
@@ -170,7 +170,7 @@ export default function CompanyPage() {
                 type="text"
                 value={formData.panNumber}
                 onChange={(e) => setFormData({ ...formData, panNumber: e.target.value.toUpperCase() })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
                 placeholder="AAAAA0000A"
               />
             </div>
@@ -178,7 +178,7 @@ export default function CompanyPage() {
         </div>
 
         {/* Address */}
-        <div className="lg:col-span-2 bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+        <div className="lg:col-span-2 bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Address</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
             <div className="md:col-span-2">
@@ -186,7 +186,7 @@ export default function CompanyPage() {
               <textarea
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
                 rows={2}
               />
             </div>
@@ -196,7 +196,7 @@ export default function CompanyPage() {
                 type="text"
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
               />
             </div>
             <div>
@@ -205,7 +205,7 @@ export default function CompanyPage() {
                 type="text"
                 value={formData.state}
                 onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
               />
             </div>
             <div>
@@ -214,14 +214,14 @@ export default function CompanyPage() {
                 type="text"
                 value={formData.pincode}
                 onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
               />
             </div>
           </div>
         </div>
 
         {/* Bank Details */}
-        <div className="lg:col-span-3 bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+        <div className="lg:col-span-3 bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Bank Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4">
             <div>
@@ -230,7 +230,7 @@ export default function CompanyPage() {
                 type="text"
                 value={formData.bankName}
                 onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
               />
             </div>
             <div>
@@ -239,7 +239,7 @@ export default function CompanyPage() {
                 type="text"
                 value={formData.accountNumber}
                 onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
               />
             </div>
             <div>
@@ -248,7 +248,7 @@ export default function CompanyPage() {
                 type="text"
                 value={formData.ifscCode}
                 onChange={(e) => setFormData({ ...formData, ifscCode: e.target.value.toUpperCase() })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
               />
             </div>
             <div>
@@ -256,7 +256,7 @@ export default function CompanyPage() {
               <select
                 value={formData.accountType}
                 onChange={(e) => setFormData({ ...formData, accountType: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
               >
                 <option value="Current">Current</option>
                 <option value="Savings">Savings</option>

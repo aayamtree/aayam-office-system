@@ -53,16 +53,16 @@ export default function SharedCalendarView({ events, loading }: SharedCalendarVi
 
     if (loading) {
         return (
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            <div className="bg-white rounded-lg border border-gray-100 p-6">
                 <div className="text-center text-gray-500">Loading calendar...</div>
             </div>
         );
     }
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-100">
+        <div className="bg-white rounded-lg border border-gray-100">
             {/* FILTER HEADER - TOP INDEXING */}
-            <div className="p-4 border-b border-gray-100 bg-gray-900">
+            <div className="p-4 border-b border-gray-100 bg-muted/50">
                 <div className="flex flex-col md:flex-row md:items-center gap-3">
                     {/* Title */}
                     <div className="flex-1">
@@ -79,9 +79,9 @@ export default function SharedCalendarView({ events, loading }: SharedCalendarVi
                         {/* My Events - Default */}
                         <button
                             onClick={() => setFilterMode('my')}
-                            className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${filterMode === 'my'
-                                    ? 'bg-[rgba(0,0,255,0.1)] text-white'
-                                    : 'bg-white border border-gray-200 text-gray-700 hover:border-primary-300'
+                            className={`px-4 py-2 rounded-md flex items-center gap-2 transition-all ${filterMode === 'my'
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-white border border-gray-200 text-gray-700 hover:border-gray-300'
                                 }`}
                         >
                             <User className="w-4 h-4" />
@@ -96,9 +96,9 @@ export default function SharedCalendarView({ events, loading }: SharedCalendarVi
                         {/* All Events */}
                         <button
                             onClick={() => setFilterMode('all')}
-                            className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${filterMode === 'all'
-                                    ? 'bg-[rgba(0,0,255,0.1)] text-white'
-                                    : 'bg-white border border-gray-200 text-gray-700 hover:border-primary-300'
+                            className={`px-4 py-2 rounded-md flex items-center gap-2 transition-all ${filterMode === 'all'
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-white border border-gray-200 text-gray-700 hover:border-gray-300'
                                 }`}
                         >
                             <Users className="w-4 h-4" />
@@ -112,7 +112,7 @@ export default function SharedCalendarView({ events, loading }: SharedCalendarVi
                                 setSelectedUser(e.target.value);
                                 if (e.target.value) setFilterMode('user');
                             }}
-                            className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:border-primary-300 cursor-pointer"
+                            className="px-4 py-2 rounded-md border border-gray-200 bg-white text-gray-700 hover:border-gray-300 cursor-pointer"
                         >
                             <option value="">Filter by User...</option>
                             {allUsers.map(user => (
@@ -153,8 +153,8 @@ export default function SharedCalendarView({ events, loading }: SharedCalendarVi
                                 setFilterMode('user');
                             }}
                             className={`px-3 py-1 rounded-full text-xs transition-colors ${selectedUser === user && filterMode === 'user'
-                                    ? 'bg-[rgba(0,0,255,0.1)] text-white'
-                                    : 'bg-white hover:bg-[rgba(0,0,255,0.1)] text-gray-700'
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-white hover:bg-muted text-gray-700'
                                 }`}
                         >
                             {user}: {userCounts[user]}
@@ -204,17 +204,17 @@ function EventCard({ event, currentUser }: { event: any; currentUser: string }) 
     });
 
     return (
-        <div className={`p-4 rounded-xl border-l-4 transition-all  ${isMyEvent
-                ? 'border-l-oms-blue-500 bg-[rgba(0,0,255,0.1)]/50'
-                : 'border-l-gray-300 bg-gray-50'
+        <div className={`p-4 rounded-lg border-l-4 transition-all ${isMyEvent
+            ? 'border-l-primary bg-primary/5'
+            : 'border-l-gray-300 bg-gray-50'
             }`}>
             <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
                     {/* User Badge & Date */}
                     <div className="flex items-center gap-2 mb-2">
                         <span className={`px-2 py-1 rounded text-label ${isMyEvent
-                                ? 'bg-[rgba(0,0,255,0.1)] text-primary'
-                                : 'bg-gray-200 text-gray-700'
+                            ? 'bg-primary/10 text-primary'
+                            : 'bg-gray-200 text-gray-700'
                             }`}>
                             {isMyEvent ? '👤 You' : `👤 ${createdBy}`}
                         </span>

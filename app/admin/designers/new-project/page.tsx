@@ -309,7 +309,7 @@ export default function NewProjectPage() {
                 <form onSubmit={handleSubmit} className="space-y-6">
 
                     {/* 1. Project Basics */}
-                    <div className="space-y-5 bg-white rounded-xl p-8 border border-gray-200">
+                    <div className="space-y-5 bg-white rounded-lg p-8 border border-gray-200">
                         <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
                             <div className="flex items-center justify-center w-10 h-10 rounded-md bg-gray-900 text-white text-section">
                                 1
@@ -366,7 +366,7 @@ export default function NewProjectPage() {
                     </div>
 
                     {/* 2. Parameters */}
-                    <div className="space-y-5 bg-white rounded-xl p-8 border border-gray-200">
+                    <div className="space-y-5 bg-white rounded-lg p-8 border border-gray-200">
                         <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
                             <div className="flex items-center justify-center w-10 h-10 rounded-md bg-gray-700 text-white text-section">
                                 2
@@ -420,7 +420,7 @@ export default function NewProjectPage() {
                     </div>
 
                     {/* 3. Assets & Brief */}
-                    <div className="space-y-5 bg-white rounded-xl p-8 border border-gray-200">
+                    <div className="space-y-5 bg-white rounded-lg p-8 border border-gray-200">
                         <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
                             <div className="flex items-center justify-center w-10 h-10 rounded-md bg-gray-600 text-white text-section">
                                 3

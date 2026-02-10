@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Printer, ShoppingCart, Package, ListTodo, TrendingUp, Clock, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { Printer, ShoppingCart, Package, ListTodo, TrendingUp, Clock, CheckCircle, AlertTriangle, Loader2, Calculator } from 'lucide-react';
 import { useJobs, usePaperStock, usePOSSales } from '@/lib/hooks';
 import { Job, PaperStock, POSSale } from '@/types/database';
 import { useAuth } from '@/lib/auth-context';
@@ -88,7 +88,7 @@ export default function CMYKPrintPage() {
       </div>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
 
         <Link href="/admin/cmyk-print/retail-pos" className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100  transition-shadow group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
@@ -118,6 +118,19 @@ export default function CMYKPrintPage() {
               ● {lowStockItems.length} Low
             </span>
           </div>
+        </Link>
+
+        <Link href="/admin/cmyk-print/cost-calculator" className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100 transition-shadow group">
+          <div className="flex items-center gap-2 md:gap-4 mb-4">
+            <div className="w-12 h-12 bg-amber-50 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Calculator className="w-6 h-6 text-amber-700" />
+            </div>
+            <div>
+              <h2 className="text-section text-gray-900">Cost Calculator</h2>
+              <p className="text-sm text-gray-500">Paper costing</p>
+            </div>
+          </div>
+          <div className="text-sm text-gray-900">● Estimate Costs →</div>
         </Link>
       </div>
 

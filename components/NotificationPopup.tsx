@@ -102,7 +102,7 @@ export function NotificationPopup() {
                 <div
                     key={notification.id}
                     className={`
-            rounded-xl  p-4 animate-slide-in-right
+            rounded-lg  p-4 animate-slide-in-right
             ${notification.priority === 'urgent'
                             ? 'bg-red-50 border-2 border-red-500'
                             : 'bg-blue-50 border-2 border-blue-500'

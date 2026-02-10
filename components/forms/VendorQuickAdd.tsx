@@ -71,28 +71,28 @@ export default function VendorQuickAdd({ onVendorCreated, onClose }: VendorQuick
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-3xl w-full max-w-2xl  overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-lg w-full max-w-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-orange-600 to-amber-600 p-6 text-white flex items-center justify-between">
+                <div className="bg-muted/50 p-6 flex items-center justify-between border-b border-border">
                     <div>
-                        <h3 className="text-page-title flex items-center gap-3">
+                        <h3 className="text-page-title flex items-center gap-3 text-foreground">
                             <Truck size={28} />
                             Quick Add Vendor
                         </h3>
-                        <p className="text-orange-100 text-sm mt-1">Add new vendor to centralized database</p>
+                        <p className="text-muted-foreground text-sm mt-1">Add new vendor to centralized database</p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-white/20 rounded-md transition-all"
+                        className="h-8 w-8 flex items-center justify-center hover:bg-gray-200 rounded-md transition-colors"
                     >
-                        <X size={24} />
+                        <X size={16} />
                     </button>
                 </div>
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
                     {error && (
-                        <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 text-red-700">
+                        <div className="bg-red-50 border border-red-200 rounded-md p-4 text-red-700">
                             {error}
                         </div>
                     )}
@@ -108,7 +108,7 @@ export default function VendorQuickAdd({ onVendorCreated, onClose }: VendorQuick
                                 required
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-orange-500/20 focus:border-orange-500 transition-all"
+                                className="w-full border-2 border-gray-200 rounded-md px-4 py-3 focus:ring-4 ring-ring/20 focus:border-gray-400 transition-all"
                                 placeholder="Vendor full name"
                             />
                         </div>
@@ -123,7 +123,7 @@ export default function VendorQuickAdd({ onVendorCreated, onClose }: VendorQuick
                                     type="text"
                                     value={formData.company}
                                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                                    className="w-full border-2 border-gray-200 rounded-xl pl-11 pr-4 py-3 focus:ring-4 ring-orange-500/20 focus:border-orange-500 transition-all"
+                                    className="w-full border-2 border-gray-200 rounded-md pl-11 pr-4 py-3 focus:ring-4 ring-ring/20 focus:border-gray-400 transition-all"
                                     placeholder="Company name"
                                 />
                             </div>
@@ -137,7 +137,7 @@ export default function VendorQuickAdd({ onVendorCreated, onClose }: VendorQuick
                                 type="text"
                                 value={formData.category}
                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-orange-500/20 focus:border-orange-500 transition-all"
+                                className="w-full border-2 border-gray-200 rounded-md px-4 py-3 focus:ring-4 ring-ring/20 focus:border-gray-400 transition-all"
                                 placeholder="e.g., Paper Supplier, Printer"
                             />
                         </div>
@@ -152,7 +152,7 @@ export default function VendorQuickAdd({ onVendorCreated, onClose }: VendorQuick
                                     type="email"
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                    className="w-full border-2 border-gray-200 rounded-xl pl-11 pr-4 py-3 focus:ring-4 ring-orange-500/20 focus:border-orange-500 transition-all"
+                                    className="w-full border-2 border-gray-200 rounded-md pl-11 pr-4 py-3 focus:ring-4 ring-ring/20 focus:border-gray-400 transition-all"
                                     placeholder="email@example.com"
                                 />
                             </div>
@@ -169,7 +169,7 @@ export default function VendorQuickAdd({ onVendorCreated, onClose }: VendorQuick
                                     required
                                     value={formData.phone}
                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                    className="w-full border-2 border-gray-200 rounded-xl pl-11 pr-4 py-3 focus:ring-4 ring-orange-500/20 focus:border-orange-500 transition-all"
+                                    className="w-full border-2 border-gray-200 rounded-md pl-11 pr-4 py-3 focus:ring-4 ring-ring/20 focus:border-gray-400 transition-all"
                                     placeholder="9876543210"
                                 />
                             </div>
@@ -188,7 +188,7 @@ export default function VendorQuickAdd({ onVendorCreated, onClose }: VendorQuick
                                     type="text"
                                     value={formData.gstin}
                                     onChange={(e) => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })}
-                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-orange-500/20 focus:border-orange-500 transition-all uppercase"
+                                    className="w-full border-2 border-gray-200 rounded-md px-4 py-3 focus:ring-4 ring-ring/20 focus:border-gray-400 transition-all uppercase"
                                     placeholder="22AAAAA0000A1Z5"
                                     maxLength={15}
                                 />
@@ -202,7 +202,7 @@ export default function VendorQuickAdd({ onVendorCreated, onClose }: VendorQuick
                                     type="number"
                                     value={formData.payment_terms}
                                     onChange={(e) => setFormData({ ...formData, payment_terms: parseInt(e.target.value) || 0 })}
-                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-orange-500/20 focus:border-orange-500 transition-all"
+                                    className="w-full border-2 border-gray-200 rounded-md px-4 py-3 focus:ring-4 ring-ring/20 focus:border-gray-400 transition-all"
                                     placeholder="30"
                                 />
                             </div>
@@ -223,7 +223,7 @@ export default function VendorQuickAdd({ onVendorCreated, onClose }: VendorQuick
                                 <textarea
                                     value={formData.address}
                                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-orange-500/20 focus:border-orange-500 transition-all resize-none"
+                                    className="w-full border-2 border-gray-200 rounded-md px-4 py-3 focus:ring-4 ring-ring/20 focus:border-gray-400 transition-all resize-none"
                                     rows={2}
                                     placeholder="Building, Street, Area"
                                 />
@@ -237,7 +237,7 @@ export default function VendorQuickAdd({ onVendorCreated, onClose }: VendorQuick
                                         type="text"
                                         value={formData.city}
                                         onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-orange-500/20 focus:border-orange-500 transition-all"
+                                        className="w-full border-2 border-gray-200 rounded-md px-4 py-3 focus:ring-4 ring-ring/20 focus:border-gray-400 transition-all"
                                         placeholder="Mumbai"
                                     />
                                 </div>
@@ -249,7 +249,7 @@ export default function VendorQuickAdd({ onVendorCreated, onClose }: VendorQuick
                                         type="text"
                                         value={formData.state}
                                         onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 ring-orange-500/20 focus:border-orange-500 transition-all"
+                                        className="w-full border-2 border-gray-200 rounded-md px-4 py-3 focus:ring-4 ring-ring/20 focus:border-gray-400 transition-all"
                                         placeholder="Maharashtra"
                                     />
                                 </div>
@@ -269,7 +269,7 @@ export default function VendorQuickAdd({ onVendorCreated, onClose }: VendorQuick
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-8 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-md font-bold  transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-8 py-2 bg-primary text-primary-foreground rounded-md font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? 'Adding...' : 'Add Vendor'}
                         </button>

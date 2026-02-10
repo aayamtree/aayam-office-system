@@ -20,7 +20,7 @@ export default function CRMPage() {
         </div>
         <Link
           href="/admin/crm/clients?new=true"
-          className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-xl -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
+          className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg -900/20 transition-all hover:scale-105 active:scale-95 font-medium"
         >
           <UserPlus size={20} />
           <span>Add Client</span>
@@ -30,9 +30,9 @@ export default function CRMPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-2xl p-5 border border-gray-100 transition-shadow  group">
+          <div key={stat.label} className="bg-white rounded-lg p-5 border border-gray-100 transition-shadow  group">
             <div className="flex items-center gap-3 mb-3">
-              <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+              <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
                 <stat.icon size={22} className="text-white" />
               </div>
             </div>
@@ -46,9 +46,9 @@ export default function CRMPage() {
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
         {/* Clients Card */}
-        <Link href="/admin/crm/clients" className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
+        <Link href="/admin/crm/clients" className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100  hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-2 md:gap-4 mb-4">
-            <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div className="w-14 h-14 bg-muted rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
               <Users size={28} className="text-foreground" />
             </div>
             <div>
@@ -67,7 +67,7 @@ export default function CRMPage() {
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-lg md:rounded-2xl p-3 md:p-4 border border-gray-100">
+      <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
         <div className="flex items-center gap-3 mb-3 md:mb-1.5">
           <div className="w-1 h-6 bg-gray-900 rounded-full"></div>
           <h2 className="text-section text-gray-900">Recent Activity</h2>
@@ -78,8 +78,8 @@ export default function CRMPage() {
             { action: 'Client updated', name: 'ABC Industries', time: '5 hours ago', type: 'client' },
             { action: 'Order placed by', name: 'Global Traders', time: '1 day ago', type: 'client' },
           ].map((item, index) => (
-            <div key={index} className="flex items-center gap-2 md:gap-4 p-4 bg-gray-50/80 rounded-xl hover:bg-gray-100 transition-colors border border-gray-100">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${item.type === 'client' ? 'bg-muted text-foreground' : 'bg-gray-900 text-white'
+            <div key={index} className="flex items-center gap-2 md:gap-4 p-4 bg-gray-50/80 rounded-lg hover:bg-gray-100 transition-colors border border-gray-100">
+              <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${item.type === 'client' ? 'bg-muted text-foreground' : 'bg-gray-900 text-white'
                 }`}>
                 {item.type === 'client' ? (
                   <Users size={20} />

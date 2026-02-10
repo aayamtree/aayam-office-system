@@ -27,9 +27,9 @@ export default function PriorityQuickAdd({ isOpen, onClose, onSuccess }: Priorit
         { value: 'bg-yellow-100 text-yellow-600', label: 'Yellow', preview: 'bg-yellow-100' },
         { value: 'bg-orange-100 text-orange-600', label: 'Orange', preview: 'bg-orange-100' },
         { value: 'bg-red-100 text-red-600', label: 'Red', preview: 'bg-red-100' },
-        { value: 'bg-[rgba(0,0,255,0.1)] text-primary', label: 'Purple', preview: 'bg-[rgba(0,0,255,0.1)]' },
+        { value: 'bg-purple-100 text-purple-600', label: 'Purple', preview: 'bg-purple-100' },
         { value: 'bg-pink-100 text-pink-600', label: 'Pink', preview: 'bg-pink-100' },
-        { value: 'bg-[rgba(0,0,255,0.1)] text-primary', label: 'Indigo', preview: 'bg-[rgba(0,0,255,0.1)]' },
+        { value: 'bg-indigo-100 text-indigo-600', label: 'Indigo', preview: 'bg-indigo-100' },
         { value: 'bg-teal-100 text-teal-600', label: 'Teal', preview: 'bg-teal-100' },
     ];
 
@@ -81,21 +81,21 @@ export default function PriorityQuickAdd({ isOpen, onClose, onSuccess }: Priorit
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-            <div className="bg-white rounded-2xl  w-full max-w-md">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+            <div className="bg-white rounded-lg w-full max-w-md">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-yellow-50 to-amber-50">
+                <div className="flex items-center justify-between p-6 border-b bg-muted/50">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-yellow-100 rounded-lg">
-                            <AlertCircle size={24} className="text-yellow-600" />
+                        <div className="p-2 bg-muted rounded-lg">
+                            <AlertCircle size={24} className="text-foreground" />
                         </div>
                         <div>
                             <h3 className="text-page-title text-gray-900">Add Priority Level</h3>
                             <p className="text-sm text-gray-600">Create new priority level</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-md transition-colors">
-                        <X size={20} />
+                    <button onClick={onClose} className="h-8 w-8 flex items-center justify-center hover:bg-gray-200 rounded-md transition-colors">
+                        <X size={16} />
                     </button>
                 </div>
 
@@ -106,7 +106,7 @@ export default function PriorityQuickAdd({ isOpen, onClose, onSuccess }: Priorit
                         <input
                             required
                             type="text"
-                            className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-yellow-500/20 focus:border-yellow-500 lowercase"
+                            className="w-full px-3 py-2 border rounded-md focus:ring-2 ring-ring/20 focus:border-gray-400 lowercase"
                             placeholder="e.g., critical, medium"
                             value={formData.id}
                             onChange={e => setFormData({ ...formData, id: e.target.value })}
@@ -119,7 +119,7 @@ export default function PriorityQuickAdd({ isOpen, onClose, onSuccess }: Priorit
                         <input
                             required
                             type="text"
-                            className="w-full px-3 py-2 border rounded-xl focus:ring-2 ring-yellow-500/20 focus:border-yellow-500"
+                            className="w-full px-3 py-2 border rounded-md focus:ring-2 ring-ring/20 focus:border-gray-400"
                             placeholder="e.g., Critical, Medium"
                             value={formData.name}
                             onChange={e => setFormData({ ...formData, name: e.target.value })}
@@ -135,8 +135,8 @@ export default function PriorityQuickAdd({ isOpen, onClose, onSuccess }: Priorit
                                     type="button"
                                     onClick={() => setFormData({ ...formData, color: option.value })}
                                     className={`h-10 rounded-lg border-2 transition-all ${formData.color === option.value
-                                            ? 'border-yellow-500 scale-105'
-                                            : 'border-gray-200 hover:border-yellow-300'
+                                        ? 'border-primary scale-105'
+                                        : 'border-gray-200 hover:border-gray-300'
                                         } ${option.preview}`}
                                     title={option.label}
                                 />
@@ -161,7 +161,7 @@ export default function PriorityQuickAdd({ isOpen, onClose, onSuccess }: Priorit
                         <button
                             type="submit"
                             disabled={saving}
-                            className="px-8 py-2 bg-gradient-to-r from-yellow-600 to-amber-600 text-white rounded-md font-medium  disabled:opacity-50 flex items-center gap-2"
+                            className="px-8 py-2 bg-primary text-primary-foreground rounded-md font-medium disabled:opacity-50 flex items-center gap-2"
                         >
                             {saving ? (
                                 <>

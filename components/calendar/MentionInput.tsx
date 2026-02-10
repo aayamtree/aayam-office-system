@@ -137,7 +137,7 @@ export default function MentionInput({ value, onChange, placeholder, className }
                         <button
                             key={user.id}
                             onClick={() => insertMention(user)}
-                            className={`w-full text-left px-4 py-2 hover:bg-[rgba(0,0,255,0.1)] ${index === selectedIndex ? 'bg-[rgba(0,0,255,0.1)]' : ''
+                            className={`w-full text-left px-4 py-2 hover:bg-muted ${index === selectedIndex ? 'bg-muted' : ''
                                 }`}
                         >
                             <div className="flex items-center gap-2">

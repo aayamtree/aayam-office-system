@@ -121,7 +121,7 @@ export default function UserManagementPage() {
   return (
     <div className="space-y-6">
       {/* Header Card - Stack on mobile, row on desktop */}
-      <div className="bg-white p-4 md:p-4 rounded-xl border space-y-4">
+      <div className="bg-white p-4 md:p-4 rounded-lg border space-y-4">
         {/* Title Section */}
         <div>
           <h1 className="text-xl md:text-page-title text-gray-900">Settings & Team</h1>
@@ -185,7 +185,7 @@ export default function UserManagementPage() {
           </div>
 
           {/* Users Table - Horizontal scroll on mobile */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left min-w-[640px]">
                 <thead className="bg-gray-50 border-b border-gray-100">
@@ -243,7 +243,7 @@ export default function UserManagementPage() {
           {/* ADD USER MODAL */}
           {showAddModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-              <div className="bg-white rounded-xl  w-full max-w-md overflow-hidden">
+              <div className="bg-white rounded-lg  w-full max-w-md overflow-hidden">
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center">
                   <h2 className="text-section text-gray-900">Add New Team Member</h2>
                   <button
