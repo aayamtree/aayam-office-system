@@ -18,9 +18,8 @@ import {
     Activity,
     Zap,
     Target,
-    CircleDot,
 } from 'lucide-react';
-import { useDashboardStats, useJobs, useActivityFeed } from '@/lib/hooks';
+import { useDashboardStats, useJobs } from '@/lib/hooks';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -40,7 +39,6 @@ export default function AdminDashboardShadcn() {
         limit: 5,
         orderBy: { column: 'created_at', ascending: false }
     });
-    const { activities, loading: activitiesLoading } = useActivityFeed(15);
 
     // Redirect non-admin users
     useEffect(() => {
@@ -71,20 +69,6 @@ export default function AdminDashboardShadcn() {
         }).format(amount);
     };
 
-    const timeAgo = (dateStr: string) => {
-        const now = new Date();
-        const then = new Date(dateStr);
-        const diffMs = now.getTime() - then.getTime();
-        const diffMins = Math.floor(diffMs / 60000);
-        if (diffMins < 1) return 'just now';
-        if (diffMins < 60) return `${diffMins}m ago`;
-        const diffHours = Math.floor(diffMins / 60);
-        if (diffHours < 24) return `${diffHours}h ago`;
-        const diffDays = Math.floor(diffHours / 24);
-        if (diffDays === 1) return 'yesterday';
-        return `${diffDays}d ago`;
-    };
-
     // Pipeline stages in order
     const pipelineStages = [
         { key: 'design', label: 'Design', color: 'bg-violet-500' },
@@ -102,14 +86,6 @@ export default function AdminDashboardShadcn() {
         dashboardStats.alerts.followUpsDue > 0 ||
         dashboardStats.alerts.blockedJobs > 0;
 
-    // Activity feed icon/color based on action
-    const getActivityStyle = (action: string) => {
-        if (action?.includes('Create') || action?.includes('create')) return { icon: '➕', color: 'text-green-600 bg-green-50' };
-        if (action?.includes('Update') || action?.includes('Stage') || action?.includes('update')) return { icon: '✏️', color: 'text-gray-700 bg-gray-100' };
-        if (action?.includes('Delete') || action?.includes('delete')) return { icon: '🗑️', color: 'text-red-600 bg-red-50' };
-        if (action?.includes('login')) return { icon: '🔑', color: 'text-gray-600 bg-gray-50' };
-        return { icon: '📋', color: 'text-gray-600 bg-gray-50' };
-    };
 
     return (
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 overflow-x-hidden">
@@ -320,56 +296,13 @@ export default function AdminDashboardShadcn() {
                     </Card>
                 </div>
 
-                {/* Right Column (2/5): Overdue Alerts + Activity Feed */}
+                {/* Right Column (2/5): Daily Summary + Overdue Alerts */}
                 <div className="lg:col-span-2 space-y-4">
-                    {/* Overdue Alerts */}
-                    <OverdueAlertsWidget />
-
                     {/* Daily Summary */}
                     <DailySummaryWidget />
 
-                    <Card className="h-full">
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-base flex items-center gap-2">
-                                <CircleDot className="h-4 w-4" strokeWidth={1.5} />
-                                Activity Feed
-                            </CardTitle>
-                            <CardDescription>Recent system activity</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {activitiesLoading ? (
-                                <div className="text-sm text-muted-foreground text-center py-8">Loading...</div>
-                            ) : activities.length === 0 ? (
-                                <div className="text-center py-8">
-                                    <p className="text-sm text-muted-foreground">No activity yet</p>
-                                    <p className="text-xs text-muted-foreground mt-1">Actions like creating jobs, leads, and invoices will appear here</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-                                    {activities.map((activity) => {
-                                        const style = getActivityStyle(activity.action);
-                                        const userName = activity.profiles?.name || activity.profiles?.username || 'System';
-                                        return (
-                                            <div key={activity.id} className="flex items-start gap-3">
-                                                <div className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 text-xs ${style.color}`}>
-                                                    {style.icon}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm leading-tight">
-                                                        <span className="font-medium">{userName}</span>
-                                                        <span className="text-muted-foreground"> · {activity.description || activity.action}</span>
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground mt-0.5">
-                                                        {timeAgo(activity.created_at)}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                    {/* Overdue Alerts */}
+                    <OverdueAlertsWidget />
                 </div>
             </div>
 
