@@ -128,7 +128,7 @@ export function MobileBottomNav() {
         <>
             {/* Bottom Nav Bar - Mobile Only */}
             <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 lg:hidden safe-area-bottom">
-                <div className="flex items-stretch justify-around h-14">
+                <div className="flex items-stretch justify-around h-16 px-2">
                     {/* Dynamic Tabs (4 slots) */}
                     {activeTabItems.map(item => {
                         const Icon = item.icon;
@@ -271,7 +271,7 @@ export function MobileBottomNav() {
             <style jsx global>{`
                 @media (max-width: 1023px) {
                     main {
-                        padding-bottom: 72px !important;
+                        padding-bottom: 80px !important;
                     }
                 }
                 .safe-area-bottom {
