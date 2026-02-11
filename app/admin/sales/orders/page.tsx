@@ -411,7 +411,9 @@ export default function OrdersPage() {
                       <td className="px-6 py-4 align-top">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-bold text-gray-900 font-mono text-sm bg-gray-100 px-2 py-1 rounded-md">{job.job_number}</span>
-                          {job.priority === 'urgent' && <span className="text-xs font-bold uppercase text-destructive bg-white px-2 py-0.5 rounded-full">Urgent</span>}
+                          {job.priority === 'urgent' && <span className="text-xs font-bold uppercase text-red-600 bg-red-50 px-2 py-0.5 rounded-full">Urgent</span>}
+                          {job.priority === 'high' && <span className="text-xs font-bold uppercase text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">High</span>}
+                          {job.priority === 'normal' && <span className="text-xs font-medium uppercase text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Normal</span>}
                         </div>
                         <div className="font-semibold text-gray-800">{job.project_name}</div>
                         <div className="text-xs text-gray-500 mt-1">{job.quantity} items</div>
