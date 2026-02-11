@@ -2,16 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Printer, Users, X, Calendar, IndianRupee, CheckCircle, Plus } from 'lucide-react';
+import { Printer, X, Calendar, IndianRupee, CheckCircle, Plus } from 'lucide-react';
 import { QuickAddMachine, QuickAddSheetSize, QuickAddMaterial } from '@/components/print-planner/QuickAddModals';
 
-interface PendingJob {
+interface ConfiguredJob {
     id: string;
     job_number: string;
     project_name: string;
     client_name: string;
     job_type: string;
     quantity?: number;
+    quantity_needed: number;
+    ups_in_sheet: number;
 }
 
 interface Vendor {
@@ -20,7 +22,7 @@ interface Vendor {
 }
 
 interface CreatePrintRunFormProps {
-    selectedJobs: PendingJob[];
+    selectedJobs: ConfiguredJob[];
     onRemoveJob: (jobId: string) => void;
     onClear: () => void;
     onSuccess: () => void;
@@ -70,10 +72,6 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
         setMaterials(mat.data || []);
     };
 
-    const uniqueClients = Array.from(new Set(selectedJobs.map(j => j.client_name)));
-    const lockedJobType = selectedJobs.length > 0 ? selectedJobs[0].job_type : null;
-    const isMultiClient = uniqueClients.length > 1;
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (selectedJobs.length === 0) {
@@ -105,14 +103,14 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
 
             if (printRunError) throw printRunError;
 
-            // Add jobs to print run
+            // Add jobs with their configured UPS and quantity values
             const jobsToAdd = selectedJobs.map(job => ({
                 print_run_id: printRun.id,
                 job_id: job.id,
                 client_name: job.client_name,
                 item_name: job.project_name,
-                quantity_needed: job.quantity || 0,
-                ups_in_sheet: 1,
+                quantity_needed: job.quantity_needed,
+                ups_in_sheet: job.ups_in_sheet,
                 job_type: job.job_type
             }));
 
@@ -148,52 +146,15 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
         <div className="h-full flex flex-col bg-white rounded-md border border-gray-200">
             {/* Header */}
             <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center">
-                            <Printer className="text-gray-700" size={20} />
-                        </div>
-                        <div>
-                            <h2 className="text-page-title text-gray-900">Create Print Run</h2>
-                            <p className="text-sm text-gray-500">Batch jobs for printing</p>
-                        </div>
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center">
+                        <Printer className="text-gray-700" size={20} />
                     </div>
-                    {selectedJobs.length > 0 && (
-                        <button
-                            onClick={onClear}
-                            className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-md transition-all"
-                        >
-                            Clear All
-                        </button>
-                    )}
+                    <div>
+                        <h2 className="text-page-title text-gray-900">Print Specifications</h2>
+                        <p className="text-sm text-gray-500">Set machine, material, and vendor</p>
+                    </div>
                 </div>
-
-                {/* Job Type Lock Badge */}
-                {lockedJobType && (
-                    <div className={`p-3 rounded-md border ${isMultiClient
-                        ? 'bg-gray-100 border-gray-300'
-                        : 'bg-gray-50 border-gray-300'
-                        }`}>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                {isMultiClient ? (
-                                    <>
-                                        <Users size={16} className="text-gray-700" />
-                                        <span className="text-sm font-bold text-gray-900">MULTI-CLIENT BATCH</span>
-                                    </>
-                                ) : (
-                                    <span className="text-sm font-bold text-gray-900">SINGLE CLIENT</span>
-                                )}
-                                <span className="px-2 py-0.5 bg-white rounded text-xs font-bold text-gray-700">
-                                    {lockedJobType}
-                                </span>
-                            </div>
-                            <span className="text-xs text-gray-600 font-medium">
-                                {selectedJobs.length} job{selectedJobs.length !== 1 ? 's' : ''}
-                            </span>
-                        </div>
-                    </div>
-                )}
             </div>
 
             {/* Form */}
@@ -328,27 +289,28 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                     />
                 </div>
 
-                {/* Selected Jobs */}
+                {/* Selected Jobs Summary (compact) */}
                 {selectedJobs.length > 0 && (
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-3">
-                            Selected Jobs ({selectedJobs.length})
+                            Jobs in this run ({selectedJobs.length})
                         </label>
-                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                        <div className="space-y-1.5 max-h-48 overflow-y-auto">
                             {selectedJobs.map(job => (
-                                <div key={job.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                                <div key={job.id} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-md">
                                     <div className="flex-1">
-                                        <p className="text-sm font-medium text-gray-900">{job.job_number}</p>
-                                        <p className="text-xs text-gray-500">
-                                            {job.client_name} • {job.project_name}
-                                        </p>
+                                        <span className="text-xs font-bold text-gray-900">{job.job_number}</span>
+                                        <span className="text-xs text-gray-500 ml-2">{job.client_name}</span>
+                                        <span className="text-xs text-gray-400 ml-2">
+                                            {job.quantity_needed.toLocaleString()} qty · {job.ups_in_sheet}-up
+                                        </span>
                                     </div>
                                     <button
                                         type="button"
                                         onClick={() => onRemoveJob(job.id)}
-                                        className="p-1.5 text-gray-500 hover:bg-gray-200 rounded-md transition-all"
+                                        className="p-1 text-gray-400 hover:text-red-600 rounded"
                                     >
-                                        <X size={16} />
+                                        <X size={14} />
                                     </button>
                                 </div>
                             ))}

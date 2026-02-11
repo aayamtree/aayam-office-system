@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { PrintJobQueue } from '@/components/print-planner/PrintJobQueue';
 import { CreatePrintRunForm } from '@/components/print-planner/CreatePrintRunForm';
+import { ArrowLeft, ArrowRight, CheckCircle, Layers, Package, Settings2, Users } from 'lucide-react';
 
 interface PendingJob {
     id: string;
@@ -16,12 +17,27 @@ interface PendingJob {
     due_date?: string;
 }
 
+// Extended job with UPS/Qty configuration
+interface ConfiguredJob extends PendingJob {
+    quantity_needed: number;
+    ups_in_sheet: number;
+    sheets_required: number;
+}
+
+const STEPS = [
+    { id: 1, label: 'Select Jobs', icon: Package },
+    { id: 2, label: 'Configure UPS & Qty', icon: Settings2 },
+    { id: 3, label: 'Print Specs & Submit', icon: CheckCircle },
+];
+
 export default function PrintPlannerPage() {
+    const [step, setStep] = useState(1);
     const [selectedJobs, setSelectedJobs] = useState<PendingJob[]>([]);
+    const [configuredJobs, setConfiguredJobs] = useState<ConfiguredJob[]>([]);
     const [refreshKey, setRefreshKey] = useState(0);
 
+    // Step 1: Add job to selection
     const handleAddJob = (job: PendingJob) => {
-        // Validate job type matches if jobs already selected
         if (selectedJobs.length > 0) {
             const existingJobType = selectedJobs[0].job_type;
             if (job.job_type !== existingJobType) {
@@ -29,74 +45,426 @@ export default function PrintPlannerPage() {
                 return;
             }
         }
-
-        // Add job to selection
         setSelectedJobs(prev => [...prev, job]);
     };
 
-    const handleRemoveJob = (jobId: string) => {
+    const handleRemoveJobStep1 = (jobId: string) => {
         setSelectedJobs(prev => prev.filter(j => j.id !== jobId));
+    };
+
+    // Step 1 → Step 2: Initialize configured jobs
+    const goToStep2 = () => {
+        const configured: ConfiguredJob[] = selectedJobs.map(job => ({
+            ...job,
+            quantity_needed: job.quantity || 0,
+            ups_in_sheet: 1,
+            sheets_required: job.quantity || 0, // qty / 1 ups
+        }));
+        setConfiguredJobs(configured);
+        setStep(2);
+    };
+
+    // Step 2: Update job configuration
+    const updateJobConfig = (jobId: string, field: 'quantity_needed' | 'ups_in_sheet', value: number) => {
+        setConfiguredJobs(prev => prev.map(job => {
+            if (job.id !== jobId) return job;
+            const updated = { ...job, [field]: value };
+            // Recalculate sheets
+            updated.sheets_required = updated.ups_in_sheet > 0
+                ? Math.ceil(updated.quantity_needed / updated.ups_in_sheet)
+                : 0;
+            return updated;
+        }));
+    };
+
+    const removeJobStep2 = (jobId: string) => {
+        setConfiguredJobs(prev => prev.filter(j => j.id !== jobId));
+        setSelectedJobs(prev => prev.filter(j => j.id !== jobId));
+    };
+
+    // Step 3: Success handler
+    const handleSuccess = () => {
+        setRefreshKey(prev => prev + 1);
+        setSelectedJobs([]);
+        setConfiguredJobs([]);
+        setStep(1);
+        alert('Print run created successfully!');
     };
 
     const handleClear = () => {
         setSelectedJobs([]);
-    };
-
-    const handleSuccess = () => {
-        // Refresh job queue
-        setRefreshKey(prev => prev + 1);
-        alert('Print run created successfully!');
+        setConfiguredJobs([]);
+        setStep(1);
     };
 
     const selectedJobIds = new Set(selectedJobs.map(j => j.id));
     const selectedJobType = selectedJobs.length > 0 ? selectedJobs[0].job_type : null;
+    const uniqueClients = Array.from(new Set(configuredJobs.map(j => j.client_name)));
+    const isMultiClient = uniqueClients.length > 1;
+    const totalSheets = configuredJobs.length > 0
+        ? (isMultiClient
+            ? Math.max(...configuredJobs.map(j => j.sheets_required))
+            : configuredJobs.reduce((sum, j) => sum + j.sheets_required, 0))
+        : 0;
+    const totalQty = configuredJobs.reduce((sum, j) => sum + j.quantity_needed, 0);
 
     return (
         <div className="min-h-screen bg-gray-50 p-4 pb-12">
             {/* Header */}
-            <div className="mb-1.5">
-                <h1 className="text-page-title text-gray-900 mb-2">Print Planner</h1>
-                <p className="text-gray-600">Batch print jobs with same job type for efficient printing</p>
+            <div className="mb-4">
+                <h1 className="text-page-title text-gray-900 mb-1">Print Planner</h1>
+                <p className="text-sm text-gray-600">Select jobs → Configure quantity & UPS → Create print run</p>
             </div>
 
-            {/* Split Screen Layout - No fixed height to prevent overlap */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mb-1.5">
-                {/* Left: Job Queue */}
-                <div className="h-[calc(100vh-350px)]">
-                    <PrintJobQueue
-                        key={refreshKey}
-                        onAddJob={handleAddJob}
-                        selectedJobType={selectedJobType}
-                        disabledJobIds={selectedJobIds}
-                    />
-                </div>
-
-                {/* Right: Create Print Run */}
-                <div className="h-[calc(100vh-350px)]">
-                    <CreatePrintRunForm
-                        selectedJobs={selectedJobs}
-                        onRemoveJob={handleRemoveJob}
-                        onClear={handleClear}
-                        onSuccess={handleSuccess}
-                    />
-                </div>
+            {/* Step Indicator */}
+            <div className="flex items-center gap-2 mb-4 bg-white rounded-md border border-gray-200 p-3">
+                {STEPS.map((s, i) => {
+                    const Icon = s.icon;
+                    const isActive = step === s.id;
+                    const isCompleted = step > s.id;
+                    return (
+                        <div key={s.id} className="flex items-center gap-2 flex-1">
+                            <button
+                                onClick={() => {
+                                    if (isCompleted) setStep(s.id);
+                                }}
+                                disabled={!isCompleted && !isActive}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all w-full ${isActive
+                                        ? 'bg-gray-900 text-white'
+                                        : isCompleted
+                                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer'
+                                            : 'bg-gray-50 text-gray-400 cursor-default'
+                                    }`}
+                            >
+                                <Icon size={16} />
+                                <span className="hidden sm:inline">{s.label}</span>
+                                <span className="sm:hidden">{s.id}</span>
+                            </button>
+                            {i < STEPS.length - 1 && (
+                                <ArrowRight size={14} className="text-gray-300 shrink-0" />
+                            )}
+                        </div>
+                    );
+                })}
             </div>
 
-            {/* Info Banner - Clear separation from grid above */}
-            <div className="p-4 bg-muted border-2 border-border rounded-md max-w-7xl">
-                <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-white text-sm font-bold">i</span>
+            {/* Step 1: Select Jobs */}
+            {step === 1 && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    {/* Left: Job Queue (2/3) */}
+                    <div className="lg:col-span-2 h-[calc(100vh-280px)]">
+                        <PrintJobQueue
+                            key={refreshKey}
+                            onAddJob={handleAddJob}
+                            selectedJobType={selectedJobType}
+                            disabledJobIds={selectedJobIds}
+                        />
                     </div>
-                    <div>
-                        <p className="font-bold text-gray-900 mb-1">Job Type Batching Rule</p>
-                        <p className="text-sm text-gray-700">
-                            Only jobs with the <strong>same job type</strong> can be added to a print run.
-                            For example: STICKER jobs cannot be batched with POUCH jobs as they use different vendors and processes.
-                        </p>
+
+                    {/* Right: Selected Jobs Summary (1/3) */}
+                    <div className="h-[calc(100vh-280px)] flex flex-col bg-white rounded-md border border-gray-200">
+                        <div className="p-4 border-b border-gray-200">
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-bold text-gray-900">
+                                    Selected Jobs ({selectedJobs.length})
+                                </h3>
+                                {selectedJobs.length > 0 && (
+                                    <button
+                                        onClick={() => setSelectedJobs([])}
+                                        className="text-xs text-gray-500 hover:text-gray-700"
+                                    >
+                                        Clear all
+                                    </button>
+                                )}
+                            </div>
+                            {selectedJobType && (
+                                <div className="mt-2 flex items-center gap-2">
+                                    <span className="px-2 py-0.5 bg-gray-900 text-white rounded text-xs font-bold">
+                                        {selectedJobType}
+                                    </span>
+                                    {isMultiClient && (
+                                        <span className="flex items-center gap-1 text-xs font-medium text-gray-600">
+                                            <Users size={12} /> Multi-client
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                            {selectedJobs.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <Package className="mx-auto h-10 w-10 text-gray-200 mb-2" />
+                                    <p className="text-sm text-gray-400">Click &quot;Add&quot; on jobs to select them</p>
+                                </div>
+                            ) : (
+                                selectedJobs.map(job => (
+                                    <div key={job.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold text-gray-900 truncate">{job.job_number}</p>
+                                            <p className="text-xs text-gray-500 truncate">
+                                                {job.client_name} · {job.project_name}
+                                            </p>
+                                            {job.quantity && (
+                                                <p className="text-xs text-gray-400">{job.quantity.toLocaleString()} qty</p>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={() => handleRemoveJobStep1(job.id)}
+                                            className="ml-2 p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded transition-all"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        {/* Next Button */}
+                        <div className="p-4 border-t border-gray-200">
+                            <button
+                                onClick={goToStep2}
+                                disabled={selectedJobs.length === 0}
+                                className="w-full py-3 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                Next: Configure UPS & Qty
+                                <ArrowRight size={16} />
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
+
+            {/* Step 2: Configure UPS & Quantity per Job */}
+            {step === 2 && (
+                <div className="bg-white rounded-md border border-gray-200">
+                    {/* Header */}
+                    <div className="p-4 border-b border-gray-200">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                                    <Settings2 size={16} />
+                                    Configure Each Job
+                                </h3>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Set UPS per sheet and quantity for each job. Sheets required are auto-calculated.
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {isMultiClient && (
+                                    <span className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 rounded-md text-xs font-bold text-gray-700 border border-gray-200">
+                                        <Layers size={14} />
+                                        GANG SHEET — Multiple clients share sheets
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Job Configuration Table */}
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="bg-gray-50 border-b border-gray-200">
+                                    <th className="text-left text-xs font-bold text-gray-600 px-4 py-3">Job #</th>
+                                    <th className="text-left text-xs font-bold text-gray-600 px-4 py-3">Client</th>
+                                    <th className="text-left text-xs font-bold text-gray-600 px-4 py-3">Project</th>
+                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-32">Qty Needed</th>
+                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-28">UPS / Sheet</th>
+                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-28">Sheets Required</th>
+                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-16"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {configuredJobs.map((job, idx) => (
+                                    <tr key={job.id} className={`border-b border-gray-100 ${idx % 2 === 0 ? '' : 'bg-gray-50/50'}`}>
+                                        <td className="px-4 py-3">
+                                            <span className="font-mono text-sm font-bold text-gray-900">{job.job_number}</span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className="text-sm text-gray-700">{job.client_name}</span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className="text-sm text-gray-700">{job.project_name}</span>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={job.quantity_needed}
+                                                onChange={(e) => updateJobConfig(job.id, 'quantity_needed', parseInt(e.target.value) || 0)}
+                                                className="w-24 px-3 py-1.5 text-center text-sm border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none"
+                                            />
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                value={job.ups_in_sheet}
+                                                onChange={(e) => updateJobConfig(job.id, 'ups_in_sheet', parseInt(e.target.value) || 1)}
+                                                className="w-20 px-3 py-1.5 text-center text-sm font-bold border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none bg-gray-50"
+                                            />
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <span className="inline-block px-3 py-1.5 bg-gray-100 rounded-md text-sm font-bold text-gray-900 min-w-[60px]">
+                                                {job.sheets_required.toLocaleString()}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <button
+                                                onClick={() => removeJobStep2(job.id)}
+                                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-all"
+                                                title="Remove job"
+                                            >
+                                                ✕
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                            <tfoot>
+                                <tr className="bg-gray-100 border-t-2 border-gray-300">
+                                    <td colSpan={3} className="px-4 py-3 text-right">
+                                        <span className="text-sm font-bold text-gray-700">TOTALS</span>
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <span className="text-sm font-bold text-gray-900">{totalQty.toLocaleString()}</span>
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <span className="text-xs text-gray-500">—</span>
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <span className="inline-block px-3 py-1.5 bg-gray-900 text-white rounded-md text-sm font-bold min-w-[60px]">
+                                            {totalSheets.toLocaleString()}
+                                        </span>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    {/* Gang Sheet Info */}
+                    {isMultiClient && (
+                        <div className="mx-4 my-3 p-3 bg-gray-50 rounded-md border border-gray-200">
+                            <div className="flex items-start gap-2">
+                                <Layers size={16} className="text-gray-700 mt-0.5 shrink-0" />
+                                <div>
+                                    <p className="text-sm font-bold text-gray-900">Gang Sheet Mode</p>
+                                    <p className="text-xs text-gray-600 mt-0.5">
+                                        Multiple clients&apos; jobs share the same physical sheets.
+                                        Total sheets = max sheets across jobs ({totalSheets} sheets),
+                                        not the sum.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Navigation */}
+                    <div className="p-4 border-t border-gray-200 flex items-center justify-between">
+                        <button
+                            onClick={() => setStep(1)}
+                            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-all"
+                        >
+                            <ArrowLeft size={16} />
+                            Back to Selection
+                        </button>
+                        <button
+                            onClick={() => setStep(3)}
+                            disabled={configuredJobs.length === 0}
+                            className="flex items-center gap-2 px-6 py-2.5 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            Next: Print Specs
+                            <ArrowRight size={16} />
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Step 3: Print Specs & Submit */}
+            {step === 3 && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    {/* Left: Summary (1/3) */}
+                    <div className="bg-white rounded-md border border-gray-200 p-4">
+                        <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                            <Package size={16} />
+                            Print Run Summary
+                        </h3>
+
+                        {/* Stats */}
+                        <div className="grid grid-cols-2 gap-2 mb-4">
+                            <div className="p-3 bg-gray-50 rounded-md text-center">
+                                <p className="text-2xl font-bold text-gray-900">{configuredJobs.length}</p>
+                                <p className="text-xs text-gray-500">Jobs</p>
+                            </div>
+                            <div className="p-3 bg-gray-50 rounded-md text-center">
+                                <p className="text-2xl font-bold text-gray-900">{uniqueClients.length}</p>
+                                <p className="text-xs text-gray-500">Client{uniqueClients.length !== 1 ? 's' : ''}</p>
+                            </div>
+                            <div className="p-3 bg-gray-50 rounded-md text-center">
+                                <p className="text-2xl font-bold text-gray-900">{totalQty.toLocaleString()}</p>
+                                <p className="text-xs text-gray-500">Total Qty</p>
+                            </div>
+                            <div className="p-3 bg-gray-900 rounded-md text-center">
+                                <p className="text-2xl font-bold text-white">{totalSheets.toLocaleString()}</p>
+                                <p className="text-xs text-gray-300">Total Sheets</p>
+                            </div>
+                        </div>
+
+                        {isMultiClient && (
+                            <div className="mb-4 px-3 py-2 bg-gray-100 rounded-md border border-gray-200">
+                                <p className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                                    <Layers size={12} /> GANG SHEET
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Job List */}
+                        <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                            {configuredJobs.map(job => (
+                                <div key={job.id} className="p-2.5 bg-gray-50 rounded-md">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-bold text-gray-900">{job.job_number}</span>
+                                        <span className="text-xs text-gray-500">{job.sheets_required} sheets</span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-0.5">{job.client_name} · {job.project_name}</p>
+                                    <p className="text-xs text-gray-400 mt-0.5">
+                                        {job.quantity_needed.toLocaleString()} qty × {job.ups_in_sheet}-up
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+
+                        <button
+                            onClick={() => setStep(2)}
+                            className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-md transition-all border border-gray-200"
+                        >
+                            <ArrowLeft size={14} />
+                            Edit Configuration
+                        </button>
+                    </div>
+
+                    {/* Right: Print Specs Form (2/3) */}
+                    <div className="lg:col-span-2">
+                        <CreatePrintRunForm
+                            selectedJobs={configuredJobs.map(j => ({
+                                id: j.id,
+                                job_number: j.job_number,
+                                project_name: j.project_name,
+                                client_name: j.client_name,
+                                job_type: j.job_type,
+                                quantity: j.quantity,
+                                quantity_needed: j.quantity_needed,
+                                ups_in_sheet: j.ups_in_sheet,
+                            }))}
+                            onRemoveJob={removeJobStep2}
+                            onClear={handleClear}
+                            onSuccess={handleSuccess}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
