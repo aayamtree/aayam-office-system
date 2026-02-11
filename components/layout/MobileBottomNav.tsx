@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import {
     LayoutDashboard, Briefcase, Printer, Palette, Megaphone,
     IndianRupee, Truck, Users, FileText, Calendar, Settings,
-    User, ChevronUp, X, Check, GripVertical
+    User, ChevronUp, X, Check, GripVertical, LogOut
 } from 'lucide-react';
 
 interface NavItem {
@@ -48,8 +48,9 @@ const STORAGE_KEY = 'aayam_bottom_nav_tabs';
 export function MobileBottomNav() {
     const pathname = usePathname();
     const router = useRouter();
-    const { profile } = useAuth();
+    const { profile, signOut } = useAuth();
     const [showCustomizer, setShowCustomizer] = useState(false);
+    const [showAccountMenu, setShowAccountMenu] = useState(false);
     const [selectedTabs, setSelectedTabs] = useState<string[]>([]);
     const [tempTabs, setTempTabs] = useState<string[]>([]);
 
@@ -152,11 +153,11 @@ export function MobileBottomNav() {
 
                     {/* Account Button (Permanent) */}
                     <button
-                        onClick={() => router.push('/admin/settings/profile')}
-                        className={`flex flex-col items-center justify-center flex-1 gap-0.5 transition-colors ${isProfileActive ? 'text-gray-900' : 'text-gray-400'
+                        onClick={() => setShowAccountMenu(!showAccountMenu)}
+                        className={`flex flex-col items-center justify-center flex-1 gap-0.5 transition-colors ${isProfileActive || showAccountMenu ? 'text-gray-900' : 'text-gray-400'
                             }`}
                     >
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${isProfileActive
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${isProfileActive || showAccountMenu
                             ? 'bg-gray-900 text-white'
                             : 'bg-gray-200 text-gray-600'
                             }`}>
@@ -176,6 +177,27 @@ export function MobileBottomNav() {
                         <ChevronUp size={14} />
                     </button>
                 </div>
+
+                {/* Account popup menu */}
+                {showAccountMenu && (
+                    <div className="absolute bottom-full right-2 mb-2 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden w-44">
+                        <button
+                            onClick={() => { setShowAccountMenu(false); router.push('/admin/settings/profile'); }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                            <User size={16} />
+                            <span>Profile</span>
+                        </button>
+                        <div className="border-t border-gray-100" />
+                        <button
+                            onClick={() => { setShowAccountMenu(false); signOut(); }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50"
+                        >
+                            <LogOut size={16} />
+                            <span>Log out</span>
+                        </button>
+                    </div>
+                )}
             </nav>
 
             {/* Customizer Modal */}
