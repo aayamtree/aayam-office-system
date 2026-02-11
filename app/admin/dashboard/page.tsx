@@ -306,11 +306,8 @@ export default function AdminDashboardShadcn() {
                 </div>
             </div>
 
-            {/* Row 3: Calendar + Team Workload + Quick Notes */}
-            <div className="grid gap-4 lg:grid-cols-3">
-                <div>
-                    <MiniCalendarWidget />
-                </div>
+            {/* Row 3: Team Workload + Quick Notes */}
+            <div className="grid gap-4 lg:grid-cols-2">
                 <div>
                     <TeamWorkloadWidget />
                 </div>
@@ -431,6 +428,9 @@ export default function AdminDashboardShadcn() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Row 5: Full-Width Month Calendar */}
+            <MiniCalendarWidget />
         </div>
     );
 }
