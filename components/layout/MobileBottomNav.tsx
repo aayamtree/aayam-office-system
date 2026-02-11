@@ -160,7 +160,7 @@ export function MobileBottomNav() {
                             ? 'bg-gray-900 text-white'
                             : 'bg-gray-200 text-gray-600'
                             }`}>
-                            {profile?.full_name?.charAt(0) || 'U'}
+                            {profile?.full_name?.charAt(0)?.toUpperCase() || profile?.email?.charAt(0)?.toUpperCase() || 'U'}
                         </div>
                         <span className={`text-[10px] leading-tight ${isProfileActive ? 'font-bold' : 'font-medium'}`}>
                             Account
