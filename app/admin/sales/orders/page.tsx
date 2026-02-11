@@ -152,7 +152,7 @@ export default function OrdersPage() {
     setSubmitting(true);
     try {
       if (isEditing && selectedJob) {
-        await updateJob(selectedJob.id, {
+        const result = await updateJob(selectedJob.id, {
           client_id: formData.clientId,
           project_name: formData.projectName,
           description: formData.description,
@@ -167,8 +167,12 @@ export default function OrdersPage() {
           client_deadline: formData.clientDeadline,
           notes: formData.notes
         });
+        if (result?.error) {
+          alert('Failed to update: ' + result.error);
+          return;
+        }
       } else {
-        await createJob({
+        const result = await createJob({
           client_id: formData.clientId,
           project_name: formData.projectName,
           description: formData.description,
@@ -189,6 +193,10 @@ export default function OrdersPage() {
           notes: formData.notes,
           sales_person_id: profile?.id || user?.id,
         });
+        if (result?.error) {
+          alert('Failed to create: ' + result.error);
+          return;
+        }
       }
       setShowModal(false);
     } catch (error) {
