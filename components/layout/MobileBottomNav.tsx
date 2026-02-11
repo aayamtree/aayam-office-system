@@ -35,12 +35,12 @@ const ALL_NAV_ITEMS: NavItem[] = [
 
 // Default tabs per role (first 3 before Account)
 const ROLE_DEFAULTS: Record<string, string[]> = {
-    admin: ['dashboard', 'jobs', 'finance'],
-    finance: ['dashboard', 'finance', 'jobs'],
-    designer: ['design', 'calendar', 'eod'],
-    marketing: ['marketing', 'crm', 'calendar'],
-    dispatch: ['dispatch', 'calendar', 'eod'],
-    cmyk: ['print', 'calendar', 'eod'],
+    admin: ['dashboard', 'jobs', 'finance', 'print'],
+    finance: ['dashboard', 'finance', 'jobs', 'reports'],
+    designer: ['design', 'calendar', 'eod', 'jobs'],
+    marketing: ['marketing', 'crm', 'calendar', 'eod'],
+    dispatch: ['dispatch', 'calendar', 'eod', 'jobs'],
+    cmyk: ['print', 'calendar', 'eod', 'jobs'],
 };
 
 const STORAGE_KEY = 'aayam_bottom_nav_tabs';
@@ -68,8 +68,8 @@ export function MobileBottomNav() {
                 const valid = parsed.filter((id: string) =>
                     availableItems.some(item => item.id === id)
                 );
-                if (valid.length >= 3) {
-                    setSelectedTabs(valid.slice(0, 3));
+                if (valid.length >= 4) {
+                    setSelectedTabs(valid.slice(0, 4));
                     return;
                 }
             } catch { }
@@ -79,7 +79,7 @@ export function MobileBottomNav() {
         const validDefaults = defaults.filter(id =>
             availableItems.some(item => item.id === id)
         );
-        setSelectedTabs(validDefaults.slice(0, 3));
+        setSelectedTabs(validDefaults.slice(0, 4));
     }, [userRole]);
 
     // Save when tabs change
@@ -109,13 +109,13 @@ export function MobileBottomNav() {
     const toggleTempTab = (id: string) => {
         if (tempTabs.includes(id)) {
             setTempTabs(prev => prev.filter(t => t !== id));
-        } else if (tempTabs.length < 3) {
+        } else if (tempTabs.length < 4) {
             setTempTabs(prev => [...prev, id]);
         }
     };
 
     const saveCustomTabs = () => {
-        if (tempTabs.length === 3) {
+        if (tempTabs.length === 4) {
             setSelectedTabs(tempTabs);
             setShowCustomizer(false);
         }
@@ -137,8 +137,8 @@ export function MobileBottomNav() {
                                 key={item.id}
                                 onClick={() => router.push(item.href)}
                                 className={`flex flex-col items-center justify-center flex-1 gap-0.5 transition-colors ${active
-                                        ? 'text-gray-900'
-                                        : 'text-gray-400'
+                                    ? 'text-gray-900'
+                                    : 'text-gray-400'
                                     }`}
                             >
                                 <Icon size={20} strokeWidth={active ? 2.5 : 1.5} />
@@ -156,8 +156,8 @@ export function MobileBottomNav() {
                             }`}
                     >
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${isProfileActive
-                                ? 'bg-gray-900 text-white'
-                                : 'bg-gray-200 text-gray-600'
+                            ? 'bg-gray-900 text-white'
+                            : 'bg-gray-200 text-gray-600'
                             }`}>
                             {profile.full_name?.charAt(0) || 'U'}
                         </div>
@@ -186,12 +186,12 @@ export function MobileBottomNav() {
                         <div className="flex items-center justify-between p-4 border-b border-gray-200">
                             <div>
                                 <h3 className="text-base font-bold text-gray-900">Customize Navigation</h3>
-                                <p className="text-xs text-gray-500">Select 3 quick access buttons</p>
+                                <p className="text-xs text-gray-500">Select 4 quick access buttons</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={saveCustomTabs}
-                                    disabled={tempTabs.length !== 3}
+                                    disabled={tempTabs.length !== 4}
                                     className="px-3 py-1.5 bg-gray-900 text-white rounded-md text-xs font-medium disabled:opacity-40"
                                 >
                                     <Check size={14} className="inline mr-1" />
@@ -209,17 +209,17 @@ export function MobileBottomNav() {
                         {/* Current Selection Preview */}
                         <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
                             <p className="text-xs font-medium text-gray-500 mb-2">
-                                Selected ({tempTabs.length}/3)
+                                Selected ({tempTabs.length}/4)
                             </p>
                             <div className="flex gap-2">
-                                {[0, 1, 2].map(i => {
+                                {[0, 1, 2, 3].map(i => {
                                     const item = ALL_NAV_ITEMS.find(n => n.id === tempTabs[i]);
                                     return (
                                         <div
                                             key={i}
                                             className={`flex-1 py-2 rounded-md text-center text-xs font-medium border ${item
-                                                    ? 'bg-gray-900 text-white border-gray-900'
-                                                    : 'bg-white text-gray-300 border-dashed border-gray-300'
+                                                ? 'bg-gray-900 text-white border-gray-900'
+                                                : 'bg-white text-gray-300 border-dashed border-gray-300'
                                                 }`}
                                         >
                                             {item ? item.label : 'Empty'}
@@ -237,7 +237,7 @@ export function MobileBottomNav() {
                             {availableItems.map(item => {
                                 const Icon = item.icon;
                                 const isSelected = tempTabs.includes(item.id);
-                                const isFull = tempTabs.length >= 3 && !isSelected;
+                                const isFull = tempTabs.length >= 4 && !isSelected;
 
                                 return (
                                     <button
@@ -245,10 +245,10 @@ export function MobileBottomNav() {
                                         onClick={() => toggleTempTab(item.id)}
                                         disabled={isFull}
                                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-all ${isSelected
-                                                ? 'bg-gray-900 text-white'
-                                                : isFull
-                                                    ? 'bg-gray-50 text-gray-300 cursor-not-allowed'
-                                                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-100'
+                                            ? 'bg-gray-900 text-white'
+                                            : isFull
+                                                ? 'bg-gray-50 text-gray-300 cursor-not-allowed'
+                                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-100'
                                             }`}
                                     >
                                         <Icon size={18} />
