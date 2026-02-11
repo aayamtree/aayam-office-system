@@ -140,7 +140,7 @@ export function useClients() {
       .select()
       .single();
 
-    if (!error) await refetch();
+    if (!error) refetch();
     return { data, error: error?.message };
   };
 
@@ -154,7 +154,7 @@ export function useClients() {
       .select()
       .single();
 
-    if (!error) await refetch();
+    if (!error) refetch();
     return { data, error: error?.message };
   };
 
@@ -166,7 +166,7 @@ export function useClients() {
       .delete()
       .eq('id', id);
 
-    if (!error) await refetch();
+    if (!error) refetch();
     return { error: error?.message };
   };
 
@@ -203,7 +203,7 @@ export function useVendors() {
       .select()
       .single();
 
-    if (!error) await refetch();
+    if (!error) refetch();
     return { data, error: error?.message };
   };
 
@@ -221,7 +221,7 @@ export function useVendors() {
       .select()
       .single();
 
-    if (!error) await refetch();
+    if (!error) refetch();
     return { data, error: error?.message };
   };
 
@@ -233,7 +233,7 @@ export function useVendors() {
       .delete()
       .eq('id', id);
 
-    if (!error) await refetch();
+    if (!error) refetch();
     return { error: error?.message };
   };
 
@@ -1524,7 +1524,7 @@ export function useNotes() {
       .select()
       .single();
 
-    if (!error) await refetch();
+    if (!error) refetch();
     return { data, error: error?.message };
   };
 
@@ -1538,7 +1538,7 @@ export function useNotes() {
       .select()
       .single();
 
-    if (!error) await refetch();
+    if (!error) refetch();
     return { data, error: error?.message };
   };
 
@@ -1550,7 +1550,7 @@ export function useNotes() {
       .delete()
       .eq('id', id);
 
-    if (!error) await refetch();
+    if (!error) refetch();
     return { error: error?.message };
   };
 
@@ -1682,7 +1682,7 @@ export function useReminders() {
       .select()
       .single();
 
-    if (!error) await refetch();
+    if (!error) refetch();
     return { data, error: error?.message };
   };
 
@@ -1696,7 +1696,7 @@ export function useReminders() {
       .select()
       .single();
 
-    if (!error) await refetch();
+    if (!error) refetch();
     return { data, error: error?.message };
   };
 
@@ -1708,7 +1708,7 @@ export function useReminders() {
       .delete()
       .eq('id', id);
 
-    if (!error) await refetch();
+    if (!error) refetch();
     return { error: error?.message };
   };
 
