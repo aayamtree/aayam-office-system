@@ -4,9 +4,9 @@
     "description": "Complete business management system for Aayam printing office",
     "start_url": "/admin/dashboard",
     "display": "standalone",
-    "background_color": "#0f0f1a",
-    "theme_color": "#4f46e5",
-    "orientation": "portrait-primary",
+    "background_color": "#111827",
+    "theme_color": "#111827",
+    "orientation": "any",
     "icons": [
         {
             "src": "/icon-192.png",
@@ -19,11 +19,16 @@
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
+        },
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png",
+            "purpose": "any"
         }
     ],
     "categories": [
         "business",
         "productivity"
-    ],
-    "screenshots": []
+    ]
 }
