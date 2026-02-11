@@ -29,6 +29,7 @@ export function useSupabaseQuery<T>(
   const stableFilter = JSON.stringify(options?.filter);
   const stableOrderBy = JSON.stringify(options?.orderBy);
   const stableOptions = JSON.stringify(options);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Key for SWR cache
   const key = isSupabaseConfigured() ? [tableName, stableFilter, stableOrderBy, options?.select, options?.limit] : null;
@@ -69,6 +70,35 @@ export function useSupabaseQuery<T>(
     dedupingInterval: 5000,   // Increase to 5s to prevent excessive refetching
     keepPreviousData: true,   // Show previous data while fetching new data
   });
+
+  // =============================================
+  // REALTIME SUBSCRIPTION — Auto-refetch on changes
+  // =============================================
+  useEffect(() => {
+    if (!isSupabaseConfigured() || !key) return;
+
+    const channelName = `realtime-${tableName}-${stableFilter}`;
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: tableName },
+        () => {
+          // Debounce: wait 1s before refetching (prevents rapid-fire during bulk ops)
+          if (debounceRef.current) clearTimeout(debounceRef.current);
+          debounceRef.current = setTimeout(() => {
+            mutate();
+          }, 1000);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      supabase.removeChannel(channel);
+    };
+  }, [tableName, stableFilter]);
 
   return {
     data: data || [],
