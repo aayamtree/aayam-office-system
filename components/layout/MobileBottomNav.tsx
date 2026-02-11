@@ -121,14 +121,15 @@ export function MobileBottomNav() {
         }
     };
 
-    if (!profile) return null;
+    // Don't render on login page
+    if (pathname === '/login' || pathname === '/') return null;
 
     return (
         <>
             {/* Bottom Nav Bar - Mobile Only */}
             <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 lg:hidden safe-area-bottom">
                 <div className="flex items-stretch justify-around h-14">
-                    {/* Dynamic Tabs (3 slots) */}
+                    {/* Dynamic Tabs (4 slots) */}
                     {activeTabItems.map(item => {
                         const Icon = item.icon;
                         const active = isActive(item.href);
@@ -159,7 +160,7 @@ export function MobileBottomNav() {
                             ? 'bg-gray-900 text-white'
                             : 'bg-gray-200 text-gray-600'
                             }`}>
-                            {profile.full_name?.charAt(0) || 'U'}
+                            {profile?.full_name?.charAt(0) || 'U'}
                         </div>
                         <span className={`text-[10px] leading-tight ${isProfileActive ? 'font-bold' : 'font-medium'}`}>
                             Account
