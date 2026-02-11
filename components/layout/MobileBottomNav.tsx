@@ -180,23 +180,26 @@ export function MobileBottomNav() {
 
                 {/* Account popup menu */}
                 {showAccountMenu && (
-                    <div className="absolute bottom-full right-2 mb-2 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden w-44">
-                        <button
-                            onClick={() => { setShowAccountMenu(false); router.push('/admin/settings/profile'); }}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
-                        >
-                            <User size={16} />
-                            <span>Profile</span>
-                        </button>
-                        <div className="border-t border-gray-100" />
-                        <button
-                            onClick={() => { setShowAccountMenu(false); signOut(); }}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50"
-                        >
-                            <LogOut size={16} />
-                            <span>Log out</span>
-                        </button>
-                    </div>
+                    <>
+                        <div className="fixed inset-0 z-30" onClick={() => setShowAccountMenu(false)} />
+                        <div className="absolute bottom-full right-2 mb-2 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden w-44 z-40">
+                            <button
+                                onClick={() => { setShowAccountMenu(false); router.push('/admin/settings/profile'); }}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                            >
+                                <User size={16} />
+                                <span>Profile</span>
+                            </button>
+                            <div className="border-t border-gray-100" />
+                            <button
+                                onClick={() => { setShowAccountMenu(false); signOut(); }}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50"
+                            >
+                                <LogOut size={16} />
+                                <span>Log out</span>
+                            </button>
+                        </div>
+                    </>
                 )}
             </nav>
 
