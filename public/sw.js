@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aayam-v3';
+const CACHE_NAME = 'aayam-v4';
 
 // Assets to pre-cache for offline shell
 const PRECACHE_ASSETS = [
@@ -33,7 +33,7 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// Fetch: Network-first strategy for API calls, cache-first for static assets
+// Fetch: Network-first for everything (ensures latest code always loads)
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
@@ -51,35 +51,14 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // For page navigations — network first, fall back to cache
-    if (request.mode === 'navigate') {
-        event.respondWith(
-            fetch(request)
-                .then((response) => {
-                    const clone = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-                    return response;
-                })
-                .catch(() => caches.match(request) || caches.match('/admin/dashboard'))
-        );
-        return;
-    }
-
-    // For static assets (JS, CSS, images) — cache first, then network
-    if (
-        url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|ico|woff2?)$/) ||
-        url.pathname.startsWith('/_next/')
-    ) {
-        event.respondWith(
-            caches.match(request).then((cached) => {
-                if (cached) return cached;
-                return fetch(request).then((response) => {
-                    const clone = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-                    return response;
-                });
+    // For everything else (pages, JS, CSS, images): network-first, cache fallback
+    event.respondWith(
+        fetch(request)
+            .then((response) => {
+                const clone = response.clone();
+                caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+                return response;
             })
-        );
-        return;
-    }
+            .catch(() => caches.match(request))
+    );
 });
