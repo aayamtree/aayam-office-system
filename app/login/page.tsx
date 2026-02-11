@@ -107,9 +107,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-oms-blue rounded-lg flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <span className="text-white font-bold text-2xl">A</span>
-          </div>
+          <img src="/company-logo.png" alt="Aayam" className="w-20 h-20 mx-auto mb-4" />
           <h1 className="text-page-title text-gray-900">Aayam Office</h1>
           <p className="text-body text-gray-600 mt-1">Sign in to your account</p>
         </div>

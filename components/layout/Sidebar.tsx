@@ -277,9 +277,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           className="flex items-center gap-2"
           onClick={handleLinkClick}
         >
-          <div className="w-8 h-8 bg-foreground rounded flex items-center justify-center">
-            <span className="text-background font-bold text-lg">A</span>
-          </div>
+          <img src="/company-logo.png" alt="Aayam" className="w-8 h-8 rounded" />
           <span className="font-bold text-foreground text-xl">Aayam</span>
         </Link>
       </div>
