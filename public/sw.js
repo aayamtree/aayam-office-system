@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aayam-v2';
+const CACHE_NAME = 'aayam-v3';
 
 // Assets to pre-cache for offline shell
 const PRECACHE_ASSETS = [
