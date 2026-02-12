@@ -90,7 +90,7 @@ export default function OrdersPage() {
   // Team members for "received by" dropdown
   const [teamMembers, setTeamMembers] = useState<{ id: string, full_name: string }[]>([]);
   useEffect(() => {
-    supabase.from('profiles').select('id, full_name').eq('is_active', true)
+    supabase.from('profiles').select('id, full_name').eq('is_active', true).eq('role', 'admin')
       .then(({ data }) => { if (data) setTeamMembers(data as any); });
   }, []);
 
@@ -819,8 +819,8 @@ export default function OrdersPage() {
                     type="button"
                     onClick={() => setShowAdvance(!showAdvance)}
                     className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border-2 border-dashed transition-all text-sm font-semibold ${showAdvance
-                        ? 'border-green-300 bg-green-50 text-green-700'
-                        : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
+                      ? 'border-green-300 bg-green-50 text-green-700'
+                      : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
                       }`}
                   >
                     <span className="flex items-center gap-2">
@@ -846,8 +846,8 @@ export default function OrdersPage() {
                               type="button"
                               onClick={() => setAdvanceData({ ...advanceData, paymentMode: mode.value as any })}
                               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-semibold transition-all ${advanceData.paymentMode === mode.value
-                                  ? 'border-green-500 bg-green-500 text-white'
-                                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                                ? 'border-green-500 bg-green-500 text-white'
+                                : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                                 }`}
                             >
                               <mode.icon className="w-4 h-4" />

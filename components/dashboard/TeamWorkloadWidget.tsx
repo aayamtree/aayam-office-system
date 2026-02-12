@@ -3,14 +3,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useDesigners } from '@/lib/hooks';
-import { BarChart3, Clock, AlertTriangle, Users } from 'lucide-react';
+import { Users, CheckCircle2, Briefcase } from 'lucide-react';
 
 interface DesignerWorkload {
     designer_id: string;
     designer_name: string;
-    total_hours: number;
-    days_worked: number;
-    avg_daily: number;
+    tasks_done: number;
+    tasks_allotted: number;
 }
 
 export default function TeamWorkloadWidget() {
@@ -36,42 +35,41 @@ export default function TeamWorkloadWidget() {
                 startDate.setDate(now.getDate() - 30);
             }
 
-            const { data: hours } = await supabase
-                .from('designer_hours')
-                .select('designer_id, hours_worked, overtime_hours, date')
-                .gte('date', startDate.toISOString().split('T')[0])
-                .lte('date', now.toISOString().split('T')[0]);
+            // Fetch design tasks assigned in this period
+            const { data: tasks } = await supabase
+                .from('design_tasks')
+                .select('assigned_to, status, created_at')
+                .gte('created_at', startDate.toISOString());
 
-            if (!hours) {
+            if (!tasks) {
                 setWorkloads([]);
                 setLoading(false);
                 return;
             }
 
             // Group by designer
-            const grouped: Record<string, { total: number; dates: Set<string> }> = {};
-            hours.forEach(h => {
-                if (!grouped[h.designer_id]) {
-                    grouped[h.designer_id] = { total: 0, dates: new Set() };
+            const grouped: Record<string, { done: number; total: number }> = {};
+            tasks.forEach(t => {
+                const designerId = t.assigned_to;
+                if (!designerId) return;
+                if (!grouped[designerId]) {
+                    grouped[designerId] = { done: 0, total: 0 };
                 }
-                grouped[h.designer_id].total += (h.hours_worked || 0) + (h.overtime_hours || 0);
-                grouped[h.designer_id].dates.add(h.date);
+                grouped[designerId].total++;
+                if (t.status === 'completed' || t.status === 'delivered') {
+                    grouped[designerId].done++;
+                }
             });
 
             const result: DesignerWorkload[] = designers
-                .filter(d => d.is_active !== false)
-                .map(d => {
-                    const data = grouped[d.id] || { total: 0, dates: new Set() };
-                    const daysWorked = data.dates.size;
-                    return {
-                        designer_id: d.id,
-                        designer_name: d.name,
-                        total_hours: Math.round(data.total * 10) / 10,
-                        days_worked: daysWorked,
-                        avg_daily: daysWorked > 0 ? Math.round((data.total / daysWorked) * 10) / 10 : 0,
-                    };
-                })
-                .sort((a, b) => b.total_hours - a.total_hours);
+                .filter(d => (d as any).is_active !== false)
+                .map(d => ({
+                    designer_id: d.id,
+                    designer_name: (d as any).name || 'Unknown',
+                    tasks_done: grouped[d.id]?.done || 0,
+                    tasks_allotted: grouped[d.id]?.total || 0,
+                }))
+                .sort((a, b) => b.tasks_allotted - a.tasks_allotted);
 
             setWorkloads(result);
         } catch (error) {
@@ -81,7 +79,7 @@ export default function TeamWorkloadWidget() {
         }
     };
 
-    const maxHours = Math.max(...workloads.map(w => w.total_hours), 1);
+    const maxTasks = Math.max(...workloads.map(w => w.tasks_allotted), 1);
 
     return (
         <div className="bg-white rounded-lg border border-gray-100 p-4 md:p-5">
@@ -112,15 +110,15 @@ export default function TeamWorkloadWidget() {
                 <div className="text-center py-6 text-sm text-gray-400">Loading workload data...</div>
             ) : workloads.length === 0 ? (
                 <div className="text-center py-6">
-                    <Clock className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <Users className="w-8 h-8 text-gray-300 mx-auto mb-2" />
                     <p className="text-sm text-gray-500">No designers found</p>
                     <p className="text-xs text-gray-400">Add designers to see their workload</p>
                 </div>
             ) : (
                 <div className="space-y-3">
                     {workloads.map(w => {
-                        const barWidth = maxHours > 0 ? (w.total_hours / maxHours) * 100 : 0;
-                        const isOverloaded = w.avg_daily > 8;
+                        const barWidth = maxTasks > 0 ? (w.tasks_allotted / maxTasks) * 100 : 0;
+                        const doneWidth = w.tasks_allotted > 0 ? (w.tasks_done / w.tasks_allotted) * 100 : 0;
 
                         return (
                             <div key={w.designer_id} className="group">
@@ -130,36 +128,32 @@ export default function TeamWorkloadWidget() {
                                             {w.designer_name.charAt(0).toUpperCase()}
                                         </div>
                                         <span className="text-sm font-medium text-gray-700">{w.designer_name}</span>
-                                        {isOverloaded && (
-                                            <span title="Averaging >8h/day">
-                                                <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                                            </span>
-                                        )}
                                     </div>
-                                    <div className="text-right">
-                                        <span className="text-sm font-bold text-gray-900">{w.total_hours}h</span>
-                                        <span className="text-xs text-gray-400 ml-1">({w.days_worked}d)</span>
+                                    <div className="flex items-center gap-2 text-right">
+                                        <span className="flex items-center gap-1 text-xs font-semibold text-green-600">
+                                            <CheckCircle2 className="w-3 h-3" />
+                                            {w.tasks_done}
+                                        </span>
+                                        <span className="text-xs text-gray-400">/</span>
+                                        <span className="flex items-center gap-1 text-xs font-semibold text-gray-600">
+                                            <Briefcase className="w-3 h-3" />
+                                            {w.tasks_allotted}
+                                        </span>
                                     </div>
                                 </div>
-                                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <div className="h-2 bg-gray-100 rounded-full overflow-hidden relative" style={{ width: `${Math.max(barWidth, 20)}%` }}>
                                     <div
-                                        className={`h-full rounded-full transition-all duration-500 ${isOverloaded ? 'bg-amber-400' : w.total_hours > 0 ? 'bg-gray-800' : 'bg-gray-200'
-                                            }`}
-                                        style={{ width: `${barWidth}%` }}
+                                        className={`h-full rounded-full transition-all duration-500 ${w.tasks_done > 0 ? 'bg-green-500' : 'bg-gray-200'}`}
+                                        style={{ width: `${doneWidth}%` }}
                                     />
                                 </div>
-                                {w.total_hours > 0 && (
-                                    <p className="text-xs text-gray-400 mt-0.5">
-                                        Avg: {w.avg_daily}h/day
-                                    </p>
-                                )}
                             </div>
                         );
                     })}
 
-                    {workloads.every(w => w.total_hours === 0) && (
+                    {workloads.every(w => w.tasks_allotted === 0) && (
                         <p className="text-xs text-gray-400 italic text-center mt-2">
-                            No hours logged yet for this period. Use Design Tasks to log hours.
+                            No tasks allotted in this period yet.
                         </p>
                     )}
                 </div>

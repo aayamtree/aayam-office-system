@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useDashboardNotes } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
@@ -42,6 +42,20 @@ export default function QuickNotesWidget() {
     // Team members for tagging
     const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
     const [showTagPicker, setShowTagPicker] = useState(false);
+    const tagPickerRef = useRef<HTMLDivElement>(null);
+
+    // Close tag picker on outside click
+    useEffect(() => {
+        const handleClick = (e: MouseEvent) => {
+            if (tagPickerRef.current && !tagPickerRef.current.contains(e.target as Node)) {
+                setShowTagPicker(false);
+            }
+        };
+        if (showTagPicker) {
+            document.addEventListener('mousedown', handleClick);
+        }
+        return () => document.removeEventListener('mousedown', handleClick);
+    }, [showTagPicker]);
 
     // Fetch team members once
     useEffect(() => {
@@ -152,7 +166,7 @@ export default function QuickNotesWidget() {
                                 ))}
 
                                 {/* Tag Button */}
-                                <div className="relative ml-2">
+                                <div className="relative ml-2" ref={tagPickerRef}>
                                     <Button
                                         variant="ghost"
                                         size="sm"

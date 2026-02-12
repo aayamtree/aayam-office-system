@@ -1050,6 +1050,7 @@ export function useDashboardStats() {
     pendingPayments: 0,
     pendingDispatches: 0,
     leadsThisMonth: 0,
+    ordersThisMonth: 0,
     pipeline: {} as Record<string, number>,
     pipelineOverdue: {} as Record<string, number>,
     alerts: {
@@ -1095,7 +1096,8 @@ export function useDashboardStats() {
           leadsFollowUp,
           lowStock,
           completedJobs,
-          followUpsTable
+          followUpsTable,
+          allJobsForRevenue
         ] = await Promise.all([
           // 1. Total Clients
           supabase.from('clients').select('id', { count: 'exact', head: true }),
@@ -1112,7 +1114,7 @@ export function useDashboardStats() {
           // 5. Leads this month
           supabase.from('leads').select('id', { count: 'exact', head: true }).gte('created_at', startOfMonth),
 
-          // 6. Follow-ups Due (today or earlier and not won/lost) - NOTE: This only checks leads. Ideally should combine with `follow_ups` table.
+          // 6. Follow-ups Due (today or earlier and not won/lost)
           supabase.from('leads').select('id', { count: 'exact', head: true }).lte('next_follow_up', todayStr).not('status', 'in', '("won","lost")'),
 
           // 7. Low Stock
@@ -1121,26 +1123,30 @@ export function useDashboardStats() {
           // 8. Jobs Completed Today
           supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('current_stage', 'delivered').gte('updated_at', todayStr),
 
-          // 9. Follow ups table count - get follow-ups due today or earlier
+          // 9. Follow ups table count
           supabase.from('follow_ups').select('id', { count: 'exact', head: true }).lte('follow_up_date', todayStr),
+
+          // 10. All jobs this year (for revenue/sales chart when no invoices exist)
+          supabase.from('jobs').select('id, total_amount, amount_received, payment_status, created_at').gte('created_at', startOfYear).neq('current_stage', 'cancelled'),
         ]);
 
-        // Aggregations
-        const totalRevenue = invoices.data?.reduce((sum, inv) => sum + (inv.total_amount || 0), 0) || 0;
+        // Determine revenue source: use invoices if they exist, else fall back to jobs
+        const hasInvoices = (invoices.data?.length || 0) > 0;
+
+        const totalRevenue = hasInvoices
+          ? invoices.data?.reduce((sum, inv) => sum + (inv.total_amount || 0), 0) || 0
+          : allJobsForRevenue.data?.reduce((sum, j) => sum + (j.total_amount || 0), 0) || 0;
 
         // Blocked Jobs Logic
         const feedbackPendingCount = jobs.data?.filter(j => j.current_stage === 'approval').length || 0;
-
-        // Payment Hold: Jobs in Ready/Packed/Dispatched/Delivered but unpaid?
-        // Let's strictly say "Ready or Packed" (completed production) but not paid.
-        // We need to map Job ID to Payment Status.
         const unpaidJobIds = new Set(invoices.data?.filter(inv => inv.payment_status !== 'paid' && inv.job_id).map(inv => inv.job_id));
         const paymentHoldCount = jobs.data?.filter(j => ['ready', 'packed'].includes(j.current_stage || '') && unpaidJobIds.has(j.id)).length || 0;
-
         const totalBlocked = feedbackPendingCount + paymentHoldCount;
 
-        // This calculates total pending from ALL fetched invoices (this year). For total outstanding, we might need all time unpaid, but this year is a good proxy.
-        const pendingPayments = invoices.data?.filter(inv => inv.payment_status !== 'paid').reduce((sum, inv) => sum + (inv.balance_due || 0), 0) || 0;
+        // Pending Payments — from invoices or job balances
+        const pendingPayments = hasInvoices
+          ? invoices.data?.filter(inv => inv.payment_status !== 'paid').reduce((sum, inv) => sum + (inv.balance_due || 0), 0) || 0
+          : allJobsForRevenue.data?.filter(j => j.payment_status !== 'paid').reduce((sum, j) => sum + ((j.total_amount || 0) - (j.amount_received || 0)), 0) || 0;
 
         const overduePaymentsCount = invoices.data?.filter(inv => inv.payment_status !== 'paid' && inv.due_date && inv.due_date < todayStr).length || 0;
         const paymentsDueTodayCount = invoices.data?.filter(inv => inv.payment_status !== 'paid' && inv.due_date && inv.due_date === todayStr).length || 0;
@@ -1155,7 +1161,6 @@ export function useDashboardStats() {
           const stage = j.current_stage || 'new';
           pipelineCounts[stage] = (pipelineCounts[stage] || 0) + 1;
 
-          // Focus Checks on Active Jobs
           if (j.client_deadline) {
             const deadline = j.client_deadline.split('T')[0];
             if (deadline === todayStr) jobsDueTodayCount++;
@@ -1169,20 +1174,30 @@ export function useDashboardStats() {
         // Low Stock
         const lowStockCount = lowStock.data?.filter(item => item.quantity <= (item.reorder_level || 0)).length || 0;
 
-        // Sales Performance (Monthly)
+        // Sales Performance (Monthly) — use whichever source has data
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const monthlySales = new Array(12).fill(0);
-        invoices.data?.forEach(inv => {
-          const d = new Date(inv.created_at);
-          monthlySales[d.getMonth()] += (inv.total_amount || 0);
-        });
+
+        if (hasInvoices) {
+          invoices.data?.forEach(inv => {
+            const d = new Date(inv.created_at);
+            monthlySales[d.getMonth()] += (inv.total_amount || 0);
+          });
+        } else {
+          allJobsForRevenue.data?.forEach(j => {
+            if (j.created_at) {
+              const d = new Date(j.created_at);
+              monthlySales[d.getMonth()] += (j.total_amount || 0);
+            }
+          });
+        }
 
         const currentMonthIdx = new Date().getMonth();
         const salesPerformance = monthNames.map((m, idx) => ({
           month: m,
           value: monthlySales[idx],
           active: idx === currentMonthIdx
-        })).slice(Math.max(0, currentMonthIdx - 5), currentMonthIdx + 1); // Last 6 months
+        })).slice(Math.max(0, currentMonthIdx - 5), currentMonthIdx + 1);
 
         setStats({
           totalClients: clients.count || 0,
@@ -1191,6 +1206,10 @@ export function useDashboardStats() {
           pendingPayments,
           pendingDispatches: dispatches.count || 0,
           leadsThisMonth: leadsMonth.count || 0,
+          ordersThisMonth: allJobsForRevenue.data?.filter(j => {
+            const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+            return j.created_at && j.created_at >= startOfMonth;
+          }).length || 0,
           pipeline: pipelineCounts,
           pipelineOverdue,
           alerts: {
