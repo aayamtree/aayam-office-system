@@ -190,7 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Get initial session with timeout
     const initSession = async () => {
       try {
-        // Timeout increased to 10s for server stability (especially after DB operations)
+        // Timeout for initial session fetch
         const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Auth Timeout')), 10000)
         );
@@ -210,7 +210,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (err) {
         console.error('Session init error:', err);
-        if (mounted) setLoading(false);
+        if (!mounted) return;
+
+        // RESILIENCE: On timeout, try to use cached profile so app isn't stuck
+        const cached = localStorage.getItem('aayam_fallback_profile');
+        if (cached) {
+          try {
+            const cachedProfile = JSON.parse(cached);
+            console.warn('Auth timeout - using cached profile for:', cachedProfile.email);
+            setProfile(cachedProfile);
+            setUser({ id: cachedProfile.id, email: cachedProfile.email, role: 'authenticated' } as User);
+          } catch (e) {
+            console.error('Cached profile parse error:', e);
+          }
+        }
+        setLoading(false);
+
+        // Silent background retry after timeout
+        setTimeout(async () => {
+          if (!mounted) return;
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user && mounted) {
+              console.log('Background session recovery succeeded');
+              setSession(session);
+              setUser(session.user);
+              fetchProfile(session.user.id, session.user.email);
+            }
+          } catch (retryErr) {
+            console.error('Background session retry also failed:', retryErr);
+          }
+        }, 3000);
       }
     };
 
