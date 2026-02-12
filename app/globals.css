@@ -169,7 +169,6 @@ body {
   font-size: var(--text-sm);
   font-weight: 500;
   line-height: var(--leading-normal);
-  color: var(--color-gray-700);
 }
 
 /* =============================================
