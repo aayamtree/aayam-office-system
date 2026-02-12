@@ -5,7 +5,9 @@
 -- but nothing sets that flag. Now it also includes jobs at 'printing' stage.
 -- =====================================================
 
-CREATE OR REPLACE VIEW pending_print_jobs AS
+DROP VIEW IF EXISTS pending_print_jobs;
+
+CREATE VIEW pending_print_jobs AS
 SELECT 
     j.*,
     c.name as client_name
