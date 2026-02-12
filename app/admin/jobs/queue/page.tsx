@@ -256,30 +256,30 @@ export default function JobQueuePage() {
       {/* View Modal with Interactive Workflow */}
       {showViewModal && selectedJob && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-md w-full max-w-md max-h-[90vh] overflow-y-auto animate-scale-in">
-            <div className="flex items-center justify-between p-4 border-b border-gray-100">
-              <h2 className="text-section text-gray-900">Job Details</h2>
-              <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+          <div className="bg-card rounded-md w-full max-w-md max-h-[90vh] overflow-y-auto animate-scale-in">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="text-section text-foreground">Job Details</h2>
+              <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-muted rounded-lg">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-4 space-y-4">
-              <div className="p-4 rounded-lg text-center capitalize bg-gray-100 text-gray-900">
+              <div className="p-4 rounded-lg text-center capitalize bg-muted text-foreground">
                 <p className="text-section">{selectedJob.current_stage}</p>
               </div>
 
               <div className="space-y-2">
-                <div className="flex justify-between p-3 bg-gray-50 rounded-md"><span className="text-gray-500">Job No.</span><span className="font-medium text-gray-900">{selectedJob.job_number}</span></div>
-                <div className="flex justify-between p-3 bg-gray-50 rounded-md"><span className="text-gray-500">Client</span><span className="font-medium text-gray-900">{selectedJob.client?.name}</span></div>
-                <div className="p-3 bg-gray-50 rounded-md"><span className="text-gray-500 text-sm">Description</span><p className="font-medium text-gray-900 mt-1">{selectedJob.project_name}</p></div>
-                <div className="flex justify-between p-3 bg-gray-50 rounded-md"><span className="text-gray-500">Quantity</span><span className="font-medium text-gray-900">{selectedJob.quantity}</span></div>
-                {selectedJob.designer?.name && <div className="flex justify-between p-3 bg-gray-50 rounded-md"><span className="text-gray-500">Designer</span><span className="font-medium text-gray-900">{selectedJob.designer.name}</span></div>}
+                <div className="flex justify-between p-3 bg-muted rounded-md"><span className="text-muted-foreground">Job No.</span><span className="font-medium text-foreground">{selectedJob.job_number}</span></div>
+                <div className="flex justify-between p-3 bg-muted rounded-md"><span className="text-muted-foreground">Client</span><span className="font-medium text-foreground">{selectedJob.client?.name}</span></div>
+                <div className="p-3 bg-muted rounded-md"><span className="text-muted-foreground text-sm">Description</span><p className="font-medium text-foreground mt-1">{selectedJob.project_name}</p></div>
+                <div className="flex justify-between p-3 bg-muted rounded-md"><span className="text-muted-foreground">Quantity</span><span className="font-medium text-foreground">{selectedJob.quantity}</span></div>
+                {selectedJob.designer?.name && <div className="flex justify-between p-3 bg-muted rounded-md"><span className="text-muted-foreground">Designer</span><span className="font-medium text-foreground">{selectedJob.designer.name}</span></div>}
               </div>
 
               {/* Status Progress - Interactive */}
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">Workflow (Click to change)</p>
+                <p className="text-sm font-medium text-foreground mb-2">Workflow (Click to change)</p>
                 <div className="flex items-center gap-1 overflow-x-auto pb-2 scrollbar-hide">
                   {statusFlow.map((status, idx) => {
                     const currentIdx = statusFlow.indexOf(selectedJob.current_stage);
@@ -293,14 +293,14 @@ export default function JobQueuePage() {
                         onClick={() => handleStageSelect(status)}
                         title={`Move to ${status}`}
                       >
-                        <div className={`px-3 py-1.5 rounded-lg text-label whitespace-nowrap capitalize transition-all transform group-hover:scale-105 ${isCurrent ? 'bg-gray-900 text-white ring-2 ring-gray-300' :
-                          isCompleted ? 'bg-gray-700 text-white hover:bg-gray-600' :
-                            'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
+                        <div className={`px-3 py-1.5 rounded-lg text-label whitespace-nowrap capitalize transition-all transform group-hover:scale-105 ${isCurrent ? 'bg-primary text-primary-foreground ring-2 ring-ring/30' :
+                          isCompleted ? 'bg-primary/80 text-primary-foreground hover:bg-primary/70' :
+                            'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                           }`}>
                           {status}
                         </div>
                         {idx < statusFlow.length - 1 && (
-                          <ArrowRight className={`w-3 h-3 mx-1 ${isCompleted ? 'text-foreground' : 'text-gray-300'}`} />
+                          <ArrowRight className={`w-3 h-3 mx-1 ${isCompleted ? 'text-foreground' : 'text-muted-foreground/50'}`} />
                         )}
                       </button>
                     );
@@ -308,7 +308,7 @@ export default function JobQueuePage() {
                 </div>
               </div>
 
-              <button onClick={() => setShowViewModal(false)} className="w-full px-4 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800">Close</button>
+              <button onClick={() => setShowViewModal(false)} className="w-full px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">Close</button>
             </div>
           </div>
         </div>
