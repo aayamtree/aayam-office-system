@@ -1,13 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession, signIn } from 'next-auth/react';
 import { Cloud, CheckCircle, XCircle, RefreshCw, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 
 export default function GoogleDriveSettings() {
     const { profile } = useAuth();
-    const { data: session } = useSession();
     const [driveStatus, setDriveStatus] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [connecting, setConnecting] = useState(false);
@@ -30,88 +28,52 @@ export default function GoogleDriveSettings() {
         loadStatus();
     }, []);
 
-    // Handle Google Drive connection
-    const handleConnect = async () => {
-        console.log('Starting Google Drive connection...');
-
-        // Store in localStorage so it persists after OAuth redirect
-        localStorage.setItem('gdrive_connecting', 'true');
-        setConnecting(true);
-
-        // Redirect to Google OAuth — must use redirect:true for OAuth providers
-        await signIn('google', {
-            callbackUrl: window.location.href,
-        });
-    };
-
-    // Check localStorage on mount to see if we're returning from OAuth
+    // Check URL params for OAuth callback results
     useEffect(() => {
-        const isConnecting = localStorage.getItem('gdrive_connecting') === 'true';
-        if (isConnecting) {
-            console.log('Detected returning from OAuth, setting connecting=true');
-            setConnecting(true);
+        const params = new URLSearchParams(window.location.search);
+        const connected = params.get('drive_connected');
+        const error = params.get('drive_error');
+
+        if (connected === 'true') {
+            alert('Google Drive connected successfully!');
+            // Clean up URL params
+            window.history.replaceState({}, '', window.location.pathname);
+            loadStatus();
+        }
+
+        if (error) {
+            alert(`Drive connection error: ${decodeURIComponent(error)}`);
+            window.history.replaceState({}, '', window.location.pathname);
         }
     }, []);
 
-    // After Google OAuth, save credentials to database
-    useEffect(() => {
-        console.log('Session changed:', {
-            hasAccessToken: !!session?.accessToken,
-            connecting,
-            session
-        });
+    // Handle Google Drive connection - direct OAuth (no NextAuth)
+    const handleConnect = () => {
+        setConnecting(true);
 
-        if (session?.accessToken && connecting) {
-            console.log('Triggering saveCredentials...');
-            // Clear the localStorage flag
-            localStorage.removeItem('gdrive_connecting');
-            saveCredentials();
+        const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+        if (!clientId) {
+            alert('Google Client ID not configured. Contact admin.');
+            setConnecting(false);
+            return;
         }
-    }, [session, connecting]);
 
-    const saveCredentials = async () => {
-        try {
-            if (!profile?.id) {
-                alert('User not authenticated. Please refresh and try again.');
-                return;
-            }
+        const baseUrl = window.location.origin;
+        const redirectUri = `${baseUrl}/api/drive/callback`;
+        const scope = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar.events';
+        const state = profile?.id || ''; // Pass user ID as state
 
-            console.log('Attempting to save credentials...', {
-                userId: profile.id,
-                hasAccessToken: !!session?.accessToken,
-                hasRefreshToken: !!session?.refreshToken,
-                scopes: session?.scope
-            });
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+            `client_id=${encodeURIComponent(clientId)}` +
+            `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+            `&response_type=code` +
+            `&scope=${encodeURIComponent(scope)}` +
+            `&access_type=offline` +
+            `&prompt=consent` +
+            `&state=${encodeURIComponent(state)}`;
 
-            const res = await fetch('/api/drive/connect', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    userId: profile.id,  // Send user ID from auth context
-                    accessToken: session?.accessToken,
-                    refreshToken: session?.refreshToken,
-                    expiresIn: 3600, // Default 1 hour
-                    scopes: session?.scope || ''
-                })
-            });
-
-            const data = await res.json();
-            console.log('API Response:', { status: res.status, data });
-
-            if (res.ok) {
-                await loadStatus();
-                setConnecting(false);
-                alert('Google Drive connected successfully!');
-            } else {
-                console.error('Failed to save credentials:', data);
-                alert(`Failed to save Drive credentials: ${data.error || 'Unknown error'}`);
-            }
-        } catch (error) {
-            console.error('Error saving credentials:', error);
-            alert('Error connecting Drive');
-        }
+        // Redirect to Google OAuth directly
+        window.location.href = authUrl;
     };
 
     const handleDisconnect = async () => {
@@ -209,7 +171,7 @@ export default function GoogleDriveSettings() {
                         </div>
                         <div className="flex gap-2">
                             <button
-                                onClick={() => { setConnecting(true); handleConnect(); }}
+                                onClick={handleConnect}
                                 disabled={connecting}
                                 className="px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 disabled:opacity-50"
                             >
@@ -236,7 +198,7 @@ export default function GoogleDriveSettings() {
                             </p>
                         </div>
                         <button
-                            onClick={() => { setConnecting(true); handleConnect(); }}
+                            onClick={handleConnect}
                             disabled={connecting}
                             className="px-3 py-2 bg-amber-600 text-white text-sm rounded-md hover:bg-amber-700 disabled:opacity-50 flex items-center gap-2"
                         >
