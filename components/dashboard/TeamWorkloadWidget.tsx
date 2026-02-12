@@ -12,6 +12,9 @@ interface DesignerWorkload {
     tasks_allotted: number;
 }
 
+// Stages that mean design work is completed / moved past design
+const DONE_STAGES = ['printing', 'finishing', 'ready', 'packed', 'dispatched', 'delivered'];
+
 export default function TeamWorkloadWidget() {
     const { designers } = useDesigners();
     const [workloads, setWorkloads] = useState<DesignerWorkload[]>([]);
@@ -35,29 +38,41 @@ export default function TeamWorkloadWidget() {
                 startDate.setDate(now.getDate() - 30);
             }
 
-            // Fetch design tasks assigned in this period
+            // Fetch jobs assigned to designers in this period
+            const { data: jobs } = await supabase
+                .from('jobs')
+                .select('designer_id, current_stage, created_at')
+                .not('designer_id', 'is', null)
+                .neq('current_stage', 'cancelled')
+                .gte('created_at', startDate.toISOString());
+
+            // Also fetch design_tasks as secondary source
             const { data: tasks } = await supabase
                 .from('design_tasks')
                 .select('assigned_to, status, created_at')
                 .gte('created_at', startDate.toISOString());
 
-            if (!tasks) {
-                setWorkloads([]);
-                setLoading(false);
-                return;
-            }
-
-            // Group by designer
+            // Group by designer from jobs
             const grouped: Record<string, { done: number; total: number }> = {};
-            tasks.forEach(t => {
-                const designerId = t.assigned_to;
-                if (!designerId) return;
-                if (!grouped[designerId]) {
-                    grouped[designerId] = { done: 0, total: 0 };
+
+            jobs?.forEach(j => {
+                const dId = j.designer_id;
+                if (!dId) return;
+                if (!grouped[dId]) grouped[dId] = { done: 0, total: 0 };
+                grouped[dId].total++;
+                if (DONE_STAGES.includes(j.current_stage || '')) {
+                    grouped[dId].done++;
                 }
-                grouped[designerId].total++;
-                if (t.status === 'completed' || t.status === 'delivered') {
-                    grouped[designerId].done++;
+            });
+
+            // Merge design_tasks data (add tasks not already counted via jobs)
+            tasks?.forEach(t => {
+                const dId = t.assigned_to;
+                if (!dId) return;
+                if (!grouped[dId]) grouped[dId] = { done: 0, total: 0 };
+                grouped[dId].total++;
+                if (t.status === 'completed') {
+                    grouped[dId].done++;
                 }
             });
 
@@ -153,7 +168,7 @@ export default function TeamWorkloadWidget() {
 
                     {workloads.every(w => w.tasks_allotted === 0) && (
                         <p className="text-xs text-gray-400 italic text-center mt-2">
-                            No tasks allotted in this period yet.
+                            No work allotted in this period yet.
                         </p>
                     )}
                 </div>
