@@ -307,15 +307,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Optimistic Logout: Clear ALL auth-related local storage
     localStorage.removeItem('aayam_fallback_profile');
     localStorage.removeItem('aayam_speed_role');
-    localStorage.removeItem('aayam_bypass_mode'); // CRITICAL: Clear bypass mode to prevent auto-login
+    localStorage.removeItem('aayam_bypass_mode');
+    localStorage.removeItem('gdrive_connecting');
+
+    // Clear any Supabase-specific storage keys
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('sb-') || key.startsWith('supabase'))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+
+    // Clear sessionStorage too
+    sessionStorage.clear();
+
+    // Clear NextAuth cookies (from previous Google OAuth attempts)
+    document.cookie.split(';').forEach(c => {
+      const name = c.split('=')[0].trim();
+      if (name.startsWith('next-auth') || name.startsWith('__Secure-next-auth')) {
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
+      }
+    });
+
+    // Clear React state
     setSession(null);
     setUser(null);
     setProfile(null);
 
-    // Perform Supabase signout first
+    // Perform Supabase signout with timeout to ensure it completes
     if (isConfigured) {
       try {
-        await supabase.auth.signOut();
+        await Promise.race([
+          supabase.auth.signOut({ scope: 'global' }),
+          new Promise(resolve => setTimeout(resolve, 3000)) // 3s timeout
+        ]);
       } catch (e) {
         console.error('SignOut API error:', e);
       }
