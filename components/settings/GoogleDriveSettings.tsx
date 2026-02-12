@@ -38,13 +38,10 @@ export default function GoogleDriveSettings() {
         localStorage.setItem('gdrive_connecting', 'true');
         setConnecting(true);
 
-        // Authenticate with Google
-        const result = await signIn('google', {
+        // Redirect to Google OAuth — must use redirect:true for OAuth providers
+        await signIn('google', {
             callbackUrl: window.location.href,
-            redirect: false
         });
-
-        console.log('SignIn result:', result);
     };
 
     // Check localStorage on mount to see if we're returning from OAuth
