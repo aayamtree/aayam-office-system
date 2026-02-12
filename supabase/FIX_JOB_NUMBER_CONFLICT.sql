@@ -16,33 +16,27 @@ DROP TRIGGER IF EXISTS trigger_set_job_number ON jobs;
 DROP FUNCTION IF EXISTS set_job_number();
 DROP FUNCTION IF EXISTS generate_job_number();
 
--- 4. Rename existing JOB- format records to AAY- format
--- This converts e.g. JOB-20260211-0005 → AAY-26-XXXX using the counter
+-- 4. Rename existing JOB- format records to AAY-DDMMXXX format
 DO $$
 DECLARE
   rec RECORD;
   next_num INTEGER;
-  year_val TEXT;
+  dd TEXT;
+  mm TEXT;
 BEGIN
-  year_val := to_char(current_date, 'YY');
+  dd := to_char(current_date, 'DD');
+  mm := to_char(current_date, 'MM');
   
-  -- Ensure counter exists
-  INSERT INTO counters (prefix, current_number, financial_year)
-  VALUES ('AAY', 0, year_val)
-  ON CONFLICT (prefix) DO NOTHING;
-  
-  -- Get current counter value
-  SELECT current_number INTO next_num FROM counters WHERE prefix = 'AAY';
+  -- Count existing AAY- jobs created today to get starting sequence
+  SELECT COUNT(*) INTO next_num FROM jobs 
+  WHERE job_number LIKE 'AAY-%' AND created_at::date = current_date;
   
   FOR rec IN SELECT id FROM jobs WHERE job_number LIKE 'JOB-%' ORDER BY created_at
   LOOP
     next_num := next_num + 1;
-    UPDATE jobs SET job_number = 'AAY-' || year_val || '-' || LPAD(next_num::TEXT, 4, '0')
+    UPDATE jobs SET job_number = 'AAY-' || dd || mm || LPAD(next_num::TEXT, 3, '0')
     WHERE id = rec.id;
   END LOOP;
-  
-  -- Update the counter to the new value
-  UPDATE counters SET current_number = next_num, updated_at = NOW() WHERE prefix = 'AAY';
 END $$;
 
 -- =====================================================

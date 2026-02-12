@@ -46,8 +46,8 @@ BEGIN
   END IF;
 
   -- For non-job counters, keep the old sequential logic
-  INSERT INTO counters (prefix, current_number, financial_year)
-  VALUES (prefix_val, 0, to_char(current_date, 'YY'))
+  INSERT INTO counters (prefix, current_number)
+  VALUES (prefix_val, 0)
   ON CONFLICT (prefix) DO NOTHING;
 
   UPDATE counters 
