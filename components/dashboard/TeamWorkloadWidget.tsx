@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useDesigners } from '@/lib/hooks';
 import { Users, CheckCircle2, Briefcase } from 'lucide-react';
@@ -136,7 +137,7 @@ export default function TeamWorkloadWidget() {
                         const doneWidth = w.tasks_allotted > 0 ? (w.tasks_done / w.tasks_allotted) * 100 : 0;
 
                         return (
-                            <div key={w.designer_id} className="group">
+                            <Link key={w.designer_id} href="/admin/design-tasks" className="group block hover:bg-gray-50 rounded-md px-2 -mx-2 py-1 transition-colors cursor-pointer">
                                 <div className="flex items-center justify-between mb-1">
                                     <div className="flex items-center gap-2">
                                         <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600">
@@ -162,7 +163,7 @@ export default function TeamWorkloadWidget() {
                                         style={{ width: `${doneWidth}%` }}
                                     />
                                 </div>
-                            </div>
+                            </Link>
                         );
                     })}
 

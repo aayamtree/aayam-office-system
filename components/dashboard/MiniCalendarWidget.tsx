@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useCalendarEvents } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
@@ -29,10 +30,12 @@ interface CalendarItem {
     type: 'event' | 'deadline' | 'followup' | 'dispatch';
     status?: string;
     color: string; // tailwind color class
+    link?: string; // navigation link for business items
 }
 
 export default function MiniCalendarWidget() {
     const { profile } = useAuth();
+    const router = useRouter();
     const [currentMonth, setCurrentMonth] = useState(new Date());
 
     // Fetch events for the visible range (full month + overflow days)
@@ -86,6 +89,7 @@ export default function MiniCalendarWidget() {
                             type: 'deadline',
                             status: j.current_stage,
                             color: 'bg-amber-100 text-amber-800',
+                            link: '/admin/jobs',
                         });
                     }
                 });
@@ -100,6 +104,7 @@ export default function MiniCalendarWidget() {
                             type: 'followup',
                             status: f.status,
                             color: 'bg-blue-100 text-blue-800',
+                            link: '/admin/marketing/follow-ups',
                         });
                     }
                 });
@@ -114,6 +119,7 @@ export default function MiniCalendarWidget() {
                             type: 'dispatch',
                             status: d.status,
                             color: 'bg-green-100 text-green-800',
+                            link: '/admin/dispatch',
                         });
                     }
                 });
@@ -305,9 +311,11 @@ export default function MiniCalendarWidget() {
                                                                 if (item.type === 'event') {
                                                                     const eventId = item.id.replace('event-', '');
                                                                     toggleComplete(eventId, item.status !== 'completed');
+                                                                } else if (item.link) {
+                                                                    router.push(item.link);
                                                                 }
                                                             }}
-                                                            className={`px-1 py-0.5 rounded text-[10px] leading-tight truncate cursor-pointer transition-colors ${item.color}`}
+                                                            className={`px-1 py-0.5 rounded text-[10px] leading-tight truncate cursor-pointer transition-colors hover:opacity-80 ${item.color}`}
                                                             title={item.title}
                                                         >
                                                             {item.title}

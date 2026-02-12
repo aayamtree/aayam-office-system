@@ -71,7 +71,8 @@ export default function AdminDashboardShadcn() {
 
     // Pipeline stages in order
     const pipelineStages = [
-        { key: 'design', label: 'Design', color: 'bg-violet-500' },
+        { key: 'new', label: 'New', color: 'bg-blue-500' },
+        { key: 'designing', label: 'Designing', color: 'bg-violet-500' },
         { key: 'approval', label: 'Approval', color: 'bg-amber-500' },
         { key: 'printing', label: 'Printing', color: 'bg-gray-800' },
         { key: 'finishing', label: 'Finishing', color: 'bg-cyan-500' },
@@ -96,65 +97,73 @@ export default function AdminDashboardShadcn() {
 
             {/* Row 1: KPI Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                        <IndianRupee className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-page-title">
-                            {statsLoading ? '...' : formatCurrency(dashboardStats.totalRevenue)}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                            Lifetime invoice total
-                        </p>
-                    </CardContent>
-                </Card>
+                <Link href="/admin/finance">
+                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                            <IndianRupee className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-page-title">
+                                {statsLoading ? '...' : formatCurrency(dashboardStats.totalRevenue)}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Lifetime invoice total
+                            </p>
+                        </CardContent>
+                    </Card>
+                </Link>
 
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
-                        <Package className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-page-title">
-                            {statsLoading ? '...' : dashboardStats.activeJobs}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                            Currently in production
-                        </p>
-                    </CardContent>
-                </Card>
+                <Link href="/admin/jobs">
+                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
+                            <Package className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-page-title">
+                                {statsLoading ? '...' : dashboardStats.activeJobs}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Currently in production
+                            </p>
+                        </CardContent>
+                    </Card>
+                </Link>
 
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
-                        <CreditCard className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-page-title">
-                            {statsLoading ? '...' : formatCurrency(dashboardStats.pendingPayments)}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                            Outstanding invoices
-                        </p>
-                    </CardContent>
-                </Card>
+                <Link href="/admin/finance/payments">
+                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
+                            <CreditCard className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-page-title">
+                                {statsLoading ? '...' : formatCurrency(dashboardStats.pendingPayments)}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Outstanding invoices
+                            </p>
+                        </CardContent>
+                    </Card>
+                </Link>
 
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Orders This Month</CardTitle>
-                        <Package className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-page-title">
-                            {statsLoading ? '...' : dashboardStats.ordersThisMonth}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                            New orders created
-                        </p>
-                    </CardContent>
-                </Card>
+                <Link href="/admin/sales/orders">
+                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Orders This Month</CardTitle>
+                            <Package className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-page-title">
+                                {statsLoading ? '...' : dashboardStats.ordersThisMonth}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                New orders created
+                            </p>
+                        </CardContent>
+                    </Card>
+                </Link>
             </div>
 
             {/* Row 2: Today's Focus + Pipeline | Activity Feed */}
@@ -171,34 +180,34 @@ export default function AdminDashboardShadcn() {
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                <div className="flex flex-col items-center p-3 rounded-md bg-amber-50 border border-amber-100">
+                                <Link href="/admin/jobs" className="flex flex-col items-center p-3 rounded-md bg-amber-50 border border-amber-100 hover:shadow-md transition-shadow cursor-pointer">
                                     <Clock className="h-4 w-4 text-amber-600 mb-1" strokeWidth={1.5} />
                                     <span className="text-xl font-bold text-amber-700">
                                         {statsLoading ? '-' : dashboardStats.todaysFocus.jobsDue}
                                     </span>
                                     <span className="text-xs text-amber-600">Jobs Due</span>
-                                </div>
-                                <div className="flex flex-col items-center p-3 rounded-md bg-red-50 border border-red-100">
+                                </Link>
+                                <Link href="/admin/jobs" className="flex flex-col items-center p-3 rounded-md bg-red-50 border border-red-100 hover:shadow-md transition-shadow cursor-pointer">
                                     <AlertTriangle className="h-4 w-4 text-red-600 mb-1" strokeWidth={1.5} />
                                     <span className="text-xl font-bold text-red-700">
                                         {statsLoading ? '-' : dashboardStats.todaysFocus.jobsDelayed}
                                     </span>
                                     <span className="text-xs text-red-600">Delayed</span>
-                                </div>
-                                <div className="flex flex-col items-center p-3 rounded-md bg-green-50 border border-green-100">
+                                </Link>
+                                <Link href="/admin/jobs" className="flex flex-col items-center p-3 rounded-md bg-green-50 border border-green-100 hover:shadow-md transition-shadow cursor-pointer">
                                     <CheckCircle2 className="h-4 w-4 text-green-600 mb-1" strokeWidth={1.5} />
                                     <span className="text-xl font-bold text-green-700">
                                         {statsLoading ? '-' : dashboardStats.todaysFocus.jobsCompleted}
                                     </span>
                                     <span className="text-xs text-green-600">Completed</span>
-                                </div>
-                                <div className="flex flex-col items-center p-3 rounded-md bg-gray-50 border border-gray-200">
+                                </Link>
+                                <Link href="/admin/finance" className="flex flex-col items-center p-3 rounded-md bg-gray-50 border border-gray-200 hover:shadow-md transition-shadow cursor-pointer">
                                     <IndianRupee className="h-4 w-4 text-gray-600 mb-1" strokeWidth={1.5} />
                                     <span className="text-xl font-bold text-gray-900">
                                         {statsLoading ? '-' : dashboardStats.todaysFocus.paymentsDue}
                                     </span>
                                     <span className="text-xs text-gray-600">Payments Due</span>
-                                </div>
+                                </Link>
                             </div>
                         </CardContent>
                     </Card>
@@ -269,7 +278,7 @@ export default function AdminDashboardShadcn() {
                                         if (count === 0) return null;
 
                                         return (
-                                            <div key={stage.key} className="flex items-center gap-3">
+                                            <Link key={stage.key} href="/admin/jobs/queue" className="flex items-center gap-3 hover:bg-muted/50 rounded-sm px-1 -mx-1 py-0.5 transition-colors cursor-pointer">
                                                 <span className="text-xs w-16 text-right text-muted-foreground truncate">{stage.label}</span>
                                                 <div className="flex-1 h-6 bg-gray-100 rounded-sm overflow-hidden relative">
                                                     <div
@@ -287,7 +296,7 @@ export default function AdminDashboardShadcn() {
                                                         {overdue} late
                                                     </span>
                                                 )}
-                                            </div>
+                                            </Link>
                                         );
                                     })}
                                 </div>
@@ -361,7 +370,7 @@ export default function AdminDashboardShadcn() {
                                     </TableRow>
                                 ) : (
                                     recentJobs.map((job) => (
-                                        <TableRow key={job.id}>
+                                        <TableRow key={job.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push('/admin/jobs')}>
                                             <TableCell className="font-medium">
                                                 #{job.job_number}
                                             </TableCell>
