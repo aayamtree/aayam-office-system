@@ -123,7 +123,7 @@ export default function ProductionQueuePage() {
                             <p className="text-gray-500 mt-1">Live overview of all active jobs • Updates every 30s</p>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <div className="w-3 h-3 bg-white0 rounded-full animate-pulse"></div>
+                            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                             Live Updates Active
                         </div>
                     </div>
@@ -155,10 +155,10 @@ export default function ProductionQueuePage() {
                             }`}
                     >
                         {summary.print_ready > 0 && (
-                            <div className="absolute top-4 right-4 w-3 h-3 bg-white0 rounded-full animate-pulse"></div>
+                            <div className="absolute top-4 right-4 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                         )}
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-white rounded-lg">
+                            <div className="p-2 bg-green-50 rounded-lg">
                                 <CheckCircle2 className="text-gray-900" size={20} />
                             </div>
                         </div>
@@ -173,7 +173,7 @@ export default function ProductionQueuePage() {
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-white rounded-lg">
+                            <div className="p-2 bg-amber-50 rounded-lg">
                                 <Clock className="text-destructive" size={20} />
                             </div>
                         </div>
@@ -223,12 +223,12 @@ export default function ProductionQueuePage() {
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-white rounded-lg">
-                                <TrendingUp className="text-primary" size={20} />
+                            <div className="p-2 bg-white/20 rounded-lg">
+                                <TrendingUp className="text-white" size={20} />
                             </div>
                         </div>
-                        <p className="text-page-title text-gray-900">{summary.total_active}</p>
-                        <p className="text-sm text-gray-700 font-medium mt-1">Total Active</p>
+                        <p className="text-page-title text-white">{summary.total_active}</p>
+                        <p className="text-sm text-gray-300 font-medium mt-1">Total Active</p>
                     </button>
                 </div>
 
@@ -262,8 +262,8 @@ export default function ProductionQueuePage() {
                         <button
                             onClick={() => setCategoryFilter('all')}
                             className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${categoryFilter === 'all'
-                                    ? 'bg-gray-900 text-white'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ? 'bg-gray-900 text-white'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                         >
                             All Types
@@ -273,8 +273,8 @@ export default function ProductionQueuePage() {
                                 key={cat}
                                 onClick={() => setCategoryFilter(categoryFilter === cat ? 'all' : cat)}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${categoryFilter === cat
-                                        ? 'bg-gray-900 text-white'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    ? 'bg-gray-900 text-white'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     }`}
                             >
                                 {cat}

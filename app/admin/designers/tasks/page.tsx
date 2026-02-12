@@ -778,9 +778,18 @@ export default function DesignerWorkspace() {
 
                             <div className="flex justify-between items-start mb-2 pr-12">
                               {/* Job Type Tag */}
-                              <span className="flex items-center gap-1 text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded uppercase tracking-wider">
-                                <TypeIcon size={10} /> {typeLabel}
-                              </span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="flex items-center gap-1 text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded uppercase tracking-wider">
+                                  <TypeIcon size={10} /> {typeLabel}
+                                </span>
+                                {/* Priority Tag */}
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${task.priority === 'urgent' ? 'bg-red-50 text-red-600 border border-red-200' :
+                                    task.priority === 'high' ? 'bg-orange-50 text-orange-600 border border-orange-200' :
+                                      'bg-gray-100 text-gray-500 border border-gray-200'
+                                  }`}>
+                                  {task.priority || 'normal'}
+                                </span>
+                              </div>
                             </div>
 
                             <h4 className="font-bold text-gray-800 mb-1 line-clamp-2 leading-tight">{task.title}</h4>
@@ -789,8 +798,9 @@ export default function DesignerWorkspace() {
                             {/* Footer Info */}
                             <div className="flex justify-between items-center border-t pt-3 mt-1">
                               <div className="flex items-center gap-3">
-                                {/* Designer Avatar */}
-                                <span className="text-xs font-bold text-primary bg-muted border border-gray-200 px-2 py-0.5 rounded overflow-hidden text-ellipsis whitespace-nowrap max-w-[80px]">
+                                {/* Designer Name with Icon */}
+                                <span className="flex items-center gap-1 text-xs font-bold text-primary bg-muted border border-gray-200 px-2 py-0.5 rounded overflow-hidden text-ellipsis whitespace-nowrap max-w-[120px]">
+                                  <User size={10} className="shrink-0" />
                                   {task.designerName || 'Unassigned'}
                                 </span>
 
@@ -1250,9 +1260,9 @@ export default function DesignerWorkspace() {
                       {/* Current Status Badge */}
                       <div className="flex items-center gap-3 flex-wrap">
                         <span className={`px-3 py-1.5 rounded-full text-xs font-bold border ${selectedTask.approval_status === 'approved' ? 'bg-green-50 text-green-700 border-green-200' :
-                            selectedTask.approval_status === 'sent' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                              selectedTask.approval_status === 'changes_requested' ? 'bg-red-50 text-red-700 border-red-200' :
-                                'bg-gray-50 text-gray-500 border-gray-200'
+                          selectedTask.approval_status === 'sent' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                            selectedTask.approval_status === 'changes_requested' ? 'bg-red-50 text-red-700 border-red-200' :
+                              'bg-gray-50 text-gray-500 border-gray-200'
                           }`}>
                           {selectedTask.approval_status === 'approved' ? '\u2705 Client Approved' :
                             selectedTask.approval_status === 'sent' ? '\u{1F4E4} Sent for Approval' :
@@ -1312,8 +1322,8 @@ export default function DesignerWorkspace() {
                             {approvalLogs.map((log: any, idx: number) => (
                               <div key={idx} className="flex gap-3 items-start">
                                 <div className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${(log.notes || '').includes('Approved') ? 'bg-green-500' :
-                                    (log.notes || '').includes('Changes') ? 'bg-red-400' :
-                                      'bg-amber-400'
+                                  (log.notes || '').includes('Changes') ? 'bg-red-400' :
+                                    'bg-amber-400'
                                   }`} />
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm text-gray-700">{log.notes}</p>
