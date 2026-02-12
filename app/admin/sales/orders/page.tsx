@@ -1,23 +1,26 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
   Calendar, User, Package, IndianRupee, Truck, CheckCircle,
-  AlertCircle, ChevronRight, Briefcase, ExternalLink
+  AlertCircle, ChevronRight, Briefcase, ExternalLink,
+  Upload, CreditCard, Banknote, Smartphone, ChevronDown, Tag
 } from 'lucide-react';
-import { useJobs, useClients } from '@/lib/hooks';
+import { useJobs, useClients, useProductCategories } from '@/lib/hooks';
 import { Job, Client } from '@/types/database';
 import { useAuth } from '@/lib/auth-context';
 import { formatDate } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/lib/supabase';
 
 export default function OrdersPage() {
   const { user, profile } = useAuth();
   const { jobs: allJobs, loading: jobsLoading, createJob, updateJob, deleteJob } = useJobs();
+  const { categories, createCategory } = useProductCategories();
   const router = useRouter();
 
   // Filter jobs for Marketing role
@@ -53,6 +56,7 @@ export default function OrdersPage() {
   const [formData, setFormData] = useState({
     clientId: '',
     projectName: '',
+    productCategoryId: '',
     description: '',
     quantity: 1,
     ratePerPiece: 0,
@@ -65,6 +69,54 @@ export default function OrdersPage() {
     clientDeadline: '',
     notes: ''
   });
+
+  // Product Category search
+  const [categorySearch, setCategorySearch] = useState('');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const categoryRef = useRef<HTMLDivElement>(null);
+
+  // Advance Payment
+  const [showAdvance, setShowAdvance] = useState(false);
+  const [advanceData, setAdvanceData] = useState({
+    amount: 0,
+    paymentMode: 'cash' as 'cash' | 'upi' | 'bank_transfer',
+    referenceNumber: '',
+    receivedBy: '',
+    proofFile: null as File | null,
+  });
+  const [uploadingProof, setUploadingProof] = useState(false);
+
+  // Team members for "received by" dropdown
+  const [teamMembers, setTeamMembers] = useState<{ id: string, full_name: string }[]>([]);
+  useEffect(() => {
+    supabase.from('profiles').select('id, full_name').eq('is_active', true)
+      .then(({ data }) => { if (data) setTeamMembers(data as any); });
+  }, []);
+
+  // Close category dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
+        setShowCategoryDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  // Filtered categories for search
+  const filteredCategories = useMemo(() => {
+    if (!categories) return [];
+    if (!categorySearch.trim()) return categories;
+    return categories.filter((c: any) => c.name.toLowerCase().includes(categorySearch.toLowerCase()));
+  }, [categories, categorySearch]);
+
+  const selectedCategoryName = useMemo(() => {
+    if (!formData.productCategoryId || !categories) return '';
+    const cat = categories.find((c: any) => c.id === formData.productCategoryId);
+    return cat?.name || '';
+  }, [formData.productCategoryId, categories]);
 
   // Auto-open if ?new=true
   useEffect(() => {
@@ -103,6 +155,7 @@ export default function OrdersPage() {
     setFormData({
       clientId: '',
       projectName: '',
+      productCategoryId: '',
       description: '',
       quantity: 1,
       ratePerPiece: 0,
@@ -115,6 +168,9 @@ export default function OrdersPage() {
       clientDeadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       notes: ''
     });
+    setShowAdvance(false);
+    setAdvanceData({ amount: 0, paymentMode: 'cash', referenceNumber: '', receivedBy: '', proofFile: null });
+    setCategorySearch('');
     setIsEditing(false);
     setShowModal(true);
   };
@@ -123,6 +179,7 @@ export default function OrdersPage() {
     setFormData({
       clientId: job.client_id || '',
       projectName: job.project_name,
+      productCategoryId: job.product_category_id || '',
       description: job.description || '',
       quantity: job.quantity,
       ratePerPiece: job.quote_per_piece || (job.quantity > 0 ? job.subtotal / job.quantity : 0),
@@ -135,6 +192,9 @@ export default function OrdersPage() {
       clientDeadline: job.client_deadline ? new Date(job.client_deadline).toISOString().split('T')[0] : '',
       notes: job.notes || ''
     });
+    setCategorySearch('');
+    setShowAdvance(job.amount_received > 0);
+    setAdvanceData({ amount: job.amount_received || 0, paymentMode: 'cash', referenceNumber: '', receivedBy: '', proofFile: null });
     setSelectedJob(job);
     setIsEditing(true);
     setShowModal(true);
@@ -147,14 +207,38 @@ export default function OrdersPage() {
     }
   };
 
+  // Upload proof file to Supabase storage
+  const uploadProofFile = async (file: File, jobId: string): Promise<string | null> => {
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `payment-proofs/${jobId}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from('attachments').upload(path, file);
+      if (error) {
+        console.error('Upload error:', error);
+        return null;
+      }
+      const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(path);
+      return urlData?.publicUrl || null;
+    } catch (err) {
+      console.error('File upload failed:', err);
+      return null;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const advanceAmount = showAdvance ? advanceData.amount : 0;
+      const paymentStatus = advanceAmount > 0
+        ? (advanceAmount >= formData.totalAmount ? 'paid' : 'partial')
+        : 'pending';
+
       if (isEditing && selectedJob) {
         const result = await updateJob(selectedJob.id, {
           client_id: formData.clientId,
           project_name: formData.projectName,
+          product_category_id: formData.productCategoryId || null,
           description: formData.description,
           quantity: formData.quantity,
           quote_per_piece: formData.ratePerPiece,
@@ -162,11 +246,13 @@ export default function OrdersPage() {
           gst_rate: formData.gstRate,
           gst_amount: formData.gstAmount,
           total_amount: formData.totalAmount,
+          amount_received: advanceAmount,
+          payment_status: paymentStatus,
           priority: formData.priority,
           current_stage: formData.currentStage,
           client_deadline: formData.clientDeadline,
           notes: formData.notes
-        });
+        } as any);
         if (result?.error) {
           alert('Failed to update: ' + result.error);
           return;
@@ -175,6 +261,7 @@ export default function OrdersPage() {
         const result = await createJob({
           client_id: formData.clientId,
           project_name: formData.projectName,
+          product_category_id: formData.productCategoryId || null,
           description: formData.description,
           quantity: formData.quantity,
           quote_per_piece: formData.ratePerPiece,
@@ -183,8 +270,8 @@ export default function OrdersPage() {
           gst_amount: formData.gstAmount,
           discount_amount: 0,
           total_amount: formData.totalAmount,
-          payment_status: 'pending',
-          amount_received: 0,
+          payment_status: paymentStatus,
+          amount_received: advanceAmount,
           order_date: new Date().toISOString(),
           priority: formData.priority,
           current_stage: formData.currentStage,
@@ -192,10 +279,33 @@ export default function OrdersPage() {
           client_deadline: formData.clientDeadline,
           notes: formData.notes,
           sales_person_id: profile?.id || user?.id,
-        });
+        } as any);
         if (result?.error) {
           alert('Failed to create: ' + result.error);
           return;
+        }
+
+        // Record advance payment if provided
+        if (advanceAmount > 0 && result?.data?.id) {
+          let proofUrl: string | null = null;
+          if (advanceData.proofFile) {
+            setUploadingProof(true);
+            proofUrl = await uploadProofFile(advanceData.proofFile, result.data.id);
+            setUploadingProof(false);
+          }
+
+          // Create payment record via direct insert
+          await supabase.from('payments_received').insert([{
+            job_id: result.data.id,
+            client_id: formData.clientId || null,
+            amount: advanceAmount,
+            payment_mode: advanceData.paymentMode,
+            payment_date: new Date().toISOString(),
+            reference_number: advanceData.referenceNumber || null,
+            received_by: advanceData.receivedBy || profile?.id || null,
+            attachment_url: proofUrl,
+            notes: `Advance payment at order creation`,
+          }]);
         }
       }
       setShowModal(false);
@@ -231,18 +341,27 @@ export default function OrdersPage() {
     return colors[status] || 'bg-gray-100 text-gray-700';
   };
 
+  // Helper to get category name from ID
+  const getCategoryName = (job: Job) => {
+    if (!job.product_category_id || !categories) return '';
+    const cat = categories.find((c: any) => c.id === job.product_category_id);
+    return cat?.name || job.product_category || '';
+  };
+
   const filteredJobs = useMemo(() => {
     return jobs.filter(job => {
       const s = searchQuery.toLowerCase();
+      const catName = getCategoryName(job).toLowerCase();
       const matchSearch =
         job.job_number.toLowerCase().includes(s) ||
         job.project_name.toLowerCase().includes(s) ||
         (job.client?.company || '').toLowerCase().includes(s) ||
-        (job.client?.name || '').toLowerCase().includes(s);
+        (job.client?.name || '').toLowerCase().includes(s) ||
+        catName.includes(s);
       const matchStatus = statusFilter === 'all' || job.current_stage === statusFilter;
       return matchSearch && matchStatus;
     });
-  }, [jobs, searchQuery, statusFilter]);
+  }, [jobs, searchQuery, statusFilter, categories]);
 
   return (
     <div className="space-y-3 md:space-y-6 lg:space-y-8 pb-10">
@@ -342,7 +461,12 @@ export default function OrdersPage() {
                         {job.client?.company || job.client?.name || 'Unknown'}
                       </p>
 
-                      {/* Project Name */}
+                      {/* Category + Project Name */}
+                      {getCategoryName(job) && (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded mb-1">
+                          <Tag className="w-3 h-3" />{getCategoryName(job)}
+                        </span>
+                      )}
                       <h3 className="text-gray-900 font-bold text-lg mb-4">
                         {job.project_name}
                       </h3>
@@ -415,7 +539,14 @@ export default function OrdersPage() {
                           {job.priority === 'high' && <span className="text-xs font-bold uppercase text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">High</span>}
                           {job.priority === 'normal' && <span className="text-xs font-medium uppercase text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">Normal</span>}
                         </div>
-                        <div className="font-semibold text-gray-800">{job.project_name}</div>
+                        <div className="font-semibold text-gray-800">
+                          {job.project_name}
+                          {getCategoryName(job) && (
+                            <span className="ml-2 inline-flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                              <Tag className="w-3 h-3" />{getCategoryName(job)}
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-gray-500 mt-1">{job.quantity} items</div>
                       </td>
                       <td className="px-6 py-4 align-top">
@@ -508,6 +639,81 @@ export default function OrdersPage() {
                       <option key={c.id} value={c.id}>{c.company} ({c.name})</option>
                     ))}
                   </select>
+                </div>
+
+                {/* Product Category - Searchable Combobox */}
+                <div ref={categoryRef} className="relative">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Product Category</label>
+                  <div
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg cursor-pointer bg-white flex items-center justify-between hover:border-gray-300 transition-colors"
+                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                  >
+                    <span className={selectedCategoryName ? 'text-gray-900 font-medium' : 'text-gray-400'}>
+                      {selectedCategoryName || 'Select category (Box, Label, Pouch...)'}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
+                  </div>
+                  {showCategoryDropdown && (
+                    <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                      <div className="p-2 border-b border-gray-100">
+                        <input
+                          type="text"
+                          placeholder="Search or type new..."
+                          value={categorySearch}
+                          onChange={(e) => setCategorySearch(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="max-h-44 overflow-y-auto">
+                        {/* Clear selection */}
+                        <button
+                          type="button"
+                          onClick={() => { setFormData({ ...formData, productCategoryId: '' }); setShowCategoryDropdown(false); setCategorySearch(''); }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-400 hover:bg-gray-50 transition-colors"
+                        >
+                          — None —
+                        </button>
+                        {filteredCategories.map((cat: any) => (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => {
+                              setFormData({ ...formData, productCategoryId: cat.id });
+                              setShowCategoryDropdown(false);
+                              setCategorySearch('');
+                            }}
+                            className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between ${formData.productCategoryId === cat.id ? 'bg-gray-100 font-semibold text-gray-900' : 'text-gray-700'
+                              }`}
+                          >
+                            {cat.name}
+                            {formData.productCategoryId === cat.id && <CheckCircle className="w-4 h-4 text-green-500" />}
+                          </button>
+                        ))}
+                        {/* Add new category option */}
+                        {categorySearch.trim() && !categories?.find((c: any) => c.name.toLowerCase() === categorySearch.trim().toLowerCase()) && (
+                          <button
+                            type="button"
+                            disabled={creatingCategory}
+                            onClick={async () => {
+                              setCreatingCategory(true);
+                              const { data: newCat } = await createCategory(categorySearch.trim());
+                              if (newCat) {
+                                setFormData({ ...formData, productCategoryId: newCat.id });
+                              }
+                              setCreatingCategory(false);
+                              setShowCategoryDropdown(false);
+                              setCategorySearch('');
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-primary font-semibold hover:bg-primary/5 transition-colors flex items-center gap-2 border-t border-gray-100"
+                          >
+                            <Plus className="w-4 h-4" />
+                            {creatingCategory ? 'Adding...' : `Add "${categorySearch.trim()}"`}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -606,6 +812,117 @@ export default function OrdersPage() {
                     <option value="delivered">Delivered</option>
                   </select>
                 </div>
+
+                {/* Advance Payment Section */}
+                <div className="col-span-1 sm:col-span-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvance(!showAdvance)}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border-2 border-dashed transition-all text-sm font-semibold ${showAdvance
+                        ? 'border-green-300 bg-green-50 text-green-700'
+                        : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
+                      }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <IndianRupee className="w-4 h-4" />
+                      {showAdvance ? 'Advance Payment' : 'Record Advance Payment'}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${showAdvance ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {showAdvance && (
+                    <div className="mt-3 p-4 bg-green-50/50 rounded-lg border border-green-100 space-y-4">
+                      {/* Payment Mode */}
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Payment Mode</label>
+                        <div className="flex gap-2">
+                          {[
+                            { value: 'cash', label: 'Cash', icon: Banknote },
+                            { value: 'upi', label: 'UPI', icon: Smartphone },
+                            { value: 'bank_transfer', label: 'Bank Transfer', icon: CreditCard }
+                          ].map(mode => (
+                            <button
+                              key={mode.value}
+                              type="button"
+                              onClick={() => setAdvanceData({ ...advanceData, paymentMode: mode.value as any })}
+                              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-semibold transition-all ${advanceData.paymentMode === mode.value
+                                  ? 'border-green-500 bg-green-500 text-white'
+                                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                                }`}
+                            >
+                              <mode.icon className="w-4 h-4" />
+                              {mode.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Amount */}
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Advance Amount (₹)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={advanceData.amount || ''}
+                          onChange={(e) => setAdvanceData({ ...advanceData, amount: parseFloat(e.target.value) || 0 })}
+                          placeholder="Enter amount"
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-400"
+                        />
+                      </div>
+
+                      {/* Conditional fields based on payment mode */}
+                      {advanceData.paymentMode === 'cash' ? (
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Received By</label>
+                          <select
+                            value={advanceData.receivedBy}
+                            onChange={(e) => setAdvanceData({ ...advanceData, receivedBy: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-400 bg-white"
+                          >
+                            <option value="">Select team member</option>
+                            {teamMembers.map(m => (
+                              <option key={m.id} value={m.id}>{m.full_name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : (
+                        <>
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                              {advanceData.paymentMode === 'upi' ? 'UTR / Reference Number' : 'Transaction Reference'}
+                            </label>
+                            <input
+                              type="text"
+                              value={advanceData.referenceNumber}
+                              onChange={(e) => setAdvanceData({ ...advanceData, referenceNumber: e.target.value })}
+                              placeholder={advanceData.paymentMode === 'upi' ? 'e.g. 408123456789' : 'e.g. NEFT-REF-123'}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-400"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Upload Proof (Screenshot / PDF)</label>
+                            <label className="flex items-center gap-3 px-4 py-3 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-gray-300 transition-colors bg-white">
+                              <Upload className="w-5 h-5 text-gray-400" />
+                              <span className="text-sm text-gray-500">
+                                {advanceData.proofFile ? advanceData.proofFile.name : 'Choose file...'}
+                              </span>
+                              <input
+                                type="file"
+                                accept="image/*,.pdf"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) setAdvanceData({ ...advanceData, proofFile: file });
+                                }}
+                              />
+                            </label>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="flex gap-2 md:gap-4 pt-4 border-t border-gray-100">
@@ -655,6 +972,25 @@ export default function OrdersPage() {
                   <p className="text-sm text-gray-600">{selectedJob.client?.name}</p>
                 </div>
               </div>
+
+              {/* Category badge */}
+              {getCategoryName(selectedJob) && (
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg">
+                    <Tag className="w-4 h-4" />{getCategoryName(selectedJob)}
+                  </span>
+                  {selectedJob.amount_received > 0 && (
+                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-green-700 bg-green-100 px-3 py-1.5 rounded-lg">
+                      <IndianRupee className="w-3.5 h-3.5" />Advance: {formatCurrency(selectedJob.amount_received)}
+                    </span>
+                  )}
+                </div>
+              )}
+              {!getCategoryName(selectedJob) && selectedJob.amount_received > 0 && (
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-green-700 bg-green-100 px-3 py-1.5 rounded-lg">
+                  <IndianRupee className="w-3.5 h-3.5" />Advance: {formatCurrency(selectedJob.amount_received)}
+                </span>
+              )}
 
               <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div className="p-3 border rounded-lg">

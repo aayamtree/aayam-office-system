@@ -456,6 +456,37 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
 }
 
 // =============================================
+// PRODUCT CATEGORIES HOOK
+// =============================================
+export function useProductCategories() {
+  const { data, loading, error, refetch } = useSupabaseQuery<any>('product_categories', {
+    filter: [{ column: 'is_active', value: true }],
+    orderBy: { column: 'name', ascending: true }
+  });
+
+  const createCategory = async (name: string) => {
+    if (!isSupabaseConfigured()) return { data: null, error: 'Database not configured' };
+
+    const { data: newCat, error } = await supabase
+      .from('product_categories')
+      .insert([{ name: name.trim(), is_active: true }])
+      .select()
+      .single();
+
+    if (!error) refetch();
+    return { data: newCat, error: error?.message };
+  };
+
+  return {
+    categories: data,
+    loading,
+    error,
+    refetch,
+    createCategory
+  };
+}
+
+// =============================================
 // INVOICES HOOK
 // =============================================
 export function useInvoices() {
