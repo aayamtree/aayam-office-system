@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { Bell, Menu, ChevronRight, Plus } from 'lucide-react';
+import { Bell, Menu, ChevronRight, Plus, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
@@ -47,10 +47,30 @@ function timeAgo(dateStr: string): string {
 
 export default function Header({ onMenuClick }: HeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { isAdmin } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [hasUrgent, setHasUrgent] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshSuccess, setRefreshSuccess] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    setRefreshSuccess(false);
+    try {
+      router.refresh();
+      await fetchNotifications();
+      // Brief delay to let Next.js revalidate
+      await new Promise(r => setTimeout(r, 800));
+      setRefreshSuccess(true);
+      setTimeout(() => setRefreshSuccess(false), 2000);
+    } catch (e) {
+      console.error('Refresh failed:', e);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const fetchNotifications = useCallback(async () => {
     if (!isSupabaseConfigured()) return;
@@ -224,6 +244,31 @@ export default function Header({ onMenuClick }: HeaderProps) {
               </Link>
             </Button>
           )}
+
+          {/* Refresh Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className={`relative transition-colors duration-300 ${refreshSuccess
+                ? 'text-green-500 hover:text-green-600'
+                : 'text-muted-foreground hover:text-foreground'
+              }`}
+            title="Refresh data"
+          >
+            <RefreshCw
+              className={`h-4.5 w-4.5 transition-transform ${isRefreshing ? 'animate-spin' : ''
+                }`}
+              strokeWidth={1.5}
+            />
+            {refreshSuccess && (
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full animate-ping" />
+            )}
+            {refreshSuccess && (
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full" />
+            )}
+          </Button>
 
           {/* Notifications */}
           <DropdownMenu open={showNotifications} onOpenChange={setShowNotifications}>
