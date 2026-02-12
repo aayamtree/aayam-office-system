@@ -323,8 +323,11 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
     // Get next job number
-    // Fallback: AAY-YY-XXXX (Random 4 digit)
-    let jobNumber = `AAY-${new Date().getFullYear().toString().slice(-2)}-${Math.floor(1000 + Math.random() * 9000)}`;
+    // Fallback: AAY-DDMMXXX (DD=day, MM=month, XXX=daily sequence)
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    let jobNumber = `AAY-${dd}${mm}001`;
 
     try {
       const { data: numberData } = await supabase.rpc('get_next_number', { counter_id: 'job' });
