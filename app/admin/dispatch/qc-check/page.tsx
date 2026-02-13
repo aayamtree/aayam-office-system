@@ -42,7 +42,9 @@ export default function QCCheckPage() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const { jobs, loading, updateJobStage, updateJob } = useJobs();
+  const { jobs, loading, updateJobStage, updateJob } = useJobs({
+    filter: [{ column: 'current_stage', value: ['designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready'], op: 'in' }]
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showQCModal, setShowQCModal] = useState(false);

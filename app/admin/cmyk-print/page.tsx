@@ -10,6 +10,7 @@ import DriveConnectionStatus from '@/components/drive/DriveConnectionStatus';
 export default function CMYKPrintPage() {
   const { profile } = useAuth();
   const { jobs, loading: jobsLoading } = useJobs({
+    filter: [{ column: 'current_stage', value: ['new', 'designing', 'printing', 'finishing', 'ready', 'dispatched', 'delivered'], op: 'in' }],
     orderBy: { column: 'created_at', ascending: false }
   });
   const { stock, loading: stockLoading } = usePaperStock();

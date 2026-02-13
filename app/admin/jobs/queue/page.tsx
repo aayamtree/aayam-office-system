@@ -13,7 +13,10 @@ import { Job, JobStatus } from '@/types/database';
 const statusFlow: JobStatus[] = ['new', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready', 'dispatched', 'delivered'];
 
 export default function JobQueuePage() {
-  const { jobs, loading, updateJobStage, updateJob } = useJobs();
+  const { jobs, loading, updateJobStage, updateJob } = useJobs({
+    filter: [{ column: 'current_stage', value: ['new', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready', 'dispatched'], op: 'in' }],
+    limit: 100
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showViewModal, setShowViewModal] = useState(false);

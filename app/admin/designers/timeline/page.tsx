@@ -4,7 +4,9 @@ import { useJobs, useClients, useDesigners } from '@/lib/hooks';
 import { Calendar, User } from 'lucide-react';
 
 export default function Timeline() {
-    const { jobs, loading } = useJobs();
+    const { jobs, loading } = useJobs({
+        filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready'], op: 'in' }]
+    });
     const { clients } = useClients();
     const { designers } = useDesigners();
 

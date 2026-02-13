@@ -6,7 +6,9 @@ import { Users, Search, User, Clock, LayoutGrid, List } from 'lucide-react';
 import Link from 'next/link';
 
 export default function TeamQueue() {
-    const { jobs, loading } = useJobs();
+    const { jobs, loading } = useJobs({
+        filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready'], op: 'in' }]
+    });
     const { clients } = useClients();
     const { designers } = useDesigners();
     const [searchQuery, setSearchQuery] = useState('');

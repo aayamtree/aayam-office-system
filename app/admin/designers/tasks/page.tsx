@@ -118,7 +118,10 @@ export default function DesignerWorkspace() {
   const { profile } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { jobs, loading: jobsLoading, error: jobsError, updateJobStage, createJob, updateJob } = useJobs();
+  const { jobs, loading: jobsLoading, error: jobsError, updateJobStage, createJob, updateJob } = useJobs({
+    filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready', 'delivered'], op: 'in' }],
+    limit: 200
+  });
   const { clients } = useClients();
 
   // DEBUG: Check why clients dropdown is empty

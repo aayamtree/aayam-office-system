@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { useLeads, useFollowUps, useJobs } from '@/lib/hooks';
+import { useLeads, useFollowUps } from '@/lib/hooks';
 import {
     Users, TrendingUp, AlertCircle, CheckCircle, Clock, Calendar,
     IndianRupee, FileText, ArrowRight, Activity
@@ -13,7 +13,6 @@ export default function AdminMarketingDashboard() {
     const { profile } = useAuth();
     const { leads, loading: leadsLoading } = useLeads();
     const { followUps, loading: followUpsLoading } = useFollowUps();
-    const { jobs, loading: jobsLoading } = useJobs();
 
     // Calculate stats
     const today = new Date().toISOString().split('T')[0];
@@ -109,7 +108,7 @@ export default function AdminMarketingDashboard() {
 
     const teamMembers = Object.values(teamActivity || {});
 
-    const loading = leadsLoading || followUpsLoading || jobsLoading;
+    const loading = leadsLoading || followUpsLoading;
 
     // Only show for admin
     if (profile?.role !== 'admin') {
