@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useJobs, useClients, useDesigners } from '@/lib/hooks';
-import { Calendar, Clock, User, AlertCircle, Search } from 'lucide-react';
+import { Calendar, Clock, User, AlertCircle, Search, Palette } from 'lucide-react';
 import Link from 'next/link';
 
 export default function MyQueue() {
@@ -97,6 +97,12 @@ export default function MyQueue() {
                                                         <span>{task.client}</span>
                                                         <span className="text-gray-400">•</span>
                                                         <span>#{task.jobNumber}</span>
+                                                        {task.designer && (
+                                                            <>
+                                                                <span className="text-gray-400">•</span>
+                                                                <span className="flex items-center gap-1"><Palette size={12} />{task.designer}</span>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <span className="px-2.5 md:px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs md:text-sm font-bold whitespace-nowrap self-start">
@@ -137,6 +143,12 @@ export default function MyQueue() {
                                                         <span>{task.client}</span>
                                                         <span className="text-gray-400">•</span>
                                                         <span>#{task.jobNumber}</span>
+                                                        {task.designer && (
+                                                            <>
+                                                                <span className="text-gray-400">•</span>
+                                                                <span className="flex items-center gap-1"><Palette size={12} />{task.designer}</span>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <span className="px-2.5 md:px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs md:text-sm font-bold whitespace-nowrap self-start">
@@ -175,6 +187,12 @@ export default function MyQueue() {
                                                         <span>{task.client}</span>
                                                         <span className="text-gray-400">•</span>
                                                         <span>#{task.jobNumber}</span>
+                                                        {task.designer && (
+                                                            <>
+                                                                <span className="text-gray-400">•</span>
+                                                                <span className="flex items-center gap-1"><Palette size={12} />{task.designer}</span>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm capitalize">
