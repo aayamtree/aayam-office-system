@@ -71,6 +71,7 @@ export default function AdminDashboardShadcn() {
 
     // Pipeline stages in order
     const pipelineStages = [
+        { key: 'awaiting_admin', label: 'Pending Approval', color: 'bg-orange-500' },
         { key: 'new', label: 'New', color: 'bg-blue-500' },
         { key: 'designing', label: 'Designing', color: 'bg-violet-500' },
         { key: 'approval', label: 'Approval', color: 'bg-amber-500' },
@@ -83,9 +84,11 @@ export default function AdminDashboardShadcn() {
 
     const totalPipelineJobs = Object.values(dashboardStats.pipeline).reduce((a, b) => a + b, 0);
 
+    const pendingApprovals = dashboardStats.pipeline['awaiting_admin'] || 0;
     const hasAlerts = dashboardStats.alerts.overduePayments > 0 ||
         dashboardStats.alerts.followUpsDue > 0 ||
-        dashboardStats.alerts.blockedJobs > 0;
+        dashboardStats.alerts.blockedJobs > 0 ||
+        pendingApprovals > 0;
 
 
     return (
@@ -225,6 +228,13 @@ export default function AdminDashboardShadcn() {
                                         <Link href="/admin/finance">
                                             <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100 cursor-pointer gap-1">
                                                 <span className="font-bold">{dashboardStats.alerts.overduePayments}</span> Overdue Payments
+                                            </Badge>
+                                        </Link>
+                                    )}
+                                    {pendingApprovals > 0 && (
+                                        <Link href="/admin/jobs">
+                                            <Badge variant="outline" className="border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 cursor-pointer gap-1 animate-pulse">
+                                                <span className="font-bold">{pendingApprovals}</span> Pending Approval{pendingApprovals > 1 ? 's' : ''}
                                             </Badge>
                                         </Link>
                                     )}
