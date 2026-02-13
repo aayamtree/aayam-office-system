@@ -82,7 +82,7 @@ export default function GoogleDriveSettings() {
             `&response_type=code` +
             `&scope=${encodeURIComponent(scope)}` +
             `&access_type=offline` +
-            `&prompt=consent` +
+            `&prompt=${encodeURIComponent('select_account consent')}` +
             `&state=${encodeURIComponent(state)}`;
 
         // Redirect to Google OAuth directly
