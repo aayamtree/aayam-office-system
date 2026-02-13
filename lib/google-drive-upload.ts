@@ -120,6 +120,84 @@ export async function uploadToDrive(
 }
 
 /**
+ * Find a folder by name inside a parent, or create it
+ */
+export async function findOrCreateFolder(
+    accessToken: string,
+    folderName: string,
+    parentFolderId?: string
+): Promise<{ folderId: string | null; error?: string }> {
+    try {
+        // Search for existing folder
+        let query = `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+        if (parentFolderId) {
+            query += ` and '${parentFolderId}' in parents`;
+        }
+
+        const searchRes = await fetch(
+            `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name)`,
+            { headers: { 'Authorization': `Bearer ${accessToken}` } }
+        );
+
+        if (searchRes.ok) {
+            const searchData = await searchRes.json();
+            if (searchData.files?.length > 0) {
+                return { folderId: searchData.files[0].id };
+            }
+        }
+
+        // Create folder
+        const metadata: any = {
+            name: folderName,
+            mimeType: 'application/vnd.google-apps.folder',
+            ...(parentFolderId && { parents: [parentFolderId] })
+        };
+
+        const createRes = await fetch(
+            'https://www.googleapis.com/drive/v3/files?fields=id',
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(metadata)
+            }
+        );
+
+        if (!createRes.ok) {
+            return { folderId: null, error: `Failed to create folder: ${createRes.status}` };
+        }
+
+        const data = await createRes.json();
+        return { folderId: data.id };
+
+    } catch (error: any) {
+        return { folderId: null, error: error.message };
+    }
+}
+
+/**
+ * Get or create the project folder hierarchy:
+ *   My Drive > Aayam Projects > {jobNumber} - {projectName}
+ * Returns the project subfolder ID for uploading files into
+ */
+export async function getProjectFolder(
+    accessToken: string,
+    jobNumber: string,
+    projectName: string
+): Promise<{ folderId: string | null; error?: string }> {
+    // 1. Find or create "Aayam Projects" root folder
+    const root = await findOrCreateFolder(accessToken, 'Aayam Projects');
+    if (!root.folderId) return root;
+
+    // 2. Find or create project subfolder inside it
+    const projectFolderName = `${jobNumber} - ${projectName}`.slice(0, 100);
+    const project = await findOrCreateFolder(accessToken, projectFolderName, root.folderId);
+    return project;
+}
+
+/**
  * Make a Drive file publicly viewable
  */
 async function makeFilePublic(accessToken: string, fileId: string): Promise<void> {

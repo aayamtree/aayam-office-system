@@ -7,7 +7,7 @@ import { useClients, useDesigners, useProductCategories } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { extractFileIdFromLink, verifyDriveFile, formatBytes, getFileIcon, DriveFileInfo } from '@/lib/google-drive';
-import { uploadToDrive } from '@/lib/google-drive-upload';
+import { uploadToDrive, getProjectFolder } from '@/lib/google-drive-upload';
 import { createCalendarEvent, createProjectCalendarEvent } from '@/lib/google-calendar';
 import { format } from 'date-fns';
 
@@ -255,13 +255,20 @@ export default function NewProjectPage() {
             // Upload files to Google Drive
             if (formData.files.length > 0 && (orgDriveToken || session?.accessToken)) {
                 const driveToken = (orgDriveToken || session!.accessToken) as string;
+
+                // Create project folder: Aayam Projects > AAY-XXXX - Project Name
+                setUploadProgress('Creating project folder...');
+                const { folderId: projectFolderId } = await getProjectFolder(
+                    driveToken, jobNumber, formData.title
+                );
+
                 const uploadedLinks: string[] = [];
                 for (let i = 0; i < formData.files.length; i++) {
                     const file = formData.files[i];
                     setUploadProgress(`Uploading ${i + 1}/${formData.files.length}: ${file.name}`);
 
                     const result = await uploadToDrive(
-                        driveToken, file, undefined, undefined,
+                        driveToken, file, projectFolderId || undefined, undefined,
                         { uploadedTo: `Design Project: ${formData.title}`, resourceId: newJob.id }
                     );
 
@@ -271,10 +278,16 @@ export default function NewProjectPage() {
                 }
 
                 if (uploadedLinks.length > 0) {
-                    const existingLink = formData.driveLink ? formData.driveLink + '\n' : '';
+                    // Save project folder link + individual file links
+                    const folderLink = projectFolderId ? `https://drive.google.com/drive/folders/${projectFolderId}` : '';
+                    const allLinks = [
+                        formData.driveLink,
+                        folderLink,
+                        ...uploadedLinks
+                    ].filter(Boolean).join('\n');
                     await supabase
                         .from('jobs')
-                        .update({ drive_link: existingLink + uploadedLinks.join('\n') })
+                        .update({ drive_link: allLinks })
                         .eq('id', newJob.id);
                 }
                 setUploadProgress('');
