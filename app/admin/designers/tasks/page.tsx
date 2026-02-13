@@ -464,6 +464,7 @@ export default function DesignerWorkspace() {
             createdAt: job.created_at,
             current_stage: job.current_stage,
             jobType: job.job_type || 'Design',
+            productCategory: job.product_category || '',
             approval_status: job.approval_status || 'pending',
             approval_by: job.approval_by,
             approval_date: job.approval_date,
@@ -486,6 +487,7 @@ export default function DesignerWorkspace() {
       task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       task.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (task.jobType && task.jobType.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (task.productCategory && task.productCategory.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (task.deadline && task.deadline.includes(searchQuery));
 
     // Team Logic with Admin Special Handling
@@ -802,7 +804,9 @@ export default function DesignerWorkspace() {
               {kanbanColumns.map(col => {
                 const colTasks = tasks.filter(t => {
                   const matchesStatus = t.status === col.id || (col.id === 'pending' && (!t.status || t.status === 'new')); // fallback
-                  const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase());
+                  const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    (t.productCategory && t.productCategory.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                    t.clientName?.toLowerCase().includes(searchQuery.toLowerCase());
                   return matchesStatus && matchesSearch;
                 });
 
@@ -846,6 +850,17 @@ export default function DesignerWorkspace() {
                                   }`}>
                                   {task.priority || 'normal'}
                                 </span>
+                                {/* Product Category Tag */}
+                                {(() => {
+                                  const catMap: Record<string, { label: string; bg: string; text: string }> = {
+                                    'box': { label: '📦 BOX', bg: 'bg-amber-100', text: 'text-amber-700' },
+                                    'pouch': { label: '👝 POUCH', bg: 'bg-rose-100', text: 'text-rose-700' },
+                                    'label': { label: '🏷️ LABEL', bg: 'bg-indigo-100', text: 'text-indigo-700' },
+                                    'sticker': { label: '⭐ STICKER', bg: 'bg-pink-100', text: 'text-pink-700' },
+                                  };
+                                  const c = catMap[task.productCategory?.toLowerCase()];
+                                  return c ? <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${c.bg} ${c.text}`}>{c.label}</span> : null;
+                                })()}
                               </div>
                             </div>
 
@@ -1147,6 +1162,16 @@ export default function DesignerWorkspace() {
                           };
                           const t = typeMap[task.jobType] || { label: task.jobType?.toUpperCase() || 'PROJECT', bg: 'bg-gray-100', text: 'text-gray-600' };
                           return <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${t.bg} ${t.text}`}>{t.label}</span>;
+                        })()}
+                        {(() => {
+                          const catMap: Record<string, { label: string; bg: string; text: string }> = {
+                            'box': { label: '📦 BOX', bg: 'bg-amber-100', text: 'text-amber-700' },
+                            'pouch': { label: '👝 POUCH', bg: 'bg-rose-100', text: 'text-rose-700' },
+                            'label': { label: '🏷️ LABEL', bg: 'bg-indigo-100', text: 'text-indigo-700' },
+                            'sticker': { label: '⭐ STICKER', bg: 'bg-pink-100', text: 'text-pink-700' },
+                          };
+                          const c = catMap[task.productCategory?.toLowerCase()];
+                          return c ? <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${c.bg} ${c.text}`}>{c.label}</span> : null;
                         })()}
                       </div>
                       <div className="flex flex-col items-end gap-0.5">

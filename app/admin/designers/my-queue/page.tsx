@@ -34,7 +34,8 @@ export default function MyQueue() {
             priority: job.priority || 'normal',
             deadline: job.client_deadline,
             jobNumber: job.job_number,
-            jobType: job.job_type || 'Design'
+            jobType: job.job_type || 'Design',
+            productCategory: job.product_category || ''
         }));
 
     // Helper for job type tag styling
@@ -48,11 +49,24 @@ export default function MyQueue() {
         return map[type] || { label: type?.toUpperCase() || 'PROJECT', bg: 'bg-gray-100', text: 'text-gray-600' };
     };
 
-    // Filter by search (now includes jobType)
+    // Helper for product category tag styling
+    const getCategoryTag = (cat: string) => {
+        const map: Record<string, { label: string; bg: string; text: string }> = {
+            'box': { label: '📦 BOX', bg: 'bg-amber-100', text: 'text-amber-700' },
+            'pouch': { label: '👝 POUCH', bg: 'bg-rose-100', text: 'text-rose-700' },
+            'label': { label: '🏷️ LABEL', bg: 'bg-indigo-100', text: 'text-indigo-700' },
+            'sticker': { label: '⭐ STICKER', bg: 'bg-pink-100', text: 'text-pink-700' },
+            'other': { label: 'OTHER', bg: 'bg-gray-100', text: 'text-gray-600' },
+        };
+        return map[cat?.toLowerCase()] || null;
+    };
+
+    // Filter by search (now includes jobType + productCategory)
     const filteredTasks = myTasks.filter(task =>
         task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         task.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.jobType.toLowerCase().includes(searchQuery.toLowerCase())
+        task.jobType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        task.productCategory.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // Group by priority
@@ -106,6 +120,7 @@ export default function MyQueue() {
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2 mb-1">
                                                         {(() => { const t = getJobTypeTag(task.jobType); return <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${t.bg} ${t.text}`}>{t.label}</span>; })()}
+                                                        {(() => { const c = getCategoryTag(task.productCategory); return c ? <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${c.bg} ${c.text}`}>{c.label}</span> : null; })()}
                                                     </div>
                                                     <h3 className="text-base md:text-section text-gray-900 line-clamp-2">{task.title}</h3>
                                                     <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600 mt-1">
@@ -155,6 +170,7 @@ export default function MyQueue() {
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2 mb-1">
                                                         {(() => { const t = getJobTypeTag(task.jobType); return <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${t.bg} ${t.text}`}>{t.label}</span>; })()}
+                                                        {(() => { const c = getCategoryTag(task.productCategory); return c ? <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${c.bg} ${c.text}`}>{c.label}</span> : null; })()}
                                                     </div>
                                                     <h3 className="text-base md:text-section text-gray-900 line-clamp-2">{task.title}</h3>
                                                     <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600 mt-1">
@@ -203,6 +219,7 @@ export default function MyQueue() {
                                                 <div>
                                                     <div className="flex items-center gap-2 mb-1">
                                                         {(() => { const t = getJobTypeTag(task.jobType); return <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${t.bg} ${t.text}`}>{t.label}</span>; })()}
+                                                        {(() => { const c = getCategoryTag(task.productCategory); return c ? <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${c.bg} ${c.text}`}>{c.label}</span> : null; })()}
                                                     </div>
                                                     <h3 className="text-section text-gray-900">{task.title}</h3>
                                                     <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
