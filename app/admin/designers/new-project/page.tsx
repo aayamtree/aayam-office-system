@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession, signIn } from 'next-auth/react';
-import { useClients, useDesigners } from '@/lib/hooks';
+import { useClients, useDesigners, useProductCategories } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { extractFileIdFromLink, verifyDriveFile, formatBytes, getFileIcon, DriveFileInfo } from '@/lib/google-drive';
@@ -44,6 +44,7 @@ export default function NewProjectPage() {
     const { profile } = useAuth();
     const { clients } = useClients();
     const { designers } = useDesigners();
+    const { categories: productCategories } = useProductCategories();
     const [creating, setCreating] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<string>('');
 
@@ -515,25 +516,21 @@ export default function NewProjectPage() {
                         {/* Product Category */}
                         <div className="space-y-2">
                             <Label className="text-sm font-semibold">Product Category</Label>
-                            <ToggleGroup
-                                type="single"
+                            <Select
                                 value={formData.productCategory}
-                                onValueChange={(val) => setFormData(prev => ({ ...prev, productCategory: val || '' }))}
-                                className="justify-start"
+                                onValueChange={(val) => setFormData(prev => ({ ...prev, productCategory: val }))}
                             >
-                                <ToggleGroupItem value="box" className="gap-1.5 px-4 data-[state=on]:bg-amber-100 data-[state=on]:text-amber-700 data-[state=on]:border-amber-300">
-                                    📦 Box
-                                </ToggleGroupItem>
-                                <ToggleGroupItem value="pouch" className="gap-1.5 px-4 data-[state=on]:bg-rose-100 data-[state=on]:text-rose-700 data-[state=on]:border-rose-300">
-                                    👝 Pouch
-                                </ToggleGroupItem>
-                                <ToggleGroupItem value="label" className="gap-1.5 px-4 data-[state=on]:bg-indigo-100 data-[state=on]:text-indigo-700 data-[state=on]:border-indigo-300">
-                                    🏷️ Label
-                                </ToggleGroupItem>
-                                <ToggleGroupItem value="sticker" className="gap-1.5 px-4 data-[state=on]:bg-pink-100 data-[state=on]:text-pink-700 data-[state=on]:border-pink-300">
-                                    ⭐ Sticker
-                                </ToggleGroupItem>
-                            </ToggleGroup>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {productCategories?.map((cat: any) => (
+                                        <SelectItem key={cat.id} value={cat.name}>
+                                            {cat.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
 
                         {/* Deadline + Priority row */}
