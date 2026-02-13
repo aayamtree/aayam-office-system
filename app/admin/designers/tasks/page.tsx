@@ -963,7 +963,7 @@ export default function DesignerWorkspace() {
             {/* =================================================================================
           COLUMN 1: TASK QUEUE (List)
          ================================================================================= */}
-            <div className="w-full md:w-80 bg-white border-r flex flex-col h-full z-10 [4px_0_24px_rgba(0,0,0,0.02)]">
+            <div className="w-full md:w-96 bg-white border-r flex flex-col h-full z-10 [4px_0_24px_rgba(0,0,0,0.02)]">
 
               {/* Stats & Toggle Header */}
               <div className="p-4 pb-0 bg-gray-50/50 space-y-3">
@@ -1150,47 +1150,48 @@ export default function DesignerWorkspace() {
                   >
                     {selectedTaskId === task.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-muted0"></div>}
 
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs text-gray-500 font-medium tracking-wide">{task.taskId}</span>
-                        {(() => {
-                          const typeMap: Record<string, { label: string; bg: string; text: string }> = {
-                            'Design': { label: 'DESIGN', bg: 'bg-violet-100', text: 'text-violet-700' },
-                            'Printing': { label: 'PRINT', bg: 'bg-emerald-100', text: 'text-emerald-700' },
-                            'Design + Printing': { label: 'DESIGN+PRINT', bg: 'bg-sky-100', text: 'text-sky-700' },
-                            'Design + Print': { label: 'DESIGN+PRINT', bg: 'bg-sky-100', text: 'text-sky-700' },
-                          };
-                          const t = typeMap[task.jobType] || { label: task.jobType?.toUpperCase() || 'PROJECT', bg: 'bg-gray-100', text: 'text-gray-600' };
-                          return <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${t.bg} ${t.text}`}>{t.label}</span>;
-                        })()}
-                        {(() => {
-                          const catMap: Record<string, { label: string; bg: string; text: string }> = {
-                            'box': { label: '📦 BOX', bg: 'bg-amber-100', text: 'text-amber-700' },
-                            'pouch': { label: '👝 POUCH', bg: 'bg-rose-100', text: 'text-rose-700' },
-                            'label': { label: '🏷️ LABEL', bg: 'bg-indigo-100', text: 'text-indigo-700' },
-                            'sticker': { label: '⭐ STICKER', bg: 'bg-pink-100', text: 'text-pink-700' },
-                          };
-                          const c = catMap[task.productCategory?.toLowerCase()];
-                          return c ? <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${c.bg} ${c.text}`}>{c.label}</span> : null;
-                        })()}
-                      </div>
-                      <div className="flex flex-col items-end gap-0.5">
+                    {/* Tags row */}
+                    <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                      <span className="font-mono text-xs text-gray-500 font-medium tracking-wide">{task.taskId}</span>
+                      {(() => {
+                        const typeMap: Record<string, { label: string; bg: string; text: string }> = {
+                          'Design': { label: 'DESIGN', bg: 'bg-violet-100', text: 'text-violet-700' },
+                          'Printing': { label: 'PRINT', bg: 'bg-emerald-100', text: 'text-emerald-700' },
+                          'Design + Printing': { label: 'DESIGN+PRINT', bg: 'bg-sky-100', text: 'text-sky-700' },
+                          'Design + Print': { label: 'DESIGN+PRINT', bg: 'bg-sky-100', text: 'text-sky-700' },
+                        };
+                        const t = typeMap[task.jobType] || { label: task.jobType?.toUpperCase() || 'PROJECT', bg: 'bg-gray-100', text: 'text-gray-600' };
+                        return <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${t.bg} ${t.text}`}>{t.label}</span>;
+                      })()}
+                      {(() => {
+                        const catMap: Record<string, { label: string; bg: string; text: string }> = {
+                          'box': { label: '📦 BOX', bg: 'bg-amber-100', text: 'text-amber-700' },
+                          'pouch': { label: '👝 POUCH', bg: 'bg-rose-100', text: 'text-rose-700' },
+                          'label': { label: '🏷️ LABEL', bg: 'bg-indigo-100', text: 'text-indigo-700' },
+                          'sticker': { label: '⭐ STICKER', bg: 'bg-pink-100', text: 'text-pink-700' },
+                        };
+                        const c = catMap[task.productCategory?.toLowerCase()];
+                        return c ? <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${c.bg} ${c.text}`}>{c.label}</span> : null;
+                      })()}
+                      {/* Deadline / Overdue inline */}
+                      <span className="ml-auto flex-shrink-0">
                         {task.rawDeadline && new Date(task.rawDeadline) < new Date() && task.current_stage !== 'delivered' ? (
-                          <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full flex items-center gap-1 mb-1">
+                          <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-full flex items-center gap-1">
                             <Clock size={10} /> Overdue
                           </span>
                         ) : (
-                          <span className="text-xs text-gray-400 font-medium">{task.deadline || 'No Deadline'}</span>
+                          <span className="text-[10px] text-gray-400 font-medium">{task.deadline || 'No Deadline'}</span>
                         )}
-
-                        {/* Show Designer Label in Team View */}
-                        {(activeTab === 'team_tasks' || isAdmin) && (
-                          <span className="text-[9px] font-bold text-primary bg-muted border border-gray-200 px-1.5 py-0.5 rounded">
-                            {task.designerName}
-                          </span>
-                        )}
-                      </div>
+                      </span>
                     </div>
+                    {/* Designer label for team view */}
+                    {(activeTab === 'team_tasks' || isAdmin) && (
+                      <div className="mb-1">
+                        <span className="text-[9px] font-bold text-primary bg-muted border border-gray-200 px-1.5 py-0.5 rounded">
+                          {task.designerName}
+                        </span>
+                      </div>
+                    )}
                     <h3 className={`font-semibold text-sm mb-3 leading-snug ${selectedTaskId === task.id ? 'text-gray-900' : 'text-gray-800'}`}>
                       {task.title}
                     </h3>

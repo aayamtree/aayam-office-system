@@ -3,40 +3,42 @@
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useJobs, useClients, useDesigners } from '@/lib/hooks';
-import { Calendar, Clock, User, AlertCircle, Search, Palette } from 'lucide-react';
+import { Calendar, Clock, User, AlertCircle, Search, Palette, Users, LayoutGrid, List } from 'lucide-react';
 import Link from 'next/link';
 
-export default function MyQueue() {
+export default function UnifiedQueue() {
     const { profile } = useAuth();
     const { jobs, loading } = useJobs();
     const { clients } = useClients();
     const { designers } = useDesigners();
     const [searchQuery, setSearchQuery] = useState('');
+    const [showAll, setShowAll] = useState(false);
 
-    // Find the designer record whose user_id matches the logged-in profile (with name fallback)
+    // Find the designer record whose user_id matches the logged-in profile
     const myDesigner = designers.find(d => d.user_id === profile?.id)
         || designers.find(d => d.name?.toLowerCase() === profile?.full_name?.toLowerCase());
     const isAdmin = profile?.role === 'admin';
 
-    // Get my tasks: match on designers table ID, not profile ID
-    const myTasks = (jobs || [])
-        .filter(job => {
-            if (isAdmin) return true; // Admin sees all
-            return job.designer_id === myDesigner?.id;
-        })
+    // Get all active tasks
+    const allTasks = (jobs || [])
         .filter(job => job.current_stage !== 'delivered' && job.current_stage !== 'dispatched' && job.current_stage !== 'cancelled')
         .map(job => ({
             id: job.id,
             title: job.project_name,
-            client: clients.find(c => c.id === job.client_id)?.name || 'Unknown',
-            designer: designers.find(d => d.id === job.designer_id)?.name || '',
+            client: clients.find(c => c.id === job.client_id)?.company || clients.find(c => c.id === job.client_id)?.name || 'Unknown',
+            designer: designers.find(d => d.id === job.designer_id)?.name || 'Unassigned',
+            designerId: job.designer_id,
             status: job.current_stage || 'new',
             priority: job.priority || 'normal',
             deadline: job.client_deadline,
             jobNumber: job.job_number,
             jobType: job.job_type || 'Design',
-            productCategory: job.product_category || ''
+            productCategory: job.product_category || '',
+            isMyTask: isAdmin || job.designer_id === myDesigner?.id,
         }));
+
+    // Show toggle: "My Tasks" shows only user's tasks, "All Team" shows everyone's
+    const visibleTasks = showAll ? allTasks : allTasks.filter(t => t.isMyTask);
 
     // Helper for job type tag styling
     const getJobTypeTag = (type: string) => {
@@ -61,18 +63,26 @@ export default function MyQueue() {
         return map[cat?.toLowerCase()] || null;
     };
 
-    // Filter by search (now includes jobType + productCategory)
-    const filteredTasks = myTasks.filter(task =>
+    // Filter by search
+    const filteredTasks = visibleTasks.filter(task =>
         task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         task.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
         task.jobType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.productCategory.toLowerCase().includes(searchQuery.toLowerCase())
+        task.productCategory.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        task.designer.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // Group by priority
     const urgentTasks = filteredTasks.filter(t => t.priority === 'urgent');
     const highTasks = filteredTasks.filter(t => t.priority === 'high');
     const normalTasks = filteredTasks.filter(t => t.priority === 'normal' || t.priority === 'low');
+
+    // Count by designer for summary bar
+    const designerCounts = designers.map(d => ({
+        id: d.id,
+        name: d.name,
+        count: allTasks.filter(t => t.designerId === d.id).length
+    })).filter(d => d.count > 0);
 
     if (loading) {
         return (
@@ -82,178 +92,172 @@ export default function MyQueue() {
         );
     }
 
+    const renderTaskCard = (task: typeof filteredTasks[0]) => {
+        const isOverdue = task.deadline && new Date(task.deadline) < new Date();
+        const typeTag = getJobTypeTag(task.jobType);
+        const catTag = getCategoryTag(task.productCategory);
+        const isEditable = task.isMyTask;
+
+        return (
+            <Link
+                key={task.id}
+                href={isEditable ? '/admin/designers/tasks' : '#'}
+                onClick={(e) => !isEditable && e.preventDefault()}
+            >
+                <div className={`p-4 rounded-lg border transition-all ${isEditable
+                    ? 'bg-white hover:border-gray-300 hover:shadow-sm cursor-pointer'
+                    : 'bg-gray-50/50 cursor-default opacity-80'
+                    } ${isOverdue && task.status !== 'delivered' ? 'border-l-4 border-l-red-400' : 'border-gray-200'}`}>
+
+                    {/* Tags row */}
+                    <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                        <span className="font-mono text-[10px] text-gray-400 tracking-wide">#{task.jobNumber}</span>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${typeTag.bg} ${typeTag.text}`}>{typeTag.label}</span>
+                        {catTag && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${catTag.bg} ${catTag.text}`}>{catTag.label}</span>}
+                        {/* Priority inline */}
+                        {task.priority === 'urgent' && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">URGENT</span>}
+                        {task.priority === 'high' && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-orange-50 text-orange-600 border border-orange-200">HIGH</span>}
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="font-semibold text-sm text-gray-900 mb-1 leading-snug">{task.title}</h3>
+                    <p className="text-xs text-gray-500 mb-3">{task.client}</p>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded ${task.isMyTask && !isAdmin ? 'text-primary bg-muted' : 'text-gray-500 bg-gray-100'} border border-gray-200`}>
+                                <User size={10} />
+                                {task.designer}
+                            </span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${task.status === 'designing' ? 'bg-violet-50 text-violet-600' :
+                                task.status === 'approval' ? 'bg-amber-50 text-amber-600' :
+                                    task.status === 'printing' ? 'bg-emerald-50 text-emerald-600' :
+                                        'bg-gray-100 text-gray-600'
+                                }`}>
+                                {task.status === 'new' ? 'To Do' : task.status === 'designing' ? 'Designing' : task.status === 'approval' ? 'Approval' : task.status}
+                            </span>
+                        </div>
+                        {task.deadline && (
+                            <span className={`text-[10px] font-medium flex items-center gap-1 ${isOverdue && task.status !== 'delivered' ? 'text-red-500' : 'text-gray-400'}`}>
+                                {isOverdue && task.status !== 'delivered' && <AlertCircle size={10} />}
+                                {new Date(task.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Read-only indicator for team tasks */}
+                    {!isEditable && (
+                        <div className="mt-2 text-[9px] text-gray-400 uppercase tracking-wider text-center border-t pt-2">
+                            View Only
+                        </div>
+                    )}
+                </div>
+            </Link>
+        );
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 p-3 md:p-4">
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-4xl mx-auto">
                 {/* Header */}
-                <div className="mb-4 md:mb-1.5">
-                    <h1 className="text-page-title text-gray-900 mb-1 md:mb-2">My Queue</h1>
-                    <p className="text-sm md:text-base text-gray-600">{filteredTasks.length} active tasks</p>
+                <div className="mb-4">
+                    <h1 className="text-page-title text-gray-900 mb-1 flex items-center gap-2">
+                        <Palette size={24} className="text-primary" /> Queue
+                    </h1>
+                    <p className="text-sm text-gray-600">
+                        {showAll ? `${filteredTasks.length} team tasks` : `${filteredTasks.length} tasks assigned to you`}
+                    </p>
                 </div>
 
+                {/* My Tasks / All Team Toggle */}
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="flex bg-white border rounded-lg overflow-hidden">
+                        <button
+                            onClick={() => setShowAll(false)}
+                            className={`px-4 py-2 text-sm font-bold flex items-center gap-2 transition-all ${!showAll ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-800'}`}
+                        >
+                            <User size={14} /> My Tasks
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${!showAll ? 'bg-white/20' : 'bg-gray-100'}`}>
+                                {allTasks.filter(t => t.isMyTask).length}
+                            </span>
+                        </button>
+                        <button
+                            onClick={() => setShowAll(true)}
+                            className={`px-4 py-2 text-sm font-bold flex items-center gap-2 transition-all border-l ${showAll ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-800'}`}
+                        >
+                            <Users size={14} /> All Team
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${showAll ? 'bg-white/20' : 'bg-gray-100'}`}>
+                                {allTasks.length}
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Designer summary when viewing all */}
+                {showAll && designerCounts.length > 0 && (
+                    <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+                        {designerCounts.map(d => (
+                            <div key={d.id} className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border whitespace-nowrap">
+                                <span className="text-sm font-bold text-primary">{d.count}</span>
+                                <span className="text-xs text-gray-600">{d.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
                 {/* Search */}
-                <div className="mb-4 md:mb-1.5 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <div className="relative mb-4">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <input
                         type="text"
-                        placeholder="Search tasks..."
+                        placeholder="Search tasks, clients, designers..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-3 md:pr-4 py-2.5 md:py-3 border rounded-lg text-sm md:text-base"
+                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-gray-300"
                     />
                 </div>
 
-                {/* Task Groups */}
-                <div className="space-y-3 md:space-y-6 md:space-y-8">
-                    {/* Urgent */}
+                {/* Task list grouped by priority */}
+                <div className="space-y-4">
                     {urgentTasks.length > 0 && (
                         <div>
-                            <div className="flex items-center gap-2 mb-3 md:mb-4">
-                                <AlertCircle className="text-red-600" size={20} />
-                                <h2 className="text-lg md:text-page-title text-red-600">Urgent ({urgentTasks.length})</h2>
-                            </div>
-                            <div className="grid gap-3 md:gap-4">
-                                {urgentTasks.map(task => (
-                                    <Link key={task.id} href="/admin/designers/tasks">
-                                        <div className="bg-white p-4 md:p-4 rounded-lg md:rounded-lg border-2 border-red-200  transition-shadow cursor-pointer">
-                                            <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2 md:gap-0 mb-2 md:mb-3">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        {(() => { const t = getJobTypeTag(task.jobType); return <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${t.bg} ${t.text}`}>{t.label}</span>; })()}
-                                                        {(() => { const c = getCategoryTag(task.productCategory); return c ? <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${c.bg} ${c.text}`}>{c.label}</span> : null; })()}
-                                                    </div>
-                                                    <h3 className="text-base md:text-section text-gray-900 line-clamp-2">{task.title}</h3>
-                                                    <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600 mt-1">
-                                                        <User size={14} className="md:hidden" />
-                                                        <User size={16} className="hidden md:block" />
-                                                        <span>{task.client}</span>
-                                                        <span className="text-gray-400">•</span>
-                                                        <span>#{task.jobNumber}</span>
-                                                        {task.designer && (
-                                                            <>
-                                                                <span className="text-gray-400">•</span>
-                                                                <span className="flex items-center gap-1"><Palette size={12} />{task.designer}</span>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <span className="px-2.5 md:px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs md:text-sm font-bold whitespace-nowrap self-start">
-                                                    URGENT
-                                                </span>
-                                            </div>
-                                            {task.deadline && (
-                                                <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600">
-                                                    <Clock size={14} className="md:hidden" />
-                                                    <Clock size={16} className="hidden md:block" />
-                                                    <span>Due: {new Date(task.deadline).toLocaleDateString()}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </Link>
-                                ))}
+                            <h3 className="text-xs font-bold text-red-600 uppercase tracking-wider mb-2 flex items-center gap-2">
+                                <AlertCircle size={14} /> Urgent ({urgentTasks.length})
+                            </h3>
+                            <div className="space-y-2">
+                                {urgentTasks.map(renderTaskCard)}
                             </div>
                         </div>
                     )}
 
-                    {/* High Priority */}
                     {highTasks.length > 0 && (
                         <div>
-                            <div className="flex items-center gap-2 mb-3 md:mb-4">
-                                <AlertCircle className="text-orange-600" size={20} />
-                                <h2 className="text-lg md:text-page-title text-orange-600">High Priority ({highTasks.length})</h2>
+                            <h3 className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-2 flex items-center gap-2">
+                                ⚠️ High Priority ({highTasks.length})
+                            </h3>
+                            <div className="space-y-2">
+                                {highTasks.map(renderTaskCard)}
                             </div>
-                            <div className="grid gap-3 md:gap-4">
-                                {highTasks.map(task => (
-                                    <Link key={task.id} href="/admin/designers/tasks">
-                                        <div className="bg-white p-4 md:p-4 rounded-lg md:rounded-lg border-2 border-orange-200  transition-shadow cursor-pointer">
-                                            <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2 md:gap-0 mb-2 md:mb-3">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        {(() => { const t = getJobTypeTag(task.jobType); return <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${t.bg} ${t.text}`}>{t.label}</span>; })()}
-                                                        {(() => { const c = getCategoryTag(task.productCategory); return c ? <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${c.bg} ${c.text}`}>{c.label}</span> : null; })()}
-                                                    </div>
-                                                    <h3 className="text-base md:text-section text-gray-900 line-clamp-2">{task.title}</h3>
-                                                    <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600 mt-1">
-                                                        <User size={14} className="md:hidden" />
-                                                        <User size={16} className="hidden md:block" />
-                                                        <span>{task.client}</span>
-                                                        <span className="text-gray-400">•</span>
-                                                        <span>#{task.jobNumber}</span>
-                                                        {task.designer && (
-                                                            <>
-                                                                <span className="text-gray-400">•</span>
-                                                                <span className="flex items-center gap-1"><Palette size={12} />{task.designer}</span>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <span className="px-2.5 md:px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs md:text-sm font-bold whitespace-nowrap self-start">
-                                                    HIGH
-                                                </span>
-                                            </div>
-                                            {task.deadline && (
-                                                <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600">
-                                                    <Clock size={14} className="md:hidden" />
-                                                    <Clock size={16} className="hidden md:block" />
-                                                    <span>Due: {new Date(task.deadline).toLocaleDateString()}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>                      </div>
+                        </div>
                     )}
 
-                    {/* Normal Tasks */}
                     {normalTasks.length > 0 && (
                         <div>
-                            <div className="flex items-center gap-2 mb-3 md:mb-4">
-                                <Calendar className="text-foreground" size={20} />
-                                <h2 className="text-lg md:text-page-title text-foreground">All Tasks ({normalTasks.length})</h2>
+                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                                Normal ({normalTasks.length})
+                            </h3>
+                            <div className="space-y-2">
+                                {normalTasks.map(renderTaskCard)}
                             </div>
-                            <div className="grid gap-3 md:gap-4">
-                                {normalTasks.map(task => (
-                                    <Link key={task.id} href="/admin/designers/tasks">
-                                        <div className="bg-white p-4 rounded-lg border  transition-shadow cursor-pointer">
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div>
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        {(() => { const t = getJobTypeTag(task.jobType); return <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${t.bg} ${t.text}`}>{t.label}</span>; })()}
-                                                        {(() => { const c = getCategoryTag(task.productCategory); return c ? <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${c.bg} ${c.text}`}>{c.label}</span> : null; })()}
-                                                    </div>
-                                                    <h3 className="text-section text-gray-900">{task.title}</h3>
-                                                    <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                                                        <User size={16} />
-                                                        <span>{task.client}</span>
-                                                        <span className="text-gray-400">•</span>
-                                                        <span>#{task.jobNumber}</span>
-                                                        {task.designer && (
-                                                            <>
-                                                                <span className="text-gray-400">•</span>
-                                                                <span className="flex items-center gap-1"><Palette size={12} />{task.designer}</span>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm capitalize">
-                                                    {task.status}
-                                                </span>
-                                            </div>
-                                            {task.deadline && (
-                                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                    <Clock size={16} />
-                                                    <span>Due: {new Date(task.deadline).toLocaleDateString()}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>                      </div>
+                        </div>
                     )}
 
                     {filteredTasks.length === 0 && (
-                        <div className="bg-white rounded-lg p-12 text-center">
-                            <p className="text-gray-500 text-lg">No tasks found</p>
+                        <div className="text-center py-16 text-gray-400">
+                            <Palette size={32} className="mx-auto mb-3 opacity-30" />
+                            <p className="text-sm font-medium">No tasks found</p>
+                            <p className="text-xs mt-1">{showAll ? 'No active team tasks' : 'You have no assigned tasks right now'}</p>
                         </div>
                     )}
                 </div>
