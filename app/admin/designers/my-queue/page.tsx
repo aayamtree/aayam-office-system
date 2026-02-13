@@ -130,12 +130,13 @@ export default function UnifiedQueue() {
                                 <User size={10} />
                                 {task.designer}
                             </span>
-                            <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${task.status === 'designing' ? 'bg-violet-50 text-violet-600' :
-                                task.status === 'approval' ? 'bg-amber-50 text-amber-600' :
-                                    task.status === 'printing' ? 'bg-emerald-50 text-emerald-600' :
-                                        'bg-gray-100 text-gray-600'
+                            <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${task.status === 'awaiting_admin' ? 'bg-amber-50 text-amber-700 border border-amber-300' :
+                                task.status === 'designing' ? 'bg-violet-50 text-violet-600' :
+                                    task.status === 'approval' ? 'bg-amber-50 text-amber-600' :
+                                        task.status === 'printing' ? 'bg-emerald-50 text-emerald-600' :
+                                            'bg-gray-100 text-gray-600'
                                 }`}>
-                                {task.status === 'new' ? 'To Do' : task.status === 'designing' ? 'Designing' : task.status === 'approval' ? 'Approval' : task.status}
+                                {task.status === 'awaiting_admin' ? '⏳ Awaiting Approval' : task.status === 'new' ? 'To Do' : task.status === 'designing' ? 'Designing' : task.status === 'approval' ? 'Approval' : task.status}
                             </span>
                         </div>
                         {task.deadline && (

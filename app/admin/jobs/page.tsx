@@ -55,6 +55,7 @@ export default function JobsPage() {
 
   // Fallback defaults when database tables are empty
   const DEFAULT_STAGES = [
+    { id: 'awaiting_admin', name: '⏳ Awaiting Approval', color: 'bg-amber-500', bg_light: 'bg-amber-50', border: 'border-amber-300', order_index: 0, is_active: true },
     { id: 'new', name: 'New', color: 'bg-gray-500', bg_light: 'bg-gray-50', border: 'border-gray-200', order_index: 1, is_active: true },
     { id: 'designing', name: 'Design', color: 'bg-purple-500', bg_light: 'bg-purple-50', border: 'border-purple-200', order_index: 2, is_active: true },
     { id: 'approval', name: 'Approval', color: 'bg-yellow-500', bg_light: 'bg-yellow-50', border: 'border-yellow-200', order_index: 3, is_active: true },
@@ -326,6 +327,20 @@ export default function JobsPage() {
     await updateJobStage(jobId, newStage as JobStatus);
   };
 
+  const handleApproveDesignerProject = async (job: Job) => {
+    if (!confirm(`Approve project "${job.project_name}" and activate for the designer?`)) return;
+    const { error } = await supabase
+      .from('jobs')
+      .update({ current_stage: 'new', updated_at: new Date().toISOString() })
+      .eq('id', job.id);
+    if (error) {
+      alert('Failed to approve: ' + error.message);
+    } else {
+      alert('Project approved! The designer can now start work.');
+      window.location.reload();
+    }
+  };
+
   const handleAddPayment = (job: Job) => {
     setSelectedJob(job);
     setPaymentAmount(0);
@@ -501,6 +516,16 @@ export default function JobsPage() {
         >
           <Copy />
         </Button>
+        {job.current_stage === 'awaiting_admin' && (
+          <Button
+            size="sm"
+            onClick={(e) => { e.stopPropagation(); handleApproveDesignerProject(job); }}
+            title="Approve & Activate"
+            className="bg-green-600 hover:bg-green-700 text-white text-xs gap-1"
+          >
+            ✅ Approve
+          </Button>
+        )}
         {!['printing', 'finishing', 'quality_check', 'ready', 'dispatched', 'delivered'].includes(job.current_stage) && (
           <Button
             size="icon"

@@ -18,6 +18,7 @@ import {
 const getDesignerStatus = (stage: string) => {
   const map: Record<string, string> = {
     'new': 'pending',
+    'awaiting_admin': 'pending',  // Designer can see but not change stage
     'designing': 'in_progress',
     'quality_check': 'review', // Internal Review
     'approval': 'waiting',     // Waiting for Client
@@ -438,7 +439,7 @@ export default function DesignerWorkspace() {
   useEffect(() => {
     if (jobs) {
       const mappedTasks = (jobs || [])
-        .filter(job => ['new', 'designing', 'approval', 'printing', 'finishing', 'completed', 'delivered'].includes(job.current_stage || ''))
+        .filter(job => ['new', 'awaiting_admin', 'designing', 'approval', 'printing', 'finishing', 'completed', 'delivered'].includes(job.current_stage || ''))
         .map(job => {
           // Resolve Relationships (Manual Join)
           const client = (clients || []).find(c => c.id === job.client_id);
@@ -865,6 +866,11 @@ export default function DesignerWorkspace() {
                             </div>
 
                             <h4 className="font-bold text-gray-800 mb-1 line-clamp-2 leading-tight">{task.title}</h4>
+                            {task.current_stage === 'awaiting_admin' && (
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-300">⏳ Awaiting Admin Approval</span>
+                              </div>
+                            )}
                             <p className="text-xs text-gray-500 mb-3 font-medium">{task.clientName}</p>
 
                             {/* Footer Info */}

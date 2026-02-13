@@ -1,36 +1,74 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession, signIn, signOut } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react';
 import { useClients, useDesigners } from '@/lib/hooks';
+import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { extractFileIdFromLink, verifyDriveFile, formatBytes, getFileIcon, DriveFileInfo } from '@/lib/google-drive';
 import { uploadToDrive } from '@/lib/google-drive-upload';
 import { createCalendarEvent, createProjectCalendarEvent } from '@/lib/google-calendar';
-import { Briefcase, Folder, Loader2, CheckCircle, ArrowLeft, Calendar, Upload, X, FileText, Image, File as FileIcon } from 'lucide-react';
+import { format } from 'date-fns';
+
+// Shadcn UI
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
+
+// Icons
+import {
+    ArrowLeft, Briefcase, CalendarIcon, CheckCircle, Cloud, FileText,
+    Image, File as FileIcon, Info, Link2, Loader2, Package, Search,
+    Sparkles, Upload, X
+} from 'lucide-react';
 import Link from 'next/link';
+
+// Types
+interface ExistingJob {
+    id: string;
+    job_number: string;
+    project_name: string;
+    client_name: string;
+}
 
 export default function NewProjectPage() {
     const router = useRouter();
     const { data: session } = useSession();
+    const { profile } = useAuth();
     const { clients } = useClients();
     const { designers } = useDesigners();
     const [creating, setCreating] = useState(false);
-    const [calendarEventCreated, setCalendarEventCreated] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<string>('');
 
+    // Project type state
+    const [projectType, setProjectType] = useState<'new' | 'addon'>('new');
+    const [parentJobId, setParentJobId] = useState('');
+    const [existingJobs, setExistingJobs] = useState<ExistingJob[]>([]);
+    const [jobSearchQuery, setJobSearchQuery] = useState('');
+
+    // Form data
     const [formData, setFormData] = useState({
         title: '',
         clientId: '',
         designerId: '',
         jobType: 'Design',
-        deadline: '',
+        productCategory: '',
+        deadline: undefined as Date | undefined,
         priority: 'normal',
         driveLink: '',
         description: '',
-        files: [] as File[]
+        files: [] as File[],
     });
+
+    // Calendar popover state
+    const [calendarOpen, setCalendarOpen] = useState(false);
 
     // Drag & drop state
     const [isDragging, setIsDragging] = useState(false);
@@ -41,9 +79,56 @@ export default function NewProjectPage() {
     const [driveFileInfo, setDriveFileInfo] = useState<DriveFileInfo | null>(null);
     const [driveFileError, setDriveFileError] = useState<string>('');
 
+    // Pre-select current user as designer
+    useEffect(() => {
+        if (profile?.id && designers?.length > 0 && !formData.designerId) {
+            const currentDesigner = designers.find((d: any) => d.id === profile.id || d.user_id === profile.id);
+            if (currentDesigner) {
+                setFormData(prev => ({ ...prev, designerId: currentDesigner.id }));
+            }
+        }
+    }, [profile, designers, formData.designerId]);
+
+    // Load existing jobs for add-on picker
+    useEffect(() => {
+        if (projectType === 'addon') {
+            loadExistingJobs();
+        }
+    }, [projectType]);
+
+    const loadExistingJobs = async () => {
+        const { data } = await supabase
+            .from('jobs')
+            .select('id, job_number, project_name, client_id')
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(100);
+
+        if (data) {
+            const jobsWithClientNames = data.map((j: any) => {
+                const client = clients?.find((c: any) => c.id === j.client_id);
+                return {
+                    id: j.id,
+                    job_number: j.job_number || 'No ID',
+                    project_name: j.project_name || 'Untitled',
+                    client_name: client?.company || client?.name || 'Unknown',
+                };
+            });
+            setExistingJobs(jobsWithClientNames);
+        }
+    };
+
+    const filteredJobs = existingJobs.filter(j => {
+        if (!jobSearchQuery) return true;
+        const q = jobSearchQuery.toLowerCase();
+        return j.job_number.toLowerCase().includes(q)
+            || j.project_name.toLowerCase().includes(q)
+            || j.client_name.toLowerCase().includes(q);
+    });
+
     // Handle Drive link change with verification
     const handleDriveLinkChange = async (link: string) => {
-        setFormData({ ...formData, driveLink: link });
+        setFormData(prev => ({ ...prev, driveLink: link }));
 
         if (!link.trim()) {
             setDriveFileStatus('idle');
@@ -52,7 +137,6 @@ export default function NewProjectPage() {
             return;
         }
 
-        // Extract file ID
         const fileId = extractFileIdFromLink(link);
         if (!fileId) {
             setDriveFileStatus('error');
@@ -60,7 +144,6 @@ export default function NewProjectPage() {
             return;
         }
 
-        // Verify file
         setDriveFileStatus('verifying');
         const result = await verifyDriveFile(fileId);
 
@@ -77,43 +160,26 @@ export default function NewProjectPage() {
     // Multi-file handlers
     const addFiles = useCallback((newFiles: FileList | File[]) => {
         const fileArray = Array.from(newFiles);
-        setFormData(prev => ({
-            ...prev,
-            files: [...prev.files, ...fileArray]
-        }));
+        setFormData(prev => ({ ...prev, files: [...prev.files, ...fileArray] }));
     }, []);
 
     const removeFile = useCallback((index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            files: prev.files.filter((_, i) => i !== index)
-        }));
+        setFormData(prev => ({ ...prev, files: prev.files.filter((_, i) => i !== index) }));
     }, []);
 
     // Drag & drop handlers
-    const handleDragOver = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(true);
-    }, []);
-
-    const handleDragLeave = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-    }, []);
-
+    const handleDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); }, []);
+    const handleDragLeave = useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(false); }, []);
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
-        if (e.dataTransfer.files.length > 0) {
-            addFiles(e.dataTransfer.files);
-        }
+        if (e.dataTransfer.files.length > 0) addFiles(e.dataTransfer.files);
     }, [addFiles]);
 
-    // Get file icon based on type
     const getUploadFileIcon = (file: File) => {
-        if (file.type.startsWith('image/')) return <Image size={16} className="text-gray-500" />;
-        if (file.type === 'application/pdf') return <FileText size={16} className="text-gray-500" />;
-        return <FileIcon size={16} className="text-gray-500" />;
+        if (file.type.startsWith('image/')) return <Image size={16} className="text-muted-foreground" />;
+        if (file.type === 'application/pdf') return <FileText size={16} className="text-muted-foreground" />;
+        return <FileIcon size={16} className="text-muted-foreground" />;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -122,21 +188,26 @@ export default function NewProjectPage() {
 
         try {
             const { data: { user } } = await supabase.auth.getUser();
+            const isDesignerRole = profile?.role === 'designer';
 
-            const jobData = {
-                // Designer-provided fields
+            const jobData: any = {
                 project_name: formData.title,
                 client_id: formData.clientId,
                 designer_id: formData.designerId || user?.id,
                 job_type: formData.jobType,
-                client_deadline: formData.deadline || null,
+                product_category: formData.productCategory || null,
+                client_deadline: formData.deadline ? formData.deadline.toISOString().split('T')[0] : null,
                 priority: formData.priority,
                 drive_link: formData.driveLink || null,
                 description: formData.description || null,
-                current_stage: 'new' as const,
-                status: 'active' as const,
+                parent_job_id: projectType === 'addon' ? parentJobId || null : null,
+                project_origin: isDesignerRole ? 'designer' : 'admin',
 
-                // Auto-generated/defaulted fields
+                // Designer-created projects start in awaiting_admin
+                current_stage: isDesignerRole ? 'awaiting_admin' : 'new',
+                status: 'active',
+
+                // Financial fields (zeroed out — admin sets these)
                 quantity: 1,
                 quote_per_piece: 0,
                 subtotal: 0,
@@ -144,10 +215,10 @@ export default function NewProjectPage() {
                 gst_amount: 0,
                 discount_amount: 0,
                 total_amount: 0,
-                payment_status: 'pending' as const,
+                payment_status: 'pending',
                 amount_received: 0,
                 order_date: new Date().toISOString().split('T')[0],
-                created_by: user?.id
+                created_by: user?.id,
             };
 
             const { data: newJob, error } = await supabase
@@ -158,7 +229,7 @@ export default function NewProjectPage() {
 
             if (error) throw error;
 
-            // Upload files to Google Drive if any files selected and session is available
+            // Upload files to Google Drive
             if (formData.files.length > 0 && session?.accessToken) {
                 const uploadedLinks: string[] = [];
                 for (let i = 0; i < formData.files.length; i++) {
@@ -166,14 +237,8 @@ export default function NewProjectPage() {
                     setUploadProgress(`Uploading ${i + 1}/${formData.files.length}: ${file.name}`);
 
                     const result = await uploadToDrive(
-                        session.accessToken,
-                        file,
-                        undefined, // folderId - optional
-                        undefined, // fileName - use original
-                        {
-                            uploadedTo: `Design Project: ${formData.title}`,
-                            resourceId: newJob.id
-                        }
+                        session.accessToken, file, undefined, undefined,
+                        { uploadedTo: `Design Project: ${formData.title}`, resourceId: newJob.id }
                     );
 
                     if (result.success && result.webViewLink) {
@@ -181,32 +246,26 @@ export default function NewProjectPage() {
                     }
                 }
 
-                // Update job with uploaded file links
                 if (uploadedLinks.length > 0) {
                     const existingLink = formData.driveLink ? formData.driveLink + '\n' : '';
                     await supabase
                         .from('jobs')
-                        .update({
-                            drive_link: existingLink + uploadedLinks.join('\n')
-                        })
+                        .update({ drive_link: existingLink + uploadedLinks.join('\n') })
                         .eq('id', newJob.id);
                 }
                 setUploadProgress('');
             }
 
-            // Create Calendar event if user is signed in and has deadline
+            // Create Calendar event
             if (session?.accessToken && formData.deadline) {
                 const calendarEvent = createProjectCalendarEvent(
                     formData.title,
-                    formData.deadline,
+                    formData.deadline.toISOString().split('T')[0],
                     formData.description,
                     formData.driveLink
                 );
 
-                const eventResult = await createCalendarEvent(
-                    session.accessToken,
-                    calendarEvent
-                );
+                const eventResult = await createCalendarEvent(session.accessToken, calendarEvent);
 
                 if (eventResult.success && eventResult.eventId) {
                     await supabase
@@ -216,13 +275,30 @@ export default function NewProjectPage() {
                             calendar_event_link: eventResult.eventLink,
                         })
                         .eq('id', newJob.id);
-
-                    setCalendarEventCreated(true);
                 }
             }
 
-            alert(session?.accessToken && formData.deadline
-                ? 'Project created successfully! Calendar event added with reminders.'
+            // Notify admins if designer-created
+            if (isDesignerRole) {
+                const parentInfo = projectType === 'addon' && parentJobId
+                    ? existingJobs.find(j => j.id === parentJobId)
+                    : null;
+
+                const message = parentInfo
+                    ? `🔗 Add-on project "${formData.title}" (linked to ${parentInfo.job_number}) created by ${profile?.full_name || 'Designer'}. Pricing & approval needed.`
+                    : `🆕 New project "${formData.title}" created by ${profile?.full_name || 'Designer'}. Pricing & approval needed.`;
+
+                try {
+                    await supabase.from('broadcast_notifications').insert({
+                        message,
+                        priority: 'normal',
+                        target_audience: 'admin',
+                    });
+                } catch { } // Don't block on notification failure
+            }
+
+            alert(isDesignerRole
+                ? 'Project submitted! Admin will be notified to set pricing and approve.'
                 : 'Project created successfully!'
             );
             router.push('/admin/designers/my-queue');
@@ -235,208 +311,272 @@ export default function NewProjectPage() {
         }
     };
 
+    const isDesignerRole = profile?.role === 'designer';
+
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <div className="relative bg-gray-900 overflow-hidden">
-                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30"></div>
-                <div className="relative max-w-5xl mx-auto p-4">
+        <div className="min-h-screen bg-background">
+            {/* Simple Header */}
+            <div className="border-b bg-card">
+                <div className="max-w-3xl mx-auto px-4 py-4">
                     <Link
                         href="/admin/designers/my-queue"
-                        className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-4 text-sm"
+                        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-3 transition-colors"
                     >
-                        <ArrowLeft size={18} />
-                        Back to My Queue
+                        <ArrowLeft size={16} />
+                        Back to Queue
                     </Link>
-                    <div className="flex items-start gap-2 md:gap-4">
-                        <div className="p-3 bg-white/20 backdrop-blur-lg rounded-md">
-                            <Briefcase size={32} className="text-white" />
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-primary/10 rounded-lg">
+                            <Briefcase size={22} className="text-primary" />
                         </div>
                         <div>
-                            <h1 className="font-bold text-white text-page-title mb-1">Create New Project</h1>
-                            <p className="text-white/80 text-sm">Initialize a new design or print job with all details</p>
+                            <h1 className="text-xl font-bold text-foreground">Create New Project</h1>
+                            <p className="text-sm text-muted-foreground">Quick-start a design or print job</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Form Content */}
-            <div className="max-w-5xl mx-auto p-4">
-                {/* Calendar Integration Notice */}
-                <div className="mb-1.5 p-4 bg-white border border-gray-200 rounded-md">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <Calendar className="text-gray-900" size={20} />
-                            <div>
-                                <h3 className="font-semibold text-gray-900">Google Calendar Integration</h3>
-                                <p className="text-sm text-gray-600 mt-1">
-                                    {session?.user ? (
-                                        <span className="text-gray-900 font-semibold">
-                                            Connected as {session.user.email}
-                                        </span>
-                                    ) : (
-                                        'Sign in to auto-create calendar events with reminders'
-                                    )}
-                                </p>
-                            </div>
-                        </div>
-                        {!session ? (
-                            <button
-                                type="button"
-                                onClick={() => signIn('google')}
-                                className="px-4 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors font-semibold text-gray-900 flex items-center gap-2 text-sm"
-                            >
-                                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                                </svg>
-                                Connect Google Calendar
-                            </button>
-                        ) : (
-                            <button
-                                type="button"
-                                onClick={() => signOut()}
-                                className="text-sm text-gray-600 hover:text-gray-900"
-                            >
-                                Sign out
-                            </button>
-                        )}
-                    </div>
-                </div>
-
+            {/* Form */}
+            <div className="max-w-3xl mx-auto px-4 py-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
 
-                    {/* 1. Project Basics */}
-                    <div className="space-y-5 bg-white rounded-lg p-8 border border-gray-200">
-                        <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-md bg-gray-900 text-white text-section">
-                                1
+                    {/* Project Type Toggle */}
+                    <div className="bg-card border rounded-lg p-5 space-y-4">
+                        <Label className="text-sm font-semibold">Project Type</Label>
+                        <ToggleGroup
+                            type="single"
+                            value={projectType}
+                            onValueChange={(val) => { if (val) setProjectType(val as 'new' | 'addon'); }}
+                            className="justify-start"
+                        >
+                            <ToggleGroupItem value="new" className="gap-2 px-4 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                                <Sparkles size={16} />
+                                New Project
+                            </ToggleGroupItem>
+                            <ToggleGroupItem value="addon" className="gap-2 px-4 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                                <Link2 size={16} />
+                                Add-on to Existing
+                            </ToggleGroupItem>
+                        </ToggleGroup>
+
+                        {/* Parent Project Selector (if add-on) */}
+                        {projectType === 'addon' && (
+                            <div className="space-y-2 pt-2 border-t">
+                                <Label className="text-sm font-semibold flex items-center gap-2">
+                                    <Package size={14} />
+                                    Link to Parent Project
+                                </Label>
+                                <Select value={parentJobId} onValueChange={setParentJobId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Search and select parent project..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <div className="px-2 pb-2">
+                                            <div className="flex items-center gap-2 border rounded-md px-2">
+                                                <Search size={14} className="text-muted-foreground" />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search by job number, name, or client..."
+                                                    className="w-full py-1.5 text-sm bg-transparent outline-none"
+                                                    value={jobSearchQuery}
+                                                    onChange={(e) => setJobSearchQuery(e.target.value)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            </div>
+                                        </div>
+                                        {filteredJobs.length === 0 ? (
+                                            <div className="px-2 py-4 text-center text-sm text-muted-foreground">No projects found</div>
+                                        ) : (
+                                            filteredJobs.slice(0, 20).map(job => (
+                                                <SelectItem key={job.id} value={job.id}>
+                                                    <span className="font-mono text-xs text-muted-foreground mr-2">{job.job_number}</span>
+                                                    <span className="font-medium">{job.project_name}</span>
+                                                    <span className="text-muted-foreground ml-1">— {job.client_name}</span>
+                                                </SelectItem>
+                                            ))
+                                        )}
+                                    </SelectContent>
+                                </Select>
                             </div>
-                            <h4 className="text-base font-bold text-gray-800 uppercase tracking-wide">Project Basics</h4>
+                        )}
+                    </div>
+
+                    {/* Project Info */}
+                    <div className="bg-card border rounded-lg p-5 space-y-4">
+                        {/* Project Name */}
+                        <div className="space-y-2">
+                            <Label htmlFor="projectName" className="text-sm font-semibold">
+                                Project Name <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                                id="projectName"
+                                required
+                                placeholder="e.g. Wedding Invitation - Sharma Family"
+                                value={formData.title}
+                                onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                            />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                            <div className="col-span-2">
-                                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                    Project Name <span className="text-red-500">*</span>
-                                </label>
-                                <input
+                        {/* Client + Designer row */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label className="text-sm font-semibold">
+                                    Client <span className="text-destructive">*</span>
+                                </Label>
+                                <Select
                                     required
-                                    type="text"
-                                    className="w-full border border-gray-200 rounded-md px-4 py-2 text-base focus:ring-2 focus:ring-gray-400/20 focus:border-gray-400 transition-all font-medium hover:border-gray-300"
-                                    placeholder="e.g. Wedding Invitation - Sharma Family"
-                                    value={formData.title}
-                                    onChange={e => setFormData({ ...formData, title: e.target.value })}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                    Client <span className="text-red-500">*</span>
-                                </label>
-                                <select
-                                    required
-                                    className="w-full border border-gray-200 rounded-md px-4 py-2 text-base focus:ring-2 focus:ring-gray-400/20 focus:border-gray-400 transition-all bg-white hover:border-gray-300"
                                     value={formData.clientId}
-                                    onChange={e => setFormData({ ...formData, clientId: e.target.value })}
+                                    onValueChange={(val) => setFormData(prev => ({ ...prev, clientId: val }))}
                                 >
-                                    <option value="">Select Client</option>
-                                    {clients?.map(c => <option key={c.id} value={c.id}>{c.company || c.name}</option>)}
-                                </select>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select Client" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {clients?.map((c: any) => (
+                                            <SelectItem key={c.id} value={c.id}>
+                                                {c.company || c.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                    Assign Designer
-                                </label>
-                                <select
-                                    className="w-full border border-gray-200 rounded-md px-4 py-2 text-base focus:ring-2 focus:ring-gray-400/20 focus:border-gray-400 transition-all bg-white hover:border-gray-300"
+                            <div className="space-y-2">
+                                <Label className="text-sm font-semibold">Assign to</Label>
+                                <Select
                                     value={formData.designerId}
-                                    onChange={e => setFormData({ ...formData, designerId: e.target.value })}
+                                    onValueChange={(val) => setFormData(prev => ({ ...prev, designerId: val }))}
                                 >
-                                    <option value="">Assign to Me (Default)</option>
-                                    {designers?.map(d => (
-                                        <option key={d.id} value={d.id}>{d.name}</option>
-                                    ))}
-                                </select>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select Designer" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {designers?.map((d: any) => (
+                                            <SelectItem key={d.id} value={d.id}>
+                                                {d.name}
+                                                {(d.id === profile?.id || d.user_id === profile?.id) ? ' (You)' : ''}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
                     </div>
 
-                    {/* 2. Parameters */}
-                    <div className="space-y-5 bg-white rounded-lg p-8 border border-gray-200">
-                        <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-md bg-gray-700 text-white text-section">
-                                2
-                            </div>
-                            <h4 className="text-base font-bold text-gray-800 uppercase tracking-wide">Project Parameters</h4>
+                    <Separator />
+
+                    {/* Parameters */}
+                    <div className="bg-card border rounded-lg p-5 space-y-5">
+                        {/* Job Type */}
+                        <div className="space-y-2">
+                            <Label className="text-sm font-semibold">Job Type</Label>
+                            <ToggleGroup
+                                type="single"
+                                value={formData.jobType}
+                                onValueChange={(val) => { if (val) setFormData(prev => ({ ...prev, jobType: val })); }}
+                                className="justify-start"
+                            >
+                                <ToggleGroupItem value="Design" className="gap-1.5 px-4 data-[state=on]:bg-violet-100 data-[state=on]:text-violet-700 data-[state=on]:border-violet-300">
+                                    Design
+                                </ToggleGroupItem>
+                                <ToggleGroupItem value="Printing" className="gap-1.5 px-4 data-[state=on]:bg-emerald-100 data-[state=on]:text-emerald-700 data-[state=on]:border-emerald-300">
+                                    Print
+                                </ToggleGroupItem>
+                                <ToggleGroupItem value="Design + Printing" className="gap-1.5 px-4 data-[state=on]:bg-sky-100 data-[state=on]:text-sky-700 data-[state=on]:border-sky-300">
+                                    Design + Print
+                                </ToggleGroupItem>
+                            </ToggleGroup>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                    Job Type
-                                </label>
-                                <select
-                                    className="w-full border border-gray-200 rounded-md px-4 py-2 text-base focus:ring-2 focus:ring-gray-400/20 focus:border-gray-400 bg-white hover:border-gray-300 transition-all"
-                                    value={formData.jobType}
-                                    onChange={e => setFormData({ ...formData, jobType: e.target.value })}
-                                >
-                                    <option value="Design">Design Only</option>
-                                    <option value="Printing">Printing Only</option>
-                                    <option value="Design + Printing">Design + Print</option>
-                                </select>
+                        {/* Product Category */}
+                        <div className="space-y-2">
+                            <Label className="text-sm font-semibold">Product Category</Label>
+                            <ToggleGroup
+                                type="single"
+                                value={formData.productCategory}
+                                onValueChange={(val) => setFormData(prev => ({ ...prev, productCategory: val || '' }))}
+                                className="justify-start"
+                            >
+                                <ToggleGroupItem value="box" className="gap-1.5 px-4 data-[state=on]:bg-amber-100 data-[state=on]:text-amber-700 data-[state=on]:border-amber-300">
+                                    📦 Box
+                                </ToggleGroupItem>
+                                <ToggleGroupItem value="pouch" className="gap-1.5 px-4 data-[state=on]:bg-rose-100 data-[state=on]:text-rose-700 data-[state=on]:border-rose-300">
+                                    👝 Pouch
+                                </ToggleGroupItem>
+                                <ToggleGroupItem value="label" className="gap-1.5 px-4 data-[state=on]:bg-indigo-100 data-[state=on]:text-indigo-700 data-[state=on]:border-indigo-300">
+                                    🏷️ Label
+                                </ToggleGroupItem>
+                                <ToggleGroupItem value="sticker" className="gap-1.5 px-4 data-[state=on]:bg-pink-100 data-[state=on]:text-pink-700 data-[state=on]:border-pink-300">
+                                    ⭐ Sticker
+                                </ToggleGroupItem>
+                            </ToggleGroup>
+                        </div>
+
+                        {/* Deadline + Priority row */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Deadline Calendar */}
+                            <div className="space-y-2">
+                                <Label className="text-sm font-semibold">Deadline</Label>
+                                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            className={`w-full justify-start text-left font-normal ${!formData.deadline ? 'text-muted-foreground' : ''}`}
+                                        >
+                                            <CalendarIcon size={16} className="mr-2" />
+                                            {formData.deadline ? format(formData.deadline, 'PPP') : 'Pick a date'}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={formData.deadline}
+                                            onSelect={(date) => {
+                                                setFormData(prev => ({ ...prev, deadline: date || undefined }));
+                                                setCalendarOpen(false);
+                                            }}
+                                            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                                        />
+                                    </PopoverContent>
+                                </Popover>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                    Deadline
-                                </label>
-                                <input
-                                    type="date"
-                                    className="w-full border border-gray-200 rounded-md px-4 py-2 text-base focus:ring-2 focus:ring-gray-400/20 focus:border-gray-400 font-medium text-gray-600 hover:border-gray-300 transition-all"
-                                    value={formData.deadline}
-                                    onChange={e => setFormData({ ...formData, deadline: e.target.value })}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                    Priority
-                                </label>
-                                <select
-                                    className="w-full border border-gray-200 rounded-md px-4 py-2 text-base focus:ring-2 focus:ring-gray-400/20 focus:border-gray-400 bg-white hover:border-gray-300 transition-all"
+                            {/* Priority */}
+                            <div className="space-y-2">
+                                <Label className="text-sm font-semibold">Priority</Label>
+                                <ToggleGroup
+                                    type="single"
                                     value={formData.priority}
-                                    onChange={e => setFormData({ ...formData, priority: e.target.value })}
+                                    onValueChange={(val) => { if (val) setFormData(prev => ({ ...prev, priority: val })); }}
+                                    className="justify-start w-full"
                                 >
-                                    <option value="normal">Normal</option>
-                                    <option value="high">High</option>
-                                    <option value="urgent">Urgent</option>
-                                </select>
+                                    <ToggleGroupItem value="normal" className="flex-1 data-[state=on]:bg-gray-100 data-[state=on]:text-gray-700">
+                                        Normal
+                                    </ToggleGroupItem>
+                                    <ToggleGroupItem value="high" className="flex-1 data-[state=on]:bg-orange-100 data-[state=on]:text-orange-700 data-[state=on]:border-orange-300">
+                                        High
+                                    </ToggleGroupItem>
+                                    <ToggleGroupItem value="urgent" className="flex-1 data-[state=on]:bg-red-100 data-[state=on]:text-red-700 data-[state=on]:border-red-300">
+                                        Urgent
+                                    </ToggleGroupItem>
+                                </ToggleGroup>
                             </div>
                         </div>
                     </div>
 
-                    {/* 3. Assets & Brief */}
-                    <div className="space-y-5 bg-white rounded-lg p-8 border border-gray-200">
-                        <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-md bg-gray-600 text-white text-section">
-                                3
-                            </div>
-                            <h4 className="text-base font-bold text-gray-800 uppercase tracking-wide">Assets & Brief</h4>
-                        </div>
+                    <Separator />
 
+                    {/* Assets & Brief */}
+                    <div className="bg-card border rounded-lg p-5 space-y-5">
                         {/* Drive Link */}
-                        <div className="bg-gray-50 p-4 rounded-md border border-gray-200 space-y-4">
-                            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                                <Folder size={18} className="text-gray-500" />
+                        <div className="space-y-2">
+                            <Label className="text-sm font-semibold flex items-center gap-2">
+                                <Cloud size={14} />
                                 Google Drive Link
-                            </label>
-                            <input
+                            </Label>
+                            <Input
                                 type="url"
-                                className="w-full border border-gray-200 rounded-md px-4 py-2 text-base focus:ring-2 focus:ring-gray-400/20 focus:border-gray-400 placeholder:text-gray-400 bg-white hover:border-gray-300 transition-all"
                                 placeholder="https://drive.google.com/drive/folders/..."
                                 value={formData.driveLink}
                                 onChange={e => handleDriveLinkChange(e.target.value)}
@@ -444,73 +584,51 @@ export default function NewProjectPage() {
 
                             {/* Drive Verification Status */}
                             {driveFileStatus === 'verifying' && (
-                                <div className="flex items-center gap-2 text-gray-600 text-sm">
-                                    <Loader2 size={16} className="animate-spin" />
-                                    <span>Verifying file...</span>
+                                <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                                    <Loader2 size={14} className="animate-spin" /> Verifying file...
                                 </div>
                             )}
-
                             {driveFileStatus === 'verified' && driveFileInfo && (
-                                <div className="bg-white p-4 rounded-md border border-green-200">
-                                    <div className="flex items-start gap-3">
-                                        <span className="text-3xl">{getFileIcon(driveFileInfo.mimeType)}</span>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <CheckCircle size={16} className="text-green-600" />
-                                                <span className="text-gray-900 font-bold">Verified</span>
-                                            </div>
-                                            <p className="font-semibold text-gray-900 truncate">{driveFileInfo.name}</p>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                {formatBytes(driveFileInfo.size)}
-                                                {driveFileInfo.modifiedTime && (
-                                                    <span className="ml-2">Modified: {new Date(driveFileInfo.modifiedTime).toLocaleDateString()}</span>
-                                                )}
-                                            </p>
-                                        </div>
+                                <div className="bg-green-50 border border-green-200 rounded-md p-3 flex items-center gap-3">
+                                    <CheckCircle size={16} className="text-green-600 shrink-0" />
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-medium text-green-900 truncate">{driveFileInfo.name}</p>
+                                        <p className="text-xs text-green-700">{formatBytes(driveFileInfo.size)} — Verified</p>
                                     </div>
                                 </div>
                             )}
-
                             {driveFileStatus === 'error' && driveFileError && (
-                                <div className="bg-red-50 p-4 rounded-md border border-red-200">
-                                    <div className="flex items-start gap-2 text-red-700">
-                                        <X size={18} className="mt-0.5 flex-shrink-0" />
-                                        <div>
-                                            <p className="font-semibold">Cannot verify file</p>
-                                            <p className="text-sm mt-1">{driveFileError}</p>
-                                            <p className="text-xs mt-2 text-red-600">
-                                                Make sure the file is shared with &quot;Anyone with the link&quot;
-                                            </p>
-                                        </div>
+                                <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 flex items-start gap-2">
+                                    <X size={16} className="text-destructive shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="text-sm font-medium text-destructive">{driveFileError}</p>
+                                        <p className="text-xs text-destructive/80 mt-0.5">Make sure the file is shared with "Anyone with the link"</p>
                                     </div>
                                 </div>
                             )}
                         </div>
 
-                        {/* File Upload - Multi-file with Drag & Drop */}
-                        <div className="space-y-3">
-                            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                                <Upload size={18} className="text-gray-500" />
-                                Upload Files to Google Drive
-                            </label>
-
+                        {/* File Upload */}
+                        <div className="space-y-2">
+                            <Label className="text-sm font-semibold flex items-center gap-2">
+                                <Upload size={14} />
+                                Upload Assets to Google Drive
+                            </Label>
                             <div
                                 onDragOver={handleDragOver}
                                 onDragLeave={handleDragLeave}
                                 onDrop={handleDrop}
                                 onClick={() => fileInputRef.current?.click()}
-                                className={`border-2 border-dashed rounded-md p-8 text-center cursor-pointer transition-all ${isDragging
-                                    ? 'border-gray-900 bg-gray-100'
-                                    : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                                className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${isDragging
+                                    ? 'border-primary bg-primary/5'
+                                    : 'border-muted hover:border-muted-foreground/30 hover:bg-muted/30'
                                     }`}
                             >
-                                <Upload size={32} className="mx-auto text-gray-400 mb-3" />
-                                <p className="text-sm font-medium text-gray-700">
-                                    {isDragging ? 'Drop files here' : 'Drag & drop files here, or click to browse'}
+                                <Upload size={28} className="mx-auto text-muted-foreground mb-2" />
+                                <p className="text-sm font-medium text-foreground">
+                                    {isDragging ? 'Drop files here' : 'Drag & drop files, or click to browse'}
                                 </p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    Images, PDFs, documents — any file type
-                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">Images, PDFs, documents — any file type</p>
                                 <input
                                     ref={fileInputRef}
                                     type="file"
@@ -518,7 +636,7 @@ export default function NewProjectPage() {
                                     onChange={e => {
                                         if (e.target.files && e.target.files.length > 0) {
                                             addFiles(e.target.files);
-                                            e.target.value = ''; // Reset to allow re-selecting same files
+                                            e.target.value = '';
                                         }
                                     }}
                                     className="hidden"
@@ -527,80 +645,89 @@ export default function NewProjectPage() {
 
                             {/* File List */}
                             {formData.files.length > 0 && (
-                                <div className="space-y-2">
-                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                <div className="space-y-1.5">
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                                         {formData.files.length} file{formData.files.length !== 1 ? 's' : ''} selected
                                     </p>
                                     {formData.files.map((file, index) => (
                                         <div
                                             key={`${file.name}-${index}`}
-                                            className="flex items-center gap-3 bg-gray-50 rounded-md px-3 py-2 border border-gray-200"
+                                            className="flex items-center gap-3 bg-muted/50 rounded-md px-3 py-2 border"
                                         >
                                             {getUploadFileIcon(file)}
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
-                                                <p className="text-xs text-gray-500">{formatBytes(String(file.size))}</p>
+                                                <p className="text-sm font-medium truncate">{file.name}</p>
+                                                <p className="text-xs text-muted-foreground">{formatBytes(String(file.size))}</p>
                                             </div>
                                             <button
                                                 type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    removeFile(index);
-                                                }}
-                                                className="p-1 hover:bg-gray-200 rounded-md transition-colors"
+                                                onClick={(e) => { e.stopPropagation(); removeFile(index); }}
+                                                className="p-1 hover:bg-muted rounded transition-colors"
                                             >
-                                                <X size={14} className="text-gray-500" />
+                                                <X size={14} className="text-muted-foreground" />
                                             </button>
                                         </div>
                                     ))}
                                 </div>
                             )}
 
-                            {/* Notice if not signed in */}
+                            {/* Warning if not signed in */}
                             {!session?.accessToken && formData.files.length > 0 && (
-                                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
-                                    Sign in with Google Calendar above to upload files to Drive. Without sign-in, files won&apos;t be uploaded.
-                                </p>
+                                <div className="bg-amber-50 border border-amber-200 rounded-md p-3 flex items-start gap-2">
+                                    <Info size={14} className="text-amber-600 shrink-0 mt-0.5" />
+                                    <p className="text-xs text-amber-800">
+                                        Connect Google Drive to upload files. Without connection, files won&apos;t be uploaded.
+                                    </p>
+                                </div>
                             )}
                         </div>
 
                         {/* Description */}
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                <FileText size={16} className="text-gray-500" />
-                                Description / Work Items
-                            </label>
-                            <textarea
-                                rows={5}
-                                className="w-full border border-gray-200 rounded-md px-4 py-2 text-base focus:ring-2 focus:ring-gray-400/20 focus:border-gray-400 leading-relaxed hover:border-gray-300 transition-all"
+                        <div className="space-y-2">
+                            <Label className="text-sm font-semibold flex items-center gap-2">
+                                <FileText size={14} />
+                                Notes / Brief
+                            </Label>
+                            <Textarea
+                                rows={4}
                                 placeholder="Describe specific requirements, items to print, size, quantity, special instructions..."
                                 value={formData.description}
-                                onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
                             />
                         </div>
                     </div>
 
+                    {/* Info Banner for Designers */}
+                    {isDesignerRole && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
+                            <Info size={18} className="text-blue-600 shrink-0 mt-0.5" />
+                            <div>
+                                <p className="text-sm font-semibold text-blue-900">Admin Approval Required</p>
+                                <p className="text-xs text-blue-700 mt-0.5">
+                                    This project will be sent to admin for pricing and approval. You can start work only after admin confirms.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Action Buttons */}
-                    <div className="flex gap-2 md:gap-4 items-center justify-end bg-white rounded-md p-3 md:p-4 border border-gray-200 sticky bottom-4">
+                    <div className="flex gap-3 items-center justify-end bg-card rounded-lg p-4 border sticky bottom-4">
                         {uploadProgress && (
-                            <div className="flex-1 flex items-center gap-2 text-sm text-gray-600">
-                                <Loader2 size={16} className="animate-spin" />
+                            <div className="flex-1 flex items-center gap-2 text-sm text-muted-foreground">
+                                <Loader2 size={14} className="animate-spin" />
                                 <span>{uploadProgress}</span>
                             </div>
                         )}
-                        <Link
-                            href="/admin/designers/my-queue"
-                            className="px-4 py-2 border border-gray-300 rounded-md font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all text-base"
-                        >
-                            Cancel
+                        <Link href="/admin/designers/my-queue">
+                            <Button type="button" variant="outline">Cancel</Button>
                         </Link>
-                        <button
-                            type="submit"
-                            disabled={creating}
-                            className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-md font-bold disabled:opacity-50 transition-all text-base flex items-center gap-2"
-                        >
-                            {creating ? <><Loader2 size={20} className="animate-spin" /> Creating...</> : <><CheckCircle size={20} /> Create Project</>}
-                        </button>
+                        <Button type="submit" disabled={creating}>
+                            {creating ? (
+                                <><Loader2 size={16} className="animate-spin" /> Creating...</>
+                            ) : (
+                                <><CheckCircle size={16} /> {isDesignerRole ? 'Submit for Approval' : 'Create Project'}</>
+                            )}
+                        </Button>
                     </div>
 
                 </form>
