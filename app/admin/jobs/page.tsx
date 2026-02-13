@@ -20,7 +20,7 @@ import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
 import VendorQuickAddModal from '@/components/shared/VendorQuickAddModal';
 import ProductCategoryQuickAdd from '@/components/shared/ProductCategoryQuickAdd';
 import JobTypeQuickAdd from '@/components/shared/JobTypeQuickAdd';
-import ProductTypeQuickAdd from '@/components/shared/ProductTypeQuickAdd';
+
 import PriorityQuickAdd from '@/components/shared/PriorityQuickAdd';
 import JobStageQuickAdd from '@/components/shared/JobStageQuickAdd';
 import JobTimeline from '@/components/shared/JobTimeline';
@@ -80,10 +80,9 @@ export default function JobsPage() {
 
   const loadAllConfig = async () => {
     try {
-      const [categoriesRes, jobTypesRes, productTypesRes, prioritiesRes, stagesRes, machinesRes] = await Promise.all([
+      const [categoriesRes, jobTypesRes, prioritiesRes, stagesRes, machinesRes] = await Promise.all([
         supabase.from('product_categories').select('*').eq('is_active', true).order('name'),
         supabase.from('job_types').select('*').eq('is_active', true).order('name'),
-        supabase.from('product_types').select('*').eq('is_active', true).order('name'),
         supabase.from('priorities').select('*').eq('is_active', true).order('order_index'),
         supabase.from('job_stages').select('*').eq('is_active', true).order('order_index'),
         supabase.from('machines').select('*').eq('is_active', true).order('name'),
@@ -91,7 +90,6 @@ export default function JobsPage() {
 
       if (categoriesRes.data) setProductCategories(categoriesRes.data);
       if (jobTypesRes.data) setJobTypes(jobTypesRes.data);
-      if (productTypesRes.data) setProductTypes(productTypesRes.data);
       if (machinesRes.data) setMachines(machinesRes.data);
 
       // Use DB data if available, otherwise use hardcoded fallbacks
@@ -100,7 +98,6 @@ export default function JobsPage() {
 
       // Set initial form defaults
       if (jobTypesRes.data?.[0]) setFormData(prev => ({ ...prev, job_type: jobTypesRes.data[0].name }));
-      if (productTypesRes.data?.[0]) setFormData(prev => ({ ...prev, product_type: productTypesRes.data[0].name }));
     } catch (error) {
       console.error('Error loading configuration:', error);
       // On error, still set fallback data so UI works
@@ -121,7 +118,7 @@ export default function JobsPage() {
   const [showAddVendorModal, setShowAddVendorModal] = useState(false);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [showAddJobTypeModal, setShowAddJobTypeModal] = useState(false);
-  const [showAddProductTypeModal, setShowAddProductTypeModal] = useState(false);
+  const [showAddProductTypeModal, setShowAddProductTypeModal] = useState(false); // kept for backwards compat
   const [showAddPriorityModal, setShowAddPriorityModal] = useState(false);
   const [showAddStageModal, setShowAddStageModal] = useState(false);
   const [showSendToPrinterModal, setShowSendToPrinterModal] = useState(false);
@@ -129,7 +126,7 @@ export default function JobsPage() {
   // Database-driven configuration state
   const [productCategories, setProductCategories] = useState<any[]>([]);
   const [jobTypes, setJobTypes] = useState<any[]>([]);
-  const [productTypes, setProductTypes] = useState<any[]>([]);
+  const [productTypes] = useState<any[]>([]); // deprecated — use productCategories
   const [priorities, setPriorities] = useState<any[]>([]);
   const [stages, setStages] = useState<any[]>([]);
   const [machines, setMachines] = useState<any[]>([]);
@@ -144,7 +141,7 @@ export default function JobsPage() {
   const [sendingToPrinter, setSendingToPrinter] = useState(false);
 
   const [formData, setFormData] = useState({
-    project_name: '', client_id: '', job_type: 'Design + Print', product_category: 'Other', product_type: 'STICKER', quantity: 1, vendor_id: '',
+    project_name: '', client_id: '', job_type: 'Design + Print', product_category: 'Other', quantity: 1, vendor_id: '',
     designer_id: '', client_deadline: '', priority: 'normal', quote_per_piece: 0, gst_rate: 18, current_stage: 'new',
     advance_required: true, advance_amount: 0
   });
@@ -293,7 +290,7 @@ export default function JobsPage() {
 
   const resetForm = () => {
     setFormData({
-      project_name: '', client_id: '', job_type: 'Design + Print', product_category: 'Other', product_type: 'STICKER', quantity: 1, vendor_id: '',
+      project_name: '', client_id: '', job_type: 'Design + Print', product_category: 'Other', quantity: 1, vendor_id: '',
       designer_id: '', client_deadline: '', priority: 'normal', quote_per_piece: 0, gst_rate: 18, current_stage: 'new',
       advance_required: true, advance_amount: 0
     });
@@ -305,7 +302,6 @@ export default function JobsPage() {
       client_id: job.client_id || '',
       job_type: job.job_type || 'Design + Print',
       product_category: job.product_category || 'Other',
-      product_type: job.job_type || 'STICKER',
       quantity: job.quantity,
       vendor_id: job.vendor_id || '',
       designer_id: job.designer_id || '',
@@ -413,7 +409,6 @@ export default function JobsPage() {
       client_id: job.client_id || '',
       job_type: job.job_type || 'Design + Print',
       product_category: job.product_category || 'Other',
-      product_type: job.job_type || 'STICKER',
       quantity: job.quantity,
       vendor_id: job.vendor_id || '',
       designer_id: job.designer_id || '',
@@ -857,26 +852,7 @@ export default function JobsPage() {
                     <span className="hidden sm:inline">Add</span>
                   </Button>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Used for production checklists in EOD reports</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Product Type (for Print Planner) *</label>
-                <div className="flex gap-2">
-                  <select value={formData.product_type} onChange={(e) => setFormData({ ...formData, product_type: e.target.value })} className="flex-1 px-3 py-2 border rounded-md">
-                    {productTypes.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
-                  </select>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => setShowAddProductTypeModal(true)}
-                  >
-                    <Plus />
-                    <span className="hidden sm:inline">Add</span>
-                  </Button>
-                </div>
-                <p className="text-xs text-gray-600 mt-1">⚡ Jobs with same type can be batched together in print runs</p>
+                <p className="text-xs text-gray-500 mt-1">Used for production checklists, QC, and card tags</p>
               </div>
 
               <div className="grid grid-cols-3 gap-2 md:gap-4">
@@ -1244,12 +1220,7 @@ export default function JobsPage() {
         onSuccess={loadAllConfig}
       />
 
-      {/* Product Type Quick Add */}
-      <ProductTypeQuickAdd
-        isOpen={showAddProductTypeModal}
-        onClose={() => setShowAddProductTypeModal(false)}
-        onSuccess={loadAllConfig}
-      />
+
 
       {/* Priority Quick Add */}
       <PriorityQuickAdd

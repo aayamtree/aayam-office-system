@@ -45,8 +45,7 @@ export default function ProductionQueuePage() {
                 .select(`
           *,
           client:clients(name, company),
-          designer:profiles!jobs_designer_id_fkey(full_name),
-          product_category:product_categories(name)
+          designer:profiles!jobs_designer_id_fkey(full_name)
         `)
                 .eq('status', 'active')
                 .order('client_deadline', { ascending: true, nullsFirst: false });
@@ -56,7 +55,7 @@ export default function ProductionQueuePage() {
 
             // Extract unique product categories from jobs
             const cats = Array.from(new Set(
-                (jobsData || []).map((j: any) => (j.product_category as any)?.name).filter(Boolean)
+                (jobsData || []).map((j: any) => j.product_category).filter(Boolean)
             )) as string[];
             setCategories(cats.sort());
         } catch (error) {
@@ -88,7 +87,7 @@ export default function ProductionQueuePage() {
 
     const filteredJobs = getFilteredJobs().filter(job => {
         if (categoryFilter === 'all') return true;
-        return (job.product_category as any)?.name === categoryFilter;
+        return job.product_category === categoryFilter;
     });
 
     const getStageBadge = (job: Job) => {
@@ -339,7 +338,7 @@ export default function ProductionQueuePage() {
                                                 </td>
                                                 <td className="px-6 py-4 text-sm text-gray-900">{job.project_name}</td>
                                                 <td className="px-6 py-4 text-xs text-gray-600">
-                                                    {(job.product_category as any)?.name || '-'}
+                                                    {job.product_category || '-'}
                                                 </td>
                                                 <td className="px-6 py-4 text-sm text-gray-600">
                                                     {(job.designer as any)?.full_name || 'Unassigned'}

@@ -42,7 +42,7 @@ export default function EODReportPage() {
         status_update: string;
         completion_percentage: number;
         time_spent: number;
-        product_type: string;
+        product_category: string;
         checklist_items: Array<{ item: string; checked: boolean; comment: string; order: number }>;
         client_approval_received: boolean;
         print_file_ready: boolean;
@@ -88,7 +88,7 @@ export default function EODReportPage() {
                         status_update: '',
                         completion_percentage: 0,
                         time_spent: 0,
-                        product_type: task.product_category || task.job_type || '',
+                        product_category: task.product_category || task.job_type || '',
                         checklist_items: [],
                         client_approval_received: false,
                         print_file_ready: false,
@@ -157,8 +157,8 @@ export default function EODReportPage() {
     const handleStatusChange = async (taskId: string, newStatus: 'NOT START' | 'START WORK' | 'COMPLETE') => {
         const task = taskUpdates[taskId];
         let checklistItems: any[] = [];
-        if (newStatus === 'COMPLETE' && task.product_type) {
-            const { data } = await fetchProductChecklist(task.product_type, 'design');
+        if (newStatus === 'COMPLETE' && task.product_category) {
+            const { data } = await fetchProductChecklist(task.product_category, 'design');
             checklistItems = data || [];
         }
         setTaskUpdates(prev => ({
@@ -182,7 +182,7 @@ export default function EODReportPage() {
                 .map(taskId => ({
                     job_id: taskId,
                     task_status: taskUpdates[taskId].task_status,
-                    product_type: taskUpdates[taskId].product_type,
+                    product_category: taskUpdates[taskId].product_category,
                     status_update: taskUpdates[taskId].status_update,
                     completion_percentage: taskUpdates[taskId].completion_percentage,
                     time_spent: taskUpdates[taskId].time_spent,
@@ -403,7 +403,7 @@ export default function EODReportPage() {
                                                     {taskUpdates[task.id]?.checklist_items && taskUpdates[task.id].checklist_items.length > 0 && (
                                                         <div>
                                                             <ProductChecklistCard
-                                                                productType={task.product_category || task.job_type || 'Other'}
+                                                                productCategory={task.product_category || task.job_type || 'Other'}
                                                                 taskStatus={taskUpdates[task.id].task_status}
                                                                 checklistItems={taskUpdates[task.id].checklist_items}
                                                                 onUpdate={(items) => handleTaskUpdate(task.id, 'checklist_items', items)}

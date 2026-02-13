@@ -55,7 +55,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
         files: existingJob?.files || [],
 
         // Section 4: Financial (ADMIN ONLY)
-        product_category_id: existingJob?.product_category_id || '',
+        product_category: existingJob?.product_category || '',
         quantity: existingJob?.quantity || 1,
         base_price: existingJob?.base_price || 0,
         gst_rate: existingJob?.gst_rate || 18.00,
@@ -137,7 +137,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
 
             // Add financial fields only if user is not a designer
             if (!isDesigner) {
-                jobData.product_category_id = formData.product_category_id || null;
+                jobData.product_category = formData.product_category || null;
                 jobData.quantity = formData.quantity;
                 jobData.base_price = formData.base_price;
                 jobData.gst_rate = formData.gst_rate;
@@ -397,13 +397,13 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                                 Product Category
                                             </label>
                                             <select
-                                                value={formData.product_category_id}
-                                                onChange={(e) => setFormData({ ...formData, product_category_id: e.target.value })}
+                                                value={formData.product_category}
+                                                onChange={(e) => setFormData({ ...formData, product_category: e.target.value })}
                                                 className="w-full border-2 border-gray-200 rounded-md px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
                                             >
                                                 <option value="">Select Category</option>
                                                 {productCategories.map(cat => (
-                                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                    <option key={cat.id} value={cat.name}>{cat.name}</option>
                                                 ))}
                                             </select>
                                         </div>

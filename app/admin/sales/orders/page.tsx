@@ -56,7 +56,7 @@ export default function OrdersPage() {
   const [formData, setFormData] = useState({
     clientId: '',
     projectName: '',
-    productCategoryId: '',
+    productCategory: '',
     description: '',
     quantity: 1,
     ratePerPiece: 0,
@@ -113,10 +113,8 @@ export default function OrdersPage() {
   }, [categories, categorySearch]);
 
   const selectedCategoryName = useMemo(() => {
-    if (!formData.productCategoryId || !categories) return '';
-    const cat = categories.find((c: any) => c.id === formData.productCategoryId);
-    return cat?.name || '';
-  }, [formData.productCategoryId, categories]);
+    return formData.productCategory || '';
+  }, [formData.productCategory]);
 
   // Auto-open if ?new=true
   useEffect(() => {
@@ -155,7 +153,7 @@ export default function OrdersPage() {
     setFormData({
       clientId: '',
       projectName: '',
-      productCategoryId: '',
+      productCategory: '',
       description: '',
       quantity: 1,
       ratePerPiece: 0,
@@ -179,7 +177,7 @@ export default function OrdersPage() {
     setFormData({
       clientId: job.client_id || '',
       projectName: job.project_name,
-      productCategoryId: job.product_category_id || '',
+      productCategory: job.product_category || '',
       description: job.description || '',
       quantity: job.quantity,
       ratePerPiece: job.quote_per_piece || (job.quantity > 0 ? job.subtotal / job.quantity : 0),
@@ -238,7 +236,7 @@ export default function OrdersPage() {
         const result = await updateJob(selectedJob.id, {
           client_id: formData.clientId,
           project_name: formData.projectName,
-          product_category_id: formData.productCategoryId || null,
+          product_category: formData.productCategory || null,
           description: formData.description,
           quantity: formData.quantity,
           quote_per_piece: formData.ratePerPiece,
@@ -261,7 +259,7 @@ export default function OrdersPage() {
         const result = await createJob({
           client_id: formData.clientId,
           project_name: formData.projectName,
-          product_category_id: formData.productCategoryId || null,
+          product_category: formData.productCategory || null,
           description: formData.description,
           quantity: formData.quantity,
           quote_per_piece: formData.ratePerPiece,
@@ -343,9 +341,7 @@ export default function OrdersPage() {
 
   // Helper to get category name from ID
   const getCategoryName = (job: Job) => {
-    if (!job.product_category_id || !categories) return '';
-    const cat = categories.find((c: any) => c.id === job.product_category_id);
-    return cat?.name || job.product_category || '';
+    return job.product_category || '';
   };
 
   const filteredJobs = useMemo(() => {
@@ -669,7 +665,7 @@ export default function OrdersPage() {
                         {/* Clear selection */}
                         <button
                           type="button"
-                          onClick={() => { setFormData({ ...formData, productCategoryId: '' }); setShowCategoryDropdown(false); setCategorySearch(''); }}
+                          onClick={() => { setFormData({ ...formData, productCategory: '' }); setShowCategoryDropdown(false); setCategorySearch(''); }}
                           className="w-full text-left px-4 py-2 text-sm text-gray-400 hover:bg-gray-50 transition-colors"
                         >
                           — None —
@@ -679,15 +675,15 @@ export default function OrdersPage() {
                             key={cat.id}
                             type="button"
                             onClick={() => {
-                              setFormData({ ...formData, productCategoryId: cat.id });
+                              setFormData({ ...formData, productCategory: cat.name });
                               setShowCategoryDropdown(false);
                               setCategorySearch('');
                             }}
-                            className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between ${formData.productCategoryId === cat.id ? 'bg-gray-100 font-semibold text-gray-900' : 'text-gray-700'
+                            className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between ${formData.productCategory === cat.name ? 'bg-gray-100 font-semibold text-gray-900' : 'text-gray-700'
                               }`}
                           >
                             {cat.name}
-                            {formData.productCategoryId === cat.id && <CheckCircle className="w-4 h-4 text-green-500" />}
+                            {formData.productCategory === cat.name && <CheckCircle className="w-4 h-4 text-green-500" />}
                           </button>
                         ))}
                         {/* Add new category option */}
@@ -699,7 +695,7 @@ export default function OrdersPage() {
                               setCreatingCategory(true);
                               const { data: newCat } = await createCategory(categorySearch.trim());
                               if (newCat) {
-                                setFormData({ ...formData, productCategoryId: newCat.id });
+                                setFormData({ ...formData, productCategory: newCat.name });
                               }
                               setCreatingCategory(false);
                               setShowCategoryDropdown(false);

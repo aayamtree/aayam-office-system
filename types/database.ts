@@ -174,8 +174,7 @@ export interface Job extends BaseEntity {
   sales_order_id?: string;
 
   job_type?: 'print_only' | 'design_only' | 'design_print';
-  product_category_id?: string;
-  product_category?: string; // Legacy field
+  product_category?: string; // Single source of truth for category
   description?: string;
   quantity: number;
   actual_quantity?: number;  // Actual produced qty (for overrun/underrun tracking)

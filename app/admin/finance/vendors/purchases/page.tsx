@@ -11,7 +11,7 @@ import { formatDate } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const productTypes = [
+const productCategories = [
   'Pouches', 'Labels', 'Boxes', 'Brochures', 'Visiting Cards', 'Envelopes',
   'Paper Tubes', 'Letterheads', 'Catalogs', 'Packaging', 'Flex/Banner', 'Other'
 ];
@@ -35,7 +35,7 @@ export default function VendorPurchasesPage() {
 
   const [formData, setFormData] = useState({
     vendorId: '',
-    productType: 'Boxes',
+    productCategory: 'Boxes',
     description: '',
     quantity: 0,
     rate: 0,
@@ -79,7 +79,7 @@ export default function VendorPurchasesPage() {
     const payload = {
       vendor_id: formData.vendorId,
       job_id: formData.jobId || undefined,
-      product_type: formData.productType,
+      product_type: formData.productCategory,
       description: formData.description,
       quantity: formData.quantity,
       rate: formData.rate,
@@ -112,7 +112,7 @@ export default function VendorPurchasesPage() {
 
   const resetForm = () => {
     setFormData({
-      vendorId: '', productType: 'Boxes', description: '', quantity: 0, rate: 0,
+      vendorId: '', productCategory: 'Boxes', description: '', quantity: 0, rate: 0,
       gstRate: 18, jobId: '', billDate: new Date().toISOString().split('T')[0],
       dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       attachmentUrl: ''
@@ -124,7 +124,7 @@ export default function VendorPurchasesPage() {
   const handleEdit = (purchase: any) => {
     setFormData({
       vendorId: purchase.vendor_id || '',
-      productType: purchase.product_type || 'Boxes',
+      productCategory: purchase.product_type || 'Boxes',
       description: purchase.description || '',
       quantity: purchase.quantity || 0,
       rate: purchase.rate || 0,
@@ -345,10 +345,10 @@ export default function VendorPurchasesPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1.5">Product Type *</label>
-                  <select required value={formData.productType} onChange={(e) => setFormData({ ...formData, productType: e.target.value })}
+                  <label className="block text-sm font-medium mb-1.5">Product Category *</label>
+                  <select required value={formData.productCategory} onChange={(e) => setFormData({ ...formData, productCategory: e.target.value })}
                     className="w-full px-3 py-2.5 border rounded-lg">
-                    {productTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                    {productCategories.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
                 <div>
@@ -472,7 +472,7 @@ export default function VendorPurchasesPage() {
                   <p className="font-medium">{selectedPurchase.vendor?.name}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Product Type</p>
+                  <p className="text-xs text-gray-500">Product Category</p>
                   <p className="font-medium">{selectedPurchase.product_type}</p>
                 </div>
                 <div>
