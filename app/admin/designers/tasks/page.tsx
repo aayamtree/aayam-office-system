@@ -149,8 +149,9 @@ export default function DesignerWorkspace() {
   // Daily Briefing State
   const [showDailyBriefing, setShowDailyBriefing] = useState(false);
 
-  /* Update default to 'board' */
-  const activeTab = (searchParams.get('view') || 'board');
+  /* Admin defaults to team_tasks, designers to board */
+  const isAdmin = profile?.role === 'admin';
+  const activeTab = (searchParams.get('view') || (isAdmin ? 'team_tasks' : 'board'));
   const [searchQuery, setSearchQuery] = useState('');
 
   // Dynamic Checklist State
@@ -438,7 +439,6 @@ export default function DesignerWorkspace() {
     const myDesignerRecord = designers.find(d => d.user_id === profile?.id)
       || designers.find(d => d.name?.toLowerCase() === profile?.full_name?.toLowerCase());
     const isAssignedToMe = myDesignerRecord ? task.designerId === myDesignerRecord.id : false;
-    const isAdmin = profile?.role === 'admin';
 
     // Admin My Queue Logic: Show tasks needing admin attention + unassigned tasks
     const needsAdminAttention = isAdmin && (
@@ -453,7 +453,7 @@ export default function DesignerWorkspace() {
       matchesView = true; // Team view shows all tasks
     } else if (activeTab === 'my_tasks') {
       if (isAdmin) {
-        matchesView = needsAdminAttention; // Admin sees tasks needing attention + unassigned
+        matchesView = true; // Admin sees all tasks (Team Queue)
       } else {
         matchesView = isAssignedToMe || !task.designerId; // Designers see their tasks + unassigned
       }
@@ -912,7 +912,7 @@ export default function DesignerWorkspace() {
 
                 {/* View Tabs - Color Blocks */}
                 <div className="grid grid-cols-4 gap-1 mt-4 px-1">
-                  <button onClick={() => setView('my_tasks')} className={`py-2 rounded-lg text-xs font-bold border transition-all ${activeTab === 'my_tasks' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200'}`}>List</button>
+                  <button onClick={() => setView(isAdmin ? 'team_tasks' : 'my_tasks')} className={`py-2 rounded-lg text-xs font-bold border transition-all ${(activeTab === 'my_tasks' || activeTab === 'team_tasks') ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200'}`}>{isAdmin ? 'Team' : 'List'}</button>
                   <button onClick={() => setView('board')} className={`py-2 rounded-lg text-xs font-bold border transition-all ${activeTab === 'board' ? 'bg-gray-900 text-white border-border-600' : 'bg-white text-gray-500 border-gray-200'}`}>Board</button>
                   <button onClick={() => setView('timeline')} className={`py-2 rounded-lg text-xs font-bold border transition-all ${activeTab === 'timeline' ? 'bg-gray-900 text-white border-border-600' : 'bg-white text-gray-500 border-gray-200'}`}>Timeline</button>
                   <button onClick={() => setView('notes')} className={`py-2 rounded-lg text-xs font-bold border transition-all ${activeTab === 'notes' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-500 border-gray-200'}`}>Notes</button>
@@ -931,10 +931,10 @@ export default function DesignerWorkspace() {
                   <div>
                     <h2 className="font-bold text-gray-800 flex items-center gap-2">
                       <Briefcase size={18} className="text-primary" />
-                      {activeTab === 'notes' ? 'My Notes' : (activeTab === 'team_tasks' ? 'Team Queue' : 'My Queue')}
+                      {activeTab === 'notes' ? 'My Notes' : (isAdmin || activeTab === 'team_tasks' ? 'Team Queue' : 'My Queue')}
                     </h2>
-                    {activeTab === 'my_tasks' && profile?.role === 'admin' && (
-                      <p className="text-xs text-gray-500 mt-1 ml-7">Unassigned + Needs Attention + Overdue</p>
+                    {isAdmin && activeTab !== 'notes' && (
+                      <p className="text-xs text-gray-500 mt-1 ml-7">All designer tasks across team</p>
                     )}
                     {activeTab === 'my_tasks' && profile?.role === 'designer' && (
                       <p className="text-xs text-gray-500 mt-1 ml-7">Your assigned tasks</p>
@@ -1074,7 +1074,7 @@ export default function DesignerWorkspace() {
                         )}
 
                         {/* Show Designer Label in Team View */}
-                        {activeTab === 'team_tasks' && (
+                        {(activeTab === 'team_tasks' || isAdmin) && (
                           <span className="text-[9px] font-bold text-primary bg-muted border border-gray-200 px-1.5 py-0.5 rounded">
                             {task.designerName}
                           </span>
