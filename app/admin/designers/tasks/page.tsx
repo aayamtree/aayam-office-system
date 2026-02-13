@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
@@ -262,30 +262,67 @@ export default function DesignerWorkspace() {
   const [noteContent, setNoteContent] = useState('');
   const [noteDate, setNoteDate] = useState(new Date().toISOString().split('T')[0]);
 
+  // Note Sharing State
+  const [noteSharedWith, setNoteSharedWith] = useState<string[]>([]);
+  const [showSharePicker, setShowSharePicker] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const sharePickerRef = useRef<HTMLDivElement>(null);
+
+  // Fetch team members for sharing
+  useEffect(() => {
+    const fetchTeamMembers = async () => {
+      const { data } = await supabase.from('profiles').select('id, full_name, email, role').order('full_name');
+      setTeamMembers((data || []).filter(p => p.id !== profile?.id)); // exclude self
+    };
+    if (profile?.id) fetchTeamMembers();
+  }, [profile?.id]);
+
+  // Close share picker on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (sharePickerRef.current && !sharePickerRef.current.contains(e.target as Node)) setShowSharePicker(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const getDisplayName = (member: any) => member.full_name || member.email?.split('@')[0] || 'User';
+  const getRoleBadge = (role: string) => {
+    const map: Record<string, string> = { admin: 'Admin', designer: 'Designer', marketing: 'Marketing', dispatch: 'Dispatch', finance: 'Finance', cmyk: 'CMYK' };
+    return map[role] || role;
+  };
+
   // Fetch Notes
   const fetchNotes = async () => {
     if (!profile?.id) return;
     try {
       setLoadingNotes(true);
-      let query = supabase
-        .from('designer_notes')
-        .select('*')
-        .order('note_date', { ascending: false });
-
-      // Admin sees all notes, designers see only their own
-      if (!isAdmin) {
-        query = query.eq('user_id', profile.id);
-      }
-      const { data, error } = await query;
-
-      if (error) {
-        if (error.code === '42P01') {
-          console.warn('Notes table missing');
-          return;
+      if (isAdmin) {
+        // Admin sees all notes
+        const { data, error } = await supabase
+          .from('designer_notes')
+          .select('*')
+          .order('note_date', { ascending: false });
+        if (error) {
+          if (error.code === '42P01') { console.warn('Notes table missing'); return; }
+          throw error;
         }
-        throw error;
+        setNotes(data || []);
+      } else {
+        // Non-admin: fetch own notes + notes shared with me
+        const [ownResult, sharedResult] = await Promise.all([
+          supabase.from('designer_notes').select('*').eq('user_id', profile.id).order('note_date', { ascending: false }),
+          supabase.from('designer_notes').select('*').contains('shared_with', [profile.id]).order('note_date', { ascending: false })
+        ]);
+        if (ownResult.error && ownResult.error.code === '42P01') { console.warn('Notes table missing'); return; }
+        // Merge and deduplicate
+        const allNotes = [...(ownResult.data || [])];
+        (sharedResult.data || []).forEach((note: any) => {
+          if (!allNotes.find((n: any) => n.id === note.id)) allNotes.push(note);
+        });
+        allNotes.sort((a: any, b: any) => (b.note_date || '').localeCompare(a.note_date || ''));
+        setNotes(allNotes);
       }
-      setNotes(data || []);
     } catch (e) {
       console.error('Error fetching notes:', e);
     } finally {
@@ -302,11 +339,12 @@ export default function DesignerWorkspace() {
   const handleSaveNote = async () => {
     if (!profile?.id || !noteTitle) return alert('Title is required');
     try {
-      const noteData = {
+      const noteData: any = {
         user_id: profile.id,
         title: noteTitle,
         content: noteContent,
-        note_date: noteDate
+        note_date: noteDate,
+        shared_with: noteSharedWith
       };
 
       if (selectedNote) {
@@ -321,6 +359,8 @@ export default function DesignerWorkspace() {
       setSelectedNote(null);
       setNoteTitle('');
       setNoteContent('');
+      setNoteSharedWith([]);
+      setShowSharePicker(false);
     } catch (e: any) {
       alert('Error saving note: ' + (e.message || 'Check database schema'));
     }
@@ -331,6 +371,8 @@ export default function DesignerWorkspace() {
     setNoteTitle('');
     setNoteContent('');
     setNoteDate(new Date().toISOString().split('T')[0]);
+    setNoteSharedWith([]);
+    setShowSharePicker(false);
   };
 
   const selectNoteForEdit = (note: any) => {
@@ -338,6 +380,12 @@ export default function DesignerWorkspace() {
     setNoteTitle(note.title);
     setNoteContent(note.content || '');
     setNoteDate(note.note_date || new Date().toISOString().split('T')[0]);
+    setNoteSharedWith(note.shared_with || []);
+    setShowSharePicker(false);
+  };
+
+  const toggleShareWith = (userId: string) => {
+    setNoteSharedWith(prev => prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]);
   };
 
   const handleDeleteNote = async (id: string) => {
@@ -1051,15 +1099,31 @@ export default function DesignerWorkspace() {
 
                     <button onClick={handleCreateNote} className="w-full py-2 bg-gray-900 text-white rounded-md text-sm font-bold flex items-center justify-center gap-2 hover:bg-gray-800"><Plus size={16} /> New Note</button>
 
-                    {(notes || []).length === 0 ? <p className="text-center text-gray-400 text-xs py-4">No notes created.</p> : (notes || []).map((note, i) => (
-                      <div key={note?.id || `note-${i}`} onClick={() => selectNoteForEdit(note)} className={`p-3 rounded-lg border cursor-pointer  transition-all bg-white ${selectedNote?.id === note?.id ? 'border-primary ring-1 ring-primary' : 'border-gray-100'}`}>
-                        <div className="flex justify-between items-start mb-1"><h4 className="font-bold text-sm text-gray-800 line-clamp-1">{note?.title || 'Untitled'}</h4><span className="text-xs text-gray-400">{note?.note_date || ''}</span></div>
-                        {isAdmin && note?.user_id !== profile?.id && (
-                          <span className="text-[10px] font-bold text-primary bg-muted px-1.5 py-0.5 rounded mb-1 inline-block">{designers.find(d => d.user_id === note?.user_id)?.name || 'Designer'}</span>
-                        )}
-                        <p className="text-xs text-gray-500 line-clamp-2">{note?.content || ''}</p>
-                      </div>
-                    ))}
+                    {(notes || []).length === 0 ? <p className="text-center text-gray-400 text-xs py-4">No notes created.</p> : (notes || []).map((note, i) => {
+                      const isSharedToMe = note?.shared_with?.includes(profile?.id) && note?.user_id !== profile?.id;
+                      const noteAuthor = teamMembers.find(m => m.id === note?.user_id) || designers.find(d => d.user_id === note?.user_id);
+                      const authorName = noteAuthor?.full_name || noteAuthor?.name || noteAuthor?.email?.split('@')[0] || 'User';
+                      return (
+                        <div key={note?.id || `note-${i}`} onClick={() => selectNoteForEdit(note)} className={`p-3 rounded-lg border cursor-pointer transition-all bg-white ${selectedNote?.id === note?.id ? 'border-primary ring-1 ring-primary' : 'border-gray-100'} ${isSharedToMe ? 'border-l-4 border-l-blue-400' : ''}`}>
+                          <div className="flex justify-between items-start mb-1"><h4 className="font-bold text-sm text-gray-800 line-clamp-1">{note?.title || 'Untitled'}</h4><span className="text-xs text-gray-400">{note?.note_date || ''}</span></div>
+                          {/* Author label for admin or shared notes */}
+                          {(isAdmin || isSharedToMe) && note?.user_id !== profile?.id && (
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded mb-1 inline-flex items-center gap-1 ${isSharedToMe ? 'text-blue-600 bg-blue-50' : 'text-primary bg-muted'}`}>
+                              {isSharedToMe && <Send size={8} />}
+                              {isSharedToMe ? `Shared by @${authorName}` : authorName}
+                            </span>
+                          )}
+                          {/* Shared with indicator */}
+                          {note?.shared_with?.length > 0 && note?.user_id === profile?.id && (
+                            <div className="flex items-center gap-1 mb-1">
+                              <Send size={8} className="text-blue-400" />
+                              <span className="text-[10px] text-blue-500 font-medium">Shared with {note.shared_with.length} {note.shared_with.length === 1 ? 'person' : 'people'}</span>
+                            </div>
+                          )}
+                          <p className="text-xs text-gray-500 line-clamp-2">{note?.content || ''}</p>
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (filteredTasks || []).map(task => (
                   <div
@@ -1118,13 +1182,75 @@ export default function DesignerWorkspace() {
                     <input type="text" value={noteTitle} onChange={e => setNoteTitle(e.target.value)} placeholder="Note Title..." autoFocus className="text-section text-gray-900 border-none focus:ring-0 placeholder:text-gray-300 w-full bg-transparent" />
                     <input type="date" value={noteDate} onChange={e => setNoteDate(e.target.value)} className="text-sm border-gray-200 rounded-lg ml-4" />
                   </div>
+
+                  {/* Share With Tags */}
+                  {noteSharedWith.length > 0 && (
+                    <div className="px-8 py-2 bg-blue-50/50 border-b flex items-center gap-2 flex-wrap">
+                      <Send size={12} className="text-blue-500" />
+                      <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Shared with:</span>
+                      {noteSharedWith.map(uid => {
+                        const member = teamMembers.find(m => m.id === uid);
+                        return member ? (
+                          <span key={uid} className="inline-flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                            @{getDisplayName(member)}
+                            <button onClick={() => toggleShareWith(uid)} className="hover:text-red-500 ml-0.5"><X size={10} /></button>
+                          </span>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+
                   <div className="flex-1 p-8 bg-gray-50/30">
                     <textarea value={noteContent} onChange={e => setNoteContent(e.target.value)} placeholder="Type your note content here..." className="w-full h-full bg-transparent border-none focus:ring-0 resize-none text-gray-700 leading-relaxed font-sans placeholder:text-gray-300 p-0" />
                   </div>
                   <div className="p-4 border-t bg-white flex justify-between items-center">
                     {selectedNote && <button onClick={() => handleDeleteNote(selectedNote.id)} className="text-red-500 hover:text-red-700 text-sm font-bold flex items-center gap-2"><Trash2 size={16} /> Delete</button>}
-                    <div className="flex gap-2 ml-auto">
-                      <button onClick={handleSaveNote} className="px-4 py-2 bg-gray-900 text-white rounded-md font-bold hover:bg-gray-900 flex items-center gap-2"><Save size={18} /> Save Note</button>
+                    <div className="flex gap-2 ml-auto relative">
+                      {/* Share Button */}
+                      <div ref={sharePickerRef} className="relative">
+                        <button
+                          onClick={() => setShowSharePicker(!showSharePicker)}
+                          className={`px-3 py-2 rounded-md font-bold text-sm flex items-center gap-1.5 border transition-all ${noteSharedWith.length > 0
+                            ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
+                            : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                            }`}
+                        >
+                          <Send size={14} />
+                          {noteSharedWith.length > 0 ? `Shared (${noteSharedWith.length})` : '@ Share'}
+                        </button>
+                        {showSharePicker && (
+                          <div className="absolute bottom-full right-0 mb-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
+                            <div className="p-3 border-b bg-gray-50">
+                              <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wider">Share with team members</h4>
+                            </div>
+                            <div className="max-h-60 overflow-y-auto">
+                              {teamMembers.map(member => (
+                                <button
+                                  key={member.id}
+                                  onClick={() => toggleShareWith(member.id)}
+                                  className={`w-full px-3 py-2.5 flex items-center gap-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 ${noteSharedWith.includes(member.id) ? 'bg-blue-50' : ''
+                                    }`}
+                                >
+                                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${noteSharedWith.includes(member.id)
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-gray-200 text-gray-600'
+                                    }`}>
+                                    {getDisplayName(member).charAt(0).toUpperCase()}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-800 truncate">@{getDisplayName(member)}</p>
+                                    <p className="text-[10px] text-gray-400">{getRoleBadge(member.role)}</p>
+                                  </div>
+                                  {noteSharedWith.includes(member.id) && (
+                                    <CheckCircle size={16} className="text-blue-500 flex-shrink-0" />
+                                  )}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <button onClick={handleSaveNote} className="px-4 py-2 bg-gray-900 text-white rounded-md font-bold hover:bg-gray-800 flex items-center gap-2"><Save size={18} /> Save Note</button>
                     </div>
                   </div>
                 </div>
