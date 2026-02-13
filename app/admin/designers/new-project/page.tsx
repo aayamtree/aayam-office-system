@@ -199,7 +199,20 @@ export default function NewProjectPage() {
             const { data: { user } } = await supabase.auth.getUser();
             const isDesignerRole = profile?.role === 'designer';
 
+            // Generate job number (same logic as useJobs.createJob)
+            const now = new Date();
+            const dd = String(now.getDate()).padStart(2, '0');
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            let jobNumber = `AAY-${dd}${mm}001`;
+            try {
+                const { data: numberData } = await supabase.rpc('get_next_number', { counter_id: 'job' });
+                if (numberData) jobNumber = numberData;
+            } catch (e) {
+                console.warn('RPC get_next_number failed, using fallback');
+            }
+
             const jobData: any = {
+                job_number: jobNumber,
                 project_name: formData.title,
                 client_id: formData.clientId,
                 designer_id: formData.designerId || user?.id,
