@@ -44,8 +44,7 @@ export default function ProductionQueuePage() {
                 .from('jobs')
                 .select(`
           *,
-          client:clients(name, company),
-          designer:profiles!jobs_designer_id_fkey(full_name)
+          client:clients(name, company)
         `)
                 .eq('status', 'active')
                 .order('client_deadline', { ascending: true, nullsFirst: false });

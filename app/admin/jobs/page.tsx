@@ -118,7 +118,7 @@ export default function JobsPage() {
   const [showAddVendorModal, setShowAddVendorModal] = useState(false);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [showAddJobTypeModal, setShowAddJobTypeModal] = useState(false);
-  const [showAddProductTypeModal, setShowAddProductTypeModal] = useState(false); // kept for backwards compat
+
   const [showAddPriorityModal, setShowAddPriorityModal] = useState(false);
   const [showAddStageModal, setShowAddStageModal] = useState(false);
   const [showSendToPrinterModal, setShowSendToPrinterModal] = useState(false);
@@ -126,7 +126,7 @@ export default function JobsPage() {
   // Database-driven configuration state
   const [productCategories, setProductCategories] = useState<any[]>([]);
   const [jobTypes, setJobTypes] = useState<any[]>([]);
-  const [productTypes] = useState<any[]>([]); // deprecated — use productCategories
+
   const [priorities, setPriorities] = useState<any[]>([]);
   const [stages, setStages] = useState<any[]>([]);
   const [machines, setMachines] = useState<any[]>([]);

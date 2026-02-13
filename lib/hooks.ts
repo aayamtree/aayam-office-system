@@ -2489,19 +2489,19 @@ export function useDailyReports(userId?: string, dateFilter?: { start?: string; 
   };
 
   // Fetch product-specific checklist from job_checklists
-  const fetchProductChecklist = async (productType: string, category: 'design' | 'dispatch' = 'design') => {
+  const fetchProductChecklist = async (productCategory: string, category: 'design' | 'dispatch' = 'design') => {
     if (!isSupabaseConfigured()) return { data: [], error: null };
 
     try {
       const { data, error } = await supabase
         .from('job_checklists')
         .select('items')
-        .eq('job_type', productType)
+        .eq('job_type', productCategory)
         .eq('category', category)
         .single();
 
       if (error) {
-        console.log('No checklist found for', productType, error);
+        console.log('No checklist found for', productCategory, error);
         return { data: [], error: null }; // Return empty instead of error
       }
 

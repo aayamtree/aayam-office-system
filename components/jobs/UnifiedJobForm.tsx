@@ -12,7 +12,6 @@ import { createProjectCalendarEvent, createCalendarEvent } from '@/lib/google-ca
 
 const jobTypes = ['Design Only', 'Print Only', 'Design + Print'];
 const productCategories = ['Banner', 'Book', 'Box', 'Brochure', 'Label', 'Poster', 'Sticker', 'Other'];
-const productTypes = ['STICKER', 'POUCH', 'BOX', 'BANNER', 'FLEX', 'VINYL', 'LABEL', 'BOOK', 'BROCHURE', 'OTHER'];
 const priorities = ['low', 'normal', 'high', 'urgent'];
 
 interface UnifiedJobFormProps {
@@ -50,7 +49,6 @@ export default function UnifiedJobForm({
         designer_id: '',
         job_type: 'Design + Print',
         product_category: 'Other',
-        product_type: 'STICKER',
         priority: 'normal',
         client_deadline: '',
         description: '',
@@ -80,7 +78,6 @@ export default function UnifiedJobForm({
                 designer_id: editingJob.designer_id || '',
                 job_type: editingJob.job_type || 'Design + Print',
                 product_category: editingJob.product_category || 'Other',
-                product_type: editingJob.job_type || 'STICKER',
                 priority: editingJob.priority || 'normal',
                 client_deadline: editingJob.client_deadline || '',
                 description: editingJob.description || '',
@@ -331,17 +328,6 @@ export default function UnifiedJobForm({
                             <p className="text-xs text-gray-500 mt-1">Used for production checklists</p>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Product Type (Print Planner)</label>
-                            <select
-                                className="w-full px-3 py-2 border rounded-md bg-muted"
-                                value={formData.product_type}
-                                onChange={e => setFormData({ ...formData, product_type: e.target.value })}
-                            >
-                                {productTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                            </select>
-                            <p className="text-xs text-primary mt-1">⚡ For print batching</p>
-                        </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-1">Priority</label>
