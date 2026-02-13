@@ -13,8 +13,9 @@ export default function MyQueue() {
     const { designers } = useDesigners();
     const [searchQuery, setSearchQuery] = useState('');
 
-    // Find the designer record whose user_id matches the logged-in profile
-    const myDesigner = designers.find(d => d.user_id === profile?.id);
+    // Find the designer record whose user_id matches the logged-in profile (with name fallback)
+    const myDesigner = designers.find(d => d.user_id === profile?.id)
+        || designers.find(d => d.name?.toLowerCase() === profile?.full_name?.toLowerCase());
     const isAdmin = profile?.role === 'admin';
 
     // Get my tasks: match on designers table ID, not profile ID

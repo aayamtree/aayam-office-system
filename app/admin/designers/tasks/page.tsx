@@ -434,8 +434,9 @@ export default function DesignerWorkspace() {
       (task.deadline && task.deadline.includes(searchQuery));
 
     // Team Logic with Admin Special Handling
-    // Resolve the correct designer ID: designers table stores user_id linking to profile
-    const myDesignerRecord = designers.find(d => d.user_id === profile?.id);
+    // Resolve the correct designer ID: try user_id first, then fall back to name match
+    const myDesignerRecord = designers.find(d => d.user_id === profile?.id)
+      || designers.find(d => d.name?.toLowerCase() === profile?.full_name?.toLowerCase());
     const isAssignedToMe = myDesignerRecord ? task.designerId === myDesignerRecord.id : false;
     const isAdmin = profile?.role === 'admin';
 
