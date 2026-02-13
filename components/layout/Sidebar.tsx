@@ -399,12 +399,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <span>Profile</span>
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/admin/settings" onClick={handleLinkClick}>
-                <Settings className="mr-2 h-4 w-4" strokeWidth={1} />
-                <span>Settings</span>
-              </Link>
-            </DropdownMenuItem>
+            {profile?.role === 'admin' && (
+              <DropdownMenuItem asChild>
+                <Link href="/admin/settings" onClick={handleLinkClick}>
+                  <Settings className="mr-2 h-4 w-4" strokeWidth={1} />
+                  <span>Settings</span>
+                </Link>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" strokeWidth={1} />
