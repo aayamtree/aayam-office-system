@@ -44,7 +44,7 @@ export default function NewProjectPage() {
     const { profile } = useAuth();
     const { clients } = useClients();
     const { designers } = useDesigners();
-    const { categories: productCategories } = useProductCategories();
+    const { categories: productCategories, createCategory } = useProductCategories();
     const [creating, setCreating] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<string>('');
 
@@ -516,21 +516,69 @@ export default function NewProjectPage() {
                         {/* Product Category */}
                         <div className="space-y-2">
                             <Label className="text-sm font-semibold">Product Category</Label>
-                            <Select
-                                value={formData.productCategory}
-                                onValueChange={(val) => setFormData(prev => ({ ...prev, productCategory: val }))}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select Category" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {productCategories?.map((cat: any) => (
-                                        <SelectItem key={cat.id} value={cat.name}>
-                                            {cat.name}
+                            {formData.productCategory === '__add_new__' ? (
+                                <div className="flex gap-2">
+                                    <Input
+                                        autoFocus
+                                        placeholder="Type new category name..."
+                                        id="newCategoryInput"
+                                        onKeyDown={async (e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                const val = (e.target as HTMLInputElement).value.trim();
+                                                if (val) {
+                                                    const { data: newCat } = await createCategory(val);
+                                                    if (newCat) setFormData(prev => ({ ...prev, productCategory: newCat.name }));
+                                                    else setFormData(prev => ({ ...prev, productCategory: '' }));
+                                                }
+                                            }
+                                            if (e.key === 'Escape') setFormData(prev => ({ ...prev, productCategory: '' }));
+                                        }}
+                                    />
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        onClick={async () => {
+                                            const input = document.getElementById('newCategoryInput') as HTMLInputElement;
+                                            const val = input?.value?.trim();
+                                            if (val) {
+                                                const { data: newCat } = await createCategory(val);
+                                                if (newCat) setFormData(prev => ({ ...prev, productCategory: newCat.name }));
+                                                else setFormData(prev => ({ ...prev, productCategory: '' }));
+                                            }
+                                        }}
+                                    >
+                                        Save
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setFormData(prev => ({ ...prev, productCategory: '' }))}
+                                    >
+                                        Cancel
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Select
+                                    value={formData.productCategory}
+                                    onValueChange={(val) => setFormData(prev => ({ ...prev, productCategory: val }))}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select Category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {productCategories?.map((cat: any) => (
+                                            <SelectItem key={cat.id} value={cat.name}>
+                                                {cat.name}
+                                            </SelectItem>
+                                        ))}
+                                        <SelectItem value="__add_new__" className="text-primary font-medium border-t mt-1 pt-1">
+                                            + Add New Category
                                         </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                    </SelectContent>
+                                </Select>
+                            )}
                         </div>
 
                         {/* Deadline + Priority row */}
