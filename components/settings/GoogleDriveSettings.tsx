@@ -48,7 +48,7 @@ export default function GoogleDriveSettings() {
     }, []);
 
     // Handle Google Drive connection - direct OAuth (no NextAuth)
-    const handleConnect = () => {
+    const handleConnect = async () => {
         setConnecting(true);
 
         const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -56,6 +56,19 @@ export default function GoogleDriveSettings() {
             alert('Google Client ID not configured. Contact admin.');
             setConnecting(false);
             return;
+        }
+
+        // Step 1: Revoke old token at Google so we get a fresh refresh_token
+        try {
+            const statusRes = await fetch('/api/drive/connect');
+            const statusData = await statusRes.json();
+            if (statusData.connected) {
+                // Revoke old token at Google
+                await fetch('/api/drive/revoke', { method: 'POST' });
+            }
+        } catch (e) {
+            // Ignore revoke errors, proceed with connect
+            console.log('Revoke step skipped:', e);
         }
 
         const baseUrl = window.location.origin;
