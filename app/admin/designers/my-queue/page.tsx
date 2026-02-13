@@ -33,13 +33,26 @@ export default function MyQueue() {
             status: job.current_stage || 'new',
             priority: job.priority || 'normal',
             deadline: job.client_deadline,
-            jobNumber: job.job_number
+            jobNumber: job.job_number,
+            jobType: job.job_type || 'Design'
         }));
 
-    // Filter by search
+    // Helper for job type tag styling
+    const getJobTypeTag = (type: string) => {
+        const map: Record<string, { label: string; bg: string; text: string }> = {
+            'Design': { label: 'DESIGN', bg: 'bg-violet-100', text: 'text-violet-700' },
+            'Printing': { label: 'PRINT', bg: 'bg-emerald-100', text: 'text-emerald-700' },
+            'Design + Printing': { label: 'DESIGN+PRINT', bg: 'bg-sky-100', text: 'text-sky-700' },
+            'Design + Print': { label: 'DESIGN+PRINT', bg: 'bg-sky-100', text: 'text-sky-700' },
+        };
+        return map[type] || { label: type?.toUpperCase() || 'PROJECT', bg: 'bg-gray-100', text: 'text-gray-600' };
+    };
+
+    // Filter by search (now includes jobType)
     const filteredTasks = myTasks.filter(task =>
         task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.client.toLowerCase().includes(searchQuery.toLowerCase())
+        task.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        task.jobType.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // Group by priority
@@ -91,6 +104,9 @@ export default function MyQueue() {
                                         <div className="bg-white p-4 md:p-4 rounded-lg md:rounded-lg border-2 border-red-200  transition-shadow cursor-pointer">
                                             <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2 md:gap-0 mb-2 md:mb-3">
                                                 <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        {(() => { const t = getJobTypeTag(task.jobType); return <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${t.bg} ${t.text}`}>{t.label}</span>; })()}
+                                                    </div>
                                                     <h3 className="text-base md:text-section text-gray-900 line-clamp-2">{task.title}</h3>
                                                     <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600 mt-1">
                                                         <User size={14} className="md:hidden" />
@@ -137,6 +153,9 @@ export default function MyQueue() {
                                         <div className="bg-white p-4 md:p-4 rounded-lg md:rounded-lg border-2 border-orange-200  transition-shadow cursor-pointer">
                                             <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2 md:gap-0 mb-2 md:mb-3">
                                                 <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        {(() => { const t = getJobTypeTag(task.jobType); return <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${t.bg} ${t.text}`}>{t.label}</span>; })()}
+                                                    </div>
                                                     <h3 className="text-base md:text-section text-gray-900 line-clamp-2">{task.title}</h3>
                                                     <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600 mt-1">
                                                         <User size={14} className="md:hidden" />
@@ -182,6 +201,9 @@ export default function MyQueue() {
                                         <div className="bg-white p-4 rounded-lg border  transition-shadow cursor-pointer">
                                             <div className="flex justify-between items-start mb-3">
                                                 <div>
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        {(() => { const t = getJobTypeTag(task.jobType); return <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${t.bg} ${t.text}`}>{t.label}</span>; })()}
+                                                    </div>
                                                     <h3 className="text-section text-gray-900">{task.title}</h3>
                                                     <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
                                                         <User size={16} />

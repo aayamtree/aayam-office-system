@@ -485,6 +485,7 @@ export default function DesignerWorkspace() {
     const matchesSearch =
       task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       task.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (task.jobType && task.jobType.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (task.deadline && task.deadline.includes(searchQuery));
 
     // Team Logic with Admin Special Handling
@@ -1135,7 +1136,19 @@ export default function DesignerWorkspace() {
                     {selectedTaskId === task.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-muted0"></div>}
 
                     <div className="flex justify-between items-start mb-2">
-                      <span className="font-mono text-xs text-gray-500 font-medium tracking-wide">{task.taskId}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs text-gray-500 font-medium tracking-wide">{task.taskId}</span>
+                        {(() => {
+                          const typeMap: Record<string, { label: string; bg: string; text: string }> = {
+                            'Design': { label: 'DESIGN', bg: 'bg-violet-100', text: 'text-violet-700' },
+                            'Printing': { label: 'PRINT', bg: 'bg-emerald-100', text: 'text-emerald-700' },
+                            'Design + Printing': { label: 'DESIGN+PRINT', bg: 'bg-sky-100', text: 'text-sky-700' },
+                            'Design + Print': { label: 'DESIGN+PRINT', bg: 'bg-sky-100', text: 'text-sky-700' },
+                          };
+                          const t = typeMap[task.jobType] || { label: task.jobType?.toUpperCase() || 'PROJECT', bg: 'bg-gray-100', text: 'text-gray-600' };
+                          return <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${t.bg} ${t.text}`}>{t.label}</span>;
+                        })()}
+                      </div>
                       <div className="flex flex-col items-end gap-0.5">
                         {task.rawDeadline && new Date(task.rawDeadline) < new Date() && task.current_stage !== 'delivered' ? (
                           <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full flex items-center gap-1 mb-1">
