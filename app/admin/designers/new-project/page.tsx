@@ -602,7 +602,7 @@ export default function NewProjectPage() {
                                     <X size={16} className="text-destructive shrink-0 mt-0.5" />
                                     <div>
                                         <p className="text-sm font-medium text-destructive">{driveFileError}</p>
-                                        <p className="text-xs text-destructive/80 mt-0.5">Make sure the file is shared with "Anyone with the link"</p>
+                                        <p className="text-xs text-destructive/80 mt-0.5">Make sure the file is shared with &ldquo;Anyone with the link&rdquo;</p>
                                     </div>
                                 </div>
                             )}
