@@ -434,7 +434,9 @@ export default function DesignerWorkspace() {
       (task.deadline && task.deadline.includes(searchQuery));
 
     // Team Logic with Admin Special Handling
-    const isAssignedToMe = task.designerId === profile?.id;
+    // Resolve the correct designer ID: designers table stores user_id linking to profile
+    const myDesignerRecord = designers.find(d => d.user_id === profile?.id);
+    const isAssignedToMe = myDesignerRecord ? task.designerId === myDesignerRecord.id : false;
     const isAdmin = profile?.role === 'admin';
 
     // Admin My Queue Logic: Show tasks needing admin attention + unassigned tasks
@@ -592,7 +594,7 @@ export default function DesignerWorkspace() {
         total_amount: 0,
         amount_received: 0,
         payment_status: 'pending',
-        designer_id: newTaskData.designerId || profile?.id, // Use selected or self
+        designer_id: newTaskData.designerId || designers.find(d => d.user_id === profile?.id)?.id || null, // Resolve from designers table
         files: initialFiles
       } as any);
 
@@ -784,8 +786,8 @@ export default function DesignerWorkspace() {
                                 </span>
                                 {/* Priority Tag */}
                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${task.priority === 'urgent' ? 'bg-red-50 text-red-600 border border-red-200' :
-                                    task.priority === 'high' ? 'bg-orange-50 text-orange-600 border border-orange-200' :
-                                      'bg-gray-100 text-gray-500 border border-gray-200'
+                                  task.priority === 'high' ? 'bg-orange-50 text-orange-600 border border-orange-200' :
+                                    'bg-gray-100 text-gray-500 border border-gray-200'
                                   }`}>
                                   {task.priority || 'normal'}
                                 </span>
