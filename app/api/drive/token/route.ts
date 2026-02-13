@@ -4,6 +4,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     try {
         // Use service role to access org-wide credentials (app auth is via NextAuth, not Supabase auth)

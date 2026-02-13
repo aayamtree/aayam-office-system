@@ -10,6 +10,7 @@ import { useJobChecklists } from '@/lib/hooks';
 export default function DesignTasksPage() {
     const { profile } = useAuth();
     const { jobs, loading, updateJobStage, refetch } = useJobs({
+        filter: [{ column: 'current_stage', value: ['new', 'designing', 'approval'], op: 'in' }],
         orderBy: { column: 'created_at', ascending: false }
     });
 

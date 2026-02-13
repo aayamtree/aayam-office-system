@@ -17,7 +17,7 @@ import { upsertAutoCalendarEvent } from './calendar-auto-events';
 // Generic hook for fetching data
 export interface UseSupabaseQueryOptions {
   select?: string;
-  filter?: { column: string; value: any }[];
+  filter?: { column: string; value: any; op?: 'eq' | 'neq' | 'in' | 'lte' | 'gte' }[];
   orderBy?: { column: string; ascending?: boolean };
   limit?: number;
 }
@@ -39,10 +39,15 @@ export function useSupabaseQuery<T>(
       .from(tableName)
       .select(options?.select || '*');
 
-    // Apply filters
+    // Apply filters (supports eq, neq, in, lte, gte)
     if (options?.filter) {
       options.filter.forEach(f => {
-        query = query.eq(f.column, f.value);
+        const op = f.op || 'eq';
+        if (op === 'eq') query = query.eq(f.column, f.value);
+        else if (op === 'neq') query = query.neq(f.column, f.value);
+        else if (op === 'in') query = query.in(f.column, f.value);
+        else if (op === 'lte') query = query.lte(f.column, f.value);
+        else if (op === 'gte') query = query.gte(f.column, f.value);
       });
     }
 
@@ -1083,155 +1088,69 @@ export function useDashboardStats() {
       }
 
       try {
-        const startOfYear = new Date(new Date().getFullYear(), 0, 1).toISOString();
-        const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-        const todayStr = new Date().toISOString().split('T')[0];
+        // Single RPC call replaces 10 separate queries
+        const { data, error } = await supabase.rpc('get_dashboard_stats');
 
-        const [
-          clients,
-          jobs,
-          invoices,
-          dispatches,
-          leadsMonth,
-          leadsFollowUp,
-          lowStock,
-          completedJobs,
-          followUpsTable,
-          allJobsForRevenue
-        ] = await Promise.all([
-          // 1. Total Clients
-          supabase.from('clients').select('id', { count: 'exact', head: true }),
-
-          // 2. Active Jobs for Pipeline (fetch stage, deadline, vendor info)
-          supabase.from('jobs').select('id, current_stage, client_deadline, internal_deadline, vendor_id').neq('current_stage', 'delivered').neq('current_stage', 'cancelled'),
-
-          // 3. Invoices for Revenue & Payments
-          supabase.from('invoices').select('total_amount, payment_status, created_at, balance_due, due_date, job_id').gte('created_at', startOfYear),
-
-          // 4. Pending Dispatches
-          supabase.from('dispatches').select('id', { count: 'exact', head: true }).in('status', ['pending', 'packed', 'ready']),
-
-          // 5. Leads this month
-          supabase.from('leads').select('id', { count: 'exact', head: true }).gte('created_at', startOfMonth),
-
-          // 6. Follow-ups Due (today or earlier and not won/lost)
-          supabase.from('leads').select('id', { count: 'exact', head: true }).lte('next_follow_up', todayStr).not('status', 'in', '("won","lost")'),
-
-          // 7. Low Stock
-          supabase.from('paper_stock').select('quantity, reorder_level'),
-
-          // 8. Jobs Completed Today
-          supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('current_stage', 'delivered').gte('updated_at', todayStr),
-
-          // 9. Follow ups table count
-          supabase.from('follow_ups').select('id', { count: 'exact', head: true }).lte('follow_up_date', todayStr),
-
-          // 10. All jobs this year (for revenue/sales chart when no invoices exist)
-          supabase.from('jobs').select('id, total_amount, amount_received, payment_status, created_at').gte('created_at', startOfYear).neq('current_stage', 'cancelled'),
-        ]);
-
-        // Determine revenue source: use invoices if they exist, else fall back to jobs
-        const hasInvoices = (invoices.data?.length || 0) > 0;
-
-        const totalRevenue = hasInvoices
-          ? invoices.data?.reduce((sum, inv) => sum + (inv.total_amount || 0), 0) || 0
-          : allJobsForRevenue.data?.reduce((sum, j) => sum + (j.total_amount || 0), 0) || 0;
-
-        // Blocked Jobs Logic
-        const feedbackPendingCount = jobs.data?.filter(j => j.current_stage === 'approval').length || 0;
-        const unpaidJobIds = new Set(invoices.data?.filter(inv => inv.payment_status !== 'paid' && inv.job_id).map(inv => inv.job_id));
-        const paymentHoldCount = jobs.data?.filter(j => ['ready', 'packed'].includes(j.current_stage || '') && unpaidJobIds.has(j.id)).length || 0;
-        const totalBlocked = feedbackPendingCount + paymentHoldCount;
-
-        // Pending Payments — from invoices or job balances
-        const pendingPayments = hasInvoices
-          ? invoices.data?.filter(inv => inv.payment_status !== 'paid').reduce((sum, inv) => sum + (inv.balance_due || 0), 0) || 0
-          : allJobsForRevenue.data?.filter(j => j.payment_status !== 'paid').reduce((sum, j) => sum + ((j.total_amount || 0) - (j.amount_received || 0)), 0) || 0;
-
-        const overduePaymentsCount = invoices.data?.filter(inv => inv.payment_status !== 'paid' && inv.due_date && inv.due_date < todayStr).length || 0;
-        const paymentsDueTodayCount = invoices.data?.filter(inv => inv.payment_status !== 'paid' && inv.due_date && inv.due_date === todayStr).length || 0;
-
-        // Pipeline & Jobs Focus
-        const pipelineCounts: Record<string, number> = {};
-        const pipelineOverdue: Record<string, number> = {};
-        let jobsDueTodayCount = 0;
-        let jobsDelayedCount = 0;
-
-        jobs.data?.forEach(j => {
-          const stage = j.current_stage || 'new';
-          pipelineCounts[stage] = (pipelineCounts[stage] || 0) + 1;
-
-          if (j.client_deadline) {
-            const deadline = j.client_deadline.split('T')[0];
-            if (deadline === todayStr) jobsDueTodayCount++;
-            if (deadline < todayStr) {
-              jobsDelayedCount++;
-              pipelineOverdue[stage] = (pipelineOverdue[stage] || 0) + 1;
-            }
-          }
-        });
-
-        // Low Stock
-        const lowStockCount = lowStock.data?.filter(item => item.quantity <= (item.reorder_level || 0)).length || 0;
-
-        // Sales Performance (Monthly) — use whichever source has data
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const monthlySales = new Array(12).fill(0);
-
-        if (hasInvoices) {
-          invoices.data?.forEach(inv => {
-            const d = new Date(inv.created_at);
-            monthlySales[d.getMonth()] += (inv.total_amount || 0);
+        if (error) {
+          console.warn('RPC get_dashboard_stats not available, using fallback:', error.message);
+          // Fallback: minimal client-side queries if RPC not deployed yet
+          const [clients, jobs] = await Promise.all([
+            supabase.from('clients').select('id', { count: 'exact', head: true }),
+            supabase.from('jobs').select('id, current_stage, client_deadline').neq('current_stage', 'delivered').neq('current_stage', 'cancelled'),
+          ]);
+          const pipelineCounts: Record<string, number> = {};
+          jobs.data?.forEach(j => {
+            const stage = j.current_stage || 'new';
+            pipelineCounts[stage] = (pipelineCounts[stage] || 0) + 1;
           });
-        } else {
-          allJobsForRevenue.data?.forEach(j => {
-            if (j.created_at) {
-              const d = new Date(j.created_at);
-              monthlySales[d.getMonth()] += (j.total_amount || 0);
-            }
-          });
+          setStats(prev => ({
+            ...prev,
+            totalClients: clients.count || 0,
+            activeJobs: jobs.data?.length || 0,
+            pipeline: pipelineCounts,
+          }));
+          setLoading(false);
+          return;
         }
 
-        const currentMonthIdx = new Date().getMonth();
-        const salesPerformance = monthNames.map((m, idx) => ({
-          month: m,
-          value: monthlySales[idx],
-          active: idx === currentMonthIdx
-        })).slice(Math.max(0, currentMonthIdx - 5), currentMonthIdx + 1);
-
+        // Map RPC response to state
+        const d = data as any;
         setStats({
-          totalClients: clients.count || 0,
-          activeJobs: jobs.data?.length || 0,
-          totalRevenue,
-          pendingPayments,
-          pendingDispatches: dispatches.count || 0,
-          leadsThisMonth: leadsMonth.count || 0,
-          ordersThisMonth: allJobsForRevenue.data?.filter(j => {
-            const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-            return j.created_at && j.created_at >= startOfMonth;
-          }).length || 0,
-          pipeline: pipelineCounts,
-          pipelineOverdue,
+          totalClients: d.total_clients || 0,
+          activeJobs: d.active_jobs || 0,
+          totalRevenue: d.total_revenue || 0,
+          pendingPayments: d.pending_payments || 0,
+          pendingDispatches: d.pending_dispatches || 0,
+          leadsThisMonth: d.leads_this_month || 0,
+          ordersThisMonth: d.orders_this_month || 0,
+          pipeline: d.pipeline || {},
+          pipelineOverdue: d.pipeline_overdue || {},
           alerts: {
-            overduePayments: overduePaymentsCount,
-            followUpsDue: (leadsFollowUp.count || 0) + (followUpsTable.count || 0),
-            lowStock: lowStockCount,
-            blockedJobs: totalBlocked,
-            blockedBreakdown: { feedback: feedbackPendingCount, payment: paymentHoldCount }
+            overduePayments: d.alerts?.overdue_payments || 0,
+            followUpsDue: d.alerts?.follow_ups_due || 0,
+            lowStock: d.alerts?.low_stock || 0,
+            blockedJobs: d.alerts?.blocked_jobs || 0,
+            blockedBreakdown: {
+              feedback: d.alerts?.blocked_breakdown?.feedback || 0,
+              payment: d.alerts?.blocked_breakdown?.payment || 0
+            }
           },
           todaysFocus: {
-            jobsDue: jobsDueTodayCount,
-            jobsDelayed: jobsDelayedCount,
-            jobsCompleted: completedJobs.count || 0,
-            paymentsDue: paymentsDueTodayCount
+            jobsDue: d.todays_focus?.jobs_due || 0,
+            jobsDelayed: d.todays_focus?.jobs_delayed || 0,
+            jobsCompleted: d.todays_focus?.jobs_completed || 0,
+            paymentsDue: d.todays_focus?.payments_due || 0
           },
           vendorStats: {
-            jobsAtVendor: jobs.data?.filter(j => ['printing', 'finishing'].includes(j.current_stage || '')).length || 0,
-            dueToday: jobs.data?.filter(j => ['printing', 'finishing'].includes(j.current_stage || '') && j.internal_deadline && j.internal_deadline.split('T')[0] === todayStr).length || 0,
-            delayed: jobs.data?.filter(j => ['printing', 'finishing'].includes(j.current_stage || '') && j.internal_deadline && j.internal_deadline.split('T')[0] < todayStr).length || 0
+            jobsAtVendor: d.vendor_stats?.jobs_at_vendor || 0,
+            dueToday: d.vendor_stats?.due_today || 0,
+            delayed: d.vendor_stats?.delayed || 0
           },
-
-          salesPerformance,
+          salesPerformance: (d.sales_performance || []).map((s: any) => ({
+            month: s.month,
+            value: s.value || 0,
+            active: s.active || false
+          })),
         });
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);

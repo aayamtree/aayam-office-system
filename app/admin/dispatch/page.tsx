@@ -11,6 +11,7 @@ import { Job, Dispatch } from '@/types/database';
 export default function DispatchPage() {
   const { profile } = useAuth();
   const { jobs, loading: jobsLoading, updateJobStage } = useJobs({
+    filter: [{ column: 'current_stage', value: ['quality_check', 'ready'], op: 'in' }],
     orderBy: { column: 'client_deadline', ascending: true }
   });
   const { dispatches, loading: dispatchesLoading, createDispatch } = useDispatches();
