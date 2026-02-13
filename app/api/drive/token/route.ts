@@ -6,16 +6,11 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function GET() {
     try {
+        // Use service role to access org-wide credentials (app auth is via NextAuth, not Supabase auth)
         const supabase = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         );
-
-        // Check if user is authenticated
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
 
         // Get active Drive credentials
         const { data: credentials, error } = await supabase

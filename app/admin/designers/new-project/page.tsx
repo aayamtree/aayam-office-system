@@ -79,6 +79,15 @@ export default function NewProjectPage() {
     const [driveFileInfo, setDriveFileInfo] = useState<DriveFileInfo | null>(null);
     const [driveFileError, setDriveFileError] = useState<string>('');
 
+    // Org-wide Drive token (from admin-connected Google Drive)
+    const [orgDriveToken, setOrgDriveToken] = useState<string | null>(null);
+    useEffect(() => {
+        fetch('/api/drive/token')
+            .then(res => res.ok ? res.json() : null)
+            .then(data => { if (data?.accessToken) setOrgDriveToken(data.accessToken); })
+            .catch(() => { });
+    }, []);
+
     // Pre-select current user as designer
     useEffect(() => {
         if (profile?.id && designers?.length > 0 && !formData.designerId) {
@@ -230,14 +239,15 @@ export default function NewProjectPage() {
             if (error) throw error;
 
             // Upload files to Google Drive
-            if (formData.files.length > 0 && session?.accessToken) {
+            if (formData.files.length > 0 && (orgDriveToken || session?.accessToken)) {
+                const driveToken = (orgDriveToken || session!.accessToken) as string;
                 const uploadedLinks: string[] = [];
                 for (let i = 0; i < formData.files.length; i++) {
                     const file = formData.files[i];
                     setUploadProgress(`Uploading ${i + 1}/${formData.files.length}: ${file.name}`);
 
                     const result = await uploadToDrive(
-                        session.accessToken, file, undefined, undefined,
+                        driveToken, file, undefined, undefined,
                         { uploadedTo: `Design Project: ${formData.title}`, resourceId: newJob.id }
                     );
 
@@ -257,7 +267,7 @@ export default function NewProjectPage() {
             }
 
             // Create Calendar event
-            if (session?.accessToken && formData.deadline) {
+            if ((orgDriveToken || session?.accessToken) && formData.deadline) {
                 const calendarEvent = createProjectCalendarEvent(
                     formData.title,
                     formData.deadline.toISOString().split('T')[0],
@@ -265,7 +275,7 @@ export default function NewProjectPage() {
                     formData.driveLink
                 );
 
-                const eventResult = await createCalendarEvent(session.accessToken, calendarEvent);
+                const eventResult = await createCalendarEvent((orgDriveToken || session!.accessToken) as string, calendarEvent);
 
                 if (eventResult.success && eventResult.eventId) {
                     await supabase
@@ -672,7 +682,7 @@ export default function NewProjectPage() {
                             )}
 
                             {/* Warning if not signed in */}
-                            {!session?.accessToken && formData.files.length > 0 && (
+                            {!orgDriveToken && !session?.accessToken && formData.files.length > 0 && (
                                 <div className="bg-amber-50 border border-amber-200 rounded-md p-3 flex items-start gap-2">
                                     <Info size={14} className="text-amber-600 shrink-0 mt-0.5" />
                                     <p className="text-xs text-amber-800">
