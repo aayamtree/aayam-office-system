@@ -232,7 +232,7 @@ export default function AdminDashboardShadcn() {
                                         </Link>
                                     )}
                                     {pendingApprovals > 0 && (
-                                        <Link href="/admin/jobs">
+                                        <Link href="/admin/jobs?status=awaiting_admin">
                                             <Badge variant="outline" className="border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 cursor-pointer gap-1 animate-pulse">
                                                 <span className="font-bold">{pendingApprovals}</span> Pending Approval{pendingApprovals > 1 ? 's' : ''}
                                             </Badge>
