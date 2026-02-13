@@ -267,11 +267,16 @@ export default function DesignerWorkspace() {
     if (!profile?.id) return;
     try {
       setLoadingNotes(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from('designer_notes')
         .select('*')
-        .eq('user_id', profile.id)
         .order('note_date', { ascending: false });
+
+      // Admin sees all notes, designers see only their own
+      if (!isAdmin) {
+        query = query.eq('user_id', profile.id);
+      }
+      const { data, error } = await query;
 
       if (error) {
         if (error.code === '42P01') {
@@ -931,7 +936,7 @@ export default function DesignerWorkspace() {
                   <div>
                     <h2 className="font-bold text-gray-800 flex items-center gap-2">
                       <Briefcase size={18} className="text-primary" />
-                      {activeTab === 'notes' ? 'My Notes' : (isAdmin || activeTab === 'team_tasks' ? 'Team Queue' : 'My Queue')}
+                      {activeTab === 'notes' ? (isAdmin ? 'Team Notes' : 'My Notes') : (isAdmin || activeTab === 'team_tasks' ? 'Team Queue' : 'My Queue')}
                     </h2>
                     {isAdmin && activeTab !== 'notes' && (
                       <p className="text-xs text-gray-500 mt-1 ml-7">All designer tasks across team</p>
@@ -1049,6 +1054,9 @@ export default function DesignerWorkspace() {
                     {(notes || []).length === 0 ? <p className="text-center text-gray-400 text-xs py-4">No notes created.</p> : (notes || []).map((note, i) => (
                       <div key={note?.id || `note-${i}`} onClick={() => selectNoteForEdit(note)} className={`p-3 rounded-lg border cursor-pointer  transition-all bg-white ${selectedNote?.id === note?.id ? 'border-primary ring-1 ring-primary' : 'border-gray-100'}`}>
                         <div className="flex justify-between items-start mb-1"><h4 className="font-bold text-sm text-gray-800 line-clamp-1">{note?.title || 'Untitled'}</h4><span className="text-xs text-gray-400">{note?.note_date || ''}</span></div>
+                        {isAdmin && note?.user_id !== profile?.id && (
+                          <span className="text-[10px] font-bold text-primary bg-muted px-1.5 py-0.5 rounded mb-1 inline-block">{designers.find(d => d.user_id === note?.user_id)?.name || 'Designer'}</span>
+                        )}
                         <p className="text-xs text-gray-500 line-clamp-2">{note?.content || ''}</p>
                       </div>
                     ))}
