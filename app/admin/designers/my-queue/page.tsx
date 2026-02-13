@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { useJobs, useClients } from '@/lib/hooks';
+import { useJobs, useClients, useDesigners } from '@/lib/hooks';
 import { Calendar, Clock, User, AlertCircle, Search } from 'lucide-react';
 import Link from 'next/link';
 
@@ -10,16 +10,25 @@ export default function MyQueue() {
     const { profile } = useAuth();
     const { jobs, loading } = useJobs();
     const { clients } = useClients();
+    const { designers } = useDesigners();
     const [searchQuery, setSearchQuery] = useState('');
 
-    // Get my tasks
+    // Find the designer record whose user_id matches the logged-in profile
+    const myDesigner = designers.find(d => d.user_id === profile?.id);
+    const isAdmin = profile?.role === 'admin';
+
+    // Get my tasks: match on designers table ID, not profile ID
     const myTasks = (jobs || [])
-        .filter(job => job.designer_id === profile?.id)
-        .filter(job => job.current_stage !== 'delivered' && job.current_stage !== 'dispatched')
+        .filter(job => {
+            if (isAdmin) return true; // Admin sees all
+            return job.designer_id === myDesigner?.id;
+        })
+        .filter(job => job.current_stage !== 'delivered' && job.current_stage !== 'dispatched' && job.current_stage !== 'cancelled')
         .map(job => ({
             id: job.id,
             title: job.project_name,
             client: clients.find(c => c.id === job.client_id)?.name || 'Unknown',
+            designer: designers.find(d => d.id === job.designer_id)?.name || '',
             status: job.current_stage || 'new',
             priority: job.priority || 'normal',
             deadline: job.client_deadline,
