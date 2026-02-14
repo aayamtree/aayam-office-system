@@ -68,6 +68,10 @@ const menuItems: MenuItem[] = [
     icon: Printer,
     href: '/admin/print-planner',
     allowedRoles: ['admin', 'finance', 'cmyk'],
+    submenu: [
+      { name: 'Planner', href: '/admin/print-planner' },
+      { name: 'Print Runs', href: '/admin/print-runs' },
+    ]
   },
   {
     name: 'Design Studio',
