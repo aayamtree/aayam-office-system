@@ -145,8 +145,7 @@ export default function DesignerWorkspace() {
 
 
   // UI State
-  const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
-  const [creatingTask, setCreatingTask] = useState(false);
+
 
   // Daily Briefing State
   const [showDailyBriefing, setShowDailyBriefing] = useState(false);
@@ -181,12 +180,12 @@ export default function DesignerWorkspace() {
     setChecklist({});
   }, [selectedTaskId]);
 
-  // Handle ?action=new
+  // Handle ?action=new → redirect to dedicated page
   useEffect(() => {
     if (searchParams.get('action') === 'new') {
-      setIsNewTaskModalOpen(true);
+      router.push('/admin/designers/new-project');
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   // Check LocalStorage for Daily Briefing
   useEffect(() => {
@@ -400,27 +399,6 @@ export default function DesignerWorkspace() {
     if (selectedNote?.id === id) setSelectedNote(null);
   };
 
-  const [newTaskData, setNewTaskData] = useState<{
-    title: string;
-    clientId: string;
-    jobType: string;
-    deadline: string;
-    description: string;
-    priority: string;
-    driveLink: string;
-    designerId: string;
-    file?: File | null;
-  }>({
-    title: '',
-    clientId: '',
-    jobType: 'Design',
-    deadline: '',
-    description: '',
-    priority: 'normal',
-    driveLink: '',
-    designerId: '',
-    file: null
-  });
 
   // Safety: Prevent infinite loading
   const [forceShow, setForceShow] = useState(false);
@@ -608,73 +586,6 @@ export default function DesignerWorkspace() {
     }
   };
 
-  const handleCreateTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCreatingTask(true);
-
-    if (!newTaskData.title || !newTaskData.clientId) {
-      alert('Please select a client and enter project name');
-      setCreatingTask(false);
-      return;
-    }
-
-    try {
-      let initialFiles = [];
-
-      // 1. Add Drive Link if exists
-      if (newTaskData.driveLink) {
-        initialFiles.push({ name: 'Drive Link', url: newTaskData.driveLink, type: 'link', size: 0, uploaded_at: new Date().toISOString() });
-      }
-
-      // 2. Upload File if selected
-      if (newTaskData.file) {
-        const file = newTaskData.file;
-        const fileExt = file.name.split('.').pop();
-        // Use Timestamp + Random to ensure uniqueness in temp folder
-        const filePath = `temp-uploads/${Date.now()}_${Math.floor(Math.random() * 1000)}.${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage.from('files').upload(filePath, file);
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage.from('files').getPublicUrl(filePath);
-
-        initialFiles.push({
-          name: file.name,
-          url: publicUrl,
-          type: file.type,
-          size: file.size,
-          uploaded_at: new Date().toISOString()
-        });
-      }
-
-      // Find selected client to get company name if needed, but ID is enough for DB
-      const { error } = await createJob({
-        project_name: newTaskData.title,
-        client_id: newTaskData.clientId,
-        job_type: newTaskData.jobType,
-        priority: newTaskData.priority as any,
-        description: newTaskData.description + (newTaskData.driveLink ? `\n\nDrive Link: ${newTaskData.driveLink}` : ''),
-        client_deadline: newTaskData.deadline || null,
-        current_stage: 'new',
-        total_amount: 0,
-        amount_received: 0,
-        payment_status: 'pending',
-        designer_id: newTaskData.designerId || designers.find(d => d.user_id === profile?.id)?.id || null, // Resolve from designers table
-        files: initialFiles
-      } as any);
-
-      if (error) throw new Error(error);
-
-      alert('Project Created Successfully! Admin has been notified.');
-      setIsNewTaskModalOpen(false);
-      // Reset critical fields
-      setNewTaskData(prev => ({ ...prev, title: '', description: '', deadline: '', driveLink: '', file: null }));
-    } catch (e: any) {
-      alert('Error creating project: ' + e.message);
-    } finally {
-      setCreatingTask(false);
-    }
-  };
 
   const handleAddLog = (e: React.FormEvent) => {
     e.preventDefault();
@@ -719,7 +630,7 @@ export default function DesignerWorkspace() {
                   <button onClick={() => setView('notes')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Notes</button>
                 </div>
               </div>
-              <button onClick={() => setIsNewTaskModalOpen(true)} className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold flex gap-2 items-center"><Plus size={16} /> New Task</button>
+              <button onClick={() => router.push('/admin/designers/new-project')} className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold flex gap-2 items-center"><Plus size={16} /> New Task</button>
             </div>
 
             <div className="flex h-[calc(100%-5rem)] gap-3 md:gap-4 min-w-max pb-4">
@@ -846,7 +757,7 @@ export default function DesignerWorkspace() {
                   <button onClick={() => setView('notes')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Notes</button>
                 </div>
               </div>
-              <button onClick={() => setIsNewTaskModalOpen(true)} className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold flex gap-2 items-center"><Plus size={16} /> New Task</button>
+              <button onClick={() => router.push('/admin/designers/new-project')} className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold flex gap-2 items-center"><Plus size={16} /> New Task</button>
             </div>
 
             {/* Gantt Chart Body */}
@@ -946,7 +857,7 @@ export default function DesignerWorkspace() {
                     )}
                   </div>
                   <button
-                    onClick={() => setIsNewTaskModalOpen(true)}
+                    onClick={() => router.push('/admin/designers/new-project')}
                     className="p-2 bg-gray-900 text-white rounded-lg hover:bg-gray-900 transition-all flex items-center gap-1 text-xs font-bold px-3"
                   >
                     <Plus size={14} /> New Project
@@ -1585,222 +1496,6 @@ export default function DesignerWorkspace() {
         )}
       </div>
 
-      {/* New Project Modal */}
-      {
-        isNewTaskModalOpen && (
-          <div className="fixed inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60 flex items-center justify-center z-50 p-4 animate-in fade-in zoom-in duration-300 backdrop-blur-sm">
-            <div className="bg-white rounded-lg w-full max-w-4xl  overflow-hidden flex flex-col max-h-[90vh] border border-gray-100">
-              {/* Premium Gradient Header */}
-              <div className="relative p-4 bg-gray-900 overflow-hidden">
-                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30"></div>
-                <div className="relative flex justify-between items-start">
-                  <div className="flex items-start gap-2 md:gap-4">
-                    <div className="p-3 bg-white/20 backdrop-blur-lg rounded-lg">
-                      <Briefcase size={28} className="text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-white text-page-title mb-1">Create New Project</h3>
-                      <p className="text-white/80 text-sm">Initialize a new design or print job with all details</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setIsNewTaskModalOpen(false)}
-                    className="text-white/80 hover:text-white hover:bg-white/20 p-2.5 rounded-lg transition-all"
-                  >
-                    <X size={22} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Scrollable Content */}
-              <div className="overflow-y-auto p-8 flex-1 bg-gradient-to-b from-gray-50/50 to-white">
-                <form id="create-project-form" onSubmit={handleCreateTask} className="space-y-8">
-
-                  {/* 1. Project Basics */}
-                  <div className="space-y-5 bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
-                    <div className="flex items-center gap-3 pb-3 border-b-2 border-primary">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-900 text-white text-sm font-bold -200">
-                        1
-                      </div>
-                      <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Project Basics</h4>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div className="col-span-2">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                          📝 Project Name <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          required
-                          type="text"
-                          className="w-full border-2 border-gray-200 rounded-lg px-4 py-3.5 text-sm focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all font-medium hover:border-gray-300"
-                          placeholder="e.g. Wedding Invitation - Sharma Family"
-                          value={newTaskData.title}
-                          onChange={e => setNewTaskData({ ...newTaskData, title: e.target.value })}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                          👤 Client <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          required
-                          className="w-full border-2 border-gray-200 rounded-lg px-4 py-3.5 text-sm focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all bg-white hover:border-gray-300"
-                          value={newTaskData.clientId}
-                          onChange={e => setNewTaskData({ ...newTaskData, clientId: e.target.value })}
-                        >
-                          <option value="">Select Client</option>
-                          {clients?.map(c => <option key={c.id} value={c.id}>{c.company || c.name}</option>)}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                          🎨 Assign Designer
-                        </label>
-                        <select
-                          className="w-full border-2 border-gray-200 rounded-lg px-4 py-3.5 text-sm focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all bg-white hover:border-gray-300"
-                          value={newTaskData.designerId}
-                          onChange={e => setNewTaskData({ ...newTaskData, designerId: e.target.value })}
-                        >
-                          <option value="">Assign to Me (Default)</option>
-                          {designers?.map(d => (
-                            <option key={d.id} value={d.id}>{d.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 2. Parameters */}
-                  <div className="space-y-5 bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
-                    <div className="flex items-center gap-3 pb-3 border-b-2 border-gradient-to-r from-orange-500 to-red-500">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 text-white text-sm font-bold -200">
-                        2
-                      </div>
-                      <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Project Parameters</h4>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                          📋 Job Type
-                        </label>
-                        <select
-                          className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-sm focus:ring-4 ring-orange-500/20 focus:border-orange-500 bg-white hover:border-gray-300 transition-all"
-                          value={newTaskData.jobType}
-                          onChange={e => setNewTaskData({ ...newTaskData, jobType: e.target.value })}
-                        >
-                          <option value="Design">🎨 Design Only</option>
-                          <option value="Printing">🖨️ Printing Only</option>
-                          <option value="Design + Printing">✨ Design + Print</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                          📅 Deadline
-                        </label>
-                        <input
-                          type="date"
-                          className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-sm focus:ring-4 ring-orange-500/20 focus:border-orange-500 font-medium text-gray-600 hover:border-gray-300 transition-all"
-                          value={newTaskData.deadline}
-                          onChange={e => setNewTaskData({ ...newTaskData, deadline: e.target.value })}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                          ⚡ Priority
-                        </label>
-                        <select
-                          className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-sm focus:ring-4 ring-orange-500/20 focus:border-orange-500 bg-white hover:border-gray-300 transition-all"
-                          value={newTaskData.priority}
-                          onChange={e => setNewTaskData({ ...newTaskData, priority: e.target.value })}
-                        >
-                          <option value="normal">Normal</option>
-                          <option value="high">⚠️ High</option>
-                          <option value="urgent">🔥 Urgent</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 3. Assets & Brief */}
-                  <div className="space-y-5 bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
-                    <div className="flex items-center gap-3 pb-3 border-b-2 border-gray-300">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-gray-700 to-gray-800 text-white text-sm font-bold -200">
-                        3
-                      </div>
-                      <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Assets & Brief</h4>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-5 rounded-lg border-2 border-border space-y-3">
-                      <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                        <Folder size={18} className="text-foreground" />
-                        Design Assets (Drive Link or File Upload)
-                      </label>
-                      <input
-                        type="url"
-                        className="w-full border-2 border-border rounded-lg px-4 py-3.5 text-sm focus:ring-4 ring-gray-400/20 focus:border-gray-400 placeholder:text-gray-300 bg-white hover:border-border transition-all"
-                        placeholder="https://drive.google.com/drive/folders/..."
-                        value={newTaskData.driveLink}
-                        onChange={e => setNewTaskData({ ...newTaskData, driveLink: e.target.value })}
-                      />
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-bold text-gray-400">OR</span>
-                        <input
-                          type="file"
-                          onChange={e => {
-                            if (e.target.files && e.target.files.length > 0) {
-                              setNewTaskData({ ...newTaskData, file: e.target.files[0] });
-                            }
-                          }}
-                          className="text-xs text-gray-600 file:mr-3 file:py-2.5 file:px-5 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-gray-900 file:text-white hover:file:bg-gray-900 file: file:-200 file:transition-all"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                        📄 Description / Work Items
-                      </label>
-                      <textarea
-                        rows={4}
-                        className="w-full border-2 border-gray-200 rounded-lg px-4 py-3.5 text-sm focus:ring-4 ring-gray-400/20 focus:border-gray-400 leading-relaxed hover:border-gray-300 transition-all"
-                        placeholder="Describe specific requirements, items to print, size, quantity, special instructions..."
-                        value={newTaskData.description}
-                        onChange={e => setNewTaskData({ ...newTaskData, description: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                </form>
-              </div>
-
-              {/* Premium Footer with Action Buttons */}
-              <div className="p-4 border-t-2 border-gray-100 bg-gradient-to-r from-gray-50 to-white flex gap-2 md:gap-4 items-center justify-end">
-                <button
-                  type="button"
-                  onClick={() => setIsNewTaskModalOpen(false)}
-                  className="px-4 py-2 border-2 border-gray-300 rounded-lg font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  form="create-project-form"
-                  type="submit"
-                  disabled={creatingTask}
-                  className="px-8 py-2 bg-gray-900 text-white rounded-md font-bold 2xl -300 disabled:opacity-50 transition-all transform hover:scale-105 text-sm flex items-center gap-2"
-                >
-                  {creatingTask ? <><Loader2 size={18} className="animate-spin" /> Creating...</> : <><CheckCircle size={18} /> Create Project</>}
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      }
     </>
   );
 }
