@@ -756,10 +756,8 @@ export default function DesignerWorkspace() {
                             onClick={() => { setView('my_tasks'); setSelectedTaskId(task.id); }}
                             className={`bg-white p-4 rounded-lg border border-gray-100  transition-shadow cursor-pointer group relative ${borderClass}`}
                           >
-                            {/* Hold / Revision Badge */}
-                            {task.is_on_hold ? (
-                              <div className="absolute top-4 right-4 text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 flex items-center gap-1">⏸️ ON HOLD</div>
-                            ) : (
+                            {/* Revision Badge */}
+                            {!task.is_on_hold && (
                               <div className="absolute top-4 right-4 text-xs font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border">Rev {(task.id % 3) + 1}</div>
                             )}
 
@@ -819,6 +817,13 @@ export default function DesignerWorkspace() {
                               {/* Drive Link Indicator (if exists) */}
                               {task.driveLink && <div className="text-foreground"><Folder size={12} /></div>}
                             </div>
+
+                            {/* ON HOLD Banner — full width at bottom */}
+                            {task.is_on_hold && (
+                              <div className="-mx-4 -mb-4 mt-3 bg-amber-100 border-t border-amber-300 text-amber-800 text-[11px] font-bold text-center py-1.5 rounded-b-lg uppercase tracking-wider">
+                                ⏸️ ON HOLD
+                              </div>
+                            )}
                           </div>
                         )
                       })}
