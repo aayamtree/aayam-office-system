@@ -131,6 +131,9 @@ export default function JobsPage() {
   const [showAddPriorityModal, setShowAddPriorityModal] = useState(false);
   const [showAddStageModal, setShowAddStageModal] = useState(false);
   const [showSendToPrinterModal, setShowSendToPrinterModal] = useState(false);
+  const [showApproveDialog, setShowApproveDialog] = useState(false);
+  const [approvingJob, setApprovingJob] = useState<Job | null>(null);
+  const [approving, setApproving] = useState(false);
 
   // Database-driven configuration state
   const [productCategories, setProductCategories] = useState<any[]>([]);
@@ -336,15 +339,23 @@ export default function JobsPage() {
   };
 
   const handleApproveDesignerProject = async (job: Job) => {
-    if (!confirm(`Approve project "${job.project_name}" and activate for the designer?`)) return;
+    setApprovingJob(job);
+    setShowApproveDialog(true);
+  };
+
+  const confirmApproval = async () => {
+    if (!approvingJob) return;
+    setApproving(true);
     const { error } = await supabase
       .from('jobs')
       .update({ current_stage: 'new', updated_at: new Date().toISOString() })
-      .eq('id', job.id);
+      .eq('id', approvingJob.id);
+    setApproving(false);
+    setShowApproveDialog(false);
+    setApprovingJob(null);
     if (error) {
       alert('Failed to approve: ' + error.message);
     } else {
-      alert('Project approved! The designer can now start work.');
       window.location.reload();
     }
   };
@@ -1206,6 +1217,41 @@ export default function JobsPage() {
                   Send to Print
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Approve Designer Project Dialog */}
+      {showApproveDialog && approvingJob && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => !approving && setShowApproveDialog(false)}>
+          <div className="bg-white rounded-lg w-full max-w-sm animate-scale-in" onClick={e => e.stopPropagation()}>
+            <div className="p-5 text-center">
+              <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">✅</span>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Approve Project?</h3>
+              <p className="text-sm text-gray-600 mb-1">
+                <strong>{approvingJob.job_number}</strong> — {approvingJob.project_name}
+              </p>
+              <p className="text-xs text-gray-400">This will activate the project for the designer to start work.</p>
+            </div>
+            <div className="p-4 border-t flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => { setShowApproveDialog(false); setApprovingJob(null); }}
+                disabled={approving}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                onClick={confirmApproval}
+                disabled={approving}
+              >
+                {approving ? 'Approving...' : 'Approve & Activate'}
+              </Button>
             </div>
           </div>
         </div>
