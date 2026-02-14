@@ -127,6 +127,10 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
 
     useEffect(() => {
         if (!jobId) return;
+        // Reset form state when switching projects
+        setContent('');
+        setTag('design_note');
+        setSource('self');
         fetchNotes();
         const channel = supabase
             .channel(`job-notes-${jobId}`)
