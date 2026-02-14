@@ -35,7 +35,7 @@ interface NoteItem {
 
 interface JobOption {
     id: string;
-    job_id: string;
+    job_number: string;
     project_name: string;
 }
 
@@ -117,7 +117,7 @@ export default function MyNotes() {
     const loadJobs = async () => {
         const { data } = await supabase
             .from('jobs')
-            .select('id, job_id, project_name')
+            .select('id, job_number, project_name')
             .order('created_at', { ascending: false })
             .limit(50);
         if (data) setJobs(data as JobOption[]);
@@ -429,7 +429,7 @@ export default function MyNotes() {
 
     const getJobName = (jobId: string) => {
         const job = jobs.find(j => j.id === jobId);
-        return job ? `${job.job_id} — ${job.project_name}` : '';
+        return job ? `${job.job_number} — ${job.project_name}` : '';
     };
 
     const filteredMentionMembers = teamMembers.filter(m =>
@@ -721,7 +721,7 @@ export default function MyNotes() {
                                         >
                                             <option value="">🔗 Link to project...</option>
                                             {jobs.map(j => (
-                                                <option key={j.id} value={j.id}>{j.job_id} — {j.project_name}</option>
+                                                <option key={j.id} value={j.id}>{j.job_number} — {j.project_name}</option>
                                             ))}
                                         </select>
 
