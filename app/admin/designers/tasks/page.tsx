@@ -11,7 +11,7 @@ import {
   Plus, Search, Calendar, Clock, Edit, Trash2, Eye, X, ArrowLeft, ArrowRight, CheckCircle, XCircle,
   AlertCircle, User, Briefcase, MessageSquare, Paperclip, ExternalLink,
   FileText, Image, Video, Music, File, ChevronRight, Save, Send, MoreHorizontal,
-  ChevronLeft, Loader2, Folder, GanttChart, Layout, Monitor, AlertTriangle, Palette, Printer
+  ChevronLeft, Loader2, Folder, GanttChart, Layout, Monitor, AlertTriangle, Palette, Printer, Lock
 } from 'lucide-react';
 import ProjectNotesLog from '@/components/ProjectNotesLog';
 
@@ -1248,15 +1248,26 @@ export default function DesignerWorkspace() {
                         </select>
                       </div>
 
-                      <div className="flex-1 md:flex-none flex items-center gap-2 bg-gray-50 p-1 rounded-lg border w-full md:w-auto">
-                        <span className="text-xs font-bold text-gray-500 pl-2 uppercase whitespace-nowrap">Status:</span>
-                        <select
-                          value={selectedTask.status}
-                          onChange={(e) => updateStatus(selectedTask.realId, e.target.value)}
-                          className="flex-1 md:flex-none bg-transparent text-gray-700 text-sm rounded px-2 py-1 cursor-pointer focus:ring-0 border-none outline-none font-semibold hover:bg-white transition-colors"
-                        >
-                          {taskStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                        </select>
+                      <div className={`flex-1 md:flex-none flex items-center gap-2 p-1 rounded-lg border w-full md:w-auto ${['printing', 'finishing', 'quality_check', 'ready', 'delivered'].includes(selectedTask.current_stage || '')
+                        ? 'bg-gray-900 border-gray-900'
+                        : 'bg-gray-50'
+                        }`}>
+                        {['printing', 'finishing', 'quality_check', 'ready', 'delivered'].includes(selectedTask.current_stage || '') ? (
+                          <span className="flex items-center gap-2 text-white text-xs font-bold px-3 py-1">
+                            <Lock size={12} /> Locked — Sent to Print
+                          </span>
+                        ) : (
+                          <>
+                            <span className="text-xs font-bold text-gray-500 pl-2 uppercase whitespace-nowrap">Status:</span>
+                            <select
+                              value={selectedTask.status}
+                              onChange={(e) => updateStatus(selectedTask.realId, e.target.value)}
+                              className="flex-1 md:flex-none bg-transparent text-gray-700 text-sm rounded px-2 py-1 cursor-pointer focus:ring-0 border-none outline-none font-semibold hover:bg-white transition-colors"
+                            >
+                              {taskStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                            </select>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1305,66 +1316,68 @@ export default function DesignerWorkspace() {
                       </div>
                     </section>
 
-                    {/* 3. Project Notes & Feedback Log (handles approval + revisions) */}
+                    {/* 3. Project Notes & Feedback Log (handles approval + revisions + lock) */}
                     {selectedTask?.realId && (() => {
                       const myDesigner = designers.find((d: any) => d.user_id === profile?.id);
                       const isAssignedDesigner = myDesigner ? selectedTask.designerId === myDesigner.id : false;
                       const canWriteNotes = isAdmin || isAssignedDesigner;
-                      return <ProjectNotesLog jobId={selectedTask.realId} canWrite={canWriteNotes} onStageChange={() => refetchJobs()} />;
+                      return <ProjectNotesLog jobId={selectedTask.realId} canWrite={canWriteNotes} isAdmin={isAdmin} currentStage={selectedTask.current_stage || 'new'} onStageChange={() => refetchJobs()} />;
                     })()}
 
 
 
-                    {/* 5. Final Review & Checklist */}
-                    <section className="bg-gradient-to-br bg-white p-4 rounded-lg border border-gray-200 space-y-4">
-                      <h4 className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-2">
-                        <CheckCircle size={16} /> Pre-Print Checklist (Mandatory)
-                      </h4>
-                      <div className="grid grid-cols-2 gap-3">
-                        {(checklistConfig[selectedTask.jobType] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed']).map((label, i) => (
-                          <label key={i} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg cursor-pointer hover:border-border transition-colors">
+                    {/* 5. Final Review & Checklist — hidden when locked */}
+                    {!['printing', 'finishing', 'quality_check', 'ready', 'delivered'].includes(selectedTask.current_stage || '') && (
+                      <section className="bg-gradient-to-br bg-white p-4 rounded-lg border border-gray-200 space-y-4">
+                        <h4 className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-2">
+                          <CheckCircle size={16} /> Pre-Print Checklist (Mandatory)
+                        </h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          {(checklistConfig[selectedTask.jobType] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed']).map((label, i) => (
+                            <label key={i} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg cursor-pointer hover:border-border transition-colors">
+                              <input type="checkbox"
+                                checked={!!checklist[`item_${i}`]}
+                                onChange={e => setChecklist(prev => ({ ...prev, [`item_${i}`]: e.target.checked }))}
+                                className="w-4 h-4 text-primary rounded focus:ring-gray-400 border-gray-300"
+                              />
+                              <span className="text-sm font-bold text-gray-600">{label}</span>
+                            </label>
+                          ))}
+                          <label className="col-span-2 flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg cursor-pointer hover:border-border transition-colors">
                             <input type="checkbox"
-                              checked={!!checklist[`item_${i}`]}
-                              onChange={e => setChecklist(prev => ({ ...prev, [`item_${i}`]: e.target.checked }))}
+                              checked={checklist.approval || false}
+                              onChange={e => setChecklist(prev => ({ ...prev, approval: e.target.checked }))}
                               className="w-4 h-4 text-primary rounded focus:ring-gray-400 border-gray-300"
                             />
-                            <span className="text-sm font-bold text-gray-600">{label}</span>
+                            <span className="text-sm font-bold text-gray-600 flex items-center gap-2"><Paperclip size={14} /> Client Approval Attached / Verified</span>
                           </label>
-                        ))}
-                        <label className="col-span-2 flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg cursor-pointer hover:border-border transition-colors">
-                          <input type="checkbox"
-                            checked={checklist.approval || false}
-                            onChange={e => setChecklist(prev => ({ ...prev, approval: e.target.checked }))}
-                            className="w-4 h-4 text-primary rounded focus:ring-gray-400 border-gray-300"
-                          />
-                          <span className="text-sm font-bold text-gray-600 flex items-center gap-2"><Paperclip size={14} /> Client Approval Attached / Verified</span>
-                        </label>
-                      </div>
+                        </div>
 
-                      <div className="pt-4 border-t border-gray-200">
-                        {(() => {
-                          const requiredList = checklistConfig[selectedTask.jobType] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed'];
-                          const allMainChecks = requiredList.every((_, i) => checklist[`item_${i}`]);
-                          const isComplete = allMainChecks && checklist.approval;
+                        <div className="pt-4 border-t border-gray-200">
+                          {(() => {
+                            const requiredList = checklistConfig[selectedTask.jobType] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed'];
+                            const allMainChecks = requiredList.every((_, i) => checklist[`item_${i}`]);
+                            const isComplete = allMainChecks && checklist.approval;
 
-                          return (
-                            <button
-                              disabled={!isComplete}
-                              onClick={() => {
-                                if (confirm('Are you sure? This will lock the task for printing.')) {
-                                  updateStatus(selectedTask.realId, 'completed');
-                                }
-                              }}
-                              className="w-full py-4 rounded-lg font-bold text-white -200 flex items-center justify-center gap-2 transition-all
-                             disabled:bg-gray-300 disabled: disabled:cursor-not-allowed bg-gray-900 hover:bg-gray-900 hover:scale-[1.01]"
-                            >
-                              {isComplete ? <><Printer size={20} /> Client Approved - Ready for Print</> : 'Complete Checklist to Finish'}
-                            </button>
-                          )
-                        })()}
-                        <p className="text-center text-xs text-gray-400 mt-2 font-medium uppercase tracking-wide">Prevents costly print mistakes</p>
-                      </div>
-                    </section>
+                            return (
+                              <button
+                                disabled={!isComplete}
+                                onClick={() => {
+                                  if (confirm('Are you sure? This will lock the task for printing.')) {
+                                    updateStatus(selectedTask.realId, 'completed');
+                                  }
+                                }}
+                                className="w-full py-4 rounded-lg font-bold text-white flex items-center justify-center gap-2 transition-all
+                             disabled:bg-gray-300 disabled:cursor-not-allowed bg-gray-900 hover:bg-gray-900 hover:scale-[1.01]"
+                              >
+                                {isComplete ? <><Printer size={20} /> Client Approved - Ready for Print</> : 'Complete Checklist to Finish'}
+                              </button>
+                            )
+                          })()}
+                          <p className="text-center text-xs text-gray-400 mt-2 font-medium uppercase tracking-wide">Prevents costly print mistakes</p>
+                        </div>
+                      </section>
+                    )}
                   </div>
                 </>
               ) : (
