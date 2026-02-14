@@ -3,7 +3,14 @@
 import { useState } from 'react';
 import { PrintJobQueue } from '@/components/print-planner/PrintJobQueue';
 import { CreatePrintRunForm } from '@/components/print-planner/CreatePrintRunForm';
-import { ArrowLeft, ArrowRight, CheckCircle, Layers, Package, Settings2, Users } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Layers, Package, Settings2, Users, AlertTriangle } from 'lucide-react';
+
+const PULLING_MULTIPLE = 500; // Industry standard: sheets come in multiples of 500
+
+function roundToMultiple(n: number, multiple: number): number {
+    if (n <= 0) return 0;
+    return Math.ceil(n / multiple) * multiple;
+}
 
 interface PendingJob {
     id: string;
@@ -21,7 +28,10 @@ interface PendingJob {
 interface ConfiguredJob extends PendingJob {
     quantity_needed: number;
     ups_in_sheet: number;
-    sheets_required: number;
+    sheets_required: number;   // Raw calculation: ceil(qty / ups)
+    pulling_sheets: number;    // Rounded to nearest 500
+    actual_print_qty: number;  // pulling_sheets × ups
+    extra_prints: number;      // actual - needed (waste)
 }
 
 const STEPS = [
@@ -54,12 +64,22 @@ export default function PrintPlannerPage() {
 
     // Step 1 → Step 2: Initialize configured jobs
     const goToStep2 = () => {
-        const configured: ConfiguredJob[] = selectedJobs.map(job => ({
-            ...job,
-            quantity_needed: job.quantity || 0,
-            ups_in_sheet: 1,
-            sheets_required: job.quantity || 0, // qty / 1 ups
-        }));
+        const configured: ConfiguredJob[] = selectedJobs.map(job => {
+            const qty = job.quantity || 0;
+            const ups = 1;
+            const rawSheets = qty > 0 ? Math.ceil(qty / ups) : 0;
+            const pulling = roundToMultiple(rawSheets, PULLING_MULTIPLE);
+            const actualQty = pulling * ups;
+            return {
+                ...job,
+                quantity_needed: qty,
+                ups_in_sheet: ups,
+                sheets_required: rawSheets,
+                pulling_sheets: pulling,
+                actual_print_qty: actualQty,
+                extra_prints: actualQty - qty,
+            };
+        });
         setConfiguredJobs(configured);
         setStep(2);
     };
@@ -69,10 +89,14 @@ export default function PrintPlannerPage() {
         setConfiguredJobs(prev => prev.map(job => {
             if (job.id !== jobId) return job;
             const updated = { ...job, [field]: value };
-            // Recalculate sheets
-            updated.sheets_required = updated.ups_in_sheet > 0
+            // Recalculate sheets with pulling
+            const rawSheets = updated.ups_in_sheet > 0
                 ? Math.ceil(updated.quantity_needed / updated.ups_in_sheet)
                 : 0;
+            updated.sheets_required = rawSheets;
+            updated.pulling_sheets = roundToMultiple(rawSheets, PULLING_MULTIPLE);
+            updated.actual_print_qty = updated.pulling_sheets * updated.ups_in_sheet;
+            updated.extra_prints = updated.actual_print_qty - updated.quantity_needed;
             return updated;
         }));
     };
@@ -106,7 +130,15 @@ export default function PrintPlannerPage() {
             ? Math.max(...configuredJobs.map(j => j.sheets_required))
             : configuredJobs.reduce((sum, j) => sum + j.sheets_required, 0))
         : 0;
+    const totalPullingSheets = configuredJobs.length > 0
+        ? (isMultiClient
+            ? roundToMultiple(Math.max(...configuredJobs.map(j => j.pulling_sheets)), PULLING_MULTIPLE)
+            : configuredJobs.reduce((sum, j) => sum + j.pulling_sheets, 0))
+        : 0;
     const totalQty = configuredJobs.reduce((sum, j) => sum + j.quantity_needed, 0);
+    const totalActualQty = configuredJobs.reduce((sum, j) => sum + j.actual_print_qty, 0);
+    const totalExtra = configuredJobs.reduce((sum, j) => sum + j.extra_prints, 0);
+    const wastePercent = totalQty > 0 ? ((totalExtra / totalQty) * 100).toFixed(1) : '0';
 
     return (
         <div className="min-h-screen bg-gray-50 p-4 pb-12">
@@ -130,10 +162,10 @@ export default function PrintPlannerPage() {
                                 }}
                                 disabled={!isCompleted && !isActive}
                                 className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all w-full ${isActive
-                                        ? 'bg-gray-900 text-white'
-                                        : isCompleted
-                                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer'
-                                            : 'bg-gray-50 text-gray-400 cursor-default'
+                                    ? 'bg-gray-900 text-white'
+                                    : isCompleted
+                                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer'
+                                        : 'bg-gray-50 text-gray-400 cursor-default'
                                     }`}
                             >
                                 <Icon size={16} />
@@ -269,58 +301,83 @@ export default function PrintPlannerPage() {
                                     <th className="text-left text-xs font-bold text-gray-600 px-4 py-3">Job #</th>
                                     <th className="text-left text-xs font-bold text-gray-600 px-4 py-3">Client</th>
                                     <th className="text-left text-xs font-bold text-gray-600 px-4 py-3">Project</th>
-                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-32">Qty Needed</th>
-                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-28">UPS / Sheet</th>
-                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-28">Sheets Required</th>
-                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-16"></th>
+                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-28">Qty Needed</th>
+                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-24">UPS / Sheet</th>
+                                    <th className="text-center text-xs font-bold text-gray-500 px-4 py-3 w-24">Raw Sheets</th>
+                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-28">Pulling (×500)</th>
+                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-28">Actual Qty</th>
+                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-24">Extra</th>
+                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-12"></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {configuredJobs.map((job, idx) => (
-                                    <tr key={job.id} className={`border-b border-gray-100 ${idx % 2 === 0 ? '' : 'bg-gray-50/50'}`}>
-                                        <td className="px-4 py-3">
-                                            <span className="font-mono text-sm font-bold text-gray-900">{job.job_number}</span>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <span className="text-sm text-gray-700">{job.client_name}</span>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <span className="text-sm text-gray-700">{job.project_name}</span>
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                value={job.quantity_needed}
-                                                onChange={(e) => updateJobConfig(job.id, 'quantity_needed', parseInt(e.target.value) || 0)}
-                                                className="w-24 px-3 py-1.5 text-center text-sm border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none"
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                value={job.ups_in_sheet}
-                                                onChange={(e) => updateJobConfig(job.id, 'ups_in_sheet', parseInt(e.target.value) || 1)}
-                                                className="w-20 px-3 py-1.5 text-center text-sm font-bold border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none bg-gray-50"
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <span className="inline-block px-3 py-1.5 bg-gray-100 rounded-md text-sm font-bold text-gray-900 min-w-[60px]">
-                                                {job.sheets_required.toLocaleString()}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <button
-                                                onClick={() => removeJobStep2(job.id)}
-                                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-all"
-                                                title="Remove job"
-                                            >
-                                                ✕
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {configuredJobs.map((job, idx) => {
+                                    const wasteRate = job.quantity_needed > 0 ? (job.extra_prints / job.quantity_needed) * 100 : 0;
+                                    return (
+                                        <tr key={job.id} className={`border-b border-gray-100 ${idx % 2 === 0 ? '' : 'bg-gray-50/50'}`}>
+                                            <td className="px-4 py-3">
+                                                <span className="font-mono text-sm font-bold text-gray-900">{job.job_number}</span>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <span className="text-sm text-gray-700">{job.client_name}</span>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <span className="text-sm text-gray-700">{job.project_name}</span>
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    value={job.quantity_needed}
+                                                    onChange={(e) => updateJobConfig(job.id, 'quantity_needed', parseInt(e.target.value) || 0)}
+                                                    className="w-24 px-3 py-1.5 text-center text-sm border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none"
+                                                />
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={job.ups_in_sheet}
+                                                    onChange={(e) => updateJobConfig(job.id, 'ups_in_sheet', parseInt(e.target.value) || 1)}
+                                                    className="w-20 px-3 py-1.5 text-center text-sm font-bold border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none bg-gray-50"
+                                                />
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className="text-sm text-gray-400">{job.sheets_required.toLocaleString()}</span>
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className="inline-block px-3 py-1.5 bg-gray-900 text-white rounded-md text-sm font-bold min-w-[60px]">
+                                                    {job.pulling_sheets.toLocaleString()}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className="text-sm font-semibold text-gray-700">{job.actual_print_qty.toLocaleString()}</span>
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                {job.extra_prints > 0 ? (
+                                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-bold ${wasteRate > 30 ? 'bg-red-50 text-red-700'
+                                                            : wasteRate > 15 ? 'bg-amber-50 text-amber-700'
+                                                                : 'bg-green-50 text-green-700'
+                                                        }`}>
+                                                        +{job.extra_prints.toLocaleString()}
+                                                        <span className="text-[10px] opacity-70">({wasteRate.toFixed(0)}%)</span>
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400">—</span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <button
+                                                    onClick={() => removeJobStep2(job.id)}
+                                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-all"
+                                                    title="Remove job"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                             <tfoot>
                                 <tr className="bg-gray-100 border-t-2 border-gray-300">
@@ -334,14 +391,39 @@ export default function PrintPlannerPage() {
                                         <span className="text-xs text-gray-500">—</span>
                                     </td>
                                     <td className="px-4 py-3 text-center">
+                                        <span className="text-xs text-gray-400">{totalSheets.toLocaleString()}</span>
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
                                         <span className="inline-block px-3 py-1.5 bg-gray-900 text-white rounded-md text-sm font-bold min-w-[60px]">
-                                            {totalSheets.toLocaleString()}
+                                            {totalPullingSheets.toLocaleString()}
                                         </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <span className="text-sm font-bold text-gray-900">{totalActualQty.toLocaleString()}</span>
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        {totalExtra > 0 && (
+                                            <span className="text-xs font-bold text-amber-600">+{totalExtra.toLocaleString()} ({wastePercent}%)</span>
+                                        )}
                                     </td>
                                     <td></td>
                                 </tr>
                             </tfoot>
                         </table>
+                    </div>
+
+                    {/* Pulling Info Banner */}
+                    <div className="mx-4 my-3 p-3 bg-blue-50 rounded-md border border-blue-200">
+                        <div className="flex items-start gap-2">
+                            <AlertTriangle size={16} className="text-blue-600 mt-0.5 shrink-0" />
+                            <div>
+                                <p className="text-sm font-bold text-blue-900">Sheet Pulling — ×{PULLING_MULTIPLE}</p>
+                                <p className="text-xs text-blue-700 mt-0.5">
+                                    Printing press pulls in multiples of {PULLING_MULTIPLE} sheets. Raw sheet count is rounded up.
+                                    {totalExtra > 0 && <> You&apos;ll get <strong>+{totalExtra.toLocaleString()} extra prints</strong> ({wastePercent}% over needed).</>}
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Gang Sheet Info */}
@@ -404,12 +486,22 @@ export default function PrintPlannerPage() {
                             </div>
                             <div className="p-3 bg-gray-50 rounded-md text-center">
                                 <p className="text-2xl font-bold text-gray-900">{totalQty.toLocaleString()}</p>
-                                <p className="text-xs text-gray-500">Total Qty</p>
+                                <p className="text-xs text-gray-500">Qty Needed</p>
                             </div>
                             <div className="p-3 bg-gray-900 rounded-md text-center">
-                                <p className="text-2xl font-bold text-white">{totalSheets.toLocaleString()}</p>
-                                <p className="text-xs text-gray-300">Total Sheets</p>
+                                <p className="text-2xl font-bold text-white">{totalPullingSheets.toLocaleString()}</p>
+                                <p className="text-xs text-gray-300">Pulling Sheets</p>
                             </div>
+                            <div className="p-3 bg-gray-50 rounded-md text-center">
+                                <p className="text-2xl font-bold text-gray-900">{totalActualQty.toLocaleString()}</p>
+                                <p className="text-xs text-gray-500">Actual Print</p>
+                            </div>
+                            {totalExtra > 0 && (
+                                <div className="p-3 bg-amber-50 rounded-md text-center border border-amber-200">
+                                    <p className="text-2xl font-bold text-amber-700">+{totalExtra.toLocaleString()}</p>
+                                    <p className="text-xs text-amber-600">Extra ({wastePercent}%)</p>
+                                </div>
+                            )}
                         </div>
 
                         {isMultiClient && (
@@ -426,11 +518,12 @@ export default function PrintPlannerPage() {
                                 <div key={job.id} className="p-2.5 bg-gray-50 rounded-md">
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-bold text-gray-900">{job.job_number}</span>
-                                        <span className="text-xs text-gray-500">{job.sheets_required} sheets</span>
+                                        <span className="text-xs font-bold text-gray-700">{job.pulling_sheets.toLocaleString()} sheets</span>
                                     </div>
                                     <p className="text-xs text-gray-500 mt-0.5">{job.client_name} · {job.project_name}</p>
                                     <p className="text-xs text-gray-400 mt-0.5">
-                                        {job.quantity_needed.toLocaleString()} qty × {job.ups_in_sheet}-up
+                                        {job.quantity_needed.toLocaleString()} qty × {job.ups_in_sheet}-up → {job.actual_print_qty.toLocaleString()} prints
+                                        {job.extra_prints > 0 && <span className="text-amber-600"> (+{job.extra_prints.toLocaleString()} extra)</span>}
                                     </p>
                                 </div>
                             ))}
