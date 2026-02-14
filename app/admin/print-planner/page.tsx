@@ -475,7 +475,6 @@ export default function PrintPlannerPage() {
                                 <p className="text-xs text-blue-700 mt-0.5">
                                     Client needs <strong>{totalQty.toLocaleString()}</strong> →
                                     We print <strong>{totalActualQty.toLocaleString()}</strong>
-                                    {totalExtra > 0 && <> (<strong>+{totalExtra.toLocaleString()}</strong> extra due to pulling)</>}
                                 </p>
                             </div>
                         </div>
