@@ -48,7 +48,7 @@ function timeAgo(dateStr: string): string {
 export default function Header({ onMenuClick }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAdmin } = useAuth();
+  const { isAdmin, profile } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [hasUrgent, setHasUrgent] = useState(false);
@@ -142,13 +142,38 @@ export default function Header({ onMenuClick }: HeaderProps) {
           });
         });
       }
+
+      // 4. @mention notifications for this user (last 48h)
+      if (profile?.id) {
+        const twoDaysAgo = new Date(Date.now() - 172800000).toISOString();
+        const { data: mentionNotifs } = await supabase
+          .from('broadcast_notifications')
+          .select('id, message, created_at')
+          .eq('target_audience', `user_${profile.id}`)
+          .gt('created_at', twoDaysAgo)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (mentionNotifs?.length) {
+          mentionNotifs.forEach(notif => {
+            items.push({
+              id: `mention-${notif.id}`,
+              title: 'You were mentioned',
+              desc: notif.message || 'Someone tagged you in a note',
+              time: timeAgo(notif.created_at),
+              type: 'info',
+              href: '/admin/designers/my-notes',
+            });
+          });
+        }
+      }
     } catch (err) {
       console.error('Failed to fetch notifications:', err);
     }
 
     setNotifications(items);
     setHasUrgent(items.some(n => n.type === 'danger'));
-  }, []);
+  }, [profile?.id]);
 
   // Fetch on mount and every 60 seconds
   useEffect(() => {

@@ -36,10 +36,11 @@ export function NotificationPopup() {
                 },
                 (payload) => {
                     const newNotification = payload.new as Notification;
-                    // Only show if targeted at this user's role or all
+                    // Show if targeted at this user specifically, their role, or all
                     if (
                         newNotification.target_audience === 'all' ||
-                        newNotification.target_audience === profile.role
+                        newNotification.target_audience === profile.role ||
+                        newNotification.target_audience === `user_${profile.id}`
                     ) {
                         setNotifications((prev) => [newNotification, ...prev]);
                     }
@@ -59,9 +60,9 @@ export function NotificationPopup() {
         const { data: notifs } = await supabase
             .from('broadcast_notifications')
             .select('*')
-            .or(`target_audience.eq.all,target_audience.eq.${profile.role}`)
+            .or(`target_audience.eq.all,target_audience.eq.${profile.role},target_audience.eq.user_${profile.id}`)
             .order('created_at', { ascending: false })
-            .limit(5);
+            .limit(10);
 
         if (notifs) {
             // Get dismissed notification IDs

@@ -321,16 +321,15 @@ export default function MyNotes() {
 
     const sendMentionNotifications = async (userIds: string[], noteTitle: string) => {
         const authorName = profile?.full_name || 'Someone';
-        const notifications = userIds.map(userId => ({
-            message: `📝 ${authorName} mentioned you in a note: "${noteTitle}"`,
-            priority: 'normal',
-            target_audience: 'all', // We handle targeting via the user check
-            created_by: profile?.id,
-        }));
 
-        // Insert into broadcast_notifications
-        for (const notif of notifications) {
-            await supabase.from('broadcast_notifications').insert(notif).select();
+        // Insert one notification per tagged user, targeting them specifically
+        for (const userId of userIds) {
+            await supabase.from('broadcast_notifications').insert({
+                message: `📝 ${authorName} mentioned you in a note: "${noteTitle}"`,
+                priority: 'normal',
+                target_audience: `user_${userId}`,
+                created_by: profile?.id,
+            }).select();
         }
     };
 
