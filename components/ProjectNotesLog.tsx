@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { NoteTag, NoteSource } from '@/types/database';
+import { useConfirm } from '@/components/ConfirmModal';
 import {
     MessageSquare, Send, FileText, Lock,
     AlertCircle, CheckCircle, Palette, RefreshCw, Loader2, MessageCircle, RotateCcw
@@ -52,6 +53,7 @@ interface NoteWithUser {
 
 export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage, onStageChange }: ProjectNotesLogProps) {
     const { profile } = useAuth();
+    const confirmDialog = useConfirm();
     const [notes, setNotes] = useState<NoteWithUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -204,7 +206,8 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
     };
 
     const handleDelete = async (noteId: string) => {
-        if (!confirm('Delete this note?')) return;
+        const { confirmed } = await confirmDialog({ title: 'Delete Note', message: 'Are you sure you want to delete this note?', variant: 'danger', confirmLabel: 'Delete' });
+        if (!confirmed) return;
         try {
             await supabase.from('job_notes').delete().eq('id', noteId);
             await fetchNotes();
@@ -305,14 +308,14 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
                                 <div
                                     key={note.id}
                                     className={`rounded-lg border p-3 transition-all ${note.tag === 'approved_closed'
-                                            ? 'bg-green-50/50 border-green-300 border-l-[3px] border-l-green-600'
-                                            : note.tag === 'approved'
-                                                ? 'bg-green-50/30 border-green-200 border-l-[3px] border-l-green-400'
-                                                : note.tag === 'correction'
-                                                    ? 'bg-red-50/30 border-red-200 border-l-[3px] border-l-red-400'
-                                                    : isAdminNote
-                                                        ? 'bg-white border-orange-200 border-l-[3px] border-l-orange-400'
-                                                        : 'bg-white border-gray-100'
+                                        ? 'bg-green-50/50 border-green-300 border-l-[3px] border-l-green-600'
+                                        : note.tag === 'approved'
+                                            ? 'bg-green-50/30 border-green-200 border-l-[3px] border-l-green-400'
+                                            : note.tag === 'correction'
+                                                ? 'bg-red-50/30 border-red-200 border-l-[3px] border-l-red-400'
+                                                : isAdminNote
+                                                    ? 'bg-white border-orange-200 border-l-[3px] border-l-orange-400'
+                                                    : 'bg-white border-gray-100'
                                         }`}
                                 >
                                     <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -368,8 +371,8 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
                                         type="button"
                                         onClick={() => setTag(key)}
                                         className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full border transition-all ${tag === key
-                                                ? `${conf.bg} ${conf.text} border-current ring-1 ring-current/20`
-                                                : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-100'
+                                            ? `${conf.bg} ${conf.text} border-current ring-1 ring-current/20`
+                                            : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-100'
                                             }`}
                                     >
                                         {conf.icon} {conf.label}
@@ -408,9 +411,9 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
                                 type="submit"
                                 disabled={!content.trim() || saving}
                                 className={`p-2 rounded-md transition-colors disabled:opacity-40 ${isLocked && isAdmin ? 'bg-red-600 text-white hover:bg-red-700' :
-                                        tag === 'approved_closed' ? 'bg-green-700 text-white hover:bg-green-800' :
-                                            tag === 'approved' ? 'bg-green-600 text-white hover:bg-green-700' :
-                                                'bg-gray-900 text-white hover:bg-gray-800'
+                                    tag === 'approved_closed' ? 'bg-green-700 text-white hover:bg-green-800' :
+                                        tag === 'approved' ? 'bg-green-600 text-white hover:bg-green-700' :
+                                            'bg-gray-900 text-white hover:bg-gray-800'
                                     }`}
                             >
                                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}

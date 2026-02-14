@@ -14,6 +14,7 @@ import {
   ChevronLeft, Loader2, Folder, GanttChart, Layout, Monitor, AlertTriangle, Palette, Printer, Lock
 } from 'lucide-react';
 import ProjectNotesLog from '@/components/ProjectNotesLog';
+import { useConfirm } from '@/components/ConfirmModal';
 
 // --- HELPERS ---
 const getDesignerStatus = (stage: string) => {
@@ -150,6 +151,7 @@ export default function DesignerWorkspace() {
 
   /* Admin defaults to team_tasks, designers to board */
   const isAdmin = profile?.role === 'admin';
+  const confirmDialog = useConfirm();
   const activeTab = (searchParams.get('view') || (isAdmin ? 'team_tasks' : 'board'));
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -388,7 +390,8 @@ export default function DesignerWorkspace() {
   };
 
   const handleDeleteNote = async (id: string) => {
-    if (!confirm('Delete this note?')) return;
+    const { confirmed } = await confirmDialog({ title: 'Delete Note', message: 'Are you sure you want to delete this note?', variant: 'danger', confirmLabel: 'Delete' });
+    if (!confirmed) return;
     await supabase.from('designer_notes').delete().eq('id', id);
     await fetchNotes();
     if (selectedNote?.id === id) setSelectedNote(null);
@@ -1256,10 +1259,10 @@ export default function DesignerWorkspace() {
                       </div>
 
                       <div className={`flex-1 md:flex-none flex items-center gap-2 p-1 rounded-lg border w-full md:w-auto ${selectedTask.is_on_hold
-                          ? 'bg-amber-500 border-amber-500'
-                          : ['printing', 'finishing', 'quality_check', 'ready', 'delivered'].includes(selectedTask.current_stage || '')
-                            ? 'bg-gray-900 border-gray-900'
-                            : 'bg-gray-50'
+                        ? 'bg-amber-500 border-amber-500'
+                        : ['printing', 'finishing', 'quality_check', 'ready', 'delivered'].includes(selectedTask.current_stage || '')
+                          ? 'bg-gray-900 border-gray-900'
+                          : 'bg-gray-50'
                         }`}>
                         {selectedTask.is_on_hold ? (
                           <span className="flex items-center gap-2 text-white text-xs font-bold px-3 py-1">
@@ -1288,7 +1291,8 @@ export default function DesignerWorkspace() {
                         selectedTask.is_on_hold ? (
                           <button
                             onClick={async () => {
-                              if (!confirm('Resume this project? It will go back to its previous stage.')) return;
+                              const { confirmed } = await confirmDialog({ title: 'Resume Project', message: 'This will resume the project and move it back to its previous stage.', variant: 'success', confirmLabel: 'Resume' });
+                              if (!confirmed) return;
                               await supabase.from('jobs').update({
                                 is_on_hold: false,
                                 current_stage: selectedTask.pre_hold_stage || 'designing',
@@ -1318,8 +1322,9 @@ export default function DesignerWorkspace() {
                         ) : (
                           <button
                             onClick={async () => {
-                              const reason = prompt('Why are you putting this on hold?');
-                              if (!reason) return;
+                              const { confirmed, inputValue } = await confirmDialog({ title: 'Put on Hold', message: 'This will freeze the project. The designer won\'t be able to work on it until you resume.', variant: 'warning', confirmLabel: 'Put on Hold', showInput: true, inputPlaceholder: 'Why are you putting this on hold?', inputRequired: true });
+                              if (!confirmed || !inputValue) return;
+                              const reason = inputValue;
                               await supabase.from('jobs').update({
                                 is_on_hold: true,
                                 hold_reason: reason,
@@ -1441,8 +1446,9 @@ export default function DesignerWorkspace() {
                             return (
                               <button
                                 disabled={!isComplete}
-                                onClick={() => {
-                                  if (confirm('Are you sure? This will lock the task for printing.')) {
+                                onClick={async () => {
+                                  const { confirmed } = await confirmDialog({ title: 'Send to Print', message: 'This will lock the task and send it to the print queue. Make sure all checks are done.', variant: 'success', confirmLabel: 'Send to Print' });
+                                  if (confirmed) {
                                     updateStatus(selectedTask.realId, 'completed');
                                   }
                                 }}
