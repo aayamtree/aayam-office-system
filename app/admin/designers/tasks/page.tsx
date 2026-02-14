@@ -119,7 +119,7 @@ export default function DesignerWorkspace() {
   const { profile } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { jobs, loading: jobsLoading, error: jobsError, updateJobStage, createJob, updateJob } = useJobs({
+  const { jobs, loading: jobsLoading, error: jobsError, updateJobStage, createJob, updateJob, refetch: refetchJobs } = useJobs({
     filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready', 'delivered'], op: 'in' }],
     limit: 200
   });
@@ -140,12 +140,6 @@ export default function DesignerWorkspace() {
   const [logs, setLogs] = useState(initialLogs);
   const [newLog, setNewLog] = useState('');
 
-
-  // Approval State
-  const [approvalRemark, setApprovalRemark] = useState('');
-  const [approvalLogs, setApprovalLogs] = useState<any[]>([]);
-  const [loadingApprovalLogs, setLoadingApprovalLogs] = useState(false);
-  const [savingApproval, setSavingApproval] = useState(false);
 
   // UI State
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
@@ -683,84 +677,7 @@ export default function DesignerWorkspace() {
 
 
 
-  // --- APPROVAL HANDLERS ---
-  const fetchApprovalLogs = useCallback(async (jobId: string) => {
-    setLoadingApprovalLogs(true);
-    try {
-      const { data } = await supabase
-        .from('job_stage_history')
-        .select('*')
-        .eq('job_id', jobId)
-        .or('notes.ilike.%approval%,notes.ilike.%sent for%,notes.ilike.%changes%')
-        .order('created_at', { ascending: false })
-        .limit(20);
-      setApprovalLogs(data || []);
-    } catch (e) {
-      console.error('Error fetching approval logs:', e);
-    } finally {
-      setLoadingApprovalLogs(false);
-    }
-  }, []);
 
-  useEffect(() => {
-    if (selectedTask?.realId) {
-      fetchApprovalLogs(selectedTask.realId);
-    }
-  }, [selectedTask?.realId]);
-
-  const handleApprovalAction = async (action: 'sent' | 'approved' | 'changes_requested') => {
-    if (!selectedTask?.realId || !updateJob) return;
-    setSavingApproval(true);
-    try {
-      const userName = profile?.full_name || profile?.email || 'Unknown';
-      const now = new Date().toISOString();
-
-      if (action === 'sent') {
-        const noteText = `\u{1F4E4} Sent for Approval by ${userName}${approvalRemark ? '. Note: ' + approvalRemark : ''}`;
-        await updateJob(selectedTask.realId, {
-          approval_status: 'sent',
-          approval_by: profile?.id,
-        } as any);
-        if (updateJobStage) await updateJobStage(selectedTask.realId, 'approval' as any, noteText);
-      } else if (action === 'approved') {
-        if (!approvalRemark.trim()) {
-          alert('Please enter what the client said (remark is required for accountability)');
-          setSavingApproval(false);
-          return;
-        }
-        const noteText = `\u2705 Client Approved \u2014 recorded by ${userName}. Client said: \"${approvalRemark}\"`;
-        await updateJob(selectedTask.realId, {
-          approval_status: 'approved',
-          client_approval: true,
-          approval_date: now,
-          approval_by: profile?.id,
-          approval_remark: approvalRemark,
-        } as any);
-        if (updateJobStage) await updateJobStage(selectedTask.realId, 'printing' as any, noteText);
-      } else if (action === 'changes_requested') {
-        if (!approvalRemark.trim()) {
-          alert('Please describe what changes the client wants');
-          setSavingApproval(false);
-          return;
-        }
-        const noteText = `\u{1F504} Changes Requested \u2014 recorded by ${userName}. Client wants: \"${approvalRemark}\"`;
-        await updateJob(selectedTask.realId, {
-          approval_status: 'changes_requested',
-          client_approval: false,
-          approval_by: profile?.id,
-          approval_remark: approvalRemark,
-        } as any);
-        if (updateJobStage) await updateJobStage(selectedTask.realId, 'designing' as any, noteText);
-      }
-
-      setApprovalRemark('');
-      await fetchApprovalLogs(selectedTask.realId);
-    } catch (e: any) {
-      alert('Error: ' + e.message);
-    } finally {
-      setSavingApproval(false);
-    }
-  };
 
   const updateStatus = async (realId: string, newStatusId: string) => {
     // Map Designer UI status to Database Job Stage
@@ -1388,101 +1305,15 @@ export default function DesignerWorkspace() {
                       </div>
                     </section>
 
-                    {/* 3. Project Notes & Feedback Log */}
+                    {/* 3. Project Notes & Feedback Log (handles approval + revisions) */}
                     {selectedTask?.realId && (() => {
-                      // Determine write access: admin OR assigned designer
                       const myDesigner = designers.find((d: any) => d.user_id === profile?.id);
                       const isAssignedDesigner = myDesigner ? selectedTask.designerId === myDesigner.id : false;
                       const canWriteNotes = isAdmin || isAssignedDesigner;
-                      return <ProjectNotesLog jobId={selectedTask.realId} canWrite={canWriteNotes} />;
+                      return <ProjectNotesLog jobId={selectedTask.realId} canWrite={canWriteNotes} onStageChange={() => refetchJobs()} />;
                     })()}
 
-                    {/* 4. Client Approval Tracking */}
-                    <section className="bg-white p-4 rounded-lg border border-green-100 space-y-4">
-                      <h4 className="text-xs font-bold text-green-700 uppercase tracking-widest flex items-center gap-2">
-                        <CheckCircle size={16} /> Client Approval (WhatsApp)
-                      </h4>
 
-                      {/* Current Status Badge */}
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <span className={`px-3 py-1.5 rounded-full text-xs font-bold border ${selectedTask.approval_status === 'approved' ? 'bg-green-50 text-green-700 border-green-200' :
-                          selectedTask.approval_status === 'sent' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                            selectedTask.approval_status === 'changes_requested' ? 'bg-red-50 text-red-700 border-red-200' :
-                              'bg-gray-50 text-gray-500 border-gray-200'
-                          }`}>
-                          {selectedTask.approval_status === 'approved' ? '\u2705 Client Approved' :
-                            selectedTask.approval_status === 'sent' ? '\u{1F4E4} Sent for Approval' :
-                              selectedTask.approval_status === 'changes_requested' ? '\u{1F504} Changes Requested' :
-                                '\u23F3 Not Sent Yet'}
-                        </span>
-                        {selectedTask.approval_date && (
-                          <span className="text-xs text-gray-400">
-                            on {new Date(selectedTask.approval_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Remark Input */}
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1.5">Remark / Client Response / Final Direction</label>
-                        <textarea
-                          value={approvalRemark}
-                          onChange={(e) => setApprovalRemark(e.target.value)}
-                          placeholder="Paste what client said on WhatsApp, or note any final direction before print..."
-                          className="w-full px-3 py-2.5 border rounded-lg text-sm h-20 focus:ring-2 focus:ring-green-400 bg-gray-50 focus:bg-white"
-                        />
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex gap-2 flex-wrap">
-                        {selectedTask.approval_status !== 'sent' && selectedTask.approval_status !== 'approved' && (
-                          <button
-                            onClick={() => handleApprovalAction('sent')}
-                            disabled={savingApproval}
-                            className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-bold hover:bg-amber-600 disabled:opacity-50"
-                          >
-                            <Send size={14} /> Send for Approval
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleApprovalAction('approved')}
-                          disabled={savingApproval}
-                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 disabled:opacity-50"
-                        >
-                          <CheckCircle size={14} /> Client Approved
-                        </button>
-                        <button
-                          onClick={() => handleApprovalAction('changes_requested')}
-                          disabled={savingApproval}
-                          className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-bold hover:bg-red-200 disabled:opacity-50"
-                        >
-                          <XCircle size={14} /> Changes Requested
-                        </button>
-                      </div>
-
-                      {/* Approval History Log */}
-                      {approvalLogs.length > 0 && (
-                        <div className="border-t pt-3 mt-3">
-                          <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Approval History</h5>
-                          <div className="space-y-2 max-h-48 overflow-y-auto">
-                            {approvalLogs.map((log: any, idx: number) => (
-                              <div key={idx} className="flex gap-3 items-start">
-                                <div className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${(log.notes || '').includes('Approved') ? 'bg-green-500' :
-                                  (log.notes || '').includes('Changes') ? 'bg-red-400' :
-                                    'bg-amber-400'
-                                  }`} />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm text-gray-700">{log.notes}</p>
-                                  <p className="text-[10px] text-gray-400 mt-0.5">
-                                    {new Date(log.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </section>
 
                     {/* 5. Final Review & Checklist */}
                     <section className="bg-gradient-to-br bg-white p-4 rounded-lg border border-gray-200 space-y-4">
