@@ -12,6 +12,7 @@ import {
     ArrowRight, User
 } from 'lucide-react';
 import Link from 'next/link';
+import { useConfirm } from '@/components/ConfirmModal';
 
 interface TeamMember {
     id: string;
@@ -30,6 +31,7 @@ const NOTE_COLORS = [
 export default function QuickNotesWidget() {
     const { profile } = useAuth();
     const { notes, loading, createNote, deleteNote, togglePin } = useDashboardNotes();
+    const confirm = useConfirm();
 
     // New note form
     const [showForm, setShowForm] = useState(false);
@@ -98,7 +100,8 @@ export default function QuickNotesWidget() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Delete this note?')) return;
+        const { confirmed } = await confirm({ title: 'Delete Note', message: 'Delete this note?', variant: 'danger', confirmLabel: 'Delete' });
+        if (!confirmed) return;
         await deleteNote(id);
     };
 

@@ -7,6 +7,7 @@ import { useVendors } from '@/lib/hooks';
 import { Vendor } from '@/types/database';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useConfirm } from '@/components/ConfirmModal';
 
 const categories = ['Paper', 'Ink & Toner', 'Binding', 'Lamination', 'Machinery', 'Packaging', 'Other'];
 
@@ -14,6 +15,7 @@ export default function VendorsPage() {
   const { vendors, loading, createVendor, updateVendor, deleteVendor } = useVendors();
 
   const [saving, setSaving] = useState(false);
+  const confirm = useConfirm();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -62,7 +64,8 @@ export default function VendorsPage() {
   const handleView = (vendor: Vendor) => { setSelectedVendor(vendor); setShowViewModal(true); };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Delete this vendor?')) {
+    const { confirmed } = await confirm({ title: 'Delete Vendor', message: 'Are you sure you want to delete this vendor?', variant: 'danger', confirmLabel: 'Delete' });
+    if (confirmed) {
       try {
         await deleteVendor(id);
       } catch (error) { console.error('Error:', error); alert('Error deleting'); }

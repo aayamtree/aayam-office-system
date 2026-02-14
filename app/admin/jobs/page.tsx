@@ -21,6 +21,7 @@ import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
 import VendorQuickAddModal from '@/components/shared/VendorQuickAddModal';
 import ProductCategoryQuickAdd from '@/components/shared/ProductCategoryQuickAdd';
 import JobTypeQuickAdd from '@/components/shared/JobTypeQuickAdd';
+import { useConfirm } from '@/components/ConfirmModal';
 
 import PriorityQuickAdd from '@/components/shared/PriorityQuickAdd';
 import JobStageQuickAdd from '@/components/shared/JobStageQuickAdd';
@@ -47,6 +48,7 @@ export default function JobsPage() {
   const { createPaymentReceived } = usePaymentsReceived();
 
   const loading = jobsLoading; // Main loading state
+  const confirm = useConfirm();
 
   // Safety: Prevent infinite loading
   const [forceShow, setForceShow] = useState(false);
@@ -330,7 +332,8 @@ export default function JobsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this job?')) return;
+    const { confirmed } = await confirm({ title: 'Delete Job', message: 'Are you sure you want to delete this job?', variant: 'danger', confirmLabel: 'Delete' });
+    if (!confirmed) return;
     await deleteJob(id);
   };
 

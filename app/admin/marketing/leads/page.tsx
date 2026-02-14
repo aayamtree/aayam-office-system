@@ -14,18 +14,21 @@ import { Lead } from '@/types/database';
 import { formatDate } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useConfirm } from '@/components/ConfirmModal';
 
 export default function LeadsPage() {
     const { user, profile } = useAuth();
     const { leads, loading: leadsLoading, createLead, updateLead, deleteLead, refetch, convertToClient } = useLeads();
     const { createFollowUp } = useFollowUps();
+    const confirm = useConfirm();
 
     // State Management
     const [searchQuery, setSearchQuery] = useState('');
     // ... (rest of state)
 
     const handleMoveToFollowUp = async (lead: Lead) => {
-        if (!confirm(`Move "${lead.name}" to Follow-ups?`)) return;
+        const { confirmed } = await confirm({ title: 'Move to Follow-ups', message: `Move "${lead.name}" to Follow-ups?`, confirmLabel: 'Move' });
+        if (!confirmed) return;
         try {
             // 1. Create Follow-up Entry
             const { error } = await createFollowUp({
@@ -49,7 +52,8 @@ export default function LeadsPage() {
     };
 
     const handleConvertToClient = async (lead: Lead) => {
-        if (!confirm(`Convert "${lead.name}" to Client?`)) return;
+        const { confirmed: convertConfirmed } = await confirm({ title: 'Convert to Client', message: `Convert "${lead.name}" to Client?`, confirmLabel: 'Convert' });
+        if (!convertConfirmed) return;
         try {
             const currentUserId = profile?.id || user?.id;
             if (!currentUserId) { alert('User not authenticated'); return; }
@@ -136,7 +140,8 @@ export default function LeadsPage() {
     };
 
     const handleDelete = async (id: string, name: string) => {
-        if (!confirm(`Delete lead "${name}"?`)) return;
+        const { confirmed: deleteConfirmed } = await confirm({ title: 'Delete Lead', message: `Delete lead "${name}"?`, variant: 'danger', confirmLabel: 'Delete' });
+        if (!deleteConfirmed) return;
         try {
             await deleteLead(id);
             await refetch();

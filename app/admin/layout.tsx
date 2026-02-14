@@ -39,12 +39,14 @@ export default function AdminLayout({
 
   if (!mounted || loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-muted border-t-foreground rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
+      <ConfirmProvider>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-muted border-t-foreground rounded-full animate-spin mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Loading...</p>
+          </div>
         </div>
-      </div>
+      </ConfirmProvider>
     );
   }
 

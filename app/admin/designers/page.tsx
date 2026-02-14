@@ -10,6 +10,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useConfirm } from '@/components/ConfirmModal';
 
 interface Designer {
   id: string;
@@ -48,6 +49,7 @@ export default function DesignersPage() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [editingDesigner, setEditingDesigner] = useState<Designer | null>(null);
   const [selectedDesigner, setSelectedDesigner] = useState<Designer | null>(null);
+  const confirm = useConfirm();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -233,7 +235,8 @@ export default function DesignersPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this designer?')) return;
+    const { confirmed } = await confirm({ title: 'Delete Designer', message: 'Are you sure you want to delete this designer?', variant: 'danger', confirmLabel: 'Delete' });
+    if (!confirmed) return;
     try {
       const { error } = await supabase.from('designers').delete().eq('id', id);
       if (error) throw error;

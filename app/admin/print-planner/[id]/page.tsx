@@ -6,11 +6,13 @@ import { supabase } from '@/lib/supabase';
 import type { PrintRun, PrintRunJob, Job } from '@/types/database';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { useConfirm } from '@/components/ConfirmModal';
 
 export default function PrintRunDetailPage() {
     const params = useParams();
     const router = useRouter();
     const printRunId = params.id as string;
+    const confirm = useConfirm();
 
 
     const [printRun, setPrintRun] = useState<PrintRun | null>(null);
@@ -88,7 +90,8 @@ export default function PrintRunDetailPage() {
     };
 
     const removeJob = async (jobId: string) => {
-        if (!confirm('Remove this job from the print run?')) return;
+        const { confirmed } = await confirm({ title: 'Remove Job', message: 'Remove this job from the print run?', variant: 'danger', confirmLabel: 'Remove' });
+        if (!confirmed) return;
 
         try {
             const { error } = await supabase

@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { Palette, Play, CheckCircle, Clock, AlertCircle, CheckSquare } from 'lucide-react';
 import ChecklistModal from '@/components/design/ChecklistModal';
 import { useJobChecklists } from '@/lib/hooks';
+import { useConfirm } from '@/components/ConfirmModal';
 
 export default function DesignTasksPage() {
     const { profile } = useAuth();
@@ -16,6 +17,7 @@ export default function DesignTasksPage() {
 
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [checklistJob, setChecklistJob] = useState<any>(null);
+    const confirm = useConfirm();
 
     // Fetch checklists for progress calculation
     const { checklists } = useJobChecklists();
@@ -25,7 +27,8 @@ export default function DesignTasksPage() {
     );
 
     const handleStageUpdate = async (id: string, newStage: any) => {
-        if (!confirm(`Move job to ${newStage}?`)) return;
+        const { confirmed } = await confirm({ title: 'Move Job', message: `Move job to ${newStage}?`, confirmLabel: 'Move' });
+        if (!confirmed) return;
 
         setProcessingId(id);
         await updateJobStage(id, newStage);

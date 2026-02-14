@@ -1,5 +1,7 @@
 'use client';
 
+import { useConfirm } from '@/components/ConfirmModal';
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
@@ -282,8 +284,11 @@ export default function MyNotes() {
         }
     };
 
+    const confirm = useConfirm();
+
     const deleteNote = async (id: string) => {
-        if (!confirm('Delete this note?')) return;
+        const { confirmed } = await confirm({ title: 'Delete Note', message: 'Are you sure you want to delete this note?', variant: 'danger', confirmLabel: 'Delete' });
+        if (!confirmed) return;
         await supabase.from('notes').delete().eq('id', id);
         if (selectedNote?.id === id) {
             setSelectedNote(null);

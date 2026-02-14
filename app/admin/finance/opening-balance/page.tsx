@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   ArrowLeft, Save, IndianRupee, Building, Wallet, Calendar, CheckCircle, AlertCircle, Edit
 } from 'lucide-react';
+import { useConfirm } from '@/components/ConfirmModal';
 
 const currentFinancialYear = '2024-25';
 
@@ -24,6 +25,7 @@ const initialOpeningBalances = {
 export default function OpeningBalancePage() {
   const [openingBalance, setOpeningBalance] = useState(initialOpeningBalances);
   const [isEditing, setIsEditing] = useState(false);
+  const confirm = useConfirm();
   const [editData, setEditData] = useState({
     cash: openingBalance.cash,
     banks: [...openingBalance.banks]
@@ -42,8 +44,9 @@ export default function OpeningBalancePage() {
     });
   };
 
-  const handleSave = () => {
-    if (confirm('Are you sure you want to update the opening balances? This will affect all financial reports.')) {
+  const handleSave = async () => {
+    const { confirmed } = await confirm({ title: 'Update Opening Balances', message: 'Are you sure you want to update the opening balances? This will affect all financial reports.', variant: 'danger', confirmLabel: 'Update' });
+    if (confirmed) {
       setOpeningBalance({
         ...openingBalance,
         cash: editData.cash,
@@ -54,8 +57,9 @@ export default function OpeningBalancePage() {
     }
   };
 
-  const handleUnlock = () => {
-    if (confirm('Unlocking opening balance will allow editing. This should only be done if corrections are needed. Continue?')) {
+  const handleUnlock = async () => {
+    const { confirmed } = await confirm({ title: 'Unlock Opening Balance', message: 'Unlocking opening balance will allow editing. This should only be done if corrections are needed. Continue?', confirmLabel: 'Unlock' });
+    if (confirmed) {
       setOpeningBalance({ ...openingBalance, isLocked: false });
       setIsEditing(true);
     }

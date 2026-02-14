@@ -11,6 +11,7 @@ import { ReceiptData, defaultReceiptCompany, printReceipt, downloadReceipt } fro
 import { usePOSSales, usePOSProducts } from '@/lib/hooks';
 import { POSCategory, POSProduct } from '@/types/database';
 import { Input } from '@/components/ui/input';
+import { useConfirm } from '@/components/ConfirmModal';
 
 interface CartItem {
   id: string;
@@ -59,6 +60,7 @@ export default function RetailPOSPage() {
   const [isEditingProduct, setIsEditingProduct] = useState(false);
   const [productForm, setProductForm] = useState({ id: '', name: '', price: 0, category_id: '' });
   const [categoryForm, setCategoryForm] = useState({ id: '', name: '', color: categoryColors[0] });
+  const confirm = useConfirm();
 
   const filteredProducts = products?.filter(p => {
     const matchesCategory = selectedCategory === 'all' || p.category_id === selectedCategory;
@@ -116,7 +118,8 @@ export default function RetailPOSPage() {
   };
 
   const handleDeleteCategoryReq = async (id: string) => {
-    if (confirm('Delete this category? Products in this category might be affected.')) {
+    const { confirmed } = await confirm({ title: 'Delete Category', message: 'Delete this category? Products in this category might be affected.', variant: 'danger', confirmLabel: 'Delete' });
+    if (confirmed) {
       await deleteCategory(id);
     }
   };
@@ -138,7 +141,8 @@ export default function RetailPOSPage() {
   };
 
   const handleDeleteProductReq = async (id: string) => {
-    if (confirm('Delete this product?')) {
+    const { confirmed } = await confirm({ title: 'Delete Product', message: 'Are you sure you want to delete this product?', variant: 'danger', confirmLabel: 'Delete' });
+    if (confirmed) {
       await deleteProduct(id);
     }
   };

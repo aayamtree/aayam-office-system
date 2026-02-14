@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useJobs } from '@/lib/hooks';
 import { Job, JobStatus } from '@/types/database';
+import { useConfirm } from '@/components/ConfirmModal';
 
 // Mapping DB statuses to a display flow
 const statusFlow: JobStatus[] = ['new', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready', 'dispatched', 'delivered'];
@@ -21,6 +22,7 @@ export default function JobQueuePage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const confirm = useConfirm();
 
   // Filter for active print-relevant jobs if needed, but for now we show all
   const filteredJobs = jobs.filter(job => {
@@ -91,9 +93,9 @@ export default function JobQueuePage() {
 
   const handleStageSelect = async (newStage: string) => {
     if (!selectedJob) return;
-    if (confirm(`Move job to ${newStage}?`)) {
+    const { confirmed } = await confirm({ title: 'Move Job', message: `Move job to ${newStage}?`, confirmLabel: 'Move' });
+    if (confirmed) {
       await updateJobStage(selectedJob.id, newStage as JobStatus);
-      // Optimistically update selectedJob local state so UI reflects change immediately
       setSelectedJob({ ...selectedJob, current_stage: newStage as JobStatus });
     }
   };

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useConfirm } from '@/components/ConfirmModal';
 
 const paymentModes = ['Cash', 'Bank Transfer', 'NEFT', 'RTGS', 'UPI', 'Cheque'];
 
@@ -55,6 +56,7 @@ export default function VendorPaymentsPage() {
     vendorId: '', amount: 0, paymentMode: 'NEFT', bankAccountId: '', reference: '', paymentDate: '', notes: ''
   });
   const [submitting, setSubmitting] = useState(false);
+  const confirm = useConfirm();
 
   const filteredPayments = payments.filter(p => {
     const matchesSearch = p.paymentNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -88,8 +90,9 @@ export default function VendorPaymentsPage() {
     setShowModal(false);
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm('Delete this payment record?')) setPayments(payments.filter(p => p.id !== id));
+  const handleDelete = async (id: number) => {
+    const { confirmed } = await confirm({ title: 'Delete Payment', message: 'Are you sure you want to delete this payment record?', variant: 'danger', confirmLabel: 'Delete' });
+    if (confirmed) setPayments(payments.filter(p => p.id !== id));
   };
 
   const getModeIcon = (mode: string) => {

@@ -9,6 +9,7 @@ import {
 import { useJobs } from '@/lib/hooks';
 import { Job, JobStatus } from '@/types/database';
 import { createBrowserClient } from '@supabase/ssr';
+import { useConfirm } from '@/components/ConfirmModal';
 
 // Fallback checkpoints if no DB checklists found
 const FALLBACK_PRE_PRINT = [
@@ -37,6 +38,7 @@ interface ChecklistItem {
 }
 
 export default function QCCheckPage() {
+  const confirm = useConfirm();
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -212,7 +214,8 @@ export default function QCCheckPage() {
     if (status === 'passed') {
       const criticalMissed = activeItems.some(cp => cp.critical && !checkpoints[cp.id]?.checked);
       if (criticalMissed) {
-        if (!confirm(`Warning: Some critical ${qcLabel} checkpoints are not checked. Pass anyway?`)) return;
+        const { confirmed } = await confirm({ title: 'Critical Checkpoints Missing', message: `Warning: Some critical ${qcLabel} checkpoints are not checked. Pass anyway?`, variant: 'danger', confirmLabel: 'Pass Anyway' });
+        if (!confirmed) return;
       }
 
       if (activeQCType === 'post_print') {

@@ -16,12 +16,14 @@ import { formatDate } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/lib/supabase';
+import { useConfirm } from '@/components/ConfirmModal';
 
 export default function OrdersPage() {
   const { user, profile } = useAuth();
   const { jobs: allJobs, loading: jobsLoading, createJob, updateJob, deleteJob } = useJobs();
   const { categories, createCategory } = useProductCategories();
   const router = useRouter();
+  const confirm = useConfirm();
 
   // Filter jobs for Marketing role
   const jobs = useMemo(() => {
@@ -200,7 +202,8 @@ export default function OrdersPage() {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Are you sure you want to delete this order?')) {
+    const { confirmed } = await confirm({ title: 'Delete Order', message: 'Are you sure you want to delete this order?', variant: 'danger', confirmLabel: 'Delete' });
+    if (confirmed) {
       await deleteJob(id);
     }
   };

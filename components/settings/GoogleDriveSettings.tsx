@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Cloud, CheckCircle, XCircle, RefreshCw, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import { useConfirm } from '@/components/ConfirmModal';
 
 export default function GoogleDriveSettings() {
     const { profile } = useAuth();
@@ -10,6 +11,7 @@ export default function GoogleDriveSettings() {
     const [loading, setLoading] = useState(true);
     const [connecting, setConnecting] = useState(false);
     const [disconnecting, setDisconnecting] = useState(false);
+    const confirm = useConfirm();
 
     // Load current Drive status
     const loadStatus = async () => {
@@ -90,7 +92,8 @@ export default function GoogleDriveSettings() {
     };
 
     const handleDisconnect = async () => {
-        if (!confirm('Are you sure you want to disconnect Google Drive? All users will lose upload access until you reconnect.')) {
+        const { confirmed } = await confirm({ title: 'Disconnect Google Drive', message: 'Are you sure you want to disconnect Google Drive? All users will lose upload access until you reconnect.', variant: 'danger', confirmLabel: 'Disconnect' });
+        if (!confirmed) {
             return;
         }
 

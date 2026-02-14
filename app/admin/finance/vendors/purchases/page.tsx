@@ -10,6 +10,7 @@ import { usePurchaseBills, useVendors, useJobs } from '@/lib/hooks';
 import { formatDate } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useConfirm } from '@/components/ConfirmModal';
 
 const productCategories = [
   'Pouches', 'Labels', 'Boxes', 'Brochures', 'Visiting Cards', 'Envelopes',
@@ -32,6 +33,7 @@ export default function VendorPurchasesPage() {
   const [editingPurchase, setEditingPurchase] = useState<any>(null);
   const [selectedPurchase, setSelectedPurchase] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
+  const confirm = useConfirm();
 
   const [formData, setFormData] = useState({
     vendorId: '',
@@ -139,7 +141,8 @@ export default function VendorPurchasesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Delete this purchase bill?')) {
+    const { confirmed } = await confirm({ title: 'Delete Purchase Bill', message: 'Are you sure you want to delete this purchase bill?', variant: 'danger', confirmLabel: 'Delete' });
+    if (confirmed) {
       await deletePurchaseBill(id);
     }
   };

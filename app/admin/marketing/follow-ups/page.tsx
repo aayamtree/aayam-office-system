@@ -10,6 +10,7 @@ import { useLeads, useFollowUps, useAuth } from '@/lib/hooks';
 import { formatDate } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useConfirm } from '@/components/ConfirmModal';
 
 // Type Definitions
 const followUpTypes = [
@@ -35,6 +36,7 @@ export default function MarketingFollowUpsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingFollowUp, setEditingFollowUp] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
+  const confirm = useConfirm();
 
   const [formData, setFormData] = useState({
     leadId: '',
@@ -121,7 +123,8 @@ export default function MarketingFollowUpsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Delete this follow-up?')) await deleteFollowUp(id);
+    const { confirmed } = await confirm({ title: 'Delete Follow-up', message: 'Are you sure you want to delete this follow-up?', variant: 'danger', confirmLabel: 'Delete' });
+    if (confirmed) await deleteFollowUp(id);
   };
 
   const handleCreateQuote = (followUp: any) => {

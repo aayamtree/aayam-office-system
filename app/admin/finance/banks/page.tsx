@@ -9,6 +9,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useBankAccounts } from '@/lib/hooks';
 import { BankAccount } from '@/types/database';
+import { useConfirm } from '@/components/ConfirmModal';
 
 const accountTypes = ['Current', 'Savings', 'OD', 'CC'];
 
@@ -29,6 +30,7 @@ export default function BankAccountsPage() {
   const [editingBank, setEditingBank] = useState<BankAccount | null>(null);
   const [selectedBank, setSelectedBank] = useState<BankAccount | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const confirm = useConfirm();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -103,11 +105,11 @@ export default function BankAccountsPage() {
   };
 
   const handleDelete = async (id: string, currentBalance: number) => {
-    if (currentBalance !== 0) {
-      if (!confirm('This account has a non-zero balance. Are you sure you want to delete it? This might affect your reports.')) return;
-    } else {
-      if (!confirm('Are you sure you want to delete this bank account?')) return;
-    }
+    const message = currentBalance !== 0
+      ? 'This account has a non-zero balance. Are you sure you want to delete it? This might affect your reports.'
+      : 'Are you sure you want to delete this bank account?';
+    const { confirmed } = await confirm({ title: 'Delete Bank Account', message, variant: 'danger', confirmLabel: 'Delete' });
+    if (!confirmed) return;
     await deleteBankAccount(id);
   };
 

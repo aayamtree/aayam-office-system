@@ -13,6 +13,7 @@ import { useAuth } from '@/lib/auth-context';
 import { formatDate } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useConfirm } from '@/components/ConfirmModal';
 import WhatsAppButton from '@/components/shared/WhatsAppButton';
 
 // Sub-component: Client Jobs & Financial Summary
@@ -87,6 +88,7 @@ function ClientJobsSection({ clientId }: { clientId: string }) {
 export default function ClientsPage() {
   const { profile } = useAuth();
   const { clients, loading, createClient, updateClient, deleteClient } = useClients();
+  const confirm = useConfirm();
 
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -146,7 +148,8 @@ export default function ClientsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Delete this client?')) {
+    const { confirmed } = await confirm({ title: 'Delete Client', message: 'Delete this client?', variant: 'danger', confirmLabel: 'Delete' });
+    if (confirmed) {
       try {
         await deleteClient(id);
       } catch (error) {

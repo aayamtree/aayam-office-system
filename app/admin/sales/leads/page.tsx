@@ -11,10 +11,12 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { useLeads } from '@/lib/hooks';
 import { Lead } from '@/types/database';
+import { useConfirm } from '@/components/ConfirmModal';
 
 export default function LeadsPage() {
   const { user, profile } = useAuth();
   const { leads, loading: leadsLoading, createLead, updateLead, convertToClient, deleteLead, refetch } = useLeads();
+  const confirm = useConfirm();
 
   // State Management
   const [searchQuery, setSearchQuery] = useState('');
@@ -86,7 +88,8 @@ export default function LeadsPage() {
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Delete lead "${name}"?`)) return;
+    const { confirmed } = await confirm({ title: 'Delete Lead', message: `Delete lead "${name}"?`, variant: 'danger', confirmLabel: 'Delete' });
+    if (!confirmed) return;
     try {
       await deleteLead(id);
       await refetch();
@@ -158,7 +161,8 @@ export default function LeadsPage() {
   };
 
   const handleConvertToClient = async (lead: Lead) => {
-    if (!confirm(`Convert "${lead.name}" to Client?`)) return;
+    const { confirmed } = await confirm({ title: 'Convert to Client', message: `Convert "${lead.name}" to Client?`, confirmLabel: 'Convert' });
+    if (!confirmed) return;
     try {
       await convertToClient(lead.id, profile?.id || user?.id || '');
       await refetch();

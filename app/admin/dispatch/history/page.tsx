@@ -10,9 +10,11 @@ import { useDispatches } from '@/lib/hooks';
 import { Dispatch, DispatchStatus } from '@/types/database';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useConfirm } from '@/components/ConfirmModal';
 
 export default function DispatchHistoryPage() {
   const { dispatches, loading, updateDispatch } = useDispatches();
+  const confirm = useConfirm();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -69,7 +71,8 @@ export default function DispatchHistoryPage() {
   };
 
   const handleMarkDelivered = async (dispatch: Dispatch) => {
-    if (confirm('Mark this dispatch as DELIVERED?')) {
+    const { confirmed } = await confirm({ title: 'Mark Delivered', message: 'Mark this dispatch as DELIVERED?', confirmLabel: 'Mark Delivered' });
+    if (confirmed) {
       await updateDispatch(dispatch.id, {
         status: 'delivered',
         actual_delivery: new Date().toISOString().split('T')[0]

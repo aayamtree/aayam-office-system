@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { usePaperStock } from '@/lib/hooks';
 import { PaperStock } from '@/types/database';
+import { useConfirm } from '@/components/ConfirmModal';
 
 const categories = ['All', 'Paper', 'Photo Paper', 'Toner', 'Lamination', 'Binding', 'Card Stock', 'Envelope', 'Other'];
 
@@ -23,6 +24,7 @@ export default function PaperStockPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [restockQty, setRestockQty] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const confirm = useConfirm();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -105,7 +107,8 @@ export default function PaperStockPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Delete this item?')) {
+    const { confirmed } = await confirm({ title: 'Delete Item', message: 'Are you sure you want to delete this stock item?', variant: 'danger', confirmLabel: 'Delete' });
+    if (confirmed) {
       await deleteStockItem(id);
     }
   };

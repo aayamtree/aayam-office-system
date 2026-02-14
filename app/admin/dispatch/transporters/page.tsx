@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useVendors } from '@/lib/hooks';
 import { Vendor } from '@/types/database';
+import { useConfirm } from '@/components/ConfirmModal';
 
 const indianStates = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
@@ -20,6 +21,7 @@ const indianStates = [
 
 export default function TransportersPage() {
   const { vendors, loading, createVendor, updateVendor, deleteVendor } = useVendors();
+  const confirm = useConfirm();
   const [searchQuery, setSearchQuery] = useState('');
   const [stateFilter, setStateFilter] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
@@ -100,7 +102,8 @@ export default function TransportersPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Delete this transporter?')) {
+    const { confirmed } = await confirm({ title: 'Delete Transporter', message: 'Delete this transporter?', variant: 'danger', confirmLabel: 'Delete' });
+    if (confirmed) {
       await deleteVendor(id);
     }
   };

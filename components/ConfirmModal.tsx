@@ -33,12 +33,17 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
     const [options, setOptions] = useState<ConfirmOptions | null>(null);
     const [inputValue, setInputValue] = useState('');
     const resolveRef = useRef<(result: ConfirmResult) => void>();
+    const readyRef = useRef(false);
 
     const confirm = useCallback<ConfirmFn>((opts) => {
         return new Promise<ConfirmResult>((resolve) => {
+            readyRef.current = false;
             setOptions(opts);
             setInputValue('');
             resolveRef.current = resolve;
+            // Allow backdrop dismiss only after a brief delay to prevent
+            // the trigger button's click event from immediately dismissing
+            setTimeout(() => { readyRef.current = true; }, 150);
         });
     }, []);
 
@@ -51,6 +56,11 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
     const handleCancel = () => {
         resolveRef.current?.({ confirmed: false });
         setOptions(null);
+    };
+
+    const handleBackdropDismiss = () => {
+        if (!readyRef.current) return; // Ignore clicks during protection window
+        handleCancel();
     };
 
     const variantStyles = {
@@ -66,13 +76,14 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
         <ConfirmContext.Provider value={confirm}>
             {children}
             {options && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center" onClick={handleCancel}>
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center" onMouseDown={handleBackdropDismiss}>
                     {/* Backdrop */}
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
                     {/* Modal */}
                     <div
                         className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
                         onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
                     >
                         <div className="p-5">
                             <div className="flex items-start gap-3">

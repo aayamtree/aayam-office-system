@@ -9,6 +9,7 @@ import {
 import { useDesignProjects, useClients, useDesigners } from '@/lib/hooks';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useConfirm } from '@/components/ConfirmModal';
 
 // Static statuses for UI consistency
 const projectStatuses = [
@@ -33,6 +34,7 @@ export default function DesignerProjectsPage() {
   const [editingProject, setEditingProject] = useState<any>(null);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
+  const confirm = useConfirm();
 
   // Form State
   const [formData, setFormData] = useState({
@@ -136,7 +138,8 @@ export default function DesignerProjectsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Delete this project?')) await deleteProject(id);
+    const { confirmed } = await confirm({ title: 'Delete Project', message: 'Are you sure you want to delete this project?', variant: 'danger', confirmLabel: 'Delete' });
+    if (confirmed) await deleteProject(id);
   };
 
   const getStatusBadge = (status: string) => projectStatuses.find(s => s.id === status)?.color || 'bg-gray-100 text-gray-700';

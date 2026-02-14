@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { Plus, Trash2, Save, X, Edit2, Check, AlertCircle } from 'lucide-react';
+import { useConfirm } from '@/components/ConfirmModal';
 
 type ChecklistCategory = 'design' | 'dispatch';
 
@@ -13,6 +14,7 @@ export default function ProductionSettings() {
     );
     const [loading, setLoading] = useState(true);
     const [checklists, setChecklists] = useState<any[]>([]);
+    const confirm = useConfirm();
 
     // Category State (Design vs Dispatch)
     const [activeCategory, setActiveCategory] = useState<ChecklistCategory>('design');
@@ -122,7 +124,8 @@ export default function ProductionSettings() {
     };
 
     const deleteChecklist = async (id: string) => {
-        if (!confirm('Are you sure? This will remove the checklist for this Job Type.')) return;
+        const { confirmed } = await confirm({ title: 'Delete Checklist', message: 'Are you sure? This will remove the checklist for this Job Type.', variant: 'danger', confirmLabel: 'Delete' });
+        if (!confirmed) return;
 
         const { error } = await supabase.from('job_checklists').delete().eq('id', id);
         if (!error) fetchChecklists();

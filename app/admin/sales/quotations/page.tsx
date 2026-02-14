@@ -13,11 +13,13 @@ import { downloadQuotationPDF, defaultCompanyData } from '@/components/quotation
 import { formatDate } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useConfirm } from '@/components/ConfirmModal';
 
 export default function QuotationsPage() {
   const { user, profile } = useAuth();
   const { quotations: allQuotations, loading: quotationsLoading, createQuotation, updateQuotation, saveQuotationItems, deleteQuotation } = useQuotations();
   const { linkQuotationToFollowUp } = useFollowUps();
+  const confirm = useConfirm();
 
   // Show all quotations
   const quotations = allQuotations;
@@ -225,7 +227,8 @@ export default function QuotationsPage() {
   };
 
   const handleDelete = async (id: string, quoteNumber: string) => {
-    if (confirm(`Are you sure you want to delete Quotation ${quoteNumber}? This action cannot be undone.`)) {
+    const { confirmed } = await confirm({ title: 'Delete Quotation', message: `Are you sure you want to delete Quotation ${quoteNumber}? This action cannot be undone.`, variant: 'danger', confirmLabel: 'Delete' });
+    if (confirmed) {
       await deleteQuotation(id);
     }
   };
@@ -235,15 +238,16 @@ export default function QuotationsPage() {
     const orderTypeLabel = q.order_type === 'print' ? 'Print Only' :
       q.order_type === 'design' ? 'Design Only' : 'Design + Print';
 
-    if (!confirm(`Create a new Job Order from Quotation "${q.quote_number}" (${orderTypeLabel})? This will mark the quote as Accepted.`)) return;
+    const { confirmed: createConfirmed } = await confirm({ title: 'Convert to Order', message: `Create a new Job Order from Quotation "${q.quote_number}" (${orderTypeLabel})? This will mark the quote as Accepted.`, confirmLabel: 'Create Order' });
+    if (!createConfirmed) return;
 
     try {
       let finalClientId = q.client_id;
 
       // 1. Auto-Convert Lead to Client if needed
       if ((!finalClientId || finalClientId === '') && q.lead_id) {
-        const confirmConvert = confirm('This quotation is for a Lead. To create an order, the Lead must be converted to a Client. Proceed with conversion?');
-        if (!confirmConvert) return;
+        const { confirmed: convertConfirmed } = await confirm({ title: 'Convert Lead to Client', message: 'This quotation is for a Lead. To create an order, the Lead must be converted to a Client. Proceed with conversion?', confirmLabel: 'Convert' });
+        if (!convertConfirmed) return;
 
         // Use the hook function we exposed
         const { data: newClient, error: convertError } = await convertToClient(q.lead_id, user?.id || '');

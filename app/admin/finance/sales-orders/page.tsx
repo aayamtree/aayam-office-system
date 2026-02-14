@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useSalesOrders, useClients } from '@/lib/hooks';
 import { SalesOrder } from '@/types/database';
+import { useConfirm } from '@/components/ConfirmModal';
 
 export default function SalesOrdersPage() {
     const { salesOrders, loading, createSalesOrder, updateSalesOrder } = useSalesOrders();
@@ -19,6 +20,7 @@ export default function SalesOrdersPage() {
     const [isEditing, setIsEditing] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    const confirm = useConfirm();
 
     // Form State
     const [formData, setFormData] = useState({
@@ -99,10 +101,11 @@ export default function SalesOrdersPage() {
     };
 
     const handleConfirmOrder = async (order: SalesOrder) => {
-        if (!confirm('Are you sure? Confirming this order will trigger: \n' +
+        const message = 'Are you sure? Confirming this order will trigger:\n' +
             (order.work_type.includes('design') ? '- Design Project Creation\n' : '') +
-            (order.work_type === 'print_only' ? '- Production Job Creation\n' : '')
-        )) return;
+            (order.work_type === 'print_only' ? '- Production Job Creation\n' : '');
+        const { confirmed } = await confirm({ title: 'Confirm Order', message, confirmLabel: 'Confirm' });
+        if (!confirmed) return;
 
         await updateSalesOrder(order.id, { status: 'confirmed' });
     };
