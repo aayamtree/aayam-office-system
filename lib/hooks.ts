@@ -70,10 +70,11 @@ export function useSupabaseQuery<T>(
   };
 
   const { data, error, isLoading, mutate } = useSWR(key, fetcher, {
-    revalidateOnFocus: false, // Don't auto-refetch on window focus (was causing flickering)
-    revalidateOnReconnect: false, // Don't refetch on reconnect
-    dedupingInterval: 5000,   // Increase to 5s to prevent excessive refetching
-    keepPreviousData: true,   // Show previous data while fetching new data
+    revalidateOnFocus: true,   // Refetch when user switches back to this tab
+    revalidateOnReconnect: true, // Refetch on reconnect
+    dedupingInterval: 5000,    // 5s dedup to prevent excessive refetching
+    keepPreviousData: true,    // Show previous data while fetching new data
+    refreshInterval: 30000,    // Poll every 30s as backup to realtime
   });
 
   // =============================================
@@ -1160,6 +1161,20 @@ export function useDashboardStats() {
     };
 
     fetchStats();
+
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchStats, 30000);
+
+    // Refresh when tab becomes visible
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') fetchStats();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
 
   return { stats, loading };
