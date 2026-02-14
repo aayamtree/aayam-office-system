@@ -97,7 +97,13 @@ export default function JobsPage() {
 
       // Use DB data if available, otherwise use hardcoded fallbacks
       setPriorities(prioritiesRes.data?.length ? prioritiesRes.data : DEFAULT_PRIORITIES);
-      setStages(stagesRes.data?.length ? stagesRes.data : DEFAULT_STAGES);
+      // Ensure awaiting_admin is always in the stages list
+      const dbStages = stagesRes.data?.length ? stagesRes.data : DEFAULT_STAGES;
+      const hasAwaitingAdmin = dbStages.some((s: any) => s.id === 'awaiting_admin');
+      if (!hasAwaitingAdmin) {
+        dbStages.unshift({ id: 'awaiting_admin', name: '⏳ Awaiting Approval', color: 'bg-amber-500', bg_light: 'bg-amber-50', border: 'border-amber-300', order_index: 0, is_active: true });
+      }
+      setStages(dbStages);
 
       // Set initial form defaults
       if (jobTypesRes.data?.[0]) setFormData(prev => ({ ...prev, job_type: jobTypesRes.data[0].name }));
@@ -113,7 +119,7 @@ export default function JobsPage() {
   const [stageFilter, setStageFilter] = useState(searchParams.get('status') || 'all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [clientFilter, setClientFilter] = useState('all');
-  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>(searchParams.get('status') ? 'list' : 'kanban');
 
   const [showModal, setShowModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
