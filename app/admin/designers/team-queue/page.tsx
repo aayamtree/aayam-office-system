@@ -49,7 +49,7 @@ export default function TeamQueue() {
     const statuses = [
         { id: 'new', name: 'To Do', color: 'bg-gray-100' },
         { id: 'designing', name: 'Designing', color: 'bg-muted' },
-        { id: 'approval', name: 'Approval', color: 'bg-primary' },
+        { id: 'approval', name: 'Awaiting Client Approval', color: 'bg-primary' },
         { id: 'printing', name: 'Printing', color: 'bg-primary' },
     ];
 

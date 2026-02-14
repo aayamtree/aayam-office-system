@@ -60,7 +60,7 @@ export default function JobsPage() {
     { id: 'awaiting_admin', name: '⏳ Awaiting Approval', color: 'bg-amber-500', bg_light: 'bg-amber-50', border: 'border-amber-300', order_index: 0, is_active: true },
     { id: 'new', name: 'New', color: 'bg-gray-500', bg_light: 'bg-gray-50', border: 'border-gray-200', order_index: 1, is_active: true },
     { id: 'designing', name: 'Design', color: 'bg-purple-500', bg_light: 'bg-purple-50', border: 'border-purple-200', order_index: 2, is_active: true },
-    { id: 'approval', name: 'Approval', color: 'bg-yellow-500', bg_light: 'bg-yellow-50', border: 'border-yellow-200', order_index: 3, is_active: true },
+    { id: 'approval', name: 'Awaiting Client Approval', color: 'bg-yellow-500', bg_light: 'bg-yellow-50', border: 'border-yellow-200', order_index: 3, is_active: true },
     { id: 'printing', name: 'Print', color: 'bg-blue-500', bg_light: 'bg-blue-50', border: 'border-blue-200', order_index: 4, is_active: true },
     { id: 'finishing', name: 'Post Print', color: 'bg-cyan-500', bg_light: 'bg-cyan-50', border: 'border-cyan-200', order_index: 5, is_active: true },
     { id: 'quality_check', name: 'QC Check', color: 'bg-emerald-500', bg_light: 'bg-emerald-50', border: 'border-emerald-200', order_index: 6, is_active: true },

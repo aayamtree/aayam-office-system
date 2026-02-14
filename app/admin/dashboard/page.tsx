@@ -74,7 +74,7 @@ export default function AdminDashboardShadcn() {
         { key: 'awaiting_admin', label: 'Pending Approval', color: 'bg-orange-500' },
         { key: 'new', label: 'New', color: 'bg-blue-500' },
         { key: 'designing', label: 'Designing', color: 'bg-violet-500' },
-        { key: 'approval', label: 'Approval', color: 'bg-amber-500' },
+        { key: 'approval', label: 'Client Approval', color: 'bg-amber-500' },
         { key: 'printing', label: 'Printing', color: 'bg-gray-800' },
         { key: 'finishing', label: 'Finishing', color: 'bg-cyan-500' },
         { key: 'ready', label: 'Ready', color: 'bg-emerald-500' },

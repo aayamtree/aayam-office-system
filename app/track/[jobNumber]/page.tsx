@@ -33,7 +33,7 @@ export default async function TrackJobPage({ params }: { params: Promise<{ jobNu
     const stages = [
         { id: 'new', name: 'Order Placed', icon: '📋' },
         { id: 'designing', name: 'Designing', icon: '🎨' },
-        { id: 'approval', name: 'Approval', icon: '✅' },
+        { id: 'approval', name: 'Awaiting Client Approval', icon: '✅' },
         { id: 'printing', name: 'Printing', icon: '🖨️' },
         { id: 'finishing', name: 'Finishing', icon: '✂️' },
         { id: 'quality_check', name: 'Quality Check', icon: '🔍' },
@@ -80,8 +80,8 @@ export default async function TrackJobPage({ params }: { params: Promise<{ jobNu
                             {job.job_number}
                         </span>
                         <span className={`text-xs font-semibold px-3 py-1 rounded-full ${job.current_stage === 'delivered' ? 'bg-green-100 text-green-700' :
-                                job.current_stage === 'dispatched' ? 'bg-cyan-100 text-cyan-700' :
-                                    'bg-gray-100 text-gray-700'
+                            job.current_stage === 'dispatched' ? 'bg-cyan-100 text-cyan-700' :
+                                'bg-gray-100 text-gray-700'
                             }`}>
                             {stages.find(s => s.id === job.current_stage)?.name || job.current_stage}
                         </span>
@@ -118,8 +118,8 @@ export default async function TrackJobPage({ params }: { params: Promise<{ jobNu
                                     {/* Timeline Line & Dot */}
                                     <div className="flex flex-col items-center">
                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${isCompleted ? 'bg-green-100 text-green-600' :
-                                                isCurrent ? 'bg-gray-900 text-white ring-4 ring-gray-200' :
-                                                    'bg-gray-100 text-gray-400'
+                                            isCurrent ? 'bg-gray-900 text-white ring-4 ring-gray-200' :
+                                                'bg-gray-100 text-gray-400'
                                             }`}>
                                             {isCompleted ? '✓' : stage.icon}
                                         </div>
@@ -132,8 +132,8 @@ export default async function TrackJobPage({ params }: { params: Promise<{ jobNu
                                     {/* Label */}
                                     <div className={`pb-6 ${isCurrent ? 'pt-1' : 'pt-1.5'}`}>
                                         <p className={`text-sm font-medium ${isCompleted ? 'text-green-700' :
-                                                isCurrent ? 'text-gray-900 font-bold' :
-                                                    'text-gray-400'
+                                            isCurrent ? 'text-gray-900 font-bold' :
+                                                'text-gray-400'
                                             }`}>
                                             {stage.name}
                                         </p>

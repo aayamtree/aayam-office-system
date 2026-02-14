@@ -138,7 +138,7 @@ export default function UnifiedQueue() {
                                         task.status === 'printing' ? 'bg-emerald-50 text-emerald-600' :
                                             'bg-gray-100 text-gray-600'
                                 }`}>
-                                {task.status === 'awaiting_admin' ? '⏳ Awaiting Approval' : task.status === 'new' ? 'To Do' : task.status === 'designing' ? 'Designing' : task.status === 'approval' ? 'Approval' : task.status}
+                                {task.status === 'awaiting_admin' ? '⏳ Awaiting Approval' : task.status === 'new' ? 'To Do' : task.status === 'designing' ? 'Designing' : task.status === 'approval' ? 'Client Approval' : task.status}
                             </span>
                         </div>
                         {task.deadline && (
