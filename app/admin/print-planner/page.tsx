@@ -3,9 +3,19 @@
 import { useState } from 'react';
 import { PrintJobQueue } from '@/components/print-planner/PrintJobQueue';
 import { CreatePrintRunForm } from '@/components/print-planner/CreatePrintRunForm';
-import { ArrowLeft, ArrowRight, CheckCircle, Layers, Package, Settings2, Users, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Layers, Package, Settings2, Users, AlertTriangle, Ruler } from 'lucide-react';
 
-const PULLING_MULTIPLE = 500; // Industry standard: sheets come in multiples of 500
+const DEFAULT_PULLING = 1100; // Default pulling multiple
+
+// Common sheet sizes in Indian printing industry
+const COMMON_SHEET_SIZES = [
+    '20" × 30"',
+    '23" × 36"',
+    '25" × 36"',
+    '22" × 28"',
+    '18" × 23"',
+    'Custom',
+];
 
 function roundToMultiple(n: number, multiple: number): number {
     if (n <= 0) return 0;
@@ -45,6 +55,8 @@ export default function PrintPlannerPage() {
     const [selectedJobs, setSelectedJobs] = useState<PendingJob[]>([]);
     const [configuredJobs, setConfiguredJobs] = useState<ConfiguredJob[]>([]);
     const [refreshKey, setRefreshKey] = useState(0);
+    const [pullingMultiple, setPullingMultiple] = useState(DEFAULT_PULLING);
+    const [sheetSize, setSheetSize] = useState('23" × 36"');
 
     // Step 1: Add job to selection
     const handleAddJob = (job: PendingJob) => {
@@ -68,7 +80,7 @@ export default function PrintPlannerPage() {
             const qty = job.quantity || 0;
             const ups = 1;
             const rawSheets = qty > 0 ? Math.ceil(qty / ups) : 0;
-            const pulling = roundToMultiple(rawSheets, PULLING_MULTIPLE);
+            const pulling = roundToMultiple(rawSheets, pullingMultiple);
             const actualQty = pulling * ups;
             return {
                 ...job,
@@ -94,10 +106,30 @@ export default function PrintPlannerPage() {
                 ? Math.ceil(updated.quantity_needed / updated.ups_in_sheet)
                 : 0;
             updated.sheets_required = rawSheets;
-            updated.pulling_sheets = roundToMultiple(rawSheets, PULLING_MULTIPLE);
+            updated.pulling_sheets = roundToMultiple(rawSheets, pullingMultiple);
             updated.actual_print_qty = updated.pulling_sheets * updated.ups_in_sheet;
             updated.extra_prints = updated.actual_print_qty - updated.quantity_needed;
             return updated;
+        }));
+    };
+
+    // Recalculate all jobs when pulling multiple changes
+    const handlePullingChange = (newMultiple: number) => {
+        if (newMultiple < 1) return;
+        setPullingMultiple(newMultiple);
+        setConfiguredJobs(prev => prev.map(job => {
+            const rawSheets = job.ups_in_sheet > 0
+                ? Math.ceil(job.quantity_needed / job.ups_in_sheet)
+                : 0;
+            const pulling = roundToMultiple(rawSheets, newMultiple);
+            const actualQty = pulling * job.ups_in_sheet;
+            return {
+                ...job,
+                sheets_required: rawSheets,
+                pulling_sheets: pulling,
+                actual_print_qty: actualQty,
+                extra_prints: actualQty - job.quantity_needed,
+            };
         }));
     };
 
@@ -132,7 +164,7 @@ export default function PrintPlannerPage() {
         : 0;
     const totalPullingSheets = configuredJobs.length > 0
         ? (isMultiClient
-            ? roundToMultiple(Math.max(...configuredJobs.map(j => j.pulling_sheets)), PULLING_MULTIPLE)
+            ? roundToMultiple(Math.max(...configuredJobs.map(j => j.pulling_sheets)), pullingMultiple)
             : configuredJobs.reduce((sum, j) => sum + j.pulling_sheets, 0))
         : 0;
     const totalQty = configuredJobs.reduce((sum, j) => sum + j.quantity_needed, 0);
@@ -279,7 +311,7 @@ export default function PrintPlannerPage() {
                                     Configure Each Job
                                 </h3>
                                 <p className="text-xs text-gray-500 mt-1">
-                                    Set UPS per sheet and quantity for each job. Sheets required are auto-calculated.
+                                    Set UPS per sheet and quantity for each job. Sheets auto-round to pulling multiple.
                                 </p>
                             </div>
                             <div className="flex items-center gap-2">
@@ -290,6 +322,67 @@ export default function PrintPlannerPage() {
                                     </span>
                                 )}
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Print Settings Bar */}
+                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex flex-wrap items-center gap-4">
+                        {/* Sheet Size */}
+                        <div className="flex items-center gap-2">
+                            <Ruler size={14} className="text-gray-500" />
+                            <label className="text-xs font-bold text-gray-600 whitespace-nowrap">Sheet Size</label>
+                            <select
+                                value={COMMON_SHEET_SIZES.includes(sheetSize) ? sheetSize : 'Custom'}
+                                onChange={(e) => {
+                                    if (e.target.value === 'Custom') {
+                                        const custom = prompt('Enter custom sheet size (e.g. 24" × 36")');
+                                        if (custom) setSheetSize(custom);
+                                    } else {
+                                        setSheetSize(e.target.value);
+                                    }
+                                }}
+                                className="px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400 outline-none bg-white font-medium"
+                            >
+                                {COMMON_SHEET_SIZES.map(s => (
+                                    <option key={s} value={s}>{s}</option>
+                                ))}
+                            </select>
+                            {!COMMON_SHEET_SIZES.includes(sheetSize) && (
+                                <span className="text-xs font-bold text-gray-700 bg-white px-2 py-1 rounded border">{sheetSize}</span>
+                            )}
+                        </div>
+
+                        {/* Separator */}
+                        <div className="h-6 w-px bg-gray-300"></div>
+
+                        {/* Pulling Multiple */}
+                        <div className="flex items-center gap-2">
+                            <label className="text-xs font-bold text-gray-600 whitespace-nowrap">Pulling ×</label>
+                            <input
+                                type="number"
+                                min="1"
+                                step="100"
+                                value={pullingMultiple}
+                                onChange={(e) => handlePullingChange(parseInt(e.target.value) || DEFAULT_PULLING)}
+                                className="w-20 px-2 py-1.5 text-center text-sm font-bold border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400 outline-none bg-white"
+                            />
+                            <span className="text-xs text-gray-400">sheets/pull</span>
+                        </div>
+
+                        {/* Quick presets */}
+                        <div className="flex items-center gap-1">
+                            {[500, 1000, 1100, 1500].map(n => (
+                                <button
+                                    key={n}
+                                    onClick={() => handlePullingChange(n)}
+                                    className={`px-2 py-1 text-xs rounded transition-all ${pullingMultiple === n
+                                        ? 'bg-gray-900 text-white font-bold'
+                                        : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
+                                        }`}
+                                >
+                                    {n}
+                                </button>
+                            ))}
                         </div>
                     </div>
 
@@ -304,7 +397,7 @@ export default function PrintPlannerPage() {
                                     <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-28">Qty Needed</th>
                                     <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-24">UPS / Sheet</th>
                                     <th className="text-center text-xs font-bold text-gray-500 px-4 py-3 w-24">Raw Sheets</th>
-                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-28">Pulling (×500)</th>
+                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-28">Pulling (×{pullingMultiple})</th>
                                     <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-28">Actual Qty</th>
                                     <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-24">Extra</th>
                                     <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-12"></th>
@@ -356,8 +449,8 @@ export default function PrintPlannerPage() {
                                             <td className="px-4 py-3 text-center">
                                                 {job.extra_prints > 0 ? (
                                                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-bold ${wasteRate > 30 ? 'bg-red-50 text-red-700'
-                                                            : wasteRate > 15 ? 'bg-amber-50 text-amber-700'
-                                                                : 'bg-green-50 text-green-700'
+                                                        : wasteRate > 15 ? 'bg-amber-50 text-amber-700'
+                                                            : 'bg-green-50 text-green-700'
                                                         }`}>
                                                         +{job.extra_prints.toLocaleString()}
                                                         <span className="text-[10px] opacity-70">({wasteRate.toFixed(0)}%)</span>
@@ -417,9 +510,9 @@ export default function PrintPlannerPage() {
                         <div className="flex items-start gap-2">
                             <AlertTriangle size={16} className="text-blue-600 mt-0.5 shrink-0" />
                             <div>
-                                <p className="text-sm font-bold text-blue-900">Sheet Pulling — ×{PULLING_MULTIPLE}</p>
+                                <p className="text-sm font-bold text-blue-900">Sheet Pulling — ×{pullingMultiple} | Sheet: {sheetSize}</p>
                                 <p className="text-xs text-blue-700 mt-0.5">
-                                    Printing press pulls in multiples of {PULLING_MULTIPLE} sheets. Raw sheet count is rounded up.
+                                    Press pulls in multiples of {pullingMultiple} sheets on {sheetSize} paper.
                                     {totalExtra > 0 && <> You&apos;ll get <strong>+{totalExtra.toLocaleString()} extra prints</strong> ({wastePercent}% over needed).</>}
                                 </p>
                             </div>
