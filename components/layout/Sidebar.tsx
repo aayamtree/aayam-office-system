@@ -37,7 +37,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/Badge';
-import { Separator } from '@/components/ui/separator';
 
 interface MenuItem {
   name: string;
@@ -215,6 +214,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { profile, signOut } = useAuth();
   const [expandedItems, setExpandedItems] = useState<string[]>(['Design Studio', 'Marketing', 'Sales & Finance', 'CRM', 'Dispatch']);
   const { stats } = useDashboardStats();
+  const [hovered, setHovered] = useState(false);
 
   const toggleExpanded = (name: string) => {
     setExpandedItems(prev =>
@@ -260,46 +260,77 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   }, []);
 
   // On mobile: only render sidebar when explicitly opened
-  // On desktop: always render sidebar
+  // On desktop: always render (collapsed or expanded)
   if (!isDesktop && !isOpen) {
     return null;
   }
 
+  // Desktop: collapsed = icon strip (64px), expanded on hover = full sidebar (256px) as overlay
+  const isCollapsed = isDesktop && !hovered;
+  const sidebarWidth = isCollapsed ? 'w-16' : 'w-64';
+
+  const filteredMenu = menuItems.filter(item => {
+    const userRole = profile?.role || 'admin';
+    if (!item.allowedRoles || item.allowedRoles.length === 0) return true;
+    return item.allowedRoles.includes(userRole);
+  });
+
   return (
     <aside
-      className="fixed left-0 top-0 h-screen w-64 bg-background border-r border-border flex flex-col z-40"
+      className={`fixed left-0 top-0 h-screen ${sidebarWidth} bg-background border-r border-border flex flex-col z-40 transition-all duration-200 ease-in-out ${isDesktop && hovered ? 'shadow-2xl' : ''
+        }`}
+      onMouseEnter={() => isDesktop && setHovered(true)}
+      onMouseLeave={() => isDesktop && setHovered(false)}
     >
       {/* Logo */}
-      <div className="p-6 border-b border-border">
+      <div className={`border-b border-border ${isCollapsed ? 'p-3 flex justify-center' : 'p-6'}`}>
         <Link
           href={profile?.role === 'designer' ? '/admin/designers/tasks' : '/admin/dashboard'}
           className="flex items-center gap-2"
           onClick={handleLinkClick}
         >
-          <img src="/company-logo.png" alt="Aayam" className="w-8 h-8 rounded" />
-          <span className="font-bold text-foreground text-xl">Aayam</span>
+          <img src="/company-logo.png" alt="Aayam" className="w-8 h-8 rounded shrink-0" />
+          {!isCollapsed && <span className="font-bold text-foreground text-xl whitespace-nowrap">Aayam</span>}
         </Link>
       </div>
 
       {/* Navigation */}
-      <ScrollArea className="flex-1 px-3 py-4">
+      <ScrollArea className={`flex-1 ${isCollapsed ? 'px-1.5' : 'px-3'} py-4`}>
         <nav className="space-y-1">
           {profile && !profile.role ? (
-            <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
-              <p className="text-sm text-destructive font-medium">⚠️ No Role Assigned</p>
-              <p className="text-xs text-muted-foreground mt-1">Contact admin to assign your role</p>
-            </div>
+            !isCollapsed && (
+              <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                <p className="text-sm text-destructive font-medium">⚠️ No Role Assigned</p>
+                <p className="text-xs text-muted-foreground mt-1">Contact admin to assign your role</p>
+              </div>
+            )
           ) : (
-            menuItems.filter(item => {
-              const userRole = profile?.role || 'admin';
-              if (!item.allowedRoles || item.allowedRoles.length === 0) return true;
-              return item.allowedRoles.includes(userRole);
-            }).map((item) => {
+            filteredMenu.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href);
               const isExpanded = expandedItems.includes(item.name);
               const hasSubmenu = item.submenu && item.submenu.length > 0;
 
+              // COLLAPSED MODE: icon-only buttons
+              if (isCollapsed) {
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={handleLinkClick}
+                    title={item.name}
+                    className={`flex items-center justify-center w-full h-10 rounded-md transition-colors
+                      ${active
+                        ? 'bg-accent text-accent-foreground'
+                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                      }`}
+                  >
+                    <Icon className="h-4 w-4" strokeWidth={1.5} />
+                  </Link>
+                );
+              }
+
+              // EXPANDED MODE: full sidebar
               return (
                 <div key={item.name}>
                   {hasSubmenu && item.name !== 'Design Studio' ? (
@@ -313,7 +344,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     >
                       <div className="flex items-center gap-2">
                         <Icon className="h-4 w-4" strokeWidth={1} />
-                        <span>{item.name}</span>
+                        <span className="whitespace-nowrap">{item.name}</span>
                       </div>
                       <ChevronDown
                         className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
@@ -331,7 +362,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                         }`}
                     >
                       <Icon className="h-4 w-4" strokeWidth={1} />
-                      <span>{item.name}</span>
+                      <span className="whitespace-nowrap">{item.name}</span>
                     </Link>
                   )}
 
@@ -356,7 +387,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                                 : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                               }`}
                           >
-                            <span>{sub.name}</span>
+                            <span className="whitespace-nowrap">{sub.name}</span>
                             {showBadge && (
                               <Badge variant="secondary" className="ml-auto text-xs">
                                 {badge}
@@ -375,44 +406,53 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       </ScrollArea>
 
       {/* User Profile */}
-      <div className="p-4 border-t border-border">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="w-full justify-start px-2 h-auto py-2">
-              <Avatar className="h-8 w-8 mr-2">
-                <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} />
-                <AvatarFallback>{profile?.full_name?.charAt(0) || 'A'}</AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col items-start text-left flex-1 min-w-0">
-                <span className="text-sm font-medium truncate w-full">{profile?.full_name}</span>
-                <span className="text-xs text-muted-foreground capitalize">{profile?.role}</span>
-              </div>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/admin/settings/profile" onClick={handleLinkClick}>
-                <User className="mr-2 h-4 w-4" strokeWidth={1} />
-                <span>Profile</span>
-              </Link>
-            </DropdownMenuItem>
-            {profile?.role === 'admin' && (
+      <div className={`border-t border-border ${isCollapsed ? 'p-2 flex justify-center' : 'p-4'}`}>
+        {isCollapsed ? (
+          <Link href="/admin/settings/profile" title={profile?.full_name || 'Profile'}>
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} />
+              <AvatarFallback>{profile?.full_name?.charAt(0) || 'A'}</AvatarFallback>
+            </Avatar>
+          </Link>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="w-full justify-start px-2 h-auto py-2">
+                <Avatar className="h-8 w-8 mr-2">
+                  <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} />
+                  <AvatarFallback>{profile?.full_name?.charAt(0) || 'A'}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col items-start text-left flex-1 min-w-0">
+                  <span className="text-sm font-medium truncate w-full whitespace-nowrap">{profile?.full_name}</span>
+                  <span className="text-xs text-muted-foreground capitalize whitespace-nowrap">{profile?.role}</span>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/admin/settings" onClick={handleLinkClick}>
-                  <Settings className="mr-2 h-4 w-4" strokeWidth={1} />
-                  <span>Settings</span>
+                <Link href="/admin/settings/profile" onClick={handleLinkClick}>
+                  <User className="mr-2 h-4 w-4" strokeWidth={1} />
+                  <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
-              <LogOut className="mr-2 h-4 w-4" strokeWidth={1} />
-              <span>Log out</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              {profile?.role === 'admin' && (
+                <DropdownMenuItem asChild>
+                  <Link href="/admin/settings" onClick={handleLinkClick}>
+                    <Settings className="mr-2 h-4 w-4" strokeWidth={1} />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                <LogOut className="mr-2 h-4 w-4" strokeWidth={1} />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </aside>
   );

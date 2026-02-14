@@ -80,7 +80,7 @@ export default function AdminLayout({
           {profile && <DailyBriefingTrigger />}
 
           {/* Main Content */}
-          <main className="lg:ml-64 pt-20 lg:pt-24 px-4 md:px-6 lg:px-8 py-6 min-h-screen">
+          <main className="lg:ml-16 pt-20 lg:pt-24 px-4 md:px-6 lg:px-8 py-6 min-h-screen">
             {children}
           </main>
 
