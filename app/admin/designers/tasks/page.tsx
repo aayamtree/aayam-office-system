@@ -736,12 +736,7 @@ export default function DesignerWorkspace() {
           approval_by: profile?.id,
           approval_remark: approvalRemark,
         } as any);
-        await supabase.from('job_stage_history').insert([{
-          job_id: selectedTask.realId,
-          from_stage: selectedTask.current_stage,
-          to_stage: selectedTask.current_stage,
-          notes: noteText
-        }]);
+        if (updateJobStage) await updateJobStage(selectedTask.realId, 'printing' as any, noteText);
       } else if (action === 'changes_requested') {
         if (!approvalRemark.trim()) {
           alert('Please describe what changes the client wants');
