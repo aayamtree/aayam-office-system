@@ -57,6 +57,7 @@ export default function PrintPlannerPage() {
     const [refreshKey, setRefreshKey] = useState(0);
     const [pullingMultiple, setPullingMultiple] = useState(DEFAULT_PULLING);
     const [sheetSize, setSheetSize] = useState('23" × 36"');
+    const [qcRejectPercent, setQcRejectPercent] = useState(7); // 5-10% typical QC rejection
 
     // Step 1: Add job to selection
     const handleAddJob = (job: PendingJob) => {
@@ -171,6 +172,7 @@ export default function PrintPlannerPage() {
     const totalActualQty = configuredJobs.reduce((sum, j) => sum + j.actual_print_qty, 0);
     const totalExtra = configuredJobs.reduce((sum, j) => sum + j.extra_prints, 0);
     const wastePercent = totalQty > 0 ? ((totalExtra / totalQty) * 100).toFixed(1) : '0';
+    const totalAfterQC = Math.floor(totalActualQty * (1 - qcRejectPercent / 100));
 
     return (
         <div className="min-h-screen bg-gray-50 p-4 pb-12">
@@ -384,6 +386,24 @@ export default function PrintPlannerPage() {
                                 </button>
                             ))}
                         </div>
+
+                        {/* Separator */}
+                        <div className="h-6 w-px bg-gray-300"></div>
+
+                        {/* QC Rejection % */}
+                        <div className="flex items-center gap-2">
+                            <label className="text-xs font-bold text-gray-600 whitespace-nowrap">QC Reject</label>
+                            <input
+                                type="number"
+                                min="0"
+                                max="50"
+                                step="1"
+                                value={qcRejectPercent}
+                                onChange={(e) => setQcRejectPercent(Math.max(0, Math.min(50, parseInt(e.target.value) || 0)))}
+                                className="w-14 px-2 py-1.5 text-center text-sm font-bold border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400 outline-none bg-white"
+                            />
+                            <span className="text-xs text-gray-400">%</span>
+                        </div>
                     </div>
 
                     {/* Job Configuration Table */}
@@ -394,18 +414,18 @@ export default function PrintPlannerPage() {
                                     <th className="text-left text-xs font-bold text-gray-600 px-4 py-3">Job #</th>
                                     <th className="text-left text-xs font-bold text-gray-600 px-4 py-3">Client</th>
                                     <th className="text-left text-xs font-bold text-gray-600 px-4 py-3">Project</th>
-                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-28">Qty Needed</th>
+                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-28">Client Qty</th>
                                     <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-24">UPS / Sheet</th>
-                                    <th className="text-center text-xs font-bold text-gray-500 px-4 py-3 w-24">Raw Sheets</th>
                                     <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-28">Pulling (×{pullingMultiple})</th>
-                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-28">Actual Qty</th>
-                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-24">Extra</th>
+                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-28">Print Qty</th>
+                                    <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-28">After QC (~{qcRejectPercent}%)</th>
                                     <th className="text-center text-xs font-bold text-gray-600 px-4 py-3 w-12"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {configuredJobs.map((job, idx) => {
-                                    const wasteRate = job.quantity_needed > 0 ? (job.extra_prints / job.quantity_needed) * 100 : 0;
+                                    const afterQC = Math.floor(job.actual_print_qty * (1 - qcRejectPercent / 100));
+                                    const meetsClient = afterQC >= job.quantity_needed;
                                     return (
                                         <tr key={job.id} className={`border-b border-gray-100 ${idx % 2 === 0 ? '' : 'bg-gray-50/50'}`}>
                                             <td className="px-4 py-3">
@@ -436,9 +456,6 @@ export default function PrintPlannerPage() {
                                                 />
                                             </td>
                                             <td className="px-4 py-3 text-center">
-                                                <span className="text-sm text-gray-400">{job.sheets_required.toLocaleString()}</span>
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
                                                 <span className="inline-block px-3 py-1.5 bg-gray-900 text-white rounded-md text-sm font-bold min-w-[60px]">
                                                     {job.pulling_sheets.toLocaleString()}
                                                 </span>
@@ -447,17 +464,14 @@ export default function PrintPlannerPage() {
                                                 <span className="text-sm font-semibold text-gray-700">{job.actual_print_qty.toLocaleString()}</span>
                                             </td>
                                             <td className="px-4 py-3 text-center">
-                                                {job.extra_prints > 0 ? (
-                                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-bold ${wasteRate > 30 ? 'bg-red-50 text-red-700'
-                                                        : wasteRate > 15 ? 'bg-amber-50 text-amber-700'
-                                                            : 'bg-green-50 text-green-700'
-                                                        }`}>
-                                                        +{job.extra_prints.toLocaleString()}
-                                                        <span className="text-[10px] opacity-70">({wasteRate.toFixed(0)}%)</span>
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-xs text-gray-400">—</span>
-                                                )}
+                                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-bold ${meetsClient ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                                                    }`}>
+                                                    ~{afterQC.toLocaleString()}
+                                                    {meetsClient
+                                                        ? <span className="text-[10px] opacity-70">✓</span>
+                                                        : <span className="text-[10px] opacity-70">({(job.quantity_needed - afterQC).toLocaleString()} short)</span>
+                                                    }
+                                                </span>
                                             </td>
                                             <td className="px-4 py-3 text-center">
                                                 <button
@@ -484,9 +498,6 @@ export default function PrintPlannerPage() {
                                         <span className="text-xs text-gray-500">—</span>
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        <span className="text-xs text-gray-400">{totalSheets.toLocaleString()}</span>
-                                    </td>
-                                    <td className="px-4 py-3 text-center">
                                         <span className="inline-block px-3 py-1.5 bg-gray-900 text-white rounded-md text-sm font-bold min-w-[60px]">
                                             {totalPullingSheets.toLocaleString()}
                                         </span>
@@ -495,9 +506,9 @@ export default function PrintPlannerPage() {
                                         <span className="text-sm font-bold text-gray-900">{totalActualQty.toLocaleString()}</span>
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        {totalExtra > 0 && (
-                                            <span className="text-xs font-bold text-amber-600">+{totalExtra.toLocaleString()} ({wastePercent}%)</span>
-                                        )}
+                                        <span className={`text-sm font-bold ${totalAfterQC >= totalQty ? 'text-green-700' : 'text-red-700'}`}>
+                                            ~{totalAfterQC.toLocaleString()}
+                                        </span>
                                     </td>
                                     <td></td>
                                 </tr>
@@ -505,15 +516,20 @@ export default function PrintPlannerPage() {
                         </table>
                     </div>
 
-                    {/* Pulling Info Banner */}
+                    {/* Info Banner */}
                     <div className="mx-4 my-3 p-3 bg-blue-50 rounded-md border border-blue-200">
                         <div className="flex items-start gap-2">
                             <AlertTriangle size={16} className="text-blue-600 mt-0.5 shrink-0" />
                             <div>
-                                <p className="text-sm font-bold text-blue-900">Sheet Pulling — ×{pullingMultiple} | Sheet: {sheetSize}</p>
+                                <p className="text-sm font-bold text-blue-900">Pulling ×{pullingMultiple} · Sheet: {sheetSize} · QC Reject: {qcRejectPercent}%</p>
                                 <p className="text-xs text-blue-700 mt-0.5">
-                                    Press pulls in multiples of {pullingMultiple} sheets on {sheetSize} paper.
-                                    {totalExtra > 0 && <> You&apos;ll get <strong>+{totalExtra.toLocaleString()} extra prints</strong> ({wastePercent}% over needed).</>}
+                                    Client needs <strong>{totalQty.toLocaleString()}</strong> →
+                                    We print <strong>{totalActualQty.toLocaleString()}</strong> →
+                                    After QC (~{qcRejectPercent}% reject): <strong>~{totalAfterQC.toLocaleString()}</strong>
+                                    {totalAfterQC >= totalQty
+                                        ? <span className="text-green-700 font-bold"> ✓ Sufficient</span>
+                                        : <span className="text-red-700 font-bold"> ⚠ Short by {(totalQty - totalAfterQC).toLocaleString()}</span>
+                                    }
                                 </p>
                             </div>
                         </div>
@@ -579,7 +595,7 @@ export default function PrintPlannerPage() {
                             </div>
                             <div className="p-3 bg-gray-50 rounded-md text-center">
                                 <p className="text-2xl font-bold text-gray-900">{totalQty.toLocaleString()}</p>
-                                <p className="text-xs text-gray-500">Qty Needed</p>
+                                <p className="text-xs text-gray-500">Client Qty</p>
                             </div>
                             <div className="p-3 bg-gray-900 rounded-md text-center">
                                 <p className="text-2xl font-bold text-white">{totalPullingSheets.toLocaleString()}</p>
@@ -587,14 +603,12 @@ export default function PrintPlannerPage() {
                             </div>
                             <div className="p-3 bg-gray-50 rounded-md text-center">
                                 <p className="text-2xl font-bold text-gray-900">{totalActualQty.toLocaleString()}</p>
-                                <p className="text-xs text-gray-500">Actual Print</p>
+                                <p className="text-xs text-gray-500">Print Qty</p>
                             </div>
-                            {totalExtra > 0 && (
-                                <div className="p-3 bg-amber-50 rounded-md text-center border border-amber-200">
-                                    <p className="text-2xl font-bold text-amber-700">+{totalExtra.toLocaleString()}</p>
-                                    <p className="text-xs text-amber-600">Extra ({wastePercent}%)</p>
-                                </div>
-                            )}
+                            <div className={`p-3 rounded-md text-center border ${totalAfterQC >= totalQty ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                                <p className={`text-2xl font-bold ${totalAfterQC >= totalQty ? 'text-green-700' : 'text-red-700'}`}>~{totalAfterQC.toLocaleString()}</p>
+                                <p className={`text-xs ${totalAfterQC >= totalQty ? 'text-green-600' : 'text-red-600'}`}>After QC ({qcRejectPercent}%)</p>
+                            </div>
                         </div>
 
                         {isMultiClient && (
@@ -607,19 +621,21 @@ export default function PrintPlannerPage() {
 
                         {/* Job List */}
                         <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                            {configuredJobs.map(job => (
-                                <div key={job.id} className="p-2.5 bg-gray-50 rounded-md">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs font-bold text-gray-900">{job.job_number}</span>
-                                        <span className="text-xs font-bold text-gray-700">{job.pulling_sheets.toLocaleString()} sheets</span>
+                            {configuredJobs.map(job => {
+                                const afterQC = Math.floor(job.actual_print_qty * (1 - qcRejectPercent / 100));
+                                return (
+                                    <div key={job.id} className="p-2.5 bg-gray-50 rounded-md">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs font-bold text-gray-900">{job.job_number}</span>
+                                            <span className="text-xs font-bold text-gray-700">{job.pulling_sheets.toLocaleString()} sheets</span>
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-0.5">{job.client_name} · {job.project_name}</p>
+                                        <p className="text-xs text-gray-400 mt-0.5">
+                                            Client: {job.quantity_needed.toLocaleString()} → Print: {job.actual_print_qty.toLocaleString()} → After QC: ~{afterQC.toLocaleString()}
+                                        </p>
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-0.5">{job.client_name} · {job.project_name}</p>
-                                    <p className="text-xs text-gray-400 mt-0.5">
-                                        {job.quantity_needed.toLocaleString()} qty × {job.ups_in_sheet}-up → {job.actual_print_qty.toLocaleString()} prints
-                                        {job.extra_prints > 0 && <span className="text-amber-600"> (+{job.extra_prints.toLocaleString()} extra)</span>}
-                                    </p>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
 
                         <button
