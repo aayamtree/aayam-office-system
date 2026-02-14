@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 import DriveConnectionStatus from '@/components/drive/DriveConnectionStatus';
 import { useJobs, useClients, useDesigners } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
+import { logActivity } from '@/lib/activity-logger';
 import {
   Plus, Search, Calendar, Clock, Edit, Trash2, Eye, X, ArrowLeft, ArrowRight, CheckCircle, XCircle,
   AlertCircle, User, Briefcase, MessageSquare, Paperclip, ExternalLink,
@@ -37,6 +38,7 @@ const taskStatuses = [
   { id: 'review', name: 'Review', color: 'bg-gray-900 text-white' },
   { id: 'waiting', name: 'Waiting Client', color: 'bg-amber-100 text-amber-700' },
   { id: 'completed', name: 'Done', color: 'bg-gray-100 text-gray-900' },
+  { id: 'on_hold', name: 'On Hold', color: 'bg-amber-50 text-amber-700' },
 ];
 
 const priorities = [
@@ -250,7 +252,8 @@ export default function DesignerWorkspace() {
     { id: 'in_progress', title: 'Designing', color: 'bg-muted', textColor: 'text-gray-900', border: 'border-primary' },
     { id: 'review', title: 'Review', color: 'bg-muted', textColor: 'text-gray-900', border: 'border-primary' },
     { id: 'waiting', title: 'Waiting', color: 'bg-white', textColor: 'text-gray-900', border: 'border-gray-500' },
-    { id: 'completed', title: 'Done', color: 'bg-white', textColor: 'text-gray-900', border: 'border-green-500' }
+    { id: 'completed', title: 'Done', color: 'bg-white', textColor: 'text-gray-900', border: 'border-green-500' },
+    { id: 'on_hold', title: '⏸️ On Hold', color: 'bg-amber-50', textColor: 'text-amber-800', border: 'border-amber-400' }
   ];
 
   // Notes State
@@ -451,8 +454,7 @@ export default function DesignerWorkspace() {
             realId: job.id,
             taskId: job.job_number || 'JOB',
             title: job.project_name,
-            clientName: client?.name || 'Unknown Client', // Name resolved!
-            status: getDesignerStatus(job.current_stage),
+            clientName: client?.name || 'Unknown Client',
             priority: job.priority || 'normal',
             // Formatting Date to 'DD MMM'
             deadline: job.client_deadline ? new Date(job.client_deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '',
@@ -474,7 +476,8 @@ export default function DesignerWorkspace() {
             client_approval: job.client_approval,
             is_on_hold: job.is_on_hold || false,
             hold_reason: job.hold_reason || '',
-            pre_hold_stage: job.pre_hold_stage || ''
+            pre_hold_stage: job.pre_hold_stage || '',
+            status: job.is_on_hold ? 'on_hold' : getDesignerStatus(job.current_stage)
           };
         })
         .sort((a, b) => {
@@ -1313,6 +1316,7 @@ export default function DesignerWorkspace() {
                                 to_stage: selectedTask.pre_hold_stage || 'designing',
                                 notes: `▶️ Resumed by ${userName}`,
                               }]);
+                              await logActivity({ action: 'update', resourceType: 'job', resourceId: selectedTask.realId, details: { description: `▶️ ${selectedTask.taskId} resumed by ${userName}. Back to ${selectedTask.pre_hold_stage || 'designing'}.`, holdAction: 'resume' } });
                               refetchJobs();
                             }}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 transition-colors"
@@ -1344,6 +1348,7 @@ export default function DesignerWorkspace() {
                                 to_stage: 'on_hold',
                                 notes: `⏸️ On Hold: ${reason}`,
                               }]);
+                              await logActivity({ action: 'update', resourceType: 'job', resourceId: selectedTask.realId, details: { description: `⏸️ ${selectedTask.taskId} put on hold by ${userName}. Reason: "${reason}"`, holdAction: 'hold' } });
                               refetchJobs();
                             }}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg text-xs font-bold hover:bg-amber-200 border border-amber-300 transition-colors"
