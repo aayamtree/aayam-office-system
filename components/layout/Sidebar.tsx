@@ -219,6 +219,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [expandedItems, setExpandedItems] = useState<string[]>(['Design Studio', 'Marketing', 'Sales & Finance', 'CRM', 'Dispatch']);
   const { stats } = useDashboardStats();
   const [hovered, setHovered] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const toggleExpanded = (name: string) => {
     setExpandedItems(prev =>
@@ -270,7 +271,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   }
 
   // Desktop: collapsed = icon strip (64px), expanded on hover = full sidebar (256px) as overlay
-  const isCollapsed = isDesktop && !hovered;
+  const isCollapsed = isDesktop && !hovered && !dropdownOpen;
   const sidebarWidth = isCollapsed ? 'w-16' : 'w-64';
 
   const filteredMenu = menuItems.filter(item => {
@@ -284,7 +285,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       className={`fixed left-0 top-0 h-screen ${sidebarWidth} bg-background border-r border-border flex flex-col z-40 transition-all duration-200 ease-in-out ${isDesktop && hovered ? 'shadow-2xl' : ''
         }`}
       onMouseEnter={() => isDesktop && setHovered(true)}
-      onMouseLeave={() => isDesktop && setHovered(false)}
+      onMouseLeave={() => {
+        if (isDesktop && !dropdownOpen) setHovered(false);
+      }}
     >
       {/* Logo */}
       <div className={`border-b border-border ${isCollapsed ? 'p-3 flex justify-center' : 'p-6'}`}>
@@ -419,7 +422,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </Avatar>
           </Link>
         ) : (
-          <DropdownMenu>
+          <DropdownMenu open={dropdownOpen} onOpenChange={(open) => {
+            setDropdownOpen(open);
+            if (!open) setHovered(false);
+          }}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="w-full justify-start px-2 h-auto py-2">
                 <Avatar className="h-8 w-8 mr-2">
@@ -432,7 +438,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end">
+            <DropdownMenuContent className="w-56" side="top" align="start" sideOffset={8}>
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
