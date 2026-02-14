@@ -213,6 +213,11 @@ export interface Job extends BaseEntity {
   approval_remark?: string;   // What client said / final direction
   approval_status?: 'pending' | 'sent' | 'approved' | 'changes_requested';
   print_ready?: boolean;
+
+  // Hold feature
+  is_on_hold?: boolean;
+  hold_reason?: string;
+  pre_hold_stage?: string;
   file_version?: string;
 
   // Files and notes
