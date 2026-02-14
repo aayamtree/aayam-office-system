@@ -755,6 +755,22 @@ export interface JobChecklist {
   created_at: string;
 }
 
+// Job Note (Project Feedback/Notes Log)
+export type NoteTag = 'correction' | 'update' | 'client_says' | 'approved' | 'design_note';
+export type NoteSource = 'call' | 'whatsapp' | 'in_person' | 'self';
+
+export interface JobNote {
+  id: string;
+  job_id: string;
+  user_id: string;
+  content: string;
+  tag: NoteTag;
+  source: NoteSource;
+  created_at: string;
+  // Joined data
+  user?: Profile;
+}
+
 // =============================================
 // API Response Types
 // =============================================

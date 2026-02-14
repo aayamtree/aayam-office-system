@@ -13,6 +13,7 @@ import {
   FileText, Image, Video, Music, File, ChevronRight, Save, Send, MoreHorizontal,
   ChevronLeft, Loader2, Folder, GanttChart, Layout, Monitor, AlertTriangle, Palette, Printer
 } from 'lucide-react';
+import ProjectNotesLog from '@/components/ProjectNotesLog';
 
 // --- HELPERS ---
 const getDesignerStatus = (stage: string) => {
@@ -138,7 +139,7 @@ export default function DesignerWorkspace() {
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [logs, setLogs] = useState(initialLogs);
   const [newLog, setNewLog] = useState('');
-  const [newFeedback, setNewFeedback] = useState('');
+
 
   // Approval State
   const [approvalRemark, setApprovalRemark] = useState('');
@@ -680,11 +681,7 @@ export default function DesignerWorkspace() {
     setNewLog('');
   };
 
-  const handleAddFeedback = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert("Message sent! (Simulated)");
-    setNewFeedback('');
-  };
+
 
   // --- APPROVAL HANDLERS ---
   const fetchApprovalLogs = useCallback(async (jobId: string) => {
@@ -1396,45 +1393,14 @@ export default function DesignerWorkspace() {
                       </div>
                     </section>
 
-                    {/* 3. Feedback & Corrections */}
-                    <section className="flex-1 flex flex-col min-h-[300px]">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                          <MessageSquare size={16} className="text-orange-500" /> Feedback & Corrections
-                        </h4>
-                      </div>
-                      <div className="bg-white border border-gray-200 rounded-lg flex flex-col overflow-hidden h-[320px]">
-                        <div className="flex-1 overflow-y-auto p-4 space-y-3 md:space-y-6 bg-gray-50/30">
-                          {/* Simulated Threaded Comments */}
-                          {/* In a real app, map through 'remarks' joined to task */}
-                          <div className="space-y-4">
-                            <div className="flex gap-3">
-                              <div className="min-w-8 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-foreground">M</div>
-                              <div className="bg-white p-3 rounded-lg rounded-tl-none border max-w-[80%]">
-                                <div className="flex justify-between items-center mb-1 gap-2 md:gap-4">
-                                  <span className="text-xs font-bold text-gray-900">Manager</span>
-                                  <span className="text-[9px] font-bold bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded">Correction ❌</span>
-                                </div>
-                                <p className="text-xs text-gray-600">Client wants the logo bigger. Please check brand guidelines.</p>
-                              </div>
-                            </div>
-                            <div className="flex gap-3 flex-row-reverse">
-                              <div className="min-w-8 w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center text-xs font-bold text-white">Me</div>
-                              <div className="bg-gray-900 p-3 rounded-lg rounded-tr-none border border-border-600  max-w-[80%] text-white">
-                                <div className="flex justify-between items-center mb-1 gap-2 md:gap-4">
-                                  <span className="text-xs font-bold text-white/80">You</span>
-                                </div>
-                                <p className="text-xs text-gray-50">Updated. V2 attached in drive.</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <form onSubmit={handleAddFeedback} className="p-4 border-t bg-white flex gap-3 items-center">
-                          <input type="text" value={newFeedback} onChange={(e) => setNewFeedback(e.target.value)} placeholder="Type reply (tag: #correction, #approved)..." className="flex-1 border rounded-lg px-4 py-2 text-sm focus:ring-2 ring-primary/20 outline-none" />
-                          <button type="submit" disabled={!newFeedback.trim()} className="p-2 bg-gray-900 text-white rounded-md hover:bg-gray-900 transition-colors"><Send size={18} /></button>
-                        </form>
-                      </div>
-                    </section>
+                    {/* 3. Project Notes & Feedback Log */}
+                    {selectedTask?.realId && (() => {
+                      // Determine write access: admin OR assigned designer
+                      const myDesigner = designers.find((d: any) => d.user_id === profile?.id);
+                      const isAssignedDesigner = myDesigner ? selectedTask.designerId === myDesigner.id : false;
+                      const canWriteNotes = isAdmin || isAssignedDesigner;
+                      return <ProjectNotesLog jobId={selectedTask.realId} canWrite={canWriteNotes} />;
+                    })()}
 
                     {/* 4. Client Approval Tracking */}
                     <section className="bg-white p-4 rounded-lg border border-green-100 space-y-4">

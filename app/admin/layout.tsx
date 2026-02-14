@@ -6,7 +6,6 @@ import { SessionProvider } from 'next-auth/react';
 import { useAuth } from '@/lib/auth-context';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
-import { NotificationPopup } from '@/components/NotificationPopup';
 import DailyBriefingTrigger from '@/components/calendar/DailyBriefingTrigger';
 import CommandPalette from '@/components/shared/CommandPalette';
 import SmartReminders from '@/components/shared/SmartReminders';
@@ -68,9 +67,6 @@ export default function AdminLayout({
 
         {/* Header */}
         <Header onMenuClick={() => setSidebarOpen(true)} />
-
-        {/* Broadcast Notifications Popup */}
-        <NotificationPopup />
 
         {/* Global Command Palette (Cmd+K) */}
         <CommandPalette />
