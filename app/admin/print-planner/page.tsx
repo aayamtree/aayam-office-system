@@ -432,7 +432,7 @@ export default function PrintPlannerPage() {
                                             />
                                         </td>
                                         <td className="px-4 py-3 text-center">
-                                            <span className="text-sm font-bold text-gray-900">{job.actual_print_qty.toLocaleString()}</span>
+                                            <span className="text-sm font-bold text-gray-900">{job.quantity_needed.toLocaleString()}</span>
                                         </td>
                                         <td className="px-4 py-3 text-center">
                                             <button
@@ -458,7 +458,7 @@ export default function PrintPlannerPage() {
                                         <span className="text-xs text-gray-500">—</span>
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        <span className="text-sm font-bold text-gray-900">{totalActualQty.toLocaleString()}</span>
+                                        <span className="text-sm font-bold text-gray-900">{totalQty.toLocaleString()}</span>
                                     </td>
                                     <td></td>
                                 </tr>
@@ -473,8 +473,7 @@ export default function PrintPlannerPage() {
                             <div>
                                 <p className="text-sm font-bold text-blue-900">Pulling ×{pullingMultiple} · Sheet: {sheetSize}</p>
                                 <p className="text-xs text-blue-700 mt-0.5">
-                                    Client needs <strong>{totalQty.toLocaleString()}</strong> →
-                                    We print <strong>{totalActualQty.toLocaleString()}</strong>
+                                    Total sheets: <strong>{totalPullingSheets.toLocaleString()}</strong> (rounded to ×{pullingMultiple})
                                 </p>
                             </div>
                         </div>
