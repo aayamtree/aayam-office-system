@@ -737,6 +737,9 @@ export interface Note extends BaseEntity {
   is_pinned: boolean;
   user_id?: string;
   tagged_users?: string[];
+  mentioned_users?: string[];
+  shared_with?: string[];
+  note_date?: string;
   linked_job_id?: string;
   job?: Job; // For joined data
 }
