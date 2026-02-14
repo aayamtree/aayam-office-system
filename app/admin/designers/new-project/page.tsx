@@ -25,18 +25,11 @@ import { Separator } from '@/components/ui/separator';
 // Icons
 import {
     ArrowLeft, Briefcase, CalendarIcon, CheckCircle, Cloud, FileText,
-    Image, File as FileIcon, Info, Link2, Loader2, Package, Search,
-    Sparkles, Upload, X
+    Image, File as FileIcon, Info, Loader2,
+    Upload, X
 } from 'lucide-react';
 import Link from 'next/link';
 
-// Types
-interface ExistingJob {
-    id: string;
-    job_number: string;
-    project_name: string;
-    client_name: string;
-}
 
 export default function NewProjectPage() {
     const router = useRouter();
@@ -48,11 +41,7 @@ export default function NewProjectPage() {
     const [creating, setCreating] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<string>('');
 
-    // Project type state
-    const [projectType, setProjectType] = useState<'new' | 'addon'>('new');
-    const [parentJobId, setParentJobId] = useState('');
-    const [existingJobs, setExistingJobs] = useState<ExistingJob[]>([]);
-    const [jobSearchQuery, setJobSearchQuery] = useState('');
+    // Project type simplified — always 'new'
 
     // Form data
     const [formData, setFormData] = useState({
@@ -99,42 +88,6 @@ export default function NewProjectPage() {
         }
     }, [profile, designers, formData.designerId]);
 
-    // Load existing jobs for add-on picker
-    useEffect(() => {
-        if (projectType === 'addon') {
-            loadExistingJobs();
-        }
-    }, [projectType]);
-
-    const loadExistingJobs = async () => {
-        const { data } = await supabase
-            .from('jobs')
-            .select('id, job_number, project_name, client_id')
-            .eq('status', 'active')
-            .order('created_at', { ascending: false })
-            .limit(100);
-
-        if (data) {
-            const jobsWithClientNames = data.map((j: any) => {
-                const client = clients?.find((c: any) => c.id === j.client_id);
-                return {
-                    id: j.id,
-                    job_number: j.job_number || 'No ID',
-                    project_name: j.project_name || 'Untitled',
-                    client_name: client?.company || client?.name || 'Unknown',
-                };
-            });
-            setExistingJobs(jobsWithClientNames);
-        }
-    };
-
-    const filteredJobs = existingJobs.filter(j => {
-        if (!jobSearchQuery) return true;
-        const q = jobSearchQuery.toLowerCase();
-        return j.job_number.toLowerCase().includes(q)
-            || j.project_name.toLowerCase().includes(q)
-            || j.client_name.toLowerCase().includes(q);
-    });
 
     // Handle Drive link change with verification
     const handleDriveLinkChange = async (link: string) => {
@@ -223,7 +176,7 @@ export default function NewProjectPage() {
                 priority: formData.priority,
                 drive_link: formData.driveLink || null,
                 description: formData.description || null,
-                parent_job_id: projectType === 'addon' ? parentJobId || null : null,
+                parent_job_id: null,
                 project_origin: isDesignerRole ? 'designer' : 'admin',
 
                 // Designer-created projects start in awaiting_admin
@@ -317,13 +270,7 @@ export default function NewProjectPage() {
 
             // Notify admins if designer-created
             if (isDesignerRole) {
-                const parentInfo = projectType === 'addon' && parentJobId
-                    ? existingJobs.find(j => j.id === parentJobId)
-                    : null;
-
-                const message = parentInfo
-                    ? `🔗 Add-on project "${formData.title}" (linked to ${parentInfo.job_number}) created by ${profile?.full_name || 'Designer'}. Pricing & approval needed.`
-                    : `🆕 New project "${formData.title}" created by ${profile?.full_name || 'Designer'}. Pricing & approval needed.`;
+                const message = `🆕 New project "${formData.title}" created by ${profile?.full_name || 'Designer'}. Pricing & approval needed.`;
 
                 try {
                     await supabase.from('broadcast_notifications').insert({
@@ -378,66 +325,6 @@ export default function NewProjectPage() {
             <div className="max-w-3xl mx-auto px-4 py-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
 
-                    {/* Project Type Toggle */}
-                    <div className="bg-card border rounded-lg p-5 space-y-4">
-                        <Label className="text-sm font-semibold">Project Type</Label>
-                        <ToggleGroup
-                            type="single"
-                            value={projectType}
-                            onValueChange={(val) => { if (val) setProjectType(val as 'new' | 'addon'); }}
-                            className="justify-start"
-                        >
-                            <ToggleGroupItem value="new" className="gap-2 px-4 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-                                <Sparkles size={16} />
-                                New Project
-                            </ToggleGroupItem>
-                            <ToggleGroupItem value="addon" className="gap-2 px-4 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-                                <Link2 size={16} />
-                                Add-on to Existing
-                            </ToggleGroupItem>
-                        </ToggleGroup>
-
-                        {/* Parent Project Selector (if add-on) */}
-                        {projectType === 'addon' && (
-                            <div className="space-y-2 pt-2 border-t">
-                                <Label className="text-sm font-semibold flex items-center gap-2">
-                                    <Package size={14} />
-                                    Link to Parent Project
-                                </Label>
-                                <Select value={parentJobId} onValueChange={setParentJobId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Search and select parent project..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <div className="px-2 pb-2">
-                                            <div className="flex items-center gap-2 border rounded-md px-2">
-                                                <Search size={14} className="text-muted-foreground" />
-                                                <input
-                                                    type="text"
-                                                    placeholder="Search by job number, name, or client..."
-                                                    className="w-full py-1.5 text-sm bg-transparent outline-none"
-                                                    value={jobSearchQuery}
-                                                    onChange={(e) => setJobSearchQuery(e.target.value)}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                />
-                                            </div>
-                                        </div>
-                                        {filteredJobs.length === 0 ? (
-                                            <div className="px-2 py-4 text-center text-sm text-muted-foreground">No projects found</div>
-                                        ) : (
-                                            filteredJobs.slice(0, 20).map(job => (
-                                                <SelectItem key={job.id} value={job.id}>
-                                                    <span className="font-mono text-xs text-muted-foreground mr-2">{job.job_number}</span>
-                                                    <span className="font-medium">{job.project_name}</span>
-                                                    <span className="text-muted-foreground ml-1">— {job.client_name}</span>
-                                                </SelectItem>
-                                            ))
-                                        )}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
-                    </div>
 
                     {/* Project Info */}
                     <div className="bg-card border rounded-lg p-5 space-y-4">
