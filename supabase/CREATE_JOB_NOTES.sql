@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS job_notes (
   user_id UUID NOT NULL REFERENCES auth.users(id),
   content TEXT NOT NULL,
   tag TEXT NOT NULL DEFAULT 'design_note'
-    CHECK (tag IN ('correction', 'update', 'client_says', 'approved', 'design_note')),
+    CHECK (tag IN ('correction', 'update', 'client_says', 'approved', 'approved_closed', 'design_note')),
   source TEXT NOT NULL DEFAULT 'self'
     CHECK (source IN ('call', 'whatsapp', 'in_person', 'self')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()

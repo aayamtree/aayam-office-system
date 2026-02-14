@@ -756,7 +756,7 @@ export interface JobChecklist {
 }
 
 // Job Note (Project Feedback/Notes Log)
-export type NoteTag = 'correction' | 'update' | 'client_says' | 'approved' | 'design_note';
+export type NoteTag = 'correction' | 'update' | 'client_says' | 'approved' | 'approved_closed' | 'design_note';
 export type NoteSource = 'call' | 'whatsapp' | 'in_person' | 'self';
 
 export interface JobNote {

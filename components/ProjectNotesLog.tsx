@@ -5,16 +5,17 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { NoteTag, NoteSource } from '@/types/database';
 import {
-    MessageSquare, Send, FileText,
+    MessageSquare, Send, FileText, Lock,
     AlertCircle, CheckCircle, Palette, RefreshCw, Loader2, MessageCircle, RotateCcw
 } from 'lucide-react';
 
-// Tag configuration
-const TAG_CONFIG: Record<NoteTag, { label: string; bg: string; text: string; icon: React.ReactNode; special?: boolean }> = {
+// Tag configuration — two approval levels
+const TAG_CONFIG: Record<NoteTag, { label: string; bg: string; text: string; icon: React.ReactNode }> = {
     correction: { label: 'Correction', bg: 'bg-red-50', text: 'text-red-600', icon: <AlertCircle size={10} /> },
     update: { label: 'Update', bg: 'bg-blue-50', text: 'text-blue-600', icon: <RefreshCw size={10} /> },
     client_says: { label: 'Client Says', bg: 'bg-amber-50', text: 'text-amber-700', icon: <MessageCircle size={10} /> },
-    approved: { label: 'Approved ✅', bg: 'bg-green-50', text: 'text-green-700', icon: <CheckCircle size={10} />, special: true },
+    approved: { label: 'Approved', bg: 'bg-green-50', text: 'text-green-600', icon: <CheckCircle size={10} /> },
+    approved_closed: { label: 'Approved & Closed', bg: 'bg-green-100', text: 'text-green-800', icon: <Lock size={10} /> },
     design_note: { label: 'Design Note', bg: 'bg-purple-50', text: 'text-purple-700', icon: <Palette size={10} /> },
 };
 
@@ -29,7 +30,7 @@ const SOURCE_CONFIG: Record<NoteSource, { label: string; icon: string }> = {
 interface ProjectNotesLogProps {
     jobId: string;
     canWrite: boolean;
-    onStageChange?: () => void; // callback to refetch parent data after stage change
+    onStageChange?: () => void;
 }
 
 interface NoteWithUser {
@@ -56,31 +57,30 @@ export default function ProjectNotesLog({ jobId, canWrite, onStageChange }: Proj
     const [source, setSource] = useState<NoteSource>('self');
 
     // Computed: approval & revision stats
-    const { isApproved, revisionCount, approvedDate } = useMemo(() => {
-        if (notes.length === 0) return { isApproved: false, revisionCount: 0, approvedDate: '' };
+    const { isApproved, isClosed, revisionCount } = useMemo(() => {
+        if (notes.length === 0) return { isApproved: false, isClosed: false, revisionCount: 0 };
 
-        // Notes are sorted desc (newest first), reverse for chronological processing
         const chronological = [...notes].reverse();
-
         let approved = false;
+        let closed = false;
         let revisions = 0;
-        let lastApprovedDate = '';
 
         for (const note of chronological) {
             if (note.tag === 'approved') {
                 approved = true;
-                lastApprovedDate = note.created_at;
-            } else if (note.tag === 'correction' && approved) {
-                // Correction AFTER approval = revision
+            } else if (note.tag === 'approved_closed') {
+                approved = true;
+                closed = true;
+            } else if (note.tag === 'correction' && (approved || closed)) {
                 revisions++;
-                approved = false; // Reset — needs re-approval
+                closed = false; // Re-opened
             }
         }
 
-        return { isApproved: approved, revisionCount: revisions, approvedDate: lastApprovedDate };
+        return { isApproved: approved, isClosed: closed, revisionCount: revisions };
     }, [notes]);
 
-    // Fetch notes with user profile data
+    // Fetch notes
     const fetchNotes = useCallback(async () => {
         if (!jobId) return;
         try {
@@ -127,37 +127,25 @@ export default function ProjectNotesLog({ jobId, canWrite, onStageChange }: Proj
         }
     }, [jobId]);
 
-    // Initial fetch + Realtime subscription
+    // Initial fetch + Realtime
     useEffect(() => {
         if (!jobId) return;
         fetchNotes();
-
         const channel = supabase
             .channel(`job-notes-${jobId}`)
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'job_notes', filter: `job_id=eq.${jobId}` },
-                () => { fetchNotes(); }
-            )
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'job_notes', filter: `job_id=eq.${jobId}` }, () => { fetchNotes(); })
             .subscribe();
-
         return () => { supabase.removeChannel(channel); };
     }, [jobId, fetchNotes]);
 
-    // Add note — with special handling for "approved" and "correction" tags
+    // Add note
     const handleAddNote = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!content.trim() || !profile?.id || !jobId) return;
 
-        // Require content for approved/correction
-        if (tag === 'approved' && !content.trim()) {
-            alert('Please type what the client said (required for accountability)');
-            return;
-        }
-
         setSaving(true);
         try {
-            // 1. Insert the note
+            // Insert note
             const { error } = await supabase.from('job_notes').insert([{
                 job_id: jobId,
                 user_id: profile.id,
@@ -167,36 +155,44 @@ export default function ProjectNotesLog({ jobId, canWrite, onStageChange }: Proj
             }]);
             if (error) throw error;
 
-            // 2. Special actions based on tag
-            if (tag === 'approved') {
-                // Move job to printing stage + set approval fields
-                const userName = profile.full_name || profile.email || 'Unknown';
-                const noteText = `✅ Client Approved — recorded by ${userName}. Client said: "${content.trim()}"`;
+            const userName = profile.full_name || profile.email || 'Unknown';
 
+            // --- SPECIAL TAG ACTIONS ---
+
+            if (tag === 'approved') {
+                // "Approved" = mark approval but job STAYS with designer (no stage change)
                 await supabase.from('jobs').update({
                     approval_status: 'approved',
                     client_approval: true,
                     approval_date: new Date().toISOString(),
                     approval_by: profile.id,
                     approval_remark: content.trim(),
-                    current_stage: 'printing',
+                    // NO current_stage change — stays with designer
                 }).eq('id', jobId);
 
-                // Log stage history
+            } else if (tag === 'approved_closed') {
+                // "Approved & Closed" = final sign-off → move to printing
+                const noteText = `🔒 Approved & Closed — by ${userName}. "${content.trim()}"`;
+                await supabase.from('jobs').update({
+                    approval_status: 'approved',
+                    client_approval: true,
+                    approval_date: new Date().toISOString(),
+                    approval_by: profile.id,
+                    approval_remark: content.trim(),
+                    current_stage: 'printing', // NOW it goes to print
+                }).eq('id', jobId);
+
                 await supabase.from('job_stage_history').insert([{
                     job_id: jobId,
-                    from_stage: 'approval',
+                    from_stage: 'designing',
                     to_stage: 'printing',
                     notes: noteText,
                 }]);
-
                 if (onStageChange) onStageChange();
 
-            } else if (tag === 'correction' && isApproved) {
-                // Correction after approval = revision, move back to designing
-                const userName = profile.full_name || profile.email || 'Unknown';
-                const noteText = `🔄 Revision ${revisionCount + 1} — recorded by ${userName}. Change: "${content.trim()}"`;
-
+            } else if (tag === 'correction' && isClosed) {
+                // Correction AFTER closed = revision, pull back from printing
+                const noteText = `🔄 Revision ${revisionCount + 1} — by ${userName}. "${content.trim()}"`;
                 await supabase.from('jobs').update({
                     approval_status: 'changes_requested',
                     client_approval: false,
@@ -209,7 +205,6 @@ export default function ProjectNotesLog({ jobId, canWrite, onStageChange }: Proj
                     to_stage: 'designing',
                     notes: noteText,
                 }]);
-
                 if (onStageChange) onStageChange();
             }
 
@@ -235,14 +230,12 @@ export default function ProjectNotesLog({ jobId, canWrite, onStageChange }: Proj
         }
     };
 
-    // Role badge
     const getRoleBadge = (role?: string) => {
         if (role === 'admin') return <span className="text-[9px] font-bold bg-gray-900 text-white px-1.5 py-0.5 rounded">Admin</span>;
         if (role === 'manager') return <span className="text-[9px] font-bold bg-gray-700 text-white px-1.5 py-0.5 rounded">Manager</span>;
         return null;
     };
 
-    // Time formatting
     const formatTime = (dateStr: string) => {
         const d = new Date(dateStr);
         const now = new Date();
@@ -259,29 +252,29 @@ export default function ProjectNotesLog({ jobId, canWrite, onStageChange }: Proj
 
     return (
         <section className="flex-1 flex flex-col min-h-[300px]">
-            {/* Header with status badges */}
+            {/* Header */}
             <div className="flex items-center justify-between mb-3">
                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
                     <FileText size={16} className="text-orange-500" /> Project Notes & Feedback
                 </h4>
                 <div className="flex items-center gap-2">
-                    {/* Revision count badge */}
                     {revisionCount > 0 && (
                         <span className="flex items-center gap-1 text-[10px] font-bold bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded-full">
                             <RotateCcw size={10} /> {revisionCount} {revisionCount === 1 ? 'Revision' : 'Revisions'}
                         </span>
                     )}
-                    {/* Approval badge */}
-                    {isApproved && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full">
+                    {isClosed && (
+                        <span className="flex items-center gap-1 text-[10px] font-bold bg-green-100 text-green-800 border border-green-300 px-2 py-0.5 rounded-full">
+                            <Lock size={10} /> Closed → Print
+                        </span>
+                    )}
+                    {isApproved && !isClosed && (
+                        <span className="flex items-center gap-1 text-[10px] font-bold bg-green-50 text-green-600 border border-green-200 px-2 py-0.5 rounded-full">
                             <CheckCircle size={10} /> Approved
                         </span>
                     )}
-                    {/* Note count */}
                     {notes.length > 0 && (
-                        <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
-                            {notes.length}
-                        </span>
+                        <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded">{notes.length}</span>
                     )}
                 </div>
             </div>
@@ -290,9 +283,7 @@ export default function ProjectNotesLog({ jobId, canWrite, onStageChange }: Proj
                 {/* Notes Timeline */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/30">
                     {loading ? (
-                        <div className="flex justify-center py-10">
-                            <Loader2 className="animate-spin text-gray-400" size={20} />
-                        </div>
+                        <div className="flex justify-center py-10"><Loader2 className="animate-spin text-gray-400" size={20} /></div>
                     ) : notes.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-10 text-gray-400">
                             <MessageSquare size={24} className="mb-2 opacity-50" />
@@ -305,34 +296,29 @@ export default function ProjectNotesLog({ jobId, canWrite, onStageChange }: Proj
                             const sourceConf = SOURCE_CONFIG[note.source];
                             const isOwnNote = note.user_id === profile?.id;
                             const isAdminNote = note.user_role === 'admin' || note.user_role === 'manager';
-                            const isApprovalNote = note.tag === 'approved';
-                            const isCorrectionNote = note.tag === 'correction';
 
                             return (
                                 <div
                                     key={note.id}
-                                    className={`rounded-lg border p-3 transition-all ${isApprovalNote
-                                            ? 'bg-green-50/50 border-green-200 border-l-[3px] border-l-green-500'
-                                            : isCorrectionNote
-                                                ? 'bg-red-50/30 border-red-200 border-l-[3px] border-l-red-400'
-                                                : isAdminNote
-                                                    ? 'bg-white border-orange-200 border-l-[3px] border-l-orange-400'
-                                                    : 'bg-white border-gray-100'
+                                    className={`rounded-lg border p-3 transition-all ${note.tag === 'approved_closed'
+                                            ? 'bg-green-50/50 border-green-300 border-l-[3px] border-l-green-600'
+                                            : note.tag === 'approved'
+                                                ? 'bg-green-50/30 border-green-200 border-l-[3px] border-l-green-400'
+                                                : note.tag === 'correction'
+                                                    ? 'bg-red-50/30 border-red-200 border-l-[3px] border-l-red-400'
+                                                    : isAdminNote
+                                                        ? 'bg-white border-orange-200 border-l-[3px] border-l-orange-400'
+                                                        : 'bg-white border-gray-100'
                                         }`}
                                 >
-                                    {/* Header */}
                                     <div className="flex items-center justify-between gap-2 mb-1.5">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="text-xs font-bold text-gray-800">
-                                                {isOwnNote ? 'You' : note.user_name}
-                                            </span>
+                                            <span className="text-xs font-bold text-gray-800">{isOwnNote ? 'You' : note.user_name}</span>
                                             {getRoleBadge(note.user_role)}
                                             <span className={`flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded ${tagConf.bg} ${tagConf.text}`}>
                                                 {tagConf.icon} {tagConf.label}
                                             </span>
-                                            <span className="text-[9px] text-gray-400 font-medium">
-                                                {sourceConf.icon} {sourceConf.label}
-                                            </span>
+                                            <span className="text-[9px] text-gray-400 font-medium">{sourceConf.icon} {sourceConf.label}</span>
                                         </div>
                                         <div className="flex items-center gap-2 shrink-0">
                                             <span className="text-[10px] text-gray-400">{formatTime(note.created_at)}</span>
@@ -351,19 +337,24 @@ export default function ProjectNotesLog({ jobId, canWrite, onStageChange }: Proj
                 {/* Add Note Form */}
                 {canWrite ? (
                     <form onSubmit={handleAddNote} className="p-3 border-t bg-white space-y-2">
-                        {/* Warning if selecting "Approved" */}
+                        {/* Context banners */}
                         {tag === 'approved' && (
-                            <div className="text-[10px] font-bold text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1.5 flex items-center gap-1.5">
-                                <CheckCircle size={12} /> This will mark the project as APPROVED and move it to print queue
+                            <div className="text-[10px] font-bold text-green-600 bg-green-50 border border-green-200 rounded px-2 py-1.5 flex items-center gap-1.5">
+                                <CheckCircle size={12} /> Marks design as approved — job stays with you for any last-minute changes
                             </div>
                         )}
-                        {tag === 'correction' && isApproved && (
+                        {tag === 'approved_closed' && (
+                            <div className="text-[10px] font-bold text-green-800 bg-green-100 border border-green-300 rounded px-2 py-1.5 flex items-center gap-1.5">
+                                <Lock size={12} /> FINAL sign-off — job moves to Print Queue. No more changes expected.
+                            </div>
+                        )}
+                        {tag === 'correction' && isClosed && (
                             <div className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1.5 flex items-center gap-1.5">
-                                <RotateCcw size={12} /> This will count as Revision {revisionCount + 1} and move project back to Designing
+                                <RotateCcw size={12} /> Revision {revisionCount + 1} — will pull job BACK from print queue
                             </div>
                         )}
 
-                        {/* Tag & Source selectors */}
+                        {/* Tag chips */}
                         <div className="flex items-center gap-1.5 flex-wrap">
                             {(Object.entries(TAG_CONFIG) as [NoteTag, typeof TAG_CONFIG[NoteTag]][]).map(([key, conf]) => (
                                 <button
@@ -389,19 +380,26 @@ export default function ProjectNotesLog({ jobId, canWrite, onStageChange }: Proj
                             </select>
                         </div>
 
-                        {/* Input + Submit */}
+                        {/* Input */}
                         <div className="flex gap-2 items-center">
                             <input
                                 type="text"
                                 value={content}
                                 onChange={(e) => setContent(e.target.value)}
-                                placeholder={tag === 'approved' ? 'What did the client say? (required)...' : tag === 'correction' ? 'Describe the correction needed...' : 'Add a note...'}
+                                placeholder={
+                                    tag === 'approved' ? 'What did the client say? (required)...' :
+                                        tag === 'approved_closed' ? 'Final remark before sending to print...' :
+                                            tag === 'correction' ? 'Describe the correction needed...' :
+                                                'Add a note...'
+                                }
                                 className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 ring-primary/20 outline-none"
                             />
                             <button
                                 type="submit"
                                 disabled={!content.trim() || saving}
-                                className={`p-2 rounded-md transition-colors disabled:opacity-40 ${tag === 'approved' ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-900 text-white hover:bg-gray-800'
+                                className={`p-2 rounded-md transition-colors disabled:opacity-40 ${tag === 'approved_closed' ? 'bg-green-700 text-white hover:bg-green-800' :
+                                        tag === 'approved' ? 'bg-green-600 text-white hover:bg-green-700' :
+                                            'bg-gray-900 text-white hover:bg-gray-800'
                                     }`}
                             >
                                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
