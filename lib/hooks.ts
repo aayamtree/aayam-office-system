@@ -2096,10 +2096,10 @@ export function useCalendarEvents(startDate?: string, endDate?: string) {
   const conditions: any[] = [];
 
   if (startDate) {
-    conditions.push({ column: 'start_date', operator: 'gte', value: startDate });
+    conditions.push({ column: 'start_date', op: 'gte', value: startDate });
   }
   if (endDate) {
-    conditions.push({ column: 'start_date', operator: 'lte', value: endDate });
+    conditions.push({ column: 'start_date', op: 'lte', value: endDate });
   }
 
   const { data, loading, error, refetch } = useSupabaseQuery<UserCalendarEvent>('user_calendar_events', {

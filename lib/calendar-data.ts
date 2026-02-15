@@ -24,20 +24,19 @@ export async function fetchCalendarBusinessData(
     const items: CalendarItem[] = [];
 
     try {
-        // Build queries — admin gets all, others get filtered
         // 1. Job deadlines
         let jobsQuery = supabase.from('jobs')
-            .select('id, job_number, project_name, client_deadline, current_stage, assigned_designer')
+            .select('id, job_number, project_name, client_deadline, current_stage, designer_id')
             .gte('client_deadline', startDate)
             .lte('client_deadline', endDate)
             .neq('current_stage', 'cancelled');
         if (!isAdmin) {
-            jobsQuery = jobsQuery.eq('assigned_designer', userId);
+            jobsQuery = jobsQuery.eq('designer_id', userId);
         }
 
         // 2. Follow-ups
         let followUpsQuery = supabase.from('follow_ups')
-            .select('id, title, follow_up_date, status, assigned_to')
+            .select('id, description, follow_up_date, status, assigned_to')
             .gte('follow_up_date', startDate)
             .lte('follow_up_date', endDate);
         if (!isAdmin) {
@@ -49,33 +48,20 @@ export async function fetchCalendarBusinessData(
             .select('id, dispatch_date, status, job_id')
             .gte('dispatch_date', startDate)
             .lte('dispatch_date', endDate);
-        // Dispatches are visible to admin and dispatch role
-        if (!isAdmin && userRole !== 'dispatch') {
-            // For non-admin/non-dispatch, skip dispatches
-            dispatchQuery = dispatchQuery.eq('id', 'SKIP');
-        }
 
-        // 4. Invoices (due dates)
+        // 4. Invoices (due dates for unpaid)
         let invoiceQuery = supabase.from('invoices')
             .select('id, invoice_number, due_date, payment_status, total_amount')
             .gte('due_date', startDate)
             .lte('due_date', endDate)
             .neq('payment_status', 'paid');
-        // Invoices visible to admin and finance
-        if (!isAdmin && userRole !== 'finance') {
-            invoiceQuery = invoiceQuery.eq('id', 'SKIP');
-        }
 
-        // 5. Print Runs (deadlines)
+        // 5. Print Runs (deadlines for non-delivered)
         let printRunQuery = supabase.from('print_runs')
             .select('id, print_run_number, deadline, status')
             .gte('deadline', startDate)
             .lte('deadline', endDate)
             .neq('status', 'delivered');
-        // Print runs visible to admin only (production)
-        if (!isAdmin) {
-            printRunQuery = printRunQuery.eq('id', 'SKIP');
-        }
 
         // 6. Leads (deadlines)
         let leadsQuery = supabase.from('leads')
@@ -86,6 +72,7 @@ export async function fetchCalendarBusinessData(
             leadsQuery = leadsQuery.eq('assigned_to', userId);
         }
 
+        // Execute all queries in parallel
         const [jobsRes, followUpsRes, dispatchRes, invoiceRes, printRunRes, leadsRes] = await Promise.all([
             jobsQuery, followUpsQuery, dispatchQuery, invoiceQuery, printRunQuery, leadsQuery,
         ]);
@@ -95,7 +82,7 @@ export async function fetchCalendarBusinessData(
             if (j.client_deadline) {
                 items.push({
                     id: `job-${j.id}`,
-                    title: `📦 ${j.job_number}: ${j.project_name || 'Job'}`,
+                    title: `📦 ${j.job_number || 'Job'}: ${j.project_name || 'Untitled'}`,
                     date: j.client_deadline.split('T')[0],
                     type: 'deadline',
                     status: j.current_stage,
@@ -110,7 +97,7 @@ export async function fetchCalendarBusinessData(
             if (f.follow_up_date) {
                 items.push({
                     id: `followup-${f.id}`,
-                    title: `📞 ${f.title || 'Follow-up'}`,
+                    title: `📞 ${f.description || 'Follow-up'}`,
                     date: f.follow_up_date.split('T')[0],
                     type: 'followup',
                     status: f.status,
@@ -141,7 +128,7 @@ export async function fetchCalendarBusinessData(
                 const amount = inv.total_amount ? ` ₹${Number(inv.total_amount).toLocaleString()}` : '';
                 items.push({
                     id: `invoice-${inv.id}`,
-                    title: `🧾 ${inv.invoice_number}${amount}`,
+                    title: `🧾 ${inv.invoice_number || 'Invoice'}${amount}`,
                     date: inv.due_date.split('T')[0],
                     type: 'invoice',
                     status: inv.payment_status,
@@ -156,7 +143,7 @@ export async function fetchCalendarBusinessData(
             if (pr.deadline) {
                 items.push({
                     id: `printrun-${pr.id}`,
-                    title: `🖨️ ${pr.print_run_number}`,
+                    title: `🖨️ ${pr.print_run_number || 'Print Run'}`,
                     date: pr.deadline.split('T')[0],
                     type: 'printrun',
                     status: pr.status,
@@ -171,7 +158,7 @@ export async function fetchCalendarBusinessData(
             if (l.deadline) {
                 items.push({
                     id: `lead-${l.id}`,
-                    title: `🎯 ${l.lead_number}: ${l.company || l.name}`,
+                    title: `🎯 ${l.lead_number || 'Lead'}: ${l.company || l.name || 'Unknown'}`,
                     date: l.deadline.split('T')[0],
                     type: 'lead',
                     status: l.status,
