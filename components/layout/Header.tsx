@@ -82,7 +82,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
       const { data: overdueInvoices } = await supabase
         .from('invoices')
         .select('id, invoice_number, total_amount, due_date')
-        .eq('status', 'unpaid')
+        .neq('payment_status', 'paid')
         .lt('due_date', new Date().toISOString().split('T')[0])
         .order('due_date', { ascending: true })
         .limit(3);
@@ -104,7 +104,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
       const yesterday = new Date(Date.now() - 86400000).toISOString();
       const { data: recentJobs } = await supabase
         .from('jobs')
-        .select('id, job_id, project_name, created_at')
+        .select('id, job_number, project_name, created_at')
         .gt('created_at', yesterday)
         .order('created_at', { ascending: false })
         .limit(3);
@@ -114,7 +114,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
           items.push({
             id: `job-${job.id}`,
             title: 'New order',
-            desc: `${job.job_id || ''} — ${job.project_name || 'Untitled'}`,
+            desc: `${job.job_number || ''} — ${job.project_name || 'Untitled'}`,
             time: timeAgo(job.created_at),
             type: 'success',
             href: '/admin/jobs',
@@ -125,7 +125,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
       // 3. Recent leads (last 24h)
       const { data: recentLeads } = await supabase
         .from('leads')
-        .select('id, company_name, created_at')
+        .select('id, company, name, created_at')
         .gt('created_at', yesterday)
         .order('created_at', { ascending: false })
         .limit(2);
@@ -135,7 +135,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
           items.push({
             id: `lead-${lead.id}`,
             title: 'New lead',
-            desc: lead.company_name || 'Unknown',
+            desc: lead.company || lead.name || 'Unknown',
             time: timeAgo(lead.created_at),
             type: 'info',
             href: '/admin/marketing/leads',

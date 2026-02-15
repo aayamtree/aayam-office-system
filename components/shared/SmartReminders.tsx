@@ -54,7 +54,7 @@ export default function SmartReminders() {
             // 2. Follow-ups due today
             const { data: followUps } = await supabase
                 .from('follow_ups')
-                .select('id, lead_id, notes, follow_up_date, leads(company_name, contact_person)')
+                .select('id, lead_id, notes, follow_up_date, lead:leads(company, name)')
                 .lte('follow_up_date', today)
                 .eq('status', 'pending')
                 .limit(5);
@@ -63,7 +63,7 @@ export default function SmartReminders() {
                 items.push({
                     id: `followup_${f.id}`,
                     type: 'follow_up_due',
-                    title: `Follow-up: ${f.leads?.company_name || f.leads?.contact_person || 'Lead'}`,
+                    title: `Follow-up: ${f.lead?.company || f.lead?.name || 'Lead'}`,
                     subtitle: f.notes ? f.notes.slice(0, 60) : 'Follow-up scheduled',
                     href: `/admin/marketing/follow-ups`,
                     urgency: f.follow_up_date < today ? 'high' : 'medium',

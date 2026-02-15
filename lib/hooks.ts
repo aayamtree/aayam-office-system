@@ -2092,20 +2092,20 @@ export function useJobChecklists() {
 // PERSONAL CALENDAR HOOK
 // =============================================
 export function useCalendarEvents(startDate?: string, endDate?: string) {
-  // Build query conditions
+  // Build query conditions — DB column is `start_time` (TIMESTAMP)
   const conditions: any[] = [];
 
   if (startDate) {
-    conditions.push({ column: 'start_date', op: 'gte', value: startDate });
+    conditions.push({ column: 'start_time', op: 'gte', value: startDate });
   }
   if (endDate) {
-    conditions.push({ column: 'start_date', op: 'lte', value: endDate });
+    conditions.push({ column: 'start_time', op: 'lte', value: endDate });
   }
 
   const { data, loading, error, refetch } = useSupabaseQuery<UserCalendarEvent>('user_calendar_events', {
     select: '*',
     filter: conditions.length > 0 ? conditions : undefined,
-    orderBy: { column: 'start_date', ascending: true }
+    orderBy: { column: 'start_time', ascending: true }
   });
 
   const createEvent = async (event: Partial<UserCalendarEvent>) => {
