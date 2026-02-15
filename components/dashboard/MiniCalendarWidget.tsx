@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useCalendarEvents } from '@/lib/hooks';
-import { supabase } from '@/lib/supabase';
+import { fetchCalendarBusinessData, CalendarItem } from '@/lib/calendar-data';
 import NewEventModal from '@/components/calendar/NewEventModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -23,16 +23,6 @@ import {
     isToday,
 } from 'date-fns';
 
-interface CalendarItem {
-    id: string;
-    title: string;
-    date: string; // yyyy-MM-dd
-    type: 'event' | 'deadline' | 'followup' | 'dispatch';
-    status?: string;
-    color: string; // tailwind color class
-    link?: string; // navigation link for business items
-}
-
 export default function MiniCalendarWidget() {
     const { profile } = useAuth();
     const router = useRouter();
@@ -49,121 +39,50 @@ export default function MiniCalendarWidget() {
 
     const { events, createEvent, toggleComplete, loading: eventsLoading } = useCalendarEvents(startDate, endDate);
 
-    // Auto-fetch business data from DB
+    // Fetch ALL business data via shared utility (role-aware)
     const [businessItems, setBusinessItems] = useState<CalendarItem[]>([]);
     const [bizLoading, setBizLoading] = useState(true);
 
     useEffect(() => {
-        const fetchBusinessData = async () => {
-            setBizLoading(true);
-            try {
-                const [jobsRes, followUpsRes, dispatchRes] = await Promise.all([
-                    // Job deadlines in this date range
-                    supabase.from('jobs')
-                        .select('id, job_number, project_name, client_deadline, current_stage')
-                        .gte('client_deadline', startDate)
-                        .lte('client_deadline', endDate)
-                        .neq('current_stage', 'cancelled'),
-                    // Follow-ups due in this range
-                    supabase.from('follow_ups')
-                        .select('id, title, follow_up_date, status')
-                        .gte('follow_up_date', startDate)
-                        .lte('follow_up_date', endDate),
-                    // Dispatches scheduled in this range
-                    supabase.from('dispatches')
-                        .select('id, dispatch_date, status, job_id')
-                        .gte('dispatch_date', startDate)
-                        .lte('dispatch_date', endDate),
-                ]);
-
-                const items: CalendarItem[] = [];
-
-                // Job deadlines
-                jobsRes.data?.forEach(j => {
-                    if (j.client_deadline) {
-                        const dateStr = j.client_deadline.split('T')[0];
-                        items.push({
-                            id: `job-${j.id}`,
-                            title: `📦 ${j.job_number}: ${j.project_name || 'Job'}`,
-                            date: dateStr,
-                            type: 'deadline',
-                            status: j.current_stage,
-                            color: 'bg-amber-100 text-amber-800',
-                            link: '/admin/jobs',
-                        });
-                    }
-                });
-
-                // Follow-ups
-                followUpsRes.data?.forEach(f => {
-                    if (f.follow_up_date) {
-                        items.push({
-                            id: `followup-${f.id}`,
-                            title: `📞 ${f.title || 'Follow-up'}`,
-                            date: f.follow_up_date,
-                            type: 'followup',
-                            status: f.status,
-                            color: 'bg-blue-100 text-blue-800',
-                            link: '/admin/marketing/follow-ups',
-                        });
-                    }
-                });
-
-                // Dispatches
-                dispatchRes.data?.forEach(d => {
-                    if (d.dispatch_date) {
-                        items.push({
-                            id: `dispatch-${d.id}`,
-                            title: `🚚 Dispatch`,
-                            date: d.dispatch_date.split('T')[0],
-                            type: 'dispatch',
-                            status: d.status,
-                            color: 'bg-green-100 text-green-800',
-                            link: '/admin/dispatch',
-                        });
-                    }
-                });
-
-                setBusinessItems(items);
-            } catch (err) {
-                console.error('Error fetching calendar business data:', err);
-            } finally {
-                setBizLoading(false);
-            }
-        };
-
-        fetchBusinessData();
-    }, [startDate, endDate]);
+        if (!profile?.id) return;
+        setBizLoading(true);
+        fetchCalendarBusinessData(startDate, endDate, profile.role || 'admin', profile.id)
+            .then(items => setBusinessItems(items))
+            .finally(() => setBizLoading(false));
+    }, [startDate, endDate, profile?.id, profile?.role]);
 
     const loading = eventsLoading || bizLoading;
 
     // Combine personal events + business items
+    const isAdmin = profile?.role === 'admin';
     const allItems = useMemo(() => {
         const items: CalendarItem[] = [];
 
-        // Personal calendar events
+        // Personal calendar events (admin sees all, others see own + tagged)
         if (events && profile?.id) {
-            events
-                .filter(e => e.user_id === profile.id || (e.tagged_users && e.tagged_users.includes(profile.id)))
-                .forEach(e => {
-                    items.push({
-                        id: `event-${e.id}`,
-                        title: e.title,
-                        date: e.start_date,
-                        type: 'event',
-                        status: e.status,
-                        color: e.status === 'completed'
-                            ? 'bg-muted text-muted-foreground line-through'
-                            : 'bg-violet-100 text-violet-800',
-                    });
+            const userEvents = isAdmin
+                ? events
+                : events.filter(e => e.user_id === profile.id || (e.tagged_users && e.tagged_users.includes(profile.id)));
+
+            userEvents.forEach(e => {
+                items.push({
+                    id: `event-${e.id}`,
+                    title: e.title,
+                    date: e.start_date,
+                    type: 'event',
+                    status: e.status,
+                    color: e.status === 'completed'
+                        ? 'bg-muted text-muted-foreground line-through'
+                        : 'bg-violet-100 text-violet-800',
                 });
+            });
         }
 
         // Business items
         items.push(...businessItems);
 
         return items;
-    }, [events, profile?.id, businessItems]);
+    }, [events, profile?.id, isAdmin, businessItems]);
 
     const todayDate = new Date();
 
@@ -245,6 +164,9 @@ export default function MiniCalendarWidget() {
                         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400" /> Follow-up</span>
                         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400" /> Dispatch</span>
                         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-violet-400" /> Event</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-400" /> Invoice</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-orange-400" /> Print Run</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-400" /> Lead</span>
                     </div>
                 </CardHeader>
                 <CardContent>

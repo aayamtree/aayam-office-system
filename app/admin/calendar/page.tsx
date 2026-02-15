@@ -4,12 +4,12 @@ import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useCalendarEvents } from '@/lib/hooks';
-import { supabase } from '@/lib/supabase';
+import { fetchCalendarBusinessData, CalendarItem } from '@/lib/calendar-data';
 import GoogleConnectionStatus from '@/components/google/GoogleConnectionStatus';
 import DailyBriefingModal from '@/components/calendar/DailyBriefingModal';
 import NewEventModal from '@/components/calendar/NewEventModal';
 import EventCard from '@/components/calendar/EventCard';
-import { Calendar, Plus, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Calendar, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
     format,
     startOfMonth,
@@ -20,19 +20,8 @@ import {
     addMonths,
     subMonths,
     isSameMonth,
-    isSameDay,
     isToday,
 } from 'date-fns';
-
-interface CalendarItem {
-    id: string;
-    title: string;
-    date: string; // yyyy-MM-dd
-    type: 'event' | 'deadline' | 'followup' | 'dispatch';
-    status?: string;
-    color: string;
-    link?: string;
-}
 
 export default function CalendarPage() {
     const { profile } = useAuth();
@@ -42,7 +31,6 @@ export default function CalendarPage() {
     const [showNewEvent, setShowNewEvent] = useState(false);
     const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
 
-    // Compute the visible range for the month grid
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
     const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
@@ -53,111 +41,47 @@ export default function CalendarPage() {
 
     const { events, createEvent, toggleComplete, deleteEvent, loading: eventsLoading } = useCalendarEvents(startDate, endDate);
 
-    // Fetch business data (same as MiniCalendarWidget)
+    // Fetch ALL business data via shared utility (role-aware)
     const [businessItems, setBusinessItems] = useState<CalendarItem[]>([]);
     const [bizLoading, setBizLoading] = useState(true);
 
     useEffect(() => {
-        const fetchBusinessData = async () => {
-            setBizLoading(true);
-            try {
-                const [jobsRes, followUpsRes, dispatchRes] = await Promise.all([
-                    supabase.from('jobs')
-                        .select('id, job_number, project_name, client_deadline, current_stage')
-                        .gte('client_deadline', startDate)
-                        .lte('client_deadline', endDate)
-                        .neq('current_stage', 'cancelled'),
-                    supabase.from('follow_ups')
-                        .select('id, title, follow_up_date, status')
-                        .gte('follow_up_date', startDate)
-                        .lte('follow_up_date', endDate),
-                    supabase.from('dispatches')
-                        .select('id, dispatch_date, status, job_id')
-                        .gte('dispatch_date', startDate)
-                        .lte('dispatch_date', endDate),
-                ]);
-
-                const items: CalendarItem[] = [];
-
-                jobsRes.data?.forEach(j => {
-                    if (j.client_deadline) {
-                        items.push({
-                            id: `job-${j.id}`,
-                            title: `📦 ${j.job_number}: ${j.project_name || 'Job'}`,
-                            date: j.client_deadline.split('T')[0],
-                            type: 'deadline',
-                            status: j.current_stage,
-                            color: 'bg-amber-100 text-amber-800',
-                            link: '/admin/jobs',
-                        });
-                    }
-                });
-
-                followUpsRes.data?.forEach(f => {
-                    if (f.follow_up_date) {
-                        items.push({
-                            id: `followup-${f.id}`,
-                            title: `📞 ${f.title || 'Follow-up'}`,
-                            date: f.follow_up_date,
-                            type: 'followup',
-                            status: f.status,
-                            color: 'bg-blue-100 text-blue-800',
-                            link: '/admin/marketing/follow-ups',
-                        });
-                    }
-                });
-
-                dispatchRes.data?.forEach(d => {
-                    if (d.dispatch_date) {
-                        items.push({
-                            id: `dispatch-${d.id}`,
-                            title: `🚚 Dispatch`,
-                            date: d.dispatch_date.split('T')[0],
-                            type: 'dispatch',
-                            status: d.status,
-                            color: 'bg-green-100 text-green-800',
-                            link: '/admin/dispatch',
-                        });
-                    }
-                });
-
-                setBusinessItems(items);
-            } catch (err) {
-                console.error('Error fetching calendar business data:', err);
-            } finally {
-                setBizLoading(false);
-            }
-        };
-
-        fetchBusinessData();
-    }, [startDate, endDate]);
+        if (!profile?.id) return;
+        setBizLoading(true);
+        fetchCalendarBusinessData(startDate, endDate, profile.role || 'admin', profile.id)
+            .then(items => setBusinessItems(items))
+            .finally(() => setBizLoading(false));
+    }, [startDate, endDate, profile?.id, profile?.role]);
 
     const loading = eventsLoading || bizLoading;
+    const isAdmin = profile?.role === 'admin';
 
     // Combine personal events + business items
     const allItems = useMemo(() => {
         const items: CalendarItem[] = [];
 
         if (events && profile?.id) {
-            events
-                .filter(e => e.user_id === profile.id || (e.tagged_users && e.tagged_users.includes(profile.id)))
-                .forEach(e => {
-                    items.push({
-                        id: `event-${e.id}`,
-                        title: e.title,
-                        date: e.start_date,
-                        type: 'event',
-                        status: e.status,
-                        color: e.status === 'completed'
-                            ? 'bg-muted text-muted-foreground line-through'
-                            : 'bg-violet-100 text-violet-800',
-                    });
+            const userEvents = isAdmin
+                ? events // Admin sees all calendar events
+                : events.filter(e => e.user_id === profile.id || (e.tagged_users && e.tagged_users.includes(profile.id)));
+
+            userEvents.forEach(e => {
+                items.push({
+                    id: `event-${e.id}`,
+                    title: e.title,
+                    date: e.start_date,
+                    type: 'event',
+                    status: e.status,
+                    color: e.status === 'completed'
+                        ? 'bg-muted text-muted-foreground line-through'
+                        : 'bg-violet-100 text-violet-800',
                 });
+            });
         }
 
         items.push(...businessItems);
         return items;
-    }, [events, profile?.id, businessItems]);
+    }, [events, profile?.id, isAdmin, businessItems]);
 
     // Build calendar grid
     const calendarDays = useMemo(() => {
@@ -183,7 +107,7 @@ export default function CalendarPage() {
         return allItems.filter(item => item.date === selectedDate);
     }, [allItems, selectedDate]);
 
-    // Personal events for selected day (for EventCard rendering)
+    // Personal events for selected day
     const selectedDayEvents = useMemo(() => {
         if (!events) return [];
         return events.filter(e => e.start_date === selectedDate);
@@ -195,13 +119,30 @@ export default function CalendarPage() {
 
     const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
+    // Legend items based on role
+    const legendItems = [
+        { color: 'bg-amber-400', label: 'Deadline' },
+        { color: 'bg-blue-400', label: 'Follow-up' },
+        { color: 'bg-green-400', label: 'Dispatch' },
+        { color: 'bg-violet-400', label: 'Event' },
+        { color: 'bg-rose-400', label: 'Invoice Due' },
+        { color: 'bg-orange-400', label: 'Print Run' },
+        { color: 'bg-purple-400', label: 'Lead' },
+    ];
+
     return (
         <div className="p-4 pb-12">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-900">My Calendar</h1>
-                    <p className="text-sm text-gray-500 mt-0.5">Personal events & business deadlines in one place</p>
+                    <h1 className="text-xl font-bold text-gray-900">
+                        {isAdmin ? 'System Calendar' : 'My Calendar'}
+                    </h1>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                        {isAdmin
+                            ? 'All deadlines, events & business dates system-wide'
+                            : 'Your events, deadlines & assigned tasks'}
+                    </p>
                 </div>
                 <div className="flex items-center gap-2">
                     <GoogleConnectionStatus />
@@ -246,17 +187,18 @@ export default function CalendarPage() {
                                 onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
                                 className="p-1.5 hover:bg-gray-100 rounded-md transition-colors"
                             >
-                                <ChevronRight size={16} />
+                                <ChevronLeft size={16} className="rotate-180" />
                             </button>
                         </div>
                     </div>
 
                     {/* Legend */}
                     <div className="px-4 py-2 border-b border-gray-50 flex flex-wrap gap-4 text-[11px] text-gray-500">
-                        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" /> Deadline</span>
-                        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-400" /> Follow-up</span>
-                        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-400" /> Dispatch</span>
-                        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-violet-400" /> Event</span>
+                        {legendItems.map(l => (
+                            <span key={l.label} className="flex items-center gap-1.5">
+                                <span className={`w-2 h-2 rounded-full ${l.color}`} /> {l.label}
+                            </span>
+                        ))}
                     </div>
 
                     {/* Calendar Grid */}
@@ -369,7 +311,7 @@ export default function CalendarPage() {
                             </div>
                         ) : (
                             <div className="space-y-2">
-                                {/* Personal events (with full EventCard) */}
+                                {/* Personal events */}
                                 {selectedDayEvents.map(event => (
                                     <EventCard
                                         key={event.id}
@@ -389,7 +331,7 @@ export default function CalendarPage() {
                                             className={`px-3 py-2 rounded-md text-xs cursor-pointer transition-colors hover:opacity-80 ${item.color}`}
                                         >
                                             <p className="font-medium">{item.title}</p>
-                                            <p className="text-[10px] opacity-70 capitalize mt-0.5">{item.type}</p>
+                                            <p className="text-[10px] opacity-70 capitalize mt-0.5">{item.type === 'printrun' ? 'print run' : item.type === 'followup' ? 'follow-up' : item.type}</p>
                                         </div>
                                     ))}
                             </div>
