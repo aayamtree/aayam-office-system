@@ -41,17 +41,15 @@ export default function MiniCalendarWidget() {
 
     // Fetch ALL business data via shared utility (role-aware)
     const [businessItems, setBusinessItems] = useState<CalendarItem[]>([]);
-    const [bizLoading, setBizLoading] = useState(true);
 
     useEffect(() => {
         if (!profile?.id) return;
-        setBizLoading(true);
         fetchCalendarBusinessData(startDate, endDate, profile.role || 'admin', profile.id)
             .then(items => setBusinessItems(items))
-            .finally(() => setBizLoading(false));
+            .catch(err => console.error('Calendar data fetch error:', err));
     }, [startDate, endDate, profile?.id, profile?.role]);
 
-    const loading = eventsLoading || bizLoading;
+    const loading = eventsLoading;
 
     // Combine personal events + business items
     const isAdmin = profile?.role === 'admin';
