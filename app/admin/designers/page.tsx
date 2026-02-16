@@ -93,19 +93,17 @@ export default function DesignersPage() {
     fetchDesigners();
   }, []);
 
-  // ADMIN-ONLY PAGE — redirect non-admin users
+  // ADMIN-ONLY PAGE — silently redirect non-admin users
+  useEffect(() => {
+    if (profile && profile.role !== 'admin') {
+      router.replace(profile.role === 'designer' ? '/admin/designers/tasks' : '/admin/dashboard');
+    }
+  }, [profile, router]);
+
   if (profile && profile.role !== 'admin') {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-        <ShieldAlert className="w-16 h-16 text-red-400 mb-4" />
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Access Restricted</h2>
-        <p className="text-gray-500 mb-6">This page is only accessible to administrators.</p>
-        <button
-          onClick={() => router.push(profile.role === 'designer' ? '/admin/designers/tasks' : '/admin/dashboard')}
-          className="px-4 py-2.5 bg-gray-900 text-white rounded-lg font-medium"
-        >
-          Go to My Dashboard
-        </button>
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
