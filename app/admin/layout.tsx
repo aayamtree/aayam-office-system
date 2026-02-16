@@ -8,7 +8,6 @@ import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import DailyBriefingTrigger from '@/components/calendar/DailyBriefingTrigger';
 import CommandPalette from '@/components/shared/CommandPalette';
-import SmartReminders from '@/components/shared/SmartReminders';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { ConfirmProvider } from '@/components/ConfirmModal';
 
@@ -74,9 +73,6 @@ export default function AdminLayout({
 
           {/* Global Command Palette (Cmd+K) */}
           <CommandPalette />
-
-          {/* Smart Reminders (Auto) */}
-          <SmartReminders />
 
           {/* Daily Briefing - Auto shows once per day on login */}
           {profile && <DailyBriefingTrigger />}
