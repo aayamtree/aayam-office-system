@@ -1656,25 +1656,46 @@ export function useDashboardNotes() {
 }
 
 // =============================================
-// REMINDERS HOOK
+// REMINDERS HOOK (user-scoped)
 // =============================================
 export function useReminders() {
-  const { data, loading, error, refetch } = useSupabaseQuery<Reminder>('reminders', {
-    orderBy: { column: 'due_date', ascending: true }
-  });
+  const { profile } = useAuth();
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchReminders = useCallback(async () => {
+    if (!profile?.id || !isSupabaseConfigured()) {
+      setLoading(false);
+      return;
+    }
+
+    const { data, error: fetchError } = await supabase
+      .from('reminders')
+      .select('*')
+      .eq('user_id', profile.id)
+      .order('due_date', { ascending: true });
+
+    if (fetchError) {
+      setError(fetchError.message);
+    } else {
+      setReminders(data || []);
+    }
+    setLoading(false);
+  }, [profile?.id]);
+
+  useEffect(() => { fetchReminders(); }, [fetchReminders]);
 
   const createReminder = async (reminder: Omit<Reminder, 'id' | 'created_at' | 'updated_at'>) => {
-    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
-
-    const { data: user } = await supabase.auth.getUser();
+    if (!isSupabaseConfigured() || !profile?.id) return { error: 'Database not configured' };
 
     const { data, error } = await supabase
       .from('reminders')
-      .insert([{ ...reminder, user_id: user.user?.id }])
+      .insert([{ ...reminder, user_id: profile.id }])
       .select()
       .single();
 
-    if (!error) refetch();
+    if (!error) fetchReminders();
     return { data, error: error?.message };
   };
 
@@ -1688,7 +1709,7 @@ export function useReminders() {
       .select()
       .single();
 
-    if (!error) refetch();
+    if (!error) fetchReminders();
     return { data, error: error?.message };
   };
 
@@ -1700,12 +1721,12 @@ export function useReminders() {
       .delete()
       .eq('id', id);
 
-    if (!error) refetch();
+    if (!error) fetchReminders();
     return { error: error?.message };
   };
 
   return {
-    reminders: data,
+    reminders,
     loading,
     error,
     createReminder,

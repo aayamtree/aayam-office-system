@@ -26,6 +26,9 @@ export default function SmartReminders() {
     const role = profile?.role || 'designer';
     const isAdmin = role === 'admin';
     const isDesigner = role === 'designer';
+    const isMarketing = role === 'marketing';
+    const isDispatch = role === 'dispatch';
+    const isCmyk = role === 'cmyk';
     const isOnDashboard = pathname === '/admin/dashboard';
 
     const fetchReminders = useCallback(async () => {
@@ -61,8 +64,8 @@ export default function SmartReminders() {
                 });
             }
 
-            // 2. Follow-ups due — ADMIN & MARKETING only (not designers)
-            if (!isDesigner) {
+            // 2. Follow-ups due — ADMIN & MARKETING only
+            if (isAdmin || isMarketing) {
                 const { data: followUps } = await supabase
                     .from('follow_ups')
                     .select('id, lead_id, notes, follow_up_date, lead:leads(company, name)')
@@ -81,59 +84,73 @@ export default function SmartReminders() {
                 });
             }
 
-            // 3. Deadlines today — designers see only THEIR jobs
-            let todayQuery = supabase
-                .from('jobs')
-                .select('id, job_number, project_name, current_stage')
-                .eq('client_deadline', today)
-                .not('current_stage', 'in', '("delivered","cancelled")')
-                .limit(5);
-            if (!isAdmin) {
-                todayQuery = todayQuery.eq('designer_id', userId);
+            // 3. Deadlines today — scoped per role
+            // Marketing & CMYK don't need job deadline reminders
+            if (!isMarketing && !isCmyk) {
+                let todayQuery = supabase
+                    .from('jobs')
+                    .select('id, job_number, project_name, current_stage')
+                    .eq('client_deadline', today)
+                    .not('current_stage', 'in', '("delivered","cancelled")')
+                    .limit(5);
+
+                if (isDesigner) {
+                    // Designers see only THEIR assigned jobs
+                    todayQuery = todayQuery.eq('designer_id', userId);
+                } else if (isDispatch) {
+                    // Dispatch sees only QC/ready stage jobs (their responsibility)
+                    todayQuery = todayQuery.in('current_stage', ['quality_check', 'ready']);
+                }
+                // Admin sees all jobs (no extra filter)
+
+                const { data: todayJobs } = await todayQuery;
+
+                todayJobs?.forEach(j => {
+                    items.push({
+                        id: `today_${j.id}`,
+                        type: 'deadline_today',
+                        title: `${j.job_number} — Due Today`,
+                        subtitle: j.project_name || 'Untitled',
+                        href: `/admin/jobs?highlight=${j.id}`,
+                        urgency: 'high',
+                    });
+                });
             }
 
-            const { data: todayJobs } = await todayQuery;
+            // 4. Deadlines tomorrow — same role scoping
+            if (!isMarketing && !isCmyk) {
+                let tomorrowQuery = supabase
+                    .from('jobs')
+                    .select('id, job_number, project_name, current_stage')
+                    .eq('client_deadline', tomorrow)
+                    .not('current_stage', 'in', '("delivered","cancelled")')
+                    .limit(3);
 
-            todayJobs?.forEach(j => {
-                items.push({
-                    id: `today_${j.id}`,
-                    type: 'deadline_today',
-                    title: `${j.job_number} — Due Today`,
-                    subtitle: j.project_name || 'Untitled',
-                    href: `/admin/jobs?highlight=${j.id}`,
-                    urgency: 'high',
+                if (isDesigner) {
+                    tomorrowQuery = tomorrowQuery.eq('designer_id', userId);
+                } else if (isDispatch) {
+                    tomorrowQuery = tomorrowQuery.in('current_stage', ['quality_check', 'ready']);
+                }
+
+                const { data: tomorrowJobs } = await tomorrowQuery;
+
+                tomorrowJobs?.forEach(j => {
+                    items.push({
+                        id: `tomorrow_${j.id}`,
+                        type: 'deadline_tomorrow',
+                        title: `${j.job_number} — Due Tomorrow`,
+                        subtitle: j.project_name || 'Untitled',
+                        href: `/admin/jobs?highlight=${j.id}`,
+                        urgency: 'medium',
+                    });
                 });
-            });
-
-            // 4. Deadlines tomorrow — designers see only THEIR jobs
-            let tomorrowQuery = supabase
-                .from('jobs')
-                .select('id, job_number, project_name, current_stage')
-                .eq('client_deadline', tomorrow)
-                .not('current_stage', 'in', '("delivered","cancelled")')
-                .limit(3);
-            if (!isAdmin) {
-                tomorrowQuery = tomorrowQuery.eq('designer_id', userId);
             }
-
-            const { data: tomorrowJobs } = await tomorrowQuery;
-
-            tomorrowJobs?.forEach(j => {
-                items.push({
-                    id: `tomorrow_${j.id}`,
-                    type: 'deadline_tomorrow',
-                    title: `${j.job_number} — Due Tomorrow`,
-                    subtitle: j.project_name || 'Untitled',
-                    href: `/admin/jobs?highlight=${j.id}`,
-                    urgency: 'medium',
-                });
-            });
 
             setReminders(items);
         } catch (err) {
             console.error('SmartReminders error:', err);
         }
-    }, [profile, isAdmin, isDesigner]);
+    }, [profile, isAdmin, isDesigner, isMarketing, isDispatch, isCmyk]);
 
     useEffect(() => {
         fetchReminders();
