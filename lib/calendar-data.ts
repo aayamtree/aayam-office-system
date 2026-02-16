@@ -11,12 +11,17 @@ export interface CalendarItem {
 }
 
 /** Safe query helper — returns empty array on any error (missing table, bad column, etc.) */
-async function safeQuery<T>(queryBuilder: any): Promise<T[]> {
+async function safeQuery<T>(queryBuilder: any, label?: string): Promise<T[]> {
     try {
         const { data, error } = await queryBuilder;
-        if (error) return [];
+        if (error) {
+            console.warn(`[Calendar] ${label || 'query'} failed:`, error.message);
+            return [];
+        }
+        console.log(`[Calendar] ${label || 'query'}: ${(data ?? []).length} items`);
         return (data ?? []) as T[];
-    } catch {
+    } catch (e: any) {
+        console.warn(`[Calendar] ${label || 'query'} exception:`, e?.message);
         return [];
     }
 }
@@ -85,12 +90,12 @@ export async function fetchCalendarBusinessData(
 
     // Execute all queries in parallel — each is safe (returns [] on failure)
     const [jobs, followUps, dispatches, invoices, printRuns, leads] = await Promise.all([
-        safeQuery<any>(jobsQuery),
-        safeQuery<any>(followUpsQuery),
-        safeQuery<any>(dispatchQuery),
-        safeQuery<any>(invoiceQuery),
-        safeQuery<any>(printRunQuery),
-        safeQuery<any>(leadsQuery),
+        safeQuery<any>(jobsQuery, 'jobs'),
+        safeQuery<any>(followUpsQuery, 'follow_ups'),
+        safeQuery<any>(dispatchQuery, 'dispatches'),
+        safeQuery<any>(invoiceQuery, 'invoices'),
+        safeQuery<any>(printRunQuery, 'print_runs'),
+        safeQuery<any>(leadsQuery, 'leads'),
     ]);
 
     // Job deadlines
