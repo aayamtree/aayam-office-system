@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Printer, X, Calendar, IndianRupee, CheckCircle, Plus } from 'lucide-react';
+import { Printer, X, Calendar, IndianRupee, CheckCircle, Plus, FileText, Truck } from 'lucide-react';
 import { QuickAddMachine, QuickAddSheetSize, QuickAddMaterial } from '@/components/print-planner/QuickAddModals';
 
 interface ConfiguredJob {
@@ -19,6 +19,7 @@ interface ConfiguredJob {
 interface Vendor {
     id: string;
     name: string;
+    category?: string;
 }
 
 interface CreatePrintRunFormProps {
@@ -26,30 +27,44 @@ interface CreatePrintRunFormProps {
     onRemoveJob: (jobId: string) => void;
     onClear: () => void;
     onSuccess: () => void;
+    sheetSize: string;
+    pullingMultiple: number;
 }
 
-export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSuccess }: CreatePrintRunFormProps) {
+const GST_OPTIONS = [0, 5, 12, 18, 28];
+
+export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSuccess, sheetSize, pullingMultiple }: CreatePrintRunFormProps) {
     const [vendors, setVendors] = useState<Vendor[]>([]);
     const [loading, setLoading] = useState(false);
 
     // Form state
     const [vendorId, setVendorId] = useState('');
     const [machineId, setMachineId] = useState('');
-    const [sheetSizeId, setSheetSizeId] = useState('');
     const [materialId, setMaterialId] = useState('');
     const [deadline, setDeadline] = useState('');
-    const [totalAmount, setTotalAmount] = useState('');
+    const [printingCharge, setPrintingCharge] = useState('');
     const [notes, setNotes] = useState('');
+
+    // Paper supply state
+    const [sendingPaper, setSendingPaper] = useState(false);
+    const [paperVendorId, setPaperVendorId] = useState('');
+    const [paperQty, setPaperQty] = useState('');
+    const [paperRate, setPaperRate] = useState('');
+    const [paperGst, setPaperGst] = useState(18);
+    const [paperPaymentStatus, setPaperPaymentStatus] = useState<'paid' | 'pending'>('pending');
 
     // Dropdowns data
     const [machines, setMachines] = useState<any[]>([]);
-    const [sheetSizes, setSheetSizes] = useState<any[]>([]);
     const [materials, setMaterials] = useState<any[]>([]);
 
     // QuickAdd modal states
     const [showMachineModal, setShowMachineModal] = useState(false);
-    const [showSheetModal, setShowSheetModal] = useState(false);
     const [showMaterialModal, setShowMaterialModal] = useState(false);
+
+    // Computed paper amounts
+    const paperAmount = (parseFloat(paperQty) || 0) * (parseFloat(paperRate) || 0);
+    const paperGstAmount = paperAmount * (paperGst / 100);
+    const paperTotalWithGst = paperAmount + paperGstAmount;
 
     useEffect(() => {
         fetchVendors();
@@ -57,18 +72,16 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
     }, []);
 
     const fetchVendors = async () => {
-        const { data } = await supabase.from('vendors').select('*').eq('is_active', true);
+        const { data } = await supabase.from('vendors').select('id, name, category').eq('is_active', true);
         setVendors(data || []);
     };
 
     const fetchDropdownData = async () => {
-        const [m, s, mat] = await Promise.all([
+        const [m, mat] = await Promise.all([
             supabase.from('machines').select('*').eq('is_active', true),
-            supabase.from('sheet_sizes').select('*').eq('is_active', true),
             supabase.from('materials').select('*').eq('is_active', true)
         ]);
         setMachines(m.data || []);
-        setSheetSizes(s.data || []);
         setMaterials(mat.data || []);
     };
 
@@ -79,7 +92,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
             return;
         }
         if (!vendorId) {
-            alert('Please select a vendor');
+            alert('Please select a print vendor');
             return;
         }
 
@@ -90,13 +103,21 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                 .from('print_runs')
                 .insert({
                     machine_id: machineId || null,
-                    sheet_size_id: sheetSizeId || null,
+                    sheet_size_id: null,
                     material_id: materialId || null,
                     vendor_id: vendorId,
                     deadline: deadline || null,
-                    total_amount: totalAmount ? parseFloat(totalAmount) : null,
+                    total_amount: printingCharge ? parseFloat(printingCharge) : null,
                     status: 'planned',
-                    notes
+                    notes,
+                    sheet_size_label: sheetSize,
+                    pulling_multiple: pullingMultiple,
+                    paper_vendor_id: sendingPaper && paperVendorId ? paperVendorId : null,
+                    paper_qty: sendingPaper && paperQty ? parseInt(paperQty) : null,
+                    paper_rate: sendingPaper && paperRate ? parseFloat(paperRate) : null,
+                    paper_gst_percent: sendingPaper ? paperGst : null,
+                    paper_total: sendingPaper ? paperTotalWithGst : null,
+                    paper_payment_status: sendingPaper ? paperPaymentStatus : null,
                 })
                 .select()
                 .single();
@@ -135,11 +156,16 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
     const resetForm = () => {
         setVendorId('');
         setMachineId('');
-        setSheetSizeId('');
         setMaterialId('');
         setDeadline('');
-        setTotalAmount('');
+        setPrintingCharge('');
         setNotes('');
+        setSendingPaper(false);
+        setPaperVendorId('');
+        setPaperQty('');
+        setPaperRate('');
+        setPaperGst(18);
+        setPaperPaymentStatus('pending');
     };
 
     return (
@@ -152,14 +178,14 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                     </div>
                     <div>
                         <h2 className="text-page-title text-gray-900">Print Specifications</h2>
-                        <p className="text-sm text-gray-500">Set machine, material, and vendor</p>
+                        <p className="text-sm text-gray-500">Set machine, material, vendor & paper details</p>
                     </div>
                 </div>
             </div>
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-                {/* Vendor Selection */}
+                {/* Print Vendor Selection */}
                 <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
                         Print Vendor *
@@ -170,14 +196,14 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                         onChange={(e) => setVendorId(e.target.value)}
                         className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all outline-none"
                     >
-                        <option value="">Select vendor...</option>
+                        <option value="">Select print vendor...</option>
                         {vendors.map(v => (
                             <option key={v.id} value={v.id}>{v.name}</option>
                         ))}
                     </select>
                 </div>
 
-                {/* Print Specifications */}
+                {/* Machine & Material (Sheet Size auto-filled) */}
                 <div className="grid grid-cols-3 gap-2 md:gap-4">
                     <div>
                         <div className="flex items-center justify-between mb-2">
@@ -202,26 +228,10 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                         </select>
                     </div>
                     <div>
-                        <div className="flex items-center justify-between mb-2">
-                            <label className="block text-sm font-bold text-gray-700">Sheet Size</label>
-                            <button
-                                type="button"
-                                onClick={() => setShowSheetModal(true)}
-                                className="px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100 rounded-md flex items-center gap-1"
-                            >
-                                <Plus size={16} /> Add
-                            </button>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Sheet Size</label>
+                        <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-sm font-medium text-gray-700">
+                            {sheetSize}
                         </div>
-                        <select
-                            value={sheetSizeId}
-                            onChange={(e) => setSheetSizeId(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none"
-                        >
-                            <option value="">Select...</option>
-                            {sheetSizes.map(s => (
-                                <option key={s.id} value={s.id}>{s.size}</option>
-                            ))}
-                        </select>
                     </div>
                     <div>
                         <div className="flex items-center justify-between mb-2">
@@ -247,7 +257,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                     </div>
                 </div>
 
-                {/* Deadline & Amount */}
+                {/* Deadline & Printing Charge */}
                 <div className="grid grid-cols-2 gap-2 md:gap-4">
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">
@@ -264,17 +274,144 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">
                             <IndianRupee size={16} className="inline mr-1" />
-                            Total Amount
+                            Printing Charge
                         </label>
                         <input
                             type="number"
                             step="0.01"
-                            value={totalAmount}
-                            onChange={(e) => setTotalAmount(e.target.value)}
-                            placeholder="0.00"
+                            value={printingCharge}
+                            onChange={(e) => setPrintingCharge(e.target.value)}
+                            placeholder="₹ 0.00"
                             className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none"
                         />
                     </div>
+                </div>
+
+                {/* Paper Supply Section */}
+                <div className="border border-gray-200 rounded-md">
+                    <button
+                        type="button"
+                        onClick={() => setSendingPaper(!sendingPaper)}
+                        className={`w-full px-4 py-3 flex items-center gap-3 text-sm font-bold rounded-md transition-all ${sendingPaper
+                                ? 'bg-blue-50 text-blue-800 border-b border-blue-200'
+                                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                            }`}
+                    >
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${sendingPaper ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
+                            }`}>
+                            {sendingPaper && <CheckCircle size={14} className="text-white" />}
+                        </div>
+                        <Truck size={16} />
+                        We are sending paper from our vendor
+                    </button>
+
+                    {sendingPaper && (
+                        <div className="p-4 space-y-4">
+                            {/* Paper Vendor */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-600 mb-1.5">Paper Vendor *</label>
+                                <select
+                                    required={sendingPaper}
+                                    value={paperVendorId}
+                                    onChange={(e) => setPaperVendorId(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 outline-none text-sm"
+                                >
+                                    <option value="">Select paper vendor...</option>
+                                    {vendors.map(v => (
+                                        <option key={v.id} value={v.id}>{v.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Qty, Rate, Amount */}
+                            <div className="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">Paper Qty (sheets)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={paperQty}
+                                        onChange={(e) => setPaperQty(e.target.value)}
+                                        placeholder="0"
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 outline-none text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">Rate (₹/sheet)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={paperRate}
+                                        onChange={(e) => setPaperRate(e.target.value)}
+                                        placeholder="0.00"
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 outline-none text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">Amount</label>
+                                    <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-sm font-bold text-gray-900">
+                                        ₹{paperAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* GST & Total */}
+                            <div className="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">GST %</label>
+                                    <select
+                                        value={paperGst}
+                                        onChange={(e) => setPaperGst(parseInt(e.target.value))}
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 outline-none text-sm font-medium"
+                                    >
+                                        {GST_OPTIONS.map(g => (
+                                            <option key={g} value={g}>{g}%</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">GST Amount</label>
+                                    <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-sm text-gray-700">
+                                        ₹{paperGstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">Total with GST</label>
+                                    <div className="w-full px-3 py-2 border border-gray-200 rounded-md bg-green-50 text-sm font-bold text-green-700">
+                                        ₹{paperTotalWithGst.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Payment Status */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-600 mb-1.5">Payment Status</label>
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaperPaymentStatus('paid')}
+                                        className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${paperPaymentStatus === 'paid'
+                                                ? 'bg-green-600 text-white'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            }`}
+                                    >
+                                        ✓ Paid
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaperPaymentStatus('pending')}
+                                        className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${paperPaymentStatus === 'pending'
+                                                ? 'bg-amber-500 text-white'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            }`}
+                                    >
+                                        ⏳ Pending
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Notes */}
@@ -302,7 +439,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                                         <span className="text-xs font-bold text-gray-900">{job.job_number}</span>
                                         <span className="text-xs text-gray-500 ml-2">{job.client_name}</span>
                                         <span className="text-xs text-gray-400 ml-2">
-                                            {job.quantity_needed.toLocaleString()} qty · {job.ups_in_sheet}-up
+                                            {job.quantity_needed.toLocaleString()} qty · {job.ups_in_sheet}-up · {(pullingMultiple * job.ups_in_sheet).toLocaleString()} prints
                                         </span>
                                     </div>
                                     <button
@@ -345,15 +482,6 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                     onAdded={() => {
                         fetchDropdownData();
                         setShowMachineModal(false);
-                    }}
-                />
-            )}
-            {showSheetModal && (
-                <QuickAddSheetSize
-                    onClose={() => setShowSheetModal(false)}
-                    onAdded={() => {
-                        fetchDropdownData();
-                        setShowSheetModal(false);
                     }}
                 />
             )}

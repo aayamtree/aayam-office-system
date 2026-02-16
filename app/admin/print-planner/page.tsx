@@ -508,33 +508,15 @@ export default function PrintPlannerPage() {
                                 <p className="text-2xl font-bold text-gray-900">{uniqueClients.length}</p>
                                 <p className="text-xs text-gray-500">Client{uniqueClients.length !== 1 ? 's' : ''}</p>
                             </div>
-                            <div className="p-3 bg-gray-50 rounded-md text-center">
-                                <p className="text-2xl font-bold text-gray-900">{totalQty.toLocaleString()}</p>
-                                <p className="text-xs text-gray-500">Client Qty</p>
-                            </div>
                             <div className="p-3 bg-gray-900 rounded-md text-center">
-                                <p className="text-2xl font-bold text-white">{totalPullingSheets.toLocaleString()}</p>
+                                <p className="text-2xl font-bold text-white">{pullingMultiple.toLocaleString()}</p>
                                 <p className="text-xs text-gray-300">Pulling Sheets</p>
                             </div>
                             <div className="p-3 bg-gray-50 rounded-md text-center">
-                                <p className="text-2xl font-bold text-gray-900">{totalActualQty.toLocaleString()}</p>
-                                <p className="text-xs text-gray-500">Print Qty</p>
+                                <p className="text-sm font-bold text-gray-900">{sheetSize}</p>
+                                <p className="text-xs text-gray-500">Sheet Size</p>
                             </div>
-                            {totalExtra > 0 && (
-                                <div className="p-3 bg-amber-50 rounded-md text-center border border-amber-200">
-                                    <p className="text-2xl font-bold text-amber-700">+{totalExtra.toLocaleString()}</p>
-                                    <p className="text-xs text-amber-600">Extra Prints</p>
-                                </div>
-                            )}
                         </div>
-
-                        {isMultiClient && (
-                            <div className="mb-4 px-3 py-2 bg-gray-100 rounded-md border border-gray-200">
-                                <p className="text-xs font-bold text-gray-700 flex items-center gap-1">
-                                    <Layers size={12} /> GANG SHEET
-                                </p>
-                            </div>
-                        )}
 
                         {/* Job List */}
                         <div className="space-y-2 max-h-[300px] overflow-y-auto">
@@ -542,11 +524,11 @@ export default function PrintPlannerPage() {
                                 <div key={job.id} className="p-2.5 bg-gray-50 rounded-md">
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-bold text-gray-900">{job.job_number}</span>
-                                        <span className="text-xs font-bold text-gray-700">{job.pulling_sheets.toLocaleString()} sheets</span>
+                                        <span className="text-xs font-bold text-gray-700">{(pullingMultiple * job.ups_in_sheet).toLocaleString()} prints</span>
                                     </div>
                                     <p className="text-xs text-gray-500 mt-0.5">{job.client_name} · {job.project_name}</p>
                                     <p className="text-xs text-gray-400 mt-0.5">
-                                        Client: {job.quantity_needed.toLocaleString()} → Print: {job.actual_print_qty.toLocaleString()}
+                                        {pullingMultiple.toLocaleString()} sheets × {job.ups_in_sheet} UPS
                                     </p>
                                 </div>
                             ))}
@@ -577,6 +559,8 @@ export default function PrintPlannerPage() {
                             onRemoveJob={removeJobStep2}
                             onClear={handleClear}
                             onSuccess={handleSuccess}
+                            sheetSize={sheetSize}
+                            pullingMultiple={pullingMultiple}
                         />
                     </div>
                 </div>

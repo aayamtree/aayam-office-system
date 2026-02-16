@@ -944,9 +944,24 @@ export interface PrintRun extends BaseEntity {
   machine_id?: string;
   sheet_size_id?: string;
   material_id?: string;
+  vendor_id?: string;
   status: 'planned' | 'printed' | 'delivered';
   notes?: string;
   created_by?: string;
+  deadline?: string;
+  total_amount?: number;
+
+  // Sheet config from Step 2
+  sheet_size_label?: string;
+  pulling_multiple?: number;
+
+  // Paper supply fields
+  paper_vendor_id?: string;
+  paper_qty?: number;
+  paper_rate?: number;
+  paper_gst_percent?: number;
+  paper_total?: number;
+  paper_payment_status?: 'paid' | 'pending';
 
   // Joined data
   machine?: Machine;
@@ -955,6 +970,7 @@ export interface PrintRun extends BaseEntity {
   jobs?: PrintRunJob[];
   print_run_jobs?: PrintRunJob[]; // Alias for Supabase query
 }
+
 
 // Print Run Job (junction table)
 export interface PrintRunJob extends BaseEntity {
