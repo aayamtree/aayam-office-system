@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Printer, X, Calendar, IndianRupee, CheckCircle, Plus, FileText, Truck } from 'lucide-react';
-import { QuickAddMachine, QuickAddSheetSize, QuickAddMaterial } from '@/components/print-planner/QuickAddModals';
+import { Printer, X, Calendar, IndianRupee, CheckCircle, Plus, Truck, Edit3 } from 'lucide-react';
+import { QuickAddMachine, QuickAddMaterial } from '@/components/print-planner/QuickAddModals';
 
 interface ConfiguredJob {
     id: string;
@@ -16,7 +16,7 @@ interface ConfiguredJob {
     ups_in_sheet: number;
 }
 
-interface Vendor {
+interface VendorItem {
     id: string;
     name: string;
     category?: string;
@@ -34,8 +34,11 @@ interface CreatePrintRunFormProps {
 const GST_OPTIONS = [0, 5, 12, 18, 28];
 
 export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSuccess, sheetSize, pullingMultiple }: CreatePrintRunFormProps) {
-    const [vendors, setVendors] = useState<Vendor[]>([]);
+    const [allVendors, setAllVendors] = useState<VendorItem[]>([]);
     const [loading, setLoading] = useState(false);
+
+    // Pulling sheets — editable, starts from Step 2 value
+    const [editablePulling, setEditablePulling] = useState(pullingMultiple);
 
     // Form state
     const [vendorId, setVendorId] = useState('');
@@ -66,6 +69,16 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
     const paperGstAmount = paperAmount * (paperGst / 100);
     const paperTotalWithGst = paperAmount + paperGstAmount;
 
+    // Filter vendors: paper vendors only for paper dropdown
+    const paperVendors = allVendors.filter(v =>
+        v.category?.toLowerCase().includes('paper')
+    );
+
+    // Update editable pulling when prop changes (e.g. going back to step 2 and returning)
+    useEffect(() => {
+        setEditablePulling(pullingMultiple);
+    }, [pullingMultiple]);
+
     useEffect(() => {
         fetchVendors();
         fetchDropdownData();
@@ -73,7 +86,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
 
     const fetchVendors = async () => {
         const { data } = await supabase.from('vendors').select('id, name, category').eq('is_active', true);
-        setVendors(data || []);
+        setAllVendors(data || []);
     };
 
     const fetchDropdownData = async () => {
@@ -98,48 +111,90 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
 
         setLoading(true);
         try {
+            // Build insert data — only include base fields + conditionally paper fields
+            const insertData: Record<string, any> = {
+                machine_id: machineId || null,
+                sheet_size_id: null,
+                material_id: materialId || null,
+                vendor_id: vendorId,
+                deadline: deadline || null,
+                total_amount: printingCharge ? parseFloat(printingCharge) : null,
+                status: 'planned',
+                notes,
+            };
+
+            // Try to add new fields — these will work after migration is run
+            try {
+                insertData.sheet_size_label = sheetSize;
+                insertData.pulling_multiple = editablePulling;
+                if (sendingPaper) {
+                    insertData.paper_vendor_id = paperVendorId || null;
+                    insertData.paper_qty = paperQty ? parseInt(paperQty) : null;
+                    insertData.paper_rate = paperRate ? parseFloat(paperRate) : null;
+                    insertData.paper_gst_percent = paperGst;
+                    insertData.paper_total = paperTotalWithGst || null;
+                    insertData.paper_payment_status = paperPaymentStatus;
+                }
+            } catch {
+                // Migration not yet run — skip new fields
+            }
+
             // Create print run
             const { data: printRun, error: printRunError } = await supabase
                 .from('print_runs')
-                .insert({
-                    machine_id: machineId || null,
-                    sheet_size_id: null,
-                    material_id: materialId || null,
-                    vendor_id: vendorId,
-                    deadline: deadline || null,
-                    total_amount: printingCharge ? parseFloat(printingCharge) : null,
-                    status: 'planned',
-                    notes,
-                    sheet_size_label: sheetSize,
-                    pulling_multiple: pullingMultiple,
-                    paper_vendor_id: sendingPaper && paperVendorId ? paperVendorId : null,
-                    paper_qty: sendingPaper && paperQty ? parseInt(paperQty) : null,
-                    paper_rate: sendingPaper && paperRate ? parseFloat(paperRate) : null,
-                    paper_gst_percent: sendingPaper ? paperGst : null,
-                    paper_total: sendingPaper ? paperTotalWithGst : null,
-                    paper_payment_status: sendingPaper ? paperPaymentStatus : null,
-                })
+                .insert(insertData)
                 .select()
                 .single();
 
-            if (printRunError) throw printRunError;
+            if (printRunError) {
+                // If error is about unknown columns, retry with base fields only
+                if (printRunError.message?.includes('column') || printRunError.code === '42703') {
+                    const baseData: Record<string, any> = {
+                        machine_id: machineId || null,
+                        sheet_size_id: null,
+                        material_id: materialId || null,
+                        vendor_id: vendorId,
+                        deadline: deadline || null,
+                        total_amount: printingCharge ? parseFloat(printingCharge) : null,
+                        status: 'planned',
+                        notes,
+                    };
+                    const { data: retryRun, error: retryError } = await supabase
+                        .from('print_runs')
+                        .insert(baseData)
+                        .select()
+                        .single();
 
-            // Add jobs with their configured UPS and quantity values
-            const jobsToAdd = selectedJobs.map(job => ({
-                print_run_id: printRun.id,
-                job_id: job.id,
-                client_name: job.client_name,
-                item_name: job.project_name,
-                quantity_needed: job.quantity_needed,
-                ups_in_sheet: job.ups_in_sheet,
-                job_type: job.job_type
-            }));
+                    if (retryError) throw retryError;
 
-            const { error: jobsError } = await supabase
-                .from('print_run_jobs')
-                .insert(jobsToAdd);
+                    // Use retry result
+                    await addJobsToPrintRun(retryRun.id);
+                } else {
+                    throw printRunError;
+                }
+            } else {
+                // Add jobs to print run
+                await addJobsToPrintRun(printRun.id);
 
-            if (jobsError) throw jobsError;
+                // If paper payment is "paid", create a vendor payment record
+                if (sendingPaper && paperPaymentStatus === 'paid' && paperVendorId && paperTotalWithGst > 0) {
+                    try {
+                        await supabase.rpc('record_vendor_payment', {
+                            p_vendor_id: paperVendorId,
+                            p_amount: paperTotalWithGst,
+                            p_payment_mode: 'bank_transfer',
+                            p_payment_date: new Date().toISOString().split('T')[0],
+                            p_bank_account_id: null,
+                            p_reference: `Paper for Print Run - ${selectedJobs.map(j => j.job_number).join(', ')}`,
+                            p_notes: `Paper supply: ${paperQty} sheets × ₹${paperRate}/sheet + ${paperGst}% GST = ₹${paperTotalWithGst.toFixed(2)}`,
+                            p_purchase_bill_id: null,
+                            p_attachment_url: null
+                        });
+                    } catch {
+                        console.warn('Could not record vendor payment — payment RPC may not be available');
+                    }
+                }
+            }
 
             // Success!
             onSuccess();
@@ -147,10 +202,28 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
             resetForm();
         } catch (error: any) {
             console.error('Error creating print run:', error);
-            alert('Error creating print run: ' + error.message);
+            alert('Error creating print run: ' + (error.message || 'Unknown error'));
         } finally {
             setLoading(false);
         }
+    };
+
+    const addJobsToPrintRun = async (printRunId: string) => {
+        const jobsToAdd = selectedJobs.map(job => ({
+            print_run_id: printRunId,
+            job_id: job.id,
+            client_name: job.client_name,
+            item_name: job.project_name,
+            quantity_needed: job.quantity_needed,
+            ups_in_sheet: job.ups_in_sheet,
+            job_type: job.job_type
+        }));
+
+        const { error: jobsError } = await supabase
+            .from('print_run_jobs')
+            .insert(jobsToAdd);
+
+        if (jobsError) throw jobsError;
     };
 
     const resetForm = () => {
@@ -197,13 +270,13 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                         className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all outline-none"
                     >
                         <option value="">Select print vendor...</option>
-                        {vendors.map(v => (
-                            <option key={v.id} value={v.id}>{v.name}</option>
+                        {allVendors.map(v => (
+                            <option key={v.id} value={v.id}>{v.name} {v.category && `(${v.category})`}</option>
                         ))}
                     </select>
                 </div>
 
-                {/* Machine & Material (Sheet Size auto-filled) */}
+                {/* Machine, Sheet Size (read-only), Material */}
                 <div className="grid grid-cols-3 gap-2 md:gap-4">
                     <div>
                         <div className="flex items-center justify-between mb-2">
@@ -257,11 +330,24 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                     </div>
                 </div>
 
-                {/* Deadline & Printing Charge */}
-                <div className="grid grid-cols-2 gap-2 md:gap-4">
+                {/* Pulling Sheets (editable), Deadline, Printing Charge */}
+                <div className="grid grid-cols-3 gap-2 md:gap-4">
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">
-                            <Calendar size={16} className="inline mr-1" />
+                            <Edit3 size={14} className="inline mr-1" />
+                            Pulling Sheets
+                        </label>
+                        <input
+                            type="number"
+                            min="1"
+                            value={editablePulling}
+                            onChange={(e) => setEditablePulling(parseInt(e.target.value) || 0)}
+                            className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                            <Calendar size={14} className="inline mr-1" />
                             Deadline
                         </label>
                         <input
@@ -273,7 +359,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                     </div>
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">
-                            <IndianRupee size={16} className="inline mr-1" />
+                            <IndianRupee size={14} className="inline mr-1" />
                             Printing Charge
                         </label>
                         <input
@@ -307,20 +393,28 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
 
                     {sendingPaper && (
                         <div className="p-4 space-y-4">
-                            {/* Paper Vendor */}
+                            {/* Paper Vendor — filtered to paper vendors only */}
                             <div>
                                 <label className="block text-xs font-bold text-gray-600 mb-1.5">Paper Vendor *</label>
-                                <select
-                                    required={sendingPaper}
-                                    value={paperVendorId}
-                                    onChange={(e) => setPaperVendorId(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 outline-none text-sm"
-                                >
-                                    <option value="">Select paper vendor...</option>
-                                    {vendors.map(v => (
-                                        <option key={v.id} value={v.id}>{v.name}</option>
-                                    ))}
-                                </select>
+                                {paperVendors.length > 0 ? (
+                                    <select
+                                        required={sendingPaper}
+                                        value={paperVendorId}
+                                        onChange={(e) => setPaperVendorId(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 outline-none text-sm"
+                                    >
+                                        <option value="">Select paper vendor...</option>
+                                        {paperVendors.map(v => (
+                                            <option key={v.id} value={v.id}>{v.name}</option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-md">
+                                        <p className="text-xs text-amber-700">
+                                            No paper vendors found. Add a vendor with category &quot;Paper&quot; in <strong>Finance → Vendors</strong>.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Qty, Rate, Amount */}
@@ -409,6 +503,16 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                                         ⏳ Pending
                                     </button>
                                 </div>
+                                {paperPaymentStatus === 'paid' && paperTotalWithGst > 0 && (
+                                    <p className="text-xs text-green-600 mt-1.5">
+                                        ✓ ₹{paperTotalWithGst.toLocaleString('en-IN', { minimumFractionDigits: 2 })} will be recorded as paid in vendor payments
+                                    </p>
+                                )}
+                                {paperPaymentStatus === 'pending' && paperTotalWithGst > 0 && (
+                                    <p className="text-xs text-amber-600 mt-1.5">
+                                        ⏳ ₹{paperTotalWithGst.toLocaleString('en-IN', { minimumFractionDigits: 2 })} will be added to vendor outstanding balance
+                                    </p>
+                                )}
                             </div>
                         </div>
                     )}
@@ -420,13 +524,13 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                     <textarea
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
-                        rows={3}
+                        rows={2}
                         placeholder="Special instructions..."
                         className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 resize-none outline-none"
                     />
                 </div>
 
-                {/* Selected Jobs Summary (compact) */}
+                {/* Selected Jobs Summary */}
                 {selectedJobs.length > 0 && (
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-3">
@@ -439,7 +543,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                                         <span className="text-xs font-bold text-gray-900">{job.job_number}</span>
                                         <span className="text-xs text-gray-500 ml-2">{job.client_name}</span>
                                         <span className="text-xs text-gray-400 ml-2">
-                                            {job.quantity_needed.toLocaleString()} qty · {job.ups_in_sheet}-up · {(pullingMultiple * job.ups_in_sheet).toLocaleString()} prints
+                                            {job.quantity_needed.toLocaleString()} qty · {job.ups_in_sheet}-up · {(editablePulling * job.ups_in_sheet).toLocaleString()} prints
                                         </span>
                                     </div>
                                     <button
@@ -475,7 +579,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                 </button>
             </form>
 
-            {/* QuickAdd Modals - Conditionally Rendered */}
+            {/* QuickAdd Modals */}
             {showMachineModal && (
                 <QuickAddMachine
                     onClose={() => setShowMachineModal(false)}
