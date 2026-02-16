@@ -50,14 +50,11 @@ export async function fetchCalendarBusinessData(
         jobsQuery = jobsQuery.eq('designer_id', userId);
     }
 
-    // 2. Follow-ups
-    let followUpsQuery = supabase.from('follow_ups')
-        .select('id, description, follow_up_date, status, assigned_to')
+    // 2. Follow-ups (live schema: notes, done_by — no description/status/assigned_to columns)
+    const followUpsQuery = supabase.from('follow_ups')
+        .select('id, notes, follow_up_date, lead_id, done_by')
         .gte('follow_up_date', startDate)
         .lte('follow_up_date', endDate);
-    if (!isAdmin) {
-        followUpsQuery = followUpsQuery.eq('assigned_to', userId);
-    }
 
     // 3. Dispatches
     const dispatchQuery = supabase.from('dispatches')
@@ -118,10 +115,10 @@ export async function fetchCalendarBusinessData(
         if (f.follow_up_date) {
             items.push({
                 id: `followup-${f.id}`,
-                title: `📞 ${f.description || 'Follow-up'}`,
+                title: `📞 ${f.notes || 'Follow-up'}`,
                 date: f.follow_up_date.split('T')[0],
                 type: 'followup',
-                status: f.status,
+                status: f.done_by ? 'completed' : 'pending',
                 color: 'bg-blue-100 text-blue-800',
                 link: '/admin/marketing/follow-ups',
             });

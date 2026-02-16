@@ -65,7 +65,12 @@ export function useSupabaseQuery<T>(
 
     const { data: result, error: queryError } = await query;
 
-    if (queryError) throw queryError;
+    if (queryError) {
+      // If it's a missing table or column error (400/404/500 from PostgREST),
+      // return empty array instead of throwing to prevent SWR infinite retry loops
+      console.warn(`[useSupabaseQuery] ${tableName} error:`, queryError.message);
+      return [] as unknown as T[];
+    }
     return (result as unknown as T[]) || [];
   };
 
