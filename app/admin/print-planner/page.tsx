@@ -432,7 +432,7 @@ export default function PrintPlannerPage() {
                                             />
                                         </td>
                                         <td className="px-4 py-3 text-center">
-                                            <span className="text-sm font-bold text-gray-900">{job.quantity_needed.toLocaleString()}</span>
+                                            <span className="text-sm font-bold text-gray-900">{job.actual_print_qty.toLocaleString()}</span>
                                         </td>
                                         <td className="px-4 py-3 text-center">
                                             <button
@@ -458,7 +458,7 @@ export default function PrintPlannerPage() {
                                         <span className="text-xs text-gray-500">—</span>
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        <span className="text-sm font-bold text-gray-900">{totalQty.toLocaleString()}</span>
+                                        <span className="text-sm font-bold text-gray-900">{totalActualQty.toLocaleString()}</span>
                                     </td>
                                     <td></td>
                                 </tr>
