@@ -515,7 +515,7 @@ export default function JobsPage() {
           </Badge>
           {/* File Attachment Indicator */}
           {job.files && job.files.length > 0 && (
-            <span className="flex items-center gap-0.5 text-gray-400" title={`${job.files.length} file(s) attached`}>
+            <span className="flex items-center gap-0.5 text-gray-600" title={`${job.files.length} file(s) attached`}>
               <Paperclip className="w-3 h-3" />
               <span className="text-[10px] font-bold">{job.files.length}</span>
             </span>
@@ -787,7 +787,7 @@ export default function JobsPage() {
                           <span className="font-mono text-sm text-primary">{job.job_number}</span>
                           <span className={`text-xs px-2 py-0.5 rounded-full ${getPriorityBadge(job.priority)}`}>{job.priority}</span>
                           {job.files && job.files.length > 0 && (
-                            <span className="flex items-center gap-0.5 text-gray-400" title={`${job.files.length} file(s)`}>
+                            <span className="flex items-center gap-0.5 text-gray-600" title={`${job.files.length} file(s)`}>
                               <Paperclip className="w-3 h-3" />
                               <span className="text-[10px] font-bold">{job.files.length}</span>
                             </span>

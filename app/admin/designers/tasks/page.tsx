@@ -443,6 +443,7 @@ export default function DesignerWorkspace() {
         await updateJob(selectedTask.realId, { files: updatedFiles } as any);
         // Log upload to activity feed
         logFileUpload({ fileName: file.name, fileSize: file.size, fileType: file.type, fileUrl: publicUrl, uploadedTo: `Job ${selectedTask.taskId}`, resourceId: selectedTask.realId });
+        refetchJobs();
         alert('File uploaded successfully!');
       }
 
@@ -592,7 +593,7 @@ export default function DesignerWorkspace() {
 
                               {/* File Attachment Indicator */}
                               {(task.files?.length > 0 || task.driveLink) && (
-                                <div className="flex items-center gap-1 text-gray-400" title={`${task.files?.length || 1} file(s) attached`}>
+                                <div className="flex items-center gap-1 text-gray-600" title={`${task.files?.length || 1} file(s) attached`}>
                                   <Paperclip size={11} />
                                   <span className="text-[10px] font-bold">{task.files?.length || 1}</span>
                                 </div>
@@ -1058,7 +1059,7 @@ export default function DesignerWorkspace() {
                           <div className="space-y-1.5 mb-3">
                             {selectedTask.files.map((file: any, i: number) => (
                               <div key={i} className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors">
-                                <Paperclip size={12} className="text-gray-400 flex-shrink-0" />
+                                <Paperclip size={12} className="text-gray-600 flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
                                   <p className="text-xs font-medium text-gray-800 truncate">{file.name || `File ${i + 1}`}</p>
                                   {file.size && (
