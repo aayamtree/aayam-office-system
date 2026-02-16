@@ -1,20 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import { Zap, ChevronDown, ChevronUp, Clock, IndianRupee, Users, AlertTriangle, FileText, ExternalLink } from 'lucide-react';
-import { Badge } from '@/components/ui/Badge';
+import { useState, useEffect, useCallback } from 'react';
+import { Zap, ChevronDown, ChevronUp, Clock, IndianRupee, Users, AlertTriangle, ExternalLink, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
-import useSWR from 'swr';
 
 interface AlertCategory {
     key: string;
     label: string;
     count: number;
     color: string;
-    borderColor: string;
     icon: React.ReactNode;
     href: string;
     pulse?: boolean;
@@ -27,10 +23,6 @@ interface DetailItem {
     badge?: string;
     badgeColor?: string;
     href: string;
-}
-
-interface ExpandedData {
-    [key: string]: DetailItem[];
 }
 
 interface NeedsAttentionBarProps {
@@ -50,21 +42,23 @@ export default function NeedsAttentionBar({
     blockedFeedback,
     loading,
 }: NeedsAttentionBarProps) {
-    const { profile } = useAuth();
     const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+    const [expandedItems, setExpandedItems] = useState<DetailItem[]>([]);
+    const [detailsLoading, setDetailsLoading] = useState(false);
 
     const hasAlerts = overduePayments > 0 || pendingApprovals > 0 || followUpsDue > 0 || blockedJobs > 0;
 
-    // Fetch detailed data for expanded category
-    const { data: expandedItems } = useSWR<DetailItem[]>(
-        expandedCategory && isSupabaseConfigured() ? `needs-attention-${expandedCategory}` : null,
-        async () => {
-            if (!expandedCategory) return [];
-            const today = new Date().toISOString().split('T')[0];
-            const items: DetailItem[] = [];
+    const fetchDetails = useCallback(async (category: string) => {
+        if (!isSupabaseConfigured()) return;
+        setDetailsLoading(true);
+        setExpandedItems([]);
 
-            if (expandedCategory === 'overdue_payments') {
-                const { data } = await supabase
+        const today = new Date().toISOString().split('T')[0];
+        const items: DetailItem[] = [];
+
+        try {
+            if (category === 'overdue_payments') {
+                const { data, error } = await supabase
                     .from('jobs')
                     .select('id, job_number, project_name, total_amount, amount_received, client_deadline')
                     .neq('payment_status', 'paid')
@@ -72,6 +66,8 @@ export default function NeedsAttentionBar({
                     .not('current_stage', 'in', '("delivered","cancelled")')
                     .order('client_deadline', { ascending: true })
                     .limit(10);
+
+                if (error) console.warn('NeedsAttention overdue_payments error:', error.message);
 
                 (data || []).forEach(j => {
                     const due = (j.total_amount || 0) - (j.amount_received || 0);
@@ -87,13 +83,15 @@ export default function NeedsAttentionBar({
                 });
             }
 
-            if (expandedCategory === 'pending_approvals') {
-                const { data } = await supabase
+            if (category === 'pending_approvals') {
+                const { data, error } = await supabase
                     .from('jobs')
                     .select('id, job_number, project_name, created_at, client:clients(name)')
                     .eq('current_stage', 'awaiting_admin')
                     .order('created_at', { ascending: true })
                     .limit(10);
+
+                if (error) console.warn('NeedsAttention pending_approvals error:', error.message);
 
                 (data || []).forEach((j: any) => {
                     const daysWaiting = Math.floor((Date.now() - new Date(j.created_at).getTime()) / 86400000);
@@ -108,13 +106,15 @@ export default function NeedsAttentionBar({
                 });
             }
 
-            if (expandedCategory === 'followups_due') {
-                const { data } = await supabase
+            if (category === 'followups_due') {
+                const { data, error } = await supabase
                     .from('follow_ups')
                     .select('id, notes, follow_up_date, lead:leads(name, company)')
                     .lte('follow_up_date', today)
                     .order('follow_up_date', { ascending: true })
                     .limit(10);
+
+                if (error) console.warn('NeedsAttention followups_due error:', error.message);
 
                 (data || []).forEach((f: any) => {
                     const daysLate = Math.floor((Date.now() - new Date(f.follow_up_date).getTime()) / 86400000);
@@ -129,13 +129,15 @@ export default function NeedsAttentionBar({
                 });
             }
 
-            if (expandedCategory === 'blocked_jobs') {
-                const { data } = await supabase
+            if (category === 'blocked_jobs') {
+                const { data, error } = await supabase
                     .from('jobs')
                     .select('id, job_number, project_name, current_stage, updated_at')
                     .in('current_stage', ['approval', 'on_hold'])
                     .order('updated_at', { ascending: true })
                     .limit(10);
+
+                if (error) console.warn('NeedsAttention blocked_jobs error:', error.message);
 
                 (data || []).forEach(j => {
                     const daysSince = Math.floor((Date.now() - new Date(j.updated_at).getTime()) / 86400000);
@@ -149,11 +151,22 @@ export default function NeedsAttentionBar({
                     });
                 });
             }
+        } catch (err) {
+            console.error('NeedsAttention fetch error:', err);
+        }
 
-            return items;
-        },
-        { revalidateOnFocus: false }
-    );
+        setExpandedItems(items);
+        setDetailsLoading(false);
+    }, []);
+
+    // Fetch details when category changes
+    useEffect(() => {
+        if (expandedCategory) {
+            fetchDetails(expandedCategory);
+        } else {
+            setExpandedItems([]);
+        }
+    }, [expandedCategory, fetchDetails]);
 
     if (loading || !hasAlerts) return null;
 
@@ -163,7 +176,6 @@ export default function NeedsAttentionBar({
             label: 'Overdue Payments',
             count: overduePayments,
             color: 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100',
-            borderColor: 'border-red-200',
             icon: <IndianRupee className="w-3.5 h-3.5" />,
             href: '/admin/finance',
         } : null,
@@ -172,7 +184,6 @@ export default function NeedsAttentionBar({
             label: `Pending Approval${pendingApprovals > 1 ? 's' : ''}`,
             count: pendingApprovals,
             color: 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100',
-            borderColor: 'border-orange-200',
             icon: <Clock className="w-3.5 h-3.5" />,
             href: '/admin/jobs?status=awaiting_admin',
             pulse: true,
@@ -182,7 +193,6 @@ export default function NeedsAttentionBar({
             label: 'Follow-ups Due',
             count: followUpsDue,
             color: 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100',
-            borderColor: 'border-orange-200',
             icon: <Users className="w-3.5 h-3.5" />,
             href: '/admin/marketing/follow-ups',
         } : null,
@@ -191,7 +201,6 @@ export default function NeedsAttentionBar({
             label: 'Blocked Jobs',
             count: blockedJobs,
             color: 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100',
-            borderColor: 'border-amber-200',
             icon: <AlertTriangle className="w-3.5 h-3.5" />,
             href: '/admin/jobs',
         } : null,
@@ -242,8 +251,13 @@ export default function NeedsAttentionBar({
                             </Link>
                         </div>
                         <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                            {!expandedItems || expandedItems.length === 0 ? (
-                                <div className="text-xs text-amber-600 text-center py-3">Loading details...</div>
+                            {detailsLoading ? (
+                                <div className="flex items-center justify-center gap-2 py-3">
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" />
+                                    <span className="text-xs text-amber-600">Loading details...</span>
+                                </div>
+                            ) : expandedItems.length === 0 ? (
+                                <div className="text-xs text-amber-600 text-center py-3">No items found</div>
                             ) : (
                                 expandedItems.map(item => (
                                     <Link
