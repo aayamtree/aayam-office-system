@@ -73,6 +73,26 @@ export default function DesignersPage() {
 
   const [uploadingDoc, setUploadingDoc] = useState(false);
 
+  const fetchDesigners = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('designers')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) console.error('Error:', error);
+      setDesigners(data || []);
+    } catch (error) {
+      console.error('Error fetching designers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDesigners();
+  }, []);
+
   // ADMIN-ONLY PAGE — redirect non-admin users
   if (profile && profile.role !== 'admin') {
     return (
@@ -116,26 +136,6 @@ export default function DesignersPage() {
       alert('Upload failed: ' + error.message);
     } finally {
       setUploadingDoc(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDesigners();
-  }, []);
-
-  const fetchDesigners = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('designers')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (error) console.error('Error:', error);
-      setDesigners(data || []);
-    } catch (error) {
-      console.error('Error fetching designers:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
