@@ -12,7 +12,7 @@ import {
   Plus, Search, Calendar, Clock, Edit, Trash2, Eye, X, ArrowLeft, ArrowRight, CheckCircle, XCircle,
   AlertCircle, User, Briefcase, MessageSquare, Paperclip, ExternalLink,
   FileText, Image, Video, Music, File, ChevronRight, Save, Send, MoreHorizontal, Upload,
-  ChevronLeft, Loader2, Folder, GanttChart, Layout, Monitor, AlertTriangle, Palette, Printer, Lock
+  Loader2, Folder, GanttChart, Layout, Monitor, AlertTriangle, Palette, Printer, Lock, Bell, BarChart3, TrendingUp, Zap
 } from 'lucide-react';
 import ProjectNotesLog from '@/components/ProjectNotesLog';
 import { useConfirm } from '@/components/ConfirmModal';
@@ -114,9 +114,7 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
 }
 
 // Mock for Logs until real DB table exists
-const initialLogs = [
-  { id: 1, time: 'System', text: 'Welcome to your workspace.' },
-];
+
 
 export default function DesignerWorkspace() {
   const { profile } = useAuth();
@@ -140,8 +138,7 @@ export default function DesignerWorkspace() {
   // Local State
   const [tasks, setTasks] = useState<any[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
-  const [logs, setLogs] = useState(initialLogs);
-  const [newLog, setNewLog] = useState('');
+  const [sidebarNotifications, setSidebarNotifications] = useState<any[]>([]);
 
 
   // UI State
@@ -273,11 +270,13 @@ export default function DesignerWorkspace() {
 
 
 
-  // Calendar State
-  const [currentDate, setCurrentDate] = useState<Date | null>(null);
-
+  // Fetch recent notifications for sidebar
   useEffect(() => {
-    setCurrentDate(new Date());
+    const fetchNotifs = async () => {
+      const { data } = await supabase.from('broadcast_notifications').select('*').order('created_at', { ascending: false }).limit(5);
+      if (data) setSidebarNotifications(data);
+    };
+    fetchNotifs();
   }, []);
 
   // === DATA SYNC ===
@@ -388,20 +387,16 @@ export default function DesignerWorkspace() {
   }).length;
 
 
-  // Calendar Helpers
-  const daysInMonth = currentDate ? new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate() : 0;
-  const firstDay = currentDate ? new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay() : 0; // 0 = Sun
-  const monthName = currentDate ? currentDate.toLocaleString('default', { month: 'long', year: 'numeric' }) : '';
-  const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1; // 0 = Mon
-
-  const prevMonth = () => currentDate && setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
-  const nextMonth = () => currentDate && setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
-
-  const getTasksForDate = (day: number) => {
-    if (!currentDate) return [];
-    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return tasks.filter(t => t.deadline === dateStr);
-  };
+  // Sidebar Stats Helpers
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const completedThisWeek = tasks.filter(t => ['printing', 'finishing', 'quality_check', 'ready', 'delivered'].includes(t.current_stage || '') && t.createdAt && new Date(t.createdAt) >= weekAgo).length;
+  const totalRevisions = tasks.reduce((sum: number, t: any) => sum + (t.revision_count || 0), 0);
+  const revisionRate = tasks.length > 0 ? Math.round((tasks.filter((t: any) => (t.revision_count || 0) > 0).length / tasks.length) * 100) : 0;
+  const overdueTasks = tasks.filter(t => t.deadline && new Date(t.deadline) < now && !['printing', 'finishing', 'quality_check', 'ready', 'delivered'].includes(t.current_stage || ''));
+  const inProgressTasks = tasks.filter(t => t.status === 'in_progress');
+  const reviewTasks = tasks.filter(t => t.status === 'review');
+  const doneTasks = tasks.filter(t => ['printing', 'finishing', 'quality_check', 'ready', 'delivered'].includes(t.current_stage || ''));
 
   // --- ACTIONS ---
   // Create Task (Now actually creates a JOB via hook if we unwired it, but for now mock action on local state is removed/replaced?)
@@ -468,13 +463,7 @@ export default function DesignerWorkspace() {
   };
 
 
-  const handleAddLog = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newLog.trim()) return;
-    const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    setLogs([{ id: Date.now(), time, text: newLog }, ...logs]);
-    setNewLog('');
-  };
+
 
 
 
@@ -1227,95 +1216,111 @@ export default function DesignerWorkspace() {
             {/* =================================================================================
           COLUMN 3: PRODUCTIVITY BAR
          ================================================================================= */}
-            <div className="w-full md:w-80 bg-white border-l h-full flex flex-col z-10 [-4px_0_24px_rgba(0,0,0,0.02)]">
+            <div className="w-full md:w-80 bg-white border-l h-full flex flex-col z-10 overflow-y-auto">
 
-              {/* Full Month Calendar Widget */}
-              <div className="p-4 border-b bg-gradient-to-br from-white to-gray-50">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2 text-gray-900 font-bold">
-                    <div className="p-1.5 bg-gray-900 text-white rounded-lg">
-                      <Calendar size={16} />
-                    </div>
-                    <h2>{monthName}</h2>
+              {/* 1. Quick Task Summary */}
+              <div className="p-4 border-b">
+                <div className="flex items-center gap-2 text-gray-900 font-bold mb-3">
+                  <div className="p-1.5 bg-gray-900 text-white rounded-lg">
+                    <Zap size={16} />
                   </div>
-                  <div className="flex bg-white rounded-lg border border-gray-200">
-                    <button onClick={prevMonth} className="p-1 hover:bg-gray-50 text-gray-500"><ChevronLeft size={16} /></button>
-                    <button onClick={nextMonth} className="p-1 hover:bg-gray-50 text-gray-500"><ChevronRight size={16} /></button>
-                  </div>
+                  <h2 className="text-sm">Quick Summary</h2>
                 </div>
-
-                <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
-                  <div className="grid grid-cols-7 mb-3 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">
-                    <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className={`p-3 rounded-lg border ${overdueTasks.length > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-100'}`}>
+                    <p className={`text-2xl font-black ${overdueTasks.length > 0 ? 'text-red-600' : 'text-gray-300'}`}>{overdueTasks.length}</p>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Overdue</p>
                   </div>
-                  <div className="grid grid-cols-7 gap-1 text-center">
-                    {/* Empty cells */}
-                    {Array.from({ length: adjustedFirstDay }).map((_, i) => (
-                      <div key={`empty-${i}`} className="h-8"></div>
-                    ))}
-                    {/* Days */}
-                    {Array.from({ length: daysInMonth }).map((_, i) => {
-                      const day = i + 1;
-                      const tasksOnDay = getTasksForDate(day);
-                      const isToday = currentDate && new Date().getDate() === day && new Date().getMonth() === currentDate.getMonth();
-                      const hasTasks = tasksOnDay.length > 0;
-
-                      return (
-                        <div key={day} className={`h-8 flex flex-col items-center justify-center relative rounded-lg text-label cursor-pointer transition-colors hover:bg-gray-50
-                    ${isToday ? 'bg-gray-900 text-white hover:bg-primary' : 'text-gray-700'}`}>
-                          {day}
-                          {hasTasks && (
-                            <div className={`absolute bottom-1 w-1 h-1 rounded-full ${isToday ? 'bg-white' : 'bg-red-500'}`}></div>
-                          )}
-                        </div>
-                      );
-                    })}
+                  <div className="p-3 rounded-lg bg-blue-50 border border-blue-100">
+                    <p className="text-2xl font-black text-blue-600">{inProgressTasks.length}</p>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">In Progress</p>
                   </div>
-                </div>
-                <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
-                  <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-red-500"></div> Deadline</div>
-                  <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-gray-900"></div> Today</div>
+                  <div className="p-3 rounded-lg bg-amber-50 border border-amber-100">
+                    <p className="text-2xl font-black text-amber-600">{reviewTasks.length}</p>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">In Review</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-green-50 border border-green-100">
+                    <p className="text-2xl font-black text-green-600">{doneTasks.length}</p>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Completed</p>
+                  </div>
                 </div>
               </div>
 
-              {/* Daily Log */}
-              <div className="flex-1 flex flex-col overflow-hidden bg-white">
+              {/* 2. My Stats */}
+              <div className="p-4 border-b">
+                <div className="flex items-center gap-2 text-gray-900 font-bold mb-3">
+                  <div className="p-1.5 bg-emerald-100 text-emerald-600 rounded-lg">
+                    <BarChart3 size={16} />
+                  </div>
+                  <h2 className="text-sm">My Stats</h2>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp size={14} className="text-emerald-500" />
+                      <span className="text-xs text-gray-600">Completed this week</span>
+                    </div>
+                    <span className="text-sm font-black text-gray-900">{completedThisWeek}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <BarChart3 size={14} className="text-blue-500" />
+                      <span className="text-xs text-gray-600">Active tasks</span>
+                    </div>
+                    <span className="text-sm font-black text-gray-900">{tasks.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle size={14} className="text-amber-500" />
+                      <span className="text-xs text-gray-600">Revision rate</span>
+                    </div>
+                    <span className={`text-sm font-black ${revisionRate > 30 ? 'text-red-600' : revisionRate > 15 ? 'text-amber-600' : 'text-green-600'}`}>{revisionRate}%</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle size={14} className="text-red-500" />
+                      <span className="text-xs text-gray-600">Total revisions</span>
+                    </div>
+                    <span className="text-sm font-black text-gray-900">{totalRevisions}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Recent Notifications */}
+              <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="p-4 pb-2">
                   <div className="flex items-center gap-2 text-gray-900 font-bold mb-1">
                     <div className="p-1.5 bg-orange-100 text-orange-600 rounded-lg">
-                      <Clock size={16} />
+                      <Bell size={16} />
                     </div>
-                    <h2>Daily Log</h2>
-                  </div>
-                  <p className="text-xs text-gray-500 pl-9">Track your work execution.</p>
-                </div>
-
-                <div className="flex-1 overflow-y-auto px-6 space-y-3 md:space-y-6 py-4">
-                  <div className="relative border-l-2 border-gray-100 ml-3.5 space-y-8 pb-4">
-                    {logs.map(log => (
-                      <div key={log.id} className="relative pl-6 group">
-                        <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-white border-2 border-gray-300 ring-4 ring-white group-hover:border-primary transition-colors z-10"></div>
-                        <span className="text-xs font-mono text-gray-400 block mb-1 font-medium">{log.time}</span>
-                        <p className="text-xs text-gray-700 font-medium leading-relaxed bg-gray-50 p-2 rounded-lg border border-transparent group-hover:border-gray-100 group- transition-all">{log.text}</p>
-                      </div>
-                    ))}
+                    <h2 className="text-sm">Recent Notifications</h2>
                   </div>
                 </div>
-
-                {/* Add Log Input */}
-                <div className="p-4 border-t bg-gray-50">
-                  <form onSubmit={handleAddLog} className="flex gap-2">
-                    <input
-                      type="text"
-                      value={newLog}
-                      onChange={(e) => setNewLog(e.target.value)}
-                      className="flex-1 text-xs border border-gray-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-gray-400 bg-white"
-                      placeholder="Finished logo design..."
-                    />
-                    <button type="submit" disabled={!newLog.trim()} className="p-3 bg-gray-900 text-white rounded-md hover:bg-gray-800 disabled:opacity-50 transition-all hover:-translate-y-0.5">
-                      <ArrowRight size={14} />
-                    </button>
-                  </form>
+                <div className="flex-1 overflow-y-auto px-4 pb-4">
+                  {sidebarNotifications.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400">
+                      <Bell size={24} className="mx-auto mb-2 opacity-30" />
+                      <p className="text-xs">No recent notifications</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {sidebarNotifications.map((notif: any) => (
+                        <div key={notif.id} className={`p-3 rounded-lg text-xs border ${notif.priority === 'urgent' ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-100'}`}>
+                          <div className="flex items-start gap-2">
+                            {notif.priority === 'urgent' ? (
+                              <AlertCircle size={12} className="text-red-500 mt-0.5 flex-shrink-0" />
+                            ) : (
+                              <Bell size={12} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-gray-700 font-medium leading-relaxed">{notif.message}</p>
+                              <p className="text-[10px] text-gray-400 mt-1">{new Date(notif.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
