@@ -444,6 +444,20 @@ export default function DesignerWorkspace() {
         await updateJob(selectedTask.realId, { files: updatedFiles } as any);
         // Log upload to activity feed
         logFileUpload({ fileName: file.name, fileSize: file.size, fileType: file.type, fileUrl: publicUrl, uploadedTo: `Job ${selectedTask.taskId}`, resourceId: selectedTask.realId });
+
+        // Notify assigned designer if someone else uploaded
+        const myDesignerRec = designers.find((d: any) => d.user_id === profile?.id);
+        const isMyJob = myDesignerRec ? selectedTask.designerId === myDesignerRec.id : false;
+        if (!isMyJob && selectedTask.designerId && profile) {
+          const uploaderName = profile.full_name || 'Someone';
+          await supabase.from('broadcast_notifications').insert({
+            message: `${uploaderName} uploaded "${file.name}" to your assigned job ${selectedTask.taskId} (${selectedTask.title})`,
+            priority: 'normal',
+            target_audience: 'designer',
+            created_by: profile.id,
+          });
+        }
+
         refetchJobs();
         alert('File uploaded successfully!');
       }
@@ -1018,6 +1032,26 @@ export default function DesignerWorkspace() {
                   </div>
 
                   <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-gray-50/30">
+
+                    {/* Cross-Designer Warning Banner */}
+                    {(() => {
+                      const myDesignerRec = designers.find((d: any) => d.user_id === profile?.id);
+                      const isMyJob = myDesignerRec ? selectedTask.designerId === myDesignerRec.id : false;
+                      const assignedName = selectedTask.designerName || 'Unassigned';
+
+                      if (!isAdmin && !isMyJob && selectedTask.designerId) {
+                        return (
+                          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                            <AlertTriangle size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs font-bold text-amber-800">This job is assigned to {assignedName}</p>
+                              <p className="text-[11px] text-amber-600 mt-0.5">Any changes you make will be logged and {assignedName} will be notified.</p>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
 
                     {/* 1. Brief / Description */}
                     <section className="bg-white p-4 rounded-lg border border-gray-100">
