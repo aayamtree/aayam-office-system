@@ -258,66 +258,281 @@ export default function JobQueuePage() {
         })}
       </div>
 
-      {/* View Modal with Interactive Workflow */}
-      {showViewModal && selectedJob && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-md w-full max-w-md max-h-[90vh] overflow-y-auto animate-scale-in">
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <h2 className="text-section text-foreground">Job Details</h2>
-              <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-muted rounded-lg">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      {/* Enhanced Job Details Modal */}
+      {showViewModal && selectedJob && (() => {
+        const stage = selectedJob.current_stage;
+        const deadlineDays = selectedJob.client_deadline
+          ? Math.ceil((new Date(selectedJob.client_deadline).getTime() - Date.now()) / 86400000)
+          : null;
+        const balance = (selectedJob.total_amount || 0) - (selectedJob.amount_received || 0);
 
-            <div className="p-4 space-y-4">
-              <div className="p-4 rounded-lg text-center capitalize bg-muted text-foreground">
-                <p className="text-section">{selectedJob.current_stage}</p>
-              </div>
+        return (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowViewModal(false)}>
+            <div className="bg-card rounded-md w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in" onClick={e => e.stopPropagation()}>
 
-              <div className="space-y-2">
-                <div className="flex justify-between p-3 bg-muted rounded-md"><span className="text-muted-foreground">Job No.</span><span className="font-medium text-foreground">{selectedJob.job_number}</span></div>
-                <div className="flex justify-between p-3 bg-muted rounded-md"><span className="text-muted-foreground">Client</span><span className="font-medium text-foreground">{selectedJob.client?.name}</span></div>
-                <div className="p-3 bg-muted rounded-md"><span className="text-muted-foreground text-sm">Description</span><p className="font-medium text-foreground mt-1">{selectedJob.project_name}</p></div>
-                <div className="flex justify-between p-3 bg-muted rounded-md"><span className="text-muted-foreground">Quantity</span><span className="font-medium text-foreground">{selectedJob.quantity}</span></div>
-                {selectedJob.designer?.name && <div className="flex justify-between p-3 bg-muted rounded-md"><span className="text-muted-foreground">Designer</span><span className="font-medium text-foreground">{selectedJob.designer.name}</span></div>}
-              </div>
-
-              {/* Status Progress - Interactive */}
-              <div>
-                <p className="text-sm font-medium text-foreground mb-2">Workflow (Click to change)</p>
-                <div className="flex items-center gap-1 overflow-x-auto pb-2 scrollbar-hide">
-                  {statusFlow.map((status, idx) => {
-                    const currentIdx = statusFlow.indexOf(selectedJob.current_stage);
-                    const isCompleted = currentIdx !== -1 && idx <= currentIdx;
-                    const isCurrent = idx === currentIdx;
-                    return (
-                      <button
-                        key={status}
-                        type="button"
-                        className="flex items-center group cursor-pointer focus:outline-none"
-                        onClick={() => handleStageSelect(status)}
-                        title={`Move to ${status}`}
-                      >
-                        <div className={`px-3 py-1.5 rounded-lg text-label whitespace-nowrap capitalize transition-all transform group-hover:scale-105 ${isCurrent ? 'bg-primary text-primary-foreground ring-2 ring-ring/30' :
-                          isCompleted ? 'bg-primary/80 text-primary-foreground hover:bg-primary/70' :
-                            'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                          }`}>
-                          {status}
-                        </div>
-                        {idx < statusFlow.length - 1 && (
-                          <ArrowRight className={`w-3 h-3 mx-1 ${isCompleted ? 'text-foreground' : 'text-muted-foreground/50'}`} />
-                        )}
-                      </button>
-                    );
-                  })}
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-border">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-section text-foreground font-bold">{selectedJob.job_number}</h2>
+                  <span className={`text-xs px-2 py-0.5 rounded-md font-medium capitalize ${getStatusColor(stage)}`}>
+                    {stage.replace('_', ' ')}
+                  </span>
+                  {['high', 'urgent'].includes(selectedJob.priority) && (
+                    <span className={`text-xs px-2 py-0.5 rounded-md font-bold uppercase ${getPriorityColor(selectedJob.priority)}`}>
+                      {selectedJob.priority}
+                    </span>
+                  )}
+                  {selectedJob.is_on_hold && (
+                    <span className="text-xs px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 font-medium">⏸ ON HOLD</span>
+                  )}
                 </div>
+                <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-muted rounded-lg">
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              <button onClick={() => setShowViewModal(false)} className="w-full px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">Close</button>
+              <div className="p-4 space-y-3">
+                {/* Basic Info */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-start p-2.5 bg-muted rounded-md">
+                    <span className="text-xs text-muted-foreground">Client</span>
+                    <div className="text-right">
+                      <p className="font-medium text-sm text-foreground">{selectedJob.client?.company || selectedJob.client?.name || '—'}</p>
+                      {selectedJob.client?.company && selectedJob.client?.name && (
+                        <p className="text-xs text-muted-foreground">{selectedJob.client.name}</p>
+                      )}
+                      {selectedJob.client?.phone && (
+                        <p className="text-xs text-muted-foreground">{selectedJob.client.phone}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="p-2.5 bg-muted rounded-md">
+                    <span className="text-xs text-muted-foreground">Project</span>
+                    <p className="font-medium text-sm text-foreground mt-0.5">{selectedJob.project_name || '—'}</p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <div className="p-2.5 bg-muted rounded-md">
+                      <span className="text-xs text-muted-foreground block">Type</span>
+                      <span className="font-medium text-sm text-foreground capitalize">{selectedJob.job_type?.replace('_', ' ') || '—'}</span>
+                    </div>
+                    <div className="p-2.5 bg-muted rounded-md">
+                      <span className="text-xs text-muted-foreground block">Qty</span>
+                      <span className="font-medium text-sm text-foreground">
+                        {selectedJob.quantity?.toLocaleString()}
+                        {selectedJob.actual_quantity && selectedJob.actual_quantity !== selectedJob.quantity && (
+                          <span className="text-xs text-muted-foreground ml-1">(actual: {selectedJob.actual_quantity})</span>
+                        )}
+                      </span>
+                    </div>
+                    <div className={`p-2.5 rounded-md ${deadlineDays !== null && deadlineDays < 0 ? 'bg-red-50' : deadlineDays !== null && deadlineDays <= 1 ? 'bg-amber-50' : 'bg-muted'}`}>
+                      <span className="text-xs text-muted-foreground block">Deadline</span>
+                      {selectedJob.client_deadline ? (
+                        <>
+                          <span className="font-medium text-sm text-foreground">{new Date(selectedJob.client_deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                          <span className={`text-xs ml-1 ${deadlineDays !== null && deadlineDays < 0 ? 'text-red-600 font-semibold' : deadlineDays !== null && deadlineDays <= 1 ? 'text-amber-600' : 'text-muted-foreground'}`}>
+                            {deadlineDays !== null && deadlineDays < 0 ? `${Math.abs(deadlineDays)}d overdue` : deadlineDays === 0 ? 'Today' : deadlineDays === 1 ? 'Tomorrow' : `${deadlineDays}d left`}
+                          </span>
+                        </>
+                      ) : <span className="text-sm text-muted-foreground">—</span>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hold Reason */}
+                {selectedJob.is_on_hold && selectedJob.hold_reason && (
+                  <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-md">
+                    <span className="text-xs text-amber-700 font-semibold">⏸ Hold Reason</span>
+                    <p className="text-sm text-amber-800 mt-0.5">{selectedJob.hold_reason}</p>
+                  </div>
+                )}
+
+                {/* Stage-Specific Context Panel */}
+                <div className="border border-border rounded-md overflow-hidden">
+                  <div className="px-3 py-2 bg-muted border-b border-border">
+                    <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
+                      {stage === 'new' && '📋 New Order'}
+                      {stage === 'designing' && '🎨 Design Stage'}
+                      {stage === 'approval' && '✅ Client Approval'}
+                      {stage === 'printing' && '🖨️ Production'}
+                      {stage === 'finishing' && '✂️ Finishing'}
+                      {stage === 'quality_check' && '🔍 Quality Check'}
+                      {stage === 'ready' && '📦 Ready for Dispatch'}
+                      {stage === 'dispatched' && '🚚 Dispatched'}
+                      {stage === 'delivered' && '✅ Delivered'}
+                    </p>
+                  </div>
+                  <div className="p-3 space-y-2 text-sm">
+                    {/* NEW */}
+                    {stage === 'new' && (
+                      <>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Order Date</span><span className="font-medium">{selectedJob.order_date ? new Date(selectedJob.order_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span></div>
+                        {selectedJob.sales_person && <div className="flex justify-between"><span className="text-muted-foreground">Sales Person</span><span className="font-medium">{selectedJob.sales_person.full_name || '—'}</span></div>}
+                        {selectedJob.notes && <div><span className="text-muted-foreground">Notes</span><p className="mt-0.5 text-foreground">{selectedJob.notes}</p></div>}
+                        {!selectedJob.notes && !selectedJob.sales_person && <p className="text-muted-foreground text-xs italic">Order received. Ready to start design or production.</p>}
+                      </>
+                    )}
+
+                    {/* DESIGNING */}
+                    {stage === 'designing' && (
+                      <>
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Designer</span>
+                          <span className="font-semibold text-foreground">{selectedJob.designer?.name || <span className="text-amber-600 italic">Not assigned</span>}</span>
+                        </div>
+                        {selectedJob.designer?.phone && <div className="flex justify-between"><span className="text-muted-foreground">Designer Phone</span><span className="font-medium">{selectedJob.designer.phone}</span></div>}
+                        {selectedJob.file_version && <div className="flex justify-between"><span className="text-muted-foreground">File Version</span><span className="font-medium">{selectedJob.file_version}</span></div>}
+                        {selectedJob.notes && <div><span className="text-muted-foreground">Design Notes</span><p className="mt-0.5 text-foreground">{selectedJob.notes}</p></div>}
+                        {!selectedJob.designer?.name && <p className="text-amber-600 text-xs">⚠ No designer assigned. Please assign one from the Jobs page.</p>}
+                      </>
+                    )}
+
+                    {/* APPROVAL */}
+                    {stage === 'approval' && (
+                      <>
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Approval Status</span>
+                          <span className={`font-semibold px-2 py-0.5 rounded text-xs ${selectedJob.approval_status === 'approved' ? 'bg-green-100 text-green-700' :
+                              selectedJob.approval_status === 'changes_requested' ? 'bg-red-100 text-red-700' :
+                                selectedJob.approval_status === 'sent' ? 'bg-blue-100 text-blue-700' :
+                                  'bg-gray-100 text-gray-700'
+                            }`}>
+                            {selectedJob.approval_status?.replace('_', ' ') || 'pending'}
+                          </span>
+                        </div>
+                        {selectedJob.designer?.name && <div className="flex justify-between"><span className="text-muted-foreground">Designer</span><span className="font-medium">{selectedJob.designer.name}</span></div>}
+                        {selectedJob.approval_date && <div className="flex justify-between"><span className="text-muted-foreground">Sent On</span><span className="font-medium">{new Date(selectedJob.approval_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span></div>}
+                        {selectedJob.approval_remark && <div><span className="text-muted-foreground">Client Remark</span><p className="mt-0.5 text-foreground italic">"{selectedJob.approval_remark}"</p></div>}
+                        {selectedJob.file_version && <div className="flex justify-between"><span className="text-muted-foreground">File Version</span><span className="font-medium">{selectedJob.file_version}</span></div>}
+                      </>
+                    )}
+
+                    {/* PRINTING */}
+                    {stage === 'printing' && (
+                      <>
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Print Ready</span>
+                          <span className={`font-semibold ${selectedJob.print_ready ? 'text-green-600' : 'text-amber-600'}`}>
+                            {selectedJob.print_ready ? '✅ Yes' : '⏳ Not Yet'}
+                          </span>
+                        </div>
+                        {selectedJob.vendor?.name && (
+                          <>
+                            <div className="flex justify-between"><span className="text-muted-foreground">Vendor / Printer</span><span className="font-semibold text-foreground">{selectedJob.vendor.name}</span></div>
+                            {selectedJob.vendor?.phone && <div className="flex justify-between"><span className="text-muted-foreground">Vendor Phone</span><span className="font-medium">{selectedJob.vendor.phone}</span></div>}
+                          </>
+                        )}
+                        {!selectedJob.vendor?.name && <div className="flex justify-between"><span className="text-muted-foreground">Production</span><span className="font-medium text-foreground">In-house</span></div>}
+                        {selectedJob.designer?.name && <div className="flex justify-between"><span className="text-muted-foreground">Designed by</span><span className="font-medium">{selectedJob.designer.name}</span></div>}
+                      </>
+                    )}
+
+                    {/* FINISHING / QUALITY CHECK */}
+                    {(stage === 'finishing' || stage === 'quality_check') && (
+                      <>
+                        {selectedJob.qc_status && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">QC Status</span>
+                            <span className={`font-semibold px-2 py-0.5 rounded text-xs capitalize ${selectedJob.qc_status === 'passed' ? 'bg-green-100 text-green-700' :
+                                selectedJob.qc_status === 'failed' ? 'bg-red-100 text-red-700' :
+                                  selectedJob.qc_status === 'hold' ? 'bg-amber-100 text-amber-700' :
+                                    'bg-gray-100 text-gray-700'
+                              }`}>
+                              {selectedJob.qc_status}
+                            </span>
+                          </div>
+                        )}
+                        {selectedJob.vendor?.name && <div className="flex justify-between"><span className="text-muted-foreground">Printed by</span><span className="font-medium">{selectedJob.vendor.name}</span></div>}
+                        {selectedJob.actual_quantity && <div className="flex justify-between"><span className="text-muted-foreground">Actual Output</span><span className="font-medium">{selectedJob.actual_quantity.toLocaleString()}</span></div>}
+                        {!selectedJob.qc_status && <p className="text-muted-foreground text-xs italic">QC check pending.</p>}
+                      </>
+                    )}
+
+                    {/* READY */}
+                    {stage === 'ready' && (
+                      <>
+                        <p className="text-green-700 font-medium">✅ Job is ready for dispatch</p>
+                        {selectedJob.actual_quantity && <div className="flex justify-between"><span className="text-muted-foreground">Final Quantity</span><span className="font-medium">{selectedJob.actual_quantity.toLocaleString()}</span></div>}
+                        {selectedJob.client?.phone && <div className="flex justify-between"><span className="text-muted-foreground">Client Phone</span><span className="font-medium">{selectedJob.client.phone}</span></div>}
+                      </>
+                    )}
+
+                    {/* DISPATCHED */}
+                    {stage === 'dispatched' && (
+                      <>
+                        <p className="text-blue-700 font-medium">🚚 Job has been dispatched</p>
+                        {selectedJob.client?.phone && <div className="flex justify-between"><span className="text-muted-foreground">Client Phone</span><span className="font-medium">{selectedJob.client.phone}</span></div>}
+                      </>
+                    )}
+
+                    {/* DELIVERED */}
+                    {stage === 'delivered' && (
+                      <>
+                        <p className="text-green-700 font-medium">✅ Job delivered successfully</p>
+                        {selectedJob.completed_date && <div className="flex justify-between"><span className="text-muted-foreground">Completed</span><span className="font-medium">{new Date(selectedJob.completed_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span></div>}
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Financial Summary */}
+                <div className="flex items-center justify-between px-3 py-2 bg-muted rounded-md text-sm">
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">Total</p>
+                    <p className="font-semibold text-foreground">₹{(selectedJob.total_amount || 0).toLocaleString('en-IN')}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">Received</p>
+                    <p className="font-semibold text-green-600">₹{(selectedJob.amount_received || 0).toLocaleString('en-IN')}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">Balance</p>
+                    <p className={`font-semibold ${balance > 0 ? 'text-red-600' : 'text-green-600'}`}>₹{balance.toLocaleString('en-IN')}</p>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-md font-medium capitalize ${selectedJob.payment_status === 'paid' ? 'bg-green-100 text-green-700' :
+                      selectedJob.payment_status === 'partial' ? 'bg-amber-100 text-amber-700' :
+                        'bg-red-100 text-red-700'
+                    }`}>
+                    {selectedJob.payment_status || 'unpaid'}
+                  </span>
+                </div>
+
+                {/* Status Progress - Interactive */}
+                <div>
+                  <p className="text-sm font-medium text-foreground mb-2">Workflow (Click to change)</p>
+                  <div className="flex items-center gap-1 overflow-x-auto pb-2 scrollbar-hide">
+                    {statusFlow.map((status, idx) => {
+                      const currentIdx = statusFlow.indexOf(selectedJob.current_stage);
+                      const isCompleted = currentIdx !== -1 && idx <= currentIdx;
+                      const isCurrent = idx === currentIdx;
+                      return (
+                        <button
+                          key={status}
+                          type="button"
+                          className="flex items-center group cursor-pointer focus:outline-none"
+                          onClick={() => handleStageSelect(status)}
+                          title={`Move to ${status}`}
+                        >
+                          <div className={`px-3 py-1.5 rounded-lg text-label whitespace-nowrap capitalize transition-all transform group-hover:scale-105 ${isCurrent ? 'bg-primary text-primary-foreground ring-2 ring-ring/30' :
+                            isCompleted ? 'bg-primary/80 text-primary-foreground hover:bg-primary/70' :
+                              'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                            }`}>
+                            {status.replace('_', ' ')}
+                          </div>
+                          {idx < statusFlow.length - 1 && (
+                            <ArrowRight className={`w-3 h-3 mx-1 ${isCompleted ? 'text-foreground' : 'text-muted-foreground/50'}`} />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <button onClick={() => setShowViewModal(false)} className="w-full px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">Close</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

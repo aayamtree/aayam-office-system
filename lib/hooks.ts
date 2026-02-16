@@ -320,7 +320,7 @@ export function useSalesOrders() {
 export function useJobs(options?: UseSupabaseQueryOptions) {
   const { profile } = useAuth();
   const { data, loading, error, refetch } = useSupabaseQuery<Job>('jobs', {
-    select: '*, client:clients(*), vendor:vendors(*), invoices(*)',
+    select: '*, client:clients(*), vendor:vendors(*), designer:designers(*), invoices(*)',
     orderBy: { column: 'created_at', ascending: false },
     ...options
   });
