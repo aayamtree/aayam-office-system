@@ -1159,8 +1159,13 @@ export default function DesignerWorkspace() {
                         <h4 className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-2">
                           <CheckCircle size={16} /> Pre-Print Checklist (Mandatory)
                         </h4>
+                        {checklistConfig[selectedTask.productCategory] ? (
+                          <p className="text-[10px] text-gray-400 -mt-2 mb-1">Template: <span className="font-bold">{selectedTask.productCategory}</span></p>
+                        ) : (
+                          <p className="text-[10px] text-amber-500 -mt-2 mb-1">⚠ No template for "{selectedTask.productCategory || 'Unknown'}". Using default checks. <span className="font-semibold">Configure in Settings → Production.</span></p>
+                        )}
                         <div className="grid grid-cols-2 gap-3">
-                          {(checklistConfig[selectedTask.jobType] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed']).map((label, i) => (
+                          {(checklistConfig[selectedTask.productCategory] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed']).map((label, i) => (
                             <label key={i} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg cursor-pointer hover:border-border transition-colors">
                               <input type="checkbox"
                                 checked={!!checklist[`item_${i}`]}
@@ -1182,7 +1187,7 @@ export default function DesignerWorkspace() {
 
                         <div className="pt-4 border-t border-gray-200">
                           {(() => {
-                            const requiredList = checklistConfig[selectedTask.jobType] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed'];
+                            const requiredList = checklistConfig[selectedTask.productCategory] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed'];
                             const allMainChecks = requiredList.every((_, i) => checklist[`item_${i}`]);
                             const isComplete = allMainChecks && checklist.approval;
 
