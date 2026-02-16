@@ -11,7 +11,7 @@ import { logActivity, logFileUpload } from '@/lib/activity-logger';
 import {
   Plus, Search, Calendar, Clock, Edit, Trash2, Eye, X, ArrowLeft, ArrowRight, CheckCircle, XCircle,
   AlertCircle, User, Briefcase, MessageSquare, Paperclip, ExternalLink,
-  FileText, Image, Video, Music, File, ChevronRight, Save, Send, MoreHorizontal,
+  FileText, Image, Video, Music, File, ChevronRight, Save, Send, MoreHorizontal, Upload,
   ChevronLeft, Loader2, Folder, GanttChart, Layout, Monitor, AlertTriangle, Palette, Printer, Lock
 } from 'lucide-react';
 import ProjectNotesLog from '@/components/ProjectNotesLog';
@@ -1034,7 +1034,7 @@ export default function DesignerWorkspace() {
                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                           <Folder size={16} className="text-foreground" /> Project Assets (Drive / Local)
                         </h4>
-                        <div className="flex gap-2 mb-2">
+                        <div className="flex gap-2 mb-3">
                           <input
                             type="url"
                             defaultValue={selectedTask.driveLink}
@@ -1052,10 +1052,57 @@ export default function DesignerWorkspace() {
                             </a>
                           )}
                         </div>
-                        {/* Local File Upload */}
-                        <div className="flex items-center gap-2">
-                          <input type="file" onChange={handleFileUpload} className="text-xs text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200" />
-                        </div>
+
+                        {/* Attached Files List */}
+                        {selectedTask.files && selectedTask.files.length > 0 && (
+                          <div className="space-y-1.5 mb-3">
+                            {selectedTask.files.map((file: any, i: number) => (
+                              <div key={i} className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors">
+                                <Paperclip size={12} className="text-gray-400 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-medium text-gray-800 truncate">{file.name || `File ${i + 1}`}</p>
+                                  {file.size && (
+                                    <p className="text-[10px] text-gray-400">
+                                      {file.size < 1024 * 1024 ? `${(file.size / 1024).toFixed(1)} KB` : `${(file.size / (1024 * 1024)).toFixed(1)} MB`}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {file.url && !file.url.startsWith('data:') && (
+                                    <a href={file.url} target="_blank" rel="noreferrer" className="p-1 hover:bg-gray-200 rounded" title="Open file">
+                                      <ExternalLink size={12} className="text-gray-500" />
+                                    </a>
+                                  )}
+                                  {isAdmin && (
+                                    <button
+                                      onClick={async () => {
+                                        const updatedFiles = selectedTask.files.filter((_: any, idx: number) => idx !== i);
+                                        if (updateJob) {
+                                          await updateJob(selectedTask.realId, { files: updatedFiles } as any);
+                                          refetchJobs();
+                                        }
+                                      }}
+                                      className="p-1 hover:bg-red-100 rounded"
+                                      title="Remove file"
+                                    >
+                                      <X size={12} className="text-red-500" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Upload New File */}
+                        <label className="inline-flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-lg cursor-pointer bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
+                          <Upload size={14} />
+                          Upload File
+                          <input type="file" onChange={handleFileUpload} className="hidden" />
+                        </label>
+                        {selectedTask.files?.length > 0 && (
+                          <span className="ml-2 text-[10px] text-gray-400">{selectedTask.files.length} file(s) attached</span>
+                        )}
                       </div>
                     </section>
 
