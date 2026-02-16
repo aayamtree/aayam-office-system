@@ -24,59 +24,71 @@ export default function SmartReminders() {
     const fetchReminders = useCallback(async () => {
         if (!profile || !isSupabaseConfigured()) return;
 
+        const role = profile.role || 'designer';
+        const userId = profile.id;
+        const isAdmin = role === 'admin';
+        const isDesigner = role === 'designer';
         const now = new Date();
         const today = now.toISOString().split('T')[0];
         const tomorrow = new Date(now.getTime() + 86400000).toISOString().split('T')[0];
         const items: Reminder[] = [];
 
         try {
-            // 1. Overdue payments (jobs where payment_status != 'paid' and deadline passed)
-            const { data: overdueJobs } = await supabase
-                .from('jobs')
-                .select('id, job_number, project_name, total_amount, amount_received, client_deadline')
-                .neq('payment_status', 'paid')
-                .lt('client_deadline', today)
-                .not('current_stage', 'in', '("delivered","cancelled")')
-                .limit(5);
+            // 1. Overdue payments — ADMIN ONLY (financial data)
+            if (isAdmin) {
+                const { data: overdueJobs } = await supabase
+                    .from('jobs')
+                    .select('id, job_number, project_name, total_amount, amount_received, client_deadline')
+                    .neq('payment_status', 'paid')
+                    .lt('client_deadline', today)
+                    .not('current_stage', 'in', '("delivered","cancelled")')
+                    .limit(5);
 
-            overdueJobs?.forEach(j => {
-                const due = (j.total_amount || 0) - (j.amount_received || 0);
-                items.push({
-                    id: `overdue_${j.id}`,
-                    type: 'overdue_payment',
-                    title: `${j.job_number} — Overdue`,
-                    subtitle: `₹${due.toLocaleString('en-IN')} pending · Deadline was ${new Date(j.client_deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`,
-                    href: `/admin/jobs?highlight=${j.id}`,
-                    urgency: 'high',
+                overdueJobs?.forEach(j => {
+                    const due = (j.total_amount || 0) - (j.amount_received || 0);
+                    items.push({
+                        id: `overdue_${j.id}`,
+                        type: 'overdue_payment',
+                        title: `${j.job_number} — Overdue`,
+                        subtitle: `₹${due.toLocaleString('en-IN')} pending · Deadline was ${new Date(j.client_deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`,
+                        href: `/admin/jobs?highlight=${j.id}`,
+                        urgency: 'high',
+                    });
                 });
-            });
+            }
 
-            // 2. Follow-ups due today
-            const { data: followUps } = await supabase
-                .from('follow_ups')
-                .select('id, lead_id, notes, follow_up_date, lead:leads(company, name)')
-                .lte('follow_up_date', today)
-                .eq('status', 'pending')
-                .limit(5);
+            // 2. Follow-ups due — ADMIN & MARKETING only (not designers)
+            if (!isDesigner) {
+                const { data: followUps } = await supabase
+                    .from('follow_ups')
+                    .select('id, lead_id, notes, follow_up_date, lead:leads(company, name)')
+                    .lte('follow_up_date', today)
+                    .limit(5);
 
-            followUps?.forEach((f: any) => {
-                items.push({
-                    id: `followup_${f.id}`,
-                    type: 'follow_up_due',
-                    title: `Follow-up: ${f.lead?.company || f.lead?.name || 'Lead'}`,
-                    subtitle: f.notes ? f.notes.slice(0, 60) : 'Follow-up scheduled',
-                    href: `/admin/marketing/follow-ups`,
-                    urgency: f.follow_up_date < today ? 'high' : 'medium',
+                followUps?.forEach((f: any) => {
+                    items.push({
+                        id: `followup_${f.id}`,
+                        type: 'follow_up_due',
+                        title: `Follow-up: ${f.lead?.company || f.lead?.name || 'Lead'}`,
+                        subtitle: f.notes ? f.notes.slice(0, 60) : 'Follow-up scheduled',
+                        href: `/admin/marketing/follow-ups`,
+                        urgency: f.follow_up_date < today ? 'high' : 'medium',
+                    });
                 });
-            });
+            }
 
-            // 3. Deadlines today & tomorrow
-            const { data: todayJobs } = await supabase
+            // 3. Deadlines today — designers see only THEIR jobs
+            let todayQuery = supabase
                 .from('jobs')
                 .select('id, job_number, project_name, current_stage')
                 .eq('client_deadline', today)
                 .not('current_stage', 'in', '("delivered","cancelled")')
                 .limit(5);
+            if (!isAdmin) {
+                todayQuery = todayQuery.eq('designer_id', userId);
+            }
+
+            const { data: todayJobs } = await todayQuery;
 
             todayJobs?.forEach(j => {
                 items.push({
@@ -89,12 +101,18 @@ export default function SmartReminders() {
                 });
             });
 
-            const { data: tomorrowJobs } = await supabase
+            // 4. Deadlines tomorrow — designers see only THEIR jobs
+            let tomorrowQuery = supabase
                 .from('jobs')
                 .select('id, job_number, project_name, current_stage')
                 .eq('client_deadline', tomorrow)
                 .not('current_stage', 'in', '("delivered","cancelled")')
                 .limit(3);
+            if (!isAdmin) {
+                tomorrowQuery = tomorrowQuery.eq('designer_id', userId);
+            }
+
+            const { data: tomorrowJobs } = await tomorrowQuery;
 
             tomorrowJobs?.forEach(j => {
                 items.push({

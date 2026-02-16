@@ -38,9 +38,10 @@ export async function fetchCalendarBusinessData(
     userId: string
 ): Promise<CalendarItem[]> {
     const isAdmin = userRole === 'admin';
+    const isDesigner = userRole === 'designer';
     const items: CalendarItem[] = [];
 
-    // 1. Job deadlines
+    // 1. Job deadlines — designers see only their own
     let jobsQuery = supabase.from('jobs')
         .select('id, job_number, project_name, client_deadline, current_stage, designer_id')
         .gte('client_deadline', startDate)
@@ -50,49 +51,55 @@ export async function fetchCalendarBusinessData(
         jobsQuery = jobsQuery.eq('designer_id', userId);
     }
 
-    // 2. Follow-ups (live schema: notes, done_by — no description/status/assigned_to columns)
-    const followUpsQuery = supabase.from('follow_ups')
-        .select('id, notes, follow_up_date, lead_id, done_by')
-        .gte('follow_up_date', startDate)
-        .lte('follow_up_date', endDate);
+    // 2. Follow-ups — ADMIN & MARKETING only (not designers)
+    const followUpsQuery = !isDesigner
+        ? supabase.from('follow_ups')
+            .select('id, notes, follow_up_date, lead_id, done_by')
+            .gte('follow_up_date', startDate)
+            .lte('follow_up_date', endDate)
+        : null;
 
-    // 3. Dispatches
+    // 3. Dispatches — all roles can see
     const dispatchQuery = supabase.from('dispatches')
         .select('id, dispatch_number, dispatch_date, status, job_id')
         .gte('dispatch_date', startDate)
         .lte('dispatch_date', endDate);
 
-    // 4. Invoices (due dates for unpaid)
-    const invoiceQuery = supabase.from('invoices')
-        .select('id, invoice_number, due_date, payment_status, total_amount')
-        .gte('due_date', startDate)
-        .lte('due_date', endDate)
-        .neq('payment_status', 'paid');
+    // 4. Invoices — ADMIN ONLY (financial data)
+    const invoiceQuery = isAdmin
+        ? supabase.from('invoices')
+            .select('id, invoice_number, due_date, payment_status, total_amount')
+            .gte('due_date', startDate)
+            .lte('due_date', endDate)
+            .neq('payment_status', 'paid')
+        : null;
 
-    // 5. Print Runs (deadlines for non-delivered)
+    // 5. Print Runs — all roles can see
     const printRunQuery = supabase.from('print_runs')
         .select('id, print_run_number, deadline, status')
         .gte('deadline', startDate)
         .lte('deadline', endDate)
         .neq('status', 'delivered');
 
-    // 6. Leads (deadlines)
-    let leadsQuery = supabase.from('leads')
-        .select('id, lead_number, name, company, deadline, status, assigned_to')
-        .gte('deadline', startDate)
-        .lte('deadline', endDate);
-    if (!isAdmin) {
+    // 6. Leads — ADMIN & MARKETING only (not designers)
+    let leadsQuery = !isDesigner
+        ? supabase.from('leads')
+            .select('id, lead_number, name, company, deadline, status, assigned_to')
+            .gte('deadline', startDate)
+            .lte('deadline', endDate)
+        : null;
+    if (leadsQuery && !isAdmin) {
         leadsQuery = leadsQuery.eq('assigned_to', userId);
     }
 
     // Execute all queries in parallel — each is safe (returns [] on failure)
     const [jobs, followUps, dispatches, invoices, printRuns, leads] = await Promise.all([
         safeQuery<any>(jobsQuery, 'jobs'),
-        safeQuery<any>(followUpsQuery, 'follow_ups'),
+        followUpsQuery ? safeQuery<any>(followUpsQuery, 'follow_ups') : Promise.resolve([]),
         safeQuery<any>(dispatchQuery, 'dispatches'),
-        safeQuery<any>(invoiceQuery, 'invoices'),
+        invoiceQuery ? safeQuery<any>(invoiceQuery, 'invoices') : Promise.resolve([]),
         safeQuery<any>(printRunQuery, 'print_runs'),
-        safeQuery<any>(leadsQuery, 'leads'),
+        leadsQuery ? safeQuery<any>(leadsQuery, 'leads') : Promise.resolve([]),
     ]);
 
     // Job deadlines
