@@ -392,16 +392,16 @@ export default function JobQueuePage() {
                         <div className="flex justify-between items-center">
                           <span className="text-muted-foreground">Approval Status</span>
                           <span className={`font-semibold px-2 py-0.5 rounded text-xs ${selectedJob.approval_status === 'approved' ? 'bg-green-100 text-green-700' :
-                              selectedJob.approval_status === 'changes_requested' ? 'bg-red-100 text-red-700' :
-                                selectedJob.approval_status === 'sent' ? 'bg-blue-100 text-blue-700' :
-                                  'bg-gray-100 text-gray-700'
+                            selectedJob.approval_status === 'changes_requested' ? 'bg-red-100 text-red-700' :
+                              selectedJob.approval_status === 'sent' ? 'bg-blue-100 text-blue-700' :
+                                'bg-gray-100 text-gray-700'
                             }`}>
                             {selectedJob.approval_status?.replace('_', ' ') || 'pending'}
                           </span>
                         </div>
                         {selectedJob.designer?.name && <div className="flex justify-between"><span className="text-muted-foreground">Designer</span><span className="font-medium">{selectedJob.designer.name}</span></div>}
                         {selectedJob.approval_date && <div className="flex justify-between"><span className="text-muted-foreground">Sent On</span><span className="font-medium">{new Date(selectedJob.approval_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span></div>}
-                        {selectedJob.approval_remark && <div><span className="text-muted-foreground">Client Remark</span><p className="mt-0.5 text-foreground italic">"{selectedJob.approval_remark}"</p></div>}
+                        {selectedJob.approval_remark && <div><span className="text-muted-foreground">Client Remark</span><p className="mt-0.5 text-foreground italic">&ldquo;{selectedJob.approval_remark}&rdquo;</p></div>}
                         {selectedJob.file_version && <div className="flex justify-between"><span className="text-muted-foreground">File Version</span><span className="font-medium">{selectedJob.file_version}</span></div>}
                       </>
                     )}
@@ -433,9 +433,9 @@ export default function JobQueuePage() {
                           <div className="flex justify-between items-center">
                             <span className="text-muted-foreground">QC Status</span>
                             <span className={`font-semibold px-2 py-0.5 rounded text-xs capitalize ${selectedJob.qc_status === 'passed' ? 'bg-green-100 text-green-700' :
-                                selectedJob.qc_status === 'failed' ? 'bg-red-100 text-red-700' :
-                                  selectedJob.qc_status === 'hold' ? 'bg-amber-100 text-amber-700' :
-                                    'bg-gray-100 text-gray-700'
+                              selectedJob.qc_status === 'failed' ? 'bg-red-100 text-red-700' :
+                                selectedJob.qc_status === 'hold' ? 'bg-amber-100 text-amber-700' :
+                                  'bg-gray-100 text-gray-700'
                               }`}>
                               {selectedJob.qc_status}
                             </span>
@@ -489,8 +489,8 @@ export default function JobQueuePage() {
                     <p className={`font-semibold ${balance > 0 ? 'text-red-600' : 'text-green-600'}`}>₹{balance.toLocaleString('en-IN')}</p>
                   </div>
                   <span className={`text-xs px-2 py-1 rounded-md font-medium capitalize ${selectedJob.payment_status === 'paid' ? 'bg-green-100 text-green-700' :
-                      selectedJob.payment_status === 'partial' ? 'bg-amber-100 text-amber-700' :
-                        'bg-red-100 text-red-700'
+                    selectedJob.payment_status === 'partial' ? 'bg-amber-100 text-amber-700' :
+                      'bg-red-100 text-red-700'
                     }`}>
                     {selectedJob.payment_status || 'unpaid'}
                   </span>
