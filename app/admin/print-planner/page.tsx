@@ -466,35 +466,6 @@ export default function PrintPlannerPage() {
                         </table>
                     </div>
 
-                    {/* Info Banner */}
-                    <div className="mx-4 my-3 p-3 bg-blue-50 rounded-md border border-blue-200">
-                        <div className="flex items-start gap-2">
-                            <AlertTriangle size={16} className="text-blue-600 mt-0.5 shrink-0" />
-                            <div>
-                                <p className="text-sm font-bold text-blue-900">Pulling ×{pullingMultiple} · Sheet: {sheetSize}</p>
-                                <p className="text-xs text-blue-700 mt-0.5">
-                                    Total sheets: <strong>{totalPullingSheets.toLocaleString()}</strong> (rounded to ×{pullingMultiple})
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Gang Sheet Info */}
-                    {isMultiClient && (
-                        <div className="mx-4 my-3 p-3 bg-gray-50 rounded-md border border-gray-200">
-                            <div className="flex items-start gap-2">
-                                <Layers size={16} className="text-gray-700 mt-0.5 shrink-0" />
-                                <div>
-                                    <p className="text-sm font-bold text-gray-900">Gang Sheet Mode</p>
-                                    <p className="text-xs text-gray-600 mt-0.5">
-                                        Multiple clients&apos; jobs share the same physical sheets.
-                                        Total sheets = max sheets across jobs ({totalSheets} sheets),
-                                        not the sum.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
 
                     {/* Navigation */}
                     <div className="p-4 border-t border-gray-200 flex items-center justify-between">
