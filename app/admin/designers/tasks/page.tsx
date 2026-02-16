@@ -1162,7 +1162,7 @@ export default function DesignerWorkspace() {
                         {checklistConfig[selectedTask.productCategory] ? (
                           <p className="text-[10px] text-gray-400 -mt-2 mb-1">Template: <span className="font-bold">{selectedTask.productCategory}</span></p>
                         ) : (
-                          <p className="text-[10px] text-amber-500 -mt-2 mb-1">⚠ No template for "{selectedTask.productCategory || 'Unknown'}". Using default checks. <span className="font-semibold">Configure in Settings → Production.</span></p>
+                          <p className="text-[10px] text-amber-500 -mt-2 mb-1">⚠ No template for &ldquo;{selectedTask.productCategory || 'Unknown'}&rdquo;. Using default checks. <span className="font-semibold">Configure in Settings → Production.</span></p>
                         )}
                         <div className="grid grid-cols-2 gap-3">
                           {(checklistConfig[selectedTask.productCategory] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed']).map((label, i) => (
