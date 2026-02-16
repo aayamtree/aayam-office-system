@@ -16,7 +16,6 @@ import {
     TrendingUp,
     ArrowRight,
     Activity,
-    Zap,
     Target,
 } from 'lucide-react';
 import { useDashboardStats, useJobs } from '@/lib/hooks';
@@ -25,6 +24,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import NeedsAttentionBar from '@/components/dashboard/NeedsAttentionBar';
+import OverdueAlertsWidget from '@/components/dashboard/OverdueAlertsWidget';
 import MiniCalendarWidget from '@/components/dashboard/MiniCalendarWidget';
 import QuickNotesWidget from '@/components/dashboard/QuickNotesWidget';
 import TeamWorkloadWidget from '@/components/dashboard/TeamWorkloadWidget';
@@ -214,50 +215,15 @@ export default function AdminDashboardShadcn() {
                         </CardContent>
                     </Card>
 
-                    {/* Alerts Banner - only if there are alerts */}
-                    {!statsLoading && hasAlerts && (
-                        <Card className="border-amber-200 bg-amber-50/50">
-                            <CardContent className="pt-4 pb-3">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <Zap className="h-4 w-4 text-amber-600" strokeWidth={1.5} />
-                                    <span className="text-sm font-medium text-amber-800">Needs Attention</span>
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                    {dashboardStats.alerts.overduePayments > 0 && (
-                                        <Link href="/admin/finance">
-                                            <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100 cursor-pointer gap-1">
-                                                <span className="font-bold">{dashboardStats.alerts.overduePayments}</span> Overdue Payments
-                                            </Badge>
-                                        </Link>
-                                    )}
-                                    {pendingApprovals > 0 && (
-                                        <Link href="/admin/jobs?status=awaiting_admin">
-                                            <Badge variant="outline" className="border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 cursor-pointer gap-1 animate-pulse">
-                                                <span className="font-bold">{pendingApprovals}</span> Pending Approval{pendingApprovals > 1 ? 's' : ''}
-                                            </Badge>
-                                        </Link>
-                                    )}
-                                    {dashboardStats.alerts.followUpsDue > 0 && (
-                                        <Link href="/admin/marketing/follow-ups">
-                                            <Badge variant="outline" className="border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 cursor-pointer gap-1">
-                                                <span className="font-bold">{dashboardStats.alerts.followUpsDue}</span> Follow-ups Due
-                                            </Badge>
-                                        </Link>
-                                    )}
-                                    {dashboardStats.alerts.blockedJobs > 0 && (
-                                        <Link href="/admin/jobs">
-                                            <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 cursor-pointer gap-1">
-                                                <span className="font-bold">{dashboardStats.alerts.blockedJobs}</span> Blocked Jobs
-                                                {dashboardStats.alerts.blockedBreakdown.feedback > 0 &&
-                                                    <span className="text-xs opacity-70">({dashboardStats.alerts.blockedBreakdown.feedback} feedback)</span>
-                                                }
-                                            </Badge>
-                                        </Link>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
+                    {/* Expandable Needs Attention Bar */}
+                    <NeedsAttentionBar
+                        overduePayments={dashboardStats.alerts.overduePayments}
+                        pendingApprovals={pendingApprovals}
+                        followUpsDue={dashboardStats.alerts.followUpsDue}
+                        blockedJobs={dashboardStats.alerts.blockedJobs}
+                        blockedFeedback={dashboardStats.alerts.blockedBreakdown.feedback}
+                        loading={statsLoading}
+                    />
 
                     {/* Job Pipeline */}
                     <Card>
@@ -314,10 +280,13 @@ export default function AdminDashboardShadcn() {
                     </Card>
                 </div>
 
-                {/* Right Column (2/5): Daily Summary */}
+                {/* Right Column (2/5): Daily Summary + Overdue Alerts */}
                 <div className="lg:col-span-2 space-y-4">
                     {/* Daily Summary */}
                     <DailySummaryWidget />
+
+                    {/* Overdue Alerts - detailed list */}
+                    <OverdueAlertsWidget />
                 </div>
             </div>
 
