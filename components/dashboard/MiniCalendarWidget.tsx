@@ -66,7 +66,7 @@ export default function MiniCalendarWidget() {
                 items.push({
                     id: `event-${e.id}`,
                     title: e.title,
-                    date: e.start_date,
+                    date: (e.start_time || e.start_date || '').split('T')[0],
                     type: 'event',
                     status: e.status,
                     color: e.status === 'completed'
