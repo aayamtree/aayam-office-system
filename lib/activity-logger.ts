@@ -149,6 +149,32 @@ export async function logFileUpload(details: {
 }
 
 /**
+ * Log file download/view activity
+ */
+export async function logFileDownload(details: {
+    fileName: string;
+    fileSize?: number;
+    fileType?: string;
+    fileUrl: string;
+    downloadedFrom: string;
+    resourceId?: string;
+}) {
+    await logActivity({
+        action: 'view',
+        resourceType: 'file',
+        resourceId: details.resourceId,
+        details: {
+            fileName: details.fileName,
+            fileSize: details.fileSize,
+            fileType: details.fileType,
+            fileUrl: details.fileUrl,
+            downloadedFrom: details.downloadedFrom,
+            description: `downloaded ${details.fileName} from ${details.downloadedFrom}`
+        }
+    });
+}
+
+/**
  * Get user's recent activity
  */
 export async function getUserActivity(userId: string, limit: number = 50) {

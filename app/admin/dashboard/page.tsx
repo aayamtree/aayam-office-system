@@ -30,6 +30,7 @@ import MiniCalendarWidget from '@/components/dashboard/MiniCalendarWidget';
 import QuickNotesWidget from '@/components/dashboard/QuickNotesWidget';
 import TeamWorkloadWidget from '@/components/dashboard/TeamWorkloadWidget';
 import DailySummaryWidget from '@/components/dashboard/DailySummaryWidget';
+import RecentFilesWidget from '@/components/dashboard/RecentFilesWidget';
 
 export default function AdminDashboardShadcn() {
     const { profile } = useAuth();
@@ -413,8 +414,11 @@ export default function AdminDashboardShadcn() {
                 </Card>
             </div>
 
-            {/* Row 5: Full-Width Month Calendar */}
-            <MiniCalendarWidget />
+            {/* Row 5: Recent Files + Calendar */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <RecentFilesWidget showAll={true} limit={15} />
+                <MiniCalendarWidget />
+            </div>
         </div>
     );
 }

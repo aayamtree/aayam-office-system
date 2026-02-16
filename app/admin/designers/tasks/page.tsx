@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 import DriveConnectionStatus from '@/components/drive/DriveConnectionStatus';
 import { useJobs, useClients, useDesigners } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
-import { logActivity } from '@/lib/activity-logger';
+import { logActivity, logFileUpload } from '@/lib/activity-logger';
 import {
   Plus, Search, Calendar, Clock, Edit, Trash2, Eye, X, ArrowLeft, ArrowRight, CheckCircle, XCircle,
   AlertCircle, User, Briefcase, MessageSquare, Paperclip, ExternalLink,
@@ -303,7 +303,8 @@ export default function DesignerWorkspace() {
             rawDeadline: job.client_deadline,
             description: `Job Type: ${job.job_type || '-'}\nDetails: ${job.description || 'No description provided.'}`,
             feedback: [],
-            driveLink: job.files?.[0] || '',
+            files: job.files || [],
+            driveLink: (job.files && job.files.length > 0 && typeof job.files[0] === 'object') ? job.files[0]?.url : (job.files?.[0] || ''),
             orderId: job.id,
             designerId: job.designer_id,
             designerName: designer?.name || 'Unassigned',
@@ -439,9 +440,9 @@ export default function DesignerWorkspace() {
       const updatedFiles = [...(selectedTask.files || []), newFile];
 
       if (updateJob) {
-        // This assumes updateJob can handle the 'files' column update (jsonb)
-        // We need to cast it properly
         await updateJob(selectedTask.realId, { files: updatedFiles } as any);
+        // Log upload to activity feed
+        logFileUpload({ fileName: file.name, fileSize: file.size, fileType: file.type, fileUrl: publicUrl, uploadedTo: `Job ${selectedTask.taskId}`, resourceId: selectedTask.realId });
         alert('File uploaded successfully!');
       }
 
@@ -589,8 +590,13 @@ export default function DesignerWorkspace() {
                                 )}
                               </div>
 
-                              {/* Drive Link Indicator (if exists) */}
-                              {task.driveLink && <div className="text-foreground"><Folder size={12} /></div>}
+                              {/* File Attachment Indicator */}
+                              {(task.files?.length > 0 || task.driveLink) && (
+                                <div className="flex items-center gap-1 text-gray-400" title={`${task.files?.length || 1} file(s) attached`}>
+                                  <Paperclip size={11} />
+                                  <span className="text-[10px] font-bold">{task.files?.length || 1}</span>
+                                </div>
+                              )}
                             </div>
 
                             {/* ON HOLD Banner — full width at bottom */}

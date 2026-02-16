@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { Paperclip, Upload, X, FileText, Image, File as FileIcon, Loader2, ExternalLink } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { logFileUpload, logFileDownload } from '@/lib/activity-logger';
 import type { FileAttachment } from '@/types/database';
 
 interface JobFileAttachmentsProps {
@@ -62,25 +63,31 @@ export default function JobFileAttachments({ jobId, files, onFilesUpdated }: Job
                     console.warn('Storage upload failed, using data URL fallback:', uploadError.message);
 
                     const dataUrl = await readFileAsDataURL(file);
-                    newFiles.push({
+                    const newFile = {
                         name: file.name,
                         url: dataUrl,
                         type: file.type,
                         size: file.size,
                         uploaded_at: new Date().toISOString(),
-                    });
+                    };
+                    newFiles.push(newFile);
+                    // Log upload
+                    logFileUpload({ fileName: file.name, fileSize: file.size, fileType: file.type, fileUrl: dataUrl, uploadedTo: `Job ${jobId}`, resourceId: jobId });
                 } else {
                     const { data: urlData } = supabase.storage
                         .from('attachments')
                         .getPublicUrl(data.path);
 
-                    newFiles.push({
+                    const newFile = {
                         name: file.name,
                         url: urlData.publicUrl,
                         type: file.type,
                         size: file.size,
                         uploaded_at: new Date().toISOString(),
-                    });
+                    };
+                    newFiles.push(newFile);
+                    // Log upload
+                    logFileUpload({ fileName: file.name, fileSize: file.size, fileType: file.type, fileUrl: urlData.publicUrl, uploadedTo: `Job ${jobId}`, resourceId: jobId });
                 }
             } catch (err) {
                 console.error('File upload error:', err);
@@ -160,7 +167,9 @@ export default function JobFileAttachments({ jobId, files, onFilesUpdated }: Job
                             </div>
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 {!file.url.startsWith('data:') && (
-                                    <a href={file.url} target="_blank" rel="noreferrer" className="p-1 hover:bg-gray-200 rounded">
+                                    <a href={file.url} target="_blank" rel="noreferrer" className="p-1 hover:bg-gray-200 rounded"
+                                        onClick={() => logFileDownload({ fileName: file.name, fileSize: file.size, fileType: file.type, fileUrl: file.url, downloadedFrom: `Job ${jobId}`, resourceId: jobId })}
+                                    >
                                         <ExternalLink className="w-3.5 h-3.5 text-gray-500" />
                                     </a>
                                 )}

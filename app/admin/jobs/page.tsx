@@ -8,7 +8,7 @@ import {
   IndianRupee, Edit, Trash2, X,
   AlertCircle, AlertTriangle, ChevronDown, LayoutGrid,
   List, Building2, UserPlus, Loader2,
-  Layers, Printer, ArrowRight, Download, Clock, Copy, Send
+  Layers, Printer, ArrowRight, Download, Clock, Copy, Send, Paperclip
 } from 'lucide-react';
 import {
   useJobs, useClients, useVendors, useDesigners, usePaymentsReceived
@@ -509,9 +509,18 @@ export default function JobsPage() {
       )}
 
       <div className="flex items-center justify-between text-xs pt-3 border-t border-gray-100 text-gray-500">
-        <Badge variant="outline" className={getPaymentBadge(job.payment_status)}>
-          {formatCurrency(job.amount_received)} / {formatCurrency(job.total_amount)}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className={getPaymentBadge(job.payment_status)}>
+            {formatCurrency(job.amount_received)} / {formatCurrency(job.total_amount)}
+          </Badge>
+          {/* File Attachment Indicator */}
+          {job.files && job.files.length > 0 && (
+            <span className="flex items-center gap-0.5 text-gray-400" title={`${job.files.length} file(s) attached`}>
+              <Paperclip className="w-3 h-3" />
+              <span className="text-[10px] font-bold">{job.files.length}</span>
+            </span>
+          )}
+        </div>
 
         {job.client_deadline && (
           <span className={`flex items-center gap-1.5 font-medium ${isOverdue(job.client_deadline, job.current_stage) ? 'text-red-600' : 'text-gray-400'}`}>
@@ -777,6 +786,12 @@ export default function JobsPage() {
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-sm text-primary">{job.job_number}</span>
                           <span className={`text-xs px-2 py-0.5 rounded-full ${getPriorityBadge(job.priority)}`}>{job.priority}</span>
+                          {job.files && job.files.length > 0 && (
+                            <span className="flex items-center gap-0.5 text-gray-400" title={`${job.files.length} file(s)`}>
+                              <Paperclip className="w-3 h-3" />
+                              <span className="text-[10px] font-bold">{job.files.length}</span>
+                            </span>
+                          )}
                         </div>
                         <p className="text-sm font-medium">{job.project_name}</p>
                       </td>
