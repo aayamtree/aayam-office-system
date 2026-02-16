@@ -25,7 +25,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import OverdueAlertsWidget from '@/components/dashboard/OverdueAlertsWidget';
 import MiniCalendarWidget from '@/components/dashboard/MiniCalendarWidget';
 import QuickNotesWidget from '@/components/dashboard/QuickNotesWidget';
 import TeamWorkloadWidget from '@/components/dashboard/TeamWorkloadWidget';
@@ -315,13 +314,10 @@ export default function AdminDashboardShadcn() {
                     </Card>
                 </div>
 
-                {/* Right Column (2/5): Daily Summary + Overdue Alerts */}
+                {/* Right Column (2/5): Daily Summary */}
                 <div className="lg:col-span-2 space-y-4">
                     {/* Daily Summary */}
                     <DailySummaryWidget />
-
-                    {/* Overdue Alerts */}
-                    <OverdueAlertsWidget />
                 </div>
             </div>
 
