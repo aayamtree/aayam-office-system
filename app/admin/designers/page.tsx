@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Plus, Search, Palette, Phone, Mail, MapPin, Clock,
   Calendar, IndianRupee, Briefcase, Edit, Trash2, Eye, X,
-  CheckCircle, TrendingUp, Users, Loader2, Upload
+  CheckCircle, TrendingUp, Users, Loader2, Upload, ShieldAlert
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth-context';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useConfirm } from '@/components/ConfirmModal';
@@ -39,6 +41,26 @@ const skillOptions = [
 const employmentTypes = ['full-time', 'part-time', 'freelance'];
 
 export default function DesignersPage() {
+  const { profile } = useAuth();
+  const router = useRouter();
+
+  // ADMIN-ONLY PAGE — redirect non-admin users
+  if (profile && profile.role !== 'admin') {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] text-center">
+        <ShieldAlert className="w-16 h-16 text-red-400 mb-4" />
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Access Restricted</h2>
+        <p className="text-gray-500 mb-6">This page is only accessible to administrators.</p>
+        <button
+          onClick={() => router.push(profile.role === 'designer' ? '/admin/designers/tasks' : '/admin/dashboard')}
+          className="px-4 py-2.5 bg-gray-900 text-white rounded-lg font-medium"
+        >
+          Go to My Dashboard
+        </button>
+      </div>
+    );
+  }
+
   const [designers, setDesigners] = useState<Designer[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
