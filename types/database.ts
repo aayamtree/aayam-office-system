@@ -218,6 +218,7 @@ export interface Job extends BaseEntity {
   is_on_hold?: boolean;
   hold_reason?: string;
   pre_hold_stage?: string;
+  revision_count?: number;
   file_version?: string;
 
   // Files and notes

@@ -320,6 +320,7 @@ export default function DesignerWorkspace() {
             is_on_hold: job.is_on_hold || false,
             hold_reason: job.hold_reason || '',
             pre_hold_stage: job.pre_hold_stage || '',
+            revision_count: job.revision_count || 0,
             status: job.is_on_hold ? 'on_hold' : getDesignerStatus(job.current_stage)
           };
         })
@@ -534,8 +535,8 @@ export default function DesignerWorkspace() {
                             className={`bg-white p-4 rounded-lg border border-gray-100  transition-shadow cursor-pointer group relative ${borderClass}`}
                           >
                             {/* Revision Badge */}
-                            {!task.is_on_hold && (
-                              <div className="absolute top-4 right-4 text-xs font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border">Rev {(task.id % 3) + 1}</div>
+                            {!task.is_on_hold && task.revision_count > 0 && (
+                              <div className="absolute top-4 right-4 text-xs font-mono text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">Rev {task.revision_count}</div>
                             )}
 
                             <div className="flex justify-between items-start mb-2 pr-12">

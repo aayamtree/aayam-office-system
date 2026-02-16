@@ -410,14 +410,23 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
     // Get current job
     const { data: job } = await supabase
       .from('jobs')
-      .select('current_stage, job_number')
+      .select('current_stage, job_number, revision_count')
       .eq('id', id)
       .single();
 
-    // Update job stage
+    // Auto-increment revision_count when moving BACK to designing from approval/later stages
+    const revisionTriggerStages = ['approval', 'printing', 'finishing', 'quality_check', 'ready'];
+    const shouldIncrementRevision = newStage === 'designing' && job?.current_stage && revisionTriggerStages.includes(job.current_stage);
+
+    // Update job stage (and revision_count if applicable)
+    const updateData: any = { current_stage: newStage };
+    if (shouldIncrementRevision) {
+      updateData.revision_count = (job?.revision_count || 0) + 1;
+    }
+
     const { error: updateError } = await supabase
       .from('jobs')
-      .update({ current_stage: newStage })
+      .update(updateData)
       .eq('id', id);
 
     if (updateError) return { error: updateError.message };
