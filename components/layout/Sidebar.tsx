@@ -60,6 +60,7 @@ const menuItems: MenuItem[] = [
     allowedRoles: ['admin', 'finance'],
     submenu: [
       { name: 'Overview', href: '/admin/jobs' },
+      { name: 'Job Dossier', href: '/admin/jobs/dossier' },
       { name: 'Production Queue', href: '/admin/jobs/queue' },
     ]
   },
