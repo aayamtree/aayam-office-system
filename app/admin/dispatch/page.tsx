@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Package, CheckCircle, Truck, Clock, AlertTriangle, ClipboardCheck, Loader2, X, Camera, MapPin, Building2, Search } from 'lucide-react';
+import { Package, CheckCircle, Truck, Clock, AlertTriangle, ClipboardCheck, Loader2, X, Camera, MapPin, Building2, Search, FileText } from 'lucide-react';
 import { useJobs, useDispatches } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { Job, Dispatch } from '@/types/database';
@@ -60,6 +60,10 @@ export default function DispatchPage() {
   const [showDispatchModal, setShowDispatchModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Invoice request tracking (prevents spam)
+  const [invoiceRequested, setInvoiceRequested] = useState<Set<string>>(new Set());
+
   const [dispatchForm, setDispatchForm] = useState({
     transporter_name: '',
     tracking_number: '',
@@ -344,13 +348,41 @@ export default function DispatchPage() {
                         <p className="text-[11px] text-gray-500">Due</p>
                         <p className="text-xs font-medium">{job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}</p>
                       </div>
-                      <button
-                        onClick={() => handleOpenDispatch(job)}
-                        className={`px-3 py-1.5 text-white text-xs font-medium rounded-lg whitespace-nowrap ${hasInvoice ? 'bg-gray-900 hover:bg-gray-800' : 'bg-amber-500 hover:bg-amber-600'}`}
-                        title={hasInvoice ? 'Proceed to Dispatch' : 'No invoice yet — can still dispatch'}
-                      >
-                        {hasInvoice ? 'Dispatch Now' : '⚠️ Dispatch (No Invoice)'}
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        {!hasInvoice && (
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (invoiceRequested.has(job.id)) return;
+                              try {
+                                await supabase.from('broadcast_notifications').insert({
+                                  message: `🔔 Dispatch requesting invoice for ${job.job_number}\nClient: ${job.client?.company || job.client?.name || 'N/A'}\nProject: ${job.project_name}`,
+                                  target_audience: 'admin',
+                                  priority: 'urgent',
+                                });
+                                setInvoiceRequested(prev => new Set(Array.from(prev).concat(job.id)));
+                              } catch (err) {
+                                console.warn('Failed to send invoice request:', err);
+                              }
+                            }}
+                            className={`px-2 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${invoiceRequested.has(job.id)
+                                ? 'bg-green-100 text-green-700 cursor-default'
+                                : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                              }`}
+                            title={invoiceRequested.has(job.id) ? 'Invoice request sent' : 'Send invoice request to admin'}
+                          >
+                            <FileText className="w-3 h-3 inline mr-1" />
+                            {invoiceRequested.has(job.id) ? 'Requested ✓' : 'Request Invoice'}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleOpenDispatch(job)}
+                          className={`px-3 py-1.5 text-white text-xs font-medium rounded-lg whitespace-nowrap ${hasInvoice ? 'bg-gray-900 hover:bg-gray-800' : 'bg-amber-500 hover:bg-amber-600'}`}
+                          title={hasInvoice ? 'Proceed to Dispatch' : 'No invoice yet — can still dispatch'}
+                        >
+                          {hasInvoice ? 'Dispatch Now' : '⚠️ Dispatch (No Invoice)'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

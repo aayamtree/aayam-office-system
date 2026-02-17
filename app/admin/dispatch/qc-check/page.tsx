@@ -266,6 +266,19 @@ export default function QCCheckPage() {
     }
 
     setShowQCModal(false);
+
+    // Auto-notify admin when QC passes — invoice & e-way bill needed
+    if (status === 'passed') {
+      try {
+        await supabase.from('broadcast_notifications').insert({
+          message: `📋 ${selectedJob.job_number} passed QC — Invoice & E-Way Bill needed for dispatch.\nClient: ${selectedJob.client?.company || selectedJob.client?.name || 'N/A'}\nProject: ${selectedJob.project_name}`,
+          target_audience: 'admin',
+          priority: 'urgent',
+        });
+      } catch (err) {
+        console.warn('Could not send invoice notification:', err);
+      }
+    }
   };
 
   if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary" /></div>;
