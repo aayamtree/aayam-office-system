@@ -1045,6 +1045,30 @@ export interface UserNote extends BaseEntity {
   job?: Job;
 }
 
+
+// QC Record (audit trail for quality checks)
+export interface QcRecord {
+  id: string;
+  job_id?: string;
+  print_run_id?: string;
+  qc_type: 'pre_print' | 'post_print' | 'print_run' | 'remote';
+  checklist: Record<string, boolean>;
+  result: 'passed' | 'failed' | 'rework';
+  notes?: string;
+  received_qty?: number;
+  photos?: string[];  // URLs for remote QC photos
+  skip_reason?: string;
+  performed_by?: string;
+  performed_by_name?: string;
+  performed_at: string;
+  design_file_url?: string;
+  created_at: string;
+
+  // Joined
+  job?: Job;
+  print_run?: PrintRun;
+}
+
 // Input types for new tables
 export type MachineInput = Omit<Machine, 'id' | 'created_at' | 'updated_at'>;
 export type SheetSizeInput = Omit<SheetSize, 'id' | 'created_at' | 'updated_at'>;

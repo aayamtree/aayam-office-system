@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Search, ArrowLeft, CheckCircle, XCircle, AlertTriangle,
-  ClipboardCheck, Loader2, FileCheck, Printer
+  ClipboardCheck, Loader2, FileCheck, Printer, Image, Clock, User
 } from 'lucide-react';
 import { useJobs } from '@/lib/hooks';
+import { useAuth } from '@/lib/auth-context';
 import { Job, JobStatus } from '@/types/database';
 import { createBrowserClient } from '@supabase/ssr';
 import { useConfirm } from '@/components/ConfirmModal';
@@ -39,6 +40,7 @@ interface ChecklistItem {
 
 export default function QCCheckPage() {
   const confirm = useConfirm();
+  const { profile } = useAuth();
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -62,8 +64,11 @@ export default function QCCheckPage() {
 
   // QC Form State (Ephemeral)
   const [checkpoints, setCheckpoints] = useState<Record<string, { checked: boolean; note: string }>>({});
-  const [activeTab, setActiveTab] = useState<'checklist' | 'notes'>('checklist');
+  const [activeTab, setActiveTab] = useState<'design' | 'checklist' | 'notes'>('checklist');
   const [qcNotes, setQcNotes] = useState('');
+
+  // QC history for selected job
+  const [qcHistory, setQcHistory] = useState<any[]>([]);
 
   // Load dynamic checklists when a job is selected
   const loadChecklists = useCallback(async (job: Job) => {
@@ -197,6 +202,18 @@ export default function QCCheckPage() {
 
     // Load dynamic checklists
     await loadChecklists(job);
+
+    // Load QC history
+    try {
+      const { data } = await supabase
+        .from('qc_records')
+        .select('*')
+        .eq('job_id', job.id)
+        .order('performed_at', { ascending: false });
+      setQcHistory(data || []);
+    } catch {
+      setQcHistory([]);
+    }
   };
 
   const updateCheckpoint = (id: string, field: 'checked' | 'note', value: boolean | string) => {
@@ -221,9 +238,7 @@ export default function QCCheckPage() {
       if (activeQCType === 'post_print') {
         await updateJobStage(selectedJob.id, 'ready', `${qcLabel} Passed. Note: ${qcNotes}`);
       } else {
-        // Pre-print QC passed — update job with qc_status
         await updateJob(selectedJob.id, { qc_status: 'passed' } as any);
-        // Add a note to stage history
         await updateJobStage(selectedJob.id, selectedJob.current_stage, `${qcLabel} Passed. Note: ${qcNotes}`);
       }
     } else if (status === 'rework' || status === 'failed') {
@@ -235,13 +250,37 @@ export default function QCCheckPage() {
       }
     }
 
+    // Save QC audit record
+    const checklistResult: Record<string, boolean> = {};
+    activeItems.forEach(cp => { checklistResult[cp.label] = !!checkpoints[cp.id]?.checked; });
+
+    // Get first design file URL for reference
+    const designFileUrl = selectedJob.files?.find(f =>
+      f.type?.startsWith('image/') || f.name?.match(/\.(jpg|jpeg|png|pdf|ai|psd|svg)$/i)
+    )?.url || null;
+
+    try {
+      await supabase.from('qc_records').insert({
+        job_id: selectedJob.id,
+        qc_type: activeQCType,
+        checklist: checklistResult,
+        result: status === 'passed' ? 'passed' : status === 'rework' ? 'rework' : 'failed',
+        notes: qcNotes || null,
+        performed_by: profile?.id || null,
+        performed_by_name: profile?.full_name || 'Unknown',
+        design_file_url: designFileUrl,
+      });
+    } catch (err) {
+      console.warn('Could not save QC record:', err);
+    }
+
     setShowQCModal(false);
   };
 
   if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary" /></div>;
 
   return (
-    <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 px-2 animate-fade-in">
+    <div className="max-w-5xl mx-auto space-y-3 md:space-y-4 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link href="/admin/dispatch" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
@@ -253,124 +292,116 @@ export default function QCCheckPage() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-3">
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-center">
-          <p className="text-page-title text-purple-700">{jobs.filter(j => ['designing', 'approval', 'printing'].includes(j.current_stage)).length}</p>
-          <p className="text-xs text-purple-600 font-medium">Pre-Print</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-3 text-center">
-          <p className="text-page-title text-amber-700">{jobs.filter(j => j.current_stage === 'finishing').length}</p>
-          <p className="text-xs text-destructive font-medium">Post-Print Pending</p>
-        </div>
-        <div className="bg-muted border border-border rounded-lg p-3 text-center">
-          <p className="text-page-title text-foreground">{jobs.filter(j => j.current_stage === 'quality_check').length}</p>
-          <p className="text-xs text-foreground font-medium">In Progress</p>
-        </div>
-        <div className="bg-white border border-green-200 rounded-lg p-3 text-center">
-          <p className="text-page-title text-gray-900">{jobs.filter(j => j.current_stage === 'ready').length}</p>
-          <p className="text-xs text-gray-900 font-medium">Passed</p>
+      {/* Stats Card */}
+      <div className="bg-white rounded-lg border border-gray-100 p-3 md:p-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-center">
+            <p className="text-page-title text-purple-700">{jobs.filter(j => ['designing', 'approval', 'printing'].includes(j.current_stage)).length}</p>
+            <p className="text-xs text-purple-600 font-medium">Pre-Print</p>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-3 text-center">
+            <p className="text-page-title text-amber-700">{jobs.filter(j => j.current_stage === 'finishing').length}</p>
+            <p className="text-xs text-destructive font-medium">Post-Print Pending</p>
+          </div>
+          <div className="bg-muted border border-border rounded-lg p-3 text-center">
+            <p className="text-page-title text-foreground">{jobs.filter(j => j.current_stage === 'quality_check').length}</p>
+            <p className="text-xs text-foreground font-medium">In Progress</p>
+          </div>
+          <div className="bg-white border border-green-200 rounded-lg p-3 text-center">
+            <p className="text-page-title text-gray-900">{jobs.filter(j => j.current_stage === 'ready').length}</p>
+            <p className="text-xs text-gray-900 font-medium">Passed</p>
+          </div>
         </div>
       </div>
 
-      {/* Search & Filter */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search orders..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
-          />
+      {/* Orders Card */}
+      <div className="bg-white rounded-lg border border-gray-100 p-3 md:p-4">
+        {/* Search & Filter */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search orders..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:bg-white"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+          >
+            <option value="all">All Status</option>
+            <option value="pre_print">Pre-Print QC</option>
+            <option value="pending">Post-Print Pending</option>
+            <option value="in_progress">In Progress</option>
+            <option value="passed">Passed</option>
+          </select>
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
-        >
-          <option value="all">All Status</option>
-          <option value="pre_print">Pre-Print QC</option>
-          <option value="pending">Post-Print Pending</option>
-          <option value="in_progress">In Progress</option>
-          <option value="passed">Passed</option>
-        </select>
-      </div>
 
-      {/* Orders List */}
-      <div className="space-y-3">
+        {/* Orders Grid */}
         {filteredJobs.length === 0 && <div className="text-center py-10 text-gray-500">No jobs found.</div>}
-        {filteredJobs.map((job) => {
-          const isPrePrintStage = ['designing', 'approval', 'printing'].includes(job.current_stage);
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {filteredJobs.map((job) => {
+            const isPrePrintStage = ['designing', 'approval', 'printing'].includes(job.current_stage);
 
-          return (
-            <div key={job.id} className="bg-white rounded-lg p-4 border border-gray-100">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 md:gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className="font-semibold text-gray-900">{job.job_number}</span>
-                    {job.priority && (
-                      <span className={`px-2 py-0.5 text-xs rounded-full ${getPriorityColor(job.priority)}`}>
-                        {job.priority}
-                      </span>
-                    )}
-                    <span className={`px-2 py-0.5 text-xs rounded-full border ${getStatusColor(job.current_stage)}`}>
-                      {getStatusLabel(job.current_stage)}
+            return (
+              <div key={job.id} className="rounded-lg p-3 border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all">
+                {/* Top: badges */}
+                <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                  <span className="font-semibold text-gray-900 text-sm">{job.job_number}</span>
+                  {job.priority && (
+                    <span className={`px-1.5 py-0.5 text-[10px] rounded-full font-medium ${getPriorityColor(job.priority)}`}>
+                      {job.priority}
                     </span>
-                    {job.product_category && (
-                      <span className="px-2 py-0.5 text-xs rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                        {job.product_category}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-600">{job.client?.company} • {job.client?.name}</p>
-                  <p className="text-sm text-gray-900 font-medium mt-1">{job.project_name}</p>
-                  <p className="text-xs text-gray-500 mt-1">Qty: {job.quantity}</p>
+                  )}
+                  <span className={`px-1.5 py-0.5 text-[10px] rounded-full border font-medium ${getStatusColor(job.current_stage)}`}>
+                    {getStatusLabel(job.current_stage)}
+                  </span>
+                  {job.product_category && (
+                    <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-medium">
+                      {job.product_category}
+                    </span>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-2 md:gap-4">
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500">Due</p>
-                    <p className="font-medium text-gray-900">{job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : 'N/A'}</p>
-                  </div>
+                {/* Middle: info */}
+                <p className="text-sm text-gray-600 truncate">{job.client?.company} • {job.client?.name}</p>
+                <p className="text-sm text-gray-900 font-medium mt-0.5 truncate">{job.project_name}</p>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-gray-500">Qty: {job.quantity}</p>
+                  <p className="text-xs text-gray-500">Due: <span className="font-medium text-gray-700">{job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : 'N/A'}</span></p>
+                </div>
 
+                {/* Bottom: action */}
+                <div className="mt-3 pt-2 border-t border-gray-50">
                   {job.current_stage === 'ready' ? (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-900 rounded-lg">
-                      <CheckCircle className="w-4 h-4" />
-                      <span className="hidden sm:inline">Passed</span>
+                    <div className="flex items-center justify-center gap-1.5 py-1.5 bg-gray-100 text-gray-900 rounded-lg text-sm font-medium">
+                      <CheckCircle className="w-4 h-4" /> Passed
                     </div>
+                  ) : isPrePrintStage ? (
+                    <button
+                      onClick={() => handleStartQC(job, 'pre_print')}
+                      className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-white text-sm font-medium bg-purple-600 hover:bg-purple-700 transition-colors"
+                    >
+                      <FileCheck className="w-4 h-4" /> Pre-Print QC
+                    </button>
                   ) : (
-                    <div className="flex gap-2">
-                      {/* Pre-Print QC Button */}
-                      {isPrePrintStage && (
-                        <button
-                          onClick={() => handleStartQC(job, 'pre_print')}
-                          className="flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700"
-                        >
-                          <FileCheck className="w-4 h-4" />
-                          <span className="hidden sm:inline">Pre-Print QC</span>
-                        </button>
-                      )}
-
-                      {/* Post-Print QC Button */}
-                      {!isPrePrintStage && (
-                        <button
-                          onClick={() => handleStartQC(job, 'post_print')}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white ${job.current_stage === 'quality_check' ? 'bg-gray-900 hover:opacity-90' : 'bg-gray-900 hover:bg-gray-800'
-                            }`}
-                        >
-                          <ClipboardCheck className="w-4 h-4" />
-                          <span className="hidden sm:inline">{job.current_stage === 'quality_check' ? 'Continue QC' : 'Post-Print QC'}</span>
-                        </button>
-                      )}
-                    </div>
+                    <button
+                      onClick={() => handleStartQC(job, 'post_print')}
+                      className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-white text-sm font-medium bg-gray-900 hover:bg-gray-800 transition-colors"
+                    >
+                      <ClipboardCheck className="w-4 h-4" />
+                      {job.current_stage === 'quality_check' ? 'Continue QC' : 'Post-Print QC'}
+                    </button>
                   )}
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       {/* QC Modal */}
@@ -420,6 +451,12 @@ export default function QCCheckPage() {
             {/* Sub Tabs */}
             <div className="flex border-b border-gray-100">
               <button
+                onClick={() => setActiveTab('design')}
+                className={`flex-1 py-2.5 text-xs font-medium border-b-2 flex items-center justify-center gap-1 ${activeTab === 'design' ? 'text-blue-600 border-blue-600' : 'text-gray-500 border-transparent'}`}
+              >
+                <Image className="w-3 h-3" /> Design
+              </button>
+              <button
                 onClick={() => setActiveTab('checklist')}
                 className={`flex-1 py-2.5 text-xs font-medium border-b-2 ${activeTab === 'checklist' ? 'text-primary border-primary' : 'text-gray-500 border-transparent'}`}
               >
@@ -439,6 +476,77 @@ export default function QCCheckPage() {
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin text-primary" />
                   <span className="ml-2 text-sm text-gray-500">Loading checklist...</span>
+                </div>
+              ) : activeTab === 'design' ? (
+                <div className="space-y-4">
+                  {/* Design file preview */}
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                      <Image className="w-4 h-4 text-blue-500" />
+                      Approved Design Files
+                    </h3>
+                    <p className="text-xs text-gray-500 mb-3">Compare these files with the printed material received</p>
+                    {selectedJob.files && selectedJob.files.length > 0 ? (
+                      <div className="space-y-2">
+                        {selectedJob.files.map((file, idx) => (
+                          <div key={idx} className="border border-gray-200 rounded-lg overflow-hidden">
+                            {file.type?.startsWith('image/') ? (
+                              <div>
+                                <img src={file.url} alt={file.name} className="w-full max-h-[300px] object-contain bg-gray-50" />
+                                <div className="p-2 border-t bg-white">
+                                  <p className="text-xs text-gray-600 font-medium">{file.name}</p>
+                                  <p className="text-[10px] text-gray-400">{new Date(file.uploaded_at).toLocaleDateString()}</p>
+                                </div>
+                              </div>
+                            ) : (
+                              <a href={file.url} target="_blank" rel="noopener noreferrer"
+                                className="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors">
+                                <FileCheck className="w-5 h-5 text-blue-500" />
+                                <div>
+                                  <p className="text-sm font-medium text-gray-700">{file.name}</p>
+                                  <p className="text-xs text-gray-400">{file.type} · {new Date(file.uploaded_at).toLocaleDateString()}</p>
+                                </div>
+                              </a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 text-gray-400 text-sm border border-dashed rounded-lg">
+                        No design files attached to this job
+                      </div>
+                    )}
+                  </div>
+
+                  {/* QC History */}
+                  {qcHistory.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-gray-400" />
+                        QC History
+                      </h3>
+                      <div className="space-y-2">
+                        {qcHistory.map((record: any) => (
+                          <div key={record.id} className={`p-3 rounded-lg border text-xs ${record.result === 'passed' ? 'bg-green-50 border-green-200' :
+                            record.result === 'failed' ? 'bg-red-50 border-red-200' :
+                              'bg-amber-50 border-amber-200'
+                            }`}>
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium capitalize">
+                                {record.qc_type?.replace('_', '-')} · {record.result}
+                              </span>
+                              <span className="text-gray-500">{new Date(record.performed_at).toLocaleDateString()}</span>
+                            </div>
+                            <div className="flex items-center gap-1 mt-1 text-gray-500">
+                              <User className="w-3 h-3" />
+                              {record.performed_by_name || 'Unknown'}
+                            </div>
+                            {record.notes && <p className="mt-1 text-gray-600">{record.notes}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : activeTab === 'checklist' ? (
                 <div className="space-y-3">

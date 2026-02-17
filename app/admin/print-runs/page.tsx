@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth-context';
 import {
     Printer, Package, Clock, CheckCircle, Truck, Search as SearchIcon,
     Calendar, IndianRupee, Trash2, RefreshCw, ArrowRight, Eye, X,
-    ClipboardCheck, Send, MapPin, FileText, AlertTriangle, Building2
+    ClipboardCheck, Send, MapPin, FileText, AlertTriangle, Building2, Camera
 } from 'lucide-react';
 
 // ─── Interfaces ────────────────────────────────────────────
@@ -82,6 +83,7 @@ const NEXT_STATUS: Record<string, string | null> = {
 
 // ─── Main Component ────────────────────────────────────────
 export default function PrintRunsPage() {
+    const { profile } = useAuth();
     const [runs, setRuns] = useState<PrintRun[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<string>('all');
@@ -96,6 +98,8 @@ export default function PrintRunsPage() {
     // Delivery modal state
     const [deliveryMode, setDeliveryMode] = useState<'warehouse' | 'direct_to_client'>('warehouse');
     const [deliveryAddress, setDeliveryAddress] = useState('');
+    const [directPhotoUrl, setDirectPhotoUrl] = useState('');
+    const [directSkipReason, setDirectSkipReason] = useState('');
 
     // Dispatch modal state
     const [transporterName, setTransporterName] = useState('');
@@ -244,23 +248,44 @@ export default function PrintRunsPage() {
             delivery_mode: deliveryMode,
         };
         if (deliveryMode === 'direct_to_client') {
+            if (!directSkipReason.trim()) {
+                alert('Please enter a reason for skipping physical QC');
+                return;
+            }
             data.delivery_address = deliveryAddress;
-            // Direct to client skips QC → goes to dispatched
             await updateStatus(deliveryModal.id, 'dispatched', data);
+
+            // Save remote QC record (photo + waiver)
+            try {
+                await supabase.from('qc_records').insert({
+                    print_run_id: deliveryModal.id,
+                    qc_type: 'remote',
+                    checklist: {},
+                    result: 'passed',
+                    notes: `Direct to client — QC skipped. Reason: ${directSkipReason}`,
+                    photos: directPhotoUrl ? [directPhotoUrl] : [],
+                    skip_reason: directSkipReason,
+                    performed_by: profile?.id || null,
+                    performed_by_name: profile?.full_name || 'Unknown',
+                });
+            } catch (err) {
+                console.warn('Could not save remote QC record:', err);
+            }
         } else {
-            // Warehouse → goes to QC
             await updateStatus(deliveryModal.id, 'qc', data);
         }
         setDeliveryModal(null);
         setDeliveryAddress('');
         setDeliveryMode('warehouse');
+        setDirectPhotoUrl('');
+        setDirectSkipReason('');
     };
 
     // ─── QC Save Handler ────────────────────────────────────
     const handleQcSave = async () => {
         if (!qcModal) return;
         try {
-            // Save QC checklist
+            // Save QC checklist to print_runs
             await supabase
                 .from('print_runs')
                 .update({
@@ -278,6 +303,21 @@ export default function PrintRunsPage() {
                         .update({ received_qty: receivedQtys[job.id] })
                         .eq('id', job.id);
                 }
+            }
+
+            // Save QC audit record
+            try {
+                await supabase.from('qc_records').insert({
+                    print_run_id: qcModal.id,
+                    qc_type: 'print_run',
+                    checklist: qcChecklist,
+                    result: 'passed',
+                    notes: qcNotes || null,
+                    performed_by: profile?.id || null,
+                    performed_by_name: profile?.full_name || 'Unknown',
+                });
+            } catch (err) {
+                console.warn('Could not save QC record:', err);
             }
 
             await fetchRuns();
@@ -710,15 +750,46 @@ export default function PrintRunsPage() {
 
                             {/* Client address (only for direct) */}
                             {deliveryMode === 'direct_to_client' && (
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">Client Delivery Address</label>
-                                    <textarea
-                                        value={deliveryAddress}
-                                        onChange={e => setDeliveryAddress(e.target.value)}
-                                        rows={3}
-                                        placeholder="Enter client delivery address..."
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm resize-none focus:ring-2 focus:ring-gray-400 outline-none"
-                                    />
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1.5">Client Delivery Address</label>
+                                        <textarea
+                                            value={deliveryAddress}
+                                            onChange={e => setDeliveryAddress(e.target.value)}
+                                            rows={2}
+                                            placeholder="Enter client delivery address..."
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm resize-none focus:ring-2 focus:ring-gray-400 outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1.5">
+                                            <Camera size={12} className="inline mr-1" />
+                                            Printer Photo URL (for remote QC)
+                                        </label>
+                                        <input
+                                            type="url"
+                                            value={directPhotoUrl}
+                                            onChange={e => setDirectPhotoUrl(e.target.value)}
+                                            placeholder="Paste photo link from printer..."
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                        />
+                                        <p className="text-xs text-gray-400 mt-1">Ask printer to share photo before dispatch</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-red-600 mb-1.5">Reason for Skipping Physical QC *</label>
+                                        <input
+                                            type="text"
+                                            value={directSkipReason}
+                                            onChange={e => setDirectSkipReason(e.target.value)}
+                                            placeholder="e.g. Repeat order, Trusted printer, Urgent..."
+                                            className="w-full px-3 py-2 border border-red-200 rounded-md text-sm focus:ring-2 focus:ring-red-300 outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="bg-amber-50 border border-amber-200 rounded-md p-2.5 text-xs text-amber-700 flex items-start gap-2">
+                                        <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                                        <span>Physical QC will be skipped. A remote QC record will be saved with your name for traceability.</span>
+                                    </div>
                                 </div>
                             )}
 
