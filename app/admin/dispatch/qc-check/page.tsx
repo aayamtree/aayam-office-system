@@ -47,14 +47,14 @@ export default function QCCheckPage() {
   );
 
   const { jobs, loading, updateJobStage, updateJob } = useJobs({
-    filter: [{ column: 'current_stage', value: ['designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready'], op: 'in' }]
+    filter: [{ column: 'current_stage', value: ['finishing', 'quality_check', 'ready'], op: 'in' }]
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showQCModal, setShowQCModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
-  // QC Type Toggle
+  // QC Type — always dispatch QC on this page
   const [activeQCType, setActiveQCType] = useState<QCType>('post_print');
 
   // Dynamic checklists from DB
@@ -132,12 +132,12 @@ export default function QCCheckPage() {
     }
   }, [supabase]);
 
-  // Get the currently active checklist items
-  const activeItems = activeQCType === 'pre_print' ? prePrintItems : postPrintItems;
+  // Always use dispatch checklist on this page
+  const activeItems = postPrintItems;
 
-  // Filter jobs relevant for QC
+  // Filter jobs relevant for QC-Dispatch
   const relevantJobs = jobs.filter(j =>
-    ['finishing', 'quality_check', 'ready', 'designing', 'approval', 'printing'].includes(j.current_stage)
+    ['finishing', 'quality_check', 'ready'].includes(j.current_stage)
   );
 
   const filteredJobs = relevantJobs.filter(job => {
@@ -149,31 +149,22 @@ export default function QCCheckPage() {
     const matchesStatus = statusFilter === 'all' ||
       (statusFilter === 'pending' && job.current_stage === 'finishing') ||
       (statusFilter === 'in_progress' && job.current_stage === 'quality_check') ||
-      (statusFilter === 'passed' && job.current_stage === 'ready') ||
-      (statusFilter === 'pre_print' && ['designing', 'approval', 'printing'].includes(job.current_stage));
+      (statusFilter === 'passed' && job.current_stage === 'ready');
 
     return matchesSearch && matchesStatus;
   });
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'designing':
-      case 'approval':
-      case 'printing':
-        return 'bg-purple-100 text-purple-700 border-purple-200';
-      case 'finishing': return 'bg-gray-100 text-gray-700 border-gray-200';
+      case 'finishing': return 'bg-amber-100 text-amber-700 border-amber-200';
       case 'quality_check': return 'bg-muted text-foreground border-border';
-      case 'ready': return 'bg-gray-100 text-gray-900 border-green-200';
+      case 'ready': return 'bg-green-100 text-green-700 border-green-200';
       default: return 'bg-gray-100 text-gray-700';
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'designing':
-      case 'approval':
-      case 'printing':
-        return 'Pre-Print';
       case 'finishing': return 'Pending QC';
       case 'quality_check': return 'In QC';
       case 'ready': return 'Passed';
@@ -226,7 +217,7 @@ export default function QCCheckPage() {
   const handleQCSubmit = async (status: 'passed' | 'failed' | 'rework') => {
     if (!selectedJob) return;
 
-    const qcLabel = activeQCType === 'pre_print' ? 'Pre-Print QC' : 'QC-Dispatch';
+    const qcLabel = 'QC-Dispatch';
 
     if (status === 'passed') {
       const criticalMissed = activeItems.some(cp => cp.critical && !checkpoints[cp.id]?.checked);
@@ -287,29 +278,25 @@ export default function QCCheckPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-xl lg:text-page-title text-gray-900">QC Check</h1>
+          <h1 className="text-xl lg:text-page-title text-gray-900">QC & Dispatch</h1>
           <p className="text-sm text-gray-500">{filteredJobs.length} orders for quality check</p>
         </div>
       </div>
 
       {/* Stats Card */}
       <div className="bg-white rounded-lg border border-gray-100 p-3 md:p-4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-center">
-            <p className="text-page-title text-purple-700">{jobs.filter(j => ['designing', 'approval', 'printing'].includes(j.current_stage)).length}</p>
-            <p className="text-xs text-purple-600 font-medium">Pre-Print</p>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-3 text-center">
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
             <p className="text-page-title text-amber-700">{jobs.filter(j => j.current_stage === 'finishing').length}</p>
-            <p className="text-xs text-destructive font-medium">QC-Dispatch Pending</p>
+            <p className="text-xs text-amber-600 font-medium">Pending QC</p>
           </div>
           <div className="bg-muted border border-border rounded-lg p-3 text-center">
             <p className="text-page-title text-foreground">{jobs.filter(j => j.current_stage === 'quality_check').length}</p>
             <p className="text-xs text-foreground font-medium">In Progress</p>
           </div>
-          <div className="bg-white border border-green-200 rounded-lg p-3 text-center">
-            <p className="text-page-title text-gray-900">{jobs.filter(j => j.current_stage === 'ready').length}</p>
-            <p className="text-xs text-gray-900 font-medium">Passed</p>
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+            <p className="text-page-title text-green-700">{jobs.filter(j => j.current_stage === 'ready').length}</p>
+            <p className="text-xs text-green-600 font-medium">Passed</p>
           </div>
         </div>
       </div>
@@ -334,8 +321,7 @@ export default function QCCheckPage() {
             className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
           >
             <option value="all">All Status</option>
-            <option value="pre_print">Pre-Print QC</option>
-            <option value="pending">QC-Dispatch Pending</option>
+            <option value="pending">Pending QC</option>
             <option value="in_progress">In Progress</option>
             <option value="passed">Passed</option>
           </select>
@@ -344,63 +330,52 @@ export default function QCCheckPage() {
         {/* Orders Grid */}
         {filteredJobs.length === 0 && <div className="text-center py-10 text-gray-500">No jobs found.</div>}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {filteredJobs.map((job) => {
-            const isPrePrintStage = ['designing', 'approval', 'printing'].includes(job.current_stage);
-
-            return (
-              <div key={job.id} className="rounded-lg p-3 border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all">
-                {/* Top: badges */}
-                <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-                  <span className="font-semibold text-gray-900 text-sm">{job.job_number}</span>
-                  {job.priority && (
-                    <span className={`px-1.5 py-0.5 text-[10px] rounded-full font-medium ${getPriorityColor(job.priority)}`}>
-                      {job.priority}
-                    </span>
-                  )}
-                  <span className={`px-1.5 py-0.5 text-[10px] rounded-full border font-medium ${getStatusColor(job.current_stage)}`}>
-                    {getStatusLabel(job.current_stage)}
+          {filteredJobs.map((job) => (
+            <div key={job.id} className="rounded-lg p-3 border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all">
+              {/* Top: badges */}
+              <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                <span className="font-semibold text-gray-900 text-sm">{job.job_number}</span>
+                {job.priority && (
+                  <span className={`px-1.5 py-0.5 text-[10px] rounded-full font-medium ${getPriorityColor(job.priority)}`}>
+                    {job.priority}
                   </span>
-                  {job.product_category && (
-                    <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-medium">
-                      {job.product_category}
-                    </span>
-                  )}
-                </div>
-
-                {/* Middle: info */}
-                <p className="text-sm text-gray-600 truncate">{job.client?.company} • {job.client?.name}</p>
-                <p className="text-sm text-gray-900 font-medium mt-0.5 truncate">{job.project_name}</p>
-                <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-gray-500">Qty: {job.quantity}</p>
-                  <p className="text-xs text-gray-500">Due: <span className="font-medium text-gray-700">{job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : 'N/A'}</span></p>
-                </div>
-
-                {/* Bottom: action */}
-                <div className="mt-3 pt-2 border-t border-gray-50">
-                  {job.current_stage === 'ready' ? (
-                    <div className="flex items-center justify-center gap-1.5 py-1.5 bg-gray-100 text-gray-900 rounded-lg text-sm font-medium">
-                      <CheckCircle className="w-4 h-4" /> Passed
-                    </div>
-                  ) : isPrePrintStage ? (
-                    <button
-                      onClick={() => handleStartQC(job, 'pre_print')}
-                      className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-white text-sm font-medium bg-purple-600 hover:bg-purple-700 transition-colors"
-                    >
-                      <FileCheck className="w-4 h-4" /> Pre-Print QC
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => handleStartQC(job, 'post_print')}
-                      className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-white text-sm font-medium bg-gray-900 hover:bg-gray-800 transition-colors"
-                    >
-                      <ClipboardCheck className="w-4 h-4" />
-                      {job.current_stage === 'quality_check' ? 'Continue QC' : 'QC-Dispatch'}
-                    </button>
-                  )}
-                </div>
+                )}
+                <span className={`px-1.5 py-0.5 text-[10px] rounded-full border font-medium ${getStatusColor(job.current_stage)}`}>
+                  {getStatusLabel(job.current_stage)}
+                </span>
+                {job.product_category && (
+                  <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-medium">
+                    {job.product_category}
+                  </span>
+                )}
               </div>
-            );
-          })}
+
+              {/* Middle: info */}
+              <p className="text-sm text-gray-600 truncate">{job.client?.company} • {job.client?.name}</p>
+              <p className="text-sm text-gray-900 font-medium mt-0.5 truncate">{job.project_name}</p>
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-xs text-gray-500">Qty: {job.quantity}</p>
+                <p className="text-xs text-gray-500">Due: <span className="font-medium text-gray-700">{job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : 'N/A'}</span></p>
+              </div>
+
+              {/* Bottom: action */}
+              <div className="mt-3 pt-2 border-t border-gray-50">
+                {job.current_stage === 'ready' ? (
+                  <div className="flex items-center justify-center gap-1.5 py-1.5 bg-green-50 text-green-700 rounded-lg text-sm font-medium">
+                    <CheckCircle className="w-4 h-4" /> Passed
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleStartQC(job, 'post_print')}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-white text-sm font-medium bg-gray-900 hover:bg-gray-800 transition-colors"
+                  >
+                    <ClipboardCheck className="w-4 h-4" />
+                    {job.current_stage === 'quality_check' ? 'Continue QC' : 'Start QC'}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -430,23 +405,6 @@ export default function QCCheckPage() {
               </button>
             </div>
 
-            {/* QC Type Toggle */}
-            <div className="flex border-b border-gray-200">
-              <button
-                onClick={() => setActiveQCType('pre_print')}
-                className={`flex-1 py-3 text-sm font-medium border-b-2 flex items-center justify-center gap-2 ${activeQCType === 'pre_print' ? 'text-purple-600 border-purple-600' : 'text-gray-500 border-transparent'}`}
-              >
-                <FileCheck className="w-4 h-4" />
-                Pre-Print
-              </button>
-              <button
-                onClick={() => setActiveQCType('post_print')}
-                className={`flex-1 py-3 text-sm font-medium border-b-2 flex items-center justify-center gap-2 ${activeQCType === 'post_print' ? 'text-orange-600 border-orange-600' : 'text-gray-500 border-transparent'}`}
-              >
-                <Printer className="w-4 h-4" />
-                QC-Dispatch
-              </button>
-            </div>
 
             {/* Sub Tabs */}
             <div className="flex border-b border-gray-100">
