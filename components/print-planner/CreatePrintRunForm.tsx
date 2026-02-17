@@ -111,7 +111,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
 
         setLoading(true);
         try {
-            // Build insert data — only include base fields + conditionally paper fields
+            // Build insert data
             const insertData: Record<string, any> = {
                 machine_id: machineId || null,
                 sheet_size_id: null,
@@ -120,64 +120,43 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                 deadline: deadline || null,
                 total_amount: printingCharge ? parseFloat(printingCharge) : null,
                 status: 'planned',
-                notes,
+                notes: notes || null,
+                sheet_size_label: sheetSize,
+                pulling_multiple: editablePulling,
             };
 
-            // Try to add new fields — these will work after migration is run
-            try {
-                insertData.sheet_size_label = sheetSize;
-                insertData.pulling_multiple = editablePulling;
-                if (sendingPaper) {
-                    insertData.paper_vendor_id = paperVendorId || null;
-                    insertData.paper_qty = paperQty ? parseInt(paperQty) : null;
-                    insertData.paper_rate = paperRate ? parseFloat(paperRate) : null;
-                    insertData.paper_gst_percent = paperGst;
-                    insertData.paper_total = paperTotalWithGst || null;
-                    insertData.paper_payment_status = paperPaymentStatus;
-                }
-            } catch {
-                // Migration not yet run — skip new fields
+            // Paper supply fields
+            if (sendingPaper) {
+                insertData.paper_vendor_id = paperVendorId || null;
+                insertData.paper_qty = paperQty ? parseInt(paperQty) : null;
+                insertData.paper_rate = paperRate ? parseFloat(paperRate) : null;
+                insertData.paper_gst_percent = paperGst;
+                insertData.paper_total = paperTotalWithGst || null;
+                insertData.paper_payment_status = paperPaymentStatus;
             }
 
             // Create print run
             const { data: printRun, error: printRunError } = await supabase
                 .from('print_runs')
                 .insert(insertData)
-                .select()
+                .select('id, print_run_number')
                 .single();
 
             if (printRunError) {
-                // If error is about unknown columns, retry with base fields only
-                if (printRunError.message?.includes('column') || printRunError.code === '42703') {
-                    const baseData: Record<string, any> = {
-                        machine_id: machineId || null,
-                        sheet_size_id: null,
-                        material_id: materialId || null,
-                        vendor_id: vendorId,
-                        deadline: deadline || null,
-                        total_amount: printingCharge ? parseFloat(printingCharge) : null,
-                        status: 'planned',
-                        notes,
-                    };
-                    const { data: retryRun, error: retryError } = await supabase
-                        .from('print_runs')
-                        .insert(baseData)
-                        .select()
-                        .single();
+                console.error('Print run insert error:', printRunError);
+                throw printRunError;
+            }
 
-                    if (retryError) throw retryError;
+            // Add jobs
+            await addJobsToPrintRun(printRun.id);
 
-                    // Use retry result
-                    await addJobsToPrintRun(retryRun.id);
-                } else {
-                    throw printRunError;
-                }
-            } else {
-                // Add jobs to print run
-                await addJobsToPrintRun(printRun.id);
+            // Financial records for paper supply
+            if (sendingPaper && paperVendorId && paperTotalWithGst > 0) {
+                const refText = `Paper for ${printRun.print_run_number} - ${selectedJobs.map(j => j.job_number).join(', ')}`;
+                const noteText = `Paper supply: ${paperQty} sheets × ₹${paperRate}/sheet + ${paperGst}% GST = ₹${paperTotalWithGst.toFixed(2)}`;
 
-                // If paper payment is "paid", create a vendor payment record
-                if (sendingPaper && paperPaymentStatus === 'paid' && paperVendorId && paperTotalWithGst > 0) {
+                if (paperPaymentStatus === 'paid') {
+                    // Record as paid vendor payment
                     try {
                         await supabase.rpc('record_vendor_payment', {
                             p_vendor_id: paperVendorId,
@@ -185,13 +164,33 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                             p_payment_mode: 'bank_transfer',
                             p_payment_date: new Date().toISOString().split('T')[0],
                             p_bank_account_id: null,
-                            p_reference: `Paper for Print Run - ${selectedJobs.map(j => j.job_number).join(', ')}`,
-                            p_notes: `Paper supply: ${paperQty} sheets × ₹${paperRate}/sheet + ${paperGst}% GST = ₹${paperTotalWithGst.toFixed(2)}`,
+                            p_reference: refText,
+                            p_notes: noteText,
                             p_purchase_bill_id: null,
                             p_attachment_url: null
                         });
-                    } catch {
-                        console.warn('Could not record vendor payment — payment RPC may not be available');
+                    } catch (err) {
+                        console.warn('Could not record vendor payment:', err);
+                    }
+                } else {
+                    // Record as pending purchase bill (shows as outstanding in finance)
+                    try {
+                        await supabase.from('purchase_bills').insert({
+                            vendor_id: paperVendorId,
+                            product_type: 'Paper',
+                            description: refText,
+                            quantity: parseInt(paperQty) || 0,
+                            rate: parseFloat(paperRate) || 0,
+                            subtotal: paperAmount,
+                            gst_rate: paperGst,
+                            gst_amount: paperGstAmount,
+                            total_amount: paperTotalWithGst,
+                            payment_status: 'pending',
+                            amount_paid: 0,
+                            bill_date: new Date().toISOString().split('T')[0],
+                        });
+                    } catch (err) {
+                        console.warn('Could not create purchase bill:', err);
                     }
                 }
             }
@@ -379,8 +378,8 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                         type="button"
                         onClick={() => setSendingPaper(!sendingPaper)}
                         className={`w-full px-4 py-3 flex items-center gap-3 text-sm font-bold rounded-md transition-all ${sendingPaper
-                                ? 'bg-blue-50 text-blue-800 border-b border-blue-200'
-                                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                            ? 'bg-blue-50 text-blue-800 border-b border-blue-200'
+                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                             }`}
                     >
                         <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${sendingPaper ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
@@ -486,8 +485,8 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                                         type="button"
                                         onClick={() => setPaperPaymentStatus('paid')}
                                         className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${paperPaymentStatus === 'paid'
-                                                ? 'bg-green-600 text-white'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            ? 'bg-green-600 text-white'
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                             }`}
                                     >
                                         ✓ Paid
@@ -496,8 +495,8 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                                         type="button"
                                         onClick={() => setPaperPaymentStatus('pending')}
                                         className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${paperPaymentStatus === 'pending'
-                                                ? 'bg-amber-500 text-white'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            ? 'bg-amber-500 text-white'
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                             }`}
                                     >
                                         ⏳ Pending

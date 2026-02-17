@@ -12,28 +12,26 @@ ADD COLUMN IF NOT EXISTS invoice_reference text,
 ADD COLUMN IF NOT EXISTS qc_checklist jsonb DEFAULT '{}',
 ADD COLUMN IF NOT EXISTS qc_notes text;
 
--- 2. Update status constraint — expand from 3 to 5 statuses
--- First drop the old constraint (may not exist, so use IF EXISTS)
+-- 2. DROP old constraint FIRST (so we can update status values freely)
 ALTER TABLE print_runs DROP CONSTRAINT IF EXISTS print_runs_status_check;
 
--- Add the new constraint with all 5 statuses
--- Also keep old statuses ('printed', 'delivered') for backward compat with existing data
-ALTER TABLE print_runs ADD CONSTRAINT print_runs_status_check 
-  CHECK (status IN ('planned', 'at_printer', 'printing_done', 'qc', 'dispatched', 'printed', 'delivered'));
-
--- 3. Migrate existing data: map old statuses to new ones
+-- 3. Now migrate old statuses to new ones (no constraint blocking)
 UPDATE print_runs SET status = 'printing_done' WHERE status = 'printed';
 UPDATE print_runs SET status = 'dispatched' WHERE status = 'delivered';
 
--- 4. Add received_qty to print_run_jobs for QC tracking
+-- 4. Add the new constraint (all rows now have valid values)
+ALTER TABLE print_runs ADD CONSTRAINT print_runs_status_check 
+  CHECK (status IN ('planned', 'at_printer', 'printing_done', 'qc', 'dispatched'));
+
+-- 5. Add received_qty to print_run_jobs for QC tracking
 ALTER TABLE print_run_jobs ADD COLUMN IF NOT EXISTS received_qty integer;
 
--- 5. Add delivery_mode constraint
+-- 6. Add delivery_mode constraint
 ALTER TABLE print_runs DROP CONSTRAINT IF EXISTS print_runs_delivery_mode_check;
 ALTER TABLE print_runs ADD CONSTRAINT print_runs_delivery_mode_check
   CHECK (delivery_mode IS NULL OR delivery_mode IN ('warehouse', 'direct_to_client'));
 
 -- Add comments
 COMMENT ON COLUMN print_runs.delivery_mode IS 'warehouse = goes to QC, direct_to_client = shipped directly';
-COMMENT ON COLUMN print_runs.qc_checklist IS 'JSON: {design_match, print_quality, sealing, color, qty_confirmed}';
+COMMENT ON COLUMN print_runs.qc_checklist IS 'JSON: checklist keys from Production Settings';
 COMMENT ON COLUMN print_run_jobs.received_qty IS 'Actual qty received from printer (for QC)';
