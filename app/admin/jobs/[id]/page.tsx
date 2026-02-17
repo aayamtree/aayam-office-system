@@ -107,18 +107,31 @@ export default function JobDetailPage() {
     const fetchAll = async () => {
         setLoading(true);
 
-        // Fetch job
-        const { data: jobData } = await supabase
+        // Fetch job — try with joins first, fallback to basic query
+        let jobData: any = null;
+        const { data, error } = await supabase
             .from('jobs')
-            .select('*, client:clients(company, name, phone, email), vendor:vendors(name, company), invoices(id, invoice_number, total_amount, status)')
+            .select('*, client:clients(company, name, phone, email), vendor:vendors(name, company), invoices(id, invoice_number, total_amount, payment_status)')
             .eq('id', jobId)
             .single();
 
+        if (data) {
+            jobData = data;
+        } else if (error) {
+            console.warn('Job fetch with joins failed, trying basic:', error.message);
+            // Fallback: fetch without joins
+            const { data: basicData } = await supabase
+                .from('jobs')
+                .select('*')
+                .eq('id', jobId)
+                .single();
+            if (basicData) jobData = basicData;
+        }
+
         if (jobData) {
             setJob(jobData as JobDetail);
-            // Pre-fill existing refs
-            if ((jobData as any).invoice_reference) setInvoiceRef((jobData as any).invoice_reference);
-            if ((jobData as any).eway_bill_number) setEwayBillNo((jobData as any).eway_bill_number);
+            if (jobData.invoice_reference) setInvoiceRef(jobData.invoice_reference);
+            if (jobData.eway_bill_number) setEwayBillNo(jobData.eway_bill_number);
         }
 
         // Fetch QC records
@@ -367,8 +380,8 @@ export default function JobDetailPage() {
                         <div key={qc.id} className="mb-4 last:mb-0">
                             <div className="flex items-center gap-2 mb-2">
                                 <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${qc.result === 'passed' ? 'bg-green-100 text-green-700' :
-                                        qc.result === 'rework' ? 'bg-amber-100 text-amber-700' :
-                                            'bg-red-100 text-red-700'
+                                    qc.result === 'rework' ? 'bg-amber-100 text-amber-700' :
+                                        'bg-red-100 text-red-700'
                                     }`}>
                                     {qc.result === 'passed' ? '✅ Passed' : qc.result === 'rework' ? '⚠️ Rework' : '❌ Failed'}
                                 </span>
