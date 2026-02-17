@@ -69,7 +69,7 @@ export default function InvoicePendingWidget() {
                 {jobs.map((job) => (
                     <Link
                         key={job.id}
-                        href="/admin/dispatch"
+                        href={`/admin/jobs/${job.id}`}
                         className="block bg-white rounded-lg p-3 border border-amber-100 hover:border-amber-300 hover:shadow-sm transition-all"
                     >
                         <div className="flex items-start justify-between gap-2">
