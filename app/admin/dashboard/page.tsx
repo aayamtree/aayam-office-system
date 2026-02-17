@@ -31,6 +31,7 @@ import QuickNotesWidget from '@/components/dashboard/QuickNotesWidget';
 import TeamWorkloadWidget from '@/components/dashboard/TeamWorkloadWidget';
 import DailySummaryWidget from '@/components/dashboard/DailySummaryWidget';
 import RecentFilesWidget from '@/components/dashboard/RecentFilesWidget';
+import InvoicePendingWidget from '@/components/dashboard/InvoicePendingWidget';
 
 export default function AdminDashboardShadcn() {
     const { profile } = useAuth();
@@ -225,6 +226,9 @@ export default function AdminDashboardShadcn() {
                         blockedFeedback={dashboardStats.alerts.blockedBreakdown.feedback}
                         loading={statsLoading}
                     />
+
+                    {/* Invoice Pending Alert */}
+                    <InvoicePendingWidget />
 
                     {/* Job Pipeline */}
                     <Card>
