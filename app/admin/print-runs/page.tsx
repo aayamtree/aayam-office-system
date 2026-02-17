@@ -78,13 +78,7 @@ const NEXT_STATUS: Record<string, string | null> = {
     dispatched: null,
 };
 
-const QC_ITEMS = [
-    { key: 'design_match', label: 'Design match verified' },
-    { key: 'print_quality', label: 'Print quality OK' },
-    { key: 'sealing', label: 'Sealing / finishing OK' },
-    { key: 'color_accuracy', label: 'Color accuracy OK' },
-    { key: 'qty_confirmed', label: 'Quantity confirmed' },
-];
+// QC items fetched dynamically from Production Settings (job_checklists table)
 
 // ─── Main Component ────────────────────────────────────────
 export default function PrintRunsPage() {
@@ -116,6 +110,9 @@ export default function PrintRunsPage() {
 
     // Transporters
     const [transporters, setTransporters] = useState<TransporterVendor[]>([]);
+
+    // Dynamic QC checklist items from Production Settings
+    const [qcItems, setQcItems] = useState<{ key: string; label: string }[]>([]);
 
     // ─── Fetch ──────────────────────────────────────────────
     const fetchRuns = useCallback(async () => {
@@ -202,7 +199,26 @@ export default function PrintRunsPage() {
         setTransporters(data || []);
     };
 
-    useEffect(() => { fetchRuns(); fetchTransporters(); }, [fetchRuns]);
+    const fetchQcItems = async () => {
+        const { data } = await supabase
+            .from('job_checklists')
+            .select('items')
+            .eq('category', 'dispatch');
+        // Flatten all items from all dispatch checklists into a single list
+        const allItems: { key: string; label: string }[] = [];
+        (data || []).forEach((checklist: any) => {
+            const items = typeof checklist.items === 'string' ? JSON.parse(checklist.items) : checklist.items;
+            if (Array.isArray(items)) {
+                items.forEach((item: string) => {
+                    const key = item.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+                    allItems.push({ key, label: item });
+                });
+            }
+        });
+        setQcItems(allItems);
+    };
+
+    useEffect(() => { fetchRuns(); fetchTransporters(); fetchQcItems(); }, [fetchRuns]);
 
     // ─── Status Update ─────────────────────────────────────
     const updateStatus = async (runId: string, newStatus: string, extraData?: Record<string, any>) => {
@@ -576,7 +592,7 @@ export default function PrintRunsPage() {
                                     <div className="bg-purple-50 rounded-md p-3 border border-purple-100">
                                         <p className="text-xs font-bold text-purple-700 mb-2">✅ QC Checklist</p>
                                         <div className="space-y-1">
-                                            {QC_ITEMS.map(item => (
+                                            {qcItems.map(item => (
                                                 <div key={item.key} className="flex items-center gap-2 text-xs">
                                                     <span className={viewRun.qc_checklist[item.key] ? 'text-green-600' : 'text-gray-400'}>
                                                         {viewRun.qc_checklist[item.key] ? '✓' : '○'}
@@ -670,8 +686,8 @@ export default function PrintRunsPage() {
                                     type="button"
                                     onClick={() => setDeliveryMode('warehouse')}
                                     className={`p-4 rounded-md border-2 text-center transition-all ${deliveryMode === 'warehouse'
-                                            ? 'border-purple-500 bg-purple-50'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                        ? 'border-purple-500 bg-purple-50'
+                                        : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
                                     <Building2 size={28} className={`mx-auto mb-2 ${deliveryMode === 'warehouse' ? 'text-purple-600' : 'text-gray-400'}`} />
@@ -682,8 +698,8 @@ export default function PrintRunsPage() {
                                     type="button"
                                     onClick={() => setDeliveryMode('direct_to_client')}
                                     className={`p-4 rounded-md border-2 text-center transition-all ${deliveryMode === 'direct_to_client'
-                                            ? 'border-green-500 bg-green-50'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                        ? 'border-green-500 bg-green-50'
+                                        : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
                                     <MapPin size={28} className={`mx-auto mb-2 ${deliveryMode === 'direct_to_client' ? 'text-green-600' : 'text-gray-400'}`} />
@@ -734,20 +750,27 @@ export default function PrintRunsPage() {
                             {/* Checklist */}
                             <div>
                                 <p className="text-xs font-bold text-gray-600 mb-2">QC Checklist</p>
-                                <div className="space-y-2">
-                                    {QC_ITEMS.map(item => (
-                                        <label key={item.key} className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-all ${qcChecklist[item.key] ? 'bg-green-50 border-green-300' : 'bg-white border-gray-200 hover:bg-gray-50'
-                                            }`}>
-                                            <input
-                                                type="checkbox"
-                                                checked={!!qcChecklist[item.key]}
-                                                onChange={e => setQcChecklist({ ...qcChecklist, [item.key]: e.target.checked })}
-                                                className="w-4 h-4 accent-green-600"
-                                            />
-                                            <span className="text-sm font-medium text-gray-700">{item.label}</span>
-                                        </label>
-                                    ))}
-                                </div>
+                                {qcItems.length === 0 ? (
+                                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-md text-center">
+                                        <p className="text-sm text-amber-700 font-medium">No QC items configured</p>
+                                        <p className="text-xs text-amber-500 mt-1">Add QC checklist items in Settings → Production</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {qcItems.map(item => (
+                                            <label key={item.key} className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-all ${qcChecklist[item.key] ? 'bg-green-50 border-green-300' : 'bg-white border-gray-200 hover:bg-gray-50'
+                                                }`}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={!!qcChecklist[item.key]}
+                                                    onChange={e => setQcChecklist({ ...qcChecklist, [item.key]: e.target.checked })}
+                                                    className="w-4 h-4 accent-green-600"
+                                                />
+                                                <span className="text-sm font-medium text-gray-700">{item.label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Received Qty per Job */}
