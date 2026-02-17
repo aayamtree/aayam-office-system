@@ -173,7 +173,7 @@ export default function QCCheckPage() {
       case 'designing':
       case 'approval':
       case 'printing':
-        return 'Pre-Print QC';
+        return 'Pre-Print';
       case 'finishing': return 'Pending QC';
       case 'quality_check': return 'In QC';
       case 'ready': return 'Passed';
@@ -226,7 +226,7 @@ export default function QCCheckPage() {
   const handleQCSubmit = async (status: 'passed' | 'failed' | 'rework') => {
     if (!selectedJob) return;
 
-    const qcLabel = activeQCType === 'pre_print' ? 'Pre-Print QC' : 'Post-Print QC';
+    const qcLabel = activeQCType === 'pre_print' ? 'Pre-Print QC' : 'QC-Dispatch';
 
     if (status === 'passed') {
       const criticalMissed = activeItems.some(cp => cp.critical && !checkpoints[cp.id]?.checked);
@@ -301,7 +301,7 @@ export default function QCCheckPage() {
           </div>
           <div className="bg-white border border-gray-200 rounded-lg p-3 text-center">
             <p className="text-page-title text-amber-700">{jobs.filter(j => j.current_stage === 'finishing').length}</p>
-            <p className="text-xs text-destructive font-medium">Post-Print Pending</p>
+            <p className="text-xs text-destructive font-medium">QC-Dispatch Pending</p>
           </div>
           <div className="bg-muted border border-border rounded-lg p-3 text-center">
             <p className="text-page-title text-foreground">{jobs.filter(j => j.current_stage === 'quality_check').length}</p>
@@ -335,7 +335,7 @@ export default function QCCheckPage() {
           >
             <option value="all">All Status</option>
             <option value="pre_print">Pre-Print QC</option>
-            <option value="pending">Post-Print Pending</option>
+            <option value="pending">QC-Dispatch Pending</option>
             <option value="in_progress">In Progress</option>
             <option value="passed">Passed</option>
           </select>
@@ -394,7 +394,7 @@ export default function QCCheckPage() {
                       className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-white text-sm font-medium bg-gray-900 hover:bg-gray-800 transition-colors"
                     >
                       <ClipboardCheck className="w-4 h-4" />
-                      {job.current_stage === 'quality_check' ? 'Continue QC' : 'Post-Print QC'}
+                      {job.current_stage === 'quality_check' ? 'Continue QC' : 'QC-Dispatch'}
                     </button>
                   )}
                 </div>
@@ -415,7 +415,7 @@ export default function QCCheckPage() {
                   <h2 className="text-section text-gray-900">{selectedJob.job_number}</h2>
                   <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${activeQCType === 'pre_print' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
                     }`}>
-                    {activeQCType === 'pre_print' ? 'Pre-Print QC' : 'Post-Print QC'}
+                    {activeQCType === 'pre_print' ? 'Pre-Print QC' : 'QC-Dispatch'}
                   </span>
                 </div>
                 <p className="text-sm text-gray-500">{selectedJob.project_name}</p>
@@ -437,14 +437,14 @@ export default function QCCheckPage() {
                 className={`flex-1 py-3 text-sm font-medium border-b-2 flex items-center justify-center gap-2 ${activeQCType === 'pre_print' ? 'text-purple-600 border-purple-600' : 'text-gray-500 border-transparent'}`}
               >
                 <FileCheck className="w-4 h-4" />
-                Pre-Print QC
+                Pre-Print
               </button>
               <button
                 onClick={() => setActiveQCType('post_print')}
                 className={`flex-1 py-3 text-sm font-medium border-b-2 flex items-center justify-center gap-2 ${activeQCType === 'post_print' ? 'text-orange-600 border-orange-600' : 'text-gray-500 border-transparent'}`}
               >
                 <Printer className="w-4 h-4" />
-                Post-Print QC
+                QC-Dispatch
               </button>
             </div>
 
