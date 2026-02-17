@@ -342,6 +342,11 @@ export default function DispatchPage() {
                       <p className="font-medium text-gray-900 text-sm">{job.job_number}</p>
                       <p className="text-xs text-gray-600">{job.client?.company || job.client?.name}</p>
                       <p className="text-[11px] text-gray-400 mt-0.5">{job.project_name} · Qty: {job.quantity}</p>
+                      {(job as any).packing_info && (
+                        <p className="text-[11px] text-green-700 mt-0.5 font-medium">
+                          📦 {(job as any).packing_info.package_count} {(job as any).packing_info.package_type}(s) · ~{(job as any).packing_info.approx_weight_kg}kg
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="text-right hidden sm:block">
@@ -366,8 +371,8 @@ export default function DispatchPage() {
                               }
                             }}
                             className={`px-2 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${invoiceRequested.has(job.id)
-                                ? 'bg-green-100 text-green-700 cursor-default'
-                                : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                              ? 'bg-green-100 text-green-700 cursor-default'
+                              : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                               }`}
                             title={invoiceRequested.has(job.id) ? 'Invoice request sent' : 'Send invoice request to admin'}
                           >

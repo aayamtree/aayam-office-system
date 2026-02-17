@@ -10,6 +10,7 @@ import { useJobs } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { Job, JobStatus } from '@/types/database';
 import { createBrowserClient } from '@supabase/ssr';
+import { Package } from 'lucide-react';
 import { useConfirm } from '@/components/ConfirmModal';
 
 // Fallback checkpoints if no DB checklists found
@@ -66,6 +67,16 @@ export default function QCCheckPage() {
   const [checkpoints, setCheckpoints] = useState<Record<string, { checked: boolean; note: string }>>({});
   const [activeTab, setActiveTab] = useState<'design' | 'checklist' | 'notes'>('checklist');
   const [qcNotes, setQcNotes] = useState('');
+
+  // Packing details step (shown after QC passes)
+  const [showPackingStep, setShowPackingStep] = useState(false);
+  const [packingForm, setPackingForm] = useState({
+    verified_qty: '',
+    package_type: 'box' as 'box' | 'sack' | 'bundle' | 'pallet' | 'other',
+    package_count: '',
+    approx_weight_kg: '',
+    packing_notes: '',
+  });
 
   // QC history for selected job
   const [qcHistory, setQcHistory] = useState<any[]>([]);
@@ -214,38 +225,41 @@ export default function QCCheckPage() {
     }));
   };
 
-  const handleQCSubmit = async (status: 'passed' | 'failed' | 'rework') => {
+  // When Pass is clicked — show packing step first
+  const handlePassClick = async () => {
     if (!selectedJob) return;
 
-    const qcLabel = 'QC-Dispatch';
-
-    if (status === 'passed') {
-      const criticalMissed = activeItems.some(cp => cp.critical && !checkpoints[cp.id]?.checked);
-      if (criticalMissed) {
-        const { confirmed } = await confirm({ title: 'Critical Checkpoints Missing', message: `Warning: Some critical ${qcLabel} checkpoints are not checked. Pass anyway?`, variant: 'danger', confirmLabel: 'Pass Anyway' });
-        if (!confirmed) return;
-      }
-
-      if (activeQCType === 'post_print') {
-        await updateJobStage(selectedJob.id, 'ready', `${qcLabel} Passed. Note: ${qcNotes}`);
-      } else {
-        await updateJob(selectedJob.id, { qc_status: 'passed' } as any);
-        await updateJobStage(selectedJob.id, selectedJob.current_stage, `${qcLabel} Passed. Note: ${qcNotes}`);
-      }
-    } else if (status === 'rework' || status === 'failed') {
-      if (activeQCType === 'post_print') {
-        await updateJobStage(selectedJob.id, 'printing', `${qcLabel} Failed/Rework. Reason: ${qcNotes}`);
-      } else {
-        await updateJob(selectedJob.id, { qc_status: 'failed' } as any);
-        await updateJobStage(selectedJob.id, 'designing', `${qcLabel} Failed/Rework. Reason: ${qcNotes}`);
-      }
+    const criticalMissed = activeItems.some(cp => cp.critical && !checkpoints[cp.id]?.checked);
+    if (criticalMissed) {
+      const { confirmed } = await confirm({ title: 'Critical Checkpoints Missing', message: 'Warning: Some critical QC-Dispatch checkpoints are not checked. Pass anyway?', variant: 'danger', confirmLabel: 'Pass Anyway' });
+      if (!confirmed) return;
     }
+
+    // Pre-fill qty from job
+    setPackingForm(prev => ({ ...prev, verified_qty: String(selectedJob.quantity || '') }));
+    setShowPackingStep(true);
+  };
+
+  // Final submit with packing details
+  const handleFinalSubmit = async () => {
+    if (!selectedJob) return;
+
+    const packingInfo = {
+      verified_qty: Number(packingForm.verified_qty) || selectedJob.quantity || 0,
+      package_type: packingForm.package_type,
+      package_count: Number(packingForm.package_count) || 0,
+      approx_weight_kg: Number(packingForm.approx_weight_kg) || 0,
+      packing_notes: packingForm.packing_notes || '',
+    };
+
+    // Save packing info to job + move to ready
+    await updateJob(selectedJob.id, { packing_info: packingInfo } as any);
+    await updateJobStage(selectedJob.id, 'ready', `QC-Dispatch Passed. Qty: ${packingInfo.verified_qty} | ${packingInfo.package_count} ${packingInfo.package_type}(s) | ~${packingInfo.approx_weight_kg}kg. Note: ${qcNotes}`);
 
     // Save QC audit record
     const checklistResult: Record<string, boolean> = {};
     activeItems.forEach(cp => { checklistResult[cp.label] = !!checkpoints[cp.id]?.checked; });
 
-    // Get first design file URL for reference
     const designFileUrl = selectedJob.files?.find(f =>
       f.type?.startsWith('image/') || f.name?.match(/\.(jpg|jpeg|png|pdf|ai|psd|svg)$/i)
     )?.url || null;
@@ -253,9 +267,59 @@ export default function QCCheckPage() {
     try {
       await supabase.from('qc_records').insert({
         job_id: selectedJob.id,
-        qc_type: activeQCType,
+        qc_type: 'post_print',
         checklist: checklistResult,
-        result: status === 'passed' ? 'passed' : status === 'rework' ? 'rework' : 'failed',
+        result: 'passed',
+        notes: qcNotes || null,
+        performed_by: profile?.id || null,
+        performed_by_name: profile?.full_name || 'Unknown',
+        design_file_url: designFileUrl,
+      });
+    } catch (err) {
+      console.warn('Could not save QC record:', err);
+    }
+
+    // Rich notification to admin with packing details
+    try {
+      const checkedCount = activeItems.filter(cp => checkpoints[cp.id]?.checked).length;
+      await supabase.from('broadcast_notifications').insert({
+        message: `📋 ${selectedJob.job_number} passed QC — Invoice & E-Way Bill needed\n` +
+          `Client: ${selectedJob.client?.company || selectedJob.client?.name || 'N/A'}\n` +
+          `Project: ${selectedJob.project_name}\n` +
+          `Qty: ${packingInfo.verified_qty} | ${packingInfo.package_count} ${packingInfo.package_type}(s) | ~${packingInfo.approx_weight_kg} kg\n` +
+          `QC: ${checkedCount}/${activeItems.length} checks passed\n` +
+          `QC By: ${profile?.full_name || 'Unknown'}`,
+        target_audience: 'admin',
+        priority: 'urgent',
+      });
+    } catch (err) {
+      console.warn('Could not send invoice notification:', err);
+    }
+
+    setShowPackingStep(false);
+    setShowQCModal(false);
+  };
+
+  // Handle rework/fail — no packing needed
+  const handleQCSubmit = async (status: 'failed' | 'rework') => {
+    if (!selectedJob) return;
+
+    await updateJobStage(selectedJob.id, 'printing', `QC-Dispatch Failed/Rework. Reason: ${qcNotes}`);
+
+    // Save QC audit record
+    const checklistResult: Record<string, boolean> = {};
+    activeItems.forEach(cp => { checklistResult[cp.label] = !!checkpoints[cp.id]?.checked; });
+
+    const designFileUrl = selectedJob.files?.find(f =>
+      f.type?.startsWith('image/') || f.name?.match(/\.(jpg|jpeg|png|pdf|ai|psd|svg)$/i)
+    )?.url || null;
+
+    try {
+      await supabase.from('qc_records').insert({
+        job_id: selectedJob.id,
+        qc_type: 'post_print',
+        checklist: checklistResult,
+        result: status === 'rework' ? 'rework' : 'failed',
         notes: qcNotes || null,
         performed_by: profile?.id || null,
         performed_by_name: profile?.full_name || 'Unknown',
@@ -266,19 +330,6 @@ export default function QCCheckPage() {
     }
 
     setShowQCModal(false);
-
-    // Auto-notify admin when QC passes — invoice & e-way bill needed
-    if (status === 'passed') {
-      try {
-        await supabase.from('broadcast_notifications').insert({
-          message: `📋 ${selectedJob.job_number} passed QC — Invoice & E-Way Bill needed for dispatch.\nClient: ${selectedJob.client?.company || selectedJob.client?.name || 'N/A'}\nProject: ${selectedJob.project_name}`,
-          target_audience: 'admin',
-          priority: 'urgent',
-        });
-      } catch (err) {
-        console.warn('Could not send invoice notification:', err);
-      }
-    }
   };
 
   if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary" /></div>;
@@ -562,23 +613,101 @@ export default function QCCheckPage() {
               )}
             </div>
 
-            {/* Actions */}
-            <div className="p-4 border-t border-gray-100 flex gap-3">
-              <button
-                onClick={() => handleQCSubmit('failed')}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-                title="Send back for Rework"
-              >
-                <AlertTriangle className="w-4 h-4" /> Rework
-              </button>
-              <button
-                onClick={() => handleQCSubmit('passed')}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-white rounded-lg hover:opacity-90 transition-colors ${activeQCType === 'pre_print' ? 'bg-purple-600' : 'bg-gray-900'
-                  }`}
-              >
-                <CheckCircle className="w-4 h-4" /> Pass
-              </button>
-            </div>
+            {/* Actions / Packing Form */}
+            {showPackingStep ? (
+              <div className="p-4 border-t border-gray-100 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Package className="w-4 h-4 text-green-600" />
+                  <h3 className="text-sm font-semibold text-gray-900">Packing Details for Invoice & E-Way Bill</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-600 mb-1 block">Verified Qty</label>
+                    <input
+                      type="number"
+                      value={packingForm.verified_qty}
+                      onChange={e => setPackingForm(p => ({ ...p, verified_qty: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                      placeholder="e.g. 2500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 mb-1 block">Package Type</label>
+                    <select
+                      value={packingForm.package_type}
+                      onChange={e => setPackingForm(p => ({ ...p, package_type: e.target.value as any }))}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    >
+                      <option value="box">Box</option>
+                      <option value="sack">Sack</option>
+                      <option value="bundle">Bundle</option>
+                      <option value="pallet">Pallet</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 mb-1 block">No. of Packages</label>
+                    <input
+                      type="number"
+                      value={packingForm.package_count}
+                      onChange={e => setPackingForm(p => ({ ...p, package_count: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                      placeholder="e.g. 5"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 mb-1 block">Approx Weight (kg)</label>
+                    <input
+                      type="number"
+                      value={packingForm.approx_weight_kg}
+                      onChange={e => setPackingForm(p => ({ ...p, approx_weight_kg: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                      placeholder="e.g. 120"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-600 mb-1 block">Packing Notes (optional)</label>
+                  <input
+                    type="text"
+                    value={packingForm.packing_notes}
+                    onChange={e => setPackingForm(p => ({ ...p, packing_notes: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    placeholder="e.g. Fragile, handle with care"
+                  />
+                </div>
+                <div className="flex gap-3 pt-1">
+                  <button
+                    onClick={() => setShowPackingStep(false)}
+                    className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                  >
+                    ← Back
+                  </button>
+                  <button
+                    onClick={handleFinalSubmit}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                  >
+                    <CheckCircle className="w-4 h-4" /> Complete & Notify Admin
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 border-t border-gray-100 flex gap-3">
+                <button
+                  onClick={() => handleQCSubmit('failed')}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                  title="Send back for Rework"
+                >
+                  <AlertTriangle className="w-4 h-4" /> Rework
+                </button>
+                <button
+                  onClick={handlePassClick}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-white rounded-lg hover:opacity-90 transition-colors bg-gray-900"
+                >
+                  <CheckCircle className="w-4 h-4" /> Pass
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
