@@ -68,7 +68,7 @@ export default function PrintRunDetailPage() {
         }
     };
 
-    const updateStatus = async (newStatus: 'planned' | 'printed' | 'delivered') => {
+    const updateStatus = async (newStatus: 'planned' | 'at_printer' | 'printing_done' | 'qc' | 'dispatched') => {
         try {
             const { error } = await supabase
                 .from('print_runs')
@@ -128,9 +128,11 @@ export default function PrintRunDetailPage() {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'planned': return 'bg-muted text-gray-800 border-border';
-            case 'printed': return 'bg-gray-900 text-white-800 border-gray-300';
-            case 'delivered': return 'bg-gray-100 text-green-800 border-green-200';
+            case 'planned': return 'bg-amber-100 text-amber-800 border-amber-300';
+            case 'at_printer': return 'bg-orange-100 text-orange-800 border-orange-300';
+            case 'printing_done': return 'bg-blue-100 text-blue-800 border-blue-300';
+            case 'qc': return 'bg-purple-100 text-purple-800 border-purple-300';
+            case 'dispatched': return 'bg-green-100 text-green-800 border-green-300';
             default: return 'bg-gray-100 text-gray-800 border-gray-200';
         }
     };
@@ -155,8 +157,8 @@ export default function PrintRunDetailPage() {
                                     <Printer className="text-primary" size={32} />
                                     {printRun.print_run_number}
                                 </h1>
-                                <span className={`px-4 py-2 rounded-full text-sm font-bold border-2 ${getStatusColor(printRun.status)}`}>
-                                    {printRun.status.toUpperCase()}
+                                <span className={`px-4 py-2 rounded-full text-sm font-bold border-2 ${getStatusColor(printRun.status)}`} style={{ textTransform: 'capitalize' }}>
+                                    {printRun.status.replace(/_/g, ' ')}
                                 </span>
                             </div>
                             <div className="flex items-center gap-3 md:gap-4 text-sm text-gray-600">
@@ -169,20 +171,20 @@ export default function PrintRunDetailPage() {
                         <div className="flex gap-3">
                             {printRun.status === 'planned' && (
                                 <button
-                                    onClick={() => updateStatus('printed')}
-                                    className="px-4 py-2 bg-gray-900 text-white rounded-lg font-bold hover:bg-gray-900 transition-all flex items-center gap-2"
+                                    onClick={() => updateStatus('at_printer')}
+                                    className="px-4 py-2 bg-gray-900 text-white rounded-lg font-bold hover:bg-gray-800 transition-all flex items-center gap-2"
                                 >
                                     <CheckCircle size={20} />
-                                    Mark as Printed
+                                    Send to Printer
                                 </button>
                             )}
-                            {printRun.status === 'printed' && (
+                            {printRun.status === 'at_printer' && (
                                 <button
-                                    onClick={() => updateStatus('delivered')}
-                                    className="px-4 py-2 bg-gray-900 text-white rounded-lg font-bold hover:bg-green-700 transition-all flex items-center gap-2"
+                                    onClick={() => updateStatus('printing_done')}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all flex items-center gap-2"
                                 >
                                     <CheckCircle size={20} />
-                                    Mark as Delivered
+                                    Printing Done
                                 </button>
                             )}
                             <button

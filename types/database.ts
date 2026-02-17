@@ -945,7 +945,7 @@ export interface PrintRun extends BaseEntity {
   sheet_size_id?: string;
   material_id?: string;
   vendor_id?: string;
-  status: 'planned' | 'printed' | 'delivered';
+  status: 'planned' | 'at_printer' | 'printing_done' | 'qc' | 'dispatched';
   notes?: string;
   created_by?: string;
   deadline?: string;
@@ -962,6 +962,18 @@ export interface PrintRun extends BaseEntity {
   paper_gst_percent?: number;
   paper_total?: number;
   paper_payment_status?: 'paid' | 'pending';
+
+  // Delivery & dispatch
+  delivery_mode?: 'warehouse' | 'direct_to_client';
+  delivery_address?: string;
+  transporter_name?: string;
+  eway_bill_number?: string;
+  dispatch_date?: string;
+  invoice_reference?: string;
+
+  // QC
+  qc_checklist?: Record<string, boolean>;
+  qc_notes?: string;
 
   // Joined data
   machine?: Machine;
@@ -984,6 +996,7 @@ export interface PrintRunJob extends BaseEntity {
   sheets_to_print?: number;    // How many sheets to print for this job
   expected_output?: number;    // Auto: ups_in_sheet × sheets_to_print
   actual_output?: number;      // Actual produced (for overrun tracking)
+  received_qty?: number;       // Actual qty received from printer (QC)
   file_version?: string;
   notes?: string;
   added_at: string;
@@ -992,6 +1005,7 @@ export interface PrintRunJob extends BaseEntity {
   print_run?: PrintRun;
   job?: Job;
 }
+
 
 // Production Summary (for dashboard)
 export interface ProductionSummary {
