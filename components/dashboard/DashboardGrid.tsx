@@ -1,16 +1,17 @@
 'use client';
 
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { GripVertical } from 'lucide-react';
 
 // ─── Types ─────────────────────────────────────────────────────
-type LayoutItem = { i: string; x: number; y: number; w: number; h: number; minW?: number; minH?: number };
-type LayoutsMap = { [breakpoint: string]: LayoutItem[] };
+export type LayoutItem = { i: string; x: number; y: number; w: number; h: number };
+export type LayoutsMap = { lg: LayoutItem[]; md: LayoutItem[]; sm: LayoutItem[] };
 
-const LAYOUT_STORAGE_KEY = 'aayam-dashboard-layouts-v2';
+const LAYOUT_STORAGE_KEY = 'aayam-dashboard-layouts-v3';
 
 // ─── Persistence ───────────────────────────────────────────────
 function loadSavedLayouts(): LayoutsMap | null {
+    if (typeof window === 'undefined') return null;
     try {
         const saved = localStorage.getItem(LAYOUT_STORAGE_KEY);
         if (saved) return JSON.parse(saved);
@@ -19,13 +20,26 @@ function loadSavedLayouts(): LayoutsMap | null {
 }
 
 function saveLayoutsToStorage(layouts: LayoutsMap) {
+    if (typeof window === 'undefined') return;
     try {
         localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(layouts));
     } catch { }
 }
 
 export function resetLayouts() {
+    if (typeof window === 'undefined') return;
     localStorage.removeItem(LAYOUT_STORAGE_KEY);
+}
+
+// ─── Breakpoint detection ──────────────────────────────────────
+type Breakpoint = 'lg' | 'md' | 'sm';
+function getBreakpoint(width: number): Breakpoint {
+    if (width >= 1024) return 'lg';
+    if (width >= 640) return 'md';
+    return 'sm';
+}
+function getCols(bp: Breakpoint): number {
+    return bp === 'lg' ? 12 : bp === 'md' ? 6 : 2;
 }
 
 // ─── Props ─────────────────────────────────────────────────────
@@ -37,141 +51,148 @@ interface DashboardGridProps {
 
 // ─── Component ─────────────────────────────────────────────────
 export default function DashboardGrid({ defaultLayouts, isLocked, children }: DashboardGridProps) {
-    const [mounted, setMounted] = useState(false);
-    const [layouts, setLayouts] = useState<LayoutsMap>(defaultLayouts);
-    // eslint-disable-next-line
-    const [GridComponent, setGridComponent] = useState<any>(null);
-
-    useEffect(() => {
-        setMounted(true);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [layouts, setLayouts] = useState<LayoutsMap>(() => {
         const saved = loadSavedLayouts();
-        if (saved) setLayouts(saved);
+        return saved || defaultLayouts;
+    });
+    const [containerWidth, setContainerWidth] = useState(0);
+    const [dragState, setDragState] = useState<{
+        draggingId: string | null;
+        overId: string | null;
+    }>({ draggingId: null, overId: null });
 
-        // Dynamically load react-grid-layout on client only
-        import('react-grid-layout').then((mod: any) => {
-            const Responsive = mod.Responsive || mod.default?.Responsive;
-            const WidthProvider = mod.WidthProvider || mod.default?.WidthProvider;
-            if (Responsive && WidthProvider) {
-                setGridComponent(() => WidthProvider(Responsive));
-            }
+    // Measure container width
+    useEffect(() => {
+        if (!containerRef.current) return;
+        const obs = new ResizeObserver(entries => {
+            for (const e of entries) setContainerWidth(e.contentRect.width);
         });
+        obs.observe(containerRef.current);
+        setContainerWidth(containerRef.current.offsetWidth);
+        return () => obs.disconnect();
     }, []);
 
-    const handleLayoutChange = (_currentLayout: any[], allLayouts: LayoutsMap) => {
-        setLayouts(allLayouts);
-        saveLayoutsToStorage(allLayouts);
-    };
+    const bp = getBreakpoint(containerWidth);
+    const cols = getCols(bp);
+    const gap = 12;
+    const rowHeight = 42;
+    const layout = layouts[bp] || defaultLayouts[bp];
 
-    // Wrap each child with a drag-handle indicator when editing
-    const wrappedChildren = useMemo(() => {
-        const childArray = Array.isArray(children) ? children : [children];
-        return childArray.map((child: any) => {
-            if (!child?.key) return child;
-            return (
-                <div key={child.key} className="relative h-full">
-                    {!isLocked && (
-                        <div className="drag-handle absolute top-1 right-1 z-20 cursor-grab active:cursor-grabbing p-1.5 rounded-md bg-blue-500 hover:bg-blue-600 text-white shadow-md transition-colors">
-                            <GripVertical className="h-4 w-4" />
-                        </div>
-                    )}
-                    <div className="h-full w-full overflow-hidden">
-                        {child}
-                    </div>
-                </div>
-            );
+    // Build child map
+    const childArray = Array.isArray(children) ? children : [children];
+    const childMap: Record<string, React.ReactNode> = {};
+    childArray.forEach((child: any) => {
+        if (child?.key) childMap[child.key] = child;
+    });
+
+    // Calculate positions
+    const colWidth = containerWidth > 0 ? (containerWidth - gap * (cols - 1)) / cols : 0;
+
+    let maxBottom = 0;
+    layout.forEach(item => {
+        const bottom = item.y + item.h;
+        if (bottom > maxBottom) maxBottom = bottom;
+    });
+    const totalHeight = maxBottom * (rowHeight + gap);
+
+    // ─── Drag & Drop Handlers ──────────────────────────────────
+    const handleDragStart = useCallback((e: React.DragEvent, id: string) => {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', id);
+        // Small delay so the drag image renders
+        setTimeout(() => setDragState(prev => ({ ...prev, draggingId: id })), 0);
+    }, []);
+
+    const handleDragOver = useCallback((e: React.DragEvent, id: string) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        setDragState(prev => prev.overId !== id ? { ...prev, overId: id } : prev);
+    }, []);
+
+    const handleDragLeave = useCallback(() => {
+        setDragState(prev => ({ ...prev, overId: null }));
+    }, []);
+
+    const handleDrop = useCallback((e: React.DragEvent, targetId: string) => {
+        e.preventDefault();
+        const sourceId = e.dataTransfer.getData('text/plain');
+        if (!sourceId || sourceId === targetId) {
+            setDragState({ draggingId: null, overId: null });
+            return;
+        }
+
+        // Swap positions of source and target items
+        setLayouts(prev => {
+            const newLayouts = { ...prev };
+            (['lg', 'md', 'sm'] as Breakpoint[]).forEach(breakpoint => {
+                const items = [...newLayouts[breakpoint]];
+                const srcIdx = items.findIndex(it => it.i === sourceId);
+                const tgtIdx = items.findIndex(it => it.i === targetId);
+                if (srcIdx >= 0 && tgtIdx >= 0) {
+                    // Swap x, y, w, h
+                    const srcPos = { x: items[srcIdx].x, y: items[srcIdx].y, w: items[srcIdx].w, h: items[srcIdx].h };
+                    const tgtPos = { x: items[tgtIdx].x, y: items[tgtIdx].y, w: items[tgtIdx].w, h: items[tgtIdx].h };
+                    items[srcIdx] = { ...items[srcIdx], ...tgtPos };
+                    items[tgtIdx] = { ...items[tgtIdx], ...srcPos };
+                    newLayouts[breakpoint] = items;
+                }
+            });
+            saveLayoutsToStorage(newLayouts);
+            return newLayouts;
         });
-    }, [children, isLocked]);
 
-    if (!mounted || !GridComponent) {
-        return <div className="text-center py-12 text-muted-foreground text-sm">Loading dashboard...</div>;
+        setDragState({ draggingId: null, overId: null });
+    }, []);
+
+    const handleDragEnd = useCallback(() => {
+        setDragState({ draggingId: null, overId: null });
+    }, []);
+
+    if (containerWidth === 0) {
+        return <div ref={containerRef} className="w-full min-h-[200px]" />;
     }
 
-    const RGL = GridComponent;
-
     return (
-        <>
-            <style jsx global>{`
-                .react-grid-layout {
-                    position: relative;
-                    transition: height 200ms ease;
-                }
-                .react-grid-item {
-                    transition: all 200ms ease;
-                    transition-property: left, top, width, height;
-                }
-                .react-grid-item.cssTransforms {
-                    transition-property: transform, width, height;
-                }
-                .react-grid-item.resizing {
-                    transition: none;
-                    z-index: 1;
-                    will-change: width, height;
-                }
-                .react-grid-item.react-draggable-dragging {
-                    transition: none;
-                    z-index: 3;
-                    will-change: transform;
-                    opacity: 0.92;
-                    box-shadow: 0 12px 32px rgba(0,0,0,0.18);
-                    border-radius: 8px;
-                }
-                .react-grid-item > .react-resizable-handle {
-                    position: absolute;
-                    width: 20px;
-                    height: 20px;
-                }
-                .react-grid-item > .react-resizable-handle::after {
-                    content: "";
-                    position: absolute;
-                    right: 4px;
-                    bottom: 4px;
-                    width: 8px;
-                    height: 8px;
-                    border-right: 2px solid rgba(59, 130, 246, 0.5);
-                    border-bottom: 2px solid rgba(59, 130, 246, 0.5);
-                }
-                .react-resizable-handle-se {
-                    bottom: 0;
-                    right: 0;
-                    cursor: se-resize;
-                }
-                .react-grid-item.react-grid-placeholder {
-                    background: rgba(59, 130, 246, 0.12);
-                    border: 2px dashed rgba(59, 130, 246, 0.35);
-                    border-radius: 8px;
-                    opacity: 1;
-                    transition-duration: 100ms;
-                    z-index: 2;
-                }
-                .dashboard-editing .react-grid-item {
-                    outline: 2px dashed rgba(59, 130, 246, 0.2);
-                    outline-offset: -1px;
-                    border-radius: 8px;
-                }
-                .dashboard-editing .react-grid-item:hover {
-                    outline-color: rgba(59, 130, 246, 0.45);
-                }
-            `}</style>
+        <div ref={containerRef} className="w-full relative" style={{ height: totalHeight }}>
+            {layout.map(item => {
+                const child = childMap[item.i];
+                if (!child) return null;
 
-            <div className={!isLocked ? 'dashboard-editing' : ''}>
-                <RGL
-                    className="layout"
-                    layouts={layouts}
-                    breakpoints={{ lg: 1024, md: 768, sm: 480, xs: 0 }}
-                    cols={{ lg: 12, md: 6, sm: 2, xs: 2 }}
-                    rowHeight={40}
-                    onLayoutChange={handleLayoutChange}
-                    isDraggable={!isLocked}
-                    isResizable={!isLocked}
-                    draggableHandle=".drag-handle"
-                    containerPadding={[0, 0]}
-                    margin={[12, 12]}
-                    useCSSTransforms={true}
-                    compactType="vertical"
-                >
-                    {wrappedChildren}
-                </RGL>
-            </div>
-        </>
+                const left = item.x * (colWidth + gap);
+                const top = item.y * (rowHeight + gap);
+                const width = item.w * colWidth + (item.w - 1) * gap;
+                const height = item.h * rowHeight + (item.h - 1) * gap;
+                const isDragging = dragState.draggingId === item.i;
+                const isDragOver = dragState.overId === item.i && dragState.draggingId !== item.i;
+
+                return (
+                    <div
+                        key={item.i}
+                        className={`absolute transition-all duration-300 ease-in-out ${isDragging ? 'opacity-40 scale-95' : ''
+                            } ${isDragOver ? 'ring-2 ring-blue-400 ring-offset-2 rounded-lg' : ''} ${!isLocked ? 'outline outline-1 outline-dashed outline-blue-200 rounded-lg' : ''
+                            }`}
+                        style={{ left, top, width, height }}
+                        onDragOver={!isLocked ? (e) => handleDragOver(e, item.i) : undefined}
+                        onDragLeave={!isLocked ? handleDragLeave : undefined}
+                        onDrop={!isLocked ? (e) => handleDrop(e, item.i) : undefined}
+                    >
+                        {/* Drag handle */}
+                        {!isLocked && (
+                            <div
+                                draggable
+                                onDragStart={(e) => handleDragStart(e, item.i)}
+                                onDragEnd={handleDragEnd}
+                                className="absolute top-1.5 right-1.5 z-20 cursor-grab active:cursor-grabbing p-1.5 rounded-md bg-blue-500 hover:bg-blue-600 text-white shadow-md transition-all hover:scale-110"
+                                title="Drag to swap with another widget"
+                            >
+                                <GripVertical className="h-4 w-4" />
+                            </div>
+                        )}
+                        <div className="h-full w-full overflow-hidden">{child}</div>
+                    </div>
+                );
+            })}
+        </div>
     );
 }

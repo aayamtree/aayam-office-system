@@ -23,12 +23,9 @@ import TeamWorkloadWidget from '@/components/dashboard/TeamWorkloadWidget';
 import DailySummaryWidget from '@/components/dashboard/DailySummaryWidget';
 import RecentFilesWidget from '@/components/dashboard/RecentFilesWidget';
 import InvoicePendingWidget from '@/components/dashboard/InvoicePendingWidget';
-import DashboardGrid, { resetLayouts } from '@/components/dashboard/DashboardGrid';
+import DashboardGrid, { resetLayouts, type LayoutsMap } from '@/components/dashboard/DashboardGrid';
 
 // ─── Default Grid Layouts per breakpoint ───────────────────────
-type LayoutItem = { i: string; x: number; y: number; w: number; h: number; minW?: number; minH?: number };
-type LayoutsMap = { [bp: string]: LayoutItem[] };
-
 const DEFAULT_LAYOUTS: LayoutsMap = {
     lg: [
         { i: 'kpi-revenue', x: 0, y: 0, w: 3, h: 2 },
