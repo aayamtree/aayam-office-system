@@ -172,12 +172,12 @@ export default function AdminDashboardShadcn() {
                 {/* ── KPI Cards ── */}
                 <div key="kpi-revenue">
                     <Link href="/admin/finance" className="block h-full">
-                        <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
+                        <Card className="h-full flex flex-col hover:shadow-md transition-shadow cursor-pointer">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-4">
                                 <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
                                 <IndianRupee className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
                             </CardHeader>
-                            <CardContent className="px-4 pb-3">
+                            <CardContent className="px-4 pb-3 flex-1 flex flex-col justify-center">
                                 <div className="text-xl font-bold">{statsLoading ? '...' : formatCurrency(dashboardStats.totalRevenue)}</div>
                                 <p className="text-xs text-muted-foreground">Lifetime invoice total</p>
                             </CardContent>
@@ -192,7 +192,7 @@ export default function AdminDashboardShadcn() {
                                 <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
                                 <Package className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
                             </CardHeader>
-                            <CardContent className="px-4 pb-3">
+                            <CardContent className="px-4 pb-3 flex-1 flex flex-col justify-center">
                                 <div className="text-xl font-bold">{statsLoading ? '...' : dashboardStats.activeJobs}</div>
                                 <p className="text-xs text-muted-foreground">Currently in production</p>
                             </CardContent>
@@ -207,7 +207,7 @@ export default function AdminDashboardShadcn() {
                                 <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
                                 <CreditCard className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
                             </CardHeader>
-                            <CardContent className="px-4 pb-3">
+                            <CardContent className="px-4 pb-3 flex-1 flex flex-col justify-center">
                                 <div className="text-xl font-bold">{statsLoading ? '...' : formatCurrency(dashboardStats.pendingPayments)}</div>
                                 <p className="text-xs text-muted-foreground">Outstanding invoices</p>
                             </CardContent>
@@ -222,7 +222,7 @@ export default function AdminDashboardShadcn() {
                                 <CardTitle className="text-sm font-medium">Orders This Month</CardTitle>
                                 <Package className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
                             </CardHeader>
-                            <CardContent className="px-4 pb-3">
+                            <CardContent className="px-4 pb-3 flex-1 flex flex-col justify-center">
                                 <div className="text-xl font-bold">{statsLoading ? '...' : dashboardStats.ordersThisMonth}</div>
                                 <p className="text-xs text-muted-foreground">New orders created</p>
                             </CardContent>
@@ -232,27 +232,27 @@ export default function AdminDashboardShadcn() {
 
                 {/* ── Today's Focus ── */}
                 <div key="todays-focus">
-                    <Card className="h-full">
+                    <Card className="h-full flex flex-col">
                         <CardHeader className="pb-2 pt-3 px-4">
                             <CardTitle className="text-sm flex items-center gap-2">
                                 <Target className="h-4 w-4" strokeWidth={1.5} /> Today&apos;s Focus
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="px-4 pb-3">
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-                                <Link href="/admin/jobs" className="flex items-center gap-2 p-2 rounded-md bg-amber-50 border border-amber-100 hover:shadow-sm">
+                        <CardContent className="px-4 pb-3 flex-1 flex flex-col">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 flex-1">
+                                <Link href="/admin/jobs" className="flex items-center justify-center gap-2 p-2 rounded-md bg-amber-50 border border-amber-100 hover:shadow-sm min-h-0">
                                     <Clock className="h-4 w-4 text-amber-600 shrink-0" strokeWidth={1.5} />
                                     <div><span className="text-lg font-bold text-amber-700">{statsLoading ? '-' : dashboardStats.todaysFocus.jobsDue}</span><span className="text-[11px] text-amber-600 ml-1">Due</span></div>
                                 </Link>
-                                <Link href="/admin/jobs" className="flex items-center gap-2 p-2 rounded-md bg-red-50 border border-red-100 hover:shadow-sm">
+                                <Link href="/admin/jobs" className="flex items-center justify-center gap-2 p-2 rounded-md bg-red-50 border border-red-100 hover:shadow-sm min-h-0">
                                     <AlertTriangle className="h-4 w-4 text-red-600 shrink-0" strokeWidth={1.5} />
                                     <div><span className="text-lg font-bold text-red-700">{statsLoading ? '-' : dashboardStats.todaysFocus.jobsDelayed}</span><span className="text-[11px] text-red-600 ml-1">Delayed</span></div>
                                 </Link>
-                                <Link href="/admin/jobs" className="flex items-center gap-2 p-2 rounded-md bg-green-50 border border-green-100 hover:shadow-sm">
+                                <Link href="/admin/jobs" className="flex items-center justify-center gap-2 p-2 rounded-md bg-green-50 border border-green-100 hover:shadow-sm min-h-0">
                                     <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" strokeWidth={1.5} />
                                     <div><span className="text-lg font-bold text-green-700">{statsLoading ? '-' : dashboardStats.todaysFocus.jobsCompleted}</span><span className="text-[11px] text-green-600 ml-1">Done</span></div>
                                 </Link>
-                                <Link href="/admin/finance" className="flex items-center gap-2 p-2 rounded-md bg-gray-50 border border-gray-200 hover:shadow-sm">
+                                <Link href="/admin/finance" className="flex items-center justify-center gap-2 p-2 rounded-md bg-gray-50 border border-gray-200 hover:shadow-sm min-h-0">
                                     <IndianRupee className="h-4 w-4 text-gray-600 shrink-0" strokeWidth={1.5} />
                                     <div><span className="text-lg font-bold text-gray-900">{statsLoading ? '-' : dashboardStats.todaysFocus.paymentsDue}</span><span className="text-[11px] text-gray-600 ml-1">₹ Due</span></div>
                                 </Link>
@@ -281,14 +281,14 @@ export default function AdminDashboardShadcn() {
 
                 {/* ── Pipeline ── */}
                 <div key="pipeline">
-                    <Card className="h-full">
+                    <Card className="h-full flex flex-col">
                         <CardHeader className="pb-2 pt-3 px-4">
                             <div className="flex items-center justify-between">
                                 <CardTitle className="text-sm flex items-center gap-2"><Activity className="h-4 w-4" strokeWidth={1.5} /> Job Pipeline</CardTitle>
                                 <span className="text-xs text-muted-foreground">{statsLoading ? '...' : `${totalPipelineJobs} active`}</span>
                             </div>
                         </CardHeader>
-                        <CardContent className="px-4 pb-3 overflow-auto">
+                        <CardContent className="px-4 pb-3 overflow-auto flex-1">
                             {statsLoading ? (
                                 <div className="text-sm text-muted-foreground text-center py-4">Loading...</div>
                             ) : totalPipelineJobs === 0 ? (
@@ -330,7 +330,7 @@ export default function AdminDashboardShadcn() {
 
                 {/* ── Recent Orders ── */}
                 <div key="recent-orders">
-                    <Card className="h-full overflow-hidden">
+                    <Card className="h-full overflow-hidden flex flex-col">
                         <CardHeader className="pb-2 pt-3 px-4">
                             <div className="flex items-center justify-between">
                                 <CardTitle className="text-sm">Recent Orders</CardTitle>
@@ -339,7 +339,7 @@ export default function AdminDashboardShadcn() {
                                 </Button>
                             </div>
                         </CardHeader>
-                        <CardContent className="overflow-auto px-4 pb-3">
+                        <CardContent className="overflow-auto px-4 pb-3 flex-1">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -381,12 +381,12 @@ export default function AdminDashboardShadcn() {
 
                 {/* ── Sales Performance ── */}
                 <div key="sales-perf">
-                    <Card className="h-full">
+                    <Card className="h-full flex flex-col">
                         <CardHeader className="pb-2 pt-3 px-4">
                             <CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="h-4 w-4" strokeWidth={1.5} /> Sales Performance</CardTitle>
                             <CardDescription className="text-xs">Monthly revenue</CardDescription>
                         </CardHeader>
-                        <CardContent className="px-4 pb-3 overflow-auto">
+                        <CardContent className="px-4 pb-3 overflow-auto flex-1">
                             {statsLoading ? (
                                 <div className="text-sm text-muted-foreground text-center py-4">Loading...</div>
                             ) : dashboardStats.salesPerformance.length === 0 ? (
