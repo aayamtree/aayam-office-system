@@ -73,7 +73,7 @@ export default function DailyFinancePage() {
     const netChange = todayIncome - todayExpense;
 
     return (
-        <div className="space-y-4 px-2 animate-fade-in pb-16">
+        <div className="space-y-4 animate-fade-in pb-16">
             {/* Header */}
             <div className="flex justify-between items-start">
                 <div>

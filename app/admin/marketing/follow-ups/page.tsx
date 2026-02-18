@@ -237,7 +237,7 @@ export default function MarketingFollowUpsPage() {
   if (leadsLoading || followUpsLoading) return <div className="p-12 text-center"><Loader2 className="animate-spin mx-auto" /> Loading Data...</div>;
 
   return (
-    <div className="p-3 md:p-4 lg:p-4 space-y-2 md:space-y-4 md:space-y-5 animate-fade-in">
+    <div className="space-y-2 md:space-y-5 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
         <div>

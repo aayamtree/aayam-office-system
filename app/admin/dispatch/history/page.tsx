@@ -186,7 +186,7 @@ export default function DispatchHistoryPage() {
   if (isLoading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary" /></div>;
 
   return (
-    <div className="space-y-3 md:space-y-4 px-2 animate-fade-in">
+    <div className="space-y-3 md:space-y-4 animate-fade-in">
       <div className="flex items-center gap-3">
         <Link href="/admin/dispatch" className="p-2 hover:bg-gray-100 rounded-md lg:hidden"><ArrowLeft className="w-5 h-5" /></Link>
         <div>

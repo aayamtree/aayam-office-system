@@ -86,7 +86,7 @@ export default function CMYKPrintPage() {
   };
 
   return (
-    <div className="space-y-4 px-2 animate-fade-in pb-10">
+    <div className="space-y-4 animate-fade-in pb-10">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
         <div>

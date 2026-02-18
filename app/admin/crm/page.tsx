@@ -47,7 +47,7 @@ export default function CRMPage() {
   ];
 
   return (
-    <div className="space-y-4 animate-fade-in px-2 pb-10">
+    <div className="space-y-4 animate-fade-in pb-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>

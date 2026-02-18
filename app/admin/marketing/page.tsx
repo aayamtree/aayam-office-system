@@ -81,7 +81,7 @@ export default function MarketingDashboard() {
   }
 
   return (
-    <div className="space-y-4 animate-fade-in px-2 pb-10">
+    <div className="space-y-4 animate-fade-in pb-10">
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
         <div>
