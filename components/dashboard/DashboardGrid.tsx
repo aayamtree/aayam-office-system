@@ -7,6 +7,8 @@ import { GripVertical, Maximize2 } from 'lucide-react';
 export type LayoutItem = { i: string; x: number; y: number; w: number; h: number };
 export type LayoutsMap = { lg: LayoutItem[]; md: LayoutItem[]; sm: LayoutItem[] };
 
+type ResizeDir = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
+
 const LAYOUT_STORAGE_KEY = 'aayam-dashboard-layouts-v3';
 
 // ─── Persistence ───────────────────────────────────────────────
@@ -49,6 +51,24 @@ interface DashboardGridProps {
     children: React.ReactNode;
 }
 
+// ─── Resize state ──────────────────────────────────────────────
+interface ResizeState {
+    id: string;
+    dir: ResizeDir;
+    startMouseX: number;
+    startMouseY: number;
+    // Original item position
+    origX: number;
+    origY: number;
+    origW: number;
+    origH: number;
+    // Current computed values
+    currentX: number;
+    currentY: number;
+    currentW: number;
+    currentH: number;
+}
+
 // ─── Component ─────────────────────────────────────────────────
 export default function DashboardGrid({ defaultLayouts, isLocked, children }: DashboardGridProps) {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -65,15 +85,7 @@ export default function DashboardGrid({ defaultLayouts, isLocked, children }: Da
     }>({ draggingId: null, overId: null });
 
     // Resize state
-    const [resizeState, setResizeState] = useState<{
-        id: string;
-        startX: number;
-        startY: number;
-        startW: number;
-        startH: number;
-        currentW: number;
-        currentH: number;
-    } | null>(null);
+    const [resizeState, setResizeState] = useState<ResizeState | null>(null);
 
     // Measure container width
     useEffect(() => {
@@ -100,12 +112,12 @@ export default function DashboardGrid({ defaultLayouts, isLocked, children }: Da
         if (child?.key) childMap[child.key] = child;
     });
 
-    // Compact layout vertically after changes (push items up to fill gaps)
-    const compactLayout = useCallback((items: LayoutItem[], totalCols: number): LayoutItem[] => {
+    // Compact layout vertically after changes
+    const compactLayout = useCallback((items: LayoutItem[]): LayoutItem[] => {
         const sorted = [...items].sort((a, b) => a.y - b.y || a.x - b.x);
         const occupied: boolean[][] = [];
 
-        const isOccupied = (x: number, y: number, w: number, h: number, excludeI: string) => {
+        const isOccupied = (x: number, y: number, w: number, h: number) => {
             for (let row = y; row < y + h; row++) {
                 for (let col = x; col < x + w; col++) {
                     if (occupied[row]?.[col]) return true;
@@ -124,9 +136,8 @@ export default function DashboardGrid({ defaultLayouts, isLocked, children }: Da
         };
 
         return sorted.map(item => {
-            // Try to push item up as far as possible
             let newY = 0;
-            while (isOccupied(item.x, newY, item.w, item.h, item.i)) {
+            while (isOccupied(item.x, newY, item.w, item.h)) {
                 newY++;
             }
             const newItem = { ...item, y: newY };
@@ -184,41 +195,68 @@ export default function DashboardGrid({ defaultLayouts, isLocked, children }: Da
         setDragState({ draggingId: null, overId: null });
     }, []);
 
-    // ─── Resize Handlers ───────────────────────────────────────
-    const handleResizeStart = useCallback((e: React.MouseEvent, itemId: string, itemW: number, itemH: number) => {
+    // ─── Resize Handlers (multi-direction) ─────────────────────
+    const handleResizeStart = useCallback((e: React.MouseEvent, itemId: string, dir: ResizeDir) => {
         e.preventDefault();
         e.stopPropagation();
+        const item = layout.find(it => it.i === itemId);
+        if (!item) return;
         setResizeState({
             id: itemId,
-            startX: e.clientX,
-            startY: e.clientY,
-            startW: itemW,
-            startH: itemH,
-            currentW: itemW,
-            currentH: itemH,
+            dir,
+            startMouseX: e.clientX,
+            startMouseY: e.clientY,
+            origX: item.x,
+            origY: item.y,
+            origW: item.w,
+            origH: item.h,
+            currentX: item.x,
+            currentY: item.y,
+            currentW: item.w,
+            currentH: item.h,
         });
-    }, []);
+    }, [layout]);
 
     useEffect(() => {
         if (!resizeState) return;
 
         const unitW = colWidth + gap;
         const unitH = rowHeight + gap;
+        const { dir, startMouseX, startMouseY, origX, origY, origW, origH } = resizeState;
 
         const handleMouseMove = (e: MouseEvent) => {
-            const deltaX = e.clientX - resizeState.startX;
-            const deltaY = e.clientY - resizeState.startY;
+            const deltaColsRaw = (e.clientX - startMouseX) / unitW;
+            const deltaRowsRaw = (e.clientY - startMouseY) / unitH;
+            const deltaCols = Math.round(deltaColsRaw);
+            const deltaRows = Math.round(deltaRowsRaw);
 
-            // Convert pixel deltas to grid units
-            const newW = Math.max(1, Math.min(cols, Math.round(resizeState.startW + deltaX / unitW)));
-            const newH = Math.max(1, Math.round(resizeState.startH + deltaY / unitH));
+            let newX = origX, newY = origY, newW = origW, newH = origH;
 
-            // Clamp width to not exceed cols
-            const item = layout.find(it => it.i === resizeState.id);
-            const maxW = item ? cols - item.x : cols;
-            const clampedW = Math.min(newW, maxW);
+            // East edge: increase width
+            if (dir === 'e' || dir === 'se' || dir === 'ne') {
+                newW = Math.max(1, origW + deltaCols);
+                newW = Math.min(newW, cols - origX); // can't go past right edge
+            }
+            // West edge: move x left, increase width
+            if (dir === 'w' || dir === 'sw' || dir === 'nw') {
+                const shift = Math.min(deltaCols, origW - 1); // don't shrink below 1
+                newX = Math.max(0, origX + shift);
+                newW = origW - (newX - origX);
+                newW = Math.max(1, newW);
+            }
+            // South edge: increase height
+            if (dir === 's' || dir === 'se' || dir === 'sw') {
+                newH = Math.max(1, origH + deltaRows);
+            }
+            // North edge: move y up, increase height
+            if (dir === 'n' || dir === 'ne' || dir === 'nw') {
+                const shift = Math.min(deltaRows, origH - 1); // don't shrink below 1
+                newY = Math.max(0, origY + shift);
+                newH = origH - (newY - origY);
+                newH = Math.max(1, newH);
+            }
 
-            setResizeState(prev => prev ? { ...prev, currentW: clampedW, currentH: newH } : null);
+            setResizeState(prev => prev ? { ...prev, currentX: newX, currentY: newY, currentW: newW, currentH: newH } : null);
         };
 
         const handleMouseUp = () => {
@@ -228,8 +266,14 @@ export default function DashboardGrid({ defaultLayouts, isLocked, children }: Da
                 const items = [...newLayouts[bp]];
                 const idx = items.findIndex(it => it.i === resizeState.id);
                 if (idx >= 0) {
-                    items[idx] = { ...items[idx], w: resizeState.currentW, h: resizeState.currentH };
-                    newLayouts[bp] = compactLayout(items, cols);
+                    items[idx] = {
+                        ...items[idx],
+                        x: resizeState.currentX,
+                        y: resizeState.currentY,
+                        w: resizeState.currentW,
+                        h: resizeState.currentH,
+                    };
+                    newLayouts[bp] = compactLayout(items);
                 }
                 saveLayoutsToStorage(newLayouts);
                 return newLayouts;
@@ -243,13 +287,15 @@ export default function DashboardGrid({ defaultLayouts, isLocked, children }: Da
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [resizeState, bp, colWidth, cols, gap, rowHeight, layout, compactLayout]);
+    }, [resizeState, bp, colWidth, cols, gap, rowHeight, compactLayout]);
 
     // ─── Calculate total height ────────────────────────────────
     let maxBottom = 0;
     layout.forEach(item => {
-        const h = resizeState?.id === item.i ? resizeState.currentH : item.h;
-        const bottom = item.y + h;
+        const isThis = resizeState?.id === item.i;
+        const h = isThis ? resizeState!.currentH : item.h;
+        const y = isThis ? resizeState!.currentY : item.y;
+        const bottom = y + h;
         if (bottom > maxBottom) maxBottom = bottom;
     });
     const totalHeight = maxBottom * (rowHeight + gap);
@@ -257,6 +303,14 @@ export default function DashboardGrid({ defaultLayouts, isLocked, children }: Da
     if (containerWidth === 0) {
         return <div ref={containerRef} className="w-full min-h-[200px]" />;
     }
+
+    // Cursor map for resize directions
+    const cursorMap: Record<ResizeDir, string> = {
+        n: 'cursor-n-resize', s: 'cursor-s-resize',
+        e: 'cursor-e-resize', w: 'cursor-w-resize',
+        ne: 'cursor-ne-resize', nw: 'cursor-nw-resize',
+        se: 'cursor-se-resize', sw: 'cursor-sw-resize',
+    };
 
     return (
         <div
@@ -269,15 +323,20 @@ export default function DashboardGrid({ defaultLayouts, isLocked, children }: Da
                 if (!child) return null;
 
                 const isResizing = resizeState?.id === item.i;
+                const x = isResizing ? resizeState!.currentX : item.x;
+                const y = isResizing ? resizeState!.currentY : item.y;
                 const w = isResizing ? resizeState!.currentW : item.w;
                 const h = isResizing ? resizeState!.currentH : item.h;
 
-                const left = item.x * (colWidth + gap);
-                const top = item.y * (rowHeight + gap);
+                const left = x * (colWidth + gap);
+                const top = y * (rowHeight + gap);
                 const width = w * colWidth + (w - 1) * gap;
                 const height = h * rowHeight + (h - 1) * gap;
                 const isDragging = dragState.draggingId === item.i;
                 const isDragOver = dragState.overId === item.i && dragState.draggingId !== item.i;
+
+                // Edge handle thickness
+                const edge = 6;
 
                 return (
                     <div
@@ -296,23 +355,55 @@ export default function DashboardGrid({ defaultLayouts, isLocked, children }: Da
                                 draggable
                                 onDragStart={(e) => handleDragStart(e, item.i)}
                                 onDragEnd={handleDragEnd}
-                                className="absolute top-1.5 right-1.5 z-20 cursor-grab active:cursor-grabbing p-1.5 rounded-md bg-blue-500 hover:bg-blue-600 text-white shadow-md transition-all hover:scale-110"
+                                className="absolute top-1.5 right-1.5 z-30 cursor-grab active:cursor-grabbing p-1.5 rounded-md bg-blue-500 hover:bg-blue-600 text-white shadow-md transition-all hover:scale-110"
                                 title="Drag to swap with another widget"
                             >
                                 <GripVertical className="h-4 w-4" />
                             </div>
                         )}
 
-                        {/* Resize handle — bottom-right corner */}
-                        {!isLocked && (
+                        {/* ── Edge resize handles ── */}
+                        {!isLocked && (<>
+                            {/* Top edge */}
                             <div
-                                onMouseDown={(e) => handleResizeStart(e, item.i, item.w, item.h)}
-                                className="absolute bottom-0 right-0 z-20 w-5 h-5 cursor-se-resize group"
-                                title="Drag to resize"
+                                onMouseDown={(e) => handleResizeStart(e, item.i, 'n')}
+                                className={`absolute top-0 left-2 right-2 z-20 ${cursorMap.n} group`}
+                                style={{ height: edge }}
                             >
-                                <Maximize2 className="absolute bottom-1 right-1 h-3 w-3 text-blue-400 group-hover:text-blue-600 rotate-90 transition-colors" />
+                                <div className="absolute inset-x-0 top-0 h-0.5 bg-transparent group-hover:bg-blue-400 transition-colors" />
                             </div>
-                        )}
+                            {/* Bottom edge */}
+                            <div
+                                onMouseDown={(e) => handleResizeStart(e, item.i, 's')}
+                                className={`absolute bottom-0 left-2 right-2 z-20 ${cursorMap.s} group`}
+                                style={{ height: edge }}
+                            >
+                                <div className="absolute inset-x-0 bottom-0 h-0.5 bg-transparent group-hover:bg-blue-400 transition-colors" />
+                            </div>
+                            {/* Left edge */}
+                            <div
+                                onMouseDown={(e) => handleResizeStart(e, item.i, 'w')}
+                                className={`absolute left-0 top-2 bottom-2 z-20 ${cursorMap.w} group`}
+                                style={{ width: edge }}
+                            >
+                                <div className="absolute inset-y-0 left-0 w-0.5 bg-transparent group-hover:bg-blue-400 transition-colors" />
+                            </div>
+                            {/* Right edge */}
+                            <div
+                                onMouseDown={(e) => handleResizeStart(e, item.i, 'e')}
+                                className={`absolute right-0 top-2 bottom-2 z-20 ${cursorMap.e} group`}
+                                style={{ width: edge }}
+                            >
+                                <div className="absolute inset-y-0 right-0 w-0.5 bg-transparent group-hover:bg-blue-400 transition-colors" />
+                            </div>
+                            {/* Corners */}
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'nw')} className={`absolute top-0 left-0 z-20 w-3 h-3 ${cursorMap.nw}`} />
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'ne')} className={`absolute top-0 right-0 z-20 w-3 h-3 ${cursorMap.ne}`} />
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'sw')} className={`absolute bottom-0 left-0 z-20 w-3 h-3 ${cursorMap.sw}`} />
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'se')} className={`absolute bottom-0 right-0 z-20 w-3 h-3 ${cursorMap.se}`}>
+                                <Maximize2 className="absolute bottom-0.5 right-0.5 h-2.5 w-2.5 text-blue-400 rotate-90" />
+                            </div>
+                        </>)}
 
                         <div className="grid-cell-content h-full w-full overflow-hidden rounded-lg">{child}</div>
                     </div>
@@ -321,10 +412,8 @@ export default function DashboardGrid({ defaultLayouts, isLocked, children }: Da
 
             {/* Resize preview ghost */}
             {resizeState && (() => {
-                const item = layout.find(it => it.i === resizeState.id);
-                if (!item) return null;
-                const gLeft = item.x * (colWidth + gap);
-                const gTop = item.y * (rowHeight + gap);
+                const gLeft = resizeState.currentX * (colWidth + gap);
+                const gTop = resizeState.currentY * (rowHeight + gap);
                 const gWidth = resizeState.currentW * colWidth + (resizeState.currentW - 1) * gap;
                 const gHeight = resizeState.currentH * rowHeight + (resizeState.currentH - 1) * gap;
                 return (
