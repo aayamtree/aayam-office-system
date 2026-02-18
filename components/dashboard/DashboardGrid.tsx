@@ -9,28 +9,28 @@ export type LayoutsMap = { lg: LayoutItem[]; md: LayoutItem[]; sm: LayoutItem[] 
 
 type ResizeDir = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
-const LAYOUT_STORAGE_KEY = 'aayam-dashboard-layouts-v3';
+const DEFAULT_STORAGE_KEY = 'aayam-dashboard-layouts-v3';
 
 // ─── Persistence ───────────────────────────────────────────────
-function loadSavedLayouts(): LayoutsMap | null {
+function loadSavedLayouts(key: string): LayoutsMap | null {
     if (typeof window === 'undefined') return null;
     try {
-        const saved = localStorage.getItem(LAYOUT_STORAGE_KEY);
+        const saved = localStorage.getItem(key);
         if (saved) return JSON.parse(saved);
     } catch { }
     return null;
 }
 
-function saveLayoutsToStorage(layouts: LayoutsMap) {
+function saveLayoutsToStorage(key: string, layouts: LayoutsMap) {
     if (typeof window === 'undefined') return;
     try {
-        localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(layouts));
+        localStorage.setItem(key, JSON.stringify(layouts));
     } catch { }
 }
 
-export function resetLayouts() {
+export function resetLayouts(storageKey?: string) {
     if (typeof window === 'undefined') return;
-    localStorage.removeItem(LAYOUT_STORAGE_KEY);
+    localStorage.removeItem(storageKey || DEFAULT_STORAGE_KEY);
 }
 
 // ─── Breakpoint detection ──────────────────────────────────────
@@ -48,6 +48,7 @@ function getCols(bp: Breakpoint): number {
 interface DashboardGridProps {
     defaultLayouts: LayoutsMap;
     isLocked: boolean;
+    storageKey?: string;
     children: React.ReactNode;
 }
 
@@ -70,10 +71,11 @@ interface ResizeState {
 }
 
 // ─── Component ─────────────────────────────────────────────────
-export default function DashboardGrid({ defaultLayouts, isLocked, children }: DashboardGridProps) {
+export default function DashboardGrid({ defaultLayouts, isLocked, storageKey, children }: DashboardGridProps) {
+    const key = storageKey || DEFAULT_STORAGE_KEY;
     const containerRef = useRef<HTMLDivElement>(null);
     const [layouts, setLayouts] = useState<LayoutsMap>(() => {
-        const saved = loadSavedLayouts();
+        const saved = loadSavedLayouts(key);
         return saved || defaultLayouts;
     });
     const [containerWidth, setContainerWidth] = useState(0);
@@ -185,7 +187,7 @@ export default function DashboardGrid({ defaultLayouts, isLocked, children }: Da
                     newLayouts[breakpoint] = items;
                 }
             });
-            saveLayoutsToStorage(newLayouts);
+            saveLayoutsToStorage(key, newLayouts);
             return newLayouts;
         });
         setDragState({ draggingId: null, overId: null });
@@ -275,7 +277,7 @@ export default function DashboardGrid({ defaultLayouts, isLocked, children }: Da
                     };
                     newLayouts[bp] = compactLayout(items);
                 }
-                saveLayoutsToStorage(newLayouts);
+                saveLayoutsToStorage(key, newLayouts);
                 return newLayouts;
             });
             setResizeState(null);
