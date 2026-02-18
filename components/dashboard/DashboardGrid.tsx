@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { GripVertical, Maximize2 } from 'lucide-react';
+import { GripVertical } from 'lucide-react';
 
 // ─── Types ─────────────────────────────────────────────────────
 export type LayoutItem = { i: string; x: number; y: number; w: number; h: number };
@@ -335,9 +335,6 @@ export default function DashboardGrid({ defaultLayouts, isLocked, children }: Da
                 const isDragging = dragState.draggingId === item.i;
                 const isDragOver = dragState.overId === item.i && dragState.draggingId !== item.i;
 
-                // Edge handle thickness
-                const edge = 6;
-
                 return (
                     <div
                         key={item.i}
@@ -362,47 +359,47 @@ export default function DashboardGrid({ defaultLayouts, isLocked, children }: Da
                             </div>
                         )}
 
-                        {/* ── Edge resize handles ── */}
+                        {/* ── Edge & corner resize handles (visible dots) ── */}
                         {!isLocked && (<>
+                            {/* ── Edge hit zones (wide invisible grab areas) ── */}
                             {/* Top edge */}
-                            <div
-                                onMouseDown={(e) => handleResizeStart(e, item.i, 'n')}
-                                className={`absolute top-0 left-2 right-2 z-20 ${cursorMap.n} group`}
-                                style={{ height: edge }}
-                            >
-                                <div className="absolute inset-x-0 top-0 h-0.5 bg-transparent group-hover:bg-blue-400 transition-colors" />
-                            </div>
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'n')}
+                                className={`absolute -top-1 left-3 right-3 z-20 ${cursorMap.n}`} style={{ height: 8 }} />
                             {/* Bottom edge */}
-                            <div
-                                onMouseDown={(e) => handleResizeStart(e, item.i, 's')}
-                                className={`absolute bottom-0 left-2 right-2 z-20 ${cursorMap.s} group`}
-                                style={{ height: edge }}
-                            >
-                                <div className="absolute inset-x-0 bottom-0 h-0.5 bg-transparent group-hover:bg-blue-400 transition-colors" />
-                            </div>
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 's')}
+                                className={`absolute -bottom-1 left-3 right-3 z-20 ${cursorMap.s}`} style={{ height: 8 }} />
                             {/* Left edge */}
-                            <div
-                                onMouseDown={(e) => handleResizeStart(e, item.i, 'w')}
-                                className={`absolute left-0 top-2 bottom-2 z-20 ${cursorMap.w} group`}
-                                style={{ width: edge }}
-                            >
-                                <div className="absolute inset-y-0 left-0 w-0.5 bg-transparent group-hover:bg-blue-400 transition-colors" />
-                            </div>
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'w')}
+                                className={`absolute -left-1 top-3 bottom-3 z-20 ${cursorMap.w}`} style={{ width: 8 }} />
                             {/* Right edge */}
-                            <div
-                                onMouseDown={(e) => handleResizeStart(e, item.i, 'e')}
-                                className={`absolute right-0 top-2 bottom-2 z-20 ${cursorMap.e} group`}
-                                style={{ width: edge }}
-                            >
-                                <div className="absolute inset-y-0 right-0 w-0.5 bg-transparent group-hover:bg-blue-400 transition-colors" />
-                            </div>
-                            {/* Corners */}
-                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'nw')} className={`absolute top-0 left-0 z-20 w-3 h-3 ${cursorMap.nw}`} />
-                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'ne')} className={`absolute top-0 right-0 z-20 w-3 h-3 ${cursorMap.ne}`} />
-                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'sw')} className={`absolute bottom-0 left-0 z-20 w-3 h-3 ${cursorMap.sw}`} />
-                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'se')} className={`absolute bottom-0 right-0 z-20 w-3 h-3 ${cursorMap.se}`}>
-                                <Maximize2 className="absolute bottom-0.5 right-0.5 h-2.5 w-2.5 text-blue-400 rotate-90" />
-                            </div>
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'e')}
+                                className={`absolute -right-1 top-3 bottom-3 z-20 ${cursorMap.e}`} style={{ width: 8 }} />
+
+                            {/* ── Corner hit zones ── */}
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'nw')} className={`absolute -top-1.5 -left-1.5 z-20 w-4 h-4 ${cursorMap.nw}`} />
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'ne')} className={`absolute -top-1.5 -right-1.5 z-20 w-4 h-4 ${cursorMap.ne}`} />
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'sw')} className={`absolute -bottom-1.5 -left-1.5 z-20 w-4 h-4 ${cursorMap.sw}`} />
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'se')} className={`absolute -bottom-1.5 -right-1.5 z-20 w-4 h-4 ${cursorMap.se}`} />
+
+                            {/* ── Visible dot indicators ── */}
+                            {/* Edge midpoint dots */}
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'n')}
+                                className={`absolute top-[-3px] left-1/2 -translate-x-1/2 z-20 w-1.5 h-1.5 rounded-full bg-blue-400 hover:bg-blue-600 hover:scale-150 transition-all ${cursorMap.n}`} />
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 's')}
+                                className={`absolute bottom-[-3px] left-1/2 -translate-x-1/2 z-20 w-1.5 h-1.5 rounded-full bg-blue-400 hover:bg-blue-600 hover:scale-150 transition-all ${cursorMap.s}`} />
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'w')}
+                                className={`absolute left-[-3px] top-1/2 -translate-y-1/2 z-20 w-1.5 h-1.5 rounded-full bg-blue-400 hover:bg-blue-600 hover:scale-150 transition-all ${cursorMap.w}`} />
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'e')}
+                                className={`absolute right-[-3px] top-1/2 -translate-y-1/2 z-20 w-1.5 h-1.5 rounded-full bg-blue-400 hover:bg-blue-600 hover:scale-150 transition-all ${cursorMap.e}`} />
+                            {/* Corner dots (slightly larger) */}
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'nw')}
+                                className={`absolute top-[-4px] left-[-4px] z-20 w-2 h-2 rounded-full bg-blue-400 hover:bg-blue-600 hover:scale-150 transition-all ${cursorMap.nw}`} />
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'ne')}
+                                className={`absolute top-[-4px] right-[-4px] z-20 w-2 h-2 rounded-full bg-blue-400 hover:bg-blue-600 hover:scale-150 transition-all ${cursorMap.ne}`} />
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'sw')}
+                                className={`absolute bottom-[-4px] left-[-4px] z-20 w-2 h-2 rounded-full bg-blue-400 hover:bg-blue-600 hover:scale-150 transition-all ${cursorMap.sw}`} />
+                            <div onMouseDown={(e) => handleResizeStart(e, item.i, 'se')}
+                                className={`absolute bottom-[-4px] right-[-4px] z-20 w-2 h-2 rounded-full bg-blue-400 hover:bg-blue-600 hover:scale-150 transition-all ${cursorMap.se}`} />
                         </>)}
 
                         <div className="grid-cell-content h-full w-full overflow-hidden rounded-lg">{child}</div>
