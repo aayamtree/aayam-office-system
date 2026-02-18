@@ -84,20 +84,12 @@ export default function LoginPage() {
     }
   };
 
-  if (loading) {
+  // Don't block — show the form immediately, handle redirect silently
+  if (!loading && profile) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-2 md:gap-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-2">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-oms-blue"></div>
-        <p className="text-gray-500 text-body">Initializing...</p>
-        <button
-          onClick={() => {
-            localStorage.clear();
-            window.location.reload();
-          }}
-          className="text-xs text-oms-blue hover:underline mt-4"
-        >
-          Stuck? Click to reset application
-        </button>
+        <p className="text-gray-500 text-body">Redirecting...</p>
       </div>
     );
   }
@@ -179,10 +171,10 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || loading}
               className="btn-primary w-full py-3 text-white rounded-md font-semibold focus:ring-4 focus:ring-oms-blue/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? (
+              {loading ? 'Initializing...' : isLoading ? (
                 <span className="flex items-center justify-center gap-2">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   Signing in...
