@@ -109,7 +109,7 @@ export default function PrintRunDetailPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="flex items-center justify-center h-64">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
             </div>
         );
@@ -117,7 +117,7 @@ export default function PrintRunDetailPage() {
 
     if (!printRun) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                     <AlertCircle className="mx-auto h-12 w-12 text-gray-300 mb-4" />
                     <p className="text-gray-500 font-medium">Print run not found</p>
@@ -138,10 +138,10 @@ export default function PrintRunDetailPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="space-y-4 md:space-y-6 max-w-7xl">
             {/* Header */}
-            <div className="bg-white border-b border-gray-200 px-6 py-6">
-                <div className="max-w-7xl mx-auto">
+            <div>
+                <div>
                     <Link
                         href="/admin/print-planner"
                         className="inline-flex items-center gap-2 text-primary hover:text-gray-800 font-medium mb-4 transition-colors"

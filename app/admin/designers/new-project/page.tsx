@@ -298,10 +298,10 @@ export default function NewProjectPage() {
     const isDesignerRole = profile?.role === 'designer';
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="space-y-4 max-w-3xl">
             {/* Simple Header */}
-            <div className="border-b bg-card">
-                <div className="max-w-3xl mx-auto px-4 py-4">
+            <div>
+                <div>
                     <Link
                         href="/admin/designers/my-queue"
                         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-3 transition-colors"
@@ -322,7 +322,7 @@ export default function NewProjectPage() {
             </div>
 
             {/* Form */}
-            <div className="max-w-3xl mx-auto px-4 py-6">
+            <div>
                 <form onSubmit={handleSubmit} className="space-y-6">
 
 

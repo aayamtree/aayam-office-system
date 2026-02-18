@@ -88,7 +88,7 @@ export default function UnifiedQueue() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="flex items-center justify-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
         );
@@ -161,9 +161,8 @@ export default function UnifiedQueue() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-3 md:p-4">
-            <div className="max-w-4xl mx-auto">
-                {/* Header */}
+        <div className="space-y-4 max-w-4xl">
+            <div>
                 <div className="mb-4">
                     <h1 className="text-page-title text-gray-900 mb-1 flex items-center gap-2">
                         <Palette size={24} className="text-primary" /> Queue

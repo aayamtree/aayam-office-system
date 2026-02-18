@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
+import { useConfirm } from '@/components/ConfirmModal';
+import { toast } from '@/hooks/use-toast';
 import {
     Printer, Package, Clock, CheckCircle, Truck, Search as SearchIcon,
     Calendar, IndianRupee, Trash2, RefreshCw, ArrowRight, Eye, X,
@@ -84,6 +86,7 @@ const NEXT_STATUS: Record<string, string | null> = {
 // ─── Main Component ────────────────────────────────────────
 export default function PrintRunsPage() {
     const { profile } = useAuth();
+    const confirm = useConfirm();
     const [runs, setRuns] = useState<PrintRun[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<string>('all');
@@ -249,7 +252,7 @@ export default function PrintRunsPage() {
         };
         if (deliveryMode === 'direct_to_client') {
             if (!directSkipReason.trim()) {
-                alert('Please enter a reason for skipping physical QC');
+                toast({ title: '⚠️ Missing Info', description: 'Please enter a reason for skipping physical QC', variant: 'destructive' });
                 return;
             }
             data.delivery_address = deliveryAddress;
@@ -343,7 +346,8 @@ export default function PrintRunsPage() {
     };
 
     const deleteRun = async (runId: string) => {
-        if (!confirm('Delete this print run? This cannot be undone.')) return;
+        const { confirmed } = await confirm({ title: 'Delete Print Run', message: 'Delete this print run? This cannot be undone.', variant: 'danger', confirmLabel: 'Delete' });
+        if (!confirmed) return;
         try {
             await supabase.from('print_run_jobs').delete().eq('print_run_id', runId);
             await supabase.from('print_runs').delete().eq('id', runId);

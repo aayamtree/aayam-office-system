@@ -54,14 +54,14 @@ export default function TeamQueue() {
     ];
 
     if (loading) {
-        return <div className="min-h-screen flex items-center justify-center">
+        return <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>;
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-3 md:p-4">
-            <div className="max-w-7xl mx-auto">
+        <div className="space-y-4 md:space-y-6 max-w-7xl">
+            <div>
                 {/* Header */}
                 <div className="mb-4 md:mb-1.5">
                     <h1 className="text-page-title text-gray-900 mb-1 md:mb-2">Team Queue</h1>

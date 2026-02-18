@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useDailyReports } from '@/lib/hooks';
+import { toast } from '@/hooks/use-toast';
 import {
     Clock, CheckCircle, AlertCircle, ChevronDown, ChevronRight, ChevronLeft,
     Calendar, Loader2, Send, FileText, History, Lock, Pencil
@@ -204,14 +205,14 @@ export default function EODReportPage() {
             });
 
             if (error) {
-                alert('Error submitting report: ' + error);
+                toast({ title: '❌ Error submitting report', description: String(error), variant: 'destructive' });
             } else {
-                alert('✅ EOD Report submitted successfully!');
+                toast({ title: '✅ EOD Report submitted successfully!' });
                 await loadData();
                 await loadHistory();
             }
         } catch (e: any) {
-            alert('Error: ' + e.message);
+            toast({ title: '❌ Error', description: e.message, variant: 'destructive' });
         } finally {
             setSubmitting(false);
         }

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Providers } from '@/components/Providers';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
+import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 
 export const viewport: Viewport = {
@@ -40,6 +41,7 @@ export default function RootLayout({
         <Providers>
           <ServiceWorkerRegistration />
           {children}
+          <Toaster />
         </Providers>
       </body>
     </html>

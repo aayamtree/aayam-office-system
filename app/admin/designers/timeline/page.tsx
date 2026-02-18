@@ -25,14 +25,14 @@ export default function Timeline() {
         .sort((a, b) => a.deadline.getTime() - b.deadline.getTime());
 
     if (loading) {
-        return <div className="min-h-screen flex items-center justify-center">
+        return <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>;
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-4">
-            <div className="max-w-4xl mx-auto">
+        <div className="space-y-4 max-w-4xl">
+            <div>
                 <h1 className="text-page-title text-gray-900 mb-3 md:mb-1.5">Production Timeline</h1>
 
                 <div className="space-y-4">

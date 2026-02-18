@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useClients, useVendors, useDesigners } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/hooks/use-toast';
 import { Job } from '@/types/database';
 import { Briefcase, X, Loader2, CheckCircle, Calendar, Folder, Plus } from 'lucide-react';
 import { extractFileIdFromLink, verifyDriveFile, formatBytes, getFileIcon, DriveFileInfo } from '@/lib/google-drive';
@@ -209,7 +210,7 @@ export default function UnifiedJobForm({
             onSuccess?.();
         } catch (error: any) {
             console.error('Error saving job:', error);
-            alert('❌ Failed to save job: ' + error.message);
+            toast({ title: '❌ Failed to save job', description: error.message, variant: 'destructive' });
         } finally {
             setSaving(false);
         }

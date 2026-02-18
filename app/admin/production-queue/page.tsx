@@ -108,27 +108,23 @@ export default function ProductionQueuePage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="space-y-4 md:space-y-6 max-w-7xl">
             {/* Header */}
-            <div className="bg-white border-b border-gray-200 px-6 py-6">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-page-title text-gray-900 flex items-center gap-3">
-                                <TrendingUp className="text-primary" size={32} />
-                                Production Queue
-                            </h1>
-                            <p className="text-gray-500 mt-1">Live overview of all active jobs • Updates every 30s</p>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                            Live Updates Active
-                        </div>
-                    </div>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-page-title text-gray-900 flex items-center gap-3">
+                        <TrendingUp className="text-primary" size={28} />
+                        Production Queue
+                    </h1>
+                    <p className="text-sm text-gray-500 mt-1">Live overview of all active jobs • Updates every 30s</p>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    Live Updates Active
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto p-4 space-y-6">
+            <div className="space-y-6">
                 {/* Summary Cards - Clickable Filters */}
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4">
                     {/* Design Stage */}

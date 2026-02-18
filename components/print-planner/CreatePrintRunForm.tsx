@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/hooks/use-toast';
 import { Printer, X, Calendar, IndianRupee, CheckCircle, Plus, Truck, Edit3 } from 'lucide-react';
 import { QuickAddMachine, QuickAddMaterial } from '@/components/print-planner/QuickAddModals';
 
@@ -101,11 +102,11 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (selectedJobs.length === 0) {
-            alert('Please add at least one job');
+            toast({ title: '⚠️ Missing Jobs', description: 'Please add at least one job', variant: 'destructive' });
             return;
         }
         if (!vendorId) {
-            alert('Please select a print vendor');
+            toast({ title: '⚠️ Missing Vendor', description: 'Please select a print vendor', variant: 'destructive' });
             return;
         }
 
@@ -201,7 +202,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
             resetForm();
         } catch (error: any) {
             console.error('Error creating print run:', error);
-            alert('Error creating print run: ' + (error.message || 'Unknown error'));
+            toast({ title: '❌ Error creating print run', description: error.message || 'Unknown error', variant: 'destructive' });
         } finally {
             setLoading(false);
         }

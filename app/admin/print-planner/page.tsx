@@ -173,7 +173,7 @@ export default function PrintPlannerPage() {
     const totalExtra = totalActualQty - totalQty;
 
     return (
-        <div className="min-h-screen bg-gray-50 p-4 pb-12">
+        <div className="space-y-4 pb-12">
             {/* Header */}
             <div className="mb-4">
                 <h1 className="text-page-title text-gray-900 mb-1">Print Planner</h1>
