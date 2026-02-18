@@ -1,20 +1,15 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { GripVertical } from 'lucide-react';
 
-// Types
+// ─── Types ─────────────────────────────────────────────────────
 type LayoutItem = { i: string; x: number; y: number; w: number; h: number; minW?: number; minH?: number };
 type LayoutsMap = { [breakpoint: string]: LayoutItem[] };
 
 const LAYOUT_STORAGE_KEY = 'aayam-dashboard-layouts-v2';
 
-interface DashboardGridProps {
-    defaultLayouts: LayoutsMap;
-    isLocked: boolean;
-    children: React.ReactNode;
-}
-
+// ─── Persistence ───────────────────────────────────────────────
 function loadSavedLayouts(): LayoutsMap | null {
     try {
         const saved = localStorage.getItem(LAYOUT_STORAGE_KEY);
@@ -33,128 +28,150 @@ export function resetLayouts() {
     localStorage.removeItem(LAYOUT_STORAGE_KEY);
 }
 
+// ─── Props ─────────────────────────────────────────────────────
+interface DashboardGridProps {
+    defaultLayouts: LayoutsMap;
+    isLocked: boolean;
+    children: React.ReactNode;
+}
+
+// ─── Component ─────────────────────────────────────────────────
 export default function DashboardGrid({ defaultLayouts, isLocked, children }: DashboardGridProps) {
     const [mounted, setMounted] = useState(false);
     const [layouts, setLayouts] = useState<LayoutsMap>(defaultLayouts);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [containerWidth, setContainerWidth] = useState(0);
+    // eslint-disable-next-line
+    const [GridComponent, setGridComponent] = useState<any>(null);
 
     useEffect(() => {
         setMounted(true);
         const saved = loadSavedLayouts();
         if (saved) setLayouts(saved);
-    }, []);
 
-    useEffect(() => {
-        if (!containerRef.current) return;
-        const observer = new ResizeObserver(entries => {
-            for (const entry of entries) {
-                setContainerWidth(entry.contentRect.width);
+        // Dynamically load react-grid-layout on client only
+        import('react-grid-layout').then((mod: any) => {
+            const Responsive = mod.Responsive || mod.default?.Responsive;
+            const WidthProvider = mod.WidthProvider || mod.default?.WidthProvider;
+            if (Responsive && WidthProvider) {
+                setGridComponent(() => WidthProvider(Responsive));
             }
         });
-        observer.observe(containerRef.current);
-        setContainerWidth(containerRef.current.offsetWidth);
-        return () => observer.disconnect();
     }, []);
 
-    const handleLayoutChange = (_layout: LayoutItem[], allLayouts: LayoutsMap) => {
+    const handleLayoutChange = (_currentLayout: any[], allLayouts: LayoutsMap) => {
         setLayouts(allLayouts);
         saveLayoutsToStorage(allLayouts);
     };
 
-    // Determine current breakpoint
-    const getBreakpoint = (w: number) => {
-        if (w >= 1024) return 'lg';
-        if (w >= 768) return 'md';
-        if (w >= 480) return 'sm';
-        return 'xs';
-    };
-
-    if (!mounted || containerWidth === 0) {
-        return (
-            <div ref={containerRef} className="w-full">
-                <div className="text-center py-12 text-muted-foreground text-sm">Loading dashboard layout...</div>
-            </div>
-        );
-    }
-
-    const bp = getBreakpoint(containerWidth);
-    const currentLayout = layouts[bp] || defaultLayouts[bp] || defaultLayouts.lg;
-    const cols = bp === 'lg' ? 12 : bp === 'md' ? 6 : 2;
-    const gap = 12;
-    const colWidth = (containerWidth - gap * (cols - 1)) / cols;
-    const rowHeight = 40;
-
-    // Sort children into a map by key
-    const childArray = Array.isArray(children) ? children : [children];
-    const childMap: Record<string, React.ReactNode> = {};
-    childArray.forEach((child: any) => {
-        if (child?.key) childMap[child.key] = child;
-    });
-
-    // For locked mode, use CSS grid for simplicity and performance
-    if (isLocked) {
-        // Calculate total height
-        let maxY = 0;
-        currentLayout.forEach(item => {
-            const bottom = item.y + item.h;
-            if (bottom > maxY) maxY = bottom;
-        });
-
-        return (
-            <div ref={containerRef} className="w-full relative" style={{ height: maxY * (rowHeight + gap) - gap }}>
-                {currentLayout.map(item => {
-                    const child = childMap[item.i];
-                    if (!child) return null;
-                    const left = item.x * (colWidth + gap);
-                    const top = item.y * (rowHeight + gap);
-                    const width = item.w * colWidth + (item.w - 1) * gap;
-                    const height = item.h * rowHeight + (item.h - 1) * gap;
-                    return (
-                        <div
-                            key={item.i}
-                            className="absolute transition-all duration-200"
-                            style={{ left, top, width, height }}
-                        >
-                            <div className="h-full w-full overflow-hidden">{child}</div>
+    // Wrap each child with a drag-handle indicator when editing
+    const wrappedChildren = useMemo(() => {
+        const childArray = Array.isArray(children) ? children : [children];
+        return childArray.map((child: any) => {
+            if (!child?.key) return child;
+            return (
+                <div key={child.key} className="relative h-full">
+                    {!isLocked && (
+                        <div className="drag-handle absolute top-1 right-1 z-20 cursor-grab active:cursor-grabbing p-1.5 rounded-md bg-blue-500 hover:bg-blue-600 text-white shadow-md transition-colors">
+                            <GripVertical className="h-4 w-4" />
                         </div>
-                    );
-                })}
-            </div>
-        );
+                    )}
+                    <div className="h-full w-full overflow-hidden">
+                        {child}
+                    </div>
+                </div>
+            );
+        });
+    }, [children, isLocked]);
+
+    if (!mounted || !GridComponent) {
+        return <div className="text-center py-12 text-muted-foreground text-sm">Loading dashboard...</div>;
     }
 
-    // Editing mode — use absolute positioned draggable items
-    // For simplicity, we'll also use the same absolute positioning
-    // but with visual indicators
-    let maxY = 0;
-    currentLayout.forEach(item => {
-        const bottom = item.y + item.h;
-        if (bottom > maxY) maxY = bottom;
-    });
+    const RGL = GridComponent;
 
     return (
-        <div ref={containerRef} className="w-full relative" style={{ height: maxY * (rowHeight + gap) - gap }}>
-            {currentLayout.map(item => {
-                const child = childMap[item.i];
-                if (!child) return null;
-                const left = item.x * (colWidth + gap);
-                const top = item.y * (rowHeight + gap);
-                const width = item.w * colWidth + (item.w - 1) * gap;
-                const height = item.h * rowHeight + (item.h - 1) * gap;
-                return (
-                    <div
-                        key={item.i}
-                        className="absolute transition-all duration-200 ring-2 ring-blue-200 ring-offset-1 rounded-lg"
-                        style={{ left, top, width, height }}
-                    >
-                        <div className="absolute top-1 right-1 z-10 p-1 rounded bg-blue-100/80 cursor-grab">
-                            <GripVertical className="h-3 w-3 text-blue-500" />
-                        </div>
-                        <div className="h-full w-full overflow-hidden">{child}</div>
-                    </div>
-                );
-            })}
-        </div>
+        <>
+            <style jsx global>{`
+                .react-grid-layout {
+                    position: relative;
+                    transition: height 200ms ease;
+                }
+                .react-grid-item {
+                    transition: all 200ms ease;
+                    transition-property: left, top, width, height;
+                }
+                .react-grid-item.cssTransforms {
+                    transition-property: transform, width, height;
+                }
+                .react-grid-item.resizing {
+                    transition: none;
+                    z-index: 1;
+                    will-change: width, height;
+                }
+                .react-grid-item.react-draggable-dragging {
+                    transition: none;
+                    z-index: 3;
+                    will-change: transform;
+                    opacity: 0.92;
+                    box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+                    border-radius: 8px;
+                }
+                .react-grid-item > .react-resizable-handle {
+                    position: absolute;
+                    width: 20px;
+                    height: 20px;
+                }
+                .react-grid-item > .react-resizable-handle::after {
+                    content: "";
+                    position: absolute;
+                    right: 4px;
+                    bottom: 4px;
+                    width: 8px;
+                    height: 8px;
+                    border-right: 2px solid rgba(59, 130, 246, 0.5);
+                    border-bottom: 2px solid rgba(59, 130, 246, 0.5);
+                }
+                .react-resizable-handle-se {
+                    bottom: 0;
+                    right: 0;
+                    cursor: se-resize;
+                }
+                .react-grid-item.react-grid-placeholder {
+                    background: rgba(59, 130, 246, 0.12);
+                    border: 2px dashed rgba(59, 130, 246, 0.35);
+                    border-radius: 8px;
+                    opacity: 1;
+                    transition-duration: 100ms;
+                    z-index: 2;
+                }
+                .dashboard-editing .react-grid-item {
+                    outline: 2px dashed rgba(59, 130, 246, 0.2);
+                    outline-offset: -1px;
+                    border-radius: 8px;
+                }
+                .dashboard-editing .react-grid-item:hover {
+                    outline-color: rgba(59, 130, 246, 0.45);
+                }
+            `}</style>
+
+            <div className={!isLocked ? 'dashboard-editing' : ''}>
+                <RGL
+                    className="layout"
+                    layouts={layouts}
+                    breakpoints={{ lg: 1024, md: 768, sm: 480, xs: 0 }}
+                    cols={{ lg: 12, md: 6, sm: 2, xs: 2 }}
+                    rowHeight={40}
+                    onLayoutChange={handleLayoutChange}
+                    isDraggable={!isLocked}
+                    isResizable={!isLocked}
+                    draggableHandle=".drag-handle"
+                    containerPadding={[0, 0]}
+                    margin={[12, 12]}
+                    useCSSTransforms={true}
+                    compactType="vertical"
+                >
+                    {wrappedChildren}
+                </RGL>
+            </div>
+        </>
     );
 }
