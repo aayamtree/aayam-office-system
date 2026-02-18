@@ -314,7 +314,7 @@ export default function DashboardGrid({ defaultLayouts, isLocked, children }: Da
                             </div>
                         )}
 
-                        <div className="h-full w-full overflow-hidden rounded-lg">{child}</div>
+                        <div className="grid-cell-content h-full w-full overflow-hidden rounded-lg">{child}</div>
                     </div>
                 );
             })}

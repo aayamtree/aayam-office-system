@@ -583,7 +583,11 @@ td {
   gap: 40px;
 }
 
-
+/* Dashboard grid: force widget children to fill grid cells */
+.grid-cell-content>* {
+  height: 100%;
+  width: 100%;
+}
 
 @layer base {
   :root {
