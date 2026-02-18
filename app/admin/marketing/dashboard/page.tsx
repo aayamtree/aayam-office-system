@@ -92,8 +92,8 @@ export default function AdminMarketingDashboard() {
         { key: 'stat-quotations', title: 'Active Quotations', value: stats.activeQuotations, icon: FileText, textColor: 'text-white', bgColor: 'bg-gray-900', link: '/admin/quotations?filter=active' },
     ];
 
-    // Only show for admin
-    if (profile?.role !== 'admin') {
+    // Only show for admin and marketing
+    if (profile?.role !== 'admin' && profile?.role !== 'marketing') {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">

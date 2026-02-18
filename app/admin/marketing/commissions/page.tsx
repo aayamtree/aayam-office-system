@@ -17,8 +17,8 @@ export default function CommissionsPage() {
     const commissions: any[] = [];
     const loading = false;
 
-    // Only admin can access this page
-    if (profile?.role !== 'admin') {
+    // Only admin and marketing can access this page
+    if (profile?.role !== 'admin' && profile?.role !== 'marketing') {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
