@@ -101,14 +101,14 @@ export default function PaymentsPageNew() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className="flex items-center justify-center py-20">
                 <Loader2 className="w-8 h-8 animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="p-4 max-w-7xl mx-auto">
+        <div className="space-y-4">
             <div className="flex justify-between items-center mb-3 md:mb-1.5">
                 <div>
                     <h1 className="text-page-title">Payments (New)</h1>

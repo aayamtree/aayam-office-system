@@ -95,7 +95,7 @@ export default function AdminMarketingDashboard() {
     // Only show for admin and marketing
     if (profile?.role !== 'admin' && profile?.role !== 'marketing') {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="flex items-center justify-center py-20">
                 <div className="text-center">
                     <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
                     <h2 className="text-page-title text-gray-900">Access Denied</h2>
@@ -138,14 +138,14 @@ export default function AdminMarketingDashboard() {
             </div>
 
             {!isLocked && (
-                <div className="max-w-7xl mx-auto px-4 mt-3">
+                <div className="mt-3">
                     <div className="text-xs text-blue-600 bg-blue-50 border border-blue-100 rounded-md px-3 py-1.5 flex items-center gap-2">
                         ℹ Drag widgets by the <strong>⋮⋮ handle</strong> to rearrange. Drag <strong>edges/dots</strong> to resize. Click <strong>Layout Locked</strong> when done.
                     </div>
                 </div>
             )}
 
-            <div className="max-w-7xl mx-auto p-4">
+            <div>
                 <DashboardGrid defaultLayouts={DEFAULT_LAYOUTS} isLocked={isLocked} storageKey="aayam-mktg-layouts">
                     {/* ── Stat Cards ── */}
                     {statCards.map((stat) => (

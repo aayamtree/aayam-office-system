@@ -335,7 +335,7 @@ export default function QCCheckPage() {
   if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary" /></div>;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-3 md:space-y-4 animate-fade-in">
+    <div className="space-y-3 md:space-y-4 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link href="/admin/dispatch" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">

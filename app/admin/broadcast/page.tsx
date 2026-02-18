@@ -91,7 +91,7 @@ export default function BroadcastPage() {
     ];
 
     return (
-        <div className="p-4 max-w-6xl mx-auto">
+        <div className="space-y-4">
             {/* Header */}
             <div className="mb-1.5">
                 <h1 className="text-page-title text-gray-900 flex items-center gap-3">

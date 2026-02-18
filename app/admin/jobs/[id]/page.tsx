@@ -270,7 +270,7 @@ export default function JobDetailPage() {
     const formatCurrency = (n: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 
     return (
-        <div className="max-w-4xl mx-auto space-y-4 animate-fade-in pb-12">
+        <div className="max-w-4xl space-y-4 animate-fade-in pb-12">
             {/* Header */}
             <div className="flex items-start gap-3">
                 <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-lg mt-0.5">

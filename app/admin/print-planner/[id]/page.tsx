@@ -200,7 +200,7 @@ export default function PrintRunDetailPage() {
             </div>
 
             {/* Content */}
-            <div className="max-w-7xl mx-auto p-4 space-y-6">
+            <div className="space-y-6">
                 {/* Summary */}
                 <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
                     <h2 className="text-section text-gray-900 mb-4">Print Run Summary</h2>

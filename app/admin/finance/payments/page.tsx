@@ -132,14 +132,14 @@ export default function PaymentsPageNew() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className="flex items-center justify-center py-20">
                 <Loader2 className="animate-spin" size={32} />
             </div>
         );
     }
 
     return (
-        <div className="p-4 md:p-4 max-w-7xl mx-auto">
+        <div className="space-y-4">
             {/* Header - Stack on mobile */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 md:mb-1.5">
                 <div>
