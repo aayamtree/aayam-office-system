@@ -99,6 +99,7 @@ export default function JobDetailPage() {
     const [ewayBillNo, setEwayBillNo] = useState('');
     const [uploading, setUploading] = useState(false);
     const [saved, setSaved] = useState(false);
+    const [uploadedFiles, setUploadedFiles] = useState<{ label: string; name: string }[]>([]);
 
     useEffect(() => {
         if (!jobId) return;
@@ -204,35 +205,43 @@ export default function JobDetailPage() {
         if (!file || !job) return;
         setUploading(true);
 
-        const fileName = `${job.job_number}_${fileLabel}_${Date.now()}.${file.name.split('.').pop()}`;
+        const ext = file.name.split('.').pop() || 'pdf';
+        const fileName = `${job.job_number}_${fileLabel.replace(/\s+/g, '_')}_${Date.now()}.${ext}`;
         const filePath = `jobs/${job.id}/${fileName}`;
 
         const { error } = await supabase.storage
-            .from('job-files')
+            .from('attachments')
             .upload(filePath, file);
 
-        if (!error) {
-            const { data: urlData } = supabase.storage
-                .from('job-files')
-                .getPublicUrl(filePath);
-
-            // Add to job files array
-            const newFile = {
-                name: `${fileLabel}: ${file.name}`,
-                url: urlData.publicUrl,
-                type: file.type,
-                size: file.size,
-                uploaded_at: new Date().toISOString(),
-            };
-
-            const updatedFiles = [...(job.files || []), newFile];
-            await supabase
-                .from('jobs')
-                .update({ files: updatedFiles })
-                .eq('id', job.id);
-
-            setJob({ ...job, files: updatedFiles });
+        if (error) {
+            console.error('Upload failed:', error);
+            alert(`Upload failed: ${error.message}`);
+            setUploading(false);
+            e.target.value = '';
+            return;
         }
+
+        const { data: urlData } = supabase.storage
+            .from('attachments')
+            .getPublicUrl(filePath);
+
+        // Add to job files array
+        const newFile = {
+            name: `${fileLabel}: ${file.name}`,
+            url: urlData.publicUrl,
+            type: file.type,
+            size: file.size,
+            uploaded_at: new Date().toISOString(),
+        };
+
+        const updatedFiles = [...(job.files || []), newFile];
+        await supabase
+            .from('jobs')
+            .update({ files: updatedFiles })
+            .eq('id', job.id);
+
+        setJob({ ...job, files: updatedFiles });
+        setUploadedFiles(prev => [...prev, { label: fileLabel, name: file.name }]);
 
         setUploading(false);
         e.target.value = '';
@@ -396,6 +405,20 @@ export default function JobDetailPage() {
                         <input type="file" accept=".pdf,.jpg,.png" className="hidden" onChange={e => handleFileUpload(e, 'E-Way Bill')} />
                     </label>
                 </div>
+
+                {/* Upload confirmation */}
+                {uploadedFiles.length > 0 && (
+                    <div className="mb-3 space-y-1">
+                        {uploadedFiles.map((f, i) => (
+                            <div key={i} className="flex items-center gap-2 text-xs bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                                <CheckCircle className="w-3.5 h-3.5 text-green-600 shrink-0" />
+                                <span className="text-green-800 font-medium">{f.label}:</span>
+                                <span className="text-green-700 truncate">{f.name}</span>
+                                <span className="text-green-500">uploaded ✓</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 <button
                     onClick={handleSaveInvoiceDetails}
