@@ -211,9 +211,10 @@ const menuItems: MenuItem[] = [
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  onHoverChange?: (hovered: boolean) => void;
 }
 
-export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+export default function Sidebar({ isOpen, onClose, onHoverChange }: SidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { profile, signOut } = useAuth();
@@ -285,9 +286,17 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     <aside
       className={`fixed left-0 top-0 h-screen ${sidebarWidth} bg-background border-r border-border flex flex-col z-40 transition-all duration-200 ease-in-out ${isDesktop && hovered ? 'shadow-2xl' : ''
         }`}
-      onMouseEnter={() => isDesktop && setHovered(true)}
+      onMouseEnter={() => {
+        if (isDesktop) {
+          setHovered(true);
+          onHoverChange?.(true);
+        }
+      }}
       onMouseLeave={() => {
-        if (isDesktop && !dropdownOpen) setHovered(false);
+        if (isDesktop && !dropdownOpen) {
+          setHovered(false);
+          onHoverChange?.(false);
+        }
       }}
     >
       {/* Logo */}
@@ -425,7 +434,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         ) : (
           <DropdownMenu open={dropdownOpen} onOpenChange={(open) => {
             setDropdownOpen(open);
-            if (!open) setHovered(false);
+            if (!open) {
+              setHovered(false);
+              onHoverChange?.(false);
+            }
           }}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="w-full justify-start px-2 h-auto py-2">
