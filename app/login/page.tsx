@@ -19,20 +19,15 @@ export default function LoginPage() {
   // Redirect if already logged in - Optimized for Role
   useEffect(() => {
     if (!loading && profile) {
-      if (profile.role === 'designer') {
-        router.push('/admin/designers/tasks');
-      } else if (profile.role === 'dispatch') {
-        router.push('/admin/dispatch');
-      } else if (profile.role === 'marketing') {
-        router.push('/admin/marketing');
-      } else if (profile.role === 'cmyk') {
-        router.push('/admin/cmyk-print');
-      } else {
-        // Admin only
-        router.push('/admin/dashboard');
-      }
+      const target = profile.role === 'designer' ? '/admin/designers/tasks'
+        : profile.role === 'dispatch' ? '/admin/dispatch'
+          : profile.role === 'marketing' ? '/admin/marketing'
+            : profile.role === 'cmyk' ? '/admin/cmyk-print'
+              : '/admin/dashboard';
+      // Use window.location for instant navigation (faster than router.push)
+      window.location.href = target;
     }
-  }, [profile, loading, router]);
+  }, [profile, loading]);
 
   // Keyboard shortcut for quick login (localhost only)
   useEffect(() => {
@@ -55,6 +50,12 @@ export default function LoginPage() {
     setError('');
     setIsLoading(true);
 
+    // Safety timeout: reset loading after 8s if something gets stuck
+    const safetyTimer = setTimeout(() => {
+      setIsLoading(false);
+      setError('Login timed out. Please try again.');
+    }, 8000);
+
     try {
       // Convert username to internal email format
       const cleanInput = email.trim().toLowerCase();
@@ -65,19 +66,21 @@ export default function LoginPage() {
       const { error: signInError } = await signIn(loginEmail, password);
 
       if (signInError) {
+        clearTimeout(safetyTimer);
         console.error('Sign in error:', signInError);
         const errorMessage = typeof signInError === 'string'
           ? signInError
-          : (signInError as any).message || 'Invalid username orpassword';
+          : (signInError as any).message || 'Invalid username or password';
         setError(errorMessage);
         setIsLoading(false);
       } else {
-        // Log successful login
-        await logLogin();
-        console.log('Sign in successful (Waiting for redirect)...');
-        // Redirect handled by useEffect
+        // Fire-and-forget: don't block redirect waiting for activity log
+        logLogin().catch(console.error);
+        console.log('Sign in successful — redirecting...');
+        // Redirect is handled by useEffect watching profile
       }
     } catch (err: any) {
+      clearTimeout(safetyTimer);
       console.error('Login exception:', err);
       setError(err.message || 'An error occurred');
       setIsLoading(false);

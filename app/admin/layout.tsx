@@ -27,11 +27,9 @@ export default function AdminLayout({
 
   useEffect(() => {
     if (mounted && !loading && !profile) {
-      // router.push('/login');
-      // TEMPORARILY DISABLED TO FIX LOGIN LOOP
-      console.log('Would redirect to login, but staying for debug');
+      window.location.href = '/login';
     }
-  }, [mounted, profile, loading, router]);
+  }, [mounted, profile, loading]);
 
   // Close sidebar when clicking outside on mobile
   const closeSidebar = () => setSidebarOpen(false);
