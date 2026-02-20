@@ -23,6 +23,8 @@ import {
   Calendar,
   LogOut,
   User,
+  PanelLeftClose,
+  PanelLeft,
 } from 'lucide-react';
 
 // Shadcn Components
@@ -214,9 +216,11 @@ interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   onHoverChange?: (hovered: boolean) => void;
+  locked?: boolean;
+  onLockedChange?: (locked: boolean) => void;
 }
 
-export default function Sidebar({ isOpen, onClose, onHoverChange }: SidebarProps) {
+export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false, onLockedChange }: SidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { profile, signOut } = useAuth();
@@ -286,7 +290,8 @@ export default function Sidebar({ isOpen, onClose, onHoverChange }: SidebarProps
   }
 
   // Desktop: collapsed = icon strip (64px), expanded on hover = full sidebar (256px) as overlay
-  const isCollapsed = isDesktop && !hovered && !dropdownOpen;
+  // When LOCKED, sidebar stays expanded regardless of hover
+  const isCollapsed = isDesktop && !locked && !hovered && !dropdownOpen;
   const sidebarWidth = isCollapsed ? 'w-16' : 'w-64';
 
   const filteredMenu = menuItems.filter(item => {
@@ -300,20 +305,20 @@ export default function Sidebar({ isOpen, onClose, onHoverChange }: SidebarProps
       className={`fixed left-0 top-0 h-screen ${sidebarWidth} bg-background border-r border-border flex flex-col z-40 transition-all duration-200 ease-in-out ${isDesktop && hovered ? 'shadow-2xl' : ''
         }`}
       onMouseEnter={() => {
-        if (isDesktop) {
+        if (isDesktop && !locked) {
           setHovered(true);
           onHoverChange?.(true);
         }
       }}
       onMouseLeave={() => {
-        if (isDesktop && !dropdownOpen) {
+        if (isDesktop && !dropdownOpen && !locked) {
           setHovered(false);
           onHoverChange?.(false);
         }
       }}
     >
-      {/* Logo */}
-      <div className={`border-b border-border ${isCollapsed ? 'p-3 flex justify-center' : 'p-6'}`}>
+      {/* Logo + Lock toggle */}
+      <div className={`border-b border-border ${isCollapsed ? 'p-3 flex justify-center' : 'p-4 flex items-center justify-between'}`}>
         <Link
           href={profile?.role === 'designer' ? '/admin/designers/tasks' : '/admin/dashboard'}
           className="flex items-center gap-2"
@@ -322,6 +327,15 @@ export default function Sidebar({ isOpen, onClose, onHoverChange }: SidebarProps
           <img src="/company-logo.png" alt="Aayam" className="w-8 h-8 rounded shrink-0" />
           {!isCollapsed && <span className="font-bold text-foreground text-xl whitespace-nowrap">Aayam</span>}
         </Link>
+        {!isCollapsed && isDesktop && (
+          <button
+            onClick={() => onLockedChange?.(!locked)}
+            className={`p-1.5 rounded-md transition-colors ${locked ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+            title={locked ? 'Unlock sidebar (auto-collapse)' : 'Lock sidebar open'}
+          >
+            {locked ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
+          </button>
+        )}
       </div>
 
       {/* Navigation */}

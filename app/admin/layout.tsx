@@ -21,6 +21,13 @@ export default function AdminLayout({
   const [mounted, setMounted] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarHovered, setSidebarHovered] = useState(false);
+  const [sidebarLocked, setSidebarLocked] = useState(false);
+
+  // Load sidebar lock state from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('sidebar-locked');
+    if (saved === 'true') setSidebarLocked(true);
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -65,10 +72,16 @@ export default function AdminLayout({
           )}
 
           {/* Sidebar */}
-          <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} onHoverChange={setSidebarHovered} />
+          <Sidebar
+            isOpen={sidebarOpen}
+            onClose={closeSidebar}
+            onHoverChange={setSidebarHovered}
+            locked={sidebarLocked}
+            onLockedChange={(v) => { setSidebarLocked(v); localStorage.setItem('sidebar-locked', String(v)); }}
+          />
 
           {/* Header */}
-          <Header onMenuClick={() => setSidebarOpen(true)} sidebarExpanded={sidebarHovered} />
+          <Header onMenuClick={() => setSidebarOpen(true)} sidebarExpanded={sidebarHovered || sidebarLocked} />
 
           {/* Global Command Palette (Cmd+K) */}
           <CommandPalette />
@@ -77,7 +90,7 @@ export default function AdminLayout({
           {profile && <DailyBriefingTrigger />}
 
           {/* Main Content */}
-          <main className={`pt-20 lg:pt-24 px-4 md:px-6 lg:px-8 py-6 min-h-screen transition-[margin] duration-200 ease-in-out ${sidebarHovered ? 'lg:ml-64' : 'lg:ml-16'}`}>
+          <main className={`pt-20 lg:pt-24 px-4 md:px-6 lg:px-8 py-6 min-h-screen transition-[margin] duration-200 ease-in-out ${(sidebarHovered || sidebarLocked) ? 'lg:ml-64' : 'lg:ml-16'}`}>
             {children}
           </main>
 
