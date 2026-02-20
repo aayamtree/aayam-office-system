@@ -204,6 +204,7 @@ const menuItems: MenuItem[] = [
       { name: 'Preferences', href: '/admin/settings/preferences' },
       { name: 'Production Settings', href: '/admin/settings/production' },
       { name: 'Google Drive', href: '/admin/settings/drive' },
+      { name: 'System Health', href: '/admin/system-health' },
     ]
   },
 ];

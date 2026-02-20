@@ -339,6 +339,7 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
   const { data, loading, error, refetch } = useSupabaseQuery<Job>('jobs', {
     select: options?.select || defaultSelect,
     orderBy: { column: 'created_at', ascending: false },
+    limit: 200,  // Default pagination — prevents unbounded fetches
     ...options
   });
 
@@ -524,7 +525,8 @@ export function useProductCategories() {
 export function useInvoices() {
   const { data, loading, error, refetch } = useSupabaseQuery<Invoice>('invoices', {
     select: '*, client:clients(*), job:jobs(*), items:invoice_items(*)',
-    orderBy: { column: 'created_at', ascending: false }
+    orderBy: { column: 'created_at', ascending: false },
+    limit: 200  // Default pagination
   });
 
   const createInvoice = async (invoice: Omit<Invoice, 'id' | 'created_at' | 'updated_at' | 'invoice_number' | 'client' | 'job' | 'items'>) => {
@@ -608,7 +610,8 @@ export function useLeads() {
   const { data, loading, error, refetch } = useSupabaseQuery<Lead>('leads', {
     select: '*',
     filter,
-    orderBy: { column: 'created_at', ascending: false }
+    orderBy: { column: 'created_at', ascending: false },
+    limit: 200  // Default pagination
   });
 
   const createLead = async (lead: Omit<Lead, 'id' | 'created_at' | 'updated_at' | 'lead_number' | 'assigned_user' | 'follow_ups'> & { created_at?: string }) => {
