@@ -1118,25 +1118,48 @@ export function useDashboardStats() {
       }
 
       try {
-        // Single RPC call replaces 10 separate queries
-        const { data, error } = await supabase.rpc('get_dashboard_stats');
+        // Single RPC call replaces 10 separate queries — with 8s timeout
+        const rpcPromise = supabase.rpc('get_dashboard_stats');
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('RPC timeout after 8s')), 8000)
+        );
+
+        const { data, error } = await Promise.race([rpcPromise, timeoutPromise]) as any;
 
         if (error) {
-          console.warn('RPC get_dashboard_stats not available, using fallback:', error.message);
-          // Fallback: minimal client-side queries if RPC not deployed yet
-          const [clients, jobs] = await Promise.all([
-            supabase.from('clients').select('id', { count: 'exact', head: true }),
-            supabase.from('jobs').select('id, current_stage, client_deadline').neq('current_stage', 'delivered').neq('current_stage', 'cancelled'),
+          console.warn('RPC get_dashboard_stats failed, using fallback:', error.message);
+
+          // Fallback: safe individual queries — each wrapped separately
+          const safeQuery = async (fn: () => PromiseLike<any>, fallback: any = null) => {
+            try { return await fn(); } catch { return fallback; }
+          };
+
+          const [clientsResult, jobsResult, leadsResult] = await Promise.all([
+            safeQuery(() => supabase.from('clients').select('id', { count: 'exact', head: true }).then(r => r)),
+            safeQuery(() => supabase.from('jobs').select('id, current_stage, client_deadline, total_amount, payment_status, amount_received, created_at, updated_at').neq('current_stage', 'delivered').neq('current_stage', 'cancelled').then(r => r)),
+            safeQuery(() => supabase.from('leads').select('id', { count: 'exact', head: true }).then(r => r)),
           ]);
+
           const pipelineCounts: Record<string, number> = {};
-          jobs.data?.forEach(j => {
+          let totalRevenue = 0;
+          let pendingPayments = 0;
+
+          jobsResult?.data?.forEach((j: any) => {
             const stage = j.current_stage || 'new';
             pipelineCounts[stage] = (pipelineCounts[stage] || 0) + 1;
+            totalRevenue += j.total_amount || 0;
+            if (j.payment_status !== 'paid') {
+              pendingPayments += (j.total_amount || 0) - (j.amount_received || 0);
+            }
           });
+
           setStats(prev => ({
             ...prev,
-            totalClients: clients.count || 0,
-            activeJobs: jobs.data?.length || 0,
+            totalClients: clientsResult?.count || 0,
+            activeJobs: jobsResult?.data?.length || 0,
+            totalRevenue,
+            pendingPayments,
+            leadsThisMonth: leadsResult?.count || 0,
             pipeline: pipelineCounts,
           }));
           setLoading(false);
