@@ -96,19 +96,17 @@ export default function LeadsPage() {
         assignedTo: '',
     });
 
-    // Fetch staff list for admin assignment
+    // Fetch staff list for assignment dropdown (admin) and origin badges (all users)
     const [staffList, setStaffList] = useState<{ id: string, full_name: string, role: string }[]>([]);
     useEffect(() => {
-        if (profile?.role === 'admin') {
-            supabase.from('profiles')
-                .select('id, full_name, role')
-                .in('role', ['marketing', 'admin'])
-                .eq('is_active', true)
-                .then(({ data }) => {
-                    if (data) setStaffList(data);
-                });
-        }
-    }, [profile?.role]);
+        supabase.from('profiles')
+            .select('id, full_name, role')
+            .in('role', ['marketing', 'admin'])
+            .eq('is_active', true)
+            .then(({ data }) => {
+                if (data) setStaffList(data);
+            });
+    }, []);
 
     // --- ACTIONS ---
 
@@ -360,7 +358,7 @@ export default function LeadsPage() {
                                             {lead.created_by && lead.assigned_to && lead.created_by !== lead.assigned_to && (
                                                 <div className="mt-1.5">
                                                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                                                        📌 Assigned by {(lead as any).created_by_user?.full_name || 'Admin'}
+                                                        📌 Assigned by {staffList.find(s => s.id === lead.created_by)?.full_name || 'Admin'}
                                                     </span>
                                                 </div>
                                             )}

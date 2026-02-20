@@ -608,7 +608,7 @@ export function useLeads() {
     : undefined;  // Admin sees all
 
   const { data, loading, error, refetch } = useSupabaseQuery<Lead>('leads', {
-    select: '*, assigned_user:profiles!assigned_to(full_name), created_by_user:profiles!created_by(full_name)',
+    select: '*',
     filter,
     orderBy: { column: 'created_at', ascending: false },
     limit: 200  // Default pagination
