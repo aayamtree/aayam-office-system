@@ -84,12 +84,13 @@ export function useSupabaseQuery<T>(
 
   // =============================================
   // REALTIME SUBSCRIPTION — Auto-refetch on changes
-  // Only subscribe to frequently-changing tables to reduce WebSocket overhead
+  // ONLY for tables where OTHER users' changes need instant visibility.
+  // All other tables use SWR's mutate() after writes — no realtime needed.
+  // Reduced from 10 → 2 to save ~8 WebSocket connections per component on free tier.
   // =============================================
   const REALTIME_TABLES = new Set([
-    'jobs', 'leads', 'invoices', 'payments_received',
-    'follow_ups', 'dispatches', 'sales_orders', 'quotations',
-    'design_tasks', 'eod_reports'
+    'jobs',          // Job stage changes from multiple users (designers, dispatch, admin)
+    'design_tasks',  // Designers need to see new task assignments instantly
   ]);
 
   useEffect(() => {
