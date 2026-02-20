@@ -180,24 +180,29 @@ export default function LeadsPage() {
 
             console.log('Saving Lead for User:', currentUserId);
 
-            const payload = {
+            const rawPayload: Record<string, any> = {
                 name: formData.name,
-                company: formData.company,
-                email: formData.email,
+                company: formData.company || undefined,
+                email: formData.email || undefined,
                 phone: formData.phone,
                 source: formData.source,
                 status: formData.status,
-                lead_type: formData.leadType,
-                billing_preference: formData.billingPreference,
+                lead_type: formData.leadType || undefined,
+                billing_preference: formData.billingPreference || undefined,
                 lost_reason: formData.status === 'lost' ? formData.lostReason : undefined,
                 expected_value: parseFloat(formData.value) || 0,
-                requirement: formData.requirement,
+                requirement: formData.requirement || undefined,
                 next_follow_up:
                     ['follow_up', 'new', 'contacted'].includes(formData.status)
                         ? (formData.nextFollowUp || undefined)
                         : undefined,
-                notes: formData.notes
+                notes: formData.notes || undefined
             };
+
+            // Remove undefined values to avoid sending non-existent columns
+            const payload = Object.fromEntries(
+                Object.entries(rawPayload).filter(([, v]) => v !== undefined)
+            );
 
             // 2. Perform Save
             let result;
@@ -216,7 +221,7 @@ export default function LeadsPage() {
                     created_by: currentUserId,
                     assigned_to: (profile?.role === 'admin' && formData.assignedTo) ? formData.assignedTo : currentUserId,
                     created_at: creationDate
-                });
+                } as any);
             }
 
             // If editing and admin changed assignment, update assigned_to

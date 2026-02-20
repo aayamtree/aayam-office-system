@@ -61,8 +61,15 @@
 **Mistake:** Fixed one page's layout without checking others.
 **Rule:** Any fix that touches a pattern used across multiple pages → audit ALL pages first, fix ALL at once.
 
-### Commission/Business Logic — Ask First
-**Rule:** Never implement business logic (commission rates, pricing rules) without explicit user decision. Always present options and wait.
+### Collect ALL Feedback First
+**Mistake:** Jumped into fixing after first feedback, didn't wait for all issues.
+**Rule:** When user says "this is 1/3" or indicates multiple items, WAIT for ALL items before implementing. Batch fixes together.
+
+### Sidebar Data Must Be Lightweight
+**Rule:** Sidebar runs on EVERY page. Never add heavy hooks like `useLeads()` to sidebar. Use `select('id', { count: 'exact', head: true })` count queries instead.
+
+### When FK Joins Fail, Use Client-Side Lookups
+**Rule:** If a table was created without FK constraints, use `profilesMap` or `staffList.find()` patterns to resolve UUIDs to names on the client side. Don't try to fix it by guessing FK syntax.
 
 ---
 
@@ -78,4 +85,4 @@
 ---
 
 *Last updated: 2026-02-20*
-*Corrections captured: 7*
+*Corrections captured: 10*
