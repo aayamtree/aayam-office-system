@@ -1077,159 +1077,150 @@ export function useDispatches() {
 // =============================================
 // DASHBOARD STATS HOOK
 // =============================================
-export function useDashboardStats() {
-  const [stats, setStats] = useState({
-    totalClients: 0,
-    activeJobs: 0,
-    totalRevenue: 0,
-    pendingPayments: 0,
-    pendingDispatches: 0,
-    leadsThisMonth: 0,
-    ordersThisMonth: 0,
-    pipeline: {} as Record<string, number>,
-    pipelineOverdue: {} as Record<string, number>,
-    alerts: {
-      overduePayments: 0,
-      followUpsDue: 0,
-      lowStock: 0,
-      blockedJobs: 0,
-      blockedBreakdown: { feedback: 0, payment: 0 }
-    },
-    todaysFocus: {
-      jobsDue: 0,
-      jobsDelayed: 0,
-      jobsCompleted: 0,
-      paymentsDue: 0
-    },
-    vendorStats: {
-      jobsAtVendor: 0,
-      dueToday: 0,
-      delayed: 0
-    },
-    salesPerformance: [] as { month: string; value: number; active?: boolean }[],
-  });
-  const [loading, setLoading] = useState(true);
+// Default empty stats shape (used as fallback)
+const EMPTY_STATS = {
+  totalClients: 0,
+  activeJobs: 0,
+  totalRevenue: 0,
+  pendingPayments: 0,
+  pendingDispatches: 0,
+  leadsThisMonth: 0,
+  ordersThisMonth: 0,
+  pipeline: {} as Record<string, number>,
+  pipelineOverdue: {} as Record<string, number>,
+  alerts: {
+    overduePayments: 0,
+    followUpsDue: 0,
+    lowStock: 0,
+    blockedJobs: 0,
+    blockedBreakdown: { feedback: 0, payment: 0 }
+  },
+  todaysFocus: {
+    jobsDue: 0,
+    jobsDelayed: 0,
+    jobsCompleted: 0,
+    paymentsDue: 0
+  },
+  vendorStats: {
+    jobsAtVendor: 0,
+    dueToday: 0,
+    delayed: 0
+  },
+  salesPerformance: [] as { month: string; value: number; active?: boolean }[],
+};
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      if (!isSupabaseConfigured()) {
-        setLoading(false);
-        return;
-      }
+type DashboardStats = typeof EMPTY_STATS;
 
-      try {
-        // Single RPC call replaces 10 separate queries — with 8s timeout
-        const rpcPromise = supabase.rpc('get_dashboard_stats');
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('RPC timeout after 8s')), 8000)
-        );
+// Standalone fetcher — shared by all callers via SWR deduplication
+async function fetchDashboardStats(): Promise<DashboardStats> {
+  if (!isSupabaseConfigured()) return EMPTY_STATS;
 
-        const { data, error } = await Promise.race([rpcPromise, timeoutPromise]) as any;
+  try {
+    // RPC with 8s timeout
+    const rpcPromise = supabase.rpc('get_dashboard_stats');
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('RPC timeout after 8s')), 8000)
+    );
 
-        if (error) {
-          console.warn('RPC get_dashboard_stats failed, using fallback:', error.message);
+    const { data, error } = await Promise.race([rpcPromise, timeoutPromise]) as any;
 
-          // Fallback: safe individual queries — each wrapped separately
-          const safeQuery = async (fn: () => PromiseLike<any>, fallback: any = null) => {
-            try { return await fn(); } catch { return fallback; }
-          };
+    if (error) {
+      console.warn('RPC get_dashboard_stats failed, using fallback:', error.message);
 
-          const [clientsResult, jobsResult, leadsResult] = await Promise.all([
-            safeQuery(() => supabase.from('clients').select('id', { count: 'exact', head: true }).then(r => r)),
-            safeQuery(() => supabase.from('jobs').select('id, current_stage, client_deadline, total_amount, payment_status, amount_received, created_at, updated_at').neq('current_stage', 'delivered').neq('current_stage', 'cancelled').then(r => r)),
-            safeQuery(() => supabase.from('leads').select('id', { count: 'exact', head: true }).then(r => r)),
-          ]);
+      // Fallback: safe individual queries
+      const safeQuery = async (fn: () => PromiseLike<any>, fallback: any = null) => {
+        try { return await fn(); } catch { return fallback; }
+      };
 
-          const pipelineCounts: Record<string, number> = {};
-          let totalRevenue = 0;
-          let pendingPayments = 0;
+      const [clientsResult, jobsResult, leadsResult] = await Promise.all([
+        safeQuery(() => supabase.from('clients').select('id', { count: 'exact', head: true }).then(r => r)),
+        safeQuery(() => supabase.from('jobs').select('id, current_stage, client_deadline, total_amount, payment_status, amount_received, created_at, updated_at').neq('current_stage', 'delivered').neq('current_stage', 'cancelled').then(r => r)),
+        safeQuery(() => supabase.from('leads').select('id', { count: 'exact', head: true }).then(r => r)),
+      ]);
 
-          jobsResult?.data?.forEach((j: any) => {
-            const stage = j.current_stage || 'new';
-            pipelineCounts[stage] = (pipelineCounts[stage] || 0) + 1;
-            totalRevenue += j.total_amount || 0;
-            if (j.payment_status !== 'paid') {
-              pendingPayments += (j.total_amount || 0) - (j.amount_received || 0);
-            }
-          });
+      const pipelineCounts: Record<string, number> = {};
+      let totalRevenue = 0;
+      let pendingPayments = 0;
 
-          setStats(prev => ({
-            ...prev,
-            totalClients: clientsResult?.count || 0,
-            activeJobs: jobsResult?.data?.length || 0,
-            totalRevenue,
-            pendingPayments,
-            leadsThisMonth: leadsResult?.count || 0,
-            pipeline: pipelineCounts,
-          }));
-          setLoading(false);
-          return;
+      jobsResult?.data?.forEach((j: any) => {
+        const stage = j.current_stage || 'new';
+        pipelineCounts[stage] = (pipelineCounts[stage] || 0) + 1;
+        totalRevenue += j.total_amount || 0;
+        if (j.payment_status !== 'paid') {
+          pendingPayments += (j.total_amount || 0) - (j.amount_received || 0);
         }
+      });
 
-        // Map RPC response to state
-        const d = data as any;
-        setStats({
-          totalClients: d.total_clients || 0,
-          activeJobs: d.active_jobs || 0,
-          totalRevenue: d.total_revenue || 0,
-          pendingPayments: d.pending_payments || 0,
-          pendingDispatches: d.pending_dispatches || 0,
-          leadsThisMonth: d.leads_this_month || 0,
-          ordersThisMonth: d.orders_this_month || 0,
-          pipeline: d.pipeline || {},
-          pipelineOverdue: d.pipeline_overdue || {},
-          alerts: {
-            overduePayments: d.alerts?.overdue_payments || 0,
-            followUpsDue: d.alerts?.follow_ups_due || 0,
-            lowStock: d.alerts?.low_stock || 0,
-            blockedJobs: d.alerts?.blocked_jobs || 0,
-            blockedBreakdown: {
-              feedback: d.alerts?.blocked_breakdown?.feedback || 0,
-              payment: d.alerts?.blocked_breakdown?.payment || 0
-            }
-          },
-          todaysFocus: {
-            jobsDue: d.todays_focus?.jobs_due || 0,
-            jobsDelayed: d.todays_focus?.jobs_delayed || 0,
-            jobsCompleted: d.todays_focus?.jobs_completed || 0,
-            paymentsDue: d.todays_focus?.payments_due || 0
-          },
-          vendorStats: {
-            jobsAtVendor: d.vendor_stats?.jobs_at_vendor || 0,
-            dueToday: d.vendor_stats?.due_today || 0,
-            delayed: d.vendor_stats?.delayed || 0
-          },
-          salesPerformance: (d.sales_performance || []).map((s: any) => ({
-            month: s.month,
-            value: s.value || 0,
-            active: s.active || false
-          })),
-        });
-      } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
-      } finally {
-        setLoading(false);
-      }
+      return {
+        ...EMPTY_STATS,
+        totalClients: clientsResult?.count || 0,
+        activeJobs: jobsResult?.data?.length || 0,
+        totalRevenue,
+        pendingPayments,
+        leadsThisMonth: leadsResult?.count || 0,
+        pipeline: pipelineCounts,
+      };
+    }
+
+    // Map RPC response
+    const d = data as any;
+    return {
+      totalClients: d.total_clients || 0,
+      activeJobs: d.active_jobs || 0,
+      totalRevenue: d.total_revenue || 0,
+      pendingPayments: d.pending_payments || 0,
+      pendingDispatches: d.pending_dispatches || 0,
+      leadsThisMonth: d.leads_this_month || 0,
+      ordersThisMonth: d.orders_this_month || 0,
+      pipeline: d.pipeline || {},
+      pipelineOverdue: d.pipeline_overdue || {},
+      alerts: {
+        overduePayments: d.alerts?.overdue_payments || 0,
+        followUpsDue: d.alerts?.follow_ups_due || 0,
+        lowStock: d.alerts?.low_stock || 0,
+        blockedJobs: d.alerts?.blocked_jobs || 0,
+        blockedBreakdown: {
+          feedback: d.alerts?.blocked_breakdown?.feedback || 0,
+          payment: d.alerts?.blocked_breakdown?.payment || 0
+        }
+      },
+      todaysFocus: {
+        jobsDue: d.todays_focus?.jobs_due || 0,
+        jobsDelayed: d.todays_focus?.jobs_delayed || 0,
+        jobsCompleted: d.todays_focus?.jobs_completed || 0,
+        paymentsDue: d.todays_focus?.payments_due || 0
+      },
+      vendorStats: {
+        jobsAtVendor: d.vendor_stats?.jobs_at_vendor || 0,
+        dueToday: d.vendor_stats?.due_today || 0,
+        delayed: d.vendor_stats?.delayed || 0
+      },
+      salesPerformance: (d.sales_performance || []).map((s: any) => ({
+        month: s.month,
+        value: s.value || 0,
+        active: s.active || false
+      })),
     };
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    return EMPTY_STATS;
+  }
+}
 
-    fetchStats();
+export function useDashboardStats() {
+  const { data, isLoading } = useSWR(
+    isSupabaseConfigured() ? 'dashboard-stats' : null,
+    fetchDashboardStats,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 30000,     // 30s dedup — all callers share ONE fetch
+      refreshInterval: 120000,     // Refresh every 2 minutes
+      keepPreviousData: true,
+      fallbackData: EMPTY_STATS,
+    }
+  );
 
-    // Refresh every 2 minutes (stats don't change that frequently)
-    const interval = setInterval(fetchStats, 120000);
-
-    // Refresh when tab becomes visible
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') fetchStats();
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
-  }, []);
-
-  return { stats, loading };
+  return { stats: data || EMPTY_STATS, loading: isLoading };
 }
 
 // =============================================
