@@ -10,6 +10,7 @@ import {
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { useLeads, useFollowUps } from '@/lib/hooks';
+import { supabase } from '@/lib/supabase';
 import { Lead } from '@/types/database';
 import { formatDate } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -92,7 +93,22 @@ export default function LeadsPage() {
         nextFollowUp: '',
         notes: '',
         leadDate: '',
+        assignedTo: '',
     });
+
+    // Fetch staff list for admin assignment
+    const [staffList, setStaffList] = useState<{ id: string, full_name: string, role: string }[]>([]);
+    useEffect(() => {
+        if (profile?.role === 'admin') {
+            supabase.from('profiles')
+                .select('id, full_name, role')
+                .in('role', ['marketing', 'admin'])
+                .eq('is_active', true)
+                .then(({ data }) => {
+                    if (data) setStaffList(data);
+                });
+        }
+    }, [profile?.role]);
 
     // --- ACTIONS ---
 
@@ -112,6 +128,7 @@ export default function LeadsPage() {
             nextFollowUp: '',
             notes: '',
             leadDate: new Date().toLocaleDateString('en-CA'), // Local YYYY-MM-DD
+            assignedTo: user?.id || '',
         });
         setIsEditing(false);
         setShowModal(true);
@@ -133,6 +150,7 @@ export default function LeadsPage() {
             nextFollowUp: lead.next_follow_up || '',
             notes: lead.notes || '',
             leadDate: lead.created_at ? new Date(lead.created_at).toISOString().split('T')[0] : '',
+            assignedTo: lead.assigned_to || user?.id || '',
         });
         setSelectedLead(lead);
         setIsEditing(true);
@@ -198,9 +216,14 @@ export default function LeadsPage() {
                 result = await createLead({
                     ...payload,
                     created_by: currentUserId,
-                    assigned_to: currentUserId,
+                    assigned_to: (profile?.role === 'admin' && formData.assignedTo) ? formData.assignedTo : currentUserId,
                     created_at: creationDate
                 });
+            }
+
+            // If editing and admin changed assignment, update assigned_to
+            if (isEditing && profile?.role === 'admin' && formData.assignedTo) {
+                await updateLead(selectedLead!.id, { assigned_to: formData.assignedTo });
             }
 
             if (result.error) throw new Error(result.error);
@@ -486,6 +509,25 @@ export default function LeadsPage() {
                                     </select>
                                 </div>
                             </div>
+
+                            {/* Assign To (Admin only) */}
+                            {profile?.role === 'admin' && staffList.length > 0 && (
+                                <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                                    <label className="block text-xs font-bold text-amber-700 uppercase mb-1.5">👤 Assign To Staff</label>
+                                    <select
+                                        value={formData.assignedTo}
+                                        onChange={e => setFormData({ ...formData, assignedTo: e.target.value })}
+                                        className="w-full px-4 py-2.5 bg-white border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-400 text-sm font-medium"
+                                    >
+                                        {staffList.map(s => (
+                                            <option key={s.id} value={s.id}>
+                                                {s.full_name} ({s.role})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p className="text-xs text-amber-600 mt-1">This lead will appear on their dashboard for follow-up</p>
+                                </div>
+                            )}
 
                             {/* Status Section */}
                             <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-5">
