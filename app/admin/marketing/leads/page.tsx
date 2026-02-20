@@ -356,6 +356,15 @@ export default function LeadsPage() {
                                             <h3 className="font-bold text-gray-900 text-lg leading-tight mb-1">{lead.name}</h3>
                                             {lead.company && <p className="text-gray-500 text-sm font-medium">{lead.company}</p>}
 
+                                            {/* Origin Badge — shows when lead was assigned by someone else */}
+                                            {lead.created_by && lead.assigned_to && lead.created_by !== lead.assigned_to && (
+                                                <div className="mt-1.5">
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                                                        📌 Assigned by {(lead as any).created_by_user?.full_name || 'Admin'}
+                                                    </span>
+                                                </div>
+                                            )}
+
                                             {/* Project Type Badge */}
                                             {lead.project_type && (
                                                 <div className="mt-2">
