@@ -75,18 +75,27 @@ export function useSupabaseQuery<T>(
   };
 
   const { data, error, isLoading, mutate } = useSWR(key, fetcher, {
-    revalidateOnFocus: true,   // Refetch when user switches back to this tab
+    revalidateOnFocus: false,    // Don't refetch on tab switch — reduces unnecessary network calls
     revalidateOnReconnect: true, // Refetch on reconnect
-    dedupingInterval: 5000,    // 5s dedup to prevent excessive refetching
-    keepPreviousData: true,    // Show previous data while fetching new data
-    refreshInterval: 30000,    // Poll every 30s as backup to realtime
+    dedupingInterval: 10000,     // 10s dedup to prevent excessive refetching
+    keepPreviousData: true,      // Show previous data while fetching new data
+    refreshInterval: 0,          // Disabled — realtime subscription handles live updates
   });
 
   // =============================================
   // REALTIME SUBSCRIPTION — Auto-refetch on changes
+  // Only subscribe to frequently-changing tables to reduce WebSocket overhead
   // =============================================
+  const REALTIME_TABLES = new Set([
+    'jobs', 'leads', 'invoices', 'payments_received',
+    'follow_ups', 'dispatches', 'sales_orders', 'quotations',
+    'design_tasks', 'eod_reports'
+  ]);
+
   useEffect(() => {
     if (!isSupabaseConfigured() || !key) return;
+    // Skip realtime for static/rarely-changing tables
+    if (!REALTIME_TABLES.has(tableName)) return;
 
     const channelName = `realtime-${tableName}-${stableFilter}`;
 
@@ -324,8 +333,11 @@ export function useSalesOrders() {
 // =============================================
 export function useJobs(options?: UseSupabaseQueryOptions) {
   const { profile } = useAuth();
+  // Lightweight default: only fetch client/vendor names for list views
+  // Pages needing full relations can pass select: '*, client:clients(*), ...' in options
+  const defaultSelect = '*, client:clients(id, name), vendor:vendors(id, name), designer:designers(id, name)';
   const { data, loading, error, refetch } = useSupabaseQuery<Job>('jobs', {
-    select: '*, client:clients(*), vendor:vendors(*), designer:designers(*), invoices(*)',
+    select: options?.select || defaultSelect,
     orderBy: { column: 'created_at', ascending: false },
     ...options
   });
@@ -1176,8 +1188,8 @@ export function useDashboardStats() {
 
     fetchStats();
 
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchStats, 30000);
+    // Refresh every 2 minutes (stats don't change that frequently)
+    const interval = setInterval(fetchStats, 120000);
 
     // Refresh when tab becomes visible
     const handleVisibility = () => {
