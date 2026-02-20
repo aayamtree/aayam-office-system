@@ -300,7 +300,7 @@ export default function MarketingFollowUpsPage() {
             <AlertCircle className="text-red-600 w-5 h-5" />
             <h2 className="font-semibold text-red-900">Overdue ({overdueFollowUps.length})</h2>
           </div>
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {overdueFollowUps.map((f: any) => <FollowUpCard key={f.id} followUp={f} showDate />)}
           </div>
         </div>
@@ -310,12 +310,12 @@ export default function MarketingFollowUpsPage() {
       <div className="space-y-4">
         {todayFollowUps.length > 0 && <div className="bg-muted p-4 rounded-lg border border-border">
           <h2 className="font-bold text-gray-900 mb-2">Today</h2>
-          <div className="space-y-2">{todayFollowUps.map((f: any) => <FollowUpCard key={f.id} followUp={f} />)}</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{todayFollowUps.map((f: any) => <FollowUpCard key={f.id} followUp={f} />)}</div>
         </div>}
 
         {upcomingFollowUps.length > 0 && <div className="p-4 border rounded-lg bg-gray-50">
           <h2 className="font-bold text-gray-700 mb-2">Upcoming</h2>
-          <div className="space-y-2">{upcomingFollowUps.map((f: any) => <FollowUpCard key={f.id} followUp={f} showDate />)}</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{upcomingFollowUps.map((f: any) => <FollowUpCard key={f.id} followUp={f} showDate />)}</div>
         </div>}
       </div>
 
