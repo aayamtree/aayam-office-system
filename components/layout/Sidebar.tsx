@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useDashboardStats } from '@/lib/hooks';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import {
   LayoutDashboard,
@@ -224,6 +225,17 @@ export default function Sidebar({ isOpen, onClose, onHoverChange }: SidebarProps
   const [hovered, setHovered] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  // Lightweight active leads count for sidebar badge
+  const [activeLeadsCount, setActiveLeadsCount] = useState(0);
+  useEffect(() => {
+    supabase.from('leads')
+      .select('id', { count: 'exact', head: true })
+      .not('status', 'in', '(converted,lost)')
+      .then(({ count }) => {
+        setActiveLeadsCount(count || 0);
+      });
+  }, []);
+
   const toggleExpanded = (name: string) => {
     setExpandedItems(prev =>
       prev.includes(name)
@@ -389,7 +401,7 @@ export default function Sidebar({ isOpen, onClose, onHoverChange }: SidebarProps
                     <div className="ml-6 mt-1 space-y-1 border-l border-border pl-3">
                       {item.submenu!.map((sub) => {
                         let badge = 0;
-                        if (sub.name === 'Leads') badge = stats?.leadsThisMonth || 0;
+                        if (sub.name === 'Leads') badge = activeLeadsCount;
                         if (sub.name === 'Production Queue') badge = (stats?.pipeline?.printing || 0) + (stats?.pipeline?.finishing || 0);
 
                         const showBadge = badge > 0;

@@ -21,9 +21,13 @@
 ## 🔴 Database & Query Rules
 
 ### Supabase Foreign Key Joins
-**Mistake:** Used named FK constraints like `profiles!leads_assigned_to_fkey` that may not exist in DB.
-**Rule:** Use column-based FK pattern: `profiles!column_name(fields)` instead of constraint names.
-**Example:** `assigned_user:profiles!assigned_to(full_name)` ✅ NOT `profiles!leads_assigned_to_fkey` ❌
+**Mistake:** Used FK join patterns (`profiles!assigned_to`) on columns that have NO foreign key constraint in the DB.
+**Root Cause:** The `leads` table was created from `CREATE_MARKETING_TABLES_SIMPLE.sql` which defines `assigned_to UUID` and `created_by UUID` WITHOUT `REFERENCES profiles(id)`. Without the FK constraint, ALL join patterns fail silently.
+**Rule:** BEFORE using FK joins in Supabase select:
+1. Check the actual table creation SQL to verify FK constraints exist
+2. If no FK constraint → use `select: '*'` and look up related data client-side
+3. If FK exists → use `profiles!column_name(fields)` pattern
+**Fallback:** Fetch profiles separately and look up names via `.find()` on the client.
 
 ### SQL Index Scripts Must Be Error-Proof
 **Mistake:** Bare `CREATE INDEX` statements fail if table/column doesn't exist.
@@ -74,4 +78,4 @@
 ---
 
 *Last updated: 2026-02-20*
-*Corrections captured: 6*
+*Corrections captured: 7*

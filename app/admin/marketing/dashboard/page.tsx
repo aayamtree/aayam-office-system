@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useLeads, useFollowUps } from '@/lib/hooks';
+import { supabase } from '@/lib/supabase';
 import {
     Users, TrendingUp, AlertCircle, CheckCircle, Clock, Calendar,
     IndianRupee, FileText, ArrowRight, Activity, Lock, Unlock, RotateCcw
@@ -54,6 +55,22 @@ export default function AdminMarketingDashboard() {
     const { followUps, loading: followUpsLoading } = useFollowUps();
     const [isLocked, setIsLocked] = useState(true);
 
+    // Fetch profiles for name resolution (since leads table has no FK to profiles)
+    const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
+    useEffect(() => {
+        supabase.from('profiles')
+            .select('id, full_name')
+            .in('role', ['marketing', 'admin'])
+            .eq('is_active', true)
+            .then(({ data }) => {
+                if (data) {
+                    const map: Record<string, string> = {};
+                    data.forEach(p => { map[p.id] = p.full_name || 'Unknown'; });
+                    setProfilesMap(map);
+                }
+            });
+    }, []);
+
     // Calculate stats
     const today = new Date().toISOString().split('T')[0];
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -67,10 +84,10 @@ export default function AdminMarketingDashboard() {
         activeQuotations: 0,
     };
 
-    // Get team activity
+    // Get team activity — use profilesMap for name lookup
     const teamActivity = leads?.reduce((acc: any, lead) => {
-        const owner = lead.assigned_user?.full_name || 'Unassigned';
         const ownerId = lead.assigned_to || 'unassigned';
+        const owner = profilesMap[ownerId] || 'Unassigned';
         if (!acc[ownerId]) {
             acc[ownerId] = { name: owner, leads: 0, followUps: 0, converted: 0, commission: 0 };
         }

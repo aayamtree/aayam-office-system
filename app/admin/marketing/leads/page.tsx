@@ -335,10 +335,10 @@ export default function LeadsPage() {
                                         {lead.lead_number}
                                     </span>
                                     <div className="flex items-center gap-2">
-                                        {/* Owner Tag - visible for admin */}
-                                        {profile?.role === 'admin' && lead.assigned_user && (
+                                        {/* Assigned To — visible for admin */}
+                                        {profile?.role === 'admin' && lead.assigned_to && (
                                             <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-full font-medium">
-                                                👤 {lead.assigned_user.full_name || 'Unassigned'}
+                                                👤 {staffList.find(s => s.id === lead.assigned_to)?.full_name || 'Unassigned'}
                                             </span>
                                         )}
                                         <span className={`${headerTextColor}/90 text-xs px-3 py-1 bg-white/20 rounded-full font-medium capitalize`}>
