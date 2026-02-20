@@ -393,7 +393,7 @@ export default function QCCheckPage() {
 
         {/* Orders Grid */}
         {filteredJobs.length === 0 && <div className="text-center py-10 text-gray-500">No jobs found.</div>}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {filteredJobs.map((job) => (
             <div key={job.id} className="rounded-lg p-3 border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all">
               {/* Top: badges */}
