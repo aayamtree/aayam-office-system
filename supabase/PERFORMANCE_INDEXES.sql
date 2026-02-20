@@ -9,50 +9,56 @@
 -- JOBS (most queried table)
 -- ─────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_jobs_current_stage ON jobs(current_stage);
-CREATE INDEX IF NOT EXISTS idx_jobs_client_deadline ON jobs(client_deadline);
-CREATE INDEX IF NOT EXISTS idx_jobs_internal_deadline ON jobs(internal_deadline);
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_jobs_client_deadline ON jobs(client_deadline); EXCEPTION WHEN undefined_column THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_jobs_internal_deadline ON jobs(internal_deadline); EXCEPTION WHEN undefined_column THEN NULL; END $$;
 CREATE INDEX IF NOT EXISTS idx_jobs_created_at ON jobs(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_jobs_client_id ON jobs(client_id);
-CREATE INDEX IF NOT EXISTS idx_jobs_vendor_id ON jobs(vendor_id);
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_jobs_client_id ON jobs(client_id); EXCEPTION WHEN undefined_column THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_jobs_vendor_id ON jobs(vendor_id); EXCEPTION WHEN undefined_column THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_jobs_designer_id ON jobs(designer_id); EXCEPTION WHEN undefined_column THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_jobs_assigned_to ON jobs(assigned_to); EXCEPTION WHEN undefined_column THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_jobs_payment_status ON jobs(payment_status); EXCEPTION WHEN undefined_column THEN NULL; END $$;
+-- Composite index for dashboard pipeline queries
 DO $$ BEGIN
-  CREATE INDEX IF NOT EXISTS idx_jobs_designer_id ON jobs(designer_id);
+  CREATE INDEX IF NOT EXISTS idx_jobs_stage_deadline ON jobs(current_stage, client_deadline)
+    WHERE current_stage NOT IN ('delivered', 'cancelled');
 EXCEPTION WHEN undefined_column THEN NULL;
 END $$;
-CREATE INDEX IF NOT EXISTS idx_jobs_assigned_to ON jobs(assigned_to);
-CREATE INDEX IF NOT EXISTS idx_jobs_payment_status ON jobs(payment_status);
--- Composite index for dashboard pipeline queries
-CREATE INDEX IF NOT EXISTS idx_jobs_stage_deadline ON jobs(current_stage, client_deadline)
-  WHERE current_stage NOT IN ('delivered', 'cancelled');
 
 -- ─────────────────────────────────────────────
 -- LEADS
 -- ─────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
-CREATE INDEX IF NOT EXISTS idx_leads_assigned_to ON leads(assigned_to);
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status); EXCEPTION WHEN undefined_column THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_leads_assigned_to ON leads(assigned_to); EXCEPTION WHEN undefined_column THEN NULL; END $$;
 CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_leads_next_follow_up ON leads(next_follow_up);
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_leads_next_follow_up ON leads(next_follow_up); EXCEPTION WHEN undefined_column THEN NULL; END $$;
 -- Composite for dashboard follow-up queries
-CREATE INDEX IF NOT EXISTS idx_leads_followup_active ON leads(next_follow_up, status)
-  WHERE status NOT IN ('won', 'lost', 'converted');
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS idx_leads_followup_active ON leads(next_follow_up, status)
+    WHERE status NOT IN ('won', 'lost', 'converted');
+EXCEPTION WHEN undefined_column THEN NULL;
+END $$;
 
 -- ─────────────────────────────────────────────
 -- INVOICES
 -- ─────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_invoices_payment_status ON invoices(payment_status);
-CREATE INDEX IF NOT EXISTS idx_invoices_job_id ON invoices(job_id);
-CREATE INDEX IF NOT EXISTS idx_invoices_client_id ON invoices(client_id);
-CREATE INDEX IF NOT EXISTS idx_invoices_due_date ON invoices(due_date);
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_invoices_payment_status ON invoices(payment_status); EXCEPTION WHEN undefined_column THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_invoices_job_id ON invoices(job_id); EXCEPTION WHEN undefined_column THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_invoices_client_id ON invoices(client_id); EXCEPTION WHEN undefined_column THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_invoices_due_date ON invoices(due_date); EXCEPTION WHEN undefined_column THEN NULL; END $$;
 CREATE INDEX IF NOT EXISTS idx_invoices_created_at ON invoices(created_at DESC);
 -- Composite for overdue payment queries
-CREATE INDEX IF NOT EXISTS idx_invoices_unpaid_due ON invoices(due_date)
-  WHERE payment_status != 'paid';
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS idx_invoices_unpaid_due ON invoices(due_date)
+    WHERE payment_status != 'paid';
+EXCEPTION WHEN undefined_column THEN NULL;
+END $$;
 
 -- ─────────────────────────────────────────────
 -- FOLLOW-UPS
 -- ─────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_follow_ups_date ON follow_ups(follow_up_date);
-CREATE INDEX IF NOT EXISTS idx_follow_ups_lead_id ON follow_ups(lead_id);
-CREATE INDEX IF NOT EXISTS idx_follow_ups_status ON follow_ups(status);
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_follow_ups_date ON follow_ups(follow_up_date); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_follow_ups_lead_id ON follow_ups(lead_id); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_follow_ups_status ON follow_ups(status); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
 
 -- ─────────────────────────────────────────────
 -- CLIENTS (only create if columns exist)
@@ -70,32 +76,32 @@ END $$;
 -- ─────────────────────────────────────────────
 -- SALES ORDERS
 -- ─────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_sales_orders_client_id ON sales_orders(client_id);
-CREATE INDEX IF NOT EXISTS idx_sales_orders_created_at ON sales_orders(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_sales_orders_status ON sales_orders(status);
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_sales_orders_client_id ON sales_orders(client_id); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_sales_orders_created_at ON sales_orders(created_at DESC); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_sales_orders_status ON sales_orders(status); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
 
 -- ─────────────────────────────────────────────
 -- DISPATCHES
 -- ─────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_dispatches_status ON dispatches(status);
-CREATE INDEX IF NOT EXISTS idx_dispatches_job_id ON dispatches(job_id);
-CREATE INDEX IF NOT EXISTS idx_dispatches_created_at ON dispatches(created_at DESC);
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_dispatches_status ON dispatches(status); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_dispatches_job_id ON dispatches(job_id); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_dispatches_created_at ON dispatches(created_at DESC); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
 
 -- ─────────────────────────────────────────────
 -- DESIGN TASKS
 -- ─────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_design_tasks_status ON design_tasks(status);
-CREATE INDEX IF NOT EXISTS idx_design_tasks_assigned_to ON design_tasks(assigned_to);
-CREATE INDEX IF NOT EXISTS idx_design_tasks_job_id ON design_tasks(job_id);
-CREATE INDEX IF NOT EXISTS idx_design_tasks_priority ON design_tasks(priority);
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_design_tasks_status ON design_tasks(status); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_design_tasks_assigned_to ON design_tasks(assigned_to); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_design_tasks_job_id ON design_tasks(job_id); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_design_tasks_priority ON design_tasks(priority); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
 
 -- ─────────────────────────────────────────────
 -- QUOTATIONS
 -- ─────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_quotations_created_by ON quotations(created_by);
-CREATE INDEX IF NOT EXISTS idx_quotations_client_id ON quotations(client_id);
-CREATE INDEX IF NOT EXISTS idx_quotations_status ON quotations(status);
-CREATE INDEX IF NOT EXISTS idx_quotations_created_at ON quotations(created_at DESC);
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_quotations_created_by ON quotations(created_by); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_quotations_client_id ON quotations(client_id); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_quotations_status ON quotations(status); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_quotations_created_at ON quotations(created_at DESC); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
 
 -- ─────────────────────────────────────────────
 -- PAYMENTS RECEIVED
@@ -128,14 +134,15 @@ END $$;
 -- ─────────────────────────────────────────────
 -- ACTIVITY LOGS
 -- ─────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_activity_logs_user_id ON activity_logs(user_id);
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at DESC); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_activity_logs_user_id ON activity_logs(user_id); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
 
 -- ─────────────────────────────────────────────
 -- EOD REPORTS
 -- ─────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_eod_reports_user_id ON eod_reports(user_id);
-CREATE INDEX IF NOT EXISTS idx_eod_reports_date ON eod_reports(report_date DESC);
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_eod_reports_user_id ON eod_reports(user_id); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_eod_reports_date ON eod_reports(report_date DESC); EXCEPTION WHEN undefined_column OR undefined_table THEN NULL; END $$;
+
 
 -- ─────────────────────────────────────────────
 -- CALENDAR EVENTS
