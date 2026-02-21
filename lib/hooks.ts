@@ -294,7 +294,7 @@ export function useDesigners() {
 // =============================================
 export function useSalesOrders() {
   const { data, loading, error, refetch } = useSupabaseQuery<SalesOrder>('sales_orders', {
-    select: '*, client:clients(*)', // Add quotation link when available
+    select: '*, client:clients(id, name, company, phone, email)',
     orderBy: { column: 'created_at', ascending: false }
   });
 
@@ -526,7 +526,7 @@ export function useProductCategories() {
 // =============================================
 export function useInvoices() {
   const { data, loading, error, refetch } = useSupabaseQuery<Invoice>('invoices', {
-    select: '*, client:clients(*), job:jobs(*), items:invoice_items(*)',
+    select: '*, client:clients(id, name, company), job:jobs(id, job_number, project_name), items:invoice_items(*)',
     orderBy: { column: 'created_at', ascending: false },
     limit: 200  // Default pagination
   });
@@ -896,7 +896,7 @@ export function useBankTransactions(accountId?: string) {
 // =============================================
 export function useDesignTasks() {
   const { data, loading, error, refetch } = useSupabaseQuery<DesignTask>('design_tasks', {
-    select: '*, client:clients(*), job:jobs(*), designer:designers(*)',
+    select: '*, client:clients(id, name, company), job:jobs(id, job_number, project_name, current_stage), designer:designers(id, name, email)',
     orderBy: { column: 'created_at', ascending: false }
   });
 
@@ -962,7 +962,7 @@ export function useDesignTasks() {
 // =============================================
 export function usePurchaseBills() {
   const { data, loading, error, refetch } = useSupabaseQuery<PurchaseBill>('purchase_bills', {
-    select: '*, vendor:vendors(*), job:jobs(*)',
+    select: '*, vendor:vendors(id, name, company, phone), job:jobs(id, job_number, project_name)',
     orderBy: { column: 'created_at', ascending: false }
   });
 
@@ -1020,7 +1020,7 @@ export function usePurchaseBills() {
 // =============================================
 export function useDispatches() {
   const { data, loading, error, refetch } = useSupabaseQuery<Dispatch>('dispatches', {
-    select: '*, client:clients(*), job:jobs(*)',
+    select: '*, client:clients(id, name, company, phone, address), job:jobs(id, job_number, project_name)',
     orderBy: { column: 'created_at', ascending: false }
   });
 
@@ -1779,7 +1779,7 @@ export function useReminders() {
 // =============================================
 export function useExpenses() {
   const { data, loading, error, refetch } = useSupabaseQuery<import('@/types/database').Expense>('expenses', {
-    select: '*, bank_account:bank_accounts(*)',
+    select: '*, bank_account:bank_accounts(id, bank_name, account_name, account_number)',
     orderBy: { column: 'expense_date', ascending: false }
   });
 
@@ -2548,7 +2548,7 @@ export function useCommissions() {
     : [{ column: 'marketing_person_id', value: user?.id }]; // Marketing users see only their own
 
   const { data, loading, error, refetch } = useSupabaseQuery<Commission>('commissions', {
-    select: '*, marketing_person:profiles!marketing_person_id(*)',
+    select: '*, marketing_person:profiles!marketing_person_id(id, full_name, email, role)',
     filter,
     orderBy: { column: 'created_at', ascending: false }
   });
