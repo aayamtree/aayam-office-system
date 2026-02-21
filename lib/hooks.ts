@@ -20,6 +20,8 @@ export interface UseSupabaseQueryOptions {
   filter?: { column: string; value: any; op?: 'eq' | 'neq' | 'in' | 'lte' | 'gte' }[];
   orderBy?: { column: string; ascending?: boolean };
   limit?: number;
+  page?: number;      // 1-indexed page number for pagination
+  pageSize?: number;   // Number of rows per page (default: 50)
 }
 
 export function useSupabaseQuery<T>(
@@ -32,7 +34,7 @@ export function useSupabaseQuery<T>(
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Key for SWR cache
-  const key = isSupabaseConfigured() ? [tableName, stableFilter, stableOrderBy, options?.select, options?.limit] : null;
+  const key = isSupabaseConfigured() ? [tableName, stableFilter, stableOrderBy, options?.select, options?.limit, options?.page, options?.pageSize] : null;
 
   const fetcher = async () => {
     let query = supabase
@@ -58,8 +60,12 @@ export function useSupabaseQuery<T>(
       });
     }
 
-    // Apply limit
-    if (options?.limit) {
+    // Apply pagination (range) or simple limit
+    if (options?.page && options?.pageSize) {
+      const from = (options.page - 1) * options.pageSize;
+      const to = from + options.pageSize - 1;
+      query = query.range(from, to);
+    } else if (options?.limit) {
       query = query.limit(options.limit);
     }
 
@@ -75,11 +81,11 @@ export function useSupabaseQuery<T>(
   };
 
   const { data, error, isLoading, mutate } = useSWR(key, fetcher, {
-    revalidateOnFocus: true,     // Refetch when admin switches back to this tab
+    revalidateOnFocus: false,    // PERF: Don't refetch on tab switch — saves API calls
     revalidateOnReconnect: true, // Refetch on reconnect
     dedupingInterval: 30000,     // 30s dedup — navigating between pages reuses cached data
     keepPreviousData: true,      // Show previous data while fetching new data
-    refreshInterval: 60000,      // Auto-refresh every 60s — keeps all admins in sync
+    // PERF: No refreshInterval — no auto-polling. Data refreshes on writes via mutate().
     fallbackData: [] as T[],     // Instant render with empty array, no loading state on revisit
   });
 
@@ -90,7 +96,7 @@ export function useSupabaseQuery<T>(
   // Reduced from 10 → 2 to save ~8 WebSocket connections per component on free tier.
   // =============================================
   const REALTIME_TABLES = new Set([
-    'jobs',          // Job stage changes from multiple users (designers, dispatch, admin)
+    // PERF: Removed 'jobs' — saves 1 WebSocket connection. Jobs sync via SWR mutate() on writes.
     'design_tasks',  // Designers need to see new task assignments instantly
   ]);
 
@@ -341,7 +347,7 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
   const { data, loading, error, refetch } = useSupabaseQuery<Job>('jobs', {
     select: options?.select || defaultSelect,
     orderBy: { column: 'created_at', ascending: false },
-    limit: 200,  // Default pagination — prevents unbounded fetches
+    // PERF: No default limit — callers use pagination via page/pageSize or explicit limit
     ...options
   });
 

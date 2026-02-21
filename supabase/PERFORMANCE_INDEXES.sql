@@ -44,6 +44,7 @@ BEGIN
   CREATE INDEX IF NOT EXISTS idx_jobs_client_id ON jobs(client_id);
   CREATE INDEX IF NOT EXISTS idx_jobs_created_at ON jobs(created_at DESC);
   CREATE INDEX IF NOT EXISTS idx_jobs_payment_status ON jobs(payment_status);
+  CREATE INDEX IF NOT EXISTS idx_jobs_client_deadline ON jobs(client_deadline);
 EXCEPTION WHEN undefined_column OR undefined_table THEN
   RAISE NOTICE 'Skipped some jobs indexes';
 END $$;

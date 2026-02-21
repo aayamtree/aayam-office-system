@@ -110,7 +110,9 @@ export default function AdminDashboardShadcn() {
     const { profile } = useAuth();
     const router = useRouter();
     const { stats: dashboardStats, loading: statsLoading } = useDashboardStats();
+    // PERF: Fetch only the fields rendered in the Recent Orders table
     const { jobs: recentJobs, loading: jobsLoading } = useJobs({
+        select: 'id, job_number, project_name, current_stage, total_amount, client:clients(name)',
         limit: 5,
         orderBy: { column: 'created_at', ascending: false }
     });
