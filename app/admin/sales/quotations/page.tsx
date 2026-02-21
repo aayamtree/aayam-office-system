@@ -7,7 +7,7 @@ import {
   Calendar, User, FileText, IndianRupee, CheckCircle, XCircle, Clock, Loader2, Download
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
-import { useQuotations, useClients, useJobs, useLeads, useFollowUps } from '@/lib/hooks';
+import { useQuotations, useClients, useJobs, useLeads, useFollowUps, useProductCategories } from '@/lib/hooks';
 import { Quotation, Client, QuotationItem, JobStatus } from '@/types/database';
 import { downloadQuotationPDF, defaultCompanyData } from '@/components/quotation/QuotationPDF';
 import { formatDate } from '@/lib/utils';
@@ -19,6 +19,7 @@ export default function QuotationsPage() {
   const { user, profile } = useAuth();
   const { quotations: allQuotations, loading: quotationsLoading, createQuotation, updateQuotation, saveQuotationItems, deleteQuotation } = useQuotations();
   const { linkQuotationToFollowUp } = useFollowUps();
+  const { categories: dbCategories } = useProductCategories();
   const confirm = useConfirm();
 
   // Show all quotations
@@ -77,8 +78,18 @@ export default function QuotationsPage() {
         new: params.get('new'),
         clientId: params.get('clientId'),
         leadId: params.get('leadId'),
-        followUpId: params.get('followUpId')
+        followUpId: params.get('followUpId'),
+        highlight: params.get('highlight')
       });
+
+      // Handle highlight param — auto-fill search to jump to specific quote
+      const highlightQuote = params.get('highlight');
+      if (highlightQuote) {
+        setSearchQuery(highlightQuote);
+        // Clear URL to prevent sticky filter
+        window.history.replaceState({}, '', window.location.pathname);
+        return; // Don't process other params
+      }
 
       if (params.get('new') === 'true') {
         const clientIdParam = params.get('clientId');
@@ -759,11 +770,9 @@ export default function QuotationsPage() {
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all"
                     >
                       <option value="">Select Product</option>
-                      <option value="box">Box / Packaging</option>
-                      <option value="pouch">Pouch / Bag</option>
-                      <option value="label">Label</option>
-                      <option value="sticker">Sticker / Decal</option>
-                      <option value="other">Other Product</option>
+                      {dbCategories.map((c: any) => (
+                        <option key={c.id || c.name} value={c.name}>{c.name}</option>
+                      ))}
                     </select>
                   </div>
                 )}

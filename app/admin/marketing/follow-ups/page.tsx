@@ -138,8 +138,9 @@ export default function MarketingFollowUpsPage() {
   };
 
   const handleViewQuote = (followUp: any) => {
-    // Navigate to quotations page (could add highlight or filter)
-    router.push(`/admin/marketing/quotations`);
+    // Navigate to quotations page with quote number pre-filled in search
+    const quoteNum = followUp.quotationNumber || '';
+    router.push(`/admin/marketing/quotations?highlight=${encodeURIComponent(quoteNum)}`);
   };
 
   const getTypeInfo = (type: string) => followUpTypes.find(t => t.id === type) || followUpTypes[0];
