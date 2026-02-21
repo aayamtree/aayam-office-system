@@ -30,8 +30,11 @@ CREATE INDEX IF NOT EXISTS idx_jobs_created_at ON jobs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_jobs_payment_status ON jobs(payment_status);
 
 -- === DESIGN TASKS ===
-CREATE INDEX IF NOT EXISTS idx_design_tasks_designer_id ON design_tasks(designer_id);
+-- Filtered by assigned_to (designer)
+CREATE INDEX IF NOT EXISTS idx_design_tasks_assigned_to ON design_tasks(assigned_to);
+-- Filtered by status
 CREATE INDEX IF NOT EXISTS idx_design_tasks_status ON design_tasks(status);
+-- Filtered by job_id
 CREATE INDEX IF NOT EXISTS idx_design_tasks_job_id ON design_tasks(job_id);
 
 -- === INVOICES ===
