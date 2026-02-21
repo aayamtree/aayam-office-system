@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { useClients, useVendors, useDesigners } from '@/lib/hooks';
+import { useClients, useVendors, useDesigners, useProductCategories } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { Job } from '@/types/database';
@@ -12,7 +12,6 @@ import { useSession } from 'next-auth/react';
 import { createProjectCalendarEvent, createCalendarEvent } from '@/lib/google-calendar';
 
 const jobTypes = ['Design Only', 'Print Only', 'Design + Print'];
-const productCategories = ['Banner', 'Book', 'Box', 'Brochure', 'Label', 'Poster', 'Sticker', 'Other'];
 const priorities = ['low', 'normal', 'high', 'urgent'];
 
 interface UnifiedJobFormProps {
@@ -35,6 +34,7 @@ export default function UnifiedJobForm({
     const { clients } = useClients();
     const { vendors } = useVendors();
     const { designers } = useDesigners();
+    const { categories: productCategories } = useProductCategories();
 
     const [saving, setSaving] = useState(false);
     const [showAddClient, setShowAddClient] = useState(false);
@@ -324,7 +324,7 @@ export default function UnifiedJobForm({
                                 value={formData.product_category}
                                 onChange={e => setFormData({ ...formData, product_category: e.target.value })}
                             >
-                                {productCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                                {productCategories.map((c: any) => <option key={c.id || c.name} value={c.name}>{c.name}</option>)}
                             </select>
                             <p className="text-xs text-gray-500 mt-1">Used for production checklists</p>
                         </div>

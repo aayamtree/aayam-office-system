@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { X, Loader2, Tag } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useProductCategories } from '@/lib/hooks';
 
 interface ProductCategoryQuickAddProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ interface ProductCategoryQuickAddProps {
 
 export default function ProductCategoryQuickAdd({ isOpen, onClose, onSuccess }: ProductCategoryQuickAddProps) {
     const [saving, setSaving] = useState(false);
+    const { categories: existingCategories } = useProductCategories();
     const [formData, setFormData] = useState({
         name: '',
         description: '',
@@ -20,7 +22,7 @@ export default function ProductCategoryQuickAdd({ isOpen, onClose, onSuccess }: 
 
     if (!isOpen) return null;
 
-    const checklistTypes = ['Banner', 'Book', 'Box', 'Brochure', 'Label', 'Poster'];
+    const checklistTypes = existingCategories.map((c: any) => c.name);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

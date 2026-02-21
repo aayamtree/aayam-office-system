@@ -6,21 +6,19 @@ import {
   Plus, Search, FileText, Building2, Calendar, IndianRupee, X, Eye, Edit, Trash2,
   Package, Filter, ArrowLeft, CheckCircle, Clock, AlertCircle, Loader2
 } from 'lucide-react';
-import { usePurchaseBills, useVendors, useJobs } from '@/lib/hooks';
+import { usePurchaseBills, useVendors, useJobs, useProductCategories } from '@/lib/hooks';
 import { formatDate } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useConfirm } from '@/components/ConfirmModal';
 
-const productCategories = [
-  'Pouches', 'Labels', 'Boxes', 'Brochures', 'Visiting Cards', 'Envelopes',
-  'Paper Tubes', 'Letterheads', 'Catalogs', 'Packaging', 'Flex/Banner', 'Other'
-];
+
 
 export default function VendorPurchasesPage() {
   const { purchaseBills: allPurchases, loading, createPurchaseBill, updatePurchaseBill, deletePurchaseBill } = usePurchaseBills();
   const { vendors } = useVendors();
   const { jobs } = useJobs();
+  const { categories: productCategories } = useProductCategories();
 
   // Sort by date (descending) explicitly if not handled by hook
   const purchases = (allPurchases || []).sort((a, b) => new Date(b.bill_date).getTime() - new Date(a.bill_date).getTime());
@@ -351,7 +349,7 @@ export default function VendorPurchasesPage() {
                   <label className="block text-sm font-medium mb-1.5">Product Category *</label>
                   <select required value={formData.productCategory} onChange={(e) => setFormData({ ...formData, productCategory: e.target.value })}
                     className="w-full px-3 py-2.5 border rounded-lg">
-                    {productCategories.map(t => <option key={t} value={t}>{t}</option>)}
+                    {productCategories.map((t: any) => <option key={t.id || t.name} value={t.name}>{t.name}</option>)}
                   </select>
                 </div>
                 <div>
