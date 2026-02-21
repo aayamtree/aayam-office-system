@@ -334,7 +334,7 @@ export function useSalesOrders() {
 // JOBS HOOK
 // =============================================
 export function useJobs(options?: UseSupabaseQueryOptions) {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   // Lightweight default: only fetch client/vendor names for list views
   // Pages needing full relations can pass select: '*, client:clients(*), ...' in options
   const defaultSelect = '*, client:clients(id, name), vendor:vendors(id, name), designer:designers(id, name)';
@@ -371,7 +371,7 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
       .single();
 
     if (!error && data) {
-      logActivity('Created Job', 'job', data.id, `New job ${jobNumber} created for ${data.client_name || 'client'}`);
+      logActivity('Created Job', 'job', data.id, `New job ${jobNumber} created for ${data.client_name || 'client'}`, undefined, user?.id);
 
       // Auto-create calendar event for deadline
       if (data.client_deadline && profile?.id) {
@@ -454,12 +454,13 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
       notes
     }]);
 
-    // Log activity
-    await logActivity(
+    // Log activity (fire-and-forget)
+    logActivity(
       'Updated Job Stage',
       'Sales',
       id,
-      `Job ${job?.job_number} moved from ${job?.current_stage || 'new'} to ${newStage}${notes ? ': ' + notes : ''}`
+      `Job ${job?.job_number} moved from ${job?.current_stage || 'new'} to ${newStage}${notes ? ': ' + notes : ''}`,
+      undefined, user?.id
     );
 
     refetch();
@@ -633,7 +634,7 @@ export function useLeads() {
       .single();
 
     if (!error && data) {
-      logActivity('Created Lead', 'lead', data.id, `New lead ${data.lead_number} - ${data.name}`);
+      logActivity('Created Lead', 'lead', data.id, `New lead ${data.lead_number} - ${data.name}`, undefined, user?.id);
       refetch();
     }
     return { data, error: error?.message };
@@ -1019,6 +1020,7 @@ export function usePurchaseBills() {
 // DISPATCHES HOOK
 // =============================================
 export function useDispatches() {
+  const { user } = useAuth();
   const { data, loading, error, refetch } = useSupabaseQuery<Dispatch>('dispatches', {
     select: '*, client:clients(id, name, company, phone, address), job:jobs(id, job_number, project_name)',
     orderBy: { column: 'created_at', ascending: false }
@@ -1040,12 +1042,13 @@ export function useDispatches() {
       if (dispatch.job_id) {
         await autoProgressJob(dispatch.job_id, 'dispatch_created');
       }
-      // Log activity
-      await logActivity(
+      // Log activity (fire-and-forget)
+      logActivity(
         'Created Dispatch',
         'Dispatch',
         data.id,
-        `Created dispatch ${data.dispatch_number} - ${dispatch.packages} package(s)`
+        `Created dispatch ${data.dispatch_number} - ${dispatch.packages} package(s)`,
+        undefined, user?.id
       );
       refetch();
     }
@@ -1254,12 +1257,13 @@ export function useQuotations() {
       .single();
 
     if (!error && data) {
-      // Log activity
-      await logActivity(
+      // Log activity (fire-and-forget)
+      logActivity(
         'Created Quotation',
         'Sales',
         data.id,
-        `Created quotation ${data.quote_number} for ₹${quotation.total_amount?.toLocaleString() || 0}`
+        `Created quotation ${data.quote_number} for ₹${quotation.total_amount?.toLocaleString() || 0}`,
+        undefined, user?.id
       );
       refetch();
     }
@@ -2279,6 +2283,7 @@ export function useCalendarEvents(startDate?: string, endDate?: string) {
 // DAILY WORK REPORTS HOOK (EOD Reports)
 // =============================================
 export function useDailyReports(userId?: string, dateFilter?: { start?: string; end?: string }) {
+  const { user } = useAuth();
   // Build options for main reports
   const options: UseSupabaseQueryOptions = {
     select: '*, task_updates:report_task_updates(*, job:jobs(*, client:clients(*)))',
@@ -2365,12 +2370,13 @@ export function useDailyReports(userId?: string, dateFilter?: { start?: string; 
         if (updatesError) throw updatesError;
       }
 
-      // 4. Log activity
-      await logActivity(
+      // 4. Log activity (fire-and-forget)
+      logActivity(
         'Submitted EOD Report',
         'System',
         report.id,
-        `Daily work report submitted for ${reportData.report_date}`
+        `Daily work report submitted for ${reportData.report_date}`,
+        undefined, user?.id
       );
 
       refetch();
@@ -2573,11 +2579,12 @@ export function useCommissions() {
     }
 
     if (user) {
-      await logActivity(
+      logActivity(
         'Created Commission',
         'Commissions',
         newCommission.id,
-        `Created commission for ${commission.project_name || 'project'}: ₹${commission.project_total_amount}`
+        `Created commission for ${commission.project_name || 'project'}: ₹${commission.project_total_amount}`,
+        undefined, user?.id
       );
     }
 
@@ -2601,11 +2608,12 @@ export function useCommissions() {
     }
 
     if (user) {
-      await logActivity(
+      logActivity(
         'Updated Commission',
         'Commissions',
         id,
-        `Updated commission status to ${updates.status || 'updated'}`
+        `Updated commission status to ${updates.status || 'updated'}`,
+        undefined, user?.id
       );
     }
 
@@ -2627,11 +2635,12 @@ export function useCommissions() {
     }
 
     if (user) {
-      await logActivity(
+      logActivity(
         'Deleted Commission',
         'Commissions',
         id,
-        'Deleted commission record'
+        'Deleted commission record',
+        undefined, user?.id
       );
     }
 
@@ -2662,11 +2671,12 @@ export function useCommissions() {
     }
 
     if (user) {
-      await logActivity(
+      logActivity(
         'Marked Commission Paid',
         'Commissions',
         id,
-        `Marked commission as paid${paymentReference ? ` (Ref: ${paymentReference})` : ''}`
+        `Marked commission as paid${paymentReference ? ` (Ref: ${paymentReference})` : ''}`,
+        undefined, user?.id
       );
     }
 
@@ -2690,11 +2700,12 @@ export function useCommissions() {
     }
 
     if (user) {
-      await logActivity(
+      logActivity(
         'Approved Commission',
         'Commissions',
         id,
-        'Approved commission for payment'
+        'Approved commission for payment',
+        undefined, user?.id
       );
     }
 
