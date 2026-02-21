@@ -75,11 +75,11 @@ export function useSupabaseQuery<T>(
   };
 
   const { data, error, isLoading, mutate } = useSWR(key, fetcher, {
-    revalidateOnFocus: false,    // Don't refetch on tab switch — reduces unnecessary network calls
+    revalidateOnFocus: true,     // Refetch when admin switches back to this tab
     revalidateOnReconnect: true, // Refetch on reconnect
     dedupingInterval: 30000,     // 30s dedup — navigating between pages reuses cached data
     keepPreviousData: true,      // Show previous data while fetching new data
-    refreshInterval: 0,          // Disabled — realtime subscription handles live updates
+    refreshInterval: 60000,      // Auto-refresh every 60s — keeps all admins in sync
     fallbackData: [] as T[],     // Instant render with empty array, no loading state on revisit
   });
 
