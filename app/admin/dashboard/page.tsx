@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic';
 import {
     Package, CreditCard, IndianRupee, AlertTriangle, Clock,
     CheckCircle2, TrendingUp, ArrowRight, Activity, Target,
-    Lock, Unlock, RotateCcw, GripVertical, Loader2,
+    Lock, Unlock, RotateCcw, GripVertical, Loader2, Settings,
 } from 'lucide-react';
 import { useDashboardStats, useJobs } from '@/lib/hooks';
 
@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import NeedsAttentionBar from '@/components/dashboard/NeedsAttentionBar';
 import DashboardGrid, { resetLayouts, type LayoutsMap } from '@/components/dashboard/DashboardGrid';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 // ─── Lazy-loaded widgets (deferred to reduce initial page load) ──
 const WidgetSkeleton = () => (
@@ -106,6 +107,40 @@ const DEFAULT_LAYOUTS: LayoutsMap = {
     ],
 };
 
+// ─── Widget registry (key → human-readable label) ─────────────
+const WIDGET_LABELS: Record<string, string> = {
+    'kpi-revenue': '💰 Total Revenue',
+    'kpi-jobs': '📦 Active Jobs',
+    'kpi-payments': '💳 Pending Payments',
+    'kpi-orders': '📋 Orders This Month',
+    'todays-focus': '🎯 Today\'s Focus',
+    'needs-attention': '⚠️ Needs Attention',
+    'invoice-pending': '🧾 Pending Invoices',
+    'pipeline': '📊 Job Pipeline',
+    'daily-summary': '📝 Daily Summary',
+    'overdue': '⏰ Overdue Alerts',
+    'team-workload': '👥 Team Workload',
+    'recent-orders': '🛒 Recent Orders',
+    'quick-notes': '📌 Quick Notes',
+    'sales-perf': '📈 Sales Performance',
+    'calendar': '📅 Calendar',
+    'recent-files': '📁 Recent Files',
+};
+const ALL_WIDGET_KEYS = Object.keys(WIDGET_LABELS);
+const WIDGET_VISIBILITY_KEY = 'aayam-dashboard-widgets-v1';
+
+function loadWidgetVisibility(): Record<string, boolean> {
+    if (typeof window === 'undefined') return {};
+    try {
+        const saved = localStorage.getItem(WIDGET_VISIBILITY_KEY);
+        return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+}
+
+function saveWidgetVisibility(vis: Record<string, boolean>) {
+    try { localStorage.setItem(WIDGET_VISIBILITY_KEY, JSON.stringify(vis)); } catch { }
+}
+
 export default function AdminDashboardShadcn() {
     const { profile } = useAuth();
     const router = useRouter();
@@ -118,6 +153,32 @@ export default function AdminDashboardShadcn() {
     });
 
     const [isLocked, setIsLocked] = useState(true);
+    const [showWidgetSettings, setShowWidgetSettings] = useState(false);
+
+    // Widget visibility: default all ON, user can toggle OFF
+    const [widgetVisibility, setWidgetVisibility] = useState<Record<string, boolean>>(() => {
+        const saved = loadWidgetVisibility();
+        const vis: Record<string, boolean> = {};
+        ALL_WIDGET_KEYS.forEach(k => vis[k] = saved[k] !== undefined ? saved[k] : true);
+        return vis;
+    });
+
+    const toggleWidget = (key: string) => {
+        setWidgetVisibility(prev => {
+            const next = { ...prev, [key]: !prev[key] };
+            saveWidgetVisibility(next);
+            return next;
+        });
+    };
+
+    const showAllWidgets = () => {
+        const all: Record<string, boolean> = {};
+        ALL_WIDGET_KEYS.forEach(k => all[k] = true);
+        setWidgetVisibility(all);
+        saveWidgetVisibility(all);
+    };
+
+    const isWidgetVisible = (key: string) => widgetVisibility[key] !== false;
 
     // Redirect non-admin users
     useEffect(() => {
@@ -169,6 +230,32 @@ export default function AdminDashboardShadcn() {
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-page-title tracking-tight">Dashboard</h2>
                 <div className="flex items-center gap-2">
+                    <Popover open={showWidgetSettings} onOpenChange={setShowWidgetSettings}>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" size="sm" className="text-xs gap-1.5">
+                                <Settings className="h-3 w-3" /> Widgets
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="end" className="w-64 p-0">
+                            <div className="px-3 py-2 border-b flex items-center justify-between">
+                                <span className="text-xs font-semibold text-gray-700">Show / Hide Widgets</span>
+                                <button onClick={showAllWidgets} className="text-[10px] text-blue-600 hover:underline">Show All</button>
+                            </div>
+                            <div className="max-h-72 overflow-y-auto py-1">
+                                {ALL_WIDGET_KEYS.map(key => (
+                                    <label key={key} className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={widgetVisibility[key] !== false}
+                                            onChange={() => toggleWidget(key)}
+                                            className="rounded border-gray-300 text-primary focus:ring-primary h-3.5 w-3.5"
+                                        />
+                                        <span className="text-xs text-gray-700">{WIDGET_LABELS[key]}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                     {!isLocked && (
                         <Button variant="outline" size="sm" onClick={handleReset} className="text-xs gap-1.5">
                             <RotateCcw className="h-3 w-3" /> Reset Layout
@@ -195,7 +282,7 @@ export default function AdminDashboardShadcn() {
 
             <DashboardGrid defaultLayouts={DEFAULT_LAYOUTS} isLocked={isLocked}>
                 {/* ── KPI Cards ── */}
-                <div key="kpi-revenue">
+                {isWidgetVisible('kpi-revenue') && <div key="kpi-revenue">
                     <Link href="/admin/finance" className="block h-full">
                         <Card className="h-full flex flex-col hover:shadow-md transition-shadow cursor-pointer">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-4">
@@ -208,9 +295,9 @@ export default function AdminDashboardShadcn() {
                             </CardContent>
                         </Card>
                     </Link>
-                </div>
+                </div>}
 
-                <div key="kpi-jobs">
+                {isWidgetVisible('kpi-jobs') && <div key="kpi-jobs">
                     <Link href="/admin/jobs" className="block h-full">
                         <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-4">
@@ -223,9 +310,9 @@ export default function AdminDashboardShadcn() {
                             </CardContent>
                         </Card>
                     </Link>
-                </div>
+                </div>}
 
-                <div key="kpi-payments">
+                {isWidgetVisible('kpi-payments') && <div key="kpi-payments">
                     <Link href="/admin/finance/payments" className="block h-full">
                         <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-4">
@@ -238,9 +325,9 @@ export default function AdminDashboardShadcn() {
                             </CardContent>
                         </Card>
                     </Link>
-                </div>
+                </div>}
 
-                <div key="kpi-orders">
+                {isWidgetVisible('kpi-orders') && <div key="kpi-orders">
                     <Link href="/admin/sales/orders" className="block h-full">
                         <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-3 px-4">
@@ -253,10 +340,10 @@ export default function AdminDashboardShadcn() {
                             </CardContent>
                         </Card>
                     </Link>
-                </div>
+                </div>}
 
                 {/* ── Today's Focus ── */}
-                <div key="todays-focus">
+                {isWidgetVisible('todays-focus') && <div key="todays-focus">
                     <Card className="h-full flex flex-col">
                         <CardHeader className="pb-2 pt-3 px-4">
                             <CardTitle className="text-sm flex items-center gap-2">
@@ -284,10 +371,10 @@ export default function AdminDashboardShadcn() {
                             </div>
                         </CardContent>
                     </Card>
-                </div>
+                </div>}
 
                 {/* ── Alerts ── */}
-                <div key="needs-attention">
+                {isWidgetVisible('needs-attention') && <div key="needs-attention">
                     <div className="h-full overflow-auto">
                         <NeedsAttentionBar
                             overduePayments={dashboardStats.alerts.overduePayments}
@@ -298,14 +385,14 @@ export default function AdminDashboardShadcn() {
                             loading={statsLoading}
                         />
                     </div>
-                </div>
+                </div>}
 
-                <div key="invoice-pending">
+                {isWidgetVisible('invoice-pending') && <div key="invoice-pending">
                     <div className="h-full overflow-auto"><InvoicePendingWidget /></div>
-                </div>
+                </div>}
 
                 {/* ── Pipeline ── */}
-                <div key="pipeline">
+                {isWidgetVisible('pipeline') && <div key="pipeline">
                     <Card className="h-full flex flex-col">
                         <CardHeader className="pb-2 pt-3 px-4">
                             <div className="flex items-center justify-between">
@@ -342,19 +429,19 @@ export default function AdminDashboardShadcn() {
                             )}
                         </CardContent>
                     </Card>
-                </div>
+                </div>}
 
                 {/* ── Daily Summary ── */}
-                <div key="daily-summary"><div className="h-full overflow-auto"><DailySummaryWidget /></div></div>
+                {isWidgetVisible('daily-summary') && <div key="daily-summary"><div className="h-full overflow-auto"><DailySummaryWidget /></div></div>}
 
                 {/* ── Overdue ── */}
-                <div key="overdue"><div className="h-full overflow-auto"><OverdueAlertsWidget /></div></div>
+                {isWidgetVisible('overdue') && <div key="overdue"><div className="h-full overflow-auto"><OverdueAlertsWidget /></div></div>}
 
                 {/* ── Team Workload ── */}
-                <div key="team-workload"><div className="h-full overflow-auto"><TeamWorkloadWidget /></div></div>
+                {isWidgetVisible('team-workload') && <div key="team-workload"><div className="h-full overflow-auto"><TeamWorkloadWidget /></div></div>}
 
                 {/* ── Recent Orders ── */}
-                <div key="recent-orders">
+                {isWidgetVisible('recent-orders') && <div key="recent-orders">
                     <Card className="h-full overflow-hidden flex flex-col">
                         <CardHeader className="pb-2 pt-3 px-4">
                             <div className="flex items-center justify-between">
@@ -399,13 +486,13 @@ export default function AdminDashboardShadcn() {
                             </Table>
                         </CardContent>
                     </Card>
-                </div>
+                </div>}
 
                 {/* ── Quick Notes ── */}
-                <div key="quick-notes"><div className="h-full overflow-auto"><QuickNotesWidget /></div></div>
+                {isWidgetVisible('quick-notes') && <div key="quick-notes"><div className="h-full overflow-auto"><QuickNotesWidget /></div></div>}
 
                 {/* ── Sales Performance ── */}
-                <div key="sales-perf">
+                {isWidgetVisible('sales-perf') && <div key="sales-perf">
                     <Card className="h-full flex flex-col">
                         <CardHeader className="pb-2 pt-3 px-4">
                             <CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="h-4 w-4" strokeWidth={1.5} /> Sales Performance</CardTitle>
@@ -435,13 +522,13 @@ export default function AdminDashboardShadcn() {
                             )}
                         </CardContent>
                     </Card>
-                </div>
+                </div>}
 
                 {/* ── Calendar ── */}
-                <div key="calendar"><div className="h-full overflow-auto"><MiniCalendarWidget /></div></div>
+                {isWidgetVisible('calendar') && <div key="calendar"><div className="h-full overflow-auto"><MiniCalendarWidget /></div></div>}
 
                 {/* ── Recent Files ── */}
-                <div key="recent-files"><div className="h-full overflow-auto"><RecentFilesWidget showAll={true} limit={15} /></div></div>
+                {isWidgetVisible('recent-files') && <div key="recent-files"><div className="h-full overflow-auto"><RecentFilesWidget showAll={true} limit={15} /></div></div>}
 
             </DashboardGrid>
         </div>
