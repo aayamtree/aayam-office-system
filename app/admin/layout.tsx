@@ -38,8 +38,17 @@ export default function AdminLayout({
   // Close sidebar when clicking outside on mobile
   const closeSidebar = () => setSidebarOpen(false);
 
-  // NO BLOCKING SPINNER — middleware handles auth protection
-  // Render immediately, profile populates asynchronously
+  // Brief loading gate — with cookie-based sessions this resolves in <100ms
+  // (vs old 3-6s with localStorage + timeout approach)
+  if (loading) {
+    return (
+      <ConfirmProvider>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="w-8 h-8 border-3 border-muted border-t-foreground rounded-full animate-spin" />
+        </div>
+      </ConfirmProvider>
+    );
+  }
 
   return (
     <ConfirmProvider>
