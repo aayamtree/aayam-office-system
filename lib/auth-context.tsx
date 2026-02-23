@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null;
   });
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [isConfigured] = useState<boolean>(isSupabaseConfigured());
 
   // Fetch user profile (optimized with better caching)
@@ -187,71 +187,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let mounted = true;
 
-    // Get initial session with timeout
+    // Get initial session — NON-BLOCKING (middleware handles route protection)
     const initSession = async () => {
       try {
-        // Timeout for initial session fetch
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Auth Timeout')), 3000)
-        );
-        const sessionPromise = supabase.auth.getSession();
-
-        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+        const { data: { session } } = await supabase.auth.getSession();
 
         if (!mounted) return;
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          // Fetch profile but don't block - allow optimistic rendering
           fetchProfile(session.user.id, session.user.email);
-        } else {
-          setLoading(false);
         }
       } catch (err) {
-        console.error('Session init error:', err);
+        console.warn('Session init (non-blocking):', err);
         if (!mounted) return;
 
-        // RESILIENCE: On timeout, try to use cached profile so app isn't stuck
+        // Use cached profile as fallback
         const cached = localStorage.getItem('aayam_fallback_profile');
         if (cached) {
           try {
             const cachedProfile = JSON.parse(cached);
-            console.warn('Auth timeout - using cached profile for:', cachedProfile.email);
             setProfile(cachedProfile);
             setUser({ id: cachedProfile.id, email: cachedProfile.email, role: 'authenticated' } as User);
-          } catch (e) {
-            console.error('Cached profile parse error:', e);
-          }
+          } catch (e) { }
         }
-        setLoading(false);
-
-        // Silent background retry after timeout
-        setTimeout(async () => {
-          if (!mounted) return;
-          try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user && mounted) {
-              console.log('Background session recovery succeeded');
-              setSession(session);
-              setUser(session.user);
-              fetchProfile(session.user.id, session.user.email);
-            }
-          } catch (retryErr) {
-            console.error('Background session retry also failed:', retryErr);
-          }
-        }, 3000);
       }
     };
 
     initSession();
-    // Safety timeout matches auth timeout (3s)
-    const safetyTimeout = setTimeout(() => {
-      if (mounted && loading) {
-        console.warn('Auth check timed out, forcing load completion');
-        setLoading(false);
-      }
-    }, 3500);
 
     // Listen for auth changes - but don't cause flickering
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -273,7 +237,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false;
-      clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
   }, [isConfigured]);

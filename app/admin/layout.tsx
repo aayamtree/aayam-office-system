@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { SessionProvider } from 'next-auth/react';
 import { useAuth } from '@/lib/auth-context';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
@@ -18,7 +17,6 @@ export default function AdminLayout({
 }) {
   const router = useRouter();
   const { profile, loading } = useAuth();
-  const [mounted, setMounted] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarHovered, setSidebarHovered] = useState(false);
   const [sidebarLocked, setSidebarLocked] = useState(false);
@@ -29,75 +27,57 @@ export default function AdminLayout({
     if (saved === 'true') setSidebarLocked(true);
   }, []);
 
+  // Role-based redirect (non-blocking — just redirects after profile loads)
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (mounted && !loading && !profile) {
+    if (!loading && !profile) {
+      // Middleware should catch this, but as a fallback:
       window.location.href = '/login';
     }
-  }, [mounted, profile, loading]);
+  }, [profile, loading]);
 
   // Close sidebar when clicking outside on mobile
   const closeSidebar = () => setSidebarOpen(false);
 
-  if (!mounted || loading) {
-    return (
-      <ConfirmProvider>
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-muted border-t-foreground rounded-full animate-spin mx-auto"></div>
-            <p className="mt-4 text-muted-foreground">Loading...</p>
-          </div>
-        </div>
-      </ConfirmProvider>
-    );
-  }
-
-  // if (!profile) {
-  //   return null;
-  // }
+  // NO BLOCKING SPINNER — middleware handles auth protection
+  // Render immediately, profile populates asynchronously
 
   return (
-    <SessionProvider>
-      <ConfirmProvider>
-        <div className="min-h-screen bg-background">
-          {/* Mobile Overlay */}
-          {sidebarOpen && (
-            <div
-              className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-              onClick={closeSidebar}
-            />
-          )}
-
-          {/* Sidebar */}
-          <Sidebar
-            isOpen={sidebarOpen}
-            onClose={closeSidebar}
-            onHoverChange={setSidebarHovered}
-            locked={sidebarLocked}
-            onLockedChange={(v) => { setSidebarLocked(v); localStorage.setItem('sidebar-locked', String(v)); }}
+    <ConfirmProvider>
+      <div className="min-h-screen bg-background">
+        {/* Mobile Overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+            onClick={closeSidebar}
           />
+        )}
 
-          {/* Header */}
-          <Header onMenuClick={() => setSidebarOpen(true)} sidebarExpanded={sidebarHovered || sidebarLocked} />
+        {/* Sidebar */}
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={closeSidebar}
+          onHoverChange={setSidebarHovered}
+          locked={sidebarLocked}
+          onLockedChange={(v) => { setSidebarLocked(v); localStorage.setItem('sidebar-locked', String(v)); }}
+        />
 
-          {/* Global Command Palette (Cmd+K) */}
-          <CommandPalette />
+        {/* Header */}
+        <Header onMenuClick={() => setSidebarOpen(true)} sidebarExpanded={sidebarHovered || sidebarLocked} />
 
-          {/* Daily Briefing - Auto shows once per day on login */}
-          {profile && <DailyBriefingTrigger />}
+        {/* Global Command Palette (Cmd+K) */}
+        <CommandPalette />
 
-          {/* Main Content */}
-          <main className={`pt-20 lg:pt-24 px-4 md:px-6 lg:px-8 py-6 min-h-screen transition-[margin] duration-200 ease-in-out ${(sidebarHovered || sidebarLocked) ? 'lg:ml-64' : 'lg:ml-16'}`}>
-            {children}
-          </main>
+        {/* Daily Briefing - Auto shows once per day on login */}
+        {profile && <DailyBriefingTrigger />}
 
-          {/* Mobile Bottom Navigation */}
-          <MobileBottomNav />
-        </div>
-      </ConfirmProvider>
-    </SessionProvider>
+        {/* Main Content */}
+        <main className={`pt-20 lg:pt-24 px-4 md:px-6 lg:px-8 py-6 min-h-screen transition-[margin] duration-200 ease-in-out ${(sidebarHovered || sidebarLocked) ? 'lg:ml-64' : 'lg:ml-16'}`}>
+          {children}
+        </main>
+
+        {/* Mobile Bottom Navigation */}
+        <MobileBottomNav />
+      </div>
+    </ConfirmProvider>
   );
 }
