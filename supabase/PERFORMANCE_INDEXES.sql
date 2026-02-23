@@ -159,6 +159,33 @@ EXCEPTION WHEN undefined_column OR undefined_table THEN
   RAISE NOTICE 'Skipped clients indexes';
 END $$;
 
+DO $$
+BEGIN
+  -- === CLIENTS (additional) ===
+  CREATE INDEX IF NOT EXISTS idx_clients_assigned_to ON clients(assigned_to);
+EXCEPTION WHEN undefined_column OR undefined_table THEN
+  RAISE NOTICE 'Skipped clients assigned_to index';
+END $$;
+
+DO $$
+BEGIN
+  -- === JOBS (additional — used by dashboard parallel queries) ===
+  CREATE INDEX IF NOT EXISTS idx_jobs_designer_id ON jobs(designer_id);
+  CREATE INDEX IF NOT EXISTS idx_jobs_internal_deadline ON jobs(internal_deadline);
+  CREATE INDEX IF NOT EXISTS idx_jobs_updated_at ON jobs(updated_at DESC);
+EXCEPTION WHEN undefined_column OR undefined_table THEN
+  RAISE NOTICE 'Skipped additional jobs indexes';
+END $$;
+
+DO $$
+BEGIN
+  -- === INVOICES (additional — used by alerts queries) ===
+  CREATE INDEX IF NOT EXISTS idx_invoices_payment_status ON invoices(payment_status);
+  CREATE INDEX IF NOT EXISTS idx_invoices_due_date ON invoices(due_date);
+EXCEPTION WHEN undefined_column OR undefined_table THEN
+  RAISE NOTICE 'Skipped additional invoices indexes';
+END $$;
+
 -- ============================================
 -- DONE! Each block runs independently.
 -- Missing columns are safely skipped.

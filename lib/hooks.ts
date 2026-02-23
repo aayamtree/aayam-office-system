@@ -1287,7 +1287,7 @@ export function useDashboardStats() {
     {
       revalidateOnFocus: false,
       dedupingInterval: 30000,     // 30s dedup — all callers share ONE fetch
-      refreshInterval: 120000,     // Refresh every 2 minutes
+      // PERF: No refreshInterval — data refreshes on navigation. Saves API calls.
       keepPreviousData: true,
       fallbackData: EMPTY_STATS,
     }
