@@ -31,11 +31,11 @@ export default function Timeline() {
     }
 
     return (
-        <div className="space-y-4 max-w-4xl">
+        <div className="space-y-4">
             <div>
                 <h1 className="text-page-title text-gray-900 mb-3 md:mb-1.5">Production Timeline</h1>
 
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {activeTasks.map((task, index) => {
                         const daysLeft = Math.ceil((task.deadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                         const isOverdue = daysLeft < 0;

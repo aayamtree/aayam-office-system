@@ -230,7 +230,7 @@ export default function ProductionSettings() {
                         </button>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                         {checklists.map(checklist => (
                             <div key={checklist.id} className={`bg-white rounded-lg border transition-all ${editingId === checklist.id ? 'border-primary ring-4 ring-primary/10 relative z-10' : 'border-gray-200  hover:border-border'}`}>
 
