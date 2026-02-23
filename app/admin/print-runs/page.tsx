@@ -496,9 +496,36 @@ export default function PrintRunsPage() {
                                 {/* Body */}
                                 <div className="p-3">
                                     <p className="text-gray-500 text-xs mb-0.5">{run.vendor_name || 'No vendor'}</p>
-                                    <h3 className="text-gray-900 font-semibold text-sm mb-2 line-clamp-1">
+                                    <h3 className="text-gray-900 font-semibold text-sm mb-1 line-clamp-1">
                                         {[run.machine_name, run.sheet_size_label || run.sheet_size, run.material_name].filter(Boolean).join(' · ') || 'No specs'}
                                     </h3>
+
+                                    {/* Client names & jobs */}
+                                    {run.jobs.length > 0 && (() => {
+                                        const uniqueClients = Array.from(new Set(run.jobs.map(j => j.client_name).filter(Boolean)));
+                                        return (
+                                            <div className="mb-2">
+                                                <p className="text-xs font-bold text-gray-800 mb-0.5">
+                                                    👤 {uniqueClients.join(', ') || 'No client'}
+                                                </p>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {run.jobs.map(job => (
+                                                        <span key={job.id} className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">
+                                                            <span className="font-bold">{job.job_number}</span>
+                                                            <span className="text-gray-400">·</span>
+                                                            <span className="truncate max-w-[100px]">{job.item_name || 'Unnamed'}</span>
+                                                            {job.job_type && (
+                                                                <>
+                                                                    <span className="text-gray-400">·</span>
+                                                                    <span className="capitalize text-gray-500">{job.job_type}</span>
+                                                                </>
+                                                            )}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
 
                                     <div className="flex items-center gap-3 text-xs text-gray-500 mb-3 flex-wrap">
                                         <span>{run.jobs.length} job{run.jobs.length !== 1 ? 's' : ''}</span>
