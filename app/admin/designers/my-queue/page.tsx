@@ -161,7 +161,7 @@ export default function UnifiedQueue() {
     };
 
     return (
-        <div className="space-y-4 max-w-4xl">
+        <div className="space-y-4">
             <div>
                 <div className="mb-4">
                     <h1 className="text-page-title text-gray-900 mb-1 flex items-center gap-2">
@@ -227,7 +227,7 @@ export default function UnifiedQueue() {
                             <h3 className="text-xs font-bold text-red-600 uppercase tracking-wider mb-2 flex items-center gap-2">
                                 <AlertCircle size={14} /> Urgent ({urgentTasks.length})
                             </h3>
-                            <div className="space-y-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                 {urgentTasks.map(renderTaskCard)}
                             </div>
                         </div>
@@ -238,7 +238,7 @@ export default function UnifiedQueue() {
                             <h3 className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-2 flex items-center gap-2">
                                 ⚠️ High Priority ({highTasks.length})
                             </h3>
-                            <div className="space-y-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                 {highTasks.map(renderTaskCard)}
                             </div>
                         </div>
@@ -249,7 +249,7 @@ export default function UnifiedQueue() {
                             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
                                 Normal ({normalTasks.length})
                             </h3>
-                            <div className="space-y-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                 {normalTasks.map(renderTaskCard)}
                             </div>
                         </div>
