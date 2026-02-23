@@ -1,7 +1,8 @@
 'use client';
 
-import { AlertTriangle, Clock, FileText, Phone, Calendar } from 'lucide-react';
-import { useJobs, useInvoices, useFollowUps } from '@/lib/hooks';
+import { useState, useEffect } from 'react';
+import { AlertTriangle, Clock, FileText, Phone } from 'lucide-react';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { formatDate } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -15,79 +16,98 @@ interface OverdueItem {
     link: string;
 }
 
+// PERF: Fetches ONLY overdue items with targeted queries instead of
+// loading ALL jobs + ALL invoices + ALL follow-ups via 3 separate SWR hooks
 export default function OverdueAlertsWidget() {
-    const { jobs } = useJobs();
-    const { invoices } = useInvoices();
-    const { followUps } = useFollowUps();
+    const [overdueItems, setOverdueItems] = useState<OverdueItem[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    useEffect(() => {
+        if (!isSupabaseConfigured()) { setLoading(false); return; }
 
-    const getDaysOverdue = (dateStr: string) => {
-        const date = new Date(dateStr);
-        date.setHours(0, 0, 0, 0);
-        return Math.floor((today.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    };
+        const today = new Date().toISOString().split('T')[0];
 
-    const overdueItems: OverdueItem[] = [];
+        const getDaysOverdue = (dateStr: string) => {
+            const now = new Date(); now.setHours(0, 0, 0, 0);
+            const date = new Date(dateStr); date.setHours(0, 0, 0, 0);
+            return Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+        };
 
-    // Overdue Jobs (past deadline, not yet delivered/cancelled)
-    const activeStages = ['new', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready'];
-    (jobs || []).forEach(job => {
-        if (job.client_deadline && activeStages.includes(job.current_stage)) {
-            const days = getDaysOverdue(job.client_deadline);
-            if (days > 0) {
-                overdueItems.push({
-                    id: job.id,
-                    type: 'job',
-                    title: job.project_name,
+        const fetchOverdue = async () => {
+            const items: OverdueItem[] = [];
+
+            // 1) Overdue jobs — only active stages, past deadline
+            const { data: jobs } = await supabase
+                .from('jobs')
+                .select('id, job_number, project_name, current_stage, client_deadline')
+                .in('current_stage', ['new', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready'])
+                .lt('client_deadline', today)
+                .not('client_deadline', 'is', null)
+                .order('client_deadline', { ascending: true })
+                .limit(10);
+
+            (jobs || []).forEach(job => {
+                const days = getDaysOverdue(job.client_deadline);
+                items.push({
+                    id: job.id, type: 'job',
+                    title: job.project_name || 'Untitled',
                     subtitle: `${job.job_number} • ${job.current_stage}`,
-                    dueDate: job.client_deadline,
-                    daysOverdue: days,
+                    dueDate: job.client_deadline, daysOverdue: days,
                     link: '/admin/jobs',
                 });
-            }
-        }
-    });
+            });
 
-    // Overdue Invoices (past due date, not fully paid)
-    (invoices || []).forEach(invoice => {
-        if (invoice.due_date && invoice.payment_status !== 'paid') {
-            const days = getDaysOverdue(invoice.due_date);
-            if (days > 0) {
-                overdueItems.push({
-                    id: invoice.id,
-                    type: 'invoice',
-                    title: `Invoice ${invoice.invoice_number}`,
-                    subtitle: `₹${(invoice.total_amount - (invoice.amount_paid || 0)).toLocaleString('en-IN')} pending`,
-                    dueDate: invoice.due_date,
-                    daysOverdue: days,
+            // 2) Overdue invoices — unpaid, past due date
+            const { data: invoices } = await supabase
+                .from('invoices')
+                .select('id, invoice_number, total_amount, amount_paid, due_date, payment_status')
+                .neq('payment_status', 'paid')
+                .lt('due_date', today)
+                .not('due_date', 'is', null)
+                .order('due_date', { ascending: true })
+                .limit(10);
+
+            (invoices || []).forEach(inv => {
+                const days = getDaysOverdue(inv.due_date);
+                items.push({
+                    id: inv.id, type: 'invoice',
+                    title: `Invoice ${inv.invoice_number}`,
+                    subtitle: `₹${((inv.total_amount || 0) - (inv.amount_paid || 0)).toLocaleString('en-IN')} pending`,
+                    dueDate: inv.due_date, daysOverdue: days,
                     link: '/admin/finance/invoices',
                 });
-            }
-        }
-    });
+            });
 
-    // Overdue Follow-ups (past scheduled date, not completed)
-    (followUps || []).forEach(fu => {
-        if (fu.next_followup_date && fu.status !== 'completed' && fu.status !== 'cancelled') {
-            const days = getDaysOverdue(fu.next_followup_date);
-            if (days > 0) {
-                overdueItems.push({
-                    id: fu.id,
-                    type: 'followup',
-                    title: fu.lead?.name || fu.client?.name || 'Follow-up',
-                    subtitle: fu.notes?.slice(0, 40) || 'Pending follow-up',
-                    dueDate: fu.next_followup_date,
-                    daysOverdue: days,
-                    link: '/admin/marketing/follow-ups',
+            // 3) Overdue follow-ups — past date, not completed
+            try {
+                const { data: followUps } = await supabase
+                    .from('follow_ups')
+                    .select('id, notes, follow_up_date, status, lead:leads(name), client:clients(name)')
+                    .not('follow_up_date', 'is', null)
+                    .lt('follow_up_date', today)
+                    .not('status', 'in', '("completed","cancelled")')
+                    .order('follow_up_date', { ascending: true })
+                    .limit(10);
+
+                (followUps || []).forEach((fu: any) => {
+                    const days = getDaysOverdue(fu.follow_up_date);
+                    items.push({
+                        id: fu.id, type: 'followup',
+                        title: fu.lead?.name || fu.client?.name || 'Follow-up',
+                        subtitle: fu.notes?.slice(0, 40) || 'Pending follow-up',
+                        dueDate: fu.follow_up_date, daysOverdue: days,
+                        link: '/admin/marketing/follow-ups',
+                    });
                 });
-            }
-        }
-    });
+            } catch { /* follow_ups table may not exist */ }
 
-    // Sort by most overdue first
-    overdueItems.sort((a, b) => b.daysOverdue - a.daysOverdue);
+            items.sort((a, b) => b.daysOverdue - a.daysOverdue);
+            setOverdueItems(items);
+            setLoading(false);
+        };
+
+        fetchOverdue();
+    }, []);
 
     const getIcon = (type: string) => {
         switch (type) {
@@ -103,6 +123,14 @@ export default function OverdueAlertsWidget() {
         if (days >= 3) return 'bg-amber-50 border-amber-100 text-amber-700';
         return 'bg-orange-50 border-orange-100 text-orange-700';
     };
+
+    if (loading) {
+        return (
+            <div className="bg-white rounded-md border border-gray-100 p-4">
+                <div className="h-32 animate-pulse bg-gray-50 rounded-lg"></div>
+            </div>
+        );
+    }
 
     if (overdueItems.length === 0) {
         return (
@@ -120,7 +148,6 @@ export default function OverdueAlertsWidget() {
 
     return (
         <div className="bg-white rounded-md border border-gray-100 p-4">
-            {/* Header */}
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-red-500" />
@@ -131,7 +158,6 @@ export default function OverdueAlertsWidget() {
                 </div>
             </div>
 
-            {/* Items List */}
             <div className="space-y-2 max-h-[250px] overflow-y-auto">
                 {overdueItems.slice(0, 8).map((item) => (
                     <Link

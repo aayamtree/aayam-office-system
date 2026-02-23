@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Providers } from '@/components/Providers';
-import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
+
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 
@@ -15,7 +15,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: 'Aayam Office System',
   description: 'Complete Business Management System',
-  manifest: '/manifest.json',
+  // manifest removed — SW was causing caching issues and extra requests
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -39,7 +39,7 @@ export default function RootLayout({
       </head>
       <body>
         <Providers>
-          <ServiceWorkerRegistration />
+
           {children}
           <Toaster />
         </Providers>
