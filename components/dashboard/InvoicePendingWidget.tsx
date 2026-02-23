@@ -44,10 +44,6 @@ export default function InvoicePendingWidget() {
         };
 
         fetchPendingJobs();
-
-        // Refresh every 30 seconds
-        const interval = setInterval(fetchPendingJobs, 30000);
-        return () => clearInterval(interval);
     }, []);
 
     if (loading) return (

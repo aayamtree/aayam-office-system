@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
+
 import {
     Package, CreditCard, IndianRupee, AlertTriangle, Clock,
     CheckCircle2, TrendingUp, ArrowRight, Activity, Target,
-    Lock, Unlock, RotateCcw, GripVertical, Loader2, Settings,
+    Lock, Unlock, RotateCcw, GripVertical, Settings,
 } from 'lucide-react';
 import { useDashboardStats, useJobs } from '@/lib/hooks';
 
@@ -20,34 +20,13 @@ import NeedsAttentionBar from '@/components/dashboard/NeedsAttentionBar';
 import DashboardGrid, { resetLayouts, type LayoutsMap } from '@/components/dashboard/DashboardGrid';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
-// ─── Lazy-loaded widgets (deferred to reduce initial page load) ──
-const WidgetSkeleton = () => (
-    <Card className="h-full flex items-center justify-center">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-    </Card>
-);
-
-const OverdueAlertsWidget = dynamic(() => import('@/components/dashboard/OverdueAlertsWidget'), {
-    loading: () => <WidgetSkeleton />, ssr: false
-});
-const MiniCalendarWidget = dynamic(() => import('@/components/dashboard/MiniCalendarWidget'), {
-    loading: () => <WidgetSkeleton />, ssr: false
-});
-const QuickNotesWidget = dynamic(() => import('@/components/dashboard/QuickNotesWidget'), {
-    loading: () => <WidgetSkeleton />, ssr: false
-});
-const TeamWorkloadWidget = dynamic(() => import('@/components/dashboard/TeamWorkloadWidget'), {
-    loading: () => <WidgetSkeleton />, ssr: false
-});
-const DailySummaryWidget = dynamic(() => import('@/components/dashboard/DailySummaryWidget'), {
-    loading: () => <WidgetSkeleton />, ssr: false
-});
-const RecentFilesWidget = dynamic(() => import('@/components/dashboard/RecentFilesWidget'), {
-    loading: () => <WidgetSkeleton />, ssr: false
-});
-const InvoicePendingWidget = dynamic(() => import('@/components/dashboard/InvoicePendingWidget'), {
-    loading: () => <WidgetSkeleton />, ssr: false
-});
+import OverdueAlertsWidget from '@/components/dashboard/OverdueAlertsWidget';
+import MiniCalendarWidget from '@/components/dashboard/MiniCalendarWidget';
+import QuickNotesWidget from '@/components/dashboard/QuickNotesWidget';
+import TeamWorkloadWidget from '@/components/dashboard/TeamWorkloadWidget';
+import DailySummaryWidget from '@/components/dashboard/DailySummaryWidget';
+import RecentFilesWidget from '@/components/dashboard/RecentFilesWidget';
+import InvoicePendingWidget from '@/components/dashboard/InvoicePendingWidget';
 
 // ─── Default Grid Layouts per breakpoint ───────────────────────
 const DEFAULT_LAYOUTS: LayoutsMap = {

@@ -1,45 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useDashboardStats, useJobs } from '@/lib/hooks';
-import { Package, Truck, IndianRupee, Palette, AlertTriangle, Clock } from 'lucide-react';
+import { useDashboardStats } from '@/lib/hooks';
+import { Package, Truck, Palette, AlertTriangle, Clock } from 'lucide-react';
 
 export default function DailySummaryWidget() {
-    const { stats, loading: statsLoading } = useDashboardStats();
-    const { jobs, loading: jobsLoading } = useJobs();
+    const { stats, loading } = useDashboardStats();
 
-    const loading = statsLoading || jobsLoading;
-
-    // Calculate today's stats
-    const today = new Date().toISOString().split('T')[0];
-
-    const ordersToday = jobs.filter(j => {
-        const created = j.created_at?.split('T')[0];
-        return created === today;
-    }).length;
-
-    const dispatchedToday = jobs.filter(j => {
-        const updated = j.updated_at?.split('T')[0];
-        return j.current_stage === 'dispatched' && updated === today;
-    }).length;
-
-    const designPending = jobs.filter(j =>
-        j.current_stage === 'designing' || j.current_stage === 'approval'
-    ).length;
-
-    const overdueJobs = jobs.filter(j => {
-        if (!j.client_deadline || j.current_stage === 'delivered' || j.current_stage === 'cancelled') return false;
-        return new Date(j.client_deadline) < new Date();
-    }).length;
-
-    const formatCurrency = (amount: number) =>
-        new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
-
+    // Use data already computed by dashboard stats — no extra queries
     const items = [
         {
             icon: Package,
             label: 'New Orders',
-            value: ordersToday,
+            value: stats.ordersThisMonth,
             color: 'bg-blue-50 text-blue-600 border-blue-100',
             iconColor: 'text-blue-500',
             link: '/admin/sales/orders',
@@ -47,7 +20,7 @@ export default function DailySummaryWidget() {
         {
             icon: Truck,
             label: 'Dispatched',
-            value: dispatchedToday,
+            value: stats.pendingDispatches,
             color: 'bg-green-50 text-green-600 border-green-100',
             iconColor: 'text-green-500',
             link: '/admin/dispatch',
@@ -55,7 +28,7 @@ export default function DailySummaryWidget() {
         {
             icon: Palette,
             label: 'Design Pending',
-            value: designPending,
+            value: (stats.pipeline['designing'] || 0) + (stats.pipeline['approval'] || 0),
             color: 'bg-purple-50 text-purple-600 border-purple-100',
             iconColor: 'text-purple-500',
             link: '/admin/jobs/queue',
@@ -63,9 +36,9 @@ export default function DailySummaryWidget() {
         {
             icon: AlertTriangle,
             label: 'Overdue',
-            value: overdueJobs,
-            color: overdueJobs > 0 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-gray-50 text-gray-600 border-gray-100',
-            iconColor: overdueJobs > 0 ? 'text-red-500' : 'text-gray-400',
+            value: stats.todaysFocus.jobsDelayed,
+            color: stats.todaysFocus.jobsDelayed > 0 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-gray-50 text-gray-600 border-gray-100',
+            iconColor: stats.todaysFocus.jobsDelayed > 0 ? 'text-red-500' : 'text-gray-400',
             link: '/admin/jobs',
         },
     ];
