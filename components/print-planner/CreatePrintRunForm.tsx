@@ -56,6 +56,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
     const [paperRate, setPaperRate] = useState('');
     const [paperGst, setPaperGst] = useState(18);
     const [paperPaymentStatus, setPaperPaymentStatus] = useState<'paid' | 'pending'>('pending');
+    const [paperPaymentMode, setPaperPaymentMode] = useState<string>('cash');
 
     // Dropdowns data
     const [machines, setMachines] = useState<any[]>([]);
@@ -134,6 +135,9 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                 insertData.paper_gst_percent = paperGst;
                 insertData.paper_total = paperTotalWithGst || null;
                 insertData.paper_payment_status = paperPaymentStatus;
+                if (paperPaymentStatus === 'paid') {
+                    insertData.paper_payment_mode = paperPaymentMode;
+                }
             }
 
             // Create print run
@@ -162,7 +166,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                         await supabase.rpc('record_vendor_payment', {
                             p_vendor_id: paperVendorId,
                             p_amount: paperTotalWithGst,
-                            p_payment_mode: 'bank_transfer',
+                            p_payment_mode: paperPaymentMode,
                             p_payment_date: new Date().toISOString().split('T')[0],
                             p_bank_account_id: null,
                             p_reference: refText,
@@ -239,6 +243,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
         setPaperRate('');
         setPaperGst(18);
         setPaperPaymentStatus('pending');
+        setPaperPaymentMode('cash');
     };
 
     return (
@@ -503,10 +508,25 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                                         ⏳ Pending
                                     </button>
                                 </div>
-                                {paperPaymentStatus === 'paid' && paperTotalWithGst > 0 && (
-                                    <p className="text-xs text-green-600 mt-1.5">
-                                        ✓ ₹{paperTotalWithGst.toLocaleString('en-IN', { minimumFractionDigits: 2 })} will be recorded as paid in vendor payments
-                                    </p>
+                                {paperPaymentStatus === 'paid' && (
+                                    <div className="mt-2">
+                                        <label className="block text-xs font-bold text-gray-600 mb-1.5">Payment Mode *</label>
+                                        <select
+                                            value={paperPaymentMode}
+                                            onChange={(e) => setPaperPaymentMode(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 outline-none text-sm"
+                                        >
+                                            <option value="cash">💵 Cash</option>
+                                            <option value="bank_transfer">🏦 Bank Transfer</option>
+                                            <option value="upi">📱 UPI</option>
+                                            <option value="card">💳 Card</option>
+                                        </select>
+                                        {paperTotalWithGst > 0 && (
+                                            <p className="text-xs text-green-600 mt-1.5">
+                                                ✓ ₹{paperTotalWithGst.toLocaleString('en-IN', { minimumFractionDigits: 2 })} will be recorded as paid via {paperPaymentMode.replace('_', ' ')} in vendor payments
+                                            </p>
+                                        )}
+                                    </div>
                                 )}
                                 {paperPaymentStatus === 'pending' && paperTotalWithGst > 0 && (
                                     <p className="text-xs text-amber-600 mt-1.5">
