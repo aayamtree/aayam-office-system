@@ -75,10 +75,11 @@ export default function LoginPage() {
         setError(errorMessage);
         setIsLoading(false);
       } else {
+        clearTimeout(safetyTimer);
         // Fire-and-forget: don't block redirect waiting for activity log
         logLogin().catch(console.error);
-        console.log('Sign in successful — redirecting...');
-        // Redirect is handled by useEffect watching profile
+        // Redirect immediately — don't wait for profile state to update
+        window.location.href = '/admin/dashboard';
       }
     } catch (err: any) {
       clearTimeout(safetyTimer);
