@@ -9,7 +9,7 @@ export type LayoutsMap = { lg: LayoutItem[]; md: LayoutItem[]; sm: LayoutItem[] 
 
 type ResizeDir = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
-const DEFAULT_STORAGE_KEY = 'aayam-dashboard-layouts-v3';
+const DEFAULT_STORAGE_KEY = 'aayam-dashboard-layouts-v4';
 
 // ─── Size presets (grid units: w × h) ──────────────────────────
 const SIZE_PRESETS = [
@@ -405,8 +405,8 @@ export default function DashboardGrid({ defaultLayouts, isLocked, storageKey, ch
                                         key={preset.label}
                                         onClick={(e) => { e.stopPropagation(); applyPresetSize(item.i, preset.w, preset.h); }}
                                         className={`text-[10px] font-bold px-1.5 py-0.5 rounded transition-colors ${item.w === preset.w && item.h === preset.h
-                                                ? 'bg-blue-500 text-white'
-                                                : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'
+                                            ? 'bg-blue-500 text-white'
+                                            : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'
                                             }`}
                                         title={preset.title}
                                     >
