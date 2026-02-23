@@ -50,12 +50,12 @@ export default function LoginPage() {
     setError('');
     setIsLoading(true);
 
-    // Safety timeout: reset loading after 15s if something gets stuck
-    // (Vercel cold starts can take 5-10s on first request)
+    // Safety timeout: reset loading after 30s if something gets stuck
+    // (Vercel preview cold starts can take 10-20s on first request)
     const safetyTimer = setTimeout(() => {
       setIsLoading(false);
       setError('Login timed out. Please try again.');
-    }, 15000);
+    }, 30000);
 
     try {
       // Convert username to internal email format
