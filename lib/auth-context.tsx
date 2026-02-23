@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null;
   });
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [isConfigured] = useState<boolean>(isSupabaseConfigured());
 
   // Fetch user profile (optimized with better caching)
@@ -198,6 +198,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (session?.user) {
           fetchProfile(session.user.id, session.user.email);
+        } else {
+          setLoading(false);
         }
       } catch (err) {
         console.warn('Session init (non-blocking):', err);
@@ -212,6 +214,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser({ id: cachedProfile.id, email: cachedProfile.email, role: 'authenticated' } as User);
           } catch (e) { }
         }
+        setLoading(false);
       }
     };
 
