@@ -85,6 +85,7 @@ const menuItems: MenuItem[] = [
     submenu: [
       { name: 'Queue', href: '/admin/designers/my-queue' },
       { name: 'Timeline', href: '/admin/designers/timeline' },
+      { name: 'QC Check', href: '/admin/dispatch/qc-check' },
       { name: 'My Notes', href: '/admin/designers/my-notes' },
       { name: '+ New Project', href: '/admin/designers/new-project' },
     ]

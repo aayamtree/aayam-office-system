@@ -1,38 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { Package, CheckCircle, Truck, Clock, AlertTriangle, ClipboardCheck, Loader2, X, Camera, MapPin, Building2, Search, FileText } from 'lucide-react';
 import { useJobs, useDispatches } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { Job, Dispatch } from '@/types/database';
 import { supabase } from '@/lib/supabase';
-
-// ─── Print Run type (minimal for dispatch view) ──────────────
-interface PrintRunForDispatch {
-  id: string;
-  print_run_number: string;
-  status: string;
-  delivery_mode?: string;
-  delivery_address?: string;
-  vendor_id?: string;
-  transporter_name?: string;
-  eway_bill_number?: string;
-  dispatch_date?: string;
-  invoice_reference?: string;
-  qc_checklist?: Record<string, boolean>;
-  qc_notes?: string;
-  created_at: string;
-  updated_at?: string;
-  vendor?: { name: string; company?: string };
-  print_run_jobs?: {
-    id: string;
-    client_name?: string;
-    item_name?: string;
-    quantity_needed?: number;
-    job?: { job_number?: string; client_deadline?: string; priority?: string; client?: { company?: string; name?: string } };
-  }[];
-}
 
 // ─── Transporter vendor ──────────────────────────────────────
 interface TransporterVendor {
@@ -48,10 +22,6 @@ export default function DispatchPage() {
     orderBy: { column: 'client_deadline', ascending: true }
   });
   const { dispatches, loading: dispatchesLoading, createDispatch } = useDispatches();
-
-  // Print runs data
-  const [printRuns, setPrintRuns] = useState<PrintRunForDispatch[]>([]);
-  const [printRunsLoading, setPrintRunsLoading] = useState(true);
 
   // Transporters
   const [transporters, setTransporters] = useState<TransporterVendor[]>([]);
@@ -74,31 +44,10 @@ export default function DispatchPage() {
     notes: '',
   });
 
-  // Tab
-  const [activeTab, setActiveTab] = useState<'jobs' | 'print_runs'>('jobs');
+  const loading = jobsLoading || dispatchesLoading;
 
-  const loading = jobsLoading || dispatchesLoading || printRunsLoading;
-
-  // ─── Fetch print runs that dispatch team cares about ──────
-  useEffect(() => {
-    const fetchPrintRuns = async () => {
-      setPrintRunsLoading(true);
-      try {
-        const { data } = await supabase
-          .from('print_runs')
-          .select('*, vendor:vendors!print_runs_vendor_id_fkey(name, company), print_run_jobs(*, job:jobs(job_number, client_deadline, priority, client:clients(company, name)))')
-          .in('status', ['printing_done', 'qc', 'dispatched'])
-          .order('created_at', { ascending: false });
-        setPrintRuns(data || []);
-      } catch (err) {
-        console.error('Error fetching print runs:', err);
-      } finally {
-        setPrintRunsLoading(false);
-      }
-    };
-    fetchPrintRuns();
-
-    // Fetch transporters
+  // Fetch transporters on mount
+  useState(() => {
     const fetchTransporters = async () => {
       const { data } = await supabase
         .from('vendors')
@@ -108,19 +57,13 @@ export default function DispatchPage() {
       setTransporters(data || []);
     };
     fetchTransporters();
-  }, []);
+  });
 
   // ─── Derived Data ─────────────────────────────────────────
-  // Jobs
   const pendingQC = jobs.filter(j => j.current_stage === 'quality_check');
   const readyToDispatch = jobs.filter(j => j.current_stage === 'ready');
 
-  // Print Runs
-  const printRunsQC = printRuns.filter(pr => pr.status === 'qc');
-  const printRunsReady = printRuns.filter(pr => pr.status === 'printing_done' && pr.delivery_mode === 'warehouse');
-  const printRunsDispatched = printRuns.filter(pr => pr.status === 'dispatched');
-
-  const sentDispatches = dispatches.slice(0, 5);
+  const sentDispatches = dispatches.slice(0, 6);
 
   // Delayed count
   const today = new Date();
@@ -131,15 +74,10 @@ export default function DispatchPage() {
     return deadline < today && !['delivered', 'completed', 'cancelled', 'dispatched'].includes(j.current_stage);
   }).length;
 
-  // Combined stats
-  const totalPendingQC = pendingQC.length + printRunsQC.length;
-  const totalReady = readyToDispatch.length + printRunsReady.length;
-  const totalDispatched = dispatches.length + printRunsDispatched.length;
-
   const stats = [
-    { label: 'Pending QC', value: totalPendingQC.toString(), sub: `${pendingQC.length} jobs · ${printRunsQC.length} runs`, icon: ClipboardCheck, color: 'bg-purple-500' },
-    { label: 'Ready to Dispatch', value: totalReady.toString(), sub: `${readyToDispatch.length} jobs · ${printRunsReady.length} runs`, icon: Package, color: 'bg-primary' },
-    { label: 'Dispatched', value: totalDispatched.toString(), sub: 'All time', icon: Truck, color: 'bg-green-500' },
+    { label: 'Pending QC', value: pendingQC.length.toString(), sub: `${pendingQC.length} jobs awaiting QC`, icon: ClipboardCheck, color: 'bg-purple-500' },
+    { label: 'Ready to Dispatch', value: readyToDispatch.length.toString(), sub: `${readyToDispatch.length} jobs ready`, icon: Package, color: 'bg-primary' },
+    { label: 'Dispatched', value: dispatches.length.toString(), sub: 'All time', icon: Truck, color: 'bg-green-500' },
     { label: 'Delayed', value: delayedCount.toString(), sub: 'Needs attention', icon: AlertTriangle, color: delayedCount > 0 ? 'bg-red-500' : 'bg-gray-300' },
   ];
 
@@ -159,18 +97,7 @@ export default function DispatchPage() {
       case 'delivered': return 'Delivered';
       case 'in_transit': return 'In Transit';
       case 'dispatched': return 'Dispatched';
-      case 'printing_done': return 'Printing Done';
-      case 'qc': return 'In QC';
       default: return status;
-    }
-  };
-
-  const getPrintRunStatusColor = (status: string) => {
-    switch (status) {
-      case 'printing_done': return 'bg-blue-100 text-blue-800';
-      case 'qc': return 'bg-purple-100 text-purple-800';
-      case 'dispatched': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-700';
     }
   };
 
@@ -254,7 +181,7 @@ export default function DispatchPage() {
         </div>
       </div>
 
-      {/* Stats — now unified */}
+      {/* Stats — jobs only */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {stats.map((stat) => (
           <div key={stat.label} className="bg-white rounded-lg p-3 md:p-4 border border-gray-100">
@@ -270,224 +197,121 @@ export default function DispatchPage() {
         ))}
       </div>
 
-      {/* Tab switcher */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
-        <button
-          onClick={() => setActiveTab('jobs')}
-          className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'jobs' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-        >
-          Individual Jobs ({pendingQC.length + readyToDispatch.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('print_runs')}
-          className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'print_runs' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-        >
-          Print Runs ({printRunsQC.length + printRunsReady.length})
-        </button>
-      </div>
-
-      {/* ═══════════════════════════════════════════════ */}
-      {/* JOBS TAB                                        */}
-      {/* ═══════════════════════════════════════════════ */}
-      {activeTab === 'jobs' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
-          {/* Pending QC */}
-          <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-section text-gray-900 flex items-center gap-2">
-                <ClipboardCheck className="w-4 h-4 text-purple-500" />
-                Pending QC
-              </h2>
-              <Link href="/admin/dispatch/qc-check" className="text-sm text-primary hover:underline">View All →</Link>
-            </div>
-            <div className="space-y-2">
-              {pendingQC.length === 0 ? (
-                <div className="text-center text-gray-400 py-4 text-sm">No jobs pending QC</div>
-              ) : pendingQC.slice(0, 5).map((job) => (
-                <div key={job.id} className="flex items-center justify-between p-3 bg-purple-50/50 border border-purple-100 rounded-lg">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-gray-900 text-sm">{job.job_number}</p>
-                      {job.priority === 'urgent' && <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-[10px] rounded-full font-medium">Urgent</span>}
-                    </div>
-                    <p className="text-xs text-gray-600">{job.client?.company || job.client?.name}</p>
-                    <p className="text-[11px] text-gray-400 mt-0.5">{job.project_name}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[11px] text-gray-500">Due</p>
-                    <p className="text-xs font-medium text-gray-900">{job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+      {/* Pending QC & Ready to Dispatch — side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
+        {/* Pending QC */}
+        <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-section text-gray-900 flex items-center gap-2">
+              <ClipboardCheck className="w-4 h-4 text-purple-500" />
+              Pending QC
+            </h2>
+            <Link href="/admin/dispatch/qc-check" className="text-sm text-primary hover:underline">View All →</Link>
           </div>
-
-          {/* Ready to Dispatch */}
-          <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-section text-gray-900 flex items-center gap-2">
-                <Package className="w-4 h-4 text-green-500" />
-                Ready to Dispatch
-              </h2>
-              <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">{readyToDispatch.length} ready</span>
-            </div>
-            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
-              {readyToDispatch.length === 0 ? (
-                <div className="text-center text-gray-400 py-4 text-sm">No jobs ready for dispatch</div>
-              ) : readyToDispatch.map((job) => {
-                const hasInvoice = (job as any).invoices && (job as any).invoices.length > 0;
-                return (
-                  <div key={job.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-white border border-green-100 rounded-lg gap-2">
-                    <div>
-                      <p className="font-medium text-gray-900 text-sm">{job.job_number}</p>
-                      <p className="text-xs text-gray-600">{job.client?.company || job.client?.name}</p>
-                      <p className="text-[11px] text-gray-400 mt-0.5">{job.project_name} · Qty: {job.quantity}</p>
-                      {(job as any).packing_info && (
-                        <p className="text-[11px] text-green-700 mt-0.5 font-medium">
-                          📦 {(job as any).packing_info.package_count} {(job as any).packing_info.package_type}(s) · ~{(job as any).packing_info.approx_weight_kg}kg
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="text-right hidden sm:block">
-                        <p className="text-[11px] text-gray-500">Due</p>
-                        <p className="text-xs font-medium">{job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}</p>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        {!hasInvoice && (
-                          <button
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              if (invoiceRequested.has(job.id)) return;
-                              try {
-                                await supabase.from('broadcast_notifications').insert({
-                                  message: `🔔 Dispatch requesting invoice for ${job.job_number}\nClient: ${job.client?.company || job.client?.name || 'N/A'}\nProject: ${job.project_name}`,
-                                  target_audience: 'admin',
-                                  priority: 'urgent',
-                                });
-                                setInvoiceRequested(prev => new Set(Array.from(prev).concat(job.id)));
-                              } catch (err) {
-                                console.warn('Failed to send invoice request:', err);
-                              }
-                            }}
-                            className={`px-2 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${invoiceRequested.has(job.id)
-                              ? 'bg-green-100 text-green-700 cursor-default'
-                              : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                              }`}
-                            title={invoiceRequested.has(job.id) ? 'Invoice request sent' : 'Send invoice request to admin'}
-                          >
-                            <FileText className="w-3 h-3 inline mr-1" />
-                            {invoiceRequested.has(job.id) ? 'Requested ✓' : 'Request Invoice'}
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleOpenDispatch(job)}
-                          className={`px-3 py-1.5 text-white text-xs font-medium rounded-lg whitespace-nowrap ${hasInvoice ? 'bg-gray-900 hover:bg-gray-800' : 'bg-amber-500 hover:bg-amber-600'}`}
-                          title={hasInvoice ? 'Proceed to Dispatch' : 'No invoice yet — can still dispatch'}
-                        >
-                          {hasInvoice ? 'Dispatch Now' : '⚠️ Dispatch (No Invoice)'}
-                        </button>
-                      </div>
-                    </div>
+          <div className="space-y-2">
+            {pendingQC.length === 0 ? (
+              <div className="text-center text-gray-400 py-4 text-sm">No jobs pending QC</div>
+            ) : pendingQC.slice(0, 5).map((job) => (
+              <div key={job.id} className="flex items-center justify-between p-3 bg-purple-50/50 border border-purple-100 rounded-lg">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-gray-900 text-sm">{job.job_number}</p>
+                    {job.priority === 'urgent' && <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-[10px] rounded-full font-medium">Urgent</span>}
                   </div>
-                );
-              })}
-            </div>
+                  <p className="text-xs text-gray-600">{job.client?.company || job.client?.name}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">{job.project_name}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[11px] text-gray-500">Due</p>
+                  <p className="text-xs font-medium text-gray-900">{job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      )}
 
-      {/* ═══════════════════════════════════════════════ */}
-      {/* PRINT RUNS TAB                                  */}
-      {/* ═══════════════════════════════════════════════ */}
-      {activeTab === 'print_runs' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
-          {/* Print Runs in QC */}
-          <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-section text-gray-900 flex items-center gap-2">
-                <ClipboardCheck className="w-4 h-4 text-purple-500" />
-                Print Runs — QC
-              </h2>
-              <span className="px-3 py-1 bg-purple-100 text-purple-800 text-xs rounded-full font-medium">{printRunsQC.length} in QC</span>
-            </div>
-            <div className="space-y-2">
-              {printRunsQC.length === 0 ? (
-                <div className="text-center text-gray-400 py-4 text-sm">No print runs in QC</div>
-              ) : printRunsQC.map(pr => (
-                <div key={pr.id} className="p-3 bg-purple-50/50 border border-purple-100 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-gray-900 text-sm">{pr.print_run_number}</p>
-                      <span className={`px-2 py-0.5 text-[10px] rounded-full ${getPrintRunStatusColor(pr.status)}`}>
-                        {getStatusLabel(pr.status)}
-                      </span>
-                    </div>
-                    <Link href="/admin/print-runs" className="text-xs text-primary hover:underline">Open →</Link>
-                  </div>
-                  <p className="text-xs text-gray-500">Printer: {pr.vendor?.name || pr.vendor?.company || '-'}</p>
-                  <div className="mt-1.5 flex flex-wrap gap-1">
-                    {pr.print_run_jobs?.slice(0, 3).map(j => (
-                      <span key={j.id} className="px-2 py-0.5 bg-white border text-[10px] rounded text-gray-600">
-                        {j.job?.job_number || j.client_name || j.item_name}
-                      </span>
-                    ))}
-                    {(pr.print_run_jobs?.length || 0) > 3 && (
-                      <span className="text-[10px] text-gray-400">+{(pr.print_run_jobs?.length || 0) - 3} more</span>
+        {/* Ready to Dispatch */}
+        <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-section text-gray-900 flex items-center gap-2">
+              <Package className="w-4 h-4 text-green-500" />
+              Ready to Dispatch
+            </h2>
+            <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">{readyToDispatch.length} ready</span>
+          </div>
+          <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+            {readyToDispatch.length === 0 ? (
+              <div className="text-center text-gray-400 py-4 text-sm">No jobs ready for dispatch</div>
+            ) : readyToDispatch.map((job) => {
+              const hasInvoice = (job as any).invoices && (job as any).invoices.length > 0;
+              return (
+                <div key={job.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-white border border-green-100 rounded-lg gap-2">
+                  <div>
+                    <p className="font-medium text-gray-900 text-sm">{job.job_number}</p>
+                    <p className="text-xs text-gray-600">{job.client?.company || job.client?.name}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">{job.project_name} · Qty: {job.quantity}</p>
+                    {(job as any).packing_info && (
+                      <p className="text-[11px] text-green-700 mt-0.5 font-medium">
+                        📦 {(job as any).packing_info.package_count} {(job as any).packing_info.package_type}(s) · ~{(job as any).packing_info.approx_weight_kg}kg
+                      </p>
                     )}
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Print Runs Ready / Printing Done */}
-          <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-section text-gray-900 flex items-center gap-2">
-                <Package className="w-4 h-4 text-blue-500" />
-                Print Runs — Printing Done
-              </h2>
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">{printRunsReady.length} waiting</span>
-            </div>
-            <div className="space-y-2">
-              {printRunsReady.length === 0 ? (
-                <div className="text-center text-gray-400 py-4 text-sm">No print runs waiting for dispatch</div>
-              ) : printRunsReady.map(pr => (
-                <div key={pr.id} className="p-3 bg-blue-50/50 border border-blue-100 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-gray-900 text-sm">{pr.print_run_number}</p>
-                      <span className={`px-2 py-0.5 text-[10px] rounded-full ${getPrintRunStatusColor(pr.status)}`}>
-                        Printing Done
-                      </span>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right hidden sm:block">
+                      <p className="text-[11px] text-gray-500">Due</p>
+                      <p className="text-xs font-medium">{job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}</p>
                     </div>
-                    <Link href="/admin/print-runs" className="text-xs text-primary hover:underline">Open →</Link>
-                  </div>
-                  <p className="text-xs text-gray-500">Printer: {pr.vendor?.name || pr.vendor?.company || '-'}</p>
-                  <div className="mt-1.5 flex flex-wrap gap-1">
-                    {pr.print_run_jobs?.slice(0, 3).map(j => (
-                      <span key={j.id} className="px-2 py-0.5 bg-white border text-[10px] rounded text-gray-600">
-                        {j.job?.job_number || j.client_name || j.item_name}
-                      </span>
-                    ))}
+                    <div className="flex items-center gap-1.5">
+                      {!hasInvoice && (
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (invoiceRequested.has(job.id)) return;
+                            try {
+                              await supabase.from('broadcast_notifications').insert({
+                                message: `🔔 Dispatch requesting invoice for ${job.job_number}\nClient: ${job.client?.company || job.client?.name || 'N/A'}\nProject: ${job.project_name}`,
+                                target_audience: 'admin',
+                                priority: 'urgent',
+                              });
+                              setInvoiceRequested(prev => new Set(Array.from(prev).concat(job.id)));
+                            } catch (err) {
+                              console.warn('Failed to send invoice request:', err);
+                            }
+                          }}
+                          className={`px-2 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${invoiceRequested.has(job.id)
+                            ? 'bg-green-100 text-green-700 cursor-default'
+                            : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                            }`}
+                          title={invoiceRequested.has(job.id) ? 'Invoice request sent' : 'Send invoice request to admin'}
+                        >
+                          <FileText className="w-3 h-3 inline mr-1" />
+                          {invoiceRequested.has(job.id) ? 'Requested ✓' : 'Request Invoice'}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleOpenDispatch(job)}
+                        className={`px-3 py-1.5 text-white text-xs font-medium rounded-lg whitespace-nowrap ${hasInvoice ? 'bg-gray-900 hover:bg-gray-800' : 'bg-amber-500 hover:bg-amber-600'}`}
+                        title={hasInvoice ? 'Proceed to Dispatch' : 'No invoice yet — can still dispatch'}
+                      >
+                        {hasInvoice ? 'Dispatch Now' : '⚠️ Dispatch (No Invoice)'}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Recent Dispatches (unified) */}
+      {/* Recent Dispatches — jobs only */}
       <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-100">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-section text-gray-900">Recent Dispatches</h2>
           <Link href="/admin/dispatch/history" className="text-sm text-primary hover:underline">View All →</Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
-          {/* Job dispatches */}
-          {sentDispatches.length === 0 && printRunsDispatched.length === 0 && (
+          {sentDispatches.length === 0 && (
             <div className="col-span-3 text-center text-gray-400 py-4 text-sm">No recent dispatches</div>
           )}
           {sentDispatches.map((dispatch) => (
@@ -503,27 +327,6 @@ export default function DispatchPage() {
               <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200">
                 <span className="text-[11px] text-gray-500">{dispatch.transporter_name || 'Self'}</span>
                 <span className="text-[11px] text-gray-500">{dispatch.dispatch_date ? new Date(dispatch.dispatch_date).toLocaleDateString() : '-'}</span>
-              </div>
-            </div>
-          ))}
-          {/* Print run dispatches */}
-          {printRunsDispatched.slice(0, 3).map((pr) => (
-            <div key={pr.id} className="p-3 bg-green-50 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-medium text-gray-900 text-sm">{pr.print_run_number}</p>
-                <span className="px-2 py-0.5 text-[10px] rounded-full bg-green-100 text-green-800">
-                  Print Run
-                </span>
-              </div>
-              <p className="text-xs text-gray-600">
-                {pr.print_run_jobs?.map(j => j.client_name || j.job?.job_number).filter(Boolean).slice(0, 2).join(', ') || 'No jobs'}
-              </p>
-              <p className="text-[11px] text-gray-400 mt-1">
-                {pr.delivery_mode === 'direct_to_client' ? '📦 Direct to Client' : '🏭 Via Warehouse'}
-              </p>
-              <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200">
-                <span className="text-[11px] text-gray-500">{pr.transporter_name || 'Self'}</span>
-                <span className="text-[11px] text-gray-500">{pr.dispatch_date ? new Date(pr.dispatch_date).toLocaleDateString() : new Date(pr.updated_at || pr.created_at).toLocaleDateString()}</span>
               </div>
             </div>
           ))}

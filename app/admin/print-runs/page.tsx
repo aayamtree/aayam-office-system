@@ -27,7 +27,7 @@ interface PrintRunJob {
 interface PrintRun {
     id: string;
     print_run_number: string;
-    status: 'planned' | 'at_printer' | 'printing_done' | 'qc' | 'dispatched';
+    status: 'planned' | 'at_printer' | 'printing_done' | 'dispatched';
     notes: string | null;
     deadline: string | null;
     total_amount: number | null;
@@ -52,9 +52,7 @@ interface PrintRun {
     eway_bill_number: string | null;
     dispatch_date: string | null;
     invoice_reference: string | null;
-    // QC
-    qc_checklist: Record<string, boolean>;
-    qc_notes: string | null;
+
     // Jobs
     jobs: PrintRunJob[];
 }
@@ -69,7 +67,6 @@ const STATUS_CONFIG = {
     planned: { label: 'Planned', icon: Clock, color: 'bg-amber-100 text-amber-800', headerBg: 'bg-amber-600', dot: 'bg-amber-500' },
     at_printer: { label: 'At Printer', icon: Printer, color: 'bg-orange-100 text-orange-800', headerBg: 'bg-orange-600', dot: 'bg-orange-500' },
     printing_done: { label: 'Printing Done', icon: CheckCircle, color: 'bg-blue-100 text-blue-800', headerBg: 'bg-blue-600', dot: 'bg-blue-500' },
-    qc: { label: 'QC', icon: ClipboardCheck, color: 'bg-purple-100 text-purple-800', headerBg: 'bg-purple-600', dot: 'bg-purple-500' },
     dispatched: { label: 'Dispatched', icon: Truck, color: 'bg-green-100 text-green-800', headerBg: 'bg-green-600', dot: 'bg-green-500' },
 };
 
@@ -77,7 +74,6 @@ const NEXT_STATUS: Record<string, string | null> = {
     planned: 'at_printer',
     at_printer: 'printing_done',
     printing_done: null, // handled via delivery modal
-    qc: null,            // handled via dispatch modal
     dispatched: null,
 };
 
@@ -95,7 +91,6 @@ export default function PrintRunsPage() {
     // Modals
     const [viewRun, setViewRun] = useState<PrintRun | null>(null);
     const [deliveryModal, setDeliveryModal] = useState<PrintRun | null>(null);
-    const [qcModal, setQcModal] = useState<PrintRun | null>(null);
     const [dispatchModal, setDispatchModal] = useState<PrintRun | null>(null);
 
     // Delivery modal state
@@ -110,16 +105,14 @@ export default function PrintRunsPage() {
     const [invoiceRef, setInvoiceRef] = useState('');
     const [dispatchDate, setDispatchDate] = useState(new Date().toISOString().split('T')[0]);
 
-    // QC modal state
-    const [qcChecklist, setQcChecklist] = useState<Record<string, boolean>>({});
-    const [qcNotes, setQcNotes] = useState('');
+
     const [receivedQtys, setReceivedQtys] = useState<Record<string, number>>({});
 
     // Transporters
     const [transporters, setTransporters] = useState<TransporterVendor[]>([]);
 
     // Dynamic QC checklist items from Production Settings
-    const [qcItems, setQcItems] = useState<{ key: string; label: string }[]>([]);
+
 
     // ─── Fetch ──────────────────────────────────────────────
     const fetchRuns = useCallback(async () => {
@@ -132,7 +125,7 @@ export default function PrintRunsPage() {
                     sheet_size_label, pulling_multiple,
                     paper_qty, paper_rate, paper_gst_percent, paper_total, paper_payment_status,
                     delivery_mode, delivery_address, transporter_name, eway_bill_number,
-                    dispatch_date, invoice_reference, qc_checklist, qc_notes,
+                    dispatch_date, invoice_reference,
                     vendors!print_runs_vendor_id_fkey(name),
                     machines(name),
                     sheet_sizes(size),
@@ -179,8 +172,6 @@ export default function PrintRunsPage() {
                 eway_bill_number: r.eway_bill_number,
                 dispatch_date: r.dispatch_date,
                 invoice_reference: r.invoice_reference,
-                qc_checklist: r.qc_checklist || {},
-                qc_notes: r.qc_notes,
                 jobs: jobsData
                     .filter(j => j.print_run_id === r.id)
                     .map(j => ({
@@ -206,26 +197,9 @@ export default function PrintRunsPage() {
         setTransporters(data || []);
     };
 
-    const fetchQcItems = async () => {
-        const { data } = await supabase
-            .from('job_checklists')
-            .select('items')
-            .eq('category', 'dispatch');
-        // Flatten all items from all dispatch checklists into a single list
-        const allItems: { key: string; label: string }[] = [];
-        (data || []).forEach((checklist: any) => {
-            const items = typeof checklist.items === 'string' ? JSON.parse(checklist.items) : checklist.items;
-            if (Array.isArray(items)) {
-                items.forEach((item: string) => {
-                    const key = item.toLowerCase().replace(/[^a-z0-9]+/g, '_');
-                    allItems.push({ key, label: item });
-                });
-            }
-        });
-        setQcItems(allItems);
-    };
 
-    useEffect(() => { fetchRuns(); fetchTransporters(); fetchQcItems(); }, [fetchRuns]);
+
+    useEffect(() => { fetchRuns(); fetchTransporters(); }, [fetchRuns]);
 
     // ─── Status Update ─────────────────────────────────────
     const updateStatus = async (runId: string, newStatus: string, extraData?: Record<string, any>) => {
@@ -275,7 +249,8 @@ export default function PrintRunsPage() {
                 console.warn('Could not save remote QC record:', err);
             }
         } else {
-            await updateStatus(deliveryModal.id, 'qc', data);
+            // Warehouse path — go directly to dispatch step (no QC needed at print run level)
+            await updateStatus(deliveryModal.id, 'printing_done', data);
         }
         setDeliveryModal(null);
         setDeliveryAddress('');
@@ -284,51 +259,7 @@ export default function PrintRunsPage() {
         setDirectSkipReason('');
     };
 
-    // ─── QC Save Handler ────────────────────────────────────
-    const handleQcSave = async () => {
-        if (!qcModal) return;
-        try {
-            // Save QC checklist to print_runs
-            await supabase
-                .from('print_runs')
-                .update({
-                    qc_checklist: qcChecklist,
-                    qc_notes: qcNotes,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', qcModal.id);
 
-            // Save received qtys per job
-            for (const job of qcModal.jobs) {
-                if (receivedQtys[job.id] !== undefined) {
-                    await supabase
-                        .from('print_run_jobs')
-                        .update({ received_qty: receivedQtys[job.id] })
-                        .eq('id', job.id);
-                }
-            }
-
-            // Save QC audit record
-            try {
-                await supabase.from('qc_records').insert({
-                    print_run_id: qcModal.id,
-                    qc_type: 'print_run',
-                    checklist: qcChecklist,
-                    result: 'passed',
-                    notes: qcNotes || null,
-                    performed_by: profile?.id || null,
-                    performed_by_name: profile?.full_name || 'Unknown',
-                });
-            } catch (err) {
-                console.warn('Could not save QC record:', err);
-            }
-
-            await fetchRuns();
-            setQcModal(null);
-        } catch (err) {
-            console.error('Error saving QC:', err);
-        }
-    };
 
     // ─── Dispatch Handler ───────────────────────────────────
     const handleDispatchSubmit = async () => {
@@ -363,25 +294,13 @@ export default function PrintRunsPage() {
         if (run.status === 'printing_done') {
             // Show delivery mode modal
             setDeliveryModal(run);
-        } else if (run.status === 'qc') {
-            // Show dispatch modal
-            setDispatchModal(run);
-            setDispatchDate(new Date().toISOString().split('T')[0]);
         } else {
             const next = NEXT_STATUS[run.status];
             if (next) updateStatus(run.id, next);
         }
     };
 
-    // ─── Open QC modal ──────────────────────────────────────
-    const openQcModal = (run: PrintRun) => {
-        setQcChecklist(run.qc_checklist || {});
-        setQcNotes(run.qc_notes || '');
-        const qtys: Record<string, number> = {};
-        run.jobs.forEach(j => { qtys[j.id] = j.received_qty ?? j.quantity_needed; });
-        setReceivedQtys(qtys);
-        setQcModal(run);
-    };
+
 
     // ─── Helpers ────────────────────────────────────────────
     const filteredRuns = filter === 'all' ? runs : runs.filter(r => r.status === filter);
@@ -390,7 +309,6 @@ export default function PrintRunsPage() {
         planned: runs.filter(r => r.status === 'planned').length,
         at_printer: runs.filter(r => r.status === 'at_printer').length,
         printing_done: runs.filter(r => r.status === 'printing_done').length,
-        qc: runs.filter(r => r.status === 'qc').length,
         dispatched: runs.filter(r => r.status === 'dispatched').length,
     };
 
@@ -401,7 +319,6 @@ export default function PrintRunsPage() {
 
     const getNextLabel = (status: string) => {
         if (status === 'printing_done') return 'Delivery →';
-        if (status === 'qc') return 'Dispatch →';
         const next = NEXT_STATUS[status];
         if (!next) return null;
         return STATUS_CONFIG[next as keyof typeof STATUS_CONFIG]?.label + ' →';
@@ -559,14 +476,7 @@ export default function PrintRunsPage() {
                                         >
                                             <Eye className="w-3.5 h-3.5" /> View
                                         </button>
-                                        {run.status === 'qc' && (
-                                            <button
-                                                onClick={() => openQcModal(run)}
-                                                className="flex-1 px-3 py-1.5 bg-purple-50 border border-purple-200 text-purple-700 rounded-md text-sm font-medium hover:bg-purple-100 transition-colors flex items-center justify-center gap-1.5"
-                                            >
-                                                <ClipboardCheck className="w-3.5 h-3.5" /> QC
-                                            </button>
-                                        )}
+
                                         {nextLabel && (
                                             <button
                                                 onClick={() => handleNextStep(run)}
@@ -657,25 +567,7 @@ export default function PrintRunsPage() {
                                 </div>
                             )}
 
-                            {/* QC Results */}
-                            {viewRun.status === 'qc' || viewRun.status === 'dispatched' ? (
-                                Object.keys(viewRun.qc_checklist || {}).length > 0 && (
-                                    <div className="bg-purple-50 rounded-md p-3 border border-purple-100">
-                                        <p className="text-xs font-bold text-purple-700 mb-2">✅ QC Checklist</p>
-                                        <div className="space-y-1">
-                                            {qcItems.map(item => (
-                                                <div key={item.key} className="flex items-center gap-2 text-xs">
-                                                    <span className={viewRun.qc_checklist[item.key] ? 'text-green-600' : 'text-gray-400'}>
-                                                        {viewRun.qc_checklist[item.key] ? '✓' : '○'}
-                                                    </span>
-                                                    <span className={viewRun.qc_checklist[item.key] ? 'text-gray-700' : 'text-gray-400'}>{item.label}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        {viewRun.qc_notes && <p className="text-xs text-purple-600 mt-2">Notes: {viewRun.qc_notes}</p>}
-                                    </div>
-                                )
-                            ) : null}
+
 
                             {/* Notes */}
                             {viewRun.notes && (
@@ -716,14 +608,7 @@ export default function PrintRunsPage() {
                                     <Trash2 size={13} /> Delete
                                 </button>
                                 <div className="flex gap-2">
-                                    {viewRun.status === 'qc' && (
-                                        <button
-                                            onClick={() => { setViewRun(null); openQcModal(viewRun); }}
-                                            className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-600 text-white text-xs font-bold rounded-md hover:bg-purple-700"
-                                        >
-                                            <ClipboardCheck size={13} /> Do QC
-                                        </button>
-                                    )}
+
                                     {getNextLabel(viewRun.status) && (
                                         <button
                                             onClick={() => { setViewRun(null); handleNextStep(viewRun); }}
@@ -838,92 +723,7 @@ export default function PrintRunsPage() {
                 </div>
             )}
 
-            {/* ═══════════════════════════════════════════════════════ */}
-            {/* QC MODAL                                               */}
-            {/* ═══════════════════════════════════════════════════════ */}
-            {qcModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setQcModal(null)}>
-                    <div className="bg-white rounded-lg w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                        <div className="bg-purple-600 px-4 py-3 rounded-t-lg sticky top-0">
-                            <h2 className="text-white font-bold text-base">Quality Check</h2>
-                            <p className="text-white/70 text-xs">{qcModal.print_run_number}</p>
-                        </div>
-                        <div className="p-4 space-y-4">
-                            {/* Checklist */}
-                            <div>
-                                <p className="text-xs font-bold text-gray-600 mb-2">QC Checklist</p>
-                                {qcItems.length === 0 ? (
-                                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-md text-center">
-                                        <p className="text-sm text-amber-700 font-medium">No QC items configured</p>
-                                        <p className="text-xs text-amber-500 mt-1">Add QC checklist items in Settings → Production</p>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-2">
-                                        {qcItems.map(item => (
-                                            <label key={item.key} className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-all ${qcChecklist[item.key] ? 'bg-green-50 border-green-300' : 'bg-white border-gray-200 hover:bg-gray-50'
-                                                }`}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={!!qcChecklist[item.key]}
-                                                    onChange={e => setQcChecklist({ ...qcChecklist, [item.key]: e.target.checked })}
-                                                    className="w-4 h-4 accent-green-600"
-                                                />
-                                                <span className="text-sm font-medium text-gray-700">{item.label}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
 
-                            {/* Received Qty per Job */}
-                            <div>
-                                <p className="text-xs font-bold text-gray-600 mb-2">Received Quantity per Job</p>
-                                <div className="space-y-2">
-                                    {qcModal.jobs.map(job => (
-                                        <div key={job.id} className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-md">
-                                            <div className="flex-1">
-                                                <span className="text-xs font-bold text-gray-900">{job.job_number}</span>
-                                                <span className="text-xs text-gray-500 ml-2">{job.client_name}</span>
-                                                <span className="text-xs text-gray-400 ml-2">(ordered: {job.quantity_needed?.toLocaleString()})</span>
-                                            </div>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                value={receivedQtys[job.id] || ''}
-                                                onChange={e => setReceivedQtys({ ...receivedQtys, [job.id]: parseInt(e.target.value) || 0 })}
-                                                placeholder="Rcvd qty"
-                                                className="w-24 px-2 py-1.5 border border-gray-200 rounded-md text-sm text-right focus:ring-2 focus:ring-purple-400 outline-none"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* QC Notes */}
-                            <div>
-                                <label className="block text-xs font-bold text-gray-600 mb-1.5">QC Notes</label>
-                                <textarea
-                                    value={qcNotes}
-                                    onChange={e => setQcNotes(e.target.value)}
-                                    rows={2}
-                                    placeholder="Any QC observations..."
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm resize-none focus:ring-2 focus:ring-purple-400 outline-none"
-                                />
-                            </div>
-
-                            <div className="flex justify-end gap-2 pt-2">
-                                <button onClick={() => setQcModal(null)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md">Cancel</button>
-                                <button
-                                    onClick={handleQcSave}
-                                    className="px-6 py-2 bg-purple-600 text-white text-sm font-bold rounded-md hover:bg-purple-700"
-                                >
-                                    Save QC ✓
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* ═══════════════════════════════════════════════════════ */}
             {/* DISPATCH MODAL (from QC → dispatched)                  */}
