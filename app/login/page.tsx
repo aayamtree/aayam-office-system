@@ -89,13 +89,20 @@ export default function LoginPage() {
     }
   };
 
-  // Don't block — show the form immediately, handle redirect silently
-  if (!loading && profile) {
+  // Show redirecting state only when actively signing in or already authenticated
+  if (isLoading || (!loading && profile)) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-2">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-oms-blue"></div>
-        <p className="text-gray-500 text-body">Redirecting...</p>
+        <p className="text-gray-500 text-body">{isLoading ? 'Signing in...' : 'Redirecting...'}</p>
       </div>
+    );
+  }
+
+  // While auth is loading, show nothing (prevents flash of login form)
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white" />
     );
   }
 
