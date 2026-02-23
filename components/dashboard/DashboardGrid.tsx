@@ -104,7 +104,7 @@ export default function DashboardGrid({ defaultLayouts, isLocked, storageKey, ch
     const cols = getCols(bp);
     const gap = 12;
     const rowHeight = 42;
-    const layout = layouts[bp] || defaultLayouts[bp];
+    const rawLayout = layouts[bp] || defaultLayouts[bp];
     const colWidth = containerWidth > 0 ? (containerWidth - gap * (cols - 1)) / cols : 0;
 
     // Build child map
@@ -113,6 +113,9 @@ export default function DashboardGrid({ defaultLayouts, isLocked, storageKey, ch
     childArray.forEach((child: any) => {
         if (child?.key) childMap[child.key] = child;
     });
+
+    // PERF: Filter layout to only items with visible children, then compact to fill gaps
+    const visibleLayout = rawLayout.filter(item => !!childMap[item.i]);
 
     // Compact layout vertically after changes
     const compactLayout = useCallback((items: LayoutItem[]): LayoutItem[] => {
@@ -147,6 +150,9 @@ export default function DashboardGrid({ defaultLayouts, isLocked, storageKey, ch
             return newItem;
         });
     }, []);
+
+    // Active layout: only visible children, compacted to fill gaps
+    const layout = compactLayout(visibleLayout);
 
     // ─── Drag & Drop (swap) Handlers ───────────────────────────
     const handleDragStart = useCallback((e: React.DragEvent, id: string) => {
