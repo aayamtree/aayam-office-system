@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, Maximize2 } from 'lucide-react';
 
 // ─── Types ─────────────────────────────────────────────────────
 export type LayoutItem = { i: string; x: number; y: number; w: number; h: number };
@@ -10,6 +10,15 @@ export type LayoutsMap = { lg: LayoutItem[]; md: LayoutItem[]; sm: LayoutItem[] 
 type ResizeDir = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
 const DEFAULT_STORAGE_KEY = 'aayam-dashboard-layouts-v3';
+
+// ─── Size presets (grid units: w × h) ──────────────────────────
+const SIZE_PRESETS = [
+    { label: 'S', w: 3, h: 2, title: 'Small (3×2)' },
+    { label: 'M', w: 4, h: 4, title: 'Medium (4×4)' },
+    { label: 'L', w: 6, h: 5, title: 'Large (6×5)' },
+    { label: 'W', w: 6, h: 3, title: 'Wide (6×3)' },
+    { label: 'XL', w: 12, h: 6, title: 'Full Width (12×6)' },
+];
 
 // ─── Persistence ───────────────────────────────────────────────
 function loadSavedLayouts(key: string): LayoutsMap | null {
@@ -153,6 +162,26 @@ export default function DashboardGrid({ defaultLayouts, isLocked, storageKey, ch
 
     // Active layout: only visible children, compacted to fill gaps
     const layout = compactLayout(visibleLayout);
+
+    // Apply a preset size to a widget
+    const applyPresetSize = useCallback((itemId: string, newW: number, newH: number) => {
+        setLayouts(prev => {
+            const newLayouts = { ...prev };
+            (['lg', 'md', 'sm'] as Breakpoint[]).forEach(breakpoint => {
+                const bpCols = getCols(breakpoint);
+                const items = [...newLayouts[breakpoint]];
+                const idx = items.findIndex(it => it.i === itemId);
+                if (idx >= 0) {
+                    const clampedW = Math.min(newW, bpCols);
+                    const clampedX = Math.min(items[idx].x, bpCols - clampedW);
+                    items[idx] = { ...items[idx], w: clampedW, h: newH, x: clampedX };
+                    newLayouts[breakpoint] = compactLayout(items);
+                }
+            });
+            saveLayoutsToStorage(key, newLayouts);
+            return newLayouts;
+        });
+    }, [compactLayout, key]);
 
     // ─── Drag & Drop (swap) Handlers ───────────────────────────
     const handleDragStart = useCallback((e: React.DragEvent, id: string) => {
@@ -364,6 +393,26 @@ export default function DashboardGrid({ defaultLayouts, isLocked, storageKey, ch
                                 title="Drag to swap with another widget"
                             >
                                 <GripVertical className="h-4 w-4" />
+                            </div>
+                        )}
+
+                        {/* Size preset buttons — bottom-left */}
+                        {!isLocked && (
+                            <div className="absolute bottom-1.5 left-1.5 z-30 flex items-center gap-0.5 bg-white/90 backdrop-blur-sm rounded-md shadow-md border border-gray-200 px-1 py-0.5">
+                                <Maximize2 className="h-3 w-3 text-gray-400 mr-0.5" />
+                                {SIZE_PRESETS.map(preset => (
+                                    <button
+                                        key={preset.label}
+                                        onClick={(e) => { e.stopPropagation(); applyPresetSize(item.i, preset.w, preset.h); }}
+                                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded transition-colors ${item.w === preset.w && item.h === preset.h
+                                                ? 'bg-blue-500 text-white'
+                                                : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'
+                                            }`}
+                                        title={preset.title}
+                                    >
+                                        {preset.label}
+                                    </button>
+                                ))}
                             </div>
                         )}
 
