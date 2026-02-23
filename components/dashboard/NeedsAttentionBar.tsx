@@ -168,7 +168,21 @@ export default function NeedsAttentionBar({
         }
     }, [expandedCategory, fetchDetails]);
 
-    if (loading || !hasAlerts) return null;
+    if (loading) return (
+        <Card className="h-full flex items-center justify-center">
+            <CardContent className="pt-6"><span className="text-sm text-muted-foreground">Loading alerts...</span></CardContent>
+        </Card>
+    );
+
+    if (!hasAlerts) return (
+        <Card className="h-full flex items-center justify-center bg-green-50/50 border-green-200">
+            <CardContent className="pt-6 text-center">
+                <span className="text-2xl">✅</span>
+                <p className="text-sm font-medium text-green-800 mt-1">All Clear</p>
+                <p className="text-xs text-green-600">No items need attention right now</p>
+            </CardContent>
+        </Card>
+    );
 
     const categories: AlertCategory[] = [
         overduePayments > 0 ? {

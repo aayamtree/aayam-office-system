@@ -50,8 +50,20 @@ export default function InvoicePendingWidget() {
         return () => clearInterval(interval);
     }, []);
 
-    if (loading) return null;
-    if (jobs.length === 0) return null;
+    if (loading) return (
+        <div className="h-full flex items-center justify-center bg-white border rounded-lg">
+            <span className="text-sm text-muted-foreground">Loading invoices...</span>
+        </div>
+    );
+    if (jobs.length === 0) return (
+        <div className="h-full flex items-center justify-center bg-green-50/50 border border-green-200 rounded-lg">
+            <div className="text-center">
+                <span className="text-2xl">✅</span>
+                <p className="text-sm font-medium text-green-800 mt-1">No Pending Invoices</p>
+                <p className="text-xs text-green-600">All ready jobs have invoices</p>
+            </div>
+        </div>
+    );
 
     return (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 md:p-4">
