@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Lock, User, AlertCircle, Info } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
@@ -8,7 +8,8 @@ import { logLogin } from '@/lib/activity-logger';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signIn, profile, loading, isConfigured, bypassLogin } = useAuth();
+  const { signIn, profile, session, loading, isConfigured, bypassLogin } = useAuth();
+  const hasRedirected = useRef(false);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,17 +23,19 @@ export default function LoginPage() {
     setIsLocalhost(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
   }, []);
 
-  // Redirect if already logged in - Optimized for Role
+  // Redirect if already logged in — requires REAL session to avoid redirect loops
+  // (stale cached profiles without a session would cause middleware to bounce back to /login)
   useEffect(() => {
-    if (!loading && profile) {
+    if (!loading && profile && session && !hasRedirected.current) {
+      hasRedirected.current = true;
       const target = profile.role === 'designer' ? '/admin/designers/tasks'
         : profile.role === 'dispatch' ? '/admin/dispatch'
           : profile.role === 'marketing' ? '/admin/marketing'
             : profile.role === 'cmyk' ? '/admin/cmyk-print'
               : '/admin/dashboard';
-      window.location.href = target;
+      router.push(target);
     }
-  }, [profile, loading]);
+  }, [profile, session, loading, router]);
 
   // Keyboard shortcut for quick login (localhost only)
   useEffect(() => {
