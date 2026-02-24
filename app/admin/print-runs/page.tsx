@@ -63,7 +63,8 @@ interface TransporterVendor {
 }
 
 // ─── Status Config ─────────────────────────────────────────
-const STATUS_CONFIG = {
+const DEFAULT_STATUS = { label: 'Unknown', icon: Clock, color: 'bg-gray-100 text-gray-800', headerBg: 'bg-gray-500', dot: 'bg-gray-400' };
+const STATUS_CONFIG: Record<string, typeof DEFAULT_STATUS> = {
     planned: { label: 'Planned', icon: Clock, color: 'bg-amber-100 text-amber-800', headerBg: 'bg-amber-600', dot: 'bg-amber-500' },
     at_printer: { label: 'At Printer', icon: Printer, color: 'bg-orange-100 text-orange-800', headerBg: 'bg-orange-600', dot: 'bg-orange-500' },
     printing_done: { label: 'Printing Done', icon: CheckCircle, color: 'bg-blue-100 text-blue-800', headerBg: 'bg-blue-600', dot: 'bg-blue-500' },
@@ -387,7 +388,7 @@ export default function PrintRunsPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {filteredRuns.map(run => {
-                        const statusConf = STATUS_CONFIG[run.status];
+                        const statusConf = STATUS_CONFIG[run.status] || DEFAULT_STATUS;
                         const isUpdating = updating === run.id;
                         const isOverdue = run.deadline && new Date(run.deadline) < new Date() && run.status !== 'dispatched';
                         const nextLabel = getNextLabel(run.status);
@@ -510,7 +511,7 @@ export default function PrintRunsPage() {
             {viewRun && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setViewRun(null)}>
                     <div className="bg-white rounded-lg w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                        <div className={`${STATUS_CONFIG[viewRun.status].headerBg} px-4 py-3 flex items-center justify-between rounded-t-lg sticky top-0`}>
+                        <div className={`${(STATUS_CONFIG[viewRun.status] || DEFAULT_STATUS).headerBg} px-4 py-3 flex items-center justify-between rounded-t-lg sticky top-0`}>
                             <div>
                                 <h2 className="text-white font-bold text-base">{viewRun.print_run_number}</h2>
                                 <p className="text-white/70 text-xs">{viewRun.vendor_name || 'No vendor'}</p>
