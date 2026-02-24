@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useDashboardStats } from '@/lib/hooks';
+// PERF: Removed useDashboardStats (25 queries!) — sidebar only needs 2 badge counts
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import {
@@ -226,19 +226,23 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
   const searchParams = useSearchParams();
   const { profile, signOut } = useAuth();
   const [expandedItems, setExpandedItems] = useState<string[]>(['Design Studio', 'Marketing', 'Sales & Finance', 'CRM', 'Dispatch']);
-  const { stats } = useDashboardStats();
   const [hovered, setHovered] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Lightweight active leads count for sidebar badge
+  // PERF: Only 2 lightweight count queries instead of 25 from useDashboardStats
   const [activeLeadsCount, setActiveLeadsCount] = useState(0);
+  const [prodQueueCount, setProdQueueCount] = useState(0);
   useEffect(() => {
+    // Leads badge count
     supabase.from('leads')
       .select('id', { count: 'exact', head: true })
       .not('status', 'in', '(converted,lost)')
-      .then(({ count }) => {
-        setActiveLeadsCount(count || 0);
-      });
+      .then(({ count }) => setActiveLeadsCount(count || 0));
+    // Production Queue badge count (printing + finishing)
+    supabase.from('jobs')
+      .select('id', { count: 'exact', head: true })
+      .in('current_stage', ['printing', 'finishing'])
+      .then(({ count }) => setProdQueueCount(count || 0));
   }, []);
 
   const toggleExpanded = (name: string) => {
@@ -417,7 +421,7 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
                       {item.submenu!.map((sub) => {
                         let badge = 0;
                         if (sub.name === 'Leads') badge = activeLeadsCount;
-                        if (sub.name === 'Production Queue') badge = (stats?.pipeline?.printing || 0) + (stats?.pipeline?.finishing || 0);
+                        if (sub.name === 'Production Queue') badge = prodQueueCount;
 
                         const showBadge = badge > 0;
 

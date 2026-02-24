@@ -2,33 +2,34 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { useJobs, useClients, useDesigners } from '@/lib/hooks';
+import { useJobs } from '@/lib/hooks';
 import { Calendar, Clock, User, AlertCircle, Search, Palette, Users, LayoutGrid, List } from 'lucide-react';
 import Link from 'next/link';
 
 export default function UnifiedQueue() {
     const { profile } = useAuth();
+    // PERF: Single query with joins instead of 3 separate queries (jobs + clients + designers)
     const { jobs, loading } = useJobs({
+        select: 'id, project_name, job_number, current_stage, priority, client_deadline, designer_id, job_type, product_category, client:clients(id, name, company), designer:designers(id, name, user_id)',
         filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready'], op: 'in' }]
     });
-    const { clients } = useClients();
-    const { designers } = useDesigners();
     const [searchQuery, setSearchQuery] = useState('');
     const [showAll, setShowAll] = useState(false);
 
     // Find the designer record whose user_id matches the logged-in profile
-    const myDesigner = designers.find(d => d.user_id === profile?.id)
-        || designers.find(d => d.name?.toLowerCase() === profile?.full_name?.toLowerCase());
+    const designers = Array.from(new Map((jobs || []).filter((j: any) => j.designer).map((j: any) => [j.designer.id, j.designer])).values()) as any[];
+    const myDesigner = designers.find((d: any) => d.user_id === profile?.id)
+        || designers.find((d: any) => d.name?.toLowerCase() === profile?.full_name?.toLowerCase());
     const isAdmin = profile?.role === 'admin';
 
     // Get all active tasks
     const allTasks = (jobs || [])
         .filter(job => job.current_stage !== 'delivered' && job.current_stage !== 'dispatched' && job.current_stage !== 'cancelled')
-        .map(job => ({
+        .map((job: any) => ({
             id: job.id,
             title: job.project_name,
-            client: clients.find(c => c.id === job.client_id)?.company || clients.find(c => c.id === job.client_id)?.name || 'Unknown',
-            designer: designers.find(d => d.id === job.designer_id)?.name || 'Unassigned',
+            client: job.client?.company || job.client?.name || 'Unknown',
+            designer: job.designer?.name || 'Unassigned',
             designerId: job.designer_id,
             status: job.current_stage || 'new',
             priority: job.priority || 'normal',
