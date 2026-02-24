@@ -45,89 +45,170 @@ const EMPTY: DashboardData = {
 };
 
 // Server-side fetcher — runs on the server, never in the browser
-// All queries run in parallel for speed
+// OPTIMIZED: Reduced from 26 queries to ~10 by combining related data
 export async function fetchDashboardData(): Promise<DashboardData> {
     const supabase = createServerSupabase();
     const today = new Date().toISOString().split('T')[0];
     const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
     const startOfYear = new Date(new Date().getFullYear(), 0, 1).toISOString();
 
+    // 6 months ago for sales performance
+    const sixMonthsAgo = new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1).toISOString();
+
     const safe = async <T>(fn: () => Promise<T>, fallback: T): Promise<T> => {
         try { return await fn(); } catch { return fallback; }
     };
 
     try {
-        // ── All queries in parallel ──
+        // ── OPTIMIZED: All queries in parallel, consolidated related ones ──
         const [
-            clientsRes, activeJobsRes, revenueRes, pendingRes,
-            ordersMonthRes, leadsMonthRes, dispatchesRes,
-            pipelineRes, pipelineOverdueRes,
-            jobsDueTodayRes, jobsDelayedRes, jobsCompletedRes,
-            overduePaymentsRes, followUpsDueRes, followUpsTableRes, feedbackPendingRes,
-            vendorRes, vendorDueTodayRes, vendorDelayedRes,
+            clientsRes,
+            // ONE big jobs query — get all active jobs with key fields for pipeline, overdue, focus, vendor
+            activeJobsRes,
+            // Revenue & pending — combined into one query
+            financialsRes,
+            // Orders this month
+            ordersMonthRes,
+            // Leads this month
+            leadsMonthRes,
+            // Jobs completed today
+            completedTodayRes,
+            // Alerts: overdue payments
+            overduePaymentsRes,
+            // Alerts: follow-ups (leads + follow_ups table combined)
+            followUpsDueRes,
+            followUpsTableRes,
+            // Alerts: feedback pending
+            feedbackPendingRes,
+            // Sales performance — ONE query for all 6 months
+            salesRes,
+            // Recent jobs
             recentJobsRes,
         ] = await Promise.all([
-            // Core KPIs
+            // 1. Client count
             safe(async () => supabase.from('clients').select('id', { count: 'exact', head: true }), { count: 0 } as any),
-            safe(async () => supabase.from('jobs').select('id', { count: 'exact', head: true }).not('current_stage', 'in', '("delivered","cancelled")'), { count: 0 } as any),
-            safe(async () => supabase.from('jobs').select('total_amount').not('current_stage', 'in', '("delivered","cancelled")').gte('created_at', startOfYear), { data: [] } as any),
-            safe(async () => supabase.from('jobs').select('total_amount, amount_received').neq('payment_status', 'paid').not('current_stage', 'in', '("delivered","cancelled")'), { data: [] } as any),
+
+            // 2. Active jobs with fields for pipeline, overdue, vendor, focus — ONE query replaces ~10 old queries
+            safe(async () => supabase
+                .from('jobs')
+                .select('current_stage, client_deadline, internal_deadline, total_amount, amount_received, payment_status, updated_at')
+                .not('current_stage', 'in', '("delivered","cancelled")'), { data: [] } as any),
+
+            // 3. Financial totals (revenue this year)
+            safe(async () => supabase
+                .from('jobs')
+                .select('total_amount')
+                .not('current_stage', 'in', '("delivered","cancelled")')
+                .gte('created_at', startOfYear), { data: [] } as any),
+
+            // 4. Orders this month
             safe(async () => supabase.from('jobs').select('id', { count: 'exact', head: true }).gte('created_at', startOfMonth).neq('current_stage', 'cancelled'), { count: 0 } as any),
+
+            // 5. Leads this month
             safe(async () => supabase.from('leads').select('id', { count: 'exact', head: true }).gte('created_at', startOfMonth), { count: 0 } as any),
-            safe(async () => supabase.from('jobs').select('id', { count: 'exact', head: true }).in('current_stage', ['ready', 'packed']), { count: 0 } as any),
-            // Pipeline
-            safe(async () => supabase.from('jobs').select('current_stage').not('current_stage', 'in', '("delivered","cancelled")'), { data: [] } as any),
-            safe(async () => supabase.from('jobs').select('current_stage').not('current_stage', 'in', '("delivered","cancelled")').not('client_deadline', 'is', null).lt('client_deadline', today), { data: [] } as any),
-            // Today's focus
-            safe(async () => supabase.from('jobs').select('id', { count: 'exact', head: true }).not('current_stage', 'in', '("delivered","cancelled")').eq('client_deadline', today), { count: 0 } as any),
-            safe(async () => supabase.from('jobs').select('id', { count: 'exact', head: true }).not('current_stage', 'in', '("delivered","cancelled")').lt('client_deadline', today).not('client_deadline', 'is', null), { count: 0 } as any),
+
+            // 6. Jobs completed today
             safe(async () => supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('current_stage', 'delivered').gte('updated_at', today), { count: 0 } as any),
-            // Alerts
+
+            // 7. Overdue invoice payments
             safe(async () => supabase.from('invoices').select('id', { count: 'exact', head: true }).neq('payment_status', 'paid').not('due_date', 'is', null).lt('due_date', today), { count: 0 } as any),
+
+            // 8. Follow-ups due (leads)
             safe(async () => supabase.from('leads').select('id', { count: 'exact', head: true }).not('next_follow_up', 'is', null).lte('next_follow_up', today).not('status', 'in', '("won","lost")'), { count: 0 } as any),
+
+            // 9. Follow-ups due (follow_ups table)
             safe(async () => supabase.from('follow_ups').select('id', { count: 'exact', head: true }).not('follow_up_date', 'is', null).lte('follow_up_date', today), { count: 0 } as any),
+
+            // 10. Feedback pending (approval stage)
             safe(async () => supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('current_stage', 'approval'), { count: 0 } as any),
-            // Vendor stats
-            safe(async () => supabase.from('jobs').select('id', { count: 'exact', head: true }).in('current_stage', ['printing', 'finishing']), { count: 0 } as any),
-            safe(async () => supabase.from('jobs').select('id', { count: 'exact', head: true }).in('current_stage', ['printing', 'finishing']).eq('internal_deadline', today), { count: 0 } as any),
-            safe(async () => supabase.from('jobs').select('id', { count: 'exact', head: true }).in('current_stage', ['printing', 'finishing']).not('internal_deadline', 'is', null).lt('internal_deadline', today), { count: 0 } as any),
-            // Recent jobs for table
+
+            // 11. Sales performance — ONE query for all 6 months instead of 6 separate queries
+            safe(async () => supabase
+                .from('jobs')
+                .select('total_amount, created_at')
+                .gte('created_at', sixMonthsAgo)
+                .neq('current_stage', 'cancelled'), { data: [] } as any),
+
+            // 12. Recent jobs for table
             safe(async () => supabase.from('jobs').select('id, job_number, project_name, current_stage, total_amount, client:clients(name)').order('created_at', { ascending: false }).limit(5), { data: [] } as any),
         ]);
 
-        const totalRevenue = (revenueRes.data || []).reduce((s: number, j: any) => s + (j.total_amount || 0), 0);
-        const pendingPayments = (pendingRes.data || []).reduce((s: number, j: any) => s + ((j.total_amount || 0) - (j.amount_received || 0)), 0);
-
+        // ── Process active jobs data (ONE query → many stats) ──
+        const activeJobs = activeJobsRes.data || [];
         const pipeline: Record<string, number> = {};
-        (pipelineRes.data || []).forEach((j: any) => { const s = j.current_stage || 'new'; pipeline[s] = (pipeline[s] || 0) + 1; });
-
         const pipelineOverdue: Record<string, number> = {};
-        (pipelineOverdueRes.data || []).forEach((j: any) => { const s = j.current_stage || 'new'; pipelineOverdue[s] = (pipelineOverdue[s] || 0) + 1; });
+        let pendingPayments = 0;
+        let dispatchCount = 0;
+        let jobsDueToday = 0;
+        let jobsDelayed = 0;
+        let vendorCount = 0;
+        let vendorDueToday = 0;
+        let vendorDelayed = 0;
 
-        // Sales performance (monthly, last 6 months)
-        let salesPerformance: { month: string; value: number; active?: boolean }[] = [];
-        try {
-            const now = new Date();
-            const months: { start: Date; label: string; active: boolean }[] = [];
-            for (let i = 5; i >= 0; i--) {
-                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                months.push({ start: d, label: d.toLocaleString('en', { month: 'short' }), active: i === 0 });
+        for (const job of activeJobs) {
+            const stage = job.current_stage || 'new';
+
+            // Pipeline count
+            pipeline[stage] = (pipeline[stage] || 0) + 1;
+
+            // Overdue pipeline
+            if (job.client_deadline && job.client_deadline < today) {
+                pipelineOverdue[stage] = (pipelineOverdue[stage] || 0) + 1;
             }
-            salesPerformance = await Promise.all(months.map(async (m) => {
-                const end = new Date(m.start.getFullYear(), m.start.getMonth() + 1, 1);
-                const { data } = await supabase.from('jobs').select('total_amount').gte('created_at', m.start.toISOString()).lt('created_at', end.toISOString()).neq('current_stage', 'cancelled');
-                return { month: m.label, value: (data || []).reduce((s: number, j: any) => s + (j.total_amount || 0), 0), active: m.active };
-            }));
-        } catch { salesPerformance = []; }
+
+            // Pending payments
+            if (job.payment_status !== 'paid') {
+                pendingPayments += (job.total_amount || 0) - (job.amount_received || 0);
+            }
+
+            // Dispatch count
+            if (stage === 'ready' || stage === 'packed') {
+                dispatchCount++;
+            }
+
+            // Today's focus
+            if (job.client_deadline === today) {
+                jobsDueToday++;
+            }
+            if (job.client_deadline && job.client_deadline < today) {
+                jobsDelayed++;
+            }
+
+            // Vendor stats
+            if (stage === 'printing' || stage === 'finishing') {
+                vendorCount++;
+                if (job.internal_deadline === today) vendorDueToday++;
+                if (job.internal_deadline && job.internal_deadline < today) vendorDelayed++;
+            }
+        }
+
+        // ── Process financials ──
+        const totalRevenue = (financialsRes.data || []).reduce((s: number, j: any) => s + (j.total_amount || 0), 0);
+
+        // ── Process sales performance from ONE query ──
+        const now = new Date();
+        const salesPerformance: { month: string; value: number; active?: boolean }[] = [];
+        for (let i = 5; i >= 0; i--) {
+            const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+            const monthLabel = monthStart.toLocaleString('en', { month: 'short' });
+            const monthValue = (salesRes.data || [])
+                .filter((j: any) => {
+                    const d = new Date(j.created_at);
+                    return d >= monthStart && d < monthEnd;
+                })
+                .reduce((s: number, j: any) => s + (j.total_amount || 0), 0);
+            salesPerformance.push({ month: monthLabel, value: monthValue, active: i === 0 });
+        }
 
         const feedbackCount = feedbackPendingRes.count || 0;
 
         return {
             totalClients: clientsRes.count || 0,
-            activeJobs: activeJobsRes.count || 0,
+            activeJobs: activeJobs.length,
             totalRevenue,
             pendingPayments,
-            pendingDispatches: dispatchesRes.count || 0,
+            pendingDispatches: dispatchCount,
             leadsThisMonth: leadsMonthRes.count || 0,
             ordersThisMonth: ordersMonthRes.count || 0,
             pipeline,
@@ -140,15 +221,15 @@ export async function fetchDashboardData(): Promise<DashboardData> {
                 blockedBreakdown: { feedback: feedbackCount, payment: 0 },
             },
             todaysFocus: {
-                jobsDue: jobsDueTodayRes.count || 0,
-                jobsDelayed: jobsDelayedRes.count || 0,
-                jobsCompleted: jobsCompletedRes.count || 0,
+                jobsDue: jobsDueToday,
+                jobsDelayed: jobsDelayed,
+                jobsCompleted: completedTodayRes.count || 0,
                 paymentsDue: 0,
             },
             vendorStats: {
-                jobsAtVendor: vendorRes.count || 0,
-                dueToday: vendorDueTodayRes.count || 0,
-                delayed: vendorDelayedRes.count || 0,
+                jobsAtVendor: vendorCount,
+                dueToday: vendorDueToday,
+                delayed: vendorDelayed,
             },
             salesPerformance,
             recentJobs: recentJobsRes.data || [],
