@@ -9,6 +9,7 @@ import DailyBriefingTrigger from '@/components/calendar/DailyBriefingTrigger';
 import CommandPalette from '@/components/shared/CommandPalette';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { ConfirmProvider } from '@/components/ConfirmModal';
+import { SessionProvider } from 'next-auth/react';
 
 export default function AdminLayout({
   children,
@@ -51,42 +52,44 @@ export default function AdminLayout({
   }
 
   return (
-    <ConfirmProvider>
-      <div className="min-h-screen bg-background">
-        {/* Mobile Overlay */}
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-            onClick={closeSidebar}
+    <SessionProvider>
+      <ConfirmProvider>
+        <div className="min-h-screen bg-background">
+          {/* Mobile Overlay */}
+          {sidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+              onClick={closeSidebar}
+            />
+          )}
+
+          {/* Sidebar */}
+          <Sidebar
+            isOpen={sidebarOpen}
+            onClose={closeSidebar}
+            onHoverChange={setSidebarHovered}
+            locked={sidebarLocked}
+            onLockedChange={(v) => { setSidebarLocked(v); localStorage.setItem('sidebar-locked', String(v)); }}
           />
-        )}
 
-        {/* Sidebar */}
-        <Sidebar
-          isOpen={sidebarOpen}
-          onClose={closeSidebar}
-          onHoverChange={setSidebarHovered}
-          locked={sidebarLocked}
-          onLockedChange={(v) => { setSidebarLocked(v); localStorage.setItem('sidebar-locked', String(v)); }}
-        />
+          {/* Header */}
+          <Header onMenuClick={() => setSidebarOpen(true)} sidebarExpanded={sidebarHovered || sidebarLocked} />
 
-        {/* Header */}
-        <Header onMenuClick={() => setSidebarOpen(true)} sidebarExpanded={sidebarHovered || sidebarLocked} />
+          {/* Global Command Palette (Cmd+K) */}
+          <CommandPalette />
 
-        {/* Global Command Palette (Cmd+K) */}
-        <CommandPalette />
+          {/* Daily Briefing - Auto shows once per day on login */}
+          {profile && <DailyBriefingTrigger />}
 
-        {/* Daily Briefing - Auto shows once per day on login */}
-        {profile && <DailyBriefingTrigger />}
+          {/* Main Content */}
+          <main className={`pt-20 lg:pt-24 px-4 md:px-6 lg:px-8 py-6 min-h-screen transition-[margin] duration-200 ease-in-out ${(sidebarHovered || sidebarLocked) ? 'lg:ml-64' : 'lg:ml-16'}`}>
+            {children}
+          </main>
 
-        {/* Main Content */}
-        <main className={`pt-20 lg:pt-24 px-4 md:px-6 lg:px-8 py-6 min-h-screen transition-[margin] duration-200 ease-in-out ${(sidebarHovered || sidebarLocked) ? 'lg:ml-64' : 'lg:ml-16'}`}>
-          {children}
-        </main>
-
-        {/* Mobile Bottom Navigation */}
-        <MobileBottomNav />
-      </div>
-    </ConfirmProvider>
+          {/* Mobile Bottom Navigation */}
+          <MobileBottomNav />
+        </div>
+      </ConfirmProvider>
+    </SessionProvider>
   );
 }
