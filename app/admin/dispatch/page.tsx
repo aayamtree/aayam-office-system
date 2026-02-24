@@ -216,13 +216,13 @@ export default function DispatchPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-gray-900 text-sm">{job.job_number}</p>
-                    {job.priority === 'urgent' && <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-[10px] rounded-full font-medium">Urgent</span>}
+                    {job.priority === 'urgent' && <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-xs rounded-full font-medium">Urgent</span>}
                   </div>
                   <p className="text-xs text-gray-600">{job.client?.company || job.client?.name}</p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">{job.project_name}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{job.project_name}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[11px] text-gray-500">Due</p>
+                  <p className="text-xs text-gray-500">Due</p>
                   <p className="text-xs font-medium text-gray-900">{job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}</p>
                 </div>
               </div>
@@ -249,16 +249,16 @@ export default function DispatchPage() {
                   <div>
                     <p className="font-medium text-gray-900 text-sm">{job.job_number}</p>
                     <p className="text-xs text-gray-600">{job.client?.company || job.client?.name}</p>
-                    <p className="text-[11px] text-gray-400 mt-0.5">{job.project_name} · Qty: {job.quantity}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{job.project_name} · Qty: {job.quantity}</p>
                     {(job as any).packing_info && (
-                      <p className="text-[11px] text-green-700 mt-0.5 font-medium">
+                      <p className="text-xs text-green-700 mt-0.5 font-medium">
                         📦 {(job as any).packing_info.package_count} {(job as any).packing_info.package_type}(s) · ~{(job as any).packing_info.approx_weight_kg}kg
                       </p>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="text-right hidden sm:block">
-                      <p className="text-[11px] text-gray-500">Due</p>
+                      <p className="text-xs text-gray-500">Due</p>
                       <p className="text-xs font-medium">{job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}</p>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -318,15 +318,15 @@ export default function DispatchPage() {
             <div key={dispatch.id} className="p-3 bg-gray-50 rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <p className="font-medium text-gray-900 text-sm">{dispatch.dispatch_number}</p>
-                <span className={`px-2 py-0.5 text-[10px] rounded-full ${getStatusColor(dispatch.status)}`}>
+                <span className={`px-2 py-0.5 text-xs rounded-full ${getStatusColor(dispatch.status)}`}>
                   {getStatusLabel(dispatch.status)}
                 </span>
               </div>
               <p className="text-xs text-gray-600">{dispatch.client?.company || dispatch.client?.name}</p>
-              <p className="text-[11px] text-gray-400 mt-1">Packages: {dispatch.packages}</p>
+              <p className="text-xs text-gray-400 mt-1">Packages: {dispatch.packages}</p>
               <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200">
-                <span className="text-[11px] text-gray-500">{dispatch.transporter_name || 'Self'}</span>
-                <span className="text-[11px] text-gray-500">{dispatch.dispatch_date ? new Date(dispatch.dispatch_date).toLocaleDateString() : '-'}</span>
+                <span className="text-xs text-gray-500">{dispatch.transporter_name || 'Self'}</span>
+                <span className="text-xs text-gray-500">{dispatch.dispatch_date ? new Date(dispatch.dispatch_date).toLocaleDateString() : '-'}</span>
               </div>
             </div>
           ))}

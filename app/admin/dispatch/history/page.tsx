@@ -443,7 +443,7 @@ export default function DispatchHistoryPage() {
                       }`}>
                       <div className="flex justify-between items-center mb-2">
                         <div className="flex items-center gap-2">
-                          <span className={`px-2 py-0.5 text-[10px] rounded-full font-medium ${record.result === 'passed' ? 'bg-green-100 text-green-800' :
+                          <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${record.result === 'passed' ? 'bg-green-100 text-green-800' :
                             record.result === 'failed' ? 'bg-red-100 text-red-800' :
                               'bg-amber-100 text-amber-800'
                             }`}>
@@ -453,7 +453,7 @@ export default function DispatchHistoryPage() {
                             {record.qc_type.replace('_', '-')} QC
                           </span>
                         </div>
-                        <span className="text-[11px] text-gray-500">
+                        <span className="text-xs text-gray-500">
                           {new Date(record.performed_at).toLocaleString()}
                         </span>
                       </div>
@@ -466,7 +466,7 @@ export default function DispatchHistoryPage() {
                       {/* Checklist */}
                       {record.checklist && Object.keys(record.checklist).length > 0 && (
                         <div className="mb-2">
-                          <p className="text-[10px] text-gray-500 uppercase font-medium mb-1">Checklist</p>
+                          <p className="text-xs text-gray-500 uppercase font-medium mb-1">Checklist</p>
                           <div className="grid grid-cols-2 gap-1">
                             {Object.entries(record.checklist).map(([key, val]) => (
                               <div key={key} className="flex items-center gap-1.5 text-xs">
@@ -491,7 +491,7 @@ export default function DispatchHistoryPage() {
 
                       {record.photos && record.photos.length > 0 && (
                         <div className="mt-2">
-                          <p className="text-[10px] text-gray-500 uppercase font-medium mb-1">Remote QC Photos</p>
+                          <p className="text-xs text-gray-500 uppercase font-medium mb-1">Remote QC Photos</p>
                           <div className="flex gap-2 flex-wrap">
                             {record.photos.map((url, idx) => (
                               <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">

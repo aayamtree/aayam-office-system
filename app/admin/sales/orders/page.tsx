@@ -478,7 +478,7 @@ export default function OrdersPage() {
                             <span>{job.quantity} pcs</span>
                           </div>
                         </div>
-                        <span className="text-gray-900 font-bold text-2xl md:text-3xl">
+                        <span className="text-gray-900 font-bold text-2xl font-bold">
                           {formatCurrency(job.total_amount)}
                         </span>
                       </div>

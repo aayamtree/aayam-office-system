@@ -145,7 +145,7 @@ export default function NotificationsPage() {
                                     maxLength={500}
                                     required
                                 />
-                                <p className="text-[10px] text-gray-400 mt-1 text-right">
+                                <p className="text-xs text-gray-400 mt-1 text-right">
                                     {message.length}/500
                                 </p>
                             </div>
@@ -203,7 +203,7 @@ export default function NotificationsPage() {
                             {/* Preview */}
                             {message.trim() && (
                                 <div className="border border-dashed border-gray-300 rounded-md p-3">
-                                    <p className="text-[10px] uppercase font-medium text-gray-400 mb-2">Preview</p>
+                                    <p className="text-xs uppercase font-medium text-gray-400 mb-2">Preview</p>
                                     <div className={`rounded-md p-3 ${priority === 'urgent' ? 'bg-red-50 border border-red-200' : 'bg-gray-50 border border-gray-200'
                                         }`}>
                                         <div className="flex items-center gap-2 mb-1">
@@ -218,7 +218,7 @@ export default function NotificationsPage() {
                                         <p className={`text-sm ${priority === 'urgent' ? 'text-red-700' : 'text-gray-700'}`}>
                                             {message}
                                         </p>
-                                        <p className="text-[10px] text-gray-400 mt-2">
+                                        <p className="text-xs text-gray-400 mt-2">
                                             → {audiences.find(a => a.value === targetAudience)?.label}
                                         </p>
                                     </div>
@@ -255,7 +255,7 @@ export default function NotificationsPage() {
                                 <Clock className="w-4 h-4 text-gray-500" />
                                 <span className="text-sm font-semibold text-gray-900">Recent Broadcasts</span>
                             </div>
-                            <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md">
+                            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md">
                                 {history.length} sent
                             </span>
                         </div>
@@ -290,11 +290,11 @@ export default function NotificationsPage() {
                                                                     : notif.message}
                                                             </p>
                                                             <div className="flex items-center gap-2 mt-0.5">
-                                                                <span className="text-[10px] text-gray-500">
+                                                                <span className="text-xs text-gray-500">
                                                                     {audienceInfo?.icon} {audienceInfo?.label || notif.target_audience}
                                                                 </span>
-                                                                <span className="text-[10px] text-gray-400">•</span>
-                                                                <span className="text-[10px] text-gray-400">
+                                                                <span className="text-xs text-gray-400">•</span>
+                                                                <span className="text-xs text-gray-400">
                                                                     {new Date(notif.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                                                 </span>
                                                             </div>
@@ -302,7 +302,7 @@ export default function NotificationsPage() {
                                                     </div>
                                                     <div className="flex items-center gap-1.5 flex-shrink-0">
                                                         {notif.priority === 'urgent' && (
-                                                            <span className="text-[10px] font-medium text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                                                            <span className="text-xs font-medium text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
                                                                 URGENT
                                                             </span>
                                                         )}
@@ -318,7 +318,7 @@ export default function NotificationsPage() {
                                                         <div className={`rounded-md p-3 ${notif.priority === 'urgent' ? 'bg-red-50' : 'bg-gray-50'
                                                             }`}>
                                                             <p className="text-sm text-gray-800 whitespace-pre-wrap">{notif.message}</p>
-                                                            <div className="flex items-center gap-3 mt-2 text-[10px] text-gray-500">
+                                                            <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
                                                                 <span>📅 {new Date(notif.created_at).toLocaleString()}</span>
                                                                 <span>→ {audienceInfo?.label}</span>
                                                             </div>

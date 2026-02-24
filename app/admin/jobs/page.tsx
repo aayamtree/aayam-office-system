@@ -517,7 +517,7 @@ export default function JobsPage() {
           {job.files && job.files.length > 0 && (
             <span className="flex items-center gap-0.5 text-gray-600" title={`${job.files.length} file(s) attached`}>
               <Paperclip className="w-3 h-3" />
-              <span className="text-[10px] font-bold">{job.files.length}</span>
+              <span className="text-xs font-bold">{job.files.length}</span>
             </span>
           )}
         </div>
@@ -789,7 +789,7 @@ export default function JobsPage() {
                           {job.files && job.files.length > 0 && (
                             <span className="flex items-center gap-0.5 text-gray-600" title={`${job.files.length} file(s)`}>
                               <Paperclip className="w-3 h-3" />
-                              <span className="text-[10px] font-bold">{job.files.length}</span>
+                              <span className="text-xs font-bold">{job.files.length}</span>
                             </span>
                           )}
                         </div>

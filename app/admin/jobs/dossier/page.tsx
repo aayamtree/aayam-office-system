@@ -205,14 +205,14 @@ export default function JobDossierPage() {
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
                                             <span className="text-base font-bold text-gray-900">{job.job_number}</span>
-                                            <span className={`px-2 py-0.5 text-[10px] rounded-full font-medium ${stageColor[job.current_stage] || 'bg-gray-100 text-gray-700'}`}>
+                                            <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${stageColor[job.current_stage] || 'bg-gray-100 text-gray-700'}`}>
                                                 {stageLabel[job.current_stage] || job.current_stage}
                                             </span>
                                             {job.priority !== 'normal' && (
-                                                <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-red-100 text-red-700 font-medium">{job.priority}</span>
+                                                <span className="px-1.5 py-0.5 text-xs rounded-full bg-red-100 text-red-700 font-medium">{job.priority}</span>
                                             )}
-                                            {hasInvoice && <span className="text-[10px] text-green-700 font-medium">📄 Invoice</span>}
-                                            {job.eway_bill_number && <span className="text-[10px] text-green-700 font-medium">🧾 E-Way</span>}
+                                            {hasInvoice && <span className="text-xs text-green-700 font-medium">📄 Invoice</span>}
+                                            {job.eway_bill_number && <span className="text-xs text-green-700 font-medium">🧾 E-Way</span>}
                                         </div>
                                         <p className="text-sm text-gray-600 mt-0.5">{job.client?.company || job.client?.name}</p>
                                         <p className="text-sm text-gray-800 font-medium">{job.project_name}</p>

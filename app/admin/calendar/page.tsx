@@ -191,7 +191,7 @@ export default function CalendarPage() {
                     </div>
 
                     {/* Legend */}
-                    <div className="px-4 py-2 border-b border-gray-50 flex flex-wrap gap-4 text-[11px] text-gray-500">
+                    <div className="px-4 py-2 border-b border-gray-50 flex flex-wrap gap-4 text-xs text-gray-500">
                         {legendItems.map(l => (
                             <span key={l.label} className="flex items-center gap-1.5">
                                 <span className={`w-2 h-2 rounded-full ${l.color}`} /> {l.label}
@@ -260,14 +260,14 @@ export default function CalendarPage() {
                                                     {dayItems.slice(0, 3).map(item => (
                                                         <div
                                                             key={item.id}
-                                                            className={`px-1 py-0.5 rounded text-[10px] leading-tight truncate ${item.color}`}
+                                                            className={`px-1 py-0.5 rounded text-xs leading-tight truncate ${item.color}`}
                                                             title={item.title}
                                                         >
                                                             {item.title}
                                                         </div>
                                                     ))}
                                                     {dayItems.length > 3 && (
-                                                        <div className="text-[10px] text-gray-400 text-center">
+                                                        <div className="text-xs text-gray-400 text-center">
                                                             +{dayItems.length - 3} more
                                                         </div>
                                                     )}
@@ -329,7 +329,7 @@ export default function CalendarPage() {
                                             className={`px-3 py-2 rounded-md text-xs cursor-pointer transition-colors hover:opacity-80 ${item.color}`}
                                         >
                                             <p className="font-medium">{item.title}</p>
-                                            <p className="text-[10px] opacity-70 capitalize mt-0.5">{item.type === 'printrun' ? 'print run' : item.type === 'followup' ? 'follow-up' : item.type}</p>
+                                            <p className="text-xs opacity-70 capitalize mt-0.5">{item.type === 'printrun' ? 'print run' : item.type === 'followup' ? 'follow-up' : item.type}</p>
                                         </div>
                                     ))}
                             </div>

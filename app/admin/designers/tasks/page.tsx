@@ -549,7 +549,7 @@ export default function DesignerWorkspace() {
                                   <TypeIcon size={10} /> {typeLabel}
                                 </span>
                                 {/* Priority Tag */}
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${task.priority === 'urgent' ? 'bg-red-50 text-red-600 border border-red-200' :
+                                <span className={`text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wider ${task.priority === 'urgent' ? 'bg-red-50 text-red-600 border border-red-200' :
                                   task.priority === 'high' ? 'bg-orange-50 text-orange-600 border border-orange-200' :
                                     'bg-gray-100 text-gray-500 border border-gray-200'
                                   }`}>
@@ -564,7 +564,7 @@ export default function DesignerWorkspace() {
                                     'sticker': { label: '⭐ STICKER', bg: 'bg-pink-100', text: 'text-pink-700' },
                                   };
                                   const c = catMap[task.productCategory?.toLowerCase()];
-                                  return c ? <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${c.bg} ${c.text}`}>{c.label}</span> : null;
+                                  return c ? <span className={`text-xs font-bold px-2 py-0.5 rounded ${c.bg} ${c.text}`}>{c.label}</span> : null;
                                 })()}
                               </div>
                             </div>
@@ -572,7 +572,7 @@ export default function DesignerWorkspace() {
                             <h4 className="font-bold text-gray-800 mb-1 line-clamp-2 leading-tight">{task.title}</h4>
                             {task.current_stage === 'awaiting_admin' && (
                               <div className="flex items-center gap-1.5 mb-1">
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-300">⏳ Awaiting Admin Approval</span>
+                                <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-300">⏳ Awaiting Admin Approval</span>
                               </div>
                             )}
                             <p className="text-xs text-gray-500 mb-3 font-medium">{task.clientName}</p>
@@ -599,14 +599,14 @@ export default function DesignerWorkspace() {
                               {(task.files?.length > 0 || task.driveLink) && (
                                 <div className="flex items-center gap-1 text-gray-600" title={`${task.files?.length || 1} file(s) attached`}>
                                   <Paperclip size={11} />
-                                  <span className="text-[10px] font-bold">{task.files?.length || 1}</span>
+                                  <span className="text-xs font-bold">{task.files?.length || 1}</span>
                                 </div>
                               )}
                             </div>
 
                             {/* ON HOLD Banner — full width at bottom */}
                             {task.is_on_hold && (
-                              <div className="-mx-4 -mb-4 mt-3 bg-amber-100 border-t border-amber-300 text-amber-800 text-[11px] font-bold text-center py-1.5 rounded-b-lg uppercase tracking-wider">
+                              <div className="-mx-4 -mb-4 mt-3 bg-amber-100 border-t border-amber-300 text-amber-800 text-xs font-bold text-center py-1.5 rounded-b-lg uppercase tracking-wider">
                                 ⏸️ ON HOLD
                               </div>
                             )}
@@ -846,11 +846,11 @@ export default function DesignerWorkspace() {
                       {/* Deadline / Overdue inline */}
                       <span className="ml-auto flex-shrink-0">
                         {task.rawDeadline && new Date(task.rawDeadline) < new Date() && task.current_stage !== 'delivered' ? (
-                          <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                          <span className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-full flex items-center gap-1">
                             <Clock size={10} /> Overdue
                           </span>
                         ) : (
-                          <span className="text-[10px] text-gray-400 font-medium">{task.deadline || 'No Deadline'}</span>
+                          <span className="text-xs text-gray-400 font-medium">{task.deadline || 'No Deadline'}</span>
                         )}
                       </span>
                     </div>
@@ -1034,7 +1034,7 @@ export default function DesignerWorkspace() {
                             <AlertTriangle size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
                             <div>
                               <p className="text-xs font-bold text-amber-800">This job is assigned to {assignedName}</p>
-                              <p className="text-[11px] text-amber-600 mt-0.5">Any changes you make will be logged and {assignedName} will be notified.</p>
+                              <p className="text-xs text-amber-600 mt-0.5">Any changes you make will be logged and {assignedName} will be notified.</p>
                             </div>
                           </div>
                         );
@@ -1087,7 +1087,7 @@ export default function DesignerWorkspace() {
                                 <div className="flex-1 min-w-0">
                                   <p className="text-xs font-medium text-gray-800 truncate">{file.name || `File ${i + 1}`}</p>
                                   {file.size && (
-                                    <p className="text-[10px] text-gray-400">
+                                    <p className="text-xs text-gray-400">
                                       {file.size < 1024 * 1024 ? `${(file.size / 1024).toFixed(1)} KB` : `${(file.size / (1024 * 1024)).toFixed(1)} MB`}
                                     </p>
                                   )}
@@ -1126,7 +1126,7 @@ export default function DesignerWorkspace() {
                           <input type="file" onChange={handleFileUpload} className="hidden" />
                         </label>
                         {selectedTask.files?.length > 0 && (
-                          <span className="ml-2 text-[10px] text-gray-400">{selectedTask.files.length} file(s) attached</span>
+                          <span className="ml-2 text-xs text-gray-400">{selectedTask.files.length} file(s) attached</span>
                         )}
                       </div>
                     </section>
@@ -1149,9 +1149,9 @@ export default function DesignerWorkspace() {
                           <CheckCircle size={16} /> Pre-Print Checklist (Mandatory)
                         </h4>
                         {checklistConfig[selectedTask.productCategory] ? (
-                          <p className="text-[10px] text-gray-400 -mt-2 mb-1">Template: <span className="font-bold">{selectedTask.productCategory}</span></p>
+                          <p className="text-xs text-gray-400 -mt-2 mb-1">Template: <span className="font-bold">{selectedTask.productCategory}</span></p>
                         ) : (
-                          <p className="text-[10px] text-amber-500 -mt-2 mb-1">⚠ No template for &ldquo;{selectedTask.productCategory || 'Unknown'}&rdquo;. Using default checks. <span className="font-semibold">Configure in Settings → Production.</span></p>
+                          <p className="text-xs text-amber-500 -mt-2 mb-1">⚠ No template for &ldquo;{selectedTask.productCategory || 'Unknown'}&rdquo;. Using default checks. <span className="font-semibold">Configure in Settings → Production.</span></p>
                         )}
                         <div className="grid grid-cols-2 gap-3">
                           {(checklistConfig[selectedTask.productCategory] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed']).map((label, i) => (
@@ -1229,19 +1229,19 @@ export default function DesignerWorkspace() {
                 <div className="grid grid-cols-2 gap-2">
                   <div className={`p-3 rounded-lg border ${overdueTasks.length > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-100'}`}>
                     <p className={`text-2xl font-black ${overdueTasks.length > 0 ? 'text-red-600' : 'text-gray-300'}`}>{overdueTasks.length}</p>
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Overdue</p>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Overdue</p>
                   </div>
                   <div className="p-3 rounded-lg bg-blue-50 border border-blue-100">
                     <p className="text-2xl font-black text-blue-600">{inProgressTasks.length}</p>
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">In Progress</p>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">In Progress</p>
                   </div>
                   <div className="p-3 rounded-lg bg-amber-50 border border-amber-100">
                     <p className="text-2xl font-black text-amber-600">{reviewTasks.length}</p>
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">In Review</p>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">In Review</p>
                   </div>
                   <div className="p-3 rounded-lg bg-green-50 border border-green-100">
                     <p className="text-2xl font-black text-green-600">{doneTasks.length}</p>
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Completed</p>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Completed</p>
                   </div>
                 </div>
               </div>
@@ -1314,7 +1314,7 @@ export default function DesignerWorkspace() {
                             )}
                             <div className="flex-1 min-w-0">
                               <p className="text-gray-700 font-medium leading-relaxed">{notif.message}</p>
-                              <p className="text-[10px] text-gray-400 mt-1">{new Date(notif.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+                              <p className="text-xs text-gray-400 mt-1">{new Date(notif.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
                             </div>
                           </div>
                         </div>

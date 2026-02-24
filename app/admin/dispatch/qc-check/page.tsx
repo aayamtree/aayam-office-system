@@ -400,15 +400,15 @@ export default function QCCheckPage() {
               <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                 <span className="font-semibold text-gray-900 text-sm">{job.job_number}</span>
                 {job.priority && (
-                  <span className={`px-1.5 py-0.5 text-[10px] rounded-full font-medium ${getPriorityColor(job.priority)}`}>
+                  <span className={`px-1.5 py-0.5 text-xs rounded-full font-medium ${getPriorityColor(job.priority)}`}>
                     {job.priority}
                   </span>
                 )}
-                <span className={`px-1.5 py-0.5 text-[10px] rounded-full border font-medium ${getStatusColor(job.current_stage)}`}>
+                <span className={`px-1.5 py-0.5 text-xs rounded-full border font-medium ${getStatusColor(job.current_stage)}`}>
                   {getStatusLabel(job.current_stage)}
                 </span>
                 {job.product_category && (
-                  <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-medium">
+                  <span className="px-1.5 py-0.5 text-xs rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-medium">
                     {job.product_category}
                   </span>
                 )}
@@ -517,7 +517,7 @@ export default function QCCheckPage() {
                                 <img src={file.url} alt={file.name} className="w-full max-h-[300px] object-contain bg-gray-50" />
                                 <div className="p-2 border-t bg-white">
                                   <p className="text-xs text-gray-600 font-medium">{file.name}</p>
-                                  <p className="text-[10px] text-gray-400">{new Date(file.uploaded_at).toLocaleDateString()}</p>
+                                  <p className="text-xs text-gray-400">{new Date(file.uploaded_at).toLocaleDateString()}</p>
                                 </div>
                               </div>
                             ) : (

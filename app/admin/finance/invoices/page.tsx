@@ -566,7 +566,7 @@ export default function InvoicesPage() {
                       {/* Price & Status Row */}
                       <div className="flex items-center justify-between mb-4">
                         <div>
-                          <span className="text-gray-900 font-bold text-2xl md:text-3xl">
+                          <span className="text-gray-900 font-bold text-2xl font-bold">
                             {formatCurrency(inv.total_amount)}
                           </span>
                           {inv.amount_paid > 0 && inv.amount_paid < inv.total_amount && (

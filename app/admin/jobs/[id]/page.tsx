@@ -304,21 +304,21 @@ export default function JobDetailPage() {
             {/* Financial Summary — Bold & Clear */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
                 <div className="bg-blue-50 rounded-lg px-3 py-2">
-                    <p className="text-[10px] text-blue-600 font-medium">Revenue</p>
+                    <p className="text-xs text-blue-600 font-medium">Revenue</p>
                     <p className="text-sm font-bold text-blue-900">{formatCurrency(job.total_amount || 0)}</p>
                 </div>
                 <div className="bg-red-50 rounded-lg px-3 py-2">
-                    <p className="text-[10px] text-red-600 font-medium">Expense</p>
+                    <p className="text-xs text-red-600 font-medium">Expense</p>
                     <p className="text-sm font-bold text-red-900">{formatCurrency(totalExpense)}</p>
                 </div>
                 <div className={`${profit >= 0 ? 'bg-green-50' : 'bg-red-50'} rounded-lg px-3 py-2`}>
-                    <p className={`text-[10px] font-medium ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <p className={`text-xs font-medium ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {profit >= 0 ? 'Profit' : 'Loss'}
                     </p>
                     <p className={`text-sm font-bold ${profit >= 0 ? 'text-green-900' : 'text-red-900'}`}>{formatCurrency(Math.abs(profit))}</p>
                 </div>
                 <div className={`${(job as any).amount_received >= job.total_amount ? 'bg-green-50' : 'bg-amber-50'} rounded-lg px-3 py-2`}>
-                    <p className={`text-[10px] font-medium ${(job as any).amount_received >= job.total_amount ? 'text-green-600' : 'text-amber-600'}`}>Paid</p>
+                    <p className={`text-xs font-medium ${(job as any).amount_received >= job.total_amount ? 'text-green-600' : 'text-amber-600'}`}>Paid</p>
                     <p className={`text-sm font-bold ${(job as any).amount_received >= job.total_amount ? 'text-green-900' : 'text-amber-900'}`}>
                         {formatCurrency((job as any).amount_received || 0)}
                     </p>

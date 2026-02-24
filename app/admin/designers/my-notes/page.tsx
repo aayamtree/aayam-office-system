@@ -769,7 +769,7 @@ export default function MyNotes() {
                                     {sharedWith.length > 0 && (
                                         <div className="flex items-center gap-2 flex-wrap bg-blue-50/50 rounded-lg px-3 py-2">
                                             <Send size={12} className="text-blue-500" />
-                                            <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Shared with:</span>
+                                            <span className="text-xs font-bold text-blue-500 uppercase tracking-wider">Shared with:</span>
                                             {sharedWith.map(uid => {
                                                 const member = teamMembers.find(m => m.id === uid);
                                                 return member ? (

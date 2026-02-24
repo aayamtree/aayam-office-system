@@ -564,7 +564,7 @@ export default function QuotationsPage() {
 
                       {/* Price & Status Row */}
                       <div className="flex items-center justify-between mb-4">
-                        <span className="text-gray-900 font-bold text-2xl md:text-3xl">
+                        <span className="text-gray-900 font-bold text-2xl font-bold">
                           {formatCurrency(q.total_amount)}
                         </span>
                         <span className={`px-3 py-1.5 text-xs font-semibold rounded-md flex items-center gap-1 ${getStatusColor(q.status)}`}>

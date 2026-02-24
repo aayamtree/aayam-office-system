@@ -113,7 +113,7 @@ export default function UnifiedQueue() {
 
                     {/* Tags row */}
                     <div className="flex items-center gap-1.5 flex-wrap mb-2">
-                        <span className="font-mono text-[10px] text-gray-400 tracking-wide">#{task.jobNumber}</span>
+                        <span className="font-mono text-xs text-gray-400 tracking-wide">#{task.jobNumber}</span>
                         <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${typeTag.bg} ${typeTag.text}`}>{typeTag.label}</span>
                         {catTag && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${catTag.bg} ${catTag.text}`}>{catTag.label}</span>}
                         {/* Priority inline */}
@@ -128,11 +128,11 @@ export default function UnifiedQueue() {
                     {/* Footer */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded ${task.isMyTask && !isAdmin ? 'text-primary bg-muted' : 'text-gray-500 bg-gray-100'} border border-gray-200`}>
+                            <span className={`flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded ${task.isMyTask && !isAdmin ? 'text-primary bg-muted' : 'text-gray-500 bg-gray-100'} border border-gray-200`}>
                                 <User size={10} />
                                 {task.designer}
                             </span>
-                            <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${task.status === 'awaiting_admin' ? 'bg-amber-50 text-amber-700 border border-amber-300' :
+                            <span className={`text-xs px-2 py-0.5 rounded font-medium ${task.status === 'awaiting_admin' ? 'bg-amber-50 text-amber-700 border border-amber-300' :
                                 task.status === 'designing' ? 'bg-violet-50 text-violet-600' :
                                     task.status === 'approval' ? 'bg-amber-50 text-amber-600' :
                                         task.status === 'printing' ? 'bg-emerald-50 text-emerald-600' :
@@ -142,7 +142,7 @@ export default function UnifiedQueue() {
                             </span>
                         </div>
                         {task.deadline && (
-                            <span className={`text-[10px] font-medium flex items-center gap-1 ${isOverdue && task.status !== 'delivered' ? 'text-red-500' : 'text-gray-400'}`}>
+                            <span className={`text-xs font-medium flex items-center gap-1 ${isOverdue && task.status !== 'delivered' ? 'text-red-500' : 'text-gray-400'}`}>
                                 {isOverdue && task.status !== 'delivered' && <AlertCircle size={10} />}
                                 {new Date(task.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                             </span>
@@ -180,7 +180,7 @@ export default function UnifiedQueue() {
                             className={`px-4 py-2 text-sm font-bold flex items-center gap-2 transition-all ${!showAll ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-800'}`}
                         >
                             <User size={14} /> My Tasks
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${!showAll ? 'bg-white/20' : 'bg-gray-100'}`}>
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full ${!showAll ? 'bg-white/20' : 'bg-gray-100'}`}>
                                 {allTasks.filter(t => t.isMyTask).length}
                             </span>
                         </button>
@@ -189,7 +189,7 @@ export default function UnifiedQueue() {
                             className={`px-4 py-2 text-sm font-bold flex items-center gap-2 transition-all border-l ${showAll ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-800'}`}
                         >
                             <Users size={14} /> All Team
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${showAll ? 'bg-white/20' : 'bg-gray-100'}`}>
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full ${showAll ? 'bg-white/20' : 'bg-gray-100'}`}>
                                 {allTasks.length}
                             </span>
                         </button>

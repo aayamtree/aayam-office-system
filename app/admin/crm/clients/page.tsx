@@ -70,7 +70,7 @@ function ClientJobsSection({ clientId }: { clientId: string }) {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className="text-xs font-semibold text-gray-700">{formatCurrency(job.total_amount)}</span>
-                  <span className={`px-1.5 py-0.5 text-[10px] rounded-full font-medium ${getStageColor(job.current_stage)}`}>
+                  <span className={`px-1.5 py-0.5 text-xs rounded-full font-medium ${getStageColor(job.current_stage)}`}>
                     {job.current_stage}
                   </span>
                 </div>

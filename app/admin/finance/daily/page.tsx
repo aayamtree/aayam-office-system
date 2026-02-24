@@ -2,38 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { RefreshCw, TrendingUp, TrendingDown, Wallet, Building2, ArrowDownRight, ArrowUpRight, Lock, Unlock, RotateCcw } from 'lucide-react';
+import { RefreshCw, TrendingUp, Wallet, Building2, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
-import DashboardGrid, { LayoutsMap, resetLayouts } from '@/components/dashboard/DashboardGrid';
-
-const STORAGE_KEY = 'aayam-finance-daily-layouts';
-
-const DEFAULT_LAYOUTS: LayoutsMap = {
-    lg: [
-        { i: 'total-balance', x: 0, y: 0, w: 12, h: 3 },
-        { i: 'todays-activity', x: 0, y: 3, w: 12, h: 3 },
-        { i: 'bank-accounts', x: 0, y: 6, w: 6, h: 5 },
-        { i: 'cash-accounts', x: 6, y: 6, w: 6, h: 5 },
-        { i: 'todays-tx', x: 0, y: 11, w: 12, h: 5 },
-        { i: 'quick-actions', x: 0, y: 16, w: 12, h: 2 },
-    ],
-    md: [
-        { i: 'total-balance', x: 0, y: 0, w: 6, h: 3 },
-        { i: 'todays-activity', x: 0, y: 3, w: 6, h: 3 },
-        { i: 'bank-accounts', x: 0, y: 6, w: 6, h: 5 },
-        { i: 'cash-accounts', x: 0, y: 11, w: 6, h: 5 },
-        { i: 'todays-tx', x: 0, y: 16, w: 6, h: 5 },
-        { i: 'quick-actions', x: 0, y: 21, w: 6, h: 2 },
-    ],
-    sm: [
-        { i: 'total-balance', x: 0, y: 0, w: 2, h: 4 },
-        { i: 'todays-activity', x: 0, y: 4, w: 2, h: 4 },
-        { i: 'bank-accounts', x: 0, y: 8, w: 2, h: 5 },
-        { i: 'cash-accounts', x: 0, y: 13, w: 2, h: 5 },
-        { i: 'todays-tx', x: 0, y: 18, w: 2, h: 5 },
-        { i: 'quick-actions', x: 0, y: 23, w: 2, h: 2 },
-    ],
-};
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 
 export default function DailyFinancePage() {
     const [loading, setLoading] = useState(true);
@@ -41,7 +13,6 @@ export default function DailyFinancePage() {
     const [cashAccounts, setCashAccounts] = useState<any[]>([]);
     const [todayPayments, setTodayPayments] = useState<any[]>([]);
     const [todayExpenses, setTodayExpenses] = useState<any[]>([]);
-    const [isLocked, setIsLocked] = useState(true);
 
     const loadData = async () => {
         setLoading(true);
@@ -73,150 +44,154 @@ export default function DailyFinancePage() {
     const netChange = todayIncome - todayExpense;
 
     return (
-        <div className="space-y-4 animate-fade-in pb-16">
+        <div className="space-y-4">
             {/* Header */}
-            <div className="flex justify-between items-start">
+            <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-page-title text-gray-900">Daily Finance Summary</h1>
-                    <p className="text-gray-500">Real-time financial position</p>
+                    <h1 className="text-lg font-semibold tracking-tight">Daily Finance Summary</h1>
+                    <p className="text-sm text-muted-foreground">Real-time financial position</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button onClick={loadData} className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-semibold transition-colors" disabled={loading}>
-                        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
-                    </button>
-                    {!isLocked && (
-                        <button onClick={() => { resetLayouts(STORAGE_KEY); window.location.reload(); }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
-                            <RotateCcw className="h-3 w-3" /> Reset
-                        </button>
-                    )}
-                    <button onClick={() => setIsLocked(!isLocked)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md transition-colors ${isLocked ? 'border border-gray-200 hover:bg-gray-50' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>
-                        {isLocked ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
-                        {isLocked ? 'Unlock' : 'Lock'}
-                    </button>
-                </div>
+                <Button onClick={loadData} disabled={loading}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} /> Refresh
+                </Button>
             </div>
 
-            <DashboardGrid defaultLayouts={DEFAULT_LAYOUTS} isLocked={isLocked} storageKey={STORAGE_KEY}>
-                {/* Total Balance Card */}
-                <div key="total-balance" className="h-full">
-                    <div className="bg-gray-900 rounded-lg p-4 text-white h-full flex flex-col justify-between">
-                        <div className="flex justify-between items-start mb-4">
-                            <div>
-                                <p className="text-sm opacity-90">Total Available Balance</p>
-                                <p className="text-page-title mt-2">₹{grandTotal.toLocaleString()}</p>
-                            </div>
-                            <Link href="/admin/finance/accounts" className="text-sm bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg flex items-center gap-1">
-                                <Wallet className="w-4 h-4" />Accounts →
+            {/* Total Balance */}
+            <Card className="bg-primary text-primary-foreground">
+                <CardContent className="pt-6">
+                    <div className="flex justify-between items-start mb-4">
+                        <div>
+                            <p className="text-sm opacity-90">Total Available Balance</p>
+                            <p className="text-2xl font-bold mt-1">₹{grandTotal.toLocaleString()}</p>
+                        </div>
+                        <Button variant="secondary" size="sm" asChild>
+                            <Link href="/admin/finance/accounts" className="flex items-center gap-1">
+                                <Wallet className="h-4 w-4" /> Accounts →
                             </Link>
+                        </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-white/10 rounded-lg p-3">
+                            <div className="flex items-center gap-2 mb-1"><Building2 className="h-4 w-4" /><p className="text-sm opacity-90">Bank Accounts</p></div>
+                            <p className="text-lg font-bold">₹{totalBanks.toLocaleString()}</p>
+                            <p className="text-xs opacity-75 mt-1">{bankAccounts.length} accounts</p>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-white/10 rounded-lg p-4">
-                                <div className="flex items-center gap-2 mb-2"><Building2 className="w-4 h-4" /><p className="text-sm opacity-90">Bank Accounts</p></div>
-                                <p className="text-page-title">₹{totalBanks.toLocaleString()}</p>
-                                <p className="text-xs opacity-75 mt-1">{bankAccounts.length} accounts</p>
-                            </div>
-                            <div className="bg-white/10 rounded-lg p-4">
-                                <div className="flex items-center gap-2 mb-2"><Wallet className="w-4 h-4" /><p className="text-sm opacity-90">Cash</p></div>
-                                <p className="text-page-title">₹{totalCash.toLocaleString()}</p>
-                                <p className="text-xs opacity-75 mt-1">{cashAccounts.length} registers</p>
-                            </div>
+                        <div className="bg-white/10 rounded-lg p-3">
+                            <div className="flex items-center gap-2 mb-1"><Wallet className="h-4 w-4" /><p className="text-sm opacity-90">Cash</p></div>
+                            <p className="text-lg font-bold">₹{totalCash.toLocaleString()}</p>
+                            <p className="text-xs opacity-75 mt-1">{cashAccounts.length} registers</p>
                         </div>
                     </div>
-                </div>
+                </CardContent>
+            </Card>
 
-                {/* Today's Activity */}
-                <div key="todays-activity" className="h-full">
-                    <div className="bg-white rounded-lg border p-4 h-full flex flex-col">
-                        <h2 className="text-section mb-4 shrink-0">Today&apos;s Activity</h2>
-                        <div className="grid grid-cols-3 gap-4 flex-1">
-                            <div className="bg-white rounded-lg p-4">
-                                <div className="flex items-center gap-2 text-gray-900 mb-2"><ArrowDownRight className="w-5 h-5" /><p className="text-sm font-medium">Money IN</p></div>
-                                <p className="text-page-title text-gray-900">₹{todayIncome.toLocaleString()}</p>
-                                <p className="text-xs text-gray-900 mt-1">{todayPayments.length} payments received</p>
-                            </div>
-                            <div className="bg-red-50 rounded-lg p-4">
-                                <div className="flex items-center gap-2 text-red-600 mb-2"><ArrowUpRight className="w-5 h-5" /><p className="text-sm font-medium">Money OUT</p></div>
-                                <p className="text-page-title text-red-700">₹{todayExpense.toLocaleString()}</p>
-                                <p className="text-xs text-red-600 mt-1">{todayExpenses.length} payments made</p>
-                            </div>
-                            <div className={`rounded-lg p-4 ${netChange >= 0 ? 'bg-muted' : 'bg-orange-50'}`}>
-                                <div className={`flex items-center gap-2 mb-2 ${netChange >= 0 ? 'text-foreground' : 'text-orange-600'}`}>
-                                    <TrendingUp className="w-5 h-5" /><p className="text-sm font-medium">Net Change</p>
-                                </div>
-                                <p className={`text-page-title ${netChange >= 0 ? 'text-foreground' : 'text-orange-700'}`}>
-                                    {netChange >= 0 ? '+' : ''}₹{netChange.toLocaleString()}
-                                </p>
-                                <p className={`text-xs mt-1 ${netChange >= 0 ? 'text-foreground' : 'text-orange-600'}`}>{netChange >= 0 ? 'Profit' : 'Loss'} today</p>
-                            </div>
+            {/* Today's Activity */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Money IN</CardTitle>
+                        <ArrowDownRight className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">₹{todayIncome.toLocaleString()}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{todayPayments.length} payments received</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium text-destructive">Money OUT</CardTitle>
+                        <ArrowUpRight className="h-4 w-4 text-destructive" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-destructive">₹{todayExpense.toLocaleString()}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{todayExpenses.length} payments made</p>
+                    </CardContent>
+                </Card>
+                <Card className={netChange >= 0 ? '' : 'border-destructive/30'}>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Net Change</CardTitle>
+                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className={`text-2xl font-bold ${netChange >= 0 ? '' : 'text-destructive'}`}>
+                            {netChange >= 0 ? '+' : ''}₹{netChange.toLocaleString()}
                         </div>
-                    </div>
-                </div>
+                        <p className="text-xs text-muted-foreground mt-1">{netChange >= 0 ? 'Profit' : 'Loss'} today</p>
+                    </CardContent>
+                </Card>
+            </div>
 
-                {/* Bank Accounts */}
-                <div key="bank-accounts" className="h-full">
-                    <div className="bg-white rounded-lg border p-5 h-full flex flex-col">
-                        <h3 className="font-bold mb-4 flex items-center gap-2 shrink-0"><Building2 className="w-4 h-4" /> Bank Accounts</h3>
-                        <div className="space-y-3 flex-1 overflow-y-auto">
+            {/* Bank + Cash Accounts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <Card>
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <Building2 className="h-4 w-4" /> Bank Accounts
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-2">
                             {bankAccounts.map((acc) => (
-                                <div key={acc.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                    <div><p className="font-medium text-sm">{acc.name}</p><p className="text-xs text-gray-500">{acc.account_number}</p></div>
-                                    <p className="font-bold">₹{(acc.current_balance || 0).toLocaleString()}</p>
+                                <div key={acc.id} className="flex justify-between items-center p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                                    <div><p className="text-sm font-medium">{acc.name}</p><p className="text-xs text-muted-foreground">{acc.account_number}</p></div>
+                                    <p className="text-sm font-semibold">₹{(acc.current_balance || 0).toLocaleString()}</p>
                                 </div>
                             ))}
-                            {bankAccounts.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No bank accounts</p>}
+                            {bankAccounts.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No bank accounts</p>}
                         </div>
-                    </div>
-                </div>
+                    </CardContent>
+                </Card>
 
-                {/* Cash Accounts */}
-                <div key="cash-accounts" className="h-full">
-                    <div className="bg-white rounded-lg border p-5 h-full flex flex-col">
-                        <h3 className="font-bold mb-4 flex items-center gap-2 shrink-0"><Wallet className="w-4 h-4 text-gray-900" /> Cash Registers</h3>
-                        <div className="space-y-3 flex-1 overflow-y-auto">
+                <Card>
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <Wallet className="h-4 w-4" /> Cash Registers
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-2">
                             {cashAccounts.map((acc) => (
-                                <div key={acc.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                    <div><p className="font-medium text-sm">{acc.name}</p><p className="text-xs text-gray-500">📍 {acc.location}</p></div>
-                                    <p className="font-bold">₹{(acc.current_balance || 0).toLocaleString()}</p>
+                                <div key={acc.id} className="flex justify-between items-center p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                                    <div><p className="text-sm font-medium">{acc.name}</p><p className="text-xs text-muted-foreground">📍 {acc.location}</p></div>
+                                    <p className="text-sm font-semibold">₹{(acc.current_balance || 0).toLocaleString()}</p>
                                 </div>
                             ))}
-                            {cashAccounts.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No cash accounts</p>}
+                            {cashAccounts.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No cash accounts</p>}
                         </div>
-                    </div>
-                </div>
+                    </CardContent>
+                </Card>
+            </div>
 
-                {/* Today's Transactions */}
-                <div key="todays-tx" className="h-full">
-                    <div className="bg-white rounded-lg border p-5 h-full flex flex-col">
-                        <h3 className="font-bold mb-4 shrink-0">Today&apos;s Transactions</h3>
-                        <div className="space-y-2 flex-1 overflow-y-auto">
-                            {todayPayments.map((payment) => (
-                                <div key={payment.id} className="flex justify-between items-center p-3 bg-white rounded-lg">
-                                    <div className="flex items-center gap-3"><ArrowDownRight className="w-4 h-4" /><div><p className="font-medium text-sm">{payment.clients?.name}</p><p className="text-xs text-gray-500">{payment.payment_mode}</p></div></div>
-                                    <p className="font-bold text-gray-900">+₹{payment.amount?.toLocaleString()}</p>
-                                </div>
-                            ))}
-                            {todayExpenses.map((expense) => (
-                                <div key={expense.id} className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
-                                    <div className="flex items-center gap-3"><ArrowUpRight className="text-red-600" size={18} /><div><p className="font-medium text-sm">{expense.vendors?.name}</p><p className="text-xs text-gray-500">{expense.payment_mode}</p></div></div>
-                                    <p className="font-bold text-red-600">-₹{expense.amount?.toLocaleString()}</p>
-                                </div>
-                            ))}
-                            {todayPayments.length === 0 && todayExpenses.length === 0 && <p className="text-sm text-gray-400 text-center py-8">No transactions today yet</p>}
-                        </div>
+            {/* Today's Transactions */}
+            <Card>
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium">Today&apos;s Transactions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-2">
+                        {todayPayments.map((payment) => (
+                            <div key={payment.id} className="flex justify-between items-center p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                                <div className="flex items-center gap-3"><ArrowDownRight className="h-4 w-4" /><div><p className="text-sm font-medium">{payment.clients?.name}</p><p className="text-xs text-muted-foreground">{payment.payment_mode}</p></div></div>
+                                <p className="text-sm font-semibold">+₹{payment.amount?.toLocaleString()}</p>
+                            </div>
+                        ))}
+                        {todayExpenses.map((expense) => (
+                            <div key={expense.id} className="flex justify-between items-center p-3 rounded-lg border border-destructive/20 bg-destructive/5">
+                                <div className="flex items-center gap-3"><ArrowUpRight className="h-4 w-4 text-destructive" /><div><p className="text-sm font-medium">{expense.vendors?.name}</p><p className="text-xs text-muted-foreground">{expense.payment_mode}</p></div></div>
+                                <p className="text-sm font-semibold text-destructive">-₹{expense.amount?.toLocaleString()}</p>
+                            </div>
+                        ))}
+                        {todayPayments.length === 0 && todayExpenses.length === 0 && <p className="text-sm text-muted-foreground text-center py-6">No transactions today yet</p>}
                     </div>
-                </div>
+                </CardContent>
+            </Card>
 
-                {/* Quick Actions */}
-                <div key="quick-actions" className="h-full">
-                    <div className="grid grid-cols-3 gap-4 h-full">
-                        <Link href="/admin/finance/payments?new=true" className="bg-gray-900 hover:bg-gray-800 text-white rounded-lg p-4 text-center font-semibold shadow-sm flex items-center justify-center">Record Payment</Link>
-                        <Link href="/admin/finance/expenses/quick" className="bg-orange-600 hover:bg-orange-700 text-white rounded-lg p-4 text-center font-medium flex items-center justify-center">Quick Expense</Link>
-                        <Link href="/admin/finance/accounts" className="bg-white border hover:bg-gray-50 rounded-lg p-4 text-center font-medium flex items-center justify-center">Manage Accounts</Link>
-                    </div>
-                </div>
-            </DashboardGrid>
+            {/* Quick Actions */}
+            <div className="grid grid-cols-3 gap-4">
+                <Button asChild className="h-auto py-3"><Link href="/admin/finance/payments?new=true">Record Payment</Link></Button>
+                <Button variant="destructive" asChild className="h-auto py-3"><Link href="/admin/finance/expenses/quick">Quick Expense</Link></Button>
+                <Button variant="outline" asChild className="h-auto py-3"><Link href="/admin/finance/accounts">Manage Accounts</Link></Button>
+            </div>
         </div>
     );
 }

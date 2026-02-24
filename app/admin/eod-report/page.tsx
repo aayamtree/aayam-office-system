@@ -572,13 +572,13 @@ export default function EODReportPage() {
                         <div className="grid grid-cols-2 gap-2 p-3 border-b border-gray-100">
                             <div className="bg-gray-50 rounded-md p-2 text-center">
                                 <p className="text-lg font-bold text-gray-900">{pastReports.length}</p>
-                                <p className="text-[10px] text-gray-500 uppercase font-medium">Reports</p>
+                                <p className="text-xs text-gray-500 uppercase font-medium">Reports</p>
                             </div>
                             <div className="bg-gray-50 rounded-md p-2 text-center">
                                 <p className="text-lg font-bold text-gray-900">
                                     {pastReports.reduce((sum, r) => sum + (r.work_hours || 0), 0).toFixed(1)}
                                 </p>
-                                <p className="text-[10px] text-gray-500 uppercase font-medium">Total Hours</p>
+                                <p className="text-xs text-gray-500 uppercase font-medium">Total Hours</p>
                             </div>
                         </div>
 
@@ -608,22 +608,22 @@ export default function EODReportPage() {
                                                         <p className="text-sm font-medium text-gray-900">
                                                             {new Date(report.report_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                                                         </p>
-                                                        <p className="text-[11px] text-gray-500">
+                                                        <p className="text-xs text-gray-500">
                                                             {report.task_updates?.length || 0} tasks • {report.work_hours || 0}h
                                                         </p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-1.5">
                                                     {report.report_date === today ? (
-                                                        <span className="flex items-center gap-1 text-[10px] font-medium text-green-700 bg-green-50 px-1.5 py-0.5 rounded">
+                                                        <span className="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-1.5 py-0.5 rounded">
                                                             <Pencil className="w-2.5 h-2.5" /> Editable
                                                         </span>
                                                     ) : (
-                                                        <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                        <span className="flex items-center gap-1 text-xs text-gray-400">
                                                             <Lock className="w-2.5 h-2.5" />
                                                         </span>
                                                     )}
-                                                    <span className="text-[10px] text-gray-400">
+                                                    <span className="text-xs text-gray-400">
                                                         {new Date(report.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </span>
                                                     {expandedReport === report.id
@@ -638,25 +638,25 @@ export default function EODReportPage() {
                                                 <div className="px-3 pb-3 space-y-2">
                                                     {report.overall_notes && (
                                                         <div className="bg-gray-50 rounded-md p-2">
-                                                            <p className="text-[10px] uppercase font-medium text-gray-400 mb-1">Notes</p>
+                                                            <p className="text-xs uppercase font-medium text-gray-400 mb-1">Notes</p>
                                                             <p className="text-xs text-gray-700">{report.overall_notes}</p>
                                                         </div>
                                                     )}
                                                     {report.blockers && (
                                                         <div className="bg-red-50 rounded-md p-2">
-                                                            <p className="text-[10px] uppercase font-medium text-red-400 mb-1">Blockers</p>
+                                                            <p className="text-xs uppercase font-medium text-red-400 mb-1">Blockers</p>
                                                             <p className="text-xs text-red-700">{report.blockers}</p>
                                                         </div>
                                                     )}
                                                     {report.tomorrow_plan && (
                                                         <div className="bg-gray-50 rounded-md p-2">
-                                                            <p className="text-[10px] uppercase font-medium text-gray-400 mb-1">Next Day Plan</p>
+                                                            <p className="text-xs uppercase font-medium text-gray-400 mb-1">Next Day Plan</p>
                                                             <p className="text-xs text-gray-700">{report.tomorrow_plan}</p>
                                                         </div>
                                                     )}
                                                     {report.task_updates && report.task_updates.length > 0 && (
                                                         <div className="space-y-1">
-                                                            <p className="text-[10px] uppercase font-medium text-gray-400">Tasks</p>
+                                                            <p className="text-xs uppercase font-medium text-gray-400">Tasks</p>
                                                             {report.task_updates.map((tu: any, idx: number) => (
                                                                 <div key={idx} className="flex items-start gap-2 text-xs bg-white border border-gray-100 rounded-md p-2">
                                                                     <span className={`mt-0.5 flex-shrink-0 ${tu.task_status === 'COMPLETE' ? 'text-green-500' :
@@ -675,7 +675,7 @@ export default function EODReportPage() {
                                                                                 <div className="flex-1 h-1 bg-gray-200 rounded-full">
                                                                                     <div className="h-1 bg-gray-900 rounded-full" style={{ width: `${tu.completion_percentage}%` }} />
                                                                                 </div>
-                                                                                <span className="text-[10px] text-gray-500">{tu.completion_percentage}%</span>
+                                                                                <span className="text-xs text-gray-500">{tu.completion_percentage}%</span>
                                                                             </div>
                                                                         )}
                                                                     </div>

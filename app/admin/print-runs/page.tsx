@@ -357,7 +357,7 @@ export default function PrintRunsPage() {
                 <button onClick={() => setFilter('all')} className={`border rounded-md p-2 text-left transition-all ${filter === 'all' ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200 hover:bg-gray-50'}`}>
                     <div className="flex items-center gap-1 mb-0.5">
                         <Package className={`w-3.5 h-3.5 ${filter === 'all' ? 'text-white' : 'text-gray-500'}`} />
-                        <span className={`text-[11px] font-medium ${filter === 'all' ? 'text-white' : 'text-gray-500'}`}>All</span>
+                        <span className={`text-xs font-medium ${filter === 'all' ? 'text-white' : 'text-gray-500'}`}>All</span>
                     </div>
                     <p className={`text-lg font-bold ${filter === 'all' ? 'text-white' : 'text-gray-900'}`}>{counts.all}</p>
                 </button>
@@ -370,7 +370,7 @@ export default function PrintRunsPage() {
                         <button key={key} onClick={() => setFilter(key)} className={`border rounded-md p-2 text-left transition-all ${active ? `${conf.color} border-current` : 'bg-white border-gray-200 hover:bg-gray-50'}`}>
                             <div className="flex items-center gap-1 mb-0.5">
                                 <Icon className="w-3.5 h-3.5" />
-                                <span className="text-[11px] font-medium">{conf.label}</span>
+                                <span className="text-xs font-medium">{conf.label}</span>
                             </div>
                             <p className="text-lg font-bold">{counts[key]}</p>
                         </button>
@@ -428,7 +428,7 @@ export default function PrintRunsPage() {
                                                 </p>
                                                 <div className="flex flex-wrap gap-1">
                                                     {run.jobs.map(job => (
-                                                        <span key={job.id} className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">
+                                                        <span key={job.id} className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">
                                                             <span className="font-bold">{job.job_number}</span>
                                                             <span className="text-gray-400">·</span>
                                                             <span className="truncate max-w-[100px]">{job.item_name || 'Unnamed'}</span>
