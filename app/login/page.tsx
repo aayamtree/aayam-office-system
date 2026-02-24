@@ -15,6 +15,12 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLocalhost, setIsLocalhost] = useState(false);
+
+  // Detect localhost after mount to avoid hydration mismatch
+  useEffect(() => {
+    setIsLocalhost(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  }, []);
 
   // Redirect if already logged in - Optimized for Role
   useEffect(() => {
@@ -24,7 +30,6 @@ export default function LoginPage() {
           : profile.role === 'marketing' ? '/admin/marketing'
             : profile.role === 'cmyk' ? '/admin/cmyk-print'
               : '/admin/dashboard';
-      // Use window.location for instant navigation (faster than router.push)
       window.location.href = target;
     }
   }, [profile, loading]);
@@ -191,8 +196,8 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Localhost Quick Login - Only visible on localhost */}
-        {typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
+        {/* Localhost Quick Login - Only visible on localhost (rendered after mount to avoid hydration error) */}
+        {isLocalhost && (
           <div className="text-center mt-4">
             <button
               onClick={() => {
