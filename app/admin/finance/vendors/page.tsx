@@ -72,7 +72,7 @@ export default function VendorsPage() {
       state: vendor.state || 'Gujarat',
       category: vendor.category || 'Paper',
       is_active: vendor.is_active,
-      payment_terms: String(vendor.payment_terms || '')
+      payment_terms: String(vendor.payment_terms ?? '')
     });
     setSelectedVendor(vendor);
     setIsEditing(true);
@@ -94,11 +94,16 @@ export default function VendorsPage() {
     e.preventDefault();
     setSaving(true);
     try {
+      const ptRaw = formData.payment_terms;
+      const payment_terms = ptRaw === '' || ptRaw === null || ptRaw === undefined
+        ? null
+        : Number(ptRaw) || null;
+      const payload = { ...formData, payment_terms };
       if (isEditing && selectedVendor) {
-        const { error } = await updateVendor(selectedVendor.id, formData as any);
+        const { error } = await updateVendor(selectedVendor.id, payload as any);
         if (error) throw new Error(error);
       } else {
-        const { error } = await createVendor(formData as any);
+        const { error } = await createVendor(payload as any);
         if (error) throw new Error(error);
       }
       setShowModal(false); setIsEditing(false); setSelectedVendor(null);
