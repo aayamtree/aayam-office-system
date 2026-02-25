@@ -2206,7 +2206,7 @@ export function useVendorPayments() {
 // =============================================
 export function useActivityLogs(limit = 100) {
   const { data, loading, error, refetch } = useSupabaseQuery<ActivityLog>('activity_logs', {
-    select: '*, user:profiles(*)',
+    select: '*',   // No join — avoids FK constraint error. Add FK via FIX_ACTIVITY_LOGS.sql to enable user names.
     orderBy: { column: 'created_at', ascending: false },
     limit
   });

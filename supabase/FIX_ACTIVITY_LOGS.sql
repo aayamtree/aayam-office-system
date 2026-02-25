@@ -37,7 +37,22 @@ CREATE POLICY "Authenticated can insert activity_logs"
   TO authenticated
   WITH CHECK (auth.uid() = user_id);
 
--- Step 4: Verify result
+-- Step 4: Add FK so Supabase can join profiles (enables user names in Activity Log)
+-- Safe: only adds if constraint doesn't already exist
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'activity_logs_user_id_fkey'
+    AND table_name = 'activity_logs'
+  ) THEN
+    ALTER TABLE activity_logs
+      ADD CONSTRAINT activity_logs_user_id_fkey
+      FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE SET NULL;
+  END IF;
+END $$;
+
+-- Step 5: Verify result
 SELECT 
   COUNT(*) as total_logs,
   COUNT(DISTINCT user_id) as unique_users,
