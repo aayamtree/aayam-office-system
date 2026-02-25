@@ -32,8 +32,8 @@ export default function TeamQueue() {
 
     // Filter
     const filteredTasks = allTasks.filter(task => {
-        const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            task.client.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesSearch = (task.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (task.client || '').toLowerCase().includes(searchQuery.toLowerCase());
         const matchesDesigner = filterDesigner === 'all' || task.designerId === filterDesigner;
         return matchesSearch && matchesDesigner;
     });
@@ -87,7 +87,7 @@ export default function TeamQueue() {
                             placeholder="Search tasks..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 md:py-3 border rounded-lg text-sm"
+                            className="w-full pl-10 pr-4 py-2.5 md:py-3 border rounded-md text-sm"
                         />
                     </div>
 
@@ -95,7 +95,7 @@ export default function TeamQueue() {
                         <select
                             value={filterDesigner}
                             onChange={(e) => setFilterDesigner(e.target.value)}
-                            className="flex-1 md:flex-none px-3 md:px-4 py-2.5 md:py-3 border rounded-lg bg-white text-sm"
+                            className="flex-1 md:flex-none px-3 md:px-4 py-2.5 md:py-3 border rounded-md bg-white text-sm"
                         >
                             <option value="all">All Designers</option>
                             {designers.map(d => (
@@ -104,7 +104,7 @@ export default function TeamQueue() {
                         </select>
 
                         {/* View Toggle */}
-                        <div className="flex border rounded-lg overflow-hidden bg-white flex-shrink-0">
+                        <div className="flex border rounded-md overflow-hidden bg-white flex-shrink-0">
                             <button
                                 onClick={() => setViewMode('board')}
                                 className={`px-3 md:px-4 py-2.5 md:py-3 flex items-center gap-1.5 md:gap-2 ${viewMode === 'board' ? 'bg-gray-900 text-white' : 'text-gray-600'}`}
@@ -158,10 +158,10 @@ export default function TeamQueue() {
 
                                                         {/* Priority Badge */}
                                                         {task.priority === 'urgent' && (
-                                                            <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full font-bold text-xs">🔥 Urgent</span>
+                                                            <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-md font-bold text-xs">🔥 Urgent</span>
                                                         )}
                                                         {task.priority === 'high' && (
-                                                            <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full font-bold text-xs">⚠️ High</span>
+                                                            <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-md font-bold text-xs">⚠️ High</span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -206,7 +206,7 @@ export default function TeamQueue() {
                                                 </div>
                                             </td>
                                             <td className="p-4">
-                                                <span className={`px-3 py-1 rounded-full text-label ${task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
+                                                <span className={`px-3 py-1 rounded-md text-label ${task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
                                                     task.priority === 'high' ? 'bg-orange-100 text-orange-700' :
                                                         'bg-gray-100 text-gray-700'
                                                     }`}>

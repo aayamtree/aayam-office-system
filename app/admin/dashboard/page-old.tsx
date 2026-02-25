@@ -400,7 +400,7 @@ export default function AdminDashboard() {
                 <span className="text-page-title text-gray-900">{formatCurrency(dashboardStats.totalRevenue)}</span>
                 <span className="text-base text-gray-500 font-medium">YTD Revenue</span>
               </div>
-              <Link href="/admin/sales/orders" className="flex items-center gap-2 text-sm text-primary hover:opacity-80 font-bold bg-muted px-4 py-2 rounded-lg transition-colors">
+              <Link href="/admin/sales/orders" className="flex items-center gap-2 text-sm text-primary hover:opacity-80 font-bold bg-muted px-4 py-2 rounded-md transition-colors">
                 View Report
                 <ArrowUpRight className="w-4 h-4" />
               </Link>
@@ -464,14 +464,14 @@ export default function AdminDashboard() {
                           <div className="text-xs text-gray-500">{job.client?.company || '-'}</div>
                         </td>
                         <td className="py-4">
-                          <span className="text-xs font-bold uppercase tracking-wider text-gray-500 border border-gray-200 px-2 py-0.5 rounded-full bg-white">{dept}</span>
+                          <span className="text-xs font-bold uppercase tracking-wider text-gray-500 border border-gray-200 px-2 py-0.5 rounded-md bg-white">{dept}</span>
                         </td>
                         <td className={`py-4 text-xs ${slaColor}`}>
                           {slaText}
                         </td>
                         <td className="py-4 text-right font-bold text-gray-900 text-sm">{formatCurrency(job.total_amount)}</td>
                         <td className="py-4 text-right pr-4">
-                          <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wide rounded-full ${getStatusColor(job.current_stage)}`}>
+                          <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wide rounded-md ${getStatusColor(job.current_stage)}`}>
                             {job.current_stage.replace(/_/g, ' ')}
                           </span>
                         </td>
@@ -490,7 +490,7 @@ export default function AdminDashboard() {
                 <div key={job.id} className="border border-gray-100 p-3 rounded-lg bg-gray-50/30">
                   <div className="flex justify-between items-start mb-3">
                     <span className="font-bold text-indigo-900 bg-gray-900 px-3 py-1 rounded-lg text-sm">{job.job_number}</span>
-                    <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wide rounded-full ${getStatusColor(job.current_stage)}`}>
+                    <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wide rounded-md ${getStatusColor(job.current_stage)}`}>
                       {job.current_stage}
                     </span>
                   </div>
@@ -515,7 +515,7 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 lg:p-5 border border-gray-100">
             <h2 className="text-base md:text-section text-gray-900 mb-3 md:mb-5">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-3 md:gap-4">
-              <Link href="/admin/sales/orders" className="px-4 py-3 bg-gray-900 text-white rounded-lg text-center text-sm font-semibold hover:bg-gray-800 transition-colors shadow-sm">
+              <Link href="/admin/sales/orders" className="px-4 py-3 bg-gray-900 text-white rounded-md text-center text-sm font-semibold hover:bg-gray-800 transition-colors shadow-sm">
                 + New Order
               </Link>
               <Link href="/admin/cmyk-print" className="px-4 py-3 bg-white border-2 border-gray-200 text-[#0000FF] rounded-lg text-center text-sm font-semibold hover:bg-gray-50 transition-colors">

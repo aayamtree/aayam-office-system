@@ -166,7 +166,7 @@ export default function ProductionSettings() {
 
                     <button
                         onClick={() => setIsAddingNew(true)}
-                        className={`text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors ${activeCategory === 'design' ? 'bg-gray-900 hover:bg-gray-800' : 'bg-orange-600 hover:bg-orange-700'
+                        className={`text-white px-4 py-2 rounded-md font-bold flex items-center gap-2 transition-colors ${activeCategory === 'design' ? 'bg-gray-900 hover:bg-gray-800' : 'bg-orange-600 hover:bg-orange-700'
                             }`}
                     >
                         <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" /> Add {activeCategory === 'design' ? 'Design' : 'QC'} Checklist
@@ -275,7 +275,7 @@ export default function ProductionSettings() {
                                                             placeholder="e.g. Check spelling..."
                                                         />
                                                     </div>
-                                                    <button onClick={() => removeEditItem(idx)} className="text-gray-400 hover:text-red-500 p-2 hover:bg-red-50 rounded-lg"><X className="w-4 h-4" /></button>
+                                                    <button onClick={() => removeEditItem(idx)} className="text-gray-400 hover:text-red-500 p-2 hover:bg-red-50 rounded-md"><X className="w-4 h-4" /></button>
                                                 </div>
                                             ))}
                                             <button onClick={addItemToEdit} className="w-full py-2.5 border-2 border-dashed border-gray-200 rounded-md text-sm font-bold text-gray-500 hover:border-primary/30 hover:text-primary hover:bg-muted flex items-center justify-center gap-2 transition-all mt-4">

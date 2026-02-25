@@ -184,7 +184,7 @@ export default function ActivityPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className={`font-medium ${getActionColor(log.action)}`}>{log.action}</span>
-                    <span className={`px-2 py-0.5 text-xs rounded-full ${getModuleColor(log.module || 'System')}`}>
+                    <span className={`px-2 py-0.5 text-xs rounded-md ${getModuleColor(log.module || 'System')}`}>
                       {log.module || 'System'}
                     </span>
                   </div>

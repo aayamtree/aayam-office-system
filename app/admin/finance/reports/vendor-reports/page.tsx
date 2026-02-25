@@ -159,7 +159,7 @@ export default function VendorReportsPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="flex items-center gap-3">
-                    <Link href="/admin/finance/reports" className="p-2 hover:bg-gray-100 rounded-lg">
+                    <Link href="/admin/finance/reports" className="p-2 hover:bg-gray-100 rounded-md">
                         <ArrowLeft className="w-5 h-5" />
                     </Link>
                     <div>
@@ -291,7 +291,7 @@ export default function VendorReportsPage() {
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3 text-center">
-                                                <span className="bg-gray-100 px-2.5 py-1 rounded-full text-sm font-medium">{entry.jobs.length}</span>
+                                                <span className="bg-gray-100 px-2.5 py-1 rounded-md text-sm font-medium">{entry.jobs.length}</span>
                                             </td>
                                             <td className="px-4 py-3 text-right font-medium text-gray-900">{formatCurrency(entry.totalAmount)}</td>
                                             <td className="px-4 py-3 text-right text-green-700">{formatCurrency(entry.totalReceived)}</td>
@@ -299,7 +299,7 @@ export default function VendorReportsPage() {
                                             <td className="px-4 py-3">
                                                 <div className="flex flex-wrap gap-1">
                                                     {uniqueClients.slice(0, 3).map((name, i) => (
-                                                        <span key={i} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{name}</span>
+                                                        <span key={i} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md">{name}</span>
                                                     ))}
                                                     {uniqueClients.length > 3 && (
                                                         <span className="text-xs text-gray-400">+{uniqueClients.length - 3} more</span>
@@ -344,16 +344,16 @@ export default function VendorReportsPage() {
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3 text-center">
-                                                <span className="bg-gray-100 px-2.5 py-1 rounded-full text-sm font-medium">{entry.jobs.length}</span>
+                                                <span className="bg-gray-100 px-2.5 py-1 rounded-md text-sm font-medium">{entry.jobs.length}</span>
                                             </td>
                                             <td className="px-4 py-3 text-center">
-                                                <span className="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full text-sm font-medium">{entry.vendorCount}</span>
+                                                <span className="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-md text-sm font-medium">{entry.vendorCount}</span>
                                             </td>
                                             <td className="px-4 py-3 text-right font-medium text-gray-900">{formatCurrency(entry.totalAmount)}</td>
                                             <td className="px-4 py-3">
                                                 <div className="flex flex-wrap gap-1">
                                                     {jobTypes.slice(0, 3).map((type, i) => (
-                                                        <span key={i} className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">{type}</span>
+                                                        <span key={i} className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-md">{type}</span>
                                                     ))}
                                                 </div>
                                             </td>
@@ -390,13 +390,13 @@ export default function VendorReportsPage() {
                                             </div>
                                         </td>
                                         <td className="px-4 py-3 text-center">
-                                            <span className="bg-gray-100 px-2.5 py-1 rounded-full text-sm font-medium">{entry.jobs.length}</span>
+                                            <span className="bg-gray-100 px-2.5 py-1 rounded-md text-sm font-medium">{entry.jobs.length}</span>
                                         </td>
                                         <td className="px-4 py-3 text-center">
-                                            <span className="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full text-sm font-medium">{entry.vendorCount}</span>
+                                            <span className="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-md text-sm font-medium">{entry.vendorCount}</span>
                                         </td>
                                         <td className="px-4 py-3 text-center">
-                                            <span className="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-sm font-medium">{entry.clientCount}</span>
+                                            <span className="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-md text-sm font-medium">{entry.clientCount}</span>
                                         </td>
                                         <td className="px-4 py-3 text-right font-medium text-gray-900">{formatCurrency(entry.totalAmount)}</td>
                                     </tr>

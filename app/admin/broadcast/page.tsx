@@ -136,7 +136,7 @@ export default function BroadcastPage() {
                                 type="button"
                                 onClick={() => setPriority('normal')}
                                 className={`
-                  px-4 py-3 rounded-lg font-medium transition-all
+                  px-4 py-3 rounded-md font-medium transition-all
                   ${priority === 'normal'
                                         ? 'bg-muted border-2 border-primary text-foreground'
                                         : 'bg-gray-100 border-2 border-gray-300 text-gray-700'
@@ -149,7 +149,7 @@ export default function BroadcastPage() {
                                 type="button"
                                 onClick={() => setPriority('urgent')}
                                 className={`
-                  px-4 py-3 rounded-lg font-medium transition-all
+                  px-4 py-3 rounded-md font-medium transition-all
                   ${priority === 'urgent'
                                         ? 'bg-red-100 border-2 border-red-500 text-red-900'
                                         : 'bg-gray-100 border-2 border-gray-300 text-gray-700'

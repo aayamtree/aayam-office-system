@@ -42,7 +42,7 @@ export default function BankAccountsPage() {
   });
 
   const filteredBanks = banks ? banks.filter(b =>
-    b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (b.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     b.account_number.includes(searchTerm)
   ) : [];
 
@@ -130,7 +130,7 @@ export default function BankAccountsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin/finance" className="p-2 hover:bg-gray-100 rounded-lg">
+          <Link href="/admin/finance" className="p-2 hover:bg-gray-100 rounded-md">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
@@ -141,7 +141,7 @@ export default function BankAccountsPage() {
         <div className="flex gap-2">
           {/* Record Transaction Button Removed for Simplicity/Refactor needed if connected to real data */}
           <button onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-lg hover:bg-gray-900 font-medium">
+            className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-md hover:bg-gray-900 font-medium">
             <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
             <span>Add Bank</span>
           </button>
@@ -196,7 +196,7 @@ export default function BankAccountsPage() {
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-gray-900">{bank.name}</h3>
                     {bank.is_default && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-gray-900 text-white">Default</span>
+                      <span className="text-xs px-2 py-0.5 rounded-md bg-gray-900 text-white">Default</span>
                     )}
                   </div>
                   <p className="text-sm text-gray-500">{bank.account_type} • {bank.account_number}</p>
@@ -204,11 +204,11 @@ export default function BankAccountsPage() {
               </div>
               <div className="flex items-center gap-1">
                 <button onClick={() => { setSelectedBank(bank); setShowDetailModal(true); }}
-                  className="p-2 text-foreground hover:bg-muted rounded-lg"><Eye className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
+                  className="p-2 text-foreground hover:bg-muted rounded-md"><Eye className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
                 <button onClick={() => handleEdit(bank)}
-                  className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"><Edit className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
+                  className="p-2 text-gray-600 hover:bg-gray-100 rounded-md"><Edit className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
                 <button onClick={() => handleDelete(bank.id, bank.current_balance)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-md"><Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
               </div>
             </div>
 
@@ -248,7 +248,7 @@ export default function BankAccountsPage() {
           <Building className="mx-auto h-12 w-12 text-gray-300" />
           <h3 className="mt-3 text-lg font-medium text-gray-900">No bank accounts found</h3>
           <p className="mt-1 text-gray-500">Add your first bank account to enable reconciliation</p>
-          <button onClick={() => setShowModal(true)} className="mt-4 px-4 py-2 bg-gray-900 text-white rounded-lg">
+          <button onClick={() => setShowModal(true)} className="mt-4 px-4 py-2 bg-gray-900 text-white rounded-md">
             Add Account
           </button>
         </div>
@@ -267,20 +267,20 @@ export default function BankAccountsPage() {
                 <label className="block text-sm font-medium mb-1.5">Bank Name *</label>
                 <input type="text" required value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2.5 border rounded-lg" placeholder="HDFC Bank Current Account" />
+                  className="w-full px-3 py-2.5 border rounded-md" placeholder="HDFC Bank Current Account" />
               </div>
               <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Account Number *</label>
                   <input type="text" required value={formData.account_number}
                     onChange={(e) => setFormData({ ...formData, account_number: e.target.value })}
-                    className="w-full px-3 py-2.5 border rounded-lg" placeholder="50100012345678" />
+                    className="w-full px-3 py-2.5 border rounded-md" placeholder="50100012345678" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">IFSC Code *</label>
                   <input type="text" required value={formData.ifsc_code}
                     onChange={(e) => setFormData({ ...formData, ifsc_code: e.target.value.toUpperCase() })}
-                    className="w-full px-3 py-2.5 border rounded-lg" placeholder="HDFC0001234" />
+                    className="w-full px-3 py-2.5 border rounded-md" placeholder="HDFC0001234" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2 md:gap-4">
@@ -288,12 +288,12 @@ export default function BankAccountsPage() {
                   <label className="block text-sm font-medium mb-1.5">Branch *</label>
                   <input type="text" required value={formData.branch}
                     onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
-                    className="w-full px-3 py-2.5 border rounded-lg" placeholder="Rajkot Main" />
+                    className="w-full px-3 py-2.5 border rounded-md" placeholder="Rajkot Main" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Account Type</label>
                   <select value={formData.account_type} onChange={(e) => setFormData({ ...formData, account_type: e.target.value })}
-                    className="w-full px-3 py-2.5 border rounded-lg">
+                    className="w-full px-3 py-2.5 border rounded-md">
                     {accountTypes.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
@@ -303,7 +303,7 @@ export default function BankAccountsPage() {
                   <label className="block text-sm font-medium mb-1.5">Opening Balance (₹)</label>
                   <input type="number" value={formData.opening_balance || ''}
                     onChange={(e) => setFormData({ ...formData, opening_balance: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2.5 border rounded-lg" placeholder="0" />
+                    className="w-full px-3 py-2.5 border rounded-md" placeholder="0" />
                 </div>
               )}
               <div className="flex gap-3 pt-2">
@@ -323,7 +323,7 @@ export default function BankAccountsPage() {
           <div className="bg-white rounded-lg w-full max-w-md animate-scale-in">
             <div className="p-5 border-b flex items-center justify-between">
               <h2 className="text-page-title">{selectedBank.name}</h2>
-              <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
+              <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div className="text-center bg-gray-900 rounded-lg p-4">
@@ -353,7 +353,7 @@ export default function BankAccountsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Status</p>
-                  <span className={`px-2 py-0.5 rounded-full text-label ${selectedBank.is_active ? 'bg-gray-100 text-gray-900' : 'bg-gray-100 text-gray-600'}`}>
+                  <span className={`px-2 py-0.5 rounded-md text-label ${selectedBank.is_active ? 'bg-gray-100 text-gray-900' : 'bg-gray-100 text-gray-600'}`}>
                     {selectedBank.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </div>

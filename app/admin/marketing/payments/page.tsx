@@ -53,8 +53,8 @@ export default function MarketingPaymentsPage() {
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
 
   const filteredPayments = payments.filter(p => {
-    const matchesSearch = p.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.clientName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (p.orderId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.clientName || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -79,7 +79,7 @@ export default function MarketingPaymentsPage() {
           <h1 className="text-page-title text-gray-900">Payment Status</h1>
           <p className="text-gray-500">Track payment status for your orders</p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-2 rounded-lg">
+        <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-2 rounded-md">
           <Lock size={16} />
           <span>View Only</span>
         </div>
@@ -141,7 +141,7 @@ export default function MarketingPaymentsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
                     <span className="font-mono text-sm text-primary font-medium">{payment.orderId}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusBadge(payment.status)}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${getStatusBadge(payment.status)}`}>
                       {getStatusName(payment.status)}
                     </span>
                   </div>
@@ -159,7 +159,7 @@ export default function MarketingPaymentsPage() {
                     </p>
                   </div>
                   <button onClick={() => { setSelectedPayment(payment); setShowDetailModal(true); }}
-                    className="p-2 text-foreground hover:bg-muted rounded-lg" title="View Details">
+                    className="p-2 text-foreground hover:bg-muted rounded-md" title="View Details">
                     <Eye size={18} />
                   </button>
                 </div>
@@ -202,7 +202,7 @@ export default function MarketingPaymentsPage() {
                 <span className="font-mono text-primary">{selectedPayment.orderId}</span>
                 <h2 className="text-page-title">{selectedPayment.subject}</h2>
               </div>
-              <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+              <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X size={20} /></button>
             </div>
             <div className="p-5 space-y-4">
               <div className="grid grid-cols-2 gap-2 md:gap-4">
@@ -212,7 +212,7 @@ export default function MarketingPaymentsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Status</p>
-                  <span className={`px-2 py-0.5 rounded-full text-label ${getStatusBadge(selectedPayment.status)}`}>
+                  <span className={`px-2 py-0.5 rounded-md text-label ${getStatusBadge(selectedPayment.status)}`}>
                     {getStatusName(selectedPayment.status)}
                   </span>
                 </div>
@@ -262,7 +262,7 @@ export default function MarketingPaymentsPage() {
                             <p className="text-xs text-gray-500">{formatDate(p.date)}</p>
                           </div>
                         </div>
-                        <span className="text-xs px-2 py-1 bg-white rounded-full">{p.mode}</span>
+                        <span className="text-xs px-2 py-1 bg-white rounded-md">{p.mode}</span>
                       </div>
                     ))}
                   </div>
@@ -274,7 +274,7 @@ export default function MarketingPaymentsPage() {
                 )}
               </div>
 
-              <div className="bg-muted border border-border rounded-lg p-4">
+              <div className="bg-muted border border-border rounded-md p-4">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="text-foreground flex-shrink-0 mt-0.5" size={18} />
                   <p className="text-sm text-foreground">

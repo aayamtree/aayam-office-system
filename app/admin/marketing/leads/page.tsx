@@ -253,7 +253,7 @@ export default function LeadsPage() {
     const filteredLeads = leads.filter(lead => {
         const s = searchQuery.toLowerCase();
         const matchSearch =
-            lead.name.toLowerCase().includes(s) ||
+            (lead.name || '').toLowerCase().includes(s) ||
             (lead.company || '').toLowerCase().includes(s) ||
             lead.phone?.includes(s) ||
             (lead.lead_number || '').toLowerCase().includes(s);
@@ -333,7 +333,7 @@ export default function LeadsPage() {
                         const headerTextColor = 'text-foreground';
 
                         return (
-                            <div key={lead.id} className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
+                            <div key={lead.id} className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-sm transition-all border border-gray-100">
                                 {/* Colored Header */}
                                 <div className={`${headerBg} px-3 py-2.5 flex items-center justify-between`}>
                                     <span className={`${headerTextColor} font-mono text-sm font-bold`}>
@@ -342,11 +342,11 @@ export default function LeadsPage() {
                                     <div className="flex items-center gap-2">
                                         {/* Assigned To — visible for admin */}
                                         {profile?.role === 'admin' && lead.assigned_to && (
-                                            <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-full font-medium">
+                                            <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-md font-medium">
                                                 👤 {staffList.find(s => s.id === lead.assigned_to)?.full_name || 'Unassigned'}
                                             </span>
                                         )}
-                                        <span className={`${headerTextColor}/90 text-xs px-3 py-1 bg-white/20 rounded-full font-medium capitalize`}>
+                                        <span className={`${headerTextColor}/90 text-xs px-3 py-1 bg-white/20 rounded-md font-medium capitalize`}>
                                             {lead.status.replace('_', ' ')}
                                         </span>
                                     </div>
@@ -362,7 +362,7 @@ export default function LeadsPage() {
                                             {/* Origin Badge — shows when lead was assigned by someone else */}
                                             {lead.created_by && lead.assigned_to && lead.created_by !== lead.assigned_to && (
                                                 <div className="mt-1.5">
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
                                                         📌 Assigned by {staffList.find(s => s.id === lead.created_by)?.full_name || 'Admin'}
                                                     </span>
                                                 </div>
@@ -371,7 +371,7 @@ export default function LeadsPage() {
                                             {/* Project Type Badge */}
                                             {lead.project_type && (
                                                 <div className="mt-2">
-                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${lead.project_type === 'print' ? 'bg-gray-900 text-white' :
+                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold ${lead.project_type === 'print' ? 'bg-gray-900 text-white' :
                                                         lead.project_type === 'design' ? 'bg-pink-100 text-pink-700' :
                                                             'bg-gray-900 text-white'
                                                         }`}>
@@ -383,13 +383,13 @@ export default function LeadsPage() {
                                             )}
                                         </div>
                                         <div className="flex gap-1">
-                                            <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors" aria-label="View lead details">
+                                            <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors" aria-label="View lead details">
                                                 <Eye className="w-4 h-4" />
                                             </button>
-                                            <button onClick={() => handleEdit(lead)} className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Edit lead">
+                                            <button onClick={() => handleEdit(lead)} className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors" aria-label="Edit lead">
                                                 <Edit className="w-4 h-4" />
                                             </button>
-                                            <button onClick={() => handleDelete(lead.id, lead.name)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" aria-label="Delete lead">
+                                            <button onClick={() => handleDelete(lead.id, lead.name)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" aria-label="Delete lead">
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>
@@ -421,7 +421,7 @@ export default function LeadsPage() {
 
                                     <div className="space-y-2 mt-4">
                                         <div className="flex items-center gap-2 text-gray-600">
-                                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-900 shrink-0">
+                                            <div className="w-8 h-8 rounded-md bg-white flex items-center justify-center text-gray-900 shrink-0">
                                                 <Phone className="w-4 h-4" />
                                             </div>
                                             <span className="font-medium">{lead.phone}</span>
@@ -446,7 +446,7 @@ export default function LeadsPage() {
                                         {lead.status !== 'converted' && lead.status !== 'follow_up' && (
                                             <button
                                                 onClick={() => handleMoveToFollowUp(lead)}
-                                                className="px-4 py-2 bg-gray-900 text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors flex items-center gap-2 shadow-sm"
+                                                className="px-4 py-2 bg-gray-900 text-white rounded-md font-semibold hover:bg-gray-800 transition-colors flex items-center gap-2 shadow-sm"
                                             >
                                                 <CheckCircle className="w-4 h-4" /> Move to Follow-up
                                             </button>
@@ -611,7 +611,7 @@ export default function LeadsPage() {
                             </div>
                         </div>
 
-                        <button onClick={() => { setShowViewModal(false); handleEdit(selectedLead); }} className="w-full mt-3 md:mt-6 bg-gray-900 text-white py-2 rounded-lg font-semibold hover:bg-gray-800 shadow-sm">Edit Details</button>
+                        <button onClick={() => { setShowViewModal(false); handleEdit(selectedLead); }} className="w-full mt-3 md:mt-6 bg-gray-900 text-white py-2 rounded-md font-semibold hover:bg-gray-800 shadow-sm">Edit Details</button>
                     </div>
                 </div>
             )}

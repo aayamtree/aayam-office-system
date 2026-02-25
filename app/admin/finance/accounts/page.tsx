@@ -26,7 +26,7 @@ export default function AccountsPage() {
                 <div className="flex gap-3">
                     <button
                         onClick={() => { refreshBanks(); refreshCash(); }}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border rounded-lg hover:bg-gray-50"
+                        className="flex items-center gap-2 px-4 py-2 bg-white border rounded-md hover:bg-gray-50"
                     >
                         <RefreshCw className="w-4 h-4 md:w-4.5 md:h-4.5" />
                         Refresh
@@ -64,7 +64,7 @@ export default function AccountsPage() {
                     </div>
                     <button
                         onClick={() => setShowAddBank(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800"
                     >
                         <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
                         Add Bank Account
@@ -86,12 +86,12 @@ export default function AccountsPage() {
                                         <div className="flex items-center gap-2 mb-1">
                                             <h3 className="font-bold text-gray-900">{account.name}</h3>
                                             {account.is_default && (
-                                                <span className="px-2 py-0.5 bg-muted text-foreground text-label rounded-full">
+                                                <span className="px-2 py-0.5 bg-muted text-foreground text-label rounded-md">
                                                     Default
                                                 </span>
                                             )}
                                             {!account.is_active && (
-                                                <span className="px-2 py-0.5 bg-gray-200 text-gray-600 text-label rounded-full">
+                                                <span className="px-2 py-0.5 bg-gray-200 text-gray-600 text-label rounded-md">
                                                     Inactive
                                                 </span>
                                             )}
@@ -137,7 +137,7 @@ export default function AccountsPage() {
                     </div>
                     <button
                         onClick={() => setShowAddCash(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-green-700"
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-green-700"
                     >
                         <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
                         Add Cash Account
@@ -261,7 +261,7 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             placeholder="e.g., HDFC Current Account"
-                            className="w-full px-4 py-2 border rounded-lg"
+                            className="w-full px-4 py-2 border rounded-md"
                             required
                         />
                     </div>
@@ -273,7 +273,7 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                             value={formData.bankName}
                             onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
                             placeholder="e.g., HDFC Bank"
-                            className="w-full px-4 py-2 border rounded-lg"
+                            className="w-full px-4 py-2 border rounded-md"
                         />
                     </div>
 
@@ -284,7 +284,7 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                             value={formData.accountNumber}
                             onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
                             placeholder="XXXX1234"
-                            className="w-full px-4 py-2 border rounded-lg"
+                            className="w-full px-4 py-2 border rounded-md"
                             required
                         />
                     </div>
@@ -296,7 +296,7 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                             value={formData.ifscCode}
                             onChange={(e) => setFormData({ ...formData, ifscCode: e.target.value })}
                             placeholder="HDFC0000123"
-                            className="w-full px-4 py-2 border rounded-lg"
+                            className="w-full px-4 py-2 border rounded-md"
                         />
                     </div>
 
@@ -305,7 +305,7 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                         <select
                             value={formData.accountType}
                             onChange={(e) => setFormData({ ...formData, accountType: e.target.value })}
-                            className="w-full px-4 py-2 border rounded-lg"
+                            className="w-full px-4 py-2 border rounded-md"
                         >
                             <option value="current">Current Account</option>
                             <option value="savings">Savings Account</option>
@@ -322,7 +322,7 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                             value={formData.openingBalance}
                             onChange={(e) => setFormData({ ...formData, openingBalance: e.target.value })}
                             placeholder="0.00"
-                            className="w-full px-4 py-2 border rounded-lg"
+                            className="w-full px-4 py-2 border rounded-md"
                         />
                         <p className="text-xs text-gray-500 mt-1">Current balance in this account</p>
                     </div>
@@ -401,7 +401,7 @@ function AddCashAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             placeholder="e.g., Main Cash Register, Petty Cash"
-                            className="w-full px-4 py-2 border rounded-lg"
+                            className="w-full px-4 py-2 border rounded-md"
                             required
                         />
                     </div>
@@ -413,7 +413,7 @@ function AddCashAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                             value={formData.location}
                             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                             placeholder="e.g., Front Desk, Office Safe"
-                            className="w-full px-4 py-2 border rounded-lg"
+                            className="w-full px-4 py-2 border rounded-md"
                         />
                     </div>
 
@@ -425,7 +425,7 @@ function AddCashAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                             value={formData.openingBalance}
                             onChange={(e) => setFormData({ ...formData, openingBalance: e.target.value })}
                             placeholder="0.00"
-                            className="w-full px-4 py-2 border rounded-lg"
+                            className="w-full px-4 py-2 border rounded-md"
                         />
                         <p className="text-xs text-gray-500 mt-1">Current cash in this register</p>
                     </div>

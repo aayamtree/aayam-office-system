@@ -176,7 +176,7 @@ export default function LeadsPage() {
   const filteredLeads = leads.filter(lead => {
     const s = searchQuery.toLowerCase();
     const matchSearch =
-      lead.name.toLowerCase().includes(s) ||
+      (lead.name || '').toLowerCase().includes(s) ||
       (lead.company || '').toLowerCase().includes(s) ||
       lead.phone?.includes(s) ||
       (lead.lead_number || '').toLowerCase().includes(s);
@@ -268,13 +268,13 @@ export default function LeadsPage() {
                     {lead.company && <p className="text-gray-500 text-sm font-medium">{lead.company}</p>}
                   </div>
                   <div className="flex gap-1">
-                    <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-400 hover:text-primary hover:bg-muted rounded-lg transition-colors">
+                    <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-400 hover:text-primary hover:bg-muted rounded-md transition-colors">
                       <Eye size={18} />
                     </button>
-                    <button onClick={() => handleEdit(lead)} className="p-1.5 text-gray-400 hover:text-foreground hover:bg-muted rounded-lg transition-colors">
+                    <button onClick={() => handleEdit(lead)} className="p-1.5 text-gray-400 hover:text-foreground hover:bg-muted rounded-md transition-colors">
                       <Edit size={18} />
                     </button>
-                    <button onClick={() => handleDelete(lead.id, lead.name)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                    <button onClick={() => handleDelete(lead.id, lead.name)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors">
                       <Trash2 size={18} />
                     </button>
                   </div>
@@ -282,7 +282,7 @@ export default function LeadsPage() {
 
                 <div className="space-y-2 mt-4">
                   <div className="flex items-center gap-2 text-gray-600">
-                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-900 shrink-0">
+                    <div className="w-8 h-8 rounded-md bg-white flex items-center justify-center text-gray-900 shrink-0">
                       <Phone size={14} />
                     </div>
                     <span className="font-medium">{lead.phone}</span>
@@ -304,7 +304,7 @@ export default function LeadsPage() {
 
                 {/* Action Footer */}
                 <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${lead.status === 'converted' ? 'bg-gray-100 text-gray-900' : 'bg-gray-100 text-gray-600'
+                  <span className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase ${lead.status === 'converted' ? 'bg-gray-100 text-gray-900' : 'bg-gray-100 text-gray-600'
                     }`}>
                     {lead.status.replace('_', ' ')}
                   </span>
@@ -440,7 +440,7 @@ export default function LeadsPage() {
               </div>
             </div>
 
-            <button onClick={() => { setShowViewModal(false); handleEdit(selectedLead); }} className="w-full mt-3 md:mt-6 bg-gray-900 text-white py-2 rounded-lg font-bold hover:bg-gray-800">Edit Details</button>
+            <button onClick={() => { setShowViewModal(false); handleEdit(selectedLead); }} className="w-full mt-3 md:mt-6 bg-gray-900 text-white py-2 rounded-md font-bold hover:bg-gray-800">Edit Details</button>
           </div>
         </div>
       )}

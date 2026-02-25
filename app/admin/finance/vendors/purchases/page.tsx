@@ -169,7 +169,7 @@ export default function VendorPurchasesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin/finance/vendors" className="p-2 hover:bg-gray-100 rounded-lg">
+          <Link href="/admin/finance/vendors" className="p-2 hover:bg-gray-100 rounded-md">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
@@ -177,7 +177,7 @@ export default function VendorPurchasesPage() {
             <p className="text-gray-500">Track vendor purchases & COGS</p>
           </div>
         </div>
-        <button onClick={() => { resetForm(); setShowModal(true); }} className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 shadow-sm font-semibold">
+        <button onClick={() => { resetForm(); setShowModal(true); }} className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold">
           <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
           <span>Add Purchase</span>
         </button>
@@ -252,7 +252,7 @@ export default function VendorPurchasesPage() {
           const isOverdue = purchase.payment_status === 'pending' && new Date(purchase.due_date || '') < new Date();
 
           return (
-            <div key={purchase.id} className={`bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all border ${isOverdue ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-100'}`}>
+            <div key={purchase.id} className={`bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-sm transition-all border ${isOverdue ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-100'}`}>
               {/* Colored Header */}
               <div className={`${headerBg} px-4 py-3 flex items-center justify-between`}>
                 <div className="flex items-center gap-2">
@@ -261,10 +261,10 @@ export default function VendorPurchasesPage() {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-full font-medium hidden sm:inline-block">
+                  <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-md font-medium hidden sm:inline-block">
                     {purchase.product_type}
                   </span>
-                  <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-full font-medium capitalize">
+                  <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-md font-medium capitalize">
                     {purchase.payment_status}
                   </span>
                 </div>
@@ -300,15 +300,15 @@ export default function VendorPurchasesPage() {
 
                   <div className="flex items-center gap-1">
                     <button onClick={() => { setSelectedPurchase(purchase); setShowDetailModal(true); }}
-                      className="p-2 text-gray-400 hover:text-foreground hover:bg-muted rounded-lg transition-colors">
+                      className="p-2 text-gray-400 hover:text-foreground hover:bg-muted rounded-md transition-colors">
                       <Eye className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     </button>
                     <button onClick={() => handleEdit(purchase)}
-                      className="p-2 text-gray-400 hover:text-foreground hover:bg-muted rounded-lg transition-colors">
+                      className="p-2 text-gray-400 hover:text-foreground hover:bg-muted rounded-md transition-colors">
                       <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     </button>
                     <button onClick={() => handleDelete(purchase.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors">
                       <Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     </button>
                   </div>
@@ -340,7 +340,7 @@ export default function VendorPurchasesPage() {
                 <div className="col-span-2">
                   <label className="block text-sm font-medium mb-1.5">Vendor *</label>
                   <select required value={formData.vendorId} onChange={(e) => setFormData({ ...formData, vendorId: e.target.value })}
-                    className="w-full px-3 py-2.5 border rounded-lg bg-white">
+                    className="w-full px-3 py-2.5 border rounded-md bg-white">
                     <option value="">Select Vendor</option>
                     {(vendors || []).map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
                   </select>
@@ -348,14 +348,14 @@ export default function VendorPurchasesPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Product Category *</label>
                   <select required value={formData.productCategory} onChange={(e) => setFormData({ ...formData, productCategory: e.target.value })}
-                    className="w-full px-3 py-2.5 border rounded-lg">
+                    className="w-full px-3 py-2.5 border rounded-md">
                     {productCategories.map((t: any) => <option key={t.id || t.name} value={t.name}>{t.name}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Job ID</label>
                   <select value={formData.jobId} onChange={(e) => setFormData({ ...formData, jobId: e.target.value })}
-                    className="w-full px-3 py-2.5 border rounded-lg bg-white">
+                    className="w-full px-3 py-2.5 border rounded-md bg-white">
                     <option value="">General Stock</option>
                     {(jobs || [])
                       .filter(j => j.job_number.startsWith('AAY-'))
@@ -366,25 +366,25 @@ export default function VendorPurchasesPage() {
                   <label className="block text-sm font-medium mb-1.5">Description *</label>
                   <input type="text" required value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-3 py-2.5 border rounded-lg" placeholder="Corrugated boxes 12x10x8" />
+                    className="w-full px-3 py-2.5 border rounded-md" placeholder="Corrugated boxes 12x10x8" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Quantity *</label>
                   <input type="number" required min="1" value={formData.quantity || ''}
                     onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2.5 border rounded-lg" />
+                    className="w-full px-3 py-2.5 border rounded-md" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Rate (₹) *</label>
                   <input type="number" required min="0" step="0.01" value={formData.rate || ''}
                     onChange={(e) => setFormData({ ...formData, rate: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2.5 border rounded-lg" />
+                    className="w-full px-3 py-2.5 border rounded-md" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">GST Rate</label>
                   <select value={formData.gstRate} onChange={(e) => setFormData({ ...formData, gstRate: parseInt(e.target.value) })}
                     style={{ boxSizing: 'border-box', minWidth: 0 }}
-                    className="w-full max-w-[180px] sm:max-w-full px-1.5 py-1.5 md:px-3 md:py-2.5 border rounded-lg text-xs sm:text-sm bg-white">
+                    className="w-full max-w-[180px] sm:max-w-full px-1.5 py-1.5 md:px-3 md:py-2.5 border rounded-md text-xs sm:text-sm bg-white">
                     <option value={0}>0%</option>
                     <option value={5}>5%</option>
                     <option value={12}>12%</option>
@@ -397,14 +397,14 @@ export default function VendorPurchasesPage() {
                   <input type="date" required value={formData.billDate}
                     onChange={(e) => setFormData({ ...formData, billDate: e.target.value })}
                     style={{ boxSizing: 'border-box', minWidth: 0, fontSize: '11px' }}
-                    className="w-full max-w-[150px] sm:max-w-full px-1.5 py-1.5 md:px-3 md:py-2.5 border rounded-lg md:text-sm" />
+                    className="w-full max-w-[150px] sm:max-w-full px-1.5 py-1.5 md:px-3 md:py-2.5 border rounded-md md:text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Due Date *</label>
                   <input type="date" required value={formData.dueDate}
                     onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                     style={{ boxSizing: 'border-box', minWidth: 0, fontSize: '11px' }}
-                    className="w-full max-w-[150px] sm:max-w-full px-1.5 py-1.5 md:px-3 md:py-2.5 border rounded-lg md:text-sm" />
+                    className="w-full max-w-[150px] sm:max-w-full px-1.5 py-1.5 md:px-3 md:py-2.5 border rounded-md md:text-sm" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-sm font-medium mb-1.5">Attachment (Invoice/Slip)</label>
@@ -419,7 +419,7 @@ export default function VendorPurchasesPage() {
                         setFormData({ ...formData, attachmentUrl: file.name });
                       }
                     }}
-                    className="w-full px-3 py-2 border rounded-lg text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-900 file:text-white hover:file:bg-primary"
+                    className="w-full px-3 py-2 border rounded-md text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-900 file:text-white hover:file:bg-primary"
                   />
                   {formData.attachmentUrl && (
                     <p className="text-xs text-gray-900 mt-1">✓ {formData.attachmentUrl}</p>
@@ -464,7 +464,7 @@ export default function VendorPurchasesPage() {
                 <span className="font-mono text-primary">{selectedPurchase.bill_number}</span>
                 <h2 className="text-page-title">{selectedPurchase.description}</h2>
               </div>
-              <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
+              <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div className="grid grid-cols-2 gap-2 md:gap-4">
@@ -482,7 +482,7 @@ export default function VendorPurchasesPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Payment Status</p>
-                  <span className={`px-2 py-0.5 rounded-full text-label ${getStatusBadge(selectedPurchase.payment_status)}`}>
+                  <span className={`px-2 py-0.5 rounded-md text-label ${getStatusBadge(selectedPurchase.payment_status)}`}>
                     {selectedPurchase.payment_status}
                   </span>
                 </div>
@@ -524,7 +524,7 @@ export default function VendorPurchasesPage() {
               </div>
 
               <Link href="/admin/finance/vendors/payments"
-                className="block w-full text-center px-4 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-green-700">
+                className="block w-full text-center px-4 py-2.5 bg-gray-900 text-white rounded-md font-medium hover:bg-green-700">
                 Record Payment
               </Link>
             </div>

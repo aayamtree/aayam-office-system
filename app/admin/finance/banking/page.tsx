@@ -227,7 +227,7 @@ export default function BankingPage() {
                     <select
                         value={selectedAccountId}
                         onChange={e => setSelectedAccountId(e.target.value)}
-                        className="flex-1 sm:flex-none px-3 md:px-4 py-2 md:py-2.5 bg-white border rounded-lg text-sm"
+                        className="flex-1 sm:flex-none px-3 md:px-4 py-2 md:py-2.5 bg-white border rounded-md text-sm"
                     >
                         <option value="">Select Account</option>
                         {bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name} - {b.account_number}</option>)}
@@ -235,7 +235,7 @@ export default function BankingPage() {
                     <button
                         onClick={() => setShowImportModal(true)}
                         disabled={!selectedAccountId}
-                        className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap text-sm font-semibold shadow-sm"
+                        className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap text-sm font-semibold shadow-sm"
                     >
                         <Upload className="w-4 h-4" /> Import Statement
                     </button>
@@ -278,7 +278,7 @@ export default function BankingPage() {
             <div className="flex gap-2 overflow-x-auto pb-2">
                 <button
                     onClick={() => setStatusFilter('all')}
-                    className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${statusFilter === 'all'
+                    className={`px-4 py-2 rounded-md font-medium text-sm whitespace-nowrap transition-colors ${statusFilter === 'all'
                         ? 'bg-gray-900 text-white'
                         : 'bg-white border border-gray-200 text-gray-600 hover:border-primary/30'
                         }`}
@@ -287,7 +287,7 @@ export default function BankingPage() {
                 </button>
                 <button
                     onClick={() => setStatusFilter('missing')}
-                    className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${statusFilter === 'missing'
+                    className={`px-4 py-2 rounded-md font-medium text-sm whitespace-nowrap transition-colors ${statusFilter === 'missing'
                         ? 'bg-red-600 text-white'
                         : 'bg-white border border-gray-200 text-gray-600 hover:border-red-300'
                         }`}
@@ -296,7 +296,7 @@ export default function BankingPage() {
                 </button>
                 <button
                     onClick={() => setStatusFilter('verified')}
-                    className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${statusFilter === 'verified'
+                    className={`px-4 py-2 rounded-md font-medium text-sm whitespace-nowrap transition-colors ${statusFilter === 'verified'
                         ? 'bg-gray-900 text-white'
                         : 'bg-white border border-gray-200 text-gray-600 hover:border-green-300'
                         }`}
@@ -355,25 +355,25 @@ export default function BankingPage() {
                                     <td className="px-4 py-3 text-center">
                                         {txn.is_verified ? (
                                             <div className="flex flex-col items-center gap-1">
-                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-900 rounded-full text-label">
+                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-900 rounded-md text-label">
                                                     <CheckCircle className="w-3 h-3" /> Verified
                                                 </span>
                                                 {getCategoryName(txn) && (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-900 text-white rounded-full text-xs">
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-900 text-white rounded-md text-xs">
                                                         <Tag className="w-2.5 h-2.5" /> {getCategoryName(txn)}
                                                     </span>
                                                 )}
                                             </div>
                                         ) : txn.status === 'matched' ? (
-                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-muted text-foreground rounded-full text-label">
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-muted text-foreground rounded-md text-label">
                                                 <CheckCircle className="w-3 h-3" /> Matched
                                             </span>
                                         ) : txn.status === 'ignored' ? (
-                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-200 text-gray-600 rounded-full text-label">
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-200 text-gray-600 rounded-md text-label">
                                                 <EyeOff className="w-3 h-3" /> Ignored
                                             </span>
                                         ) : (
-                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-full text-label">
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-md text-label">
                                                 <AlertTriangle className="w-3 h-3" /> Missing
                                             </span>
                                         )}
@@ -482,13 +482,13 @@ export default function BankingPage() {
                                 </button>
                             </div>
                             <textarea
-                                className="w-full h-60 p-4 border rounded-lg font-mono text-xs bg-gray-50 focus:ring-2 ring-primary outline-none"
+                                className="w-full h-60 p-4 border rounded-md font-mono text-xs bg-gray-50 focus:ring-2 ring-primary outline-none"
                                 placeholder={`Paste Excel Content here...\nExample:\n17/10/25\tMBALAL KUNDHANI...\t0000529...\t17/10/25\t0\t30,356.00\t188,201.00`}
                                 value={importText}
                                 onChange={e => setImportText(e.target.value)}
                             />
                             <div className="mt-4 flex gap-3 justify-end">
-                                <button onClick={() => setShowImportModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+                                <button onClick={() => setShowImportModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md">Cancel</button>
                                 <button
                                     onClick={handleParse}
                                     disabled={!importText || parsing}

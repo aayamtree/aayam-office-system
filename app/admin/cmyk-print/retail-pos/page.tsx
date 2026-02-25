@@ -64,7 +64,7 @@ export default function RetailPOSPage() {
 
   const filteredProducts = products?.filter(p => {
     const matchesCategory = selectedCategory === 'all' || p.category_id === selectedCategory;
-    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (p.name || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   }) || [];
 
@@ -284,7 +284,7 @@ export default function RetailPOSPage() {
       {/* Header */}
       <div className="p-4 border-b flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href="/admin/cmyk-print" className="p-2 hover:bg-gray-100 rounded-lg">
+          <Link href="/admin/cmyk-print" className="p-2 hover:bg-gray-100 rounded-md">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
@@ -340,7 +340,7 @@ export default function RetailPOSPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                 {filteredProducts.map(product => (
                   <button key={product.id} onClick={() => addToCart(product)}
-                    className="p-3 bg-white border rounded-lg  hover:border-primary/30 transition-all text-left flex flex-col justify-between h-full">
+                    className="p-3 bg-white border rounded-md  hover:border-primary/30 transition-all text-left flex flex-col justify-between h-full">
                     <div>
                       <p className="font-medium text-gray-900 text-sm line-clamp-2">{product.name}</p>
                       <p className="text-xs text-gray-500 mt-1">{product.category?.name}</p>
@@ -368,10 +368,10 @@ export default function RetailPOSPage() {
             <div className="grid grid-cols-2 gap-2">
               <input type="text" placeholder="Customer Name" value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
               <input type="tel" placeholder="Phone" value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
-                className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
             </div>
           </div>
 
@@ -417,7 +417,7 @@ export default function RetailPOSPage() {
               <div className="flex justify-between text-section pt-2 border-t"><span>Grand Total</span><span className="text-primary">{formatCurrency(grandTotal)}</span></div>
             </div>
             <button onClick={() => setShowPaymentModal(true)} disabled={cart.length === 0}
-              className="w-full py-3 bg-gray-900 text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors shadow-sm">
+              className="w-full py-3 bg-gray-900 text-white rounded-md font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors shadow-sm">
               Pay {formatCurrency(grandTotal)}
             </button>
           </div>
@@ -430,7 +430,7 @@ export default function RetailPOSPage() {
           <div className="bg-white rounded-lg w-full max-w-md animate-scale-in">
             <div className="p-5 border-b flex items-center justify-between">
               <h2 className="text-page-title">Payment</h2>
-              <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
+              <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div className="text-center bg-gray-900 rounded-lg p-4">
@@ -452,7 +452,7 @@ export default function RetailPOSPage() {
                 <div>
                   <label className="text-sm font-medium">Amount Received</label>
                   <input type="number" value={amountReceived} onChange={(e) => setAmountReceived(e.target.value)}
-                    className="w-full mt-1 px-4 py-2.5 border rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-gray-400" placeholder="Enter amount" />
+                    className="w-full mt-1 px-4 py-2.5 border rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-400" placeholder="Enter amount" />
                   {changeAmount >= 0 && amountReceived && <p className="mt-2 text-gray-900 font-medium">Change: {formatCurrency(changeAmount)}</p>}
                 </div>
               )}
@@ -485,7 +485,7 @@ export default function RetailPOSPage() {
                   <button onClick={() => setActiveTab('categories')} className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${activeTab === 'categories' ? 'bg-white text-gray-900' : 'text-gray-500'}`}>Categories</button>
                 </div>
               </div>
-              <button onClick={() => setShowSettingsModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
+              <button onClick={() => setShowSettingsModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
@@ -529,21 +529,21 @@ export default function RetailPOSPage() {
                     <form onSubmit={handleSaveProduct} className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                        <input type="text" required value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                        <input type="text" required value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-                        <input type="number" required min="0" value={productForm.price} onChange={e => setProductForm({ ...productForm, price: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                        <input type="number" required min="0" value={productForm.price} onChange={e => setProductForm({ ...productForm, price: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                        <select required value={productForm.category_id} onChange={e => setProductForm({ ...productForm, category_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        <select required value={productForm.category_id} onChange={e => setProductForm({ ...productForm, category_id: e.target.value })} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400">
                           <option value="">Select Category</option>
                           {categories?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                       </div>
                       <div className="flex gap-2 pt-2">
-                        {isEditingProduct && <button type="button" onClick={() => { setIsEditingProduct(false); setProductForm({ id: '', name: '', price: 0, category_id: '' }) }} className="flex-1 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>}
+                        {isEditingProduct && <button type="button" onClick={() => { setIsEditingProduct(false); setProductForm({ id: '', name: '', price: 0, category_id: '' }) }} className="flex-1 py-2 border rounded-md hover:bg-gray-50">Cancel</button>}
                         <button type="submit" className="flex-1 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold">{isEditingProduct ? 'Update' : 'Add Product'}</button>
                       </div>
                     </form>
@@ -569,7 +569,7 @@ export default function RetailPOSPage() {
                     <form onSubmit={handleSaveCategory} className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                        <input type="text" required value={categoryForm.name} onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                        <input type="text" required value={categoryForm.name} onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Color Theme</label>

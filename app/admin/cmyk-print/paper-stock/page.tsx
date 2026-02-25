@@ -51,7 +51,7 @@ export default function PaperStockPage() {
 
   const filteredStock = stock.filter(item => {
     const status = getStatus(item);
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (item.name || '').toLowerCase().includes(searchQuery.toLowerCase());
     // Simplified category filter (contains string)
     const matchesCategory = categoryFilter === 'All' || item.name.toLowerCase().includes(categoryFilter.toLowerCase());
     const matchesStatus = statusFilter === 'all' || status === statusFilter;
@@ -164,7 +164,7 @@ export default function PaperStockPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin/cmyk-print" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
+          <Link href="/admin/cmyk-print" className="p-2 hover:bg-gray-100 rounded-md lg:hidden">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
@@ -266,7 +266,7 @@ export default function PaperStockPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold text-gray-900">{item.name}</h3>
-                    <span className={`px-2 py-0.5 text-xs rounded-full border ${getStatusColor(status)}`}>
+                    <span className={`px-2 py-0.5 text-xs rounded-md border ${getStatusColor(status)}`}>
                       {getStatusLabel(status)}
                     </span>
                   </div>
@@ -289,13 +289,13 @@ export default function PaperStockPage() {
                   </button>
                   <button
                     onClick={() => handleEdit(item)}
-                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(item.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -314,7 +314,7 @@ export default function PaperStockPage() {
               <h2 className="text-section text-gray-900">
                 {isEditing ? 'Edit Item' : 'Add New Item'}
               </h2>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-md">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -436,7 +436,7 @@ export default function PaperStockPage() {
           <div className="bg-white rounded-lg w-full max-w-sm animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <h2 className="text-section text-gray-900">Restock Item</h2>
-              <button onClick={() => setShowRestockModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+              <button onClick={() => setShowRestockModal(false)} className="p-2 hover:bg-gray-100 rounded-md">
                 <X className="w-5 h-5" />
               </button>
             </div>

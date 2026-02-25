@@ -432,7 +432,7 @@ export default function QuotationsPage() {
 
   const filteredQuotations = quotations.filter(q => {
     const matchesSearch =
-      q.quote_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (q.quote_number || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       q.client?.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       q.client?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       q.lead?.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -446,7 +446,7 @@ export default function QuotationsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin/sales" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
+          <Link href="/admin/sales" className="p-2 hover:bg-gray-100 rounded-md lg:hidden">
             <ArrowLeft size={20} />
           </Link>
           <div>
@@ -664,13 +664,13 @@ export default function QuotationsPage() {
                               <CheckCircle size={18} />
                             </button>
                           )}
-                          <button onClick={() => handleEdit(q)} className="p-2 hover:bg-gray-100 rounded-lg" title="Edit">
+                          <button onClick={() => handleEdit(q)} className="p-2 hover:bg-gray-100 rounded-md" title="Edit">
                             <Edit size={18} className="text-gray-500" />
                           </button>
-                          <button onClick={() => handleDownloadPDF(q)} className="p-2 hover:bg-gray-100 rounded-lg" title="Download PDF">
+                          <button onClick={() => handleDownloadPDF(q)} className="p-2 hover:bg-gray-100 rounded-md" title="Download PDF">
                             <Download size={18} className="text-gray-500" />
                           </button>
-                          <button onClick={() => handleDelete(q.id, q.quote_number)} className="p-2 hover:bg-red-50 rounded-lg" title="Delete">
+                          <button onClick={() => handleDelete(q.id, q.quote_number)} className="p-2 hover:bg-red-50 rounded-md" title="Delete">
                             <Trash2 size={18} className="text-red-500" />
                           </button>
                         </div>
@@ -692,7 +692,7 @@ export default function QuotationsPage() {
               <h2 className="text-section text-gray-900">
                 {isEditing ? 'Edit Quotation' : 'New Quotation'}
               </h2>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-md">
                 <X size={20} />
               </button>
             </div>

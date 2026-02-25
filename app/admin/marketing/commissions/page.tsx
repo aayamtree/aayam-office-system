@@ -106,7 +106,7 @@ export default function CommissionsPage() {
                                 <button
                                     key={f}
                                     onClick={() => setFilter(f)}
-                                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all capitalize ${filter === f
+                                    className={`px-4 py-2 rounded-md text-sm font-semibold transition-all capitalize ${filter === f
                                         ? 'bg-gray-900 text-white'
                                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                         }`}>
@@ -247,7 +247,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                             setTimeout(handleCalculate, 100);
                                         }
                                     }}
-                                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${formData.gstPercentage === rate.value.toString()
+                                    className={`px-3 py-2 rounded-md text-sm font-semibold transition-all ${formData.gstPercentage === rate.value.toString()
                                         ? 'bg-gray-900 text-white'
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                         }`}
@@ -335,7 +335,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                     <span className="font-bold">× {formData.commissionType === 'percentage' ? `${calculationResult.commissionValue}%` : formatCurrency(calculationResult.commissionValue)}</span>
                                 </div>
                                 <div className="border-t-2 border-green-300 pt-3 mt-3"></div>
-                                <div className="flex justify-between items-center bg-gray-900 text-white rounded-lg p-3">
+                                <div className="flex justify-between items-center bg-gray-900 text-white rounded-md p-3">
                                     <span className="font-bold">Final Commission</span>
                                     <span className="text-page-title">{formatCurrency(calculationResult.commissionAmount)}</span>
                                 </div>

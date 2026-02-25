@@ -166,14 +166,14 @@ export default function DispatchPage() {
         <div className="flex gap-2">
           <Link
             href="/admin/dispatch/qc-check"
-            className="flex items-center gap-2 bg-purple-600 text-white px-3 md:px-4 py-2 md:py-2.5 rounded-lg hover:bg-purple-700 transition-colors shadow-sm font-semibold text-sm"
+            className="flex items-center gap-2 bg-purple-600 text-white px-3 md:px-4 py-2 md:py-2.5 rounded-md hover:bg-purple-700 transition-colors shadow-sm font-semibold text-sm"
           >
             <ClipboardCheck className="w-4 h-4" />
             <span>Start QC</span>
           </Link>
           <Link
             href="/admin/print-runs"
-            className="flex items-center gap-2 bg-gray-900 text-white px-3 md:px-4 py-2 md:py-2.5 rounded-lg hover:bg-gray-800 transition-colors shadow-sm font-semibold text-sm"
+            className="flex items-center gap-2 bg-gray-900 text-white px-3 md:px-4 py-2 md:py-2.5 rounded-md hover:bg-gray-800 transition-colors shadow-sm font-semibold text-sm"
           >
             <Package className="w-4 h-4" />
             <span>Print Runs</span>
@@ -216,7 +216,7 @@ export default function DispatchPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-gray-900 text-sm">{job.job_number}</p>
-                    {job.priority === 'urgent' && <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-xs rounded-full font-medium">Urgent</span>}
+                    {job.priority === 'urgent' && <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-xs rounded-md font-medium">Urgent</span>}
                   </div>
                   <p className="text-xs text-gray-600">{job.client?.company || job.client?.name}</p>
                   <p className="text-xs text-gray-400 mt-0.5">{job.project_name}</p>
@@ -237,7 +237,7 @@ export default function DispatchPage() {
               <Package className="w-4 h-4 text-green-500" />
               Ready to Dispatch
             </h2>
-            <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">{readyToDispatch.length} ready</span>
+            <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-md font-medium">{readyToDispatch.length} ready</span>
           </div>
           <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
             {readyToDispatch.length === 0 ? (
@@ -318,7 +318,7 @@ export default function DispatchPage() {
             <div key={dispatch.id} className="p-3 bg-gray-50 rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <p className="font-medium text-gray-900 text-sm">{dispatch.dispatch_number}</p>
-                <span className={`px-2 py-0.5 text-xs rounded-full ${getStatusColor(dispatch.status)}`}>
+                <span className={`px-2 py-0.5 text-xs rounded-md ${getStatusColor(dispatch.status)}`}>
                   {getStatusLabel(dispatch.status)}
                 </span>
               </div>
@@ -344,7 +344,7 @@ export default function DispatchPage() {
                 <h2 className="text-section">Create Dispatch</h2>
                 <p className="text-sm text-gray-500">Order #{selectedJob.job_number}</p>
               </div>
-              <button onClick={() => setShowDispatchModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
+              <button onClick={() => setShowDispatchModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
             </div>
 
             <form onSubmit={handleDispatchSubmit} className="p-4 space-y-4">
@@ -355,7 +355,7 @@ export default function DispatchPage() {
                     <select
                       value={dispatchForm.transporter_name}
                       onChange={e => setDispatchForm({ ...dispatchForm, transporter_name: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                      className="w-full px-3 py-2 border rounded-md text-sm"
                     >
                       <option value="">Self / Manual</option>
                       {transporters.map(t => (
@@ -365,14 +365,14 @@ export default function DispatchPage() {
                   ) : (
                     <input type="text" placeholder="e.g. DTDC, Self"
                       value={dispatchForm.transporter_name} onChange={e => setDispatchForm({ ...dispatchForm, transporter_name: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-lg text-sm" />
+                      className="w-full px-3 py-2 border rounded-md text-sm" />
                   )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Tracking / LR No</label>
                   <input type="text" placeholder="Optional"
                     value={dispatchForm.tracking_number} onChange={e => setDispatchForm({ ...dispatchForm, tracking_number: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg text-sm" />
+                    className="w-full px-3 py-2 border rounded-md text-sm" />
                 </div>
               </div>
 
@@ -381,13 +381,13 @@ export default function DispatchPage() {
                   <label className="block text-sm font-medium mb-1">Vehicle No</label>
                   <input type="text" placeholder="e.g. OD-02-AA-1234"
                     value={dispatchForm.vehicle_number} onChange={e => setDispatchForm({ ...dispatchForm, vehicle_number: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg text-sm" />
+                    className="w-full px-3 py-2 border rounded-md text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Packages Count</label>
                   <input type="number" min="1"
                     value={dispatchForm.packages} onChange={e => setDispatchForm({ ...dispatchForm, packages: parseInt(e.target.value) || 1 })}
-                    className="w-full px-3 py-2 border rounded-lg text-sm" />
+                    className="w-full px-3 py-2 border rounded-md text-sm" />
                 </div>
               </div>
 
@@ -396,13 +396,13 @@ export default function DispatchPage() {
                   <label className="block text-sm font-medium mb-1">Driver Name</label>
                   <input type="text" placeholder="Optional"
                     value={dispatchForm.driver_name} onChange={e => setDispatchForm({ ...dispatchForm, driver_name: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg text-sm" />
+                    className="w-full px-3 py-2 border rounded-md text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Driver Phone</label>
                   <input type="text" placeholder="Optional"
                     value={dispatchForm.driver_phone} onChange={e => setDispatchForm({ ...dispatchForm, driver_phone: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg text-sm" />
+                    className="w-full px-3 py-2 border rounded-md text-sm" />
                 </div>
               </div>
 
@@ -410,7 +410,7 @@ export default function DispatchPage() {
                 <label className="block text-sm font-medium mb-1">Notes</label>
                 <textarea rows={2} placeholder="Any delivery instructions..."
                   value={dispatchForm.notes} onChange={e => setDispatchForm({ ...dispatchForm, notes: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg text-sm" />
+                  className="w-full px-3 py-2 border rounded-md text-sm" />
               </div>
 
               <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-500 flex gap-2">
@@ -419,8 +419,8 @@ export default function DispatchPage() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowDispatchModal(false)} className="flex-1 px-4 py-2 border rounded-lg text-sm">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 shadow-sm font-semibold text-sm">
+                <button type="button" onClick={() => setShowDispatchModal(false)} className="flex-1 px-4 py-2 border rounded-md text-sm">Cancel</button>
+                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold text-sm">
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Create Dispatch'}
                 </button>
               </div>

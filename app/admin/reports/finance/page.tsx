@@ -98,7 +98,7 @@ export default function FinanceReportPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin/reports" className="p-2 hover:bg-gray-100 rounded-lg">
+          <Link href="/admin/reports" className="p-2 hover:bg-gray-100 rounded-md">
             <ArrowLeft size={20} />
           </Link>
           <div>
@@ -212,7 +212,7 @@ export default function FinanceReportPage() {
                   <tr key={t.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm text-gray-600">{t.date}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 text-xs rounded-full ${t.type === 'income' ? 'bg-gray-100 text-gray-900' : 'bg-red-100 text-red-700'
+                      <span className={`px-2 py-1 text-xs rounded-md ${t.type === 'income' ? 'bg-gray-100 text-gray-900' : 'bg-red-100 text-red-700'
                         }`}>
                         {t.type}
                       </span>

@@ -443,7 +443,7 @@ export default function DispatchHistoryPage() {
                       }`}>
                       <div className="flex justify-between items-center mb-2">
                         <div className="flex items-center gap-2">
-                          <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${record.result === 'passed' ? 'bg-green-100 text-green-800' :
+                          <span className={`px-2 py-0.5 text-xs rounded-md font-medium ${record.result === 'passed' ? 'bg-green-100 text-green-800' :
                             record.result === 'failed' ? 'bg-red-100 text-red-800' :
                               'bg-amber-100 text-amber-800'
                             }`}>

@@ -124,18 +124,18 @@ function ClientStatementGenerator() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4 items-end mb-3 md:mb-1.5">
         <div className="md:col-span-2">
           <label className="block text-sm font-medium mb-1">Select Client</label>
-          <select value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)} className="w-full px-3 py-2 border rounded-lg bg-white">
+          <select value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)} className="w-full px-3 py-2 border rounded-md bg-white">
             <option value="">-- Choose Client --</option>
             {clients?.map(c => <option key={c.id} value={c.id}>{c.name} {c.company ? `(${c.company})` : ''}</option>)}
           </select>
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">From Date</label>
-          <input type="date" className="w-full px-3 py-2 border rounded-lg" onChange={e => setDateRange({ ...dateRange, start: e.target.value })} />
+          <input type="date" className="w-full px-3 py-2 border rounded-md" onChange={e => setDateRange({ ...dateRange, start: e.target.value })} />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">To Date</label>
-          <input type="date" className="w-full px-3 py-2 border rounded-lg" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
+          <input type="date" className="w-full px-3 py-2 border rounded-md" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
         </div>
       </div>
       <button onClick={generateStatement} className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-900 font-medium w-full md:w-auto">
@@ -202,21 +202,21 @@ function VendorStatementGenerator() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4 items-end mb-3 md:mb-1.5">
         <div className="md:col-span-2">
           <label className="block text-sm font-medium mb-1">Select Vendor</label>
-          <select value={selectedVendorId} onChange={e => setSelectedVendorId(e.target.value)} className="w-full px-3 py-2 border rounded-lg bg-white">
+          <select value={selectedVendorId} onChange={e => setSelectedVendorId(e.target.value)} className="w-full px-3 py-2 border rounded-md bg-white">
             <option value="">-- Choose Vendor --</option>
             {vendors?.map(v => <option key={v.id} value={v.id}>{v.name} {v.company ? `(${v.company})` : ''}</option>)}
           </select>
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">From Date</label>
-          <input type="date" className="w-full px-3 py-2 border rounded-lg" onChange={e => setDateRange({ ...dateRange, start: e.target.value })} />
+          <input type="date" className="w-full px-3 py-2 border rounded-md" onChange={e => setDateRange({ ...dateRange, start: e.target.value })} />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">To Date</label>
-          <input type="date" className="w-full px-3 py-2 border rounded-lg" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
+          <input type="date" className="w-full px-3 py-2 border rounded-md" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
         </div>
       </div>
-      <button onClick={() => selectedVendorId && setShowStatement(true)} className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-900 font-medium w-full md:w-auto">
+      <button onClick={() => selectedVendorId && setShowStatement(true)} className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-900 font-medium w-full md:w-auto">
         Generate Statement
       </button>
 
@@ -290,11 +290,11 @@ function CashFlowStatement() {
       <div className="flex flex-wrap gap-2 md:gap-4 mb-3 md:mb-1.5">
         <div>
           <label className="block text-sm font-medium mb-1">From</label>
-          <input type="date" value={dateRange.start} className="px-3 py-2 border rounded-lg" onChange={e => setDateRange({ ...dateRange, start: e.target.value })} />
+          <input type="date" value={dateRange.start} className="px-3 py-2 border rounded-md" onChange={e => setDateRange({ ...dateRange, start: e.target.value })} />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">To</label>
-          <input type="date" value={dateRange.end} className="px-3 py-2 border rounded-lg" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
+          <input type="date" value={dateRange.end} className="px-3 py-2 border rounded-md" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
         </div>
       </div>
 
@@ -334,7 +334,7 @@ function CashFlowStatement() {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto border rounded-lg mt-4">
+      <div className="overflow-x-auto border rounded-md mt-4">
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-50 border-b">
             <tr>
@@ -395,7 +395,7 @@ function StatementModal({ title, entity, period, ledger, onClose, columns, rever
             ], `statement_${entity.name}`)} className="px-4 py-2 bg-white text-gray-700 rounded-lg flex items-center gap-2 hover:bg-gray-50 border">
               <Download size={16} /> CSV
             </button>
-            <button onClick={() => window.print()} className="px-4 py-2 bg-gray-900 text-white rounded-lg flex items-center gap-2 hover:bg-gray-800">
+            <button onClick={() => window.print()} className="px-4 py-2 bg-gray-900 text-white rounded-md flex items-center gap-2 hover:bg-gray-800">
               <Printer size={16} /> Print
             </button>
             <button onClick={onClose} className="px-4 py-2 text-gray-500 hover:text-red-500 border rounded-md">Close</button>

@@ -273,17 +273,17 @@ export default function JobDetailPage() {
         <div className="max-w-4xl space-y-4 animate-fade-in pb-12">
             {/* Header */}
             <div className="flex items-start gap-3">
-                <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-lg mt-0.5">
+                <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-md mt-0.5">
                     <ArrowLeft className="w-5 h-5" />
                 </button>
                 <div className="flex-1">
                     <div className="flex items-center gap-3 flex-wrap">
                         <h1 className="text-xl lg:text-page-title text-gray-900 font-bold">{job.job_number}</h1>
-                        <span className={`px-2.5 py-1 text-xs rounded-full font-medium ${stageColor[job.current_stage] || 'bg-gray-100 text-gray-700'}`}>
+                        <span className={`px-2.5 py-1 text-xs rounded-md font-medium ${stageColor[job.current_stage] || 'bg-gray-100 text-gray-700'}`}>
                             {stageLabel[job.current_stage] || job.current_stage}
                         </span>
                         {job.priority && job.priority !== 'normal' && (
-                            <span className="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700 font-medium">{job.priority}</span>
+                            <span className="px-2 py-0.5 text-xs rounded-md bg-red-100 text-red-700 font-medium">{job.priority}</span>
                         )}
                     </div>
                     <p className="text-sm text-gray-600 mt-1">{job.client?.company || job.client?.name}</p>
@@ -362,12 +362,12 @@ export default function JobDetailPage() {
             )}
 
             {/* Invoice & E-Way Bill Section */}
-            <div className={`border rounded-lg p-4 ${hasInvoice ? 'bg-white border-green-200' : 'bg-amber-50 border-amber-200'}`}>
+            <div className={`border rounded-md p-4 ${hasInvoice ? 'bg-white border-green-200' : 'bg-amber-50 border-amber-200'}`}>
                 <h3 className={`text-sm font-semibold flex items-center gap-2 mb-3 ${hasInvoice ? 'text-green-900' : 'text-amber-900'}`}>
                     <FileText className="w-4 h-4" />
                     Invoice & E-Way Bill
-                    {hasInvoice && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">✓ Added</span>}
-                    {!hasInvoice && <span className="text-xs bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full">Pending</span>}
+                    {hasInvoice && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-md">✓ Added</span>}
+                    {!hasInvoice && <span className="text-xs bg-amber-200 text-amber-800 px-2 py-0.5 rounded-md">Pending</span>}
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
@@ -423,7 +423,7 @@ export default function JobDetailPage() {
                 <button
                     onClick={handleSaveInvoiceDetails}
                     disabled={uploading}
-                    className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
+                    className="px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
                 >
                     {uploading ? 'Saving...' : saved ? '✓ Saved & Dispatch Notified' : 'Save & Notify Dispatch'}
                 </button>
@@ -439,7 +439,7 @@ export default function JobDetailPage() {
                     {qcRecords.map((qc) => (
                         <div key={qc.id} className="mb-4 last:mb-0">
                             <div className="flex items-center gap-2 mb-2">
-                                <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${qc.result === 'passed' ? 'bg-green-100 text-green-700' :
+                                <span className={`px-2 py-0.5 text-xs rounded-md font-medium ${qc.result === 'passed' ? 'bg-green-100 text-green-700' :
                                     qc.result === 'rework' ? 'bg-amber-100 text-amber-700' :
                                         'bg-red-100 text-red-700'
                                     }`}>
@@ -521,7 +521,7 @@ export default function JobDetailPage() {
                                 {i < activityLogs.length - 1 && (
                                     <div className="absolute left-[11px] top-8 bottom-0 w-px bg-gray-200" />
                                 )}
-                                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center shrink-0 mt-0.5 z-10">
+                                <div className="w-6 h-6 rounded-md bg-gray-100 flex items-center justify-center shrink-0 mt-0.5 z-10">
                                     {log.action === 'create' ? <Package className="w-3 h-3 text-blue-600" /> :
                                         log.action === 'update' ? <Clock className="w-3 h-3 text-amber-600" /> :
                                             log.action === 'upload' ? <Upload className="w-3 h-3 text-violet-600" /> :

@@ -68,11 +68,11 @@ export default function UnifiedQueue() {
 
     // Filter by search
     const filteredTasks = visibleTasks.filter(task =>
-        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.jobType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.productCategory.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.designer.toLowerCase().includes(searchQuery.toLowerCase())
+        (task.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (task.client || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (task.jobType || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (task.productCategory || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (task.designer || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // Group by priority
@@ -175,13 +175,13 @@ export default function UnifiedQueue() {
 
                 {/* My Tasks / All Team Toggle */}
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="flex bg-white border rounded-lg overflow-hidden">
+                    <div className="flex bg-white border rounded-md overflow-hidden">
                         <button
                             onClick={() => setShowAll(false)}
                             className={`px-4 py-2 text-sm font-bold flex items-center gap-2 transition-all ${!showAll ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-800'}`}
                         >
                             <User size={14} /> My Tasks
-                            <span className={`text-xs px-1.5 py-0.5 rounded-full ${!showAll ? 'bg-white/20' : 'bg-gray-100'}`}>
+                            <span className={`text-xs px-1.5 py-0.5 rounded-md ${!showAll ? 'bg-white/20' : 'bg-gray-100'}`}>
                                 {allTasks.filter(t => t.isMyTask).length}
                             </span>
                         </button>
@@ -190,7 +190,7 @@ export default function UnifiedQueue() {
                             className={`px-4 py-2 text-sm font-bold flex items-center gap-2 transition-all border-l ${showAll ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-800'}`}
                         >
                             <Users size={14} /> All Team
-                            <span className={`text-xs px-1.5 py-0.5 rounded-full ${showAll ? 'bg-white/20' : 'bg-gray-100'}`}>
+                            <span className={`text-xs px-1.5 py-0.5 rounded-md ${showAll ? 'bg-white/20' : 'bg-gray-100'}`}>
                                 {allTasks.length}
                             </span>
                         </button>
@@ -201,7 +201,7 @@ export default function UnifiedQueue() {
                 {showAll && designerCounts.length > 0 && (
                     <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
                         {designerCounts.map(d => (
-                            <div key={d.id} className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border whitespace-nowrap">
+                            <div key={d.id} className="flex items-center gap-2 bg-white px-3 py-2 rounded-md border whitespace-nowrap">
                                 <span className="text-sm font-bold text-primary">{d.count}</span>
                                 <span className="text-xs text-gray-600">{d.name}</span>
                             </div>

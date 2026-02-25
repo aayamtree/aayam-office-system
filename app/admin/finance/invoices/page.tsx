@@ -343,9 +343,9 @@ export default function InvoicesPage() {
 
   const filteredInvoices = invoices.filter(inv => {
     const matchesSearch =
-      inv.invoice_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      inv.client?.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      inv.client?.name.toLowerCase().includes(searchQuery.toLowerCase());
+      (inv.invoice_number || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (inv.client?.company || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (inv.client?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || inv.payment_status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -421,7 +421,7 @@ export default function InvoicesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
         <div className="flex items-center gap-2 md:gap-3">
-          <Link href="/admin/finance" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
+          <Link href="/admin/finance" className="p-2 hover:bg-gray-100 rounded-md lg:hidden">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
@@ -540,7 +540,7 @@ export default function InvoicesPage() {
                 const headerTextColor = inv.payment_status === 'partial' ? 'text-gray-900' : 'text-white';
 
                 return (
-                  <div key={inv.id} className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
+                  <div key={inv.id} className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-sm transition-all border border-gray-100">
                     {/* Colored Header Tab */}
                     <div className={`${headerBg} px-4 py-2.5 flex items-center justify-between`}>
                       <span className={`${headerTextColor} font-semibold text-sm md:text-base`}>
@@ -573,7 +573,7 @@ export default function InvoicesPage() {
                             <p className="text-xs text-gray-500 mt-1">Paid: {formatCurrency(inv.amount_paid)}</p>
                           )}
                         </div>
-                        <span className={`px-3 py-1.5 text-xs font-semibold rounded-full ${getStatusColor(inv.payment_status)}`}>
+                        <span className={`px-3 py-1.5 text-xs font-semibold rounded-md ${getStatusColor(inv.payment_status)}`}>
                           {inv.payment_status}
                         </span>
                       </div>
@@ -590,7 +590,7 @@ export default function InvoicesPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleDownloadPDF(inv)}
-                          className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-semibold shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                          className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-semibold shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
                         >
                           <Download className="w-4 h-4 md:w-4.5 md:h-4.5" />
                           <span className="hidden sm:inline">Download</span>
@@ -648,13 +648,13 @@ export default function InvoicesPage() {
                       </td>
                       <td className="px-6 py-4 text-gray-600">{inv.due_date ? formatDate(inv.due_date) : '-'}</td>
                       <td className="px-6 py-4">
-                        <span className={`px-3 py-1 text-xs rounded-full border ${getStatusColor(inv.payment_status)}`}>
+                        <span className={`px-3 py-1 text-xs rounded-md border ${getStatusColor(inv.payment_status)}`}>
                           {inv.payment_status}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => { setSelectedInvoice(inv); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-lg" title="View">
+                          <button onClick={() => { setSelectedInvoice(inv); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-md" title="View">
                             <Eye className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-500" />
                           </button>
                           <button onClick={() => handleWhatsAppShare(inv)} className="p-2 hover:bg-white rounded-lg" title="Share on WhatsApp">
@@ -663,7 +663,7 @@ export default function InvoicesPage() {
                           <button onClick={() => handleDownloadPDF(inv)} className="p-2 hover:bg-gray-900 rounded-lg" title="Download PDF">
                             <Download className="w-4 h-4 md:w-4.5 md:h-4.5 text-primary" />
                           </button>
-                          <button onClick={() => handleEdit(inv)} className="p-2 hover:bg-gray-100 rounded-lg" title="Edit">
+                          <button onClick={() => handleEdit(inv)} className="p-2 hover:bg-gray-100 rounded-md" title="Edit">
                             <Edit className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-500" />
                           </button>
                         </div>
@@ -686,7 +686,7 @@ export default function InvoicesPage() {
                 <h2 className="text-page-title text-gray-900">
                   {isEditing ? 'Edit Invoice' : 'New Invoice'}
                 </h2>
-                <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-md">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -856,7 +856,7 @@ export default function InvoicesPage() {
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 font-semibold rounded-md hover:bg-gray-50 transition-colors"
                   >
                     Cancel
                   </button>
@@ -885,11 +885,11 @@ export default function InvoicesPage() {
                   <div className="flex items-center gap-2 mt-1">
                     <p className="text-sm text-gray-500">{new Date(selectedInvoice.invoice_date).toLocaleDateString()}</p>
                     {selectedInvoice.payment_status === 'overdue' && (
-                      <span className="text-xs font-bold text-white bg-red-500 px-2 py-0.5 rounded-full">OVERDUE</span>
+                      <span className="text-xs font-bold text-white bg-red-500 px-2 py-0.5 rounded-md">OVERDUE</span>
                     )}
                   </div>
                 </div>
-                <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-md">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -952,13 +952,13 @@ export default function InvoicesPage() {
 
                 {/* Due Date & Status */}
                 <div className="grid grid-cols-2 gap-2 md:gap-4">
-                  <div className="p-3 border rounded-lg">
+                  <div className="p-3 border rounded-md">
                     <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Due Date</p>
                     <p className="font-medium text-gray-900 mt-1">{selectedInvoice.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : '-'}</p>
                   </div>
-                  <div className="p-3 border rounded-lg">
+                  <div className="p-3 border rounded-md">
                     <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Status</p>
-                    <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-bold uppercase rounded-full ${getStatusColor(selectedInvoice.payment_status).replace('border', '')}`}>
+                    <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-bold uppercase rounded-md ${getStatusColor(selectedInvoice.payment_status).replace('border', '')}`}>
                       {selectedInvoice.payment_status}
                     </span>
                   </div>
@@ -969,7 +969,7 @@ export default function InvoicesPage() {
                   <button
                     onClick={() => handlePrintPDF(selectedInvoice)}
                     disabled={pdfLoading}
-                    className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                    className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 text-gray-700 font-semibold rounded-md hover:bg-gray-50 disabled:opacity-50 transition-colors"
                   >
                     {pdfLoading ? <Loader2 className="w-4 h-4 md:w-4.5 md:h-4.5 animate-spin" /> : <Printer className="w-4 h-4 md:w-4.5 md:h-4.5" />}
                     Print
@@ -977,14 +977,14 @@ export default function InvoicesPage() {
                   <button
                     onClick={() => handleDownloadPDF(selectedInvoice)}
                     disabled={pdfLoading}
-                    className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white font-semibold rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white font-semibold rounded-md hover:bg-gray-800 disabled:opacity-50 transition-colors"
                   >
                     {pdfLoading ? <Loader2 className="w-4 h-4 md:w-4.5 md:h-4.5 animate-spin" /> : <Download className="w-4 h-4 md:w-4.5 md:h-4.5" />}
                     Download PDF
                   </button>
                   <button
                     onClick={() => handleWhatsAppShare(selectedInvoice)}
-                    className="col-span-2 flex items-center justify-center gap-2 px-4 py-3 bg-white0 text-white font-semibold rounded-lg hover:bg-gray-900 transition-colors"
+                    className="col-span-2 flex items-center justify-center gap-2 px-4 py-3 bg-white0 text-white font-semibold rounded-md hover:bg-gray-900 transition-colors"
                   >
                     <MessageCircle className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     Share on WhatsApp
@@ -995,7 +995,7 @@ export default function InvoicesPage() {
                 {selectedInvoice.amount_paid < selectedInvoice.total_amount && (
                   <button
                     onClick={() => handlePaymentReminder(selectedInvoice)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white0 text-white font-semibold rounded-lg hover:bg-destructive transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white0 text-white font-semibold rounded-md hover:bg-destructive transition-colors"
                   >
                     <MessageCircle className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     Send Payment Reminder

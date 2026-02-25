@@ -234,7 +234,7 @@ export default function ManualJournalPage() {
                         <p className="text-gray-500 text-xs uppercase font-bold">Total Credit</p>
                         <p className="text-xl font-mono text-gray-900">{totalCredit.toFixed(2)}</p>
                     </div>
-                    <div className={`text-right px-4 py-2 rounded-lg border ${isBalanced ? 'bg-white border-green-100 text-gray-900' : 'bg-red-50 border-red-100 text-red-700'}`}>
+                    <div className={`text-right px-4 py-2 rounded-md border ${isBalanced ? 'bg-white border-green-100 text-gray-900' : 'bg-red-50 border-red-100 text-red-700'}`}>
                         <p className="text-xs uppercase font-bold">Difference</p>
                         <p className="text-xl font-mono">{Math.abs(totalDebit - totalCredit).toFixed(2)}</p>
                     </div>
@@ -242,7 +242,7 @@ export default function ManualJournalPage() {
                     <button
                         onClick={handleSave}
                         disabled={!isBalanced || loading}
-                        className={`ml-4 px-4 py-2 rounded-lg font-bold text-white flex items-center gap-2 ${isBalanced ? 'bg-gray-900 hover:bg-gray-900 -200' : 'bg-gray-300 cursor-not-allowed'
+                        className={`ml-4 px-4 py-2 rounded-md font-bold text-white flex items-center gap-2 ${isBalanced ? 'bg-gray-900 hover:bg-gray-900 -200' : 'bg-gray-300 cursor-not-allowed'
                             }`}
                     >
                         {loading ? 'Saving...' : <><Save className="w-4 h-4 md:w-4.5 md:h-4.5" /> Save Journal</>}

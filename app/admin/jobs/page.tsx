@@ -217,8 +217,8 @@ export default function JobsPage() {
 
   const filteredJobs = jobs.filter(job => {
     const clientName = job.client?.name || '';
-    const matchesSearch = job.project_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.job_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = (job.project_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (job.job_number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       clientName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStage = stageFilter === 'all' || job.current_stage === stageFilter;
     const matchesPriority = priorityFilter === 'all' || job.priority === priorityFilter;
@@ -483,8 +483,8 @@ export default function JobsPage() {
       )}
 
       <div className="flex items-start justify-between mb-3">
-        <Badge className={getPriorityBadge(job.priority)}>
-          {job.priority.toUpperCase()}
+        <Badge className={getPriorityBadge(job.priority || '')}>
+          {(job.priority || 'normal').toUpperCase()}
         </Badge>
         <Badge variant="default" className="font-mono">
           {job.job_number}
@@ -742,7 +742,7 @@ export default function JobsPage() {
                     <div className="flex items-center gap-2">
                       <div className={`w-3 h-3 rounded-full ${stage.color}`}></div>
                       <span className="font-bold text-gray-700 text-sm">{stage.name}</span>
-                      <span className="bg-gray-100 px-2 py-0.5 rounded-full text-xs text-gray-600 font-medium">{stageJobs.length}</span>
+                      <span className="bg-gray-100 px-2 py-0.5 rounded-md text-xs text-gray-600 font-medium">{stageJobs.length}</span>
                     </div>
                   </div>
 
@@ -785,7 +785,7 @@ export default function JobsPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-sm text-primary">{job.job_number}</span>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${getPriorityBadge(job.priority)}`}>{job.priority}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-md ${getPriorityBadge(job.priority)}`}>{job.priority}</span>
                           {job.files && job.files.length > 0 && (
                             <span className="flex items-center gap-0.5 text-gray-600" title={`${job.files.length} file(s)`}>
                               <Paperclip className="w-3 h-3" />
@@ -797,12 +797,12 @@ export default function JobsPage() {
                       </td>
                       <td className="px-4 py-3 text-sm">{job.client?.name || '-'}</td>
                       <td className="px-4 py-3">
-                        <span className={`text-xs px-2 py-1 rounded-full text-white ${stages.find(s => s.id === job.current_stage)?.color}`}>
+                        <span className={`text-xs px-2 py-1 rounded-md text-white ${stages.find(s => s.id === job.current_stage)?.color}`}>
                           {stages.find(s => s.id === job.current_stage)?.name}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${getPaymentBadge(job.payment_status)}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-md ${getPaymentBadge(job.payment_status)}`}>
                           {formatCurrency(job.amount_received)} / {formatCurrency(job.total_amount)}
                         </span>
                       </td>
@@ -1130,12 +1130,12 @@ export default function JobsPage() {
                       autoFocus
                       value={paymentAmount}
                       onChange={e => setPaymentAmount(parseFloat(e.target.value) || 0)}
-                      className="flex-1 px-4 py-3 text-section border rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="flex-1 px-4 py-3 text-section border rounded-md focus:ring-2 focus:ring-green-500"
                     />
                     <select
                       value={paymentMode}
                       onChange={(e) => setPaymentMode(e.target.value as PaymentMode)}
-                      className="w-1/3 px-3 py-3 border rounded-lg bg-white focus:ring-2 focus:ring-gray-400"
+                      className="w-1/3 px-3 py-3 border rounded-md bg-white focus:ring-2 focus:ring-gray-400"
                     >
                       <option value="cash">Cash</option>
                       <option value="upi">UPI / GPay</option>
@@ -1183,7 +1183,7 @@ export default function JobsPage() {
                 <select
                   value={sendToPrinterData.vendor_id}
                   onChange={(e) => setSendToPrinterData({ ...sendToPrinterData, vendor_id: e.target.value })}
-                  className="w-full px-3 py-2.5 border rounded-lg bg-white focus:ring-2 focus:ring-orange-400"
+                  className="w-full px-3 py-2.5 border rounded-md bg-white focus:ring-2 focus:ring-orange-400"
                 >
                   <option value="">Select Vendor</option>
                   {vendors.map(v => <option key={v.id} value={v.id}>{v.name} {v.category && `(${v.category})`}</option>)}
@@ -1196,7 +1196,7 @@ export default function JobsPage() {
                 <select
                   value={sendToPrinterData.machine_id}
                   onChange={(e) => setSendToPrinterData({ ...sendToPrinterData, machine_id: e.target.value })}
-                  className="w-full px-3 py-2.5 border rounded-lg bg-white focus:ring-2 focus:ring-orange-400"
+                  className="w-full px-3 py-2.5 border rounded-md bg-white focus:ring-2 focus:ring-orange-400"
                 >
                   <option value="">Select Machine</option>
                   {machines.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
@@ -1210,7 +1210,7 @@ export default function JobsPage() {
                   value={sendToPrinterData.notes}
                   onChange={(e) => setSendToPrinterData({ ...sendToPrinterData, notes: e.target.value })}
                   placeholder="Any special instructions..."
-                  className="w-full px-3 py-2.5 border rounded-lg h-20 focus:ring-2 focus:ring-orange-400"
+                  className="w-full px-3 py-2.5 border rounded-md h-20 focus:ring-2 focus:ring-orange-400"
                 />
               </div>
 

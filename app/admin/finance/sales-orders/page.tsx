@@ -140,7 +140,7 @@ export default function SalesOrdersPage() {
                         placeholder="Search orders..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-gray-400 focus:outline-none"
+                        className="w-full pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-gray-400 focus:outline-none"
                     />
                 </div>
             </div>
@@ -181,14 +181,14 @@ export default function SalesOrdersPage() {
                                     </td>
                                     <td className="p-4 font-medium text-gray-900">₹{so.total_amount}</td>
                                     <td className="p-4">
-                                        <span className={`px-2.5 py-1 rounded-full text-label ${getStatusColor(so.status)}`}>
+                                        <span className={`px-2.5 py-1 rounded-md text-label ${getStatusColor(so.status)}`}>
                                             {so.status.replace(/_/g, ' ').toUpperCase()}
                                         </span>
                                     </td>
                                     <td className="p-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             {so.status === 'draft' && (
-                                                <button onClick={() => handleConfirmOrder(so)} className="text-xs px-3 py-1 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-semibold flex items-center gap-1 shadow-sm transition-colors">
+                                                <button onClick={() => handleConfirmOrder(so)} className="text-xs px-3 py-1 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-semibold flex items-center gap-1 shadow-sm transition-colors">
                                                     Confirm <ArrowRight className="w-3 h-3" />
                                                 </button>
                                             )}
@@ -235,7 +235,7 @@ export default function SalesOrdersPage() {
                             {/* Client Selection */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Client</label>
-                                <select required value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })} className="w-full px-3 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-gray-400">
+                                <select required value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })} className="w-full px-3 py-2 border rounded-md bg-white focus:ring-2 focus:ring-gray-400">
                                     <option value="">Select Client</option>
                                     {clients.map(c => <option key={c.id} value={c.id}>{c.company || c.name}</option>)}
                                 </select>
@@ -266,23 +266,23 @@ export default function SalesOrdersPage() {
                             {/* Project Details */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
-                                <input required type="text" value={formData.projectName} onChange={e => setFormData({ ...formData, projectName: e.target.value })} className="w-full px-3 py-2 border rounded-lg" placeholder="e.g. Summer Campaign Flyers" />
+                                <input required type="text" value={formData.projectName} onChange={e => setFormData({ ...formData, projectName: e.target.value })} className="w-full px-3 py-2 border rounded-md" placeholder="e.g. Summer Campaign Flyers" />
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                <textarea rows={2} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-3 py-2 border rounded-lg" placeholder="Specs, Notes..." />
+                                <textarea rows={2} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-3 py-2 border rounded-md" placeholder="Specs, Notes..." />
                             </div>
 
                             {/* Money */}
                             <div className="grid grid-cols-2 gap-2 md:gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Amount (Excl. Tax)</label>
-                                    <input required type="number" min="0" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                                    <input required type="number" min="0" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} className="w-full px-3 py-2 border rounded-md" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">GST Rate (%)</label>
-                                    <select value={formData.gstRate} onChange={e => setFormData({ ...formData, gstRate: Number(e.target.value) })} className="w-full px-3 py-2 border rounded-lg bg-white">
+                                    <select value={formData.gstRate} onChange={e => setFormData({ ...formData, gstRate: Number(e.target.value) })} className="w-full px-3 py-2 border rounded-md bg-white">
                                         <option value="0">0%</option>
                                         <option value="5">5%</option>
                                         <option value="12">12%</option>
@@ -293,7 +293,7 @@ export default function SalesOrdersPage() {
                             </div>
 
                             <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
-                                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">Cancel</button>
+                                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors">Cancel</button>
                                 <button type="submit" disabled={submitting} className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-900 transition-colors disabled:opacity-50">
                                     {submitting ? 'Saving...' : 'Create Sales Order'}
                                 </button>

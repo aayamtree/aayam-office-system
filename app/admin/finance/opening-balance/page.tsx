@@ -70,7 +70,7 @@ export default function OpeningBalancePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin/finance" className="p-2 hover:bg-gray-100 rounded-lg">
+          <Link href="/admin/finance" className="p-2 hover:bg-gray-100 rounded-md">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
@@ -158,7 +158,7 @@ export default function OpeningBalancePage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Opening Cash Balance (₹)</label>
             <input type="number" value={editData.cash}
               onChange={(e) => setEditData({ ...editData, cash: parseFloat(e.target.value) || 0 })}
-              className="w-full px-4 py-3 border rounded-lg text-section focus:ring-2 focus:ring-green-500" />
+              className="w-full px-4 py-3 border rounded-md text-section focus:ring-2 focus:ring-green-500" />
           </div>
         ) : (
           <div className="text-page-title text-gray-900">{formatCurrency(openingBalance.cash)}</div>
@@ -189,7 +189,7 @@ export default function OpeningBalancePage() {
               {isEditing ? (
                 <input type="number" value={editData.banks.find(b => b.id === bank.id)?.balance || 0}
                   onChange={(e) => handleBankBalanceChange(bank.id, parseFloat(e.target.value) || 0)}
-                  className="w-40 px-3 py-2 border rounded-lg text-right font-semibold focus:ring-2 focus:ring-gray-400" />
+                  className="w-40 px-3 py-2 border rounded-md text-right font-semibold focus:ring-2 focus:ring-gray-400" />
               ) : (
                 <span className="text-section text-foreground">{formatCurrency(bank.balance)}</span>
               )}
@@ -208,7 +208,7 @@ export default function OpeningBalancePage() {
       </div>
 
       {/* Info Note */}
-      <div className="bg-muted border border-border rounded-lg p-4">
+      <div className="bg-muted border border-border rounded-md p-4">
         <div className="flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-foreground flex-shrink-0 mt-0.5" />
           <div>

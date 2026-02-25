@@ -157,7 +157,7 @@ export default function PrintRunDetailPage() {
                                     <Printer className="text-primary" size={32} />
                                     {printRun.print_run_number}
                                 </h1>
-                                <span className={`px-4 py-2 rounded-full text-sm font-bold border-2 ${getStatusColor(printRun.status)}`} style={{ textTransform: 'capitalize' }}>
+                                <span className={`px-4 py-2 rounded-md text-sm font-bold border-2 ${getStatusColor(printRun.status)}`} style={{ textTransform: 'capitalize' }}>
                                     {printRun.status.replace(/_/g, ' ')}
                                 </span>
                             </div>
@@ -172,7 +172,7 @@ export default function PrintRunDetailPage() {
                             {printRun.status === 'planned' && (
                                 <button
                                     onClick={() => updateStatus('at_printer')}
-                                    className="px-4 py-2 bg-gray-900 text-white rounded-lg font-bold hover:bg-gray-800 transition-all flex items-center gap-2"
+                                    className="px-4 py-2 bg-gray-900 text-white rounded-md font-bold hover:bg-gray-800 transition-all flex items-center gap-2"
                                 >
                                     <CheckCircle size={20} />
                                     Send to Printer
@@ -181,7 +181,7 @@ export default function PrintRunDetailPage() {
                             {printRun.status === 'at_printer' && (
                                 <button
                                     onClick={() => updateStatus('printing_done')}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all flex items-center gap-2"
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-md font-bold hover:bg-blue-700 transition-all flex items-center gap-2"
                                 >
                                     <CheckCircle size={20} />
                                     Printing Done
@@ -189,7 +189,7 @@ export default function PrintRunDetailPage() {
                             )}
                             <button
                                 onClick={() => setShowAddJobsModal(true)}
-                                className="px-4 py-2 bg-gray-900 text-white rounded-lg font-bold  transition-all flex items-center gap-2"
+                                className="px-4 py-2 bg-gray-900 text-white rounded-md font-bold  transition-all flex items-center gap-2"
                             >
                                 <Plus size={20} />
                                 Add Jobs
@@ -286,7 +286,7 @@ export default function PrintRunDetailPage() {
                                                 {prj.ups_in_sheet || 1}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="px-3 py-1 bg-gray-900 text-white rounded-lg text-sm font-bold">
+                                                <span className="px-3 py-1 bg-gray-900 text-white rounded-md text-sm font-bold">
                                                     {Math.ceil((prj.quantity_needed || 0) / (prj.ups_in_sheet || 1))} sheets
                                                 </span>
                                             </td>

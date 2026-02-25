@@ -10,6 +10,7 @@ import CommandPalette from '@/components/shared/CommandPalette';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { ConfirmProvider } from '@/components/ConfirmModal';
 import { SessionProvider } from 'next-auth/react';
+import { GlobalErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function AdminLayout({
   children,
@@ -81,9 +82,11 @@ export default function AdminLayout({
           {/* Daily Briefing - Auto shows once per day on login */}
           {profile && <DailyBriefingTrigger />}
 
-          {/* Main Content */}
+          {/* Main Content — wrapped in GlobalErrorBoundary so no page ever goes fully blank */}
           <main className={`pt-20 lg:pt-24 px-4 md:px-6 lg:px-8 py-6 min-h-screen transition-[margin] duration-200 ease-in-out ${(sidebarHovered || sidebarLocked) ? 'lg:ml-64' : 'lg:ml-16'}`}>
-            {children}
+            <GlobalErrorBoundary>
+              {children}
+            </GlobalErrorBoundary>
           </main>
 
           {/* Mobile Bottom Navigation */}

@@ -111,7 +111,7 @@ export default function OrdersPage() {
   const filteredCategories = useMemo(() => {
     if (!categories) return [];
     if (!categorySearch.trim()) return categories;
-    return categories.filter((c: any) => c.name.toLowerCase().includes(categorySearch.toLowerCase()));
+    return categories.filter((c: any) => (c.name || '').toLowerCase().includes(categorySearch.toLowerCase()));
   }, [categories, categorySearch]);
 
   const selectedCategoryName = useMemo(() => {
@@ -352,8 +352,8 @@ export default function OrdersPage() {
       const s = searchQuery.toLowerCase();
       const catName = getCategoryName(job).toLowerCase();
       const matchSearch =
-        job.job_number.toLowerCase().includes(s) ||
-        job.project_name.toLowerCase().includes(s) ||
+        (job.job_number || '').toLowerCase().includes(s) ||
+        (job.project_name || '').toLowerCase().includes(s) ||
         (job.client?.company || '').toLowerCase().includes(s) ||
         (job.client?.name || '').toLowerCase().includes(s) ||
         catName.includes(s);
@@ -442,13 +442,13 @@ export default function OrdersPage() {
                 const headerTextColor = job.current_stage === 'approval' ? 'text-gray-900' : 'text-white';
 
                 return (
-                  <div key={job.id} className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
+                  <div key={job.id} className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-sm transition-all border border-gray-100">
                     {/* Colored Header Tab */}
                     <div className={`${headerBg} px-5 py-3 flex items-center justify-between`}>
                       <span className={`${headerTextColor} font-semibold text-sm md:text-base`}>
                         {job.job_number}
                       </span>
-                      <span className={`${headerTextColor}/90 text-xs px-3 py-1 bg-white/20 rounded-full font-medium capitalize`}>
+                      <span className={`${headerTextColor}/90 text-xs px-3 py-1 bg-white/20 rounded-md font-medium capitalize`}>
                         {job.current_stage.replace('_', ' ')}
                       </span>
                     </div>
@@ -495,7 +495,7 @@ export default function OrdersPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => { setSelectedJob(job); setShowViewModal(true); }}
-                          className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                          className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
                         >
                           <Eye className="w-4 h-4 md:w-4.5 md:h-4.5" />
                           <span className="hidden sm:inline">View</span>
@@ -534,9 +534,9 @@ export default function OrdersPage() {
                       <td className="px-6 py-4 align-top">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-bold text-gray-900 font-mono text-sm bg-gray-100 px-2 py-1 rounded-md">{job.job_number}</span>
-                          {job.priority === 'urgent' && <span className="text-xs font-bold uppercase text-red-600 bg-red-50 px-2 py-0.5 rounded-full">Urgent</span>}
-                          {job.priority === 'high' && <span className="text-xs font-bold uppercase text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">High</span>}
-                          {job.priority === 'normal' && <span className="text-xs font-medium uppercase text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">Normal</span>}
+                          {job.priority === 'urgent' && <span className="text-xs font-bold uppercase text-red-600 bg-red-50 px-2 py-0.5 rounded-md">Urgent</span>}
+                          {job.priority === 'high' && <span className="text-xs font-bold uppercase text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">High</span>}
+                          {job.priority === 'normal' && <span className="text-xs font-medium uppercase text-green-700 bg-green-50 px-2 py-0.5 rounded-md border border-green-200">Normal</span>}
                         </div>
                         <div className="font-semibold text-gray-800">
                           {job.project_name}
@@ -557,7 +557,7 @@ export default function OrdersPage() {
                       <td className="px-6 py-4 align-top">
                         <div className="font-bold text-gray-900">{formatCurrency(job.total_amount)}</div>
                         {job.payment_status !== 'paid' && (
-                          <span className="text-label text-destructive bg-white px-2 py-0.5 rounded-full mt-1 inline-block">
+                          <span className="text-label text-destructive bg-white px-2 py-0.5 rounded-md mt-1 inline-block">
                             Due: {formatCurrency(job.total_amount - job.amount_received)}
                           </span>
                         )}
@@ -569,21 +569,21 @@ export default function OrdersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 align-top">
-                        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(job.current_stage)}`}>
+                        <span className={`px-3 py-1 text-xs font-semibold rounded-md ${getStatusColor(job.current_stage)}`}>
                           {job.current_stage.replace('_', ' ')}
                         </span>
                       </td>
                       <td className="px-6 py-4 align-middle text-right">
                         <div className="flex items-center justify-end gap-2 text-gray-500">
-                          <button onClick={() => { setSelectedJob(job); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-lg hover:text-gray-900 transition-colors">
+                          <button onClick={() => { setSelectedJob(job); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-md hover:text-gray-900 transition-colors">
                             <Eye className="w-4 h-4 md:w-4.5 md:h-4.5" />
                           </button>
                           {profile?.role !== 'marketing' && (
                             <>
-                              <button onClick={() => handleEdit(job)} className="p-2 hover:bg-gray-100 rounded-lg hover:text-gray-900 transition-colors">
+                              <button onClick={() => handleEdit(job)} className="p-2 hover:bg-gray-100 rounded-md hover:text-gray-900 transition-colors">
                                 <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
                               </button>
-                              <button onClick={(e) => handleDelete(job.id, e)} className="p-2 hover:bg-red-50 rounded-lg hover:text-red-500 transition-colors">
+                              <button onClick={(e) => handleDelete(job.id, e)} className="p-2 hover:bg-red-50 rounded-md hover:text-red-500 transition-colors">
                                 <Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" />
                               </button>
                             </>
@@ -606,7 +606,7 @@ export default function OrdersPage() {
               <h2 className="text-section text-gray-900">
                 {isEditing ? 'Edit Order' : 'New Order'}
               </h2>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-md transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -653,7 +653,7 @@ export default function OrdersPage() {
                     <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
                   </div>
                   {showCategoryDropdown && (
-                    <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                    <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-sm max-h-60 overflow-hidden">
                       <div className="p-2 border-b border-gray-100">
                         <input
                           type="text"
@@ -690,7 +690,7 @@ export default function OrdersPage() {
                           </button>
                         ))}
                         {/* Add new category option */}
-                        {categorySearch.trim() && !categories?.find((c: any) => c.name.toLowerCase() === categorySearch.trim().toLowerCase()) && (
+                        {categorySearch.trim() && !categories?.find((c: any) => (c.name || '').toLowerCase() === categorySearch.trim().toLowerCase()) && (
                           <button
                             type="button"
                             disabled={creatingCategory}
@@ -817,7 +817,7 @@ export default function OrdersPage() {
                   <button
                     type="button"
                     onClick={() => setShowAdvance(!showAdvance)}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border-2 border-dashed transition-all text-sm font-semibold ${showAdvance
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-md border-2 border-dashed transition-all text-sm font-semibold ${showAdvance
                       ? 'border-green-300 bg-green-50 text-green-700'
                       : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
                       }`}
@@ -844,7 +844,7 @@ export default function OrdersPage() {
                               key={mode.value}
                               type="button"
                               onClick={() => setAdvanceData({ ...advanceData, paymentMode: mode.value as any })}
-                              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-semibold transition-all ${advanceData.paymentMode === mode.value
+                              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-md border-2 text-sm font-semibold transition-all ${advanceData.paymentMode === mode.value
                                 ? 'border-green-500 bg-green-500 text-white'
                                 : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                                 }`}
@@ -928,7 +928,7 @@ export default function OrdersPage() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2.5 bg-white border-2 border-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-white border-2 border-gray-200 text-gray-700 font-semibold rounded-md hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
@@ -956,14 +956,14 @@ export default function OrdersPage() {
                 </div>
                 <p className="text-sm text-gray-500 mt-1">Ordered on {formatDate(selectedJob.order_date)}</p>
               </div>
-              <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+              <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-md">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-4 space-y-6">
               <div className="flex items-center gap-2 md:gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                <div className="w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center text-white text-section">
+                <div className="w-12 h-12 rounded-md bg-gray-900 flex items-center justify-center text-white text-section">
                   {selectedJob.client?.company?.charAt(0) || 'C'}
                 </div>
                 <div>
@@ -992,19 +992,19 @@ export default function OrdersPage() {
               )}
 
               <div className="grid grid-cols-2 gap-2 md:gap-4">
-                <div className="p-3 border rounded-lg">
+                <div className="p-3 border rounded-md">
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Status</p>
                   <p className="font-medium text-gray-900 capitalize mt-1">{selectedJob.current_stage.replace('_', ' ')}</p>
                 </div>
-                <div className="p-3 border rounded-lg">
+                <div className="p-3 border rounded-md">
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Priority</p>
                   <p className={`font-medium capitalize mt-1 ${selectedJob.priority === 'urgent' ? 'text-red-600' : 'text-gray-900'}`}>{selectedJob.priority}</p>
                 </div>
-                <div className="p-3 border rounded-lg">
+                <div className="p-3 border rounded-md">
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Deadline</p>
                   <p className="font-medium text-gray-900 mt-1">{selectedJob.client_deadline ? formatDate(selectedJob.client_deadline) : '-'}</p>
                 </div>
-                <div className="p-3 border rounded-lg">
+                <div className="p-3 border rounded-md">
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Quantity</p>
                   <p className="font-medium text-gray-900 mt-1">{selectedJob.quantity}</p>
                 </div>
@@ -1033,7 +1033,7 @@ export default function OrdersPage() {
               </div>
 
               <div className="flex gap-3">
-                <button onClick={() => { setShowViewModal(false); handleEdit(selectedJob); }} className="flex-1 py-3 border border-border text-gray-900 font-semibold rounded-lg hover:bg-muted transition-colors">
+                <button onClick={() => { setShowViewModal(false); handleEdit(selectedJob); }} className="flex-1 py-3 border border-border text-gray-900 font-semibold rounded-md hover:bg-muted transition-colors">
                   Edit Order
                 </button>
                 <button
@@ -1041,7 +1041,7 @@ export default function OrdersPage() {
                     setShowViewModal(false);
                     router.push(`/admin/jobs?highlight=${selectedJob.id}`);
                   }}
-                  className="flex-1 py-3 bg-gray-900 text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors shadow-sm flex items-center justify-center gap-2"
+                  className="flex-1 py-3 bg-gray-900 text-white font-semibold rounded-md hover:bg-gray-800 transition-colors shadow-sm flex items-center justify-center gap-2"
                 >
                   <Briefcase className="w-4 h-4" />
                   Open in Jobs

@@ -39,7 +39,7 @@ export default function DesignTasksPage() {
     function getChecklistProgress(job: any) {
         if (!checklists || !job.checklist_progress) return null;
         const jobType = job.job_type || 'Other';
-        const template = checklists.find(c => c.job_type.toLowerCase() === jobType.toLowerCase()) || checklists[0];
+        const template = checklists.find(c => (c.job_type || '').toLowerCase() === (jobType || '').toLowerCase()) || checklists[0];
 
         if (!template || !template.items?.length) return null;
 
@@ -58,7 +58,7 @@ export default function DesignTasksPage() {
                     <h1 className="text-page-title text-gray-900">Design Queue</h1>
                     <p className="text-gray-500">Manage design tasks and approvals</p>
                 </div>
-                <div className="bg-white px-4 py-2 rounded-lg border">
+                <div className="bg-white px-4 py-2 rounded-md border">
                     <span className="font-bold text-primary">{designJobs.length}</span> Pending Tasks
                 </div>
             </div>
@@ -72,7 +72,7 @@ export default function DesignTasksPage() {
                                 <h3 className="font-bold text-gray-900 mt-2">{job.project_name}</h3>
                                 <p className="text-sm text-gray-500">{job.client?.company}</p>
                             </div>
-                            <span className={`px-3 py-1 text-xs font-bold rounded-full capitalize
+                            <span className={`px-3 py-1 text-xs font-bold rounded-md capitalize
                 ${job.current_stage === 'new' ? 'bg-muted text-foreground' :
                                     job.current_stage === 'designing' ? 'bg-gray-900 text-white' :
                                         'bg-gray-900 text-white'}`}>
@@ -113,7 +113,7 @@ export default function DesignTasksPage() {
                                 <button
                                     disabled={processingId === job.id}
                                     onClick={() => handleStageUpdate(job.id, 'designing')}
-                                    className="flex-1 bg-gray-900 text-white py-2 rounded-lg text-sm font-semibold hover:bg-gray-900 flex items-center justify-center gap-2">
+                                    className="flex-1 bg-gray-900 text-white py-2 rounded-md text-sm font-semibold hover:bg-gray-900 flex items-center justify-center gap-2">
                                     <Play size={16} /> Start Design
                                 </button>
                             )}
@@ -130,7 +130,7 @@ export default function DesignTasksPage() {
                                     <button
                                         disabled={processingId === job.id}
                                         onClick={() => handleStageUpdate(job.id, 'approval')}
-                                        className="flex-1 bg-gray-900 text-white py-2 rounded-lg text-sm font-semibold hover:bg-gray-900 flex items-center justify-center gap-2">
+                                        className="flex-1 bg-gray-900 text-white py-2 rounded-md text-sm font-semibold hover:bg-gray-900 flex items-center justify-center gap-2">
                                         <Clock size={16} /> Send Approval
                                     </button>
                                 </>
@@ -140,7 +140,7 @@ export default function DesignTasksPage() {
                                 <button
                                     disabled={processingId === job.id}
                                     onClick={() => handleStageUpdate(job.id, 'printing')}
-                                    className="flex-1 bg-gray-900 text-white py-2 rounded-lg text-sm font-semibold hover:bg-green-700 flex items-center justify-center gap-2">
+                                    className="flex-1 bg-gray-900 text-white py-2 rounded-md text-sm font-semibold hover:bg-green-700 flex items-center justify-center gap-2">
                                     <CheckCircle size={16} /> Approved (Print)
                                 </button>
                             )}

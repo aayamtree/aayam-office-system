@@ -93,7 +93,7 @@ export default function AdminMarketingDashboard() {
             {/* KPI Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                 {statCards.map((stat) => (
-                    <Card key={stat.title} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push(stat.link)}>
+                    <Card key={stat.title} className="cursor-pointer hover:shadow-sm transition-shadow" onClick={() => router.push(stat.link)}>
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
                             <div className="flex items-center gap-2">
@@ -129,7 +129,7 @@ export default function AdminMarketingDashboard() {
                             {teamMembers.map((member: any, idx: number) => (
                                 <div key={idx} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-sm font-semibold text-primary-foreground">
+                                        <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-sm font-semibold text-primary-foreground">
                                             {member.name.charAt(0)}
                                         </div>
                                         <div>

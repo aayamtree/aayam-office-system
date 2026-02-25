@@ -133,7 +133,7 @@ export default function UserManagementPage() {
           <div className="flex bg-gray-100 p-1 rounded-lg min-w-max md:min-w-0">
             <button
               onClick={() => setActiveTab('users')}
-              className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'users'
+              className={`px-3 md:px-4 py-2 rounded-md text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'users'
                 ? 'bg-white text-primary'
                 : 'text-gray-600 hover:text-gray-800'
                 }`}
@@ -142,7 +142,7 @@ export default function UserManagementPage() {
             </button>
             <button
               onClick={() => setActiveTab('designers')}
-              className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'designers'
+              className={`px-3 md:px-4 py-2 rounded-md text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'designers'
                 ? 'bg-white text-primary'
                 : 'text-gray-600 hover:text-gray-800'
                 }`}
@@ -151,7 +151,7 @@ export default function UserManagementPage() {
             </button>
             <button
               onClick={() => setActiveTab('production')}
-              className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'production'
+              className={`px-3 md:px-4 py-2 rounded-md text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'production'
                 ? 'bg-white text-orange-600'
                 : 'text-gray-600 hover:text-gray-800'
                 }`}
@@ -160,7 +160,7 @@ export default function UserManagementPage() {
             </button>
             <button
               onClick={() => setActiveTab('drive')}
-              className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'drive'
+              className={`px-3 md:px-4 py-2 rounded-md text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'drive'
                 ? 'bg-white text-foreground'
                 : 'text-gray-600 hover:text-gray-800'
                 }`}
@@ -177,7 +177,7 @@ export default function UserManagementPage() {
           <div className="flex justify-end">
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-semibold text-sm shadow-sm"
+              className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-semibold text-sm shadow-sm"
             >
               <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
               Add User
@@ -225,7 +225,7 @@ export default function UserManagementPage() {
                         </select>
                       </td>
                       <td className="p-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-bold 
+                        <span className={`px-2 py-1 rounded-md text-xs font-bold 
                         ${profile.is_active ? 'bg-gray-100 text-gray-900' : 'bg-red-100 text-red-700'}`}>
                           {profile.is_active ? 'Active' : 'Suspended'}
                         </span>

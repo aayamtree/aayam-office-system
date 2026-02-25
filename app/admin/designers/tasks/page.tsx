@@ -72,7 +72,7 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
               {overdue.map(t => (
                 <div key={t.id} className="p-3 bg-red-50 border border-red-100 rounded-lg flex justify-between items-center">
                   <span className="text-sm font-medium text-red-900">{t.title}</span>
-                  <span className="text-xs text-red-600 font-bold px-2 py-0.5 bg-white rounded-full">Due: {t.deadline}</span>
+                  <span className="text-xs text-red-600 font-bold px-2 py-0.5 bg-white rounded-md">Due: {t.deadline}</span>
                 </div>
               ))}
             </div>
@@ -86,7 +86,7 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
               {dueToday.map(t => (
                 <div key={t.id} className="p-3 bg-muted border border-gray-200 rounded-lg flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-900">{t.title}</span>
-                  <span className="text-xs text-primary font-bold px-2 py-0.5 bg-white rounded-full">Today</span>
+                  <span className="text-xs text-primary font-bold px-2 py-0.5 bg-white rounded-md">Today</span>
                 </div>
               ))}
             </div>
@@ -335,8 +335,8 @@ export default function DesignerWorkspace() {
   // --- LOGIC ---
   const filteredTasks = tasks.filter(task => {
     const matchesSearch =
-      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (task.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (task.clientName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (task.jobType && task.jobType.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (task.productCategory && task.productCategory.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (task.deadline && task.deadline.includes(searchQuery));
@@ -500,7 +500,7 @@ export default function DesignerWorkspace() {
                   <button onClick={() => router.push('/admin/designers/my-notes')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Notes</button>
                 </div>
               </div>
-              <button onClick={() => router.push('/admin/designers/new-project')} className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold flex gap-2 items-center"><Plus size={16} /> New Task</button>
+              <button onClick={() => router.push('/admin/designers/new-project')} className="px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-bold flex gap-2 items-center"><Plus size={16} /> New Task</button>
             </div>
 
             <div className="flex h-[calc(100%-5rem)] gap-3 md:gap-4 min-w-max pb-4">
@@ -632,7 +632,7 @@ export default function DesignerWorkspace() {
                   <button onClick={() => router.push('/admin/designers/my-notes')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Notes</button>
                 </div>
               </div>
-              <button onClick={() => router.push('/admin/designers/new-project')} className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold flex gap-2 items-center"><Plus size={16} /> New Task</button>
+              <button onClick={() => router.push('/admin/designers/new-project')} className="px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-bold flex gap-2 items-center"><Plus size={16} /> New Task</button>
             </div>
 
             {/* Gantt Chart Body */}
@@ -703,10 +703,10 @@ export default function DesignerWorkspace() {
 
                 {/* View Tabs - Color Blocks */}
                 <div className="grid grid-cols-4 gap-1 mt-4 px-1">
-                  <button onClick={() => setView(isAdmin ? 'team_tasks' : 'my_tasks')} className={`py-2 rounded-lg text-xs font-bold border transition-all ${(activeTab === 'my_tasks' || activeTab === 'team_tasks') ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200'}`}>{isAdmin ? 'Team' : 'List'}</button>
-                  <button onClick={() => setView('board')} className={`py-2 rounded-lg text-xs font-bold border transition-all ${activeTab === 'board' ? 'bg-gray-900 text-white border-border-600' : 'bg-white text-gray-500 border-gray-200'}`}>Board</button>
-                  <button onClick={() => setView('timeline')} className={`py-2 rounded-lg text-xs font-bold border transition-all ${activeTab === 'timeline' ? 'bg-gray-900 text-white border-border-600' : 'bg-white text-gray-500 border-gray-200'}`}>Timeline</button>
-                  <button onClick={() => router.push('/admin/designers/my-notes')} className={`py-2 rounded-lg text-xs font-bold border transition-all bg-white text-gray-500 border-gray-200`}>Notes</button>
+                  <button onClick={() => setView(isAdmin ? 'team_tasks' : 'my_tasks')} className={`py-2 rounded-md text-xs font-bold border transition-all ${(activeTab === 'my_tasks' || activeTab === 'team_tasks') ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200'}`}>{isAdmin ? 'Team' : 'List'}</button>
+                  <button onClick={() => setView('board')} className={`py-2 rounded-md text-xs font-bold border transition-all ${activeTab === 'board' ? 'bg-gray-900 text-white border-border-600' : 'bg-white text-gray-500 border-gray-200'}`}>Board</button>
+                  <button onClick={() => setView('timeline')} className={`py-2 rounded-md text-xs font-bold border transition-all ${activeTab === 'timeline' ? 'bg-gray-900 text-white border-border-600' : 'bg-white text-gray-500 border-gray-200'}`}>Timeline</button>
+                  <button onClick={() => router.push('/admin/designers/my-notes')} className={`py-2 rounded-md text-xs font-bold border transition-all bg-white text-gray-500 border-gray-200`}>Notes</button>
                 </div>
               </div>
 
@@ -733,7 +733,7 @@ export default function DesignerWorkspace() {
                   </div>
                   <button
                     onClick={() => router.push('/admin/designers/new-project')}
-                    className="p-2 bg-gray-900 text-white rounded-lg hover:bg-gray-900 transition-all flex items-center gap-1 text-xs font-bold px-3"
+                    className="p-2 bg-gray-900 text-white rounded-md hover:bg-gray-900 transition-all flex items-center gap-1 text-xs font-bold px-3"
                   >
                     <Plus size={14} /> New Project
                   </button>
@@ -792,7 +792,7 @@ export default function DesignerWorkspace() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <span className={`text-xs font-bold px-2 py-1 rounded-full ${taskStatuses.find(s => s.id === task.status)?.color}`}>
+                              <span className={`text-xs font-bold px-2 py-1 rounded-md ${taskStatuses.find(s => s.id === task.status)?.color}`}>
                                 {taskStatuses.find(s => s.id === task.status)?.name}
                               </span>
                             </div>
@@ -846,7 +846,7 @@ export default function DesignerWorkspace() {
                       {/* Deadline / Overdue inline */}
                       <span className="ml-auto flex-shrink-0">
                         {task.rawDeadline && new Date(task.rawDeadline) < new Date() && task.current_stage !== 'delivered' ? (
-                          <span className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                          <span className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-md flex items-center gap-1">
                             <Clock size={10} /> Overdue
                           </span>
                         ) : (
@@ -870,7 +870,7 @@ export default function DesignerWorkspace() {
                         {taskStatuses.find(s => s.id === task.status)?.name}
                       </span>
                       {task.priority !== 'normal' && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full border ${priorities.find(p => p.id === task.priority)?.color}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-md border ${priorities.find(p => p.id === task.priority)?.color}`}>
                           {task.priority}
                         </span>
                       )}
@@ -902,7 +902,7 @@ export default function DesignerWorkspace() {
                         </div>
                         {/* Order ID Link if exists */}
                         <span className="hidden md:inline text-gray-300">|</span>
-                        <div className="flex items-center gap-1.5 text-primary font-medium bg-muted px-2 py-0.5 rounded-full whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 text-primary font-medium bg-muted px-2 py-0.5 rounded-md whitespace-nowrap">
                           <FileText size={12} /> Ref: {selectedTask.taskId}
                         </div>
                       </div>
@@ -979,7 +979,7 @@ export default function DesignerWorkspace() {
                               await logActivity({ action: 'update', resourceType: 'job', resourceId: selectedTask.realId, details: { description: `▶️ ${selectedTask.taskId} resumed by ${userName}. Back to ${selectedTask.pre_hold_stage || 'designing'}.`, holdAction: 'resume' } });
                               refetchJobs();
                             }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white rounded-md text-xs font-bold hover:bg-green-700 transition-colors"
                           >
                             ▶️ Resume
                           </button>
@@ -1064,7 +1064,7 @@ export default function DesignerWorkspace() {
                             type="url"
                             defaultValue={selectedTask.driveLink}
                             placeholder="https://drive.google.com/..."
-                            className="flex-1 border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:bg-white transition-colors"
+                            className="flex-1 border rounded-md px-3 py-2 text-sm bg-gray-50 focus:bg-white transition-colors"
                             onBlur={(e) => {
                               if (e.target.value !== selectedTask.driveLink && updateJob) {
                                 updateJob(selectedTask.realId, { drive_link: e.target.value } as any);
@@ -1120,7 +1120,7 @@ export default function DesignerWorkspace() {
                         )}
 
                         {/* Upload New File */}
-                        <label className="inline-flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-lg cursor-pointer bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
+                        <label className="inline-flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-md cursor-pointer bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
                           <Upload size={14} />
                           Upload File
                           <input type="file" onChange={handleFileUpload} className="hidden" />
@@ -1221,7 +1221,7 @@ export default function DesignerWorkspace() {
               {/* 1. Quick Task Summary */}
               <div className="p-4 border-b">
                 <div className="flex items-center gap-2 text-gray-900 font-bold mb-3">
-                  <div className="p-1.5 bg-gray-900 text-white rounded-lg">
+                  <div className="p-1.5 bg-gray-900 text-white rounded-md">
                     <Zap size={16} />
                   </div>
                   <h2 className="text-sm">Quick Summary</h2>
@@ -1336,7 +1336,7 @@ export default function DesignerWorkspace() {
 function DownloadButton() {
   return (
     <button className="text-gray-400 hover:text-primary transition-colors">
-      <div className="p-2 hover:bg-muted rounded-lg transition-colors">
+      <div className="p-2 hover:bg-muted rounded-md transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
       </div>
     </button>

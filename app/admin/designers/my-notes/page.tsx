@@ -531,7 +531,7 @@ export default function MyNotes() {
                                 placeholder="Search notes, #tags, @people..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2.5 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all"
+                                className="w-full pl-10 pr-4 py-2.5 border rounded-md text-sm bg-white focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all"
                             />
                             {searchQuery && (
                                 <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -753,7 +753,7 @@ export default function MyNotes() {
                                                                     : [...prev, member.id]
                                                             );
                                                         }}
-                                                        className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${sharedWith.includes(member.id)
+                                                        className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${sharedWith.includes(member.id)
                                                             ? 'bg-blue-600 text-white'
                                                             : 'bg-white border text-gray-600 hover:border-blue-300'
                                                             }`}
@@ -773,7 +773,7 @@ export default function MyNotes() {
                                             {sharedWith.map(uid => {
                                                 const member = teamMembers.find(m => m.id === uid);
                                                 return member ? (
-                                                    <span key={uid} className="inline-flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                                                    <span key={uid} className="inline-flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-md font-medium">
                                                         @{member.full_name}
                                                         <button onClick={() => setSharedWith(prev => prev.filter(id => id !== uid))} className="hover:text-red-500 ml-0.5">
                                                             <X size={10} />
@@ -800,7 +800,7 @@ export default function MyNotes() {
                                     {showMentionDropdown && filteredMentionMembers.length > 0 && (
                                         <div
                                             ref={mentionDropdownRef}
-                                            className="absolute z-50 left-4 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto w-64"
+                                            className="absolute z-50 left-4 bg-white border border-gray-200 rounded-lg shadow-sm max-h-48 overflow-y-auto w-64"
                                             style={{ top: '80px' }}
                                         >
                                             {filteredMentionMembers.slice(0, 8).map(member => (
@@ -809,7 +809,7 @@ export default function MyNotes() {
                                                     onClick={() => insertMention(member)}
                                                     className="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2 transition-colors"
                                                 >
-                                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
+                                                    <div className="w-6 h-6 rounded-md bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
                                                         {member.full_name.charAt(0)}
                                                     </div>
                                                     <div>

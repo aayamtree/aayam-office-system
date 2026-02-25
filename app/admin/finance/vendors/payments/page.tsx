@@ -59,9 +59,9 @@ export default function VendorPaymentsPage() {
   const confirm = useConfirm();
 
   const filteredPayments = payments.filter(p => {
-    const matchesSearch = p.paymentNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.vendorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.reference.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (p.paymentNo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.vendorName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.reference || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesVendor = vendorFilter === 'all' || p.vendorId.toString() === vendorFilter;
     return matchesSearch && matchesVendor;
   });
@@ -114,7 +114,7 @@ export default function VendorPaymentsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin/finance/vendors" className="p-2 hover:bg-gray-100 rounded-lg">
+          <Link href="/admin/finance/vendors" className="p-2 hover:bg-gray-100 rounded-md">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
@@ -122,7 +122,7 @@ export default function VendorPaymentsPage() {
             <p className="text-gray-500">Payment out to vendors</p>
           </div>
         </div>
-        <button onClick={() => { resetForm(); setShowModal(true); }} className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 shadow-sm font-semibold">
+        <button onClick={() => { resetForm(); setShowModal(true); }} className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold">
           <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
           <span>Record Payment</span>
         </button>
@@ -201,7 +201,7 @@ export default function VendorPaymentsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
                     <span className="font-mono text-sm text-gray-900 font-medium">{payment.paymentNo}</span>
-                    <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gray-100">
+                    <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-md bg-gray-100">
                       {getModeIcon(payment.paymentMode)}
                       {payment.paymentMode}
                     </span>
@@ -221,9 +221,9 @@ export default function VendorPaymentsPage() {
                 </div>
                 <div className="flex items-center gap-1">
                   <button onClick={() => { setSelectedPayment(payment); setShowDetailModal(true); }}
-                    className="p-2 text-foreground hover:bg-muted rounded-lg"><Eye className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
+                    className="p-2 text-foreground hover:bg-muted rounded-md"><Eye className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
                   <button onClick={() => handleDelete(payment.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-md"><Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
                 </div>
               </div>
             </div>
@@ -251,7 +251,7 @@ export default function VendorPaymentsPage() {
               <div>
                 <label className="block text-sm font-medium mb-1.5">Vendor *</label>
                 <select required value={formData.vendorId} onChange={(e) => setFormData({ ...formData, vendorId: e.target.value })}
-                  className="w-full px-3 py-2.5 border rounded-lg">
+                  className="w-full px-3 py-2.5 border rounded-md">
                   <option value="">Select Vendor</option>
                   {vendors.map(v => (
                     <option key={v.id} value={v.id}>
@@ -264,12 +264,12 @@ export default function VendorPaymentsPage() {
                 <label className="block text-sm font-medium mb-1.5">Amount (₹) *</label>
                 <input type="number" required min="1" value={formData.amount || ''}
                   onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-                  className="w-full px-3 py-2.5 border rounded-lg" placeholder="Enter amount" />
+                  className="w-full px-3 py-2.5 border rounded-md" placeholder="Enter amount" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Payment Mode *</label>
                 <select required value={formData.paymentMode} onChange={(e) => setFormData({ ...formData, paymentMode: e.target.value })}
-                  className="w-full px-3 py-2.5 border rounded-lg">
+                  className="w-full px-3 py-2.5 border rounded-md">
                   {paymentModes.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
@@ -277,7 +277,7 @@ export default function VendorPaymentsPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Bank Account *</label>
                   <select required value={formData.bankAccountId} onChange={(e) => setFormData({ ...formData, bankAccountId: e.target.value })}
-                    className="w-full px-3 py-2.5 border rounded-lg">
+                    className="w-full px-3 py-2.5 border rounded-md">
                     <option value="">Select Bank Account</option>
                     {bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name} ({b.number})</option>)}
                   </select>
@@ -287,19 +287,19 @@ export default function VendorPaymentsPage() {
                 <label className="block text-sm font-medium mb-1.5">Reference/Transaction ID</label>
                 <input type="text" value={formData.reference}
                   onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
-                  className="w-full px-3 py-2.5 border rounded-lg" placeholder="TXN123456" />
+                  className="w-full px-3 py-2.5 border rounded-md" placeholder="TXN123456" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Payment Date *</label>
                 <input type="date" required value={formData.paymentDate}
                   onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
-                  className="w-full px-3 py-2.5 border rounded-lg" />
+                  className="w-full px-3 py-2.5 border rounded-md" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Notes</label>
                 <textarea value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  className="w-full px-3 py-2.5 border rounded-lg" rows={2} placeholder="Payment notes..." />
+                  className="w-full px-3 py-2.5 border rounded-md" rows={2} placeholder="Payment notes..." />
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-md font-medium">Cancel</button>
@@ -321,7 +321,7 @@ export default function VendorPaymentsPage() {
                 <span className="font-mono text-gray-900">{selectedPayment.paymentNo}</span>
                 <h2 className="text-page-title">Payment Details</h2>
               </div>
-              <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
+              <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div className="text-center bg-white rounded-lg p-4">

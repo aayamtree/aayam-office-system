@@ -73,7 +73,7 @@ export default function CMYKPrintPage() {
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link href="/admin/cmyk-print/retail-pos">
-          <Card className="hover:shadow-md transition-shadow h-full">
+          <Card className="hover:shadow-sm transition-shadow h-full">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
@@ -92,7 +92,7 @@ export default function CMYKPrintPage() {
         </Link>
 
         <Link href="/admin/cmyk-print/paper-stock">
-          <Card className="hover:shadow-md transition-shadow h-full">
+          <Card className="hover:shadow-sm transition-shadow h-full">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
@@ -117,7 +117,7 @@ export default function CMYKPrintPage() {
         </Link>
 
         <Link href="/admin/cmyk-print/cost-calculator">
-          <Card className="hover:shadow-md transition-shadow h-full">
+          <Card className="hover:shadow-sm transition-shadow h-full">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">

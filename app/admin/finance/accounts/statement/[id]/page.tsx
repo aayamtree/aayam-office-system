@@ -195,7 +195,7 @@ export default function AccountStatementPage() {
                 <div className="flex items-center gap-2 md:gap-4">
                     <button
                         onClick={() => router.back()}
-                        className="p-2 hover:bg-gray-100 rounded-lg"
+                        className="p-2 hover:bg-gray-100 rounded-md"
                     >
                         <ArrowLeft size={20} />
                     </button>
@@ -241,7 +241,7 @@ export default function AccountStatementPage() {
                                 type="date"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
-                                className="ml-2 px-3 py-1 border rounded-lg"
+                                className="ml-2 px-3 py-1 border rounded-md"
                             />
                         </div>
                         <div>
@@ -250,7 +250,7 @@ export default function AccountStatementPage() {
                                 type="date"
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
-                                className="ml-2 px-3 py-1 border rounded-lg"
+                                className="ml-2 px-3 py-1 border rounded-md"
                             />
                         </div>
                         {(startDate || endDate) && (

@@ -105,8 +105,8 @@ export default function JobDossierPage() {
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             result = result.filter(j =>
-                j.job_number.toLowerCase().includes(q) ||
-                j.project_name.toLowerCase().includes(q) ||
+                (j.job_number || '').toLowerCase().includes(q) ||
+                (j.project_name || '').toLowerCase().includes(q) ||
                 (j.client?.company || j.client?.name || '').toLowerCase().includes(q) ||
                 (j.product_category || '').toLowerCase().includes(q) ||
                 (j.invoice_reference || '').toLowerCase().includes(q)
@@ -173,7 +173,7 @@ export default function JobDossierPage() {
                     <p className="text-xs text-red-600 font-medium">Expenses</p>
                     <p className="text-lg font-bold text-red-900">{formatCurrency(totalExpenses)}</p>
                 </div>
-                <div className={`${totalProfit >= 0 ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'} border rounded-lg p-3`}>
+                <div className={`${totalProfit >= 0 ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'} border rounded-md p-3`}>
                     <p className={`text-xs font-medium ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {totalProfit >= 0 ? 'Profit' : 'Loss'}
                     </p>
@@ -205,11 +205,11 @@ export default function JobDossierPage() {
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
                                             <span className="text-base font-bold text-gray-900">{job.job_number}</span>
-                                            <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${stageColor[job.current_stage] || 'bg-gray-100 text-gray-700'}`}>
+                                            <span className={`px-2 py-0.5 text-xs rounded-md font-medium ${stageColor[job.current_stage] || 'bg-gray-100 text-gray-700'}`}>
                                                 {stageLabel[job.current_stage] || job.current_stage}
                                             </span>
                                             {job.priority !== 'normal' && (
-                                                <span className="px-1.5 py-0.5 text-xs rounded-full bg-red-100 text-red-700 font-medium">{job.priority}</span>
+                                                <span className="px-1.5 py-0.5 text-xs rounded-md bg-red-100 text-red-700 font-medium">{job.priority}</span>
                                             )}
                                             {hasInvoice && <span className="text-xs text-green-700 font-medium">📄 Invoice</span>}
                                             {job.eway_bill_number && <span className="text-xs text-green-700 font-medium">🧾 E-Way</span>}

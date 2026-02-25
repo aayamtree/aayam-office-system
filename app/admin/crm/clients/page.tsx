@@ -70,7 +70,7 @@ function ClientJobsSection({ clientId }: { clientId: string }) {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className="text-xs font-semibold text-gray-700">{formatCurrency(job.total_amount)}</span>
-                  <span className={`px-1.5 py-0.5 text-xs rounded-full font-medium ${getStageColor(job.current_stage)}`}>
+                  <span className={`px-1.5 py-0.5 text-xs rounded-md font-medium ${getStageColor(job.current_stage)}`}>
                     {job.current_stage}
                   </span>
                 </div>
@@ -190,7 +190,7 @@ export default function ClientsPage() {
     <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 px-2 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin/crm" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden"><ArrowLeft className="w-5 h-5" /></Link>
+          <Link href="/admin/crm" className="p-2 hover:bg-gray-100 rounded-md lg:hidden"><ArrowLeft className="w-5 h-5" /></Link>
           <div><h1 className="text-lg md:text-xl lg:text-page-title text-gray-900">Clients</h1><p className="text-xs md:text-sm text-gray-500">{filteredClients.length} clients</p></div>
         </div>
         {profile?.role !== 'marketing' && (
@@ -373,13 +373,13 @@ export default function ClientsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => handleView(client)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors" aria-label="View client details">
+                        <button onClick={() => handleView(client)} className="p-2 hover:bg-gray-100 rounded-md text-gray-500 transition-colors" aria-label="View client details">
                           <Eye className="w-4 h-4 md:w-4.5 md:h-4.5" />
                         </button>
-                        <button onClick={() => handleEdit(client)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors" aria-label="Edit client">
+                        <button onClick={() => handleEdit(client)} className="p-2 hover:bg-gray-100 rounded-md text-gray-500 transition-colors" aria-label="Edit client">
                           <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
                         </button>
-                        <button onClick={() => handleDelete(client.id)} className="p-2 hover:bg-red-50 rounded-lg text-red-500 transition-colors">
+                        <button onClick={() => handleDelete(client.id)} className="p-2 hover:bg-red-50 rounded-md text-red-500 transition-colors">
                           <Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" />
                         </button>
                       </div>
@@ -443,7 +443,7 @@ export default function ClientsPage() {
                 <div>
                   <h3 className="text-section text-gray-900">{selectedClient.name}</h3>
                   <p className="text-gray-500">{selectedClient.company}</p>
-                  <span className={`mt-1 inline-block px-2 py-0.5 text-xs rounded-full ${selectedClient.client_type === 'premium' ? 'bg-amber-100 text-amber-700' :
+                  <span className={`mt-1 inline-block px-2 py-0.5 text-xs rounded-md ${selectedClient.client_type === 'premium' ? 'bg-amber-100 text-amber-700' :
                     selectedClient.client_type === 'corporate' ? 'bg-gray-900 text-white' :
                       'bg-gray-100 text-gray-700'
                     }`}>{selectedClient.client_type}</span>

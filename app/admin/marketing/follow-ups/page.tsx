@@ -165,7 +165,7 @@ export default function MarketingFollowUpsPage() {
     const headerBg = isOverdue ? headerColors.overdue : isToday ? headerColors.today : headerColors.upcoming;
 
     return (
-      <div className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
+      <div className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-sm transition-all border border-gray-100">
         {/* Colored Header */}
         <div className={`${headerBg} px-4 py-3 flex items-center justify-between`}>
           <div className="flex items-center gap-2">
@@ -178,11 +178,11 @@ export default function MarketingFollowUpsPage() {
           </div>
           <div className="flex items-center gap-2">
             {followUp.companyName && (
-              <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-full font-medium hidden sm:inline-block">
+              <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-md font-medium hidden sm:inline-block">
                 {followUp.companyName}
               </span>
             )}
-            <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-full font-medium capitalize">
+            <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-md font-medium capitalize">
               {typeInfo.name}
             </span>
           </div>
@@ -208,24 +208,24 @@ export default function MarketingFollowUpsPage() {
             {followUp.quotation ? (
               <button
                 onClick={() => handleViewQuote(followUp)}
-                className="px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-gray-900 text-white rounded-md font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
               >
                 <CheckCircle className="w-4 h-4" /> View Quote {followUp.quotationNumber}
               </button>
             ) : (
               <button
                 onClick={() => handleCreateQuote(followUp)}
-                className="px-4 py-2 bg-gray-900 text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors flex items-center gap-2 shadow-sm"
+                className="px-4 py-2 bg-gray-900 text-white rounded-md font-semibold hover:bg-gray-800 transition-colors flex items-center gap-2 shadow-sm"
               >
                 <FileText className="w-4 h-4" /> Create Quote
               </button>
             )}
 
             <div className="p-4 flex gap-1">
-              <button onClick={() => handleEdit(followUp)} className="p-2 text-gray-400 hover:text-foreground hover:bg-muted rounded-lg transition-colors" aria-label="Edit follow-up">
+              <button onClick={() => handleEdit(followUp)} className="p-2 text-gray-400 hover:text-foreground hover:bg-muted rounded-md transition-colors" aria-label="Edit follow-up">
                 <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
               </button>
-              <button onClick={() => handleDelete(followUp.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" aria-label="Delete follow-up">
+              <button onClick={() => handleDelete(followUp.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" aria-label="Delete follow-up">
                 <Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" />
               </button>
             </div>
@@ -246,7 +246,7 @@ export default function MarketingFollowUpsPage() {
           <p className="text-sm md:text-base text-gray-500">Track and manage your client follow-ups</p>
         </div>
         <button onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-gray-900 text-white px-3 md:px-4 py-2 md:py-2.5 rounded-lg hover:bg-gray-800 font-semibold shadow-sm text-sm md:text-base w-full sm:w-auto justify-center">
+          className="flex items-center gap-2 bg-gray-900 text-white px-3 md:px-4 py-2 md:py-2.5 rounded-md hover:bg-gray-800 font-semibold shadow-sm text-sm md:text-base w-full sm:w-auto justify-center">
           <Plus className="w-4 h-4 md:hidden" />
           <Plus className="w-4 h-4 hidden md:block" />
           <span>Add Follow-up</span>
@@ -314,7 +314,7 @@ export default function MarketingFollowUpsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{todayFollowUps.map((f: any) => <FollowUpCard key={f.id} followUp={f} />)}</div>
         </div>}
 
-        {upcomingFollowUps.length > 0 && <div className="p-4 border rounded-lg bg-gray-50">
+        {upcomingFollowUps.length > 0 && <div className="p-4 border rounded-md bg-gray-50">
           <h2 className="font-bold text-gray-700 mb-2">Upcoming</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{upcomingFollowUps.map((f: any) => <FollowUpCard key={f.id} followUp={f} showDate />)}</div>
         </div>}
@@ -340,7 +340,7 @@ export default function MarketingFollowUpsPage() {
               <div>
                 <label className="block text-sm font-medium mb-1.5">Lead / Potential Client *</label>
                 <select required value={formData.leadId} onChange={(e) => setFormData({ ...formData, leadId: e.target.value })}
-                  className="w-full px-3 py-2.5 border rounded-lg bg-white">
+                  className="w-full px-3 py-2.5 border rounded-md bg-white">
                   <option value="">Select Lead</option>
                   {(leads || []).map(l => <option key={l.id} value={l.id}>{l.name} {l.company ? `(${l.company})` : ''}</option>)}
                 </select>
@@ -348,7 +348,7 @@ export default function MarketingFollowUpsPage() {
               <div>
                 <label className="block text-sm font-medium mb-1.5">Type</label>
                 <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="w-full px-3 py-2.5 border rounded-lg bg-white">
+                  className="w-full px-3 py-2.5 border rounded-md bg-white">
                   {followUpTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
               </div>
@@ -357,20 +357,20 @@ export default function MarketingFollowUpsPage() {
                   <label className="block text-sm font-medium mb-1.5">Date *</label>
                   <input type="date" required value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full px-3 py-2.5 border rounded-lg" />
+                    className="w-full px-3 py-2.5 border rounded-md" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Time *</label>
                   <input type="time" required value={formData.time}
                     onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                    className="w-full px-3 py-2.5 border rounded-lg" />
+                    className="w-full px-3 py-2.5 border rounded-md" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Notes</label>
                 <textarea value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  className="w-full px-3 py-2.5 border rounded-lg" rows={3} placeholder="What to discuss..." />
+                  className="w-full px-3 py-2.5 border rounded-md" rows={3} placeholder="What to discuss..." />
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-md font-medium">Cancel</button>

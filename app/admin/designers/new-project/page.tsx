@@ -327,7 +327,7 @@ export default function NewProjectPage() {
 
 
                     {/* Project Info */}
-                    <div className="bg-card border rounded-lg p-5 space-y-4">
+                    <div className="bg-card border rounded-md p-5 space-y-4">
                         {/* Project Name */}
                         <div className="space-y-2">
                             <Label htmlFor="projectName" className="text-sm font-semibold">
@@ -391,7 +391,7 @@ export default function NewProjectPage() {
                     <Separator />
 
                     {/* Parameters */}
-                    <div className="bg-card border rounded-lg p-5 space-y-5">
+                    <div className="bg-card border rounded-md p-5 space-y-5">
                         {/* Job Type */}
                         <div className="space-y-2">
                             <Label className="text-sm font-semibold">Job Type</Label>
@@ -536,7 +536,7 @@ export default function NewProjectPage() {
                     <Separator />
 
                     {/* Assets & Brief */}
-                    <div className="bg-card border rounded-lg p-5 space-y-5">
+                    <div className="bg-card border rounded-md p-5 space-y-5">
                         {/* Drive Link */}
                         <div className="space-y-2">
                             <Label className="text-sm font-semibold flex items-center gap-2">

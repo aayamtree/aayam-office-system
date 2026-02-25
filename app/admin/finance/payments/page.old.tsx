@@ -194,7 +194,7 @@ export default function PaymentsPage() {
     <div className="space-y-4 lg:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin/finance" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden"><ArrowLeft size={20} /></Link>
+          <Link href="/admin/finance" className="p-2 hover:bg-gray-100 rounded-md lg:hidden"><ArrowLeft size={20} /></Link>
           <div>
             <h1 className="text-xl lg:text-page-title text-gray-900">Payments</h1>
             <p className="text-sm text-gray-500">{filteredPayments.length} transactions</p>
@@ -241,7 +241,7 @@ export default function PaymentsPage() {
               <div key={p.id} className="bg-white p-4 rounded-lg border border-gray-100 relative">
                 {/* Row 1: Type & Amount */}
                 <div className="flex justify-between items-start mb-3">
-                  <span className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-full uppercase tracking-wide border ${p.type === 'received' ? 'bg-white text-gray-900 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                  <span className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-md uppercase tracking-wide border ${p.type === 'received' ? 'bg-white text-gray-900 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
                     {p.type === 'received' ? <ArrowDownRight size={14} /> : <ArrowUpRight size={14} />}
                     {p.type === 'received' ? 'Received' : 'Paid'}
                   </span>
@@ -321,7 +321,7 @@ export default function PaymentsPage() {
                     <td className="px-6 py-4 capitalize text-gray-600">{p.payment_mode?.replace('_', ' ')}</td>
                     <td className="px-6 py-4 text-gray-600">{formatDate(p.raw_date)}</td>
                     <td className="px-6 py-4 text-right">
-                      <button onClick={() => handleDelete(p)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
+                      <button onClick={() => handleDelete(p)} className="p-2 text-red-500 hover:bg-red-50 rounded-md"><Trash2 size={16} /></button>
                     </td>
                   </tr>
                 ))}
@@ -337,7 +337,7 @@ export default function PaymentsPage() {
           <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b">
               <h2 className="text-section">Record Payment</h2>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-3">
@@ -360,7 +360,7 @@ export default function PaymentsPage() {
                     </div>
                   ) : (
                     <select required value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-lg bg-white">
+                      className="w-full px-3 py-2 border rounded-md bg-white">
                       <option value="">Select Client ({clients.length})</option>
                       {clients.map(c => <option key={c.id} value={c.id}>{c.name} - {c.company}</option>)}
                     </select>
@@ -406,7 +406,7 @@ export default function PaymentsPage() {
                     </div>
                   ) : (
                     <select required value={formData.vendorId} onChange={(e) => setFormData({ ...formData, vendorId: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-lg bg-white">
+                      className="w-full px-3 py-2 border rounded-md bg-white">
                       <option value="">Select Vendor ({vendors.length})</option>
                       {vendors.map(v => <option key={v.id} value={v.id}>{v.name} - {v.company}</option>)}
                     </select>
@@ -452,20 +452,20 @@ export default function PaymentsPage() {
                     value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                     placeholder="0.00"
-                    className="w-full px-3 py-2 border rounded-lg" />
+                    className="w-full px-3 py-2 border rounded-md" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Date *</label>
                   <input type="date" required value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg" />
+                    className="w-full px-3 py-2 border rounded-md" />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-1">Payment Method</label>
                 <select value={formData.method} onChange={(e) => setFormData({ ...formData, method: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg bg-white">
+                  className="w-full px-3 py-2 border rounded-md bg-white">
                   <option value="bank_transfer">Bank Transfer</option>
                   <option value="cash">Cash</option>
                   <option value="upi">UPI</option>
@@ -478,7 +478,7 @@ export default function PaymentsPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Bank Account *</label>
                   <select required value={formData.bankAccountId} onChange={(e) => setFormData({ ...formData, bankAccountId: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg bg-white">
+                    className="w-full px-3 py-2 border rounded-md bg-white">
                     <option value="">Select Bank Account</option>
                     {bankAccounts.map(b => (
                       <option key={b.id} value={b.id}>{b.name} ({b.account_number})</option>
@@ -490,7 +490,7 @@ export default function PaymentsPage() {
               <div>
                 <label className="block text-sm font-medium mb-1">Reference / Note</label>
                 <input type="text" value={formData.reference} onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
-                  placeholder="Cheque No / TXN ID" className="w-full px-3 py-2 border rounded-lg" />
+                  placeholder="Cheque No / TXN ID" className="w-full px-3 py-2 border rounded-md" />
               </div>
 
               <div>
@@ -523,7 +523,7 @@ export default function PaymentsPage() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2 border rounded-lg">Cancel</button>
+                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2 border rounded-md">Cancel</button>
                 <button type="submit" disabled={submitting || uploading} className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-md">
                   {submitting ? 'Saving...' : 'Record'}
                 </button>

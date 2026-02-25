@@ -34,7 +34,7 @@ export default function SalesReportPage() {
     else if (job.current_stage === 'cancelled') reportStatus = 'cancelled';
 
     const matchesStatus = statusFilter === 'all' || reportStatus === statusFilter;
-    const matchesClient = !clientFilter || (job.client?.name.toLowerCase().includes(clientFilter.toLowerCase()) || job.client?.company?.toLowerCase().includes(clientFilter.toLowerCase()));
+    const matchesClient = !clientFilter || ((job.client?.name || '').toLowerCase().includes(clientFilter.toLowerCase()) || (job.client?.company || '').toLowerCase().includes(clientFilter.toLowerCase()));
 
     return matchesDate && matchesStatus && matchesClient;
   }).map(job => ({
@@ -76,7 +76,7 @@ export default function SalesReportPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin/reports" className="p-2 hover:bg-gray-100 rounded-lg">
+          <Link href="/admin/reports" className="p-2 hover:bg-gray-100 rounded-md">
             <ArrowLeft size={20} />
           </Link>
           <div>
@@ -206,7 +206,7 @@ export default function SalesReportPage() {
                     <td className="px-4 py-3 text-sm text-gray-600">{sale.items}</td>
                     <td className="px-4 py-3 text-sm font-medium text-gray-900 text-right">₹{sale.amount.toLocaleString()}</td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`px-2 py-1 text-xs rounded-full ${sale.status === 'completed' ? 'bg-gray-100 text-gray-900' :
+                      <span className={`px-2 py-1 text-xs rounded-md ${sale.status === 'completed' ? 'bg-gray-100 text-gray-900' :
                         sale.status === 'pending' ? 'bg-amber-100 text-amber-700' :
                           'bg-red-100 text-red-700'
                         }`}>

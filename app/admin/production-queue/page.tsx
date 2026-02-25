@@ -91,19 +91,19 @@ export default function ProductionQueuePage() {
 
     const getStageBadge = (job: Job) => {
         if (job.print_ready && job.client_approval) {
-            return <span className="px-3 py-1 bg-gray-100 text-gray-900 text-xs rounded-full font-bold">Print Ready</span>;
+            return <span className="px-3 py-1 bg-gray-100 text-gray-900 text-xs rounded-md font-bold">Print Ready</span>;
         }
         if (!job.client_approval) {
-            return <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs rounded-full font-bold">Awaiting Approval</span>;
+            return <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs rounded-md font-bold">Awaiting Approval</span>;
         }
         switch (job.current_stage) {
             case 'designing':
-                return <span className="px-3 py-1 bg-gray-900 text-white text-xs rounded-full font-bold">Designing</span>;
+                return <span className="px-3 py-1 bg-gray-900 text-white text-xs rounded-md font-bold">Designing</span>;
             case 'printing':
             case 'finishing':
-                return <span className="px-3 py-1 bg-muted text-foreground text-xs rounded-full font-bold">In Production</span>;
+                return <span className="px-3 py-1 bg-muted text-foreground text-xs rounded-md font-bold">In Production</span>;
             default:
-                return <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full font-bold capitalize">{job.current_stage}</span>;
+                return <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-md font-bold capitalize">{job.current_stage}</span>;
         }
     };
 
@@ -228,19 +228,19 @@ export default function ProductionQueuePage() {
 
                 {/* Active Filter Indicator */}
                 {filter && (
-                    <div className="bg-muted border-2 border-border rounded-lg p-4 flex items-center justify-between">
+                    <div className="bg-muted border-2 border-border rounded-md p-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-2 h-2 bg-gray-900 rounded-full animate-pulse"></div>
                             <p className="text-sm font-bold text-foreground">
                                 Filtering by: <span className="capitalize">{filter.replace('_', ' ')}</span>
                             </p>
-                            <span className="px-3 py-1 bg-muted text-gray-800 rounded-full text-xs font-bold">
+                            <span className="px-3 py-1 bg-muted text-gray-800 rounded-md text-xs font-bold">
                                 {filteredJobs.length} jobs
                             </span>
                         </div>
                         <button
                             onClick={() => setFilter(null)}
-                            className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-900 transition-all text-sm font-bold"
+                            className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-900 transition-all text-sm font-bold"
                         >
                             Clear Filter
                         </button>
@@ -341,19 +341,19 @@ export default function ProductionQueuePage() {
                                                 <td className="px-6 py-4">{getStageBadge(job)}</td>
                                                 <td className="px-6 py-4">
                                                     {job.priority === 'high' && (
-                                                        <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-bold flex items-center gap-1 w-fit">
+                                                        <span className="px-3 py-1 bg-red-100 text-red-800 rounded-md text-xs font-bold flex items-center gap-1 w-fit">
                                                             <AlertCircle size={14} />
                                                             HIGH
                                                         </span>
                                                     )}
                                                     {job.priority === 'urgent' && (
-                                                        <span className="px-3 py-1 bg-red-600 text-white rounded-full text-xs font-bold flex items-center gap-1 w-fit animate-pulse">
+                                                        <span className="px-3 py-1 bg-red-600 text-white rounded-md text-xs font-bold flex items-center gap-1 w-fit animate-pulse">
                                                             <AlertCircle size={14} />
                                                             URGENT
                                                         </span>
                                                     )}
                                                     {job.priority === 'normal' && (
-                                                        <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">
+                                                        <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md text-xs font-bold">
                                                             Normal
                                                         </span>
                                                     )}

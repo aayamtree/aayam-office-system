@@ -311,7 +311,7 @@ export default function DesignersPage() {
           <p className="text-sm text-gray-500">{activeDesigners} active of {totalDesigners} total</p>
         </div>
         <button onClick={() => { resetForm(); setShowModal(true); }}
-          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-lg hover:bg-gray-800">
+          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-md hover:bg-gray-800">
           <Plus size={18} /><span>Add Designer</span>
         </button>
       </div>
@@ -383,7 +383,7 @@ export default function DesignersPage() {
           <Palette size={48} className="mx-auto text-gray-300 mb-4" />
           <h3 className="text-lg font-medium mb-2">No designers found</h3>
           <button onClick={() => setShowModal(true)}
-            className="inline-flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg">
+            className="inline-flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-md">
             <Plus size={18} />Add Designer
           </button>
         </div>
@@ -400,7 +400,7 @@ export default function DesignersPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold">{designer.name}</h3>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${getEmploymentBadge(designer.employment_type)}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-md ${getEmploymentBadge(designer.employment_type)}`}>
                     {designer.employment_type}
                   </span>
                 </div>
@@ -431,13 +431,13 @@ export default function DesignersPage() {
                 <span className="font-medium ml-1">{formatCurrency(designer.hourly_rate)}/hr</span>
               </div>
               <div className="flex gap-1">
-                <button onClick={() => handleViewDetail(designer)} className="p-2 hover:bg-gray-100 rounded-lg">
+                <button onClick={() => handleViewDetail(designer)} className="p-2 hover:bg-gray-100 rounded-md">
                   <Eye size={16} className="text-gray-500" />
                 </button>
-                <button onClick={() => handleEdit(designer)} className="p-2 hover:bg-gray-100 rounded-lg">
+                <button onClick={() => handleEdit(designer)} className="p-2 hover:bg-gray-100 rounded-md">
                   <Edit size={16} className="text-gray-500" />
                 </button>
-                <button onClick={() => handleDelete(designer.id)} className="p-2 hover:bg-red-50 rounded-lg">
+                <button onClick={() => handleDelete(designer.id)} className="p-2 hover:bg-red-50 rounded-md">
                   <Trash2 size={16} className="text-red-500" />
                 </button>
               </div>
@@ -460,13 +460,13 @@ export default function DesignersPage() {
                   <label className="block text-sm font-medium mb-1">Name *</label>
                   <input type="text" required value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg" />
+                    className="w-full px-3 py-2 border rounded-md" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Phone *</label>
                   <input type="tel" required value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg" />
+                    className="w-full px-3 py-2 border rounded-md" />
                 </div>
               </div>
 
@@ -474,7 +474,7 @@ export default function DesignersPage() {
                 <label className="block text-sm font-medium mb-1">Email</label>
                 <input type="email" value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg" />
+                  className="w-full px-3 py-2 border rounded-md" />
               </div>
 
               <div className="grid grid-cols-2 gap-2 md:gap-4">
@@ -482,7 +482,7 @@ export default function DesignersPage() {
                   <label className="block text-sm font-medium mb-1">Employment Type</label>
                   <select value={formData.employment_type}
                     onChange={(e) => setFormData({ ...formData, employment_type: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg">
+                    className="w-full px-3 py-2 border rounded-md">
                     <option value="full-time">Full-time</option>
                     <option value="part-time">Part-time</option>
                     <option value="freelance">Freelance</option>
@@ -492,7 +492,7 @@ export default function DesignersPage() {
                   <label className="block text-sm font-medium mb-1">Joining Date</label>
                   <input type="date" value={formData.joining_date}
                     onChange={(e) => setFormData({ ...formData, joining_date: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg" />
+                    className="w-full px-3 py-2 border rounded-md" />
                 </div>
               </div>
 
@@ -501,13 +501,13 @@ export default function DesignersPage() {
                   <label className="block text-sm font-medium mb-1">Hourly Rate (₹)</label>
                   <input type="number" min="0" value={formData.hourly_rate}
                     onChange={(e) => setFormData({ ...formData, hourly_rate: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border rounded-lg" />
+                    className="w-full px-3 py-2 border rounded-md" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Monthly Salary (₹)</label>
                   <input type="number" min="0" value={formData.monthly_salary}
                     onChange={(e) => setFormData({ ...formData, monthly_salary: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border rounded-lg" />
+                    className="w-full px-3 py-2 border rounded-md" />
                 </div>
               </div>
 
@@ -516,13 +516,13 @@ export default function DesignersPage() {
                   <label className="block text-sm font-medium mb-1">City</label>
                   <input type="text" value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg" />
+                    className="w-full px-3 py-2 border rounded-md" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Status</label>
                   <select value={formData.is_active ? 'active' : 'inactive'}
                     onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'active' })}
-                    className="w-full px-3 py-2 border rounded-lg">
+                    className="w-full px-3 py-2 border rounded-md">
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
                   </select>
@@ -557,7 +557,7 @@ export default function DesignersPage() {
                 <div className="flex flex-wrap gap-2">
                   {skillOptions.map(skill => (
                     <button key={skill} type="button" onClick={() => toggleSkill(skill)}
-                      className={`px-3 py-1 rounded-full text-sm transition-colors ${formData.skills.includes(skill)
+                      className={`px-3 py-1 rounded-md text-sm transition-colors ${formData.skills.includes(skill)
                         ? 'bg-gray-900 text-white'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}>
@@ -594,12 +594,12 @@ export default function DesignersPage() {
                     </div>
                     <div>
                       <h2 className="text-page-title">{selectedDesigner.name}</h2>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${getEmploymentBadge(selectedDesigner.employment_type)}`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-md ${getEmploymentBadge(selectedDesigner.employment_type)}`}>
                         {selectedDesigner.employment_type}
                       </span>
                     </div>
                   </div>
-                  <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+                  <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X size={20} /></button>
                 </div>
               </div>
               <div className="p-5 space-y-5">
@@ -644,7 +644,7 @@ export default function DesignersPage() {
                     <h3 className="font-semibold text-gray-900 mb-3">Skills</h3>
                     <div className="flex flex-wrap gap-2">
                       {selectedDesigner.skills.map((skill, i) => (
-                        <span key={i} className="px-3 py-1 bg-gray-900 text-white rounded-full text-sm">{skill}</span>
+                        <span key={i} className="px-3 py-1 bg-gray-900 text-white rounded-md text-sm">{skill}</span>
                       ))}
                     </div>
                   </div>
@@ -653,9 +653,9 @@ export default function DesignersPage() {
                 {/* Actions */}
                 <div className="flex gap-3 pt-2">
                   <button onClick={() => { setShowDetailModal(false); handleEdit(selectedDesigner); }}
-                    className="flex-1 px-4 py-2.5 border rounded-lg font-medium">Edit</button>
+                    className="flex-1 px-4 py-2.5 border rounded-md font-medium">Edit</button>
                   <button onClick={() => setShowDetailModal(false)}
-                    className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-lg font-medium">Close</button>
+                    className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md font-medium">Close</button>
                 </div>
               </div>
             </div>

@@ -338,7 +338,7 @@ export default function QCCheckPage() {
     <div className="space-y-3 md:space-y-4 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Link href="/admin/dispatch" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
+        <Link href="/admin/dispatch" className="p-2 hover:bg-gray-100 rounded-md lg:hidden">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
@@ -354,7 +354,7 @@ export default function QCCheckPage() {
             <p className="text-page-title text-amber-700">{jobs.filter(j => j.current_stage === 'finishing').length}</p>
             <p className="text-xs text-amber-600 font-medium">Pending QC</p>
           </div>
-          <div className="bg-muted border border-border rounded-lg p-3 text-center">
+          <div className="bg-muted border border-border rounded-md p-3 text-center">
             <p className="text-page-title text-foreground">{jobs.filter(j => j.current_stage === 'quality_check').length}</p>
             <p className="text-xs text-foreground font-medium">In Progress</p>
           </div>
@@ -400,15 +400,15 @@ export default function QCCheckPage() {
               <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                 <span className="font-semibold text-gray-900 text-sm">{job.job_number}</span>
                 {job.priority && (
-                  <span className={`px-1.5 py-0.5 text-xs rounded-full font-medium ${getPriorityColor(job.priority)}`}>
+                  <span className={`px-1.5 py-0.5 text-xs rounded-md font-medium ${getPriorityColor(job.priority)}`}>
                     {job.priority}
                   </span>
                 )}
-                <span className={`px-1.5 py-0.5 text-xs rounded-full border font-medium ${getStatusColor(job.current_stage)}`}>
+                <span className={`px-1.5 py-0.5 text-xs rounded-md border font-medium ${getStatusColor(job.current_stage)}`}>
                   {getStatusLabel(job.current_stage)}
                 </span>
                 {job.product_category && (
-                  <span className="px-1.5 py-0.5 text-xs rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-medium">
+                  <span className="px-1.5 py-0.5 text-xs rounded-md bg-blue-50 text-blue-700 border border-blue-200 font-medium">
                     {job.product_category}
                   </span>
                 )}
@@ -431,7 +431,7 @@ export default function QCCheckPage() {
                 ) : (
                   <button
                     onClick={() => handleStartQC(job, 'post_print')}
-                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-white text-sm font-medium bg-gray-900 hover:bg-gray-800 transition-colors"
+                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-md text-white text-sm font-medium bg-gray-900 hover:bg-gray-800 transition-colors"
                   >
                     <ClipboardCheck className="w-4 h-4" />
                     {job.current_stage === 'quality_check' ? 'Continue QC' : 'Start QC'}
@@ -452,7 +452,7 @@ export default function QCCheckPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-section text-gray-900">{selectedJob.job_number}</h2>
-                  <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${activeQCType === 'pre_print' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
+                  <span className={`px-2 py-0.5 text-xs rounded-md font-medium ${activeQCType === 'pre_print' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
                     }`}>
                     {activeQCType === 'pre_print' ? 'Pre-Print QC' : 'QC-Dispatch'}
                   </span>
@@ -464,7 +464,7 @@ export default function QCCheckPage() {
                   </p>
                 )}
               </div>
-              <button onClick={() => setShowQCModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+              <button onClick={() => setShowQCModal(false)} className="p-2 hover:bg-gray-100 rounded-md">
                 <XCircle className="w-5 h-5 text-gray-500" />
               </button>
             </div>
@@ -604,7 +604,7 @@ export default function QCCheckPage() {
                 <div className="space-y-4">
                   <label className="block text-sm font-medium mb-1">QC / Rework Notes</label>
                   <textarea
-                    className="w-full px-4 py-3 border rounded-lg h-32"
+                    className="w-full px-4 py-3 border rounded-md h-32"
                     placeholder="Add observations or rework instructions..."
                     value={qcNotes}
                     onChange={e => setQcNotes(e.target.value)}
@@ -685,7 +685,7 @@ export default function QCCheckPage() {
                   </button>
                   <button
                     onClick={handleFinalSubmit}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium"
                   >
                     <CheckCircle className="w-4 h-4" /> Complete & Notify Admin
                   </button>
@@ -702,7 +702,7 @@ export default function QCCheckPage() {
                 </button>
                 <button
                   onClick={handlePassClick}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-white rounded-lg hover:opacity-90 transition-colors bg-gray-900"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-white rounded-md hover:opacity-90 transition-colors bg-gray-900"
                 >
                   <CheckCircle className="w-4 h-4" /> Pass
                 </button>

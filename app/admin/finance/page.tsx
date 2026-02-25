@@ -89,7 +89,7 @@ export default function FinancePage() {
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link href="/admin/finance/invoices">
-          <Card className="hover:shadow-md transition-shadow h-full">
+          <Card className="hover:shadow-sm transition-shadow h-full">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
@@ -112,7 +112,7 @@ export default function FinancePage() {
         </Link>
 
         <Link href="/admin/finance/vendors">
-          <Card className="hover:shadow-md transition-shadow h-full">
+          <Card className="hover:shadow-sm transition-shadow h-full">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
@@ -134,7 +134,7 @@ export default function FinancePage() {
         </Link>
 
         <Link href="/admin/finance/payments">
-          <Card className="hover:shadow-md transition-shadow h-full">
+          <Card className="hover:shadow-sm transition-shadow h-full">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">

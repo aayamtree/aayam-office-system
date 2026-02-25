@@ -158,7 +158,7 @@ export default function CashBookPage() {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => router.back()}
-                        className="p-2 hover:bg-gray-100 rounded-lg flex-shrink-0"
+                        className="p-2 hover:bg-gray-100 rounded-md flex-shrink-0"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
@@ -241,7 +241,7 @@ export default function CashBookPage() {
                         <select
                             value={selectedAccount}
                             onChange={(e) => setSelectedAccount(e.target.value)}
-                            className="w-full px-3 py-2.5 border rounded-lg text-sm"
+                            className="w-full px-3 py-2.5 border rounded-md text-sm"
                         >
                             <option value="all">All Accounts</option>
                             {cashAccounts.map((acc) => (
@@ -256,7 +256,7 @@ export default function CashBookPage() {
                             type="date"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
-                            className="w-full px-3 py-2.5 border rounded-lg text-sm"
+                            className="w-full px-3 py-2.5 border rounded-md text-sm"
                         />
                     </div>
 
@@ -266,7 +266,7 @@ export default function CashBookPage() {
                             type="date"
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
-                            className="w-full px-3 py-2.5 border rounded-lg text-sm"
+                            className="w-full px-3 py-2.5 border rounded-md text-sm"
                         />
                     </div>
 
@@ -275,7 +275,7 @@ export default function CashBookPage() {
                         <select
                             value={transactionType}
                             onChange={(e) => setTransactionType(e.target.value as any)}
-                            className="w-full px-3 py-2.5 border rounded-lg text-sm"
+                            className="w-full px-3 py-2.5 border rounded-md text-sm"
                         >
                             <option value="all">All</option>
                             <option value="in">Cash In Only</option>

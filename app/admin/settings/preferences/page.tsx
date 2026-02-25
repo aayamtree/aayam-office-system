@@ -47,7 +47,7 @@ export default function PreferencesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin/settings" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
+          <Link href="/admin/settings" className="p-2 hover:bg-gray-100 rounded-md lg:hidden">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>

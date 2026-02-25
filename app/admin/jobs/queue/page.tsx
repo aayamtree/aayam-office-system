@@ -29,7 +29,7 @@ export default function JobQueuePage() {
     const clientName = job.client?.name || '';
     const clientCompany = job.client?.company || '';
     const matchesSearch =
-      job.job_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (job.job_number || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       clientCompany.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -108,7 +108,7 @@ export default function JobQueuePage() {
     <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 px-2 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-2 md:gap-3">
-        <Link href="/admin/jobs" className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
+        <Link href="/admin/jobs" className="p-2 hover:bg-gray-100 rounded-md lg:hidden">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
@@ -286,7 +286,7 @@ export default function JobQueuePage() {
                     <span className="text-xs px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 font-medium">⏸ ON HOLD</span>
                   )}
                 </div>
-                <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-muted rounded-lg">
+                <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-muted rounded-md">
                   <X className="w-5 h-5" />
                 </button>
               </div>

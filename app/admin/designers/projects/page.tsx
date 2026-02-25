@@ -183,7 +183,7 @@ export default function DesignerProjectsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin/designers" className="p-2 hover:bg-gray-100 rounded-lg">
+          <Link href="/admin/designers" className="p-2 hover:bg-gray-100 rounded-md">
             <ArrowLeft size={20} />
           </Link>
           <div>
@@ -193,17 +193,17 @@ export default function DesignerProjectsPage() {
         </div>
         <div className="flex gap-2">
           <button onClick={() => setShowGanttModal(true)}
-            className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-lg hover:bg-gray-800 font-medium">
+            className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-md hover:bg-gray-800 font-medium">
             <BarChart3 size={18} />
             <span className="hidden sm:inline">Gantt View</span>
           </button>
           <Link href="/admin/designers/tasks"
-            className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2.5 rounded-lg hover:bg-gray-200 font-medium">
+            className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2.5 rounded-md hover:bg-gray-200 font-medium">
             <Briefcase size={18} />
             <span className="hidden sm:inline">Tasks</span>
           </Link>
           <button onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-lg hover:bg-gray-900 font-medium">
+            className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-md hover:bg-gray-900 font-medium">
             <Plus size={18} />
             <span>New Project</span>
           </button>
@@ -266,16 +266,16 @@ export default function DesignerProjectsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     <span className="font-mono text-sm text-primary font-medium">{project.projectId}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusBadge(project.status)}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${getStatusBadge(project.status)}`}>
                       {projectStatuses.find(s => s.id === project.status)?.name}
                     </span>
                     {daysRemaining < 0 && project.status !== 'completed' && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                      <span className="text-xs px-2 py-0.5 rounded-md bg-red-100 text-red-700">
                         Overdue by {Math.abs(daysRemaining)} days
                       </span>
                     )}
                     {daysRemaining > 0 && daysRemaining <= 3 && project.status !== 'completed' && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
+                      <span className="text-xs px-2 py-0.5 rounded-md bg-orange-100 text-orange-700">
                         {daysRemaining} days left
                       </span>
                     )}
@@ -309,11 +309,11 @@ export default function DesignerProjectsPage() {
 
                   <div className="flex items-center gap-1">
                     <button onClick={() => { setSelectedProject(project); setShowDetailModal(true); }}
-                      className="p-2 text-foreground hover:bg-muted rounded-lg"><Eye size={18} /></button>
+                      className="p-2 text-foreground hover:bg-muted rounded-md"><Eye size={18} /></button>
                     <button onClick={() => handleEdit(project)}
-                      className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"><Edit size={18} /></button>
+                      className="p-2 text-gray-600 hover:bg-gray-100 rounded-md"><Edit size={18} /></button>
                     <button onClick={() => handleDelete(project.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={18} /></button>
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-md"><Trash2 size={18} /></button>
                   </div>
                 </div>
               </div>
@@ -360,18 +360,18 @@ export default function DesignerProjectsPage() {
                 <label className="block text-sm font-medium mb-1.5">Project Name *</label>
                 <input type="text" required value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2.5 border rounded-lg" placeholder="Wedding Stationery Package" />
+                  className="w-full px-3 py-2.5 border rounded-md" placeholder="Wedding Stationery Package" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Description</label>
                 <textarea value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2.5 border rounded-lg" rows={2} placeholder="Project details..." />
+                  className="w-full px-3 py-2.5 border rounded-md" rows={2} placeholder="Project details..." />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Client *</label>
                 <select required value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                  className="w-full px-3 py-2.5 border rounded-lg bg-white">
+                  className="w-full px-3 py-2.5 border rounded-md bg-white">
                   <option value="">Select Client</option>
                   {(clients || []).map(c => <option key={c.id} value={c.id}>{c.company} ({c.name})</option>)}
                 </select>
@@ -395,20 +395,20 @@ export default function DesignerProjectsPage() {
                   <label className="block text-sm font-medium mb-1.5">Start Date</label>
                   <input type="date" required value={formData.startDate}
                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full px-3 py-2.5 border rounded-lg" />
+                    className="w-full px-3 py-2.5 border rounded-md" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">End Date</label>
                   <input type="date" required value={formData.endDate}
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full px-3 py-2.5 border rounded-lg" />
+                    className="w-full px-3 py-2.5 border rounded-md" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Google Drive Link</label>
                 <input type="url" value={formData.driveLink}
                   onChange={(e) => setFormData({ ...formData, driveLink: e.target.value })}
-                  className="w-full px-3 py-2.5 border rounded-lg" placeholder="https://drive.google.com/..." />
+                  className="w-full px-3 py-2.5 border rounded-md" placeholder="https://drive.google.com/..." />
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-md font-medium">Cancel</button>
@@ -430,7 +430,7 @@ export default function DesignerProjectsPage() {
           <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
               <h2 className="text-page-title">{selectedProject.name}</h2>
-              <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+              <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X size={20} /></button>
             </div>
             <div className="p-5 space-y-4">
               {/* Content similar to original but reading from selectedProject props */}
@@ -449,7 +449,7 @@ export default function DesignerProjectsPage() {
           <div className="bg-white rounded-lg w-full max-w-5xl max-h-[90vh] overflow-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between z-10">
               <h2 className="text-page-title">Gantt Chart View</h2>
-              <button onClick={() => setShowGanttModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+              <button onClick={() => setShowGanttModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X size={20} /></button>
             </div>
             <div className="p-5">
               {/* Gantt logic uses getGanttData() which works on 'projects' which is now Real Data */}

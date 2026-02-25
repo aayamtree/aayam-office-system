@@ -86,7 +86,7 @@ export default function DispatchReportPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin/reports" className="p-2 hover:bg-gray-100 rounded-lg">
+          <Link href="/admin/reports" className="p-2 hover:bg-gray-100 rounded-md">
             <ArrowLeft size={20} />
           </Link>
           <div>
@@ -224,7 +224,7 @@ export default function DispatchReportPage() {
                     <td className="px-4 py-3 text-sm text-gray-600">{d.destination}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{d.transporter}</td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(d.status)}`}>
+                      <span className={`px-2 py-1 text-xs rounded-md ${getStatusColor(d.status)}`}>
                         {d.status.replace('_', ' ')}
                       </span>
                     </td>
