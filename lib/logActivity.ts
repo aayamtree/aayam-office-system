@@ -20,7 +20,8 @@ export async function logActivity({
     description,
 }: LogActivityParams): Promise<void> {
     try {
-        await supabase.from('activity_logs').insert([{
+        // Try full insert (with user_name, entity_name, module from migration)
+        const { error } = await supabase.from('activity_logs').insert([{
             user_id: userId,
             user_name: userName,
             action,
@@ -29,8 +30,18 @@ export async function logActivity({
             entity_name: entityName || null,
             description,
         }]);
-    } catch (err) {
-        console.error('[logActivity] failed:', err);
+
+        // If columns not yet added (SQL not run), fall back to core columns
+        if (error) {
+            await supabase.from('activity_logs').insert([{
+                user_id: userId,
+                action,
+                entity_id: entityId || null,
+                description,
+                metadata: { user_name: userName, module, entity_name: entityName },
+            }]);
+        }
+    } catch {
         // Never throw — logging must never break the app
     }
 }
