@@ -20,8 +20,12 @@ export default function ActivityPage() {
 
   const filteredLogs = (logs || []).filter(log => {
     const userName = log.user?.full_name || 'Unknown';
-    const matchesSearch = log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (log.details || '').toLowerCase().includes(searchQuery.toLowerCase());
+    // Support both 'details' (new) and 'description' (legacy) columns
+    const detailsText = typeof log.details === 'string'
+      ? log.details
+      : (log as any).description || log.details?.description || JSON.stringify(log.details || {});
+    const matchesSearch = (log.action || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      detailsText.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesModule = moduleFilter === 'All' || log.module === moduleFilter;
     const matchesUser = userFilter === 'All' || userName === userFilter;
     const matchesDate = !dateFilter || new Date(log.created_at).toISOString().split('T')[0] === dateFilter;
@@ -189,7 +193,12 @@ export default function ActivityPage() {
                     </span>
                   </div>
                   <p className="text-sm text-gray-600 mt-1">
-                    {typeof log.details === 'string' ? log.details : log.details?.description || JSON.stringify(log.details)}
+                    {typeof log.details === 'string'
+                      ? log.details
+                      : log.details?.description
+                      || (log as any).description
+                      || `${log.action} ${(log as any).entity_type || ''}`
+                    }
                   </p>
                   <div className="flex items-center gap-2 md:gap-4 mt-2 text-xs text-gray-400">
                     <span className="flex items-center gap-1">
@@ -208,7 +217,9 @@ export default function ActivityPage() {
           ))}
           {filteredLogs.length === 0 && (
             <div className="p-8 text-center text-gray-500">
-              No activity logs found matching your filters.
+              {(logs || []).length === 0
+                ? 'No activity has been logged yet. Activity will appear here as users interact with the system.'
+                : 'No activity logs match your current filters.'}
             </div>
           )}
         </div>

@@ -50,12 +50,23 @@ export async function logActivity({
 
         if (!user) return;
 
+        // Derive module from resourceType
+        const moduleMap: Record<string, string> = {
+            'job': 'Sales', 'invoice': 'Finance', 'payment': 'Finance',
+            'client': 'CRM', 'quotation': 'Sales', 'user': 'Settings',
+            'order': 'Sales', 'lead': 'CRM', 'delivery': 'Dispatch', 'file': 'System'
+        };
+        const activityModule = resourceType ? (moduleMap[resourceType] || 'System') : 'System';
+        const description = details?.description || `${action} ${resourceType || 'system'}`;
+
         await supabase.from('activity_logs').insert({
             user_id: user.id,
             action,
+            module: activityModule,
             entity_type: resourceType,
             entity_id: resourceId,
-            description: details?.description || `${action} ${resourceType || 'system'}`,
+            description,
+            details: details || null,
             metadata: details || {},
             ip_address: null,
             user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : null
