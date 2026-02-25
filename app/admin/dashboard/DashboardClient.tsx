@@ -25,6 +25,7 @@ import TeamWorkloadWidget from '@/components/dashboard/TeamWorkloadWidget';
 import DailySummaryWidget from '@/components/dashboard/DailySummaryWidget';
 import RecentFilesWidget from '@/components/dashboard/RecentFilesWidget';
 import InvoicePendingWidget from '@/components/dashboard/InvoicePendingWidget';
+import { GlobalErrorBoundary } from '@/components/ErrorBoundary';
 
 import type { DashboardData } from '@/lib/dashboard-data';
 
@@ -273,14 +274,16 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                 )}
 
                 {isVisible('needs-attention') && (
-                    <NeedsAttentionBar
-                        overduePayments={dashboardStats.alerts.overduePayments}
-                        pendingApprovals={pendingApprovals}
-                        followUpsDue={dashboardStats.alerts.followUpsDue}
-                        blockedJobs={dashboardStats.alerts.blockedJobs}
-                        blockedFeedback={dashboardStats.alerts.blockedBreakdown.feedback}
-                        loading={false}
-                    />
+                    <GlobalErrorBoundary>
+                        <NeedsAttentionBar
+                            overduePayments={dashboardStats.alerts.overduePayments}
+                            pendingApprovals={pendingApprovals}
+                            followUpsDue={dashboardStats.alerts.followUpsDue}
+                            blockedJobs={dashboardStats.alerts.blockedJobs}
+                            blockedFeedback={dashboardStats.alerts.blockedBreakdown.feedback}
+                            loading={false}
+                        />
+                    </GlobalErrorBoundary>
                 )}
             </div>
 
@@ -325,7 +328,7 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                     </Card>
                 )}
 
-                {isVisible('invoice-pending') && <InvoicePendingWidget />}
+                {isVisible('invoice-pending') && <GlobalErrorBoundary><InvoicePendingWidget /></GlobalErrorBoundary>}
             </div>
 
             {/* ── Recent Orders + Overdue Alerts ── */}
@@ -375,13 +378,13 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                     </Card>
                 )}
 
-                {isVisible('overdue') && <OverdueAlertsWidget />}
+                {isVisible('overdue') && <GlobalErrorBoundary><OverdueAlertsWidget /></GlobalErrorBoundary>}
             </div>
 
             {/* ── Daily Summary + Team Workload + Sales Performance ── */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {isVisible('daily-summary') && <DailySummaryWidget />}
-                {isVisible('team-workload') && <TeamWorkloadWidget />}
+                {isVisible('daily-summary') && <GlobalErrorBoundary><DailySummaryWidget /></GlobalErrorBoundary>}
+                {isVisible('team-workload') && <GlobalErrorBoundary><TeamWorkloadWidget /></GlobalErrorBoundary>}
 
                 {isVisible('sales-perf') && (
                     <Card>
@@ -418,12 +421,12 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
 
             {/* ── Calendar + Quick Notes ── */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {isVisible('calendar') && <MiniCalendarWidget />}
-                {isVisible('quick-notes') && <QuickNotesWidget />}
+                {isVisible('calendar') && <GlobalErrorBoundary><MiniCalendarWidget /></GlobalErrorBoundary>}
+                {isVisible('quick-notes') && <GlobalErrorBoundary><QuickNotesWidget /></GlobalErrorBoundary>}
             </div>
 
             {/* ── Recent Files (full width) ── */}
-            {isVisible('recent-files') && <RecentFilesWidget showAll={true} limit={15} />}
+            {isVisible('recent-files') && <GlobalErrorBoundary><RecentFilesWidget showAll={true} limit={15} /></GlobalErrorBoundary>}
         </div>
     );
 }
