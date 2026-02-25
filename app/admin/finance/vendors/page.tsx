@@ -5,8 +5,9 @@ import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { Search, Plus, Phone, Mail, MapPin, Edit, Trash2, Eye, X, ArrowLeft, Building2, Loader2, Package, Settings } from 'lucide-react';
 import { useVendors } from '@/lib/hooks';
+import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
-import { logActivity } from '@/lib/activity-logger';
+import { logActivity } from '@/lib/logActivity';
 import { Vendor } from '@/types/database';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,6 +18,7 @@ interface VendorCategory { id: string; name: string; color: string; }
 
 export default function VendorsPage() {
   const { vendors, loading, createVendor, updateVendor, deleteVendor } = useVendors();
+  const { profile, session } = useAuth();
 
   // Dynamic categories from Supabase
   const [categories, setCategories] = useState<VendorCategory[]>([]);
@@ -88,7 +90,7 @@ export default function VendorsPage() {
     if (confirmed) {
       try {
         await deleteVendor(id);
-        logActivity({ action: 'delete', resourceType: 'client', resourceId: id, details: { description: `Deleted Vendor: ${vendorName}` } });
+        logActivity({ userId: session?.user?.id || '', userName: profile?.full_name || 'Unknown', action: 'DELETE', module: 'Finance', entityId: id, entityName: vendorName, description: `Deleted Vendor: ${vendorName}` });
       } catch (error) { console.error('Error:', error); toast.error('Error deleting'); }
     }
   };
@@ -105,11 +107,11 @@ export default function VendorsPage() {
       if (isEditing && selectedVendor) {
         const { error } = await updateVendor(selectedVendor.id, payload as any);
         if (error) throw new Error(error);
-        logActivity({ action: 'update', resourceType: 'client', resourceId: selectedVendor.id, details: { description: `Updated Vendor: ${formData.name} (${formData.category || 'Vendor'})` } });
+        logActivity({ userId: session?.user?.id || '', userName: profile?.full_name || 'Unknown', action: 'UPDATE', module: 'Finance', entityId: selectedVendor.id, entityName: formData.name, description: `Updated Vendor: ${formData.name} (${formData.category || 'Vendor'})` });
       } else {
         const { error } = await createVendor(payload as any);
         if (error) throw new Error(error);
-        logActivity({ action: 'create', resourceType: 'client', resourceId: 'new', details: { description: `Added Vendor: ${formData.name} (${formData.category || 'Vendor'}) — ${formData.phone}` } });
+        logActivity({ userId: session?.user?.id || '', userName: profile?.full_name || 'Unknown', action: 'CREATE', module: 'Finance', entityName: formData.name, description: `Added Vendor: ${formData.name} (${formData.category || 'Vendor'}) — ${formData.phone}` });
       }
       setShowModal(false); setIsEditing(false); setSelectedVendor(null);
     } catch (error: any) {
