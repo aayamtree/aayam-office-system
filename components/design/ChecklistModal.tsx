@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { toast } from '@/lib/toast';
 import { X, CheckSquare, Square, Save, Loader2, AlertCircle } from 'lucide-react';
 import { useJobChecklists, useJobs } from '@/lib/hooks';
 import { Job, JobChecklist } from '@/types/database';
@@ -53,7 +54,7 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
             onClose();
         } catch (err) {
             console.error('Failed to save checklist:', err);
-            alert('Failed to save checklist progress');
+            toast.error('Failed to save checklist progress');
         } finally {
             setSaving(false);
         }

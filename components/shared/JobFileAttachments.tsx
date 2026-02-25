@@ -131,7 +131,7 @@ export default function JobFileAttachments({ jobId, files, onFilesUpdated }: Job
                     <Paperclip className="w-4 h-4" />
                     Attachments
                     {files.length > 0 && (
-                        <span className="bg-gray-100 text-gray-600 text-xs px-1.5 py-0.5 rounded-full">{files.length}</span>
+                        <span className="bg-gray-100 text-gray-600 text-xs px-1.5 py-0.5 rounded-md">{files.length}</span>
                     )}
                 </h4>
                 <label className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md cursor-pointer transition-colors ${uploading ? 'bg-gray-100 text-gray-400' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'

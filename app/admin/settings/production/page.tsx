@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from '@/lib/toast';
 import { createBrowserClient } from '@supabase/ssr';
 import { Plus, Trash2, Save, X, Edit2, Check, AlertCircle } from 'lucide-react';
 import { useConfirm } from '@/components/ConfirmModal';
@@ -74,7 +75,7 @@ export default function ProductionSettings() {
             .eq('id', editingId);
 
         if (error) {
-            alert('Error updating checklist: ' + error.message);
+            toast.error(String('Error updating checklist: ' + error.message));
         } else {
             setEditingId(null);
             fetchChecklists();
@@ -115,7 +116,7 @@ export default function ProductionSettings() {
         } as any);
 
         if (error) {
-            alert('Error creating checklist. Ensure this Job Type doesn\'t already exist for this category.\n\nDetails: ' + error.message);
+            toast.error(String('Error creating checklist. Ensure this Job Type doesn\'t already exist for this category.\n\nDetails: ' + error.message));
         } else {
             setIsAddingNew(false);
             setNewJobType('');
@@ -129,7 +130,7 @@ export default function ProductionSettings() {
 
         const { error } = await supabase.from('job_checklists').delete().eq('id', id);
         if (!error) fetchChecklists();
-        else alert('Error deleting: ' + error.message);
+        else toast.error(String('Error deleting: ' + error.message));
     }
 
     return (

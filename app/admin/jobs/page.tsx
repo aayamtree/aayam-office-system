@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -166,7 +167,7 @@ export default function JobsPage() {
 
   // Quick Add Client
   const handleAddClient = async () => {
-    if (!newClient.name || !newClient.phone) return alert('Name and Phone are required');
+    if (!newClient.name || !newClient.phone) return toast.error('Name and Phone are required');
 
     const result = await createClient({
       ...newClient,
@@ -188,7 +189,7 @@ export default function JobsPage() {
 
   // Quick Add Vendor
   const handleAddVendor = async () => {
-    if (!newVendor.name || !newVendor.phone) return alert('Name and Phone are required');
+    if (!newVendor.name || !newVendor.phone) return toast.error('Name and Phone are required');
 
     const result = await createVendor({
       ...newVendor,
@@ -286,7 +287,7 @@ export default function JobsPage() {
       }
 
       if (result.error) {
-        alert('Failed to save job: ' + result.error);
+        toast.error(String('Failed to save job: ' + result.error));
         setSaving(false);
         return;
       }
@@ -296,7 +297,7 @@ export default function JobsPage() {
       resetForm();
     } catch (error) {
       console.error('Error saving job:', error);
-      alert('Error saving job');
+      toast.error('Error saving job');
     } finally {
       setSaving(false);
     }
@@ -357,7 +358,7 @@ export default function JobsPage() {
     setShowApproveDialog(false);
     setApprovingJob(null);
     if (error) {
-      alert('Failed to approve: ' + error.message);
+      toast.error(String('Failed to approve: ' + error.message));
     } else {
       window.location.reload();
     }
@@ -396,7 +397,7 @@ export default function JobsPage() {
       setPaymentMode('cash');
     } catch (error) {
       console.error('Error:', error);
-      alert('Error adding payment');
+      toast.error('Error adding payment');
     }
   };
 
@@ -433,7 +434,7 @@ export default function JobsPage() {
       setShowSendToPrinterModal(false);
     } catch (error) {
       console.error('Error sending to printer:', error);
-      alert('Error sending to printer');
+      toast.error('Error sending to printer');
     } finally {
       setSendingToPrinter(false);
     }

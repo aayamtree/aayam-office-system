@@ -88,7 +88,7 @@ export default function NotesWidget() {
                 <h3 className="font-semibold text-gray-900">Notes</h3>
                 <button
                     onClick={() => setIsAdding(true)}
-                    className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors"
+                    className="p-2 hover:bg-gray-100 rounded-md text-gray-600 transition-colors"
                 >
                     <Plus size={20} />
                 </button>

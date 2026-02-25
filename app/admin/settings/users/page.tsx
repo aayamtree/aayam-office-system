@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import { useSupabaseQuery } from '@/lib/hooks'; // We'll use raw query or create new hook
 import { supabase } from '@/lib/supabase';
 import { User, Shield, Briefcase, Mail, Phone, Trash2 } from 'lucide-react';
@@ -44,7 +45,7 @@ export default function UserManagementPage() {
       .eq('id', userId);
 
     if (error) {
-      alert('Error updating role: ' + error.message);
+      toast.error(String('Error updating role: ' + error.message));
     } else {
       await fetchProfiles();
     }

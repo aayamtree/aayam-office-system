@@ -85,7 +85,7 @@ export function CollapsibleSection({
 
                     {/* Count badge */}
                     <span
-                        className={`inline-flex items-center justify-center min-w-[20px] h-5 px-2 text-xs font-bold rounded-full ${badgeClasses}`}
+                        className={`inline-flex items-center justify-center min-w-[20px] h-5 px-2 text-xs font-bold rounded-md ${badgeClasses}`}
                     >
                         {count}
                     </span>

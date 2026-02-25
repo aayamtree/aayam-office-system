@@ -385,7 +385,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                         <DollarSign size={20} />
                                         Financial Details (Admin Only)
                                     </h4>
-                                    <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-bold">
+                                    <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-md font-bold">
                                         🔒 Hidden from Designers
                                     </span>
                                 </div>

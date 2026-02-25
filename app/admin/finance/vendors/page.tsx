@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { Search, Plus, Phone, Mail, MapPin, Edit, Trash2, Eye, X, ArrowLeft, Building2, Loader2, Package, Settings } from 'lucide-react';
 import { useVendors } from '@/lib/hooks';
@@ -85,7 +86,7 @@ export default function VendorsPage() {
     if (confirmed) {
       try {
         await deleteVendor(id);
-      } catch (error) { console.error('Error:', error); alert('Error deleting'); }
+      } catch (error) { console.error('Error:', error); toast.error('Error deleting'); }
     }
   };
 
@@ -103,7 +104,7 @@ export default function VendorsPage() {
       setShowModal(false); setIsEditing(false); setSelectedVendor(null);
     } catch (error: any) {
       console.error('Error:', error);
-      alert(error.message || 'Error saving');
+      toast.error(String(error.message || 'Error saving'));
     } finally {
       setSaving(false);
     }

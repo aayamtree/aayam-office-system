@@ -107,7 +107,7 @@ export default function RemindersWidget() {
 
                 <div className="space-y-1">
                     {activeReminders.map(reminder => (
-                        <div key={reminder.id} className="group flex items-center gap-2 p-1.5 hover:bg-gray-50 rounded-lg transition-colors">
+                        <div key={reminder.id} className="group flex items-center gap-2 p-1.5 hover:bg-gray-50 rounded-md transition-colors">
                             <button
                                 onClick={() => toggleComplete(reminder)}
                                 className="text-gray-400 hover:text-primary transition-colors flex-shrink-0"

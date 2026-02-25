@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import { X, Loader2, Layers } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -41,7 +42,7 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
         e.preventDefault();
 
         if (!formData.id.trim() || !formData.name.trim()) {
-            alert('ID and Name are required');
+            toast.error('ID and Name are required');
             return;
         }
 
@@ -72,7 +73,7 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
 
             if (error) throw error;
 
-            alert('✅ Job stage added successfully!');
+            toast.success('Job stage added successfully!');
             onSuccess?.();
             onClose();
 
@@ -86,7 +87,7 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
             });
         } catch (error: any) {
             console.error('Error adding job stage:', error);
-            alert('❌ Failed to add job stage: ' + error.message);
+            toast.error(String('❌ Failed to add job stage: ' + error.message));
         } finally {
             setSaving(false);
         }
@@ -166,7 +167,7 @@ export default function JobStageQuickAdd({ isOpen, onClose, onSuccess }: JobStag
                     <div className={`rounded-lg p-4 border-2 ${formData.border} ${formData.bgLight}`}>
                         <p className="text-xs text-gray-500 mb-2">Preview:</p>
                         <div className="flex items-center justify-between">
-                            <span className={`text-xs px-3 py-1 rounded-full text-white ${formData.color}`}>
+                            <span className={`text-xs px-3 py-1 rounded-md text-white ${formData.color}`}>
                                 {formData.name || 'Stage Name'}
                             </span>
                             <span className="text-sm text-gray-700">Kanban Card Background</span>

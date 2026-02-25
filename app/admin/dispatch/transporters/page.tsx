@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
@@ -137,7 +138,7 @@ export default function TransportersPage() {
       setShowModal(false);
     } catch (error) {
       console.error(error);
-      alert('Failed to save transporter');
+      toast.error('Failed to save transporter');
     } finally {
       setSubmitting(false);
     }

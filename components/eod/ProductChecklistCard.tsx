@@ -106,7 +106,7 @@ export default function ProductChecklistCard({
                         </span>
                     </div>
                     {taskStatus === 'COMPLETE' && (
-                        <span className="text-xs bg-white px-2 py-1 rounded-full font-medium">
+                        <span className="text-xs bg-white px-2 py-1 rounded-md font-medium">
                             {category === 'design' ? 'Pre-Print' : 'QC & Dispatch'}
                         </span>
                     )}

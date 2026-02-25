@@ -182,7 +182,7 @@ export default function QuickNotesWidget() {
 
                                     {/* Tag Picker Dropdown */}
                                     {showTagPicker && (
-                                        <div className="absolute bottom-full left-0 mb-1 w-48 bg-popover border rounded-md shadow-lg z-50 max-h-40 overflow-y-auto">
+                                        <div className="absolute bottom-full left-0 mb-1 w-48 bg-popover border rounded-md shadow-sm z-50 max-h-40 overflow-y-auto">
                                             {teamMembers.length === 0 ? (
                                                 <div className="p-2 text-xs text-muted-foreground">No team members found</div>
                                             ) : (

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { toast } from '@/lib/toast';
 import { BarChart3, TrendingUp, Truck, FileText, Download, Loader2, Search, Printer, Calendar, ArrowRightLeft, DollarSign } from 'lucide-react';
 import { useDashboardStats, useClients, useJobs, usePaymentsReceived, useVendors, usePurchaseBills, useVendorPayments, useExpenses } from '@/lib/hooks';
 import { useState } from 'react';
@@ -80,7 +81,7 @@ function ClientStatementGenerator() {
   const [showStatement, setShowStatement] = useState(false);
 
   const generateStatement = () => {
-    if (!selectedClientId) return alert('Please select a client');
+    if (!selectedClientId) return toast.error('Please select a client');
     setShowStatement(true);
   };
 

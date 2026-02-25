@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { ArrowLeft, Download, Filter, TrendingUp, TrendingDown, IndianRupee, PieChart } from 'lucide-react';
 
@@ -85,7 +86,7 @@ export default function FinanceReportPage() {
     }, {} as Record<string, number>);
 
   const handleExport = (type: 'pdf' | 'excel') => {
-    alert(`📥 Exporting Finance Report as ${type.toUpperCase()}...\n\nIn production, this would generate a downloadable file.`);
+    toast.info(`📥 Exporting Finance Report as ${type.toUpperCase()}...\n\nIn production, this would generate a downloadable file.`);
   };
 
   const getExpenseColor = (index: number) => {

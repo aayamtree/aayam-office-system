@@ -1,6 +1,7 @@
 'use client';
 
 import { useConfirm } from '@/components/ConfirmModal';
+import { toast } from '@/lib/toast';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
@@ -197,7 +198,7 @@ export default function MyNotes() {
 
             if (error) {
                 console.error('Create error:', error);
-                alert('Error creating note: ' + error.message);
+                toast.error(String('Error creating note: ' + error.message));
                 return;
             }
             if (data) {
@@ -205,7 +206,7 @@ export default function MyNotes() {
                 selectNote(data as NoteItem);
             }
         } catch (err: any) {
-            alert('Failed to create note: ' + err.message);
+            toast.error(String('Failed to create note: ' + err.message));
         }
     };
 
@@ -278,7 +279,7 @@ export default function MyNotes() {
 
             fetchNotes();
         } catch (e: any) {
-            alert('Error saving: ' + e.message);
+            toast.error(String('Error saving: ' + e.message));
         } finally {
             setSaving(false);
         }

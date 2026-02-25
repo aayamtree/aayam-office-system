@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import { useRouter } from 'next/navigation';
 import { useSession, signIn } from 'next-auth/react';
 import { useClients, useDesigners, useProductCategories } from '@/lib/hooks';
@@ -281,14 +282,14 @@ export default function NewProjectPage() {
                 } catch { } // Don't block on notification failure
             }
 
-            alert(isDesignerRole
+            toast.error(String(isDesignerRole
                 ? 'Project submitted! Admin will be notified to set pricing and approve.'
                 : 'Project created successfully!'
-            );
+            ));
             router.push('/admin/designers/my-queue');
         } catch (error: any) {
             console.error('Error creating project:', error);
-            alert('Failed to create project: ' + error.message);
+            toast.error(String('Failed to create project: ' + error.message));
         } finally {
             setCreating(false);
             setUploadProgress('');

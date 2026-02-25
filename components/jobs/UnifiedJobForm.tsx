@@ -359,7 +359,7 @@ export default function UnifiedJobForm({
                         <h3 className="text-section text-gray-900 flex items-center gap-2">
                             <span className="bg-primary text-primary-foreground w-8 h-8 rounded-lg flex items-center justify-center text-sm">3</span>
                             Financial Details
-                            <span className="ml-auto text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full">Admin Only</span>
+                            <span className="ml-auto text-xs bg-green-100 text-green-700 px-3 py-1 rounded-md">Admin Only</span>
                         </h3>
 
                         <div className="grid grid-cols-3 gap-2 md:gap-4">

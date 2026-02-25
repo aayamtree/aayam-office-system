@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import {
   Plus, Search, Calendar, Clock, Edit, Trash2, Eye, X, ArrowLeft, CheckCircle,
@@ -103,7 +104,7 @@ export default function DesignerProjectsPage() {
       setShowModal(false);
       resetForm();
     } catch (err) {
-      alert('Failed to save project');
+      toast.error('Failed to save project');
     } finally {
       setSubmitting(false);
     }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -255,7 +256,7 @@ export default function OrdersPage() {
           notes: formData.notes
         } as any);
         if (result?.error) {
-          alert('Failed to update: ' + result.error);
+          toast.error(String('Failed to update: ' + result.error));
           return;
         }
       } else {
@@ -282,7 +283,7 @@ export default function OrdersPage() {
           sales_person_id: profile?.id || user?.id,
         } as any);
         if (result?.error) {
-          alert('Failed to create: ' + result.error);
+          toast.error(String('Failed to create: ' + result.error));
           return;
         }
 
@@ -312,7 +313,7 @@ export default function OrdersPage() {
       setShowModal(false);
     } catch (error) {
       console.error('Error saving order:', error);
-      alert('Failed to save order');
+      toast.error('Failed to save order');
     } finally {
       setSubmitting(false);
     }

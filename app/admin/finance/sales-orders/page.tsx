@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import {
     Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
@@ -94,7 +95,7 @@ export default function SalesOrdersPage() {
             }
             setShowModal(false);
         } catch (err: any) {
-            alert('Error saving order: ' + err.message);
+            toast.error(String('Error saving order: ' + err.message));
         } finally {
             setSubmitting(false);
         }

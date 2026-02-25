@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { toast } from '@/lib/toast';
 import { Building2, Wallet, Plus, Edit2, Trash2, Eye, RefreshCw } from 'lucide-react';
 import { useBankAccounts, useCashAccounts } from '@/lib/hooks';
 
@@ -235,11 +236,11 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
 
             if (error) throw error;
 
-            alert('✅ Bank account added successfully!');
+            toast.success('Bank account added successfully!');
             onSuccess();
         } catch (error: any) {
             console.error('Error:', error);
-            alert('❌ Failed to add bank account: ' + error.message);
+            toast.error(String('❌ Failed to add bank account: ' + error.message));
         } finally {
             setSaving(false);
         }
@@ -375,11 +376,11 @@ function AddCashAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
 
             if (error) throw error;
 
-            alert('✅ Cash account added successfully!');
+            toast.success('Cash account added successfully!');
             onSuccess();
         } catch (error: any) {
             console.error('Error:', error);
-            alert('❌ Failed to add cash account: ' + error.message);
+            toast.error(String('❌ Failed to add cash account: ' + error.message));
         } finally {
             setSaving(false);
         }

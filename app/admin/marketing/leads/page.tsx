@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import {
     Search, Plus, Phone, Mail, Calendar,
     Edit, Trash2, Eye, X, ArrowLeft, User,
@@ -45,10 +46,10 @@ export default function LeadsPage() {
             await updateLead(lead.id, { status: 'follow_up' });
 
             await refetch();
-            alert('Moved to Follow-ups successfully');
+            toast.success('Moved to Follow-ups successfully');
         } catch (e: any) {
             console.error(e);
-            alert('Operation failed: ' + e.message);
+            toast.error(String('Operation failed: ' + e.message));
         }
     };
 
@@ -57,16 +58,16 @@ export default function LeadsPage() {
         if (!convertConfirmed) return;
         try {
             const currentUserId = profile?.id || user?.id;
-            if (!currentUserId) { alert('User not authenticated'); return; }
+            if (!currentUserId) { toast.info('User not authenticated'); return; }
 
             const res = await convertToClient(lead.id, currentUserId);
             if (res.error) throw new Error(res.error);
 
             await refetch();
-            alert(`Converted ${lead.name} to Client! You can now manage them in CRM > Clients.`);
+            toast.info(`Converted ${lead.name} to Client! You can now manage them in CRM > Clients.`);
         } catch (e: any) {
             console.error(e);
-            alert('Conversion failed: ' + e.message);
+            toast.error(String('Conversion failed: ' + e.message));
         }
     };
 
@@ -162,7 +163,7 @@ export default function LeadsPage() {
             await deleteLead(id);
             await refetch();
         } catch (e) {
-            alert('Failed to delete lead');
+            toast.error('Failed to delete lead');
         }
     };
 
@@ -232,7 +233,7 @@ export default function LeadsPage() {
             if (result.error) throw new Error(result.error);
 
             // 3. Success & Refresh
-            alert(isEditing ? 'Lead updated successfully!' : 'Lead created successfully!');
+            toast.error(String(isEditing ? 'Lead updated successfully!' : 'Lead created successfully!'));
             setShowModal(false);
 
             // FORCE REFRESH THE LIST
@@ -240,7 +241,7 @@ export default function LeadsPage() {
 
         } catch (error: any) {
             console.error('Save Error:', error);
-            alert(error.message || 'Failed to save lead. Please check your connection.');
+            toast.error(String(error.message || 'Failed to save lead. Please check your connection.'));
         } finally {
             setSubmitting(false);
         }

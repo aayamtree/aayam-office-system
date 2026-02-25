@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import {
@@ -85,7 +86,7 @@ export default function NotificationsPage() {
             setSuccessMessage(`Message sent to ${audienceLabel}! It will popup on their screens instantly.`);
             setTimeout(() => setSuccessMessage(''), 4000);
         } else {
-            alert('Error sending: ' + error.message);
+            toast.error(String('Error sending: ' + error.message));
         }
 
         setSending(false);

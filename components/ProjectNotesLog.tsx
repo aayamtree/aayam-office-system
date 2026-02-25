@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { toast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { NoteTag, NoteSource } from '@/types/database';
@@ -203,7 +204,7 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
             setSource('self');
             await fetchNotes();
         } catch (e: any) {
-            alert('Error adding note: ' + (e.message || 'Unknown error'));
+            toast.error(String('Error adding note: ' + (e.message || 'Unknown error')));
         } finally {
             setSaving(false);
         }
@@ -215,7 +216,7 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
         try {
             await supabase.from('job_notes').delete().eq('id', noteId);
             await fetchNotes();
-        } catch (e: any) { alert('Error: ' + e.message); }
+        } catch (e: any) { toast.error(String('Error: ' + e.message)); }
     };
 
     const getRoleBadge = (role?: string) => {
@@ -251,22 +252,22 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
                 </h4>
                 <div className="flex items-center gap-2">
                     {revisionCount > 0 && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded-full">
+                        <span className="flex items-center gap-1 text-[10px] font-bold bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded-md">
                             <RotateCcw size={10} /> {revisionCount} {revisionCount === 1 ? 'Revision' : 'Revisions'}
                         </span>
                     )}
                     {isLocked && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold bg-gray-900 text-white px-2 py-0.5 rounded-full">
+                        <span className="flex items-center gap-1 text-[10px] font-bold bg-gray-900 text-white px-2 py-0.5 rounded-md">
                             <Lock size={10} /> Sent to Print
                         </span>
                     )}
                     {!isLocked && isClosed && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold bg-green-100 text-green-800 border border-green-300 px-2 py-0.5 rounded-full">
+                        <span className="flex items-center gap-1 text-[10px] font-bold bg-green-100 text-green-800 border border-green-300 px-2 py-0.5 rounded-md">
                             <Lock size={10} /> Closed → Print
                         </span>
                     )}
                     {!isLocked && isApproved && !isClosed && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold bg-green-50 text-green-600 border border-green-200 px-2 py-0.5 rounded-full">
+                        <span className="flex items-center gap-1 text-[10px] font-bold bg-green-50 text-green-600 border border-green-200 px-2 py-0.5 rounded-md">
                             <CheckCircle size={10} /> Approved
                         </span>
                     )}
@@ -278,14 +279,14 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
 
             {/* Locked banner for designers */}
             {isLocked && !isAdmin && (
-                <div className="mb-2 px-3 py-2 bg-gray-900 text-white text-xs font-bold rounded-lg flex items-center gap-2">
+                <div className="mb-2 px-3 py-2 bg-gray-900 text-white text-xs font-bold rounded-md flex items-center gap-2">
                     <Lock size={14} /> This project is locked — sent to print. Only admin can make changes.
                 </div>
             )}
 
             {/* Admin pullback banner */}
             {isLocked && isAdmin && (
-                <div className="mb-2 px-3 py-2 bg-amber-50 text-amber-800 text-xs font-bold rounded-lg border border-amber-200 flex items-center gap-2">
+                <div className="mb-2 px-3 py-2 bg-amber-50 text-amber-800 text-xs font-bold rounded-md border border-amber-200 flex items-center gap-2">
                     <AlertCircle size={14} /> Admin mode — you can add a Correction note to pull this back to designer.
                 </div>
             )}
@@ -374,7 +375,7 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
                                         key={key}
                                         type="button"
                                         onClick={() => setTag(key)}
-                                        className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full border transition-all ${tag === key
+                                        className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md border transition-all ${tag === key
                                             ? `${conf.bg} ${conf.text} border-current ring-1 ring-current/20`
                                             : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-100'
                                             }`}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import { X, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -37,7 +38,7 @@ export default function PriorityQuickAdd({ isOpen, onClose, onSuccess }: Priorit
         e.preventDefault();
 
         if (!formData.id.trim() || !formData.name.trim()) {
-            alert('ID and Name are required');
+            toast.error('ID and Name are required');
             return;
         }
 
@@ -66,7 +67,7 @@ export default function PriorityQuickAdd({ isOpen, onClose, onSuccess }: Priorit
 
             if (error) throw error;
 
-            alert('✅ Priority added successfully!');
+            toast.success('Priority added successfully!');
             onSuccess?.();
             onClose();
 
@@ -74,7 +75,7 @@ export default function PriorityQuickAdd({ isOpen, onClose, onSuccess }: Priorit
             setFormData({ id: '', name: '', color: 'bg-blue-100 text-blue-600' });
         } catch (error: any) {
             console.error('Error adding priority:', error);
-            alert('❌ Failed to add priority: ' + error.message);
+            toast.error(String('❌ Failed to add priority: ' + error.message));
         } finally {
             setSaving(false);
         }
@@ -143,7 +144,7 @@ export default function PriorityQuickAdd({ isOpen, onClose, onSuccess }: Priorit
                             ))}
                         </div>
                         <p className="text-xs text-gray-500 mt-2">
-                            Preview: <span className={`px-2 py-0.5 rounded-full text-xs ${formData.color}`}>
+                            Preview: <span className={`px-2 py-0.5 rounded-md text-xs ${formData.color}`}>
                                 {formData.name || 'Priority'}
                             </span>
                         </p>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import { X, Loader2, Briefcase } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -23,7 +24,7 @@ export default function JobTypeQuickAdd({ isOpen, onClose, onSuccess }: JobTypeQ
         e.preventDefault();
 
         if (!formData.name.trim()) {
-            alert('Job type name is required');
+            toast.error('Job type name is required');
             return;
         }
 
@@ -39,7 +40,7 @@ export default function JobTypeQuickAdd({ isOpen, onClose, onSuccess }: JobTypeQ
 
             if (error) throw error;
 
-            alert('✅ Job type added successfully!');
+            toast.success('Job type added successfully!');
             onSuccess?.();
             onClose();
 
@@ -47,7 +48,7 @@ export default function JobTypeQuickAdd({ isOpen, onClose, onSuccess }: JobTypeQ
             setFormData({ name: '', description: '' });
         } catch (error: any) {
             console.error('Error adding job type:', error);
-            alert('❌ Failed to add job type: ' + error.message);
+            toast.error(String('❌ Failed to add job type: ' + error.message));
         } finally {
             setSaving(false);
         }

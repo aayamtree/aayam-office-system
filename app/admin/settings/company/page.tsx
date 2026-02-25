@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { ArrowLeft, Save, Upload, Building2 } from 'lucide-react';
 
@@ -40,7 +41,7 @@ export default function CompanyPage() {
     setIsSaving(true);
     setTimeout(() => {
       setIsSaving(false);
-      alert('✅ Company settings saved successfully!');
+      toast.success('Company settings saved successfully!');
     }, 1000);
   };
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 import { User, Shield, Briefcase, Mail, Phone, Trash2, Plus, X } from 'lucide-react';
@@ -63,7 +64,7 @@ export default function UserManagementPage() {
       .eq('id', userId);
 
     if (error) {
-      alert('Error updating role: ' + error.message);
+      toast.error(String('Error updating role: ' + error.message));
     } else {
       await fetchProfiles();
     }
@@ -104,7 +105,7 @@ export default function UserManagementPage() {
       if (error) throw error;
 
       if (data.user) {
-        alert(`User created successfully!\n\nID: ${newUser.username}\nPass: ${newUser.password}`);
+        toast.success(`User created successfully!\n\nID: ${newUser.username}\nPass: ${newUser.password}`);
         setShowAddModal(false);
         setNewUser({ fullName: '', username: '', password: '', role: 'user' });
         setTimeout(fetchProfiles, 1000);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import {
   Plus, Search, ArrowLeft, Building, Edit, Trash2, Eye, X, IndianRupee,
@@ -79,7 +80,7 @@ export default function BankAccountsPage() {
       resetForm();
     } catch (error: any) {
       console.error(error);
-      alert(`Failed to save bank account: ${error.message || JSON.stringify(error)}`);
+      toast.error(`Failed to save bank account: ${error.message || JSON.stringify(error)}`);
     } finally {
       setSubmitting(false);
     }

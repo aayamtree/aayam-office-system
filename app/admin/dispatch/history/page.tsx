@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import {
   Search, ArrowLeft, Truck, CheckCircle,
@@ -140,7 +141,7 @@ export default function DispatchHistoryPage() {
 
   const handleWhatsAppShare = (dispatch: Dispatch) => {
     const clientPhone = dispatch.client?.phone;
-    if (!clientPhone) return alert('No client phone number available');
+    if (!clientPhone) return toast.info('No client phone number available');
 
     const message = `📦 Dispatch Update for Order #${dispatch.job?.job_number || 'N/A'}\n\nStatus: ${getStatusLabel(dispatch.status)}\nTransporter: ${dispatch.transporter_name || 'N/A'}\nTracking / LR: ${dispatch.tracking_number || 'N/A'}\nVehicle: ${dispatch.vehicle_number || 'N/A'}\nDriver: ${dispatch.driver_name} (${dispatch.driver_phone})\n\nExpected Delivery: ${dispatch.expected_delivery || 'TBD'}\n\nThank you for choosing Aayam!`;
 

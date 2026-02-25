@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import { X, Loader2, Package } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -23,7 +24,7 @@ export default function ProductTypeQuickAdd({ isOpen, onClose, onSuccess }: Prod
         e.preventDefault();
 
         if (!formData.name.trim()) {
-            alert('Product type name is required');
+            toast.error('Product type name is required');
             return;
         }
 
@@ -39,7 +40,7 @@ export default function ProductTypeQuickAdd({ isOpen, onClose, onSuccess }: Prod
 
             if (error) throw error;
 
-            alert('✅ Product type added successfully!');
+            toast.success('Product type added successfully!');
             onSuccess?.();
             onClose();
 
@@ -47,7 +48,7 @@ export default function ProductTypeQuickAdd({ isOpen, onClose, onSuccess }: Prod
             setFormData({ name: '', description: '' });
         } catch (error: any) {
             console.error('Error adding product type:', error);
-            alert('❌ Failed to add product type: ' + error.message);
+            toast.error(String('❌ Failed to add product type: ' + error.message));
         } finally {
             setSaving(false);
         }

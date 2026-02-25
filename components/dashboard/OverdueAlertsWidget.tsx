@@ -152,7 +152,7 @@ export default function OverdueAlertsWidget() {
                 <div className="flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-red-500" />
                     <h3 className="text-sm font-semibold text-gray-900">Overdue Items</h3>
-                    <span className="text-xs font-bold text-white bg-red-500 px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                    <span className="text-xs font-bold text-white bg-red-500 px-1.5 py-0.5 rounded-md min-w-[20px] text-center">
                         {overdueItems.length}
                     </span>
                 </div>

@@ -4,6 +4,14 @@
     ],
     "crons": [
         {
+            "path": "/api/cron/keep-alive",
+            "schedule": "*/5 * * * *"
+        },
+        {
+            "path": "/api/health",
+            "schedule": "45 3 * * *"
+        },
+        {
             "path": "/api/cron/refresh-drive-token",
             "schedule": "*/50 * * * *"
         },

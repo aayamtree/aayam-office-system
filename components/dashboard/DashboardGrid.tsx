@@ -476,7 +476,7 @@ export default function DashboardGrid({ defaultLayouts, isLocked, storageKey, ch
                         {!isLocked && (
                             <div
                                 onMouseDown={(e) => handleDragStart(e, item.i)}
-                                className="absolute top-1.5 right-1.5 z-30 cursor-grab active:cursor-grabbing p-1.5 rounded-md bg-blue-500 hover:bg-blue-600 text-white shadow-md transition-all hover:scale-110"
+                                className="absolute top-1.5 right-1.5 z-30 cursor-grab active:cursor-grabbing p-1.5 rounded-md bg-blue-500 hover:bg-blue-600 text-white shadow-sm transition-all hover:scale-110"
                                 title="Drag to move widget"
                             >
                                 <GripVertical className="h-4 w-4" />

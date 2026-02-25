@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
 import { Plus, X, Loader2, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { logActivity } from '@/lib/logger';
@@ -121,9 +122,9 @@ export default function PaymentsPageNew() {
 
             await fetchPayments();
             setShowModal(false);
-            alert('Payment recorded successfully!');
+            toast.success('Payment recorded successfully!');
         } catch (err: any) {
-            alert('Error: ' + err.message);
+            toast.error(String('Error: ' + err.message));
             console.error('Submit error:', err);
         } finally {
             setSubmitting(false);

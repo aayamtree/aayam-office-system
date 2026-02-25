@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import {
   Plus, Search, FileText, Building2, Calendar, IndianRupee, X, Eye, Edit, Trash2,
@@ -104,7 +105,7 @@ export default function VendorPurchasesPage() {
       }
       resetForm();
     } catch (err: any) {
-      alert('Failed to save purchase bill: ' + err.message);
+      toast.error(String('Failed to save purchase bill: ' + err.message));
     } finally {
       setSubmitting(false);
     }

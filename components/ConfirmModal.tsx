@@ -152,7 +152,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
                                 <button
                                     type="button"
                                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCancel(); }}
-                                    className="flex-1 py-2.5 rounded-lg text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+                                    className="flex-1 py-2.5 rounded-md text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
                                 >
                                     {options.cancelLabel || 'Cancel'}
                                 </button>
@@ -160,7 +160,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
                                     type="button"
                                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleConfirm(); }}
                                     disabled={options.showInput && options.inputRequired && !inputRef.current.trim()}
-                                    className={`flex-1 py-2.5 rounded-lg text-sm font-bold text-white ${v.bg} ${v.hover} transition-colors disabled:opacity-40 disabled:cursor-not-allowed`}
+                                    className={`flex-1 py-2.5 rounded-md text-sm font-bold text-white ${v.bg} ${v.hover} transition-colors disabled:opacity-40 disabled:cursor-not-allowed`}
                                 >
                                     {options.confirmLabel || 'Confirm'}
                                 </button>

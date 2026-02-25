@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import {
   ArrowLeft, Plus, Minus, Trash2, ShoppingCart,
@@ -183,13 +184,13 @@ export default function RetailPOSPage() {
 
       const result = await createPOSSale(saleData, saleItems);
       if (result.error) {
-        alert('Failed to save sale: ' + result.error);
+        toast.error(String('Failed to save sale: ' + result.error));
         return null;
       }
       return result.data?.sale_number;
     } catch (e) {
       console.error(e);
-      alert('An unexpected error occurred.');
+      toast.error('An unexpected error occurred.');
       return null;
     }
   };
@@ -230,7 +231,7 @@ export default function RetailPOSPage() {
       clearCart();
     } catch (error) {
       console.error('Error printing receipt:', error);
-      alert('Error printing receipt. Please try again.');
+      toast.error('Error printing receipt. Please try again.');
     } finally {
       setIsProcessing(false);
     }

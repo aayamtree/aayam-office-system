@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import { X, Plus, Loader2 } from 'lucide-react';
 import { useExpenseCategories, useIncomeCategories, useTransactionCategorization, TransactionCategorization } from '@/lib/categorization-hooks';
 
@@ -89,7 +90,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
 
         // Validation
         if (!selectedCategory) {
-            alert('Please select a category');
+            toast.error('Please select a category');
             return;
         }
 
@@ -113,7 +114,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
         const { error } = await categorizeTransaction(transaction.id, categorizationData);
 
         if (error) {
-            alert(`Error: ${error}`);
+            toast.error(`Error: ${error}`);
         } else {
             onSuccess();
             onClose();
@@ -122,7 +123,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
 
     const handleCreateNewCategory = async () => {
         if (!newCategoryName.trim()) {
-            alert('Please enter a category name');
+            toast.error('Please enter a category name');
             return;
         }
 
@@ -133,7 +134,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
             const { data, error } = await createFn(newCategoryName.trim());
 
             if (error) {
-                alert(`Error creating category: ${error}`);
+                toast.error(`Error creating category: ${error}`);
             } else if (data) {
                 setSelectedCategory(data.id);
                 setNewCategoryName('');

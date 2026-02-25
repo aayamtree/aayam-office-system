@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import { Cloud, CheckCircle, XCircle, RefreshCw, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useConfirm } from '@/components/ConfirmModal';
@@ -37,14 +38,14 @@ export default function GoogleDriveSettings() {
         const error = params.get('drive_error');
 
         if (connected === 'true') {
-            alert('Google Drive connected successfully!');
+            toast.success('Google Drive connected successfully!');
             // Clean up URL params
             window.history.replaceState({}, '', window.location.pathname);
             loadStatus();
         }
 
         if (error) {
-            alert(`Drive connection error: ${decodeURIComponent(error)}`);
+            toast.error(`Drive connection error: ${decodeURIComponent(error)}`);
             window.history.replaceState({}, '', window.location.pathname);
         }
     }, []);
@@ -55,7 +56,7 @@ export default function GoogleDriveSettings() {
 
         const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
         if (!clientId) {
-            alert('Google Client ID not configured. Contact admin.');
+            toast.info('Google Client ID not configured. Contact admin.');
             setConnecting(false);
             return;
         }
@@ -105,14 +106,14 @@ export default function GoogleDriveSettings() {
 
             if (res.ok) {
                 await loadStatus();
-                alert('Google Drive disconnected successfully');
+                toast.success('Google Drive disconnected successfully');
             } else {
                 const data = await res.json();
-                alert(`Failed to disconnect: ${data.error || 'Unknown error'}`);
+                toast.error(`Failed to disconnect: ${data.error || 'Unknown error'}`);
             }
         } catch (error) {
             console.error('Error disconnecting:', error);
-            alert('Error disconnecting Drive');
+            toast.error('Error disconnecting Drive');
         } finally {
             setDisconnecting(false);
         }

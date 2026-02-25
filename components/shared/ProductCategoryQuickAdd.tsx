@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import { X, Loader2, Tag } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useProductCategories } from '@/lib/hooks';
@@ -28,7 +29,7 @@ export default function ProductCategoryQuickAdd({ isOpen, onClose, onSuccess }: 
         e.preventDefault();
 
         if (!formData.name) {
-            alert('Category name is required');
+            toast.error('Category name is required');
             return;
         }
 
@@ -47,7 +48,7 @@ export default function ProductCategoryQuickAdd({ isOpen, onClose, onSuccess }: 
 
             if (error) throw error;
 
-            alert('✅ Product category added successfully!');
+            toast.success('Product category added successfully!');
             onSuccess?.(data.id, data.name);
             onClose();
 
@@ -59,7 +60,7 @@ export default function ProductCategoryQuickAdd({ isOpen, onClose, onSuccess }: 
             });
         } catch (error: any) {
             console.error('Error adding category:', error);
-            alert('❌ Failed to add category: ' + error.message);
+            toast.error(String('❌ Failed to add category: ' + error.message));
         } finally {
             setSaving(false);
         }

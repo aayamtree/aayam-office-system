@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { Package, CheckCircle, Truck, Clock, AlertTriangle, ClipboardCheck, Loader2, X, Camera, MapPin, Building2, Search, FileText } from 'lucide-react';
 import { useJobs, useDispatches } from '@/lib/hooks';
@@ -147,9 +148,9 @@ export default function DispatchPage() {
       }
 
       setShowDispatchModal(false);
-      alert('Order marked as Dispatched!');
+      toast.info('Order marked as Dispatched!');
     } catch (err: any) {
-      alert('Error dispatching: ' + err.message);
+      toast.error(String('Error dispatching: ' + err.message));
     } finally {
       setSubmitting(false);
     }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
@@ -109,7 +110,7 @@ export default function InvoicesPage() {
   // Handle PDF Download
   const handleDownloadPDF = async (invoice: Invoice) => {
     if (!invoice.client) {
-      alert('Client details missing for this invoice.');
+      toast.info('Client details missing for this invoice.');
       return;
     }
     setPdfLoading(true);
@@ -118,7 +119,7 @@ export default function InvoicesPage() {
       await downloadInvoicePDF(invoiceData);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Error generating PDF. Please try again.');
+      toast.error('Error generating PDF. Please try again.');
     } finally {
       setPdfLoading(false);
     }
@@ -127,7 +128,7 @@ export default function InvoicesPage() {
   // Handle PDF Print
   const handlePrintPDF = async (invoice: Invoice) => {
     if (!invoice.client) {
-      alert('Client details missing for this invoice.');
+      toast.info('Client details missing for this invoice.');
       return;
     }
     setPdfLoading(true);
@@ -136,7 +137,7 @@ export default function InvoicesPage() {
       await printInvoicePDF(invoiceData);
     } catch (error) {
       console.error('Error printing PDF:', error);
-      alert('Error printing. Please try again.');
+      toast.error('Error printing. Please try again.');
     } finally {
       setPdfLoading(false);
     }
@@ -145,7 +146,7 @@ export default function InvoicesPage() {
   // Handle WhatsApp Share Invoice
   const handleWhatsAppShare = (invoice: Invoice) => {
     if (!invoice.client?.phone) {
-      alert('Client phone number is missing.');
+      toast.info('Client phone number is missing.');
       return;
     }
 
@@ -166,7 +167,7 @@ export default function InvoicesPage() {
   // Handle WhatsApp Payment Reminder
   const handlePaymentReminder = (invoice: Invoice) => {
     if (!invoice.client?.phone) {
-      alert('Client phone number is missing.');
+      toast.info('Client phone number is missing.');
       return;
     }
     const message = getPaymentReminderMessage({
@@ -335,7 +336,7 @@ export default function InvoicesPage() {
       setShowModal(false);
     } catch (error) {
       console.error('Error saving invoice:', error);
-      alert('Failed to save invoice');
+      toast.error('Failed to save invoice');
     } finally {
       setSubmitting(false);
     }

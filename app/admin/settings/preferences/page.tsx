@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { ArrowLeft, Save } from 'lucide-react';
 
@@ -34,7 +35,7 @@ export default function PreferencesPage() {
     setIsSaving(true);
     setTimeout(() => {
       setIsSaving(false);
-      alert('✅ Preferences saved successfully!');
+      toast.success('Preferences saved successfully!');
     }, 1000);
   };
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import { X, Loader2, UserPlus } from 'lucide-react';
 import { useClients } from '@/lib/hooks';
 
@@ -31,7 +32,7 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
         e.preventDefault();
 
         if (!formData.name || !formData.phone) {
-            alert('Name and Phone are required');
+            toast.error('Name and Phone are required');
             return;
         }
 
@@ -45,12 +46,12 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
             });
 
             if (newClient?.error) {
-                alert('❌ Failed to add client: ' + newClient.error);
+                toast.error(String('❌ Failed to add client: ' + newClient.error));
                 setSaving(false);
                 return;
             }
 
-            alert('✅ Client added successfully!');
+            toast.success('Client added successfully!');
             if (newClient?.data) {
                 onSuccess?.(newClient.data.id);
             }
@@ -70,7 +71,7 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
             });
         } catch (error: any) {
             console.error('Error adding client:', error);
-            alert('❌ Failed to add client: ' + error.message);
+            toast.error(String('❌ Failed to add client: ' + error.message));
         } finally {
             setSaving(false);
         }

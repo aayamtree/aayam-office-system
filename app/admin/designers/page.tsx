@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -131,7 +132,7 @@ export default function DesignersPage() {
       setFormData(prev => ({ ...prev, document_url: publicUrl }));
     } catch (error: any) {
       console.error('Upload failed:', error);
-      alert('Upload failed: ' + error.message);
+      toast.error(String('Upload failed: ' + error.message));
     } finally {
       setUploadingDoc(false);
     }
@@ -200,7 +201,7 @@ export default function DesignersPage() {
         }
 
         if (!error) {
-          alert('Designer saved successfully, but Identity Document could not be saved because the "document_url" column is missing in the database. Please contact admin to add this column.');
+          toast.success('Designer saved successfully, but Identity Document could not be saved because the "document_url" column is missing in the database. Please contact admin to add this column.');
         }
       }
 
@@ -210,7 +211,7 @@ export default function DesignersPage() {
       resetForm();
     } catch (error) {
       console.error('Error saving designer:', error);
-      alert('Error saving designer');
+      toast.error('Error saving designer');
     } finally {
       setSaving(false);
     }
@@ -263,7 +264,7 @@ export default function DesignersPage() {
       setDesigners(designers.filter(d => d.id !== id));
     } catch (error) {
       console.error('Error:', error);
-      alert('Error deleting designer');
+      toast.error('Error deleting designer');
     }
   };
 

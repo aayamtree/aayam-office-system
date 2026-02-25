@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { ArrowLeft, Download, Filter, Truck, Package, Clock, CheckCircle } from 'lucide-react';
 
@@ -68,7 +69,7 @@ export default function DispatchReportPage() {
   const transporterData = Object.entries(transporterBreakdown).sort((a, b) => b[1] - a[1]);
 
   const handleExport = (type: 'pdf' | 'excel') => {
-    alert(`📥 Exporting Dispatch Report as ${type.toUpperCase()}...\n\nIn production, this would generate a downloadable file.`);
+    toast.info(`📥 Exporting Dispatch Report as ${type.toUpperCase()}...\n\nIn production, this would generate a downloadable file.`);
   };
 
   const getStatusColor = (status: string) => {

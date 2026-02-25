@@ -152,7 +152,7 @@ export default function SharedCalendarView({ events, loading }: SharedCalendarVi
                                 setSelectedUser(user);
                                 setFilterMode('user');
                             }}
-                            className={`px-3 py-1 rounded-full text-xs transition-colors ${selectedUser === user && filterMode === 'user'
+                            className={`px-3 py-1 rounded-md text-xs transition-colors ${selectedUser === user && filterMode === 'user'
                                 ? 'bg-primary text-primary-foreground'
                                 : 'bg-white hover:bg-muted text-gray-700'
                                 }`}

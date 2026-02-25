@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
@@ -269,7 +270,7 @@ export default function QuotationsPage() {
 
         if (newClient) {
           finalClientId = newClient.id;
-          alert(`Lead converted to Client: ${newClient.company || newClient.name}`);
+          toast.info(`Lead converted to Client: ${newClient.company || newClient.name}`);
         }
       }
 
@@ -326,26 +327,26 @@ export default function QuotationsPage() {
       // 5. Route based on order type
       if (q.order_type === 'design_print') {
         // Design + Print: Redirect to product requirements collection
-        alert(`Order created successfully! Job #${job?.job_number}\n\nNext: Collect product requirements for design and printing.`);
+        toast.success(`Order created successfully! Job #${job?.job_number}\n\nNext: Collect product requirements for design and printing.`);
         // TODO: Redirect to product requirements page when implemented
         // router.push(`/admin/marketing/product-requirements/${job?.id}?quotation=${q.id}`);
       } else if (q.order_type === 'print') {
         // Print Only: Client needs to upload design files
-        alert(`Order created successfully! Job #${job?.job_number}\n\nNext: Client will provide design files for printing.`);
+        toast.success(`Order created successfully! Job #${job?.job_number}\n\nNext: Client will provide design files for printing.`);
         // TODO: Could redirect to file upload page
       } else if (q.order_type === 'design') {
         // Design Only: Goes straight to design queue
-        alert(`Order created successfully! Job #${job?.job_number}\n\nNext: Job added to design queue.`);
+        toast.success(`Order created successfully! Job #${job?.job_number}\n\nNext: Job added to design queue.`);
         // TODO: Could redirect to design tasks
       } else {
-        alert(`Order created successfully! Job #${job?.job_number}`);
+        toast.success(`Order created successfully! Job #${job?.job_number}`);
       }
 
       // Refresh logic handled by hooks automatically
 
     } catch (err: any) {
       console.error('Error converting to order:', err);
-      alert('Failed to convert quotation to order: ' + err.message);
+      toast.error(String('Failed to convert quotation to order: ' + err.message));
     }
   };
 
@@ -395,7 +396,7 @@ export default function QuotationsPage() {
       setShowModal(false);
     } catch (error: any) {
       console.error('Error saving quotation:', error);
-      alert('Failed to save quotation: ' + (error.message || 'Unknown error'));
+      toast.error(String('Failed to save quotation: ' + (error.message || 'Unknown error')));
     } finally {
       setSubmitting(false);
     }

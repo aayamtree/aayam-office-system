@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -215,7 +216,7 @@ export default function JobDetailPage() {
 
         if (error) {
             console.error('Upload failed:', error);
-            alert(`Upload failed: ${error.message}`);
+            toast.error(`Upload failed: ${error.message}`);
             setUploading(false);
             e.target.value = '';
             return;

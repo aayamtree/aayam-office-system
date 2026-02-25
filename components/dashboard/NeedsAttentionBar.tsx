@@ -239,7 +239,7 @@ export default function NeedsAttentionBar({
                         <button
                             key={cat.key}
                             onClick={() => toggleExpand(cat.key)}
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full border transition-all cursor-pointer ${cat.color} ${expandedCategory === cat.key ? 'ring-2 ring-offset-1 ring-amber-300' : ''} ${cat.pulse ? 'animate-pulse' : ''}`}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md border transition-all cursor-pointer ${cat.color} ${expandedCategory === cat.key ? 'ring-2 ring-offset-1 ring-amber-300' : ''} ${cat.pulse ? 'animate-pulse' : ''}`}
                         >
                             {cat.icon}
                             <span className="font-bold">{cat.count}</span> {cat.label}
@@ -284,7 +284,7 @@ export default function NeedsAttentionBar({
                                             <p className="text-xs text-gray-500 truncate">{item.subtitle}</p>
                                         </div>
                                         {item.badge && (
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ml-2 ${item.badgeColor}`}>
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 ml-2 ${item.badgeColor}`}>
                                                 {item.badge}
                                             </span>
                                         )}

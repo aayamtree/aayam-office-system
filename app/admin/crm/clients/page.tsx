@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import {
   Search, Plus, Phone, Mail, MapPin, Hash,
@@ -154,7 +155,7 @@ export default function ClientsPage() {
         await deleteClient(id);
       } catch (error) {
         console.error('Error:', error);
-        alert('Error deleting');
+        toast.error('Error deleting');
       }
     }
   };
@@ -178,7 +179,7 @@ export default function ClientsPage() {
       setSelectedClient(null);
     } catch (error) {
       console.error('Error:', error);
-      alert('Error saving');
+      toast.error('Error saving');
     } finally {
       setSaving(false);
     }

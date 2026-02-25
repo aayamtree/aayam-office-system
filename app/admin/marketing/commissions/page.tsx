@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import { useAuth } from '@/lib/auth-context';
 import {
     IndianRupee, Plus, Download, Calculator,
@@ -355,7 +356,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                     </button>
                     <button
                         onClick={() => {
-                            alert('Commission saving feature coming soon - database table creation needed!');
+                            toast.info('Commission saving feature coming soon - database table creation needed!');
                             onClose();
                         }}
                         className="px-8 py-2 bg-gray-900 text-white rounded-md font-semibold hover:bg-gray-800 transition-all">

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import {
     Plus, Search, Palette, Phone, Mail, MapPin,
     Calendar, Briefcase, Edit, Trash2, Eye, X,
@@ -106,7 +107,7 @@ export default function DesignersManager() {
             setFormData(prev => ({ ...prev, document_url: publicUrl }));
         } catch (error: any) {
             console.error('Upload failed:', error);
-            alert('Upload failed: ' + error.message);
+            toast.error(String('Upload failed: ' + error.message));
         } finally {
             setUploadingDoc(false);
         }
@@ -174,7 +175,7 @@ export default function DesignersManager() {
             resetForm();
         } catch (error) {
             console.error('Error saving designer:', error);
-            alert('Error saving designer');
+            toast.error('Error saving designer');
         } finally {
             setSaving(false);
         }
@@ -227,7 +228,7 @@ export default function DesignersManager() {
             setDesigners(designers.filter(d => d.id !== id));
         } catch (error) {
             console.error('Error:', error);
-            alert('Error deleting designer');
+            toast.error('Error deleting designer');
         }
     };
 
@@ -302,7 +303,7 @@ export default function DesignersManager() {
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-gray-900">{designer.name}</h3>
-                                    <span className={`text-xs uppercase font-bold px-2 py-0.5 rounded-full ${getEmploymentBadge(designer.employment_type)}`}>{designer.employment_type}</span>
+                                    <span className={`text-xs uppercase font-bold px-2 py-0.5 rounded-md ${getEmploymentBadge(designer.employment_type)}`}>{designer.employment_type}</span>
                                 </div>
                             </div>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -339,15 +340,15 @@ export default function DesignersManager() {
                         <form onSubmit={handleSubmit} className="p-5 space-y-4">
                             {/* Form fields same as original but tighter */}
                             <div className="grid grid-cols-2 gap-2 md:gap-4">
-                                <div><label className="text-xs font-bold text-gray-500 mb-1 block">Full Name</label><input required className="w-full border rounded-lg p-2 text-sm" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} /></div>
-                                <div><label className="text-xs font-bold text-gray-500 mb-1 block">Phone</label><input required className="w-full border rounded-lg p-2 text-sm" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} /></div>
+                                <div><label className="text-xs font-bold text-gray-500 mb-1 block">Full Name</label><input required className="w-full border rounded-md p-2 text-sm" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} /></div>
+                                <div><label className="text-xs font-bold text-gray-500 mb-1 block">Phone</label><input required className="w-full border rounded-md p-2 text-sm" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} /></div>
                             </div>
-                            <div><label className="text-xs font-bold text-gray-500 mb-1 block">Email</label><input className="w-full border rounded-lg p-2 text-sm" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} /></div>
+                            <div><label className="text-xs font-bold text-gray-500 mb-1 block">Email</label><input className="w-full border rounded-md p-2 text-sm" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} /></div>
 
                             <div className="grid grid-cols-2 gap-2 md:gap-4">
                                 <div>
                                     <label className="text-xs font-bold text-gray-500 mb-1 block">Type</label>
-                                    <select className="w-full border rounded-lg p-2 text-sm" value={formData.employment_type} onChange={e => setFormData({ ...formData, employment_type: e.target.value })}>
+                                    <select className="w-full border rounded-md p-2 text-sm" value={formData.employment_type} onChange={e => setFormData({ ...formData, employment_type: e.target.value })}>
                                         <option value="full-time">Full Time</option>
                                         <option value="part-time">Part Time</option>
                                         <option value="freelance">Freelance</option>
@@ -355,13 +356,13 @@ export default function DesignersManager() {
                                 </div>
                                 <div>
                                     <label className="text-xs font-bold text-gray-500 mb-1 block">Joined</label>
-                                    <input type="date" className="w-full border rounded-lg p-2 text-sm" value={formData.joining_date} onChange={e => setFormData({ ...formData, joining_date: e.target.value })} />
+                                    <input type="date" className="w-full border rounded-md p-2 text-sm" value={formData.joining_date} onChange={e => setFormData({ ...formData, joining_date: e.target.value })} />
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-2 md:gap-4">
-                                <div><label className="text-xs font-bold text-gray-500 mb-1 block">Hourly Rate</label><input type="number" className="w-full border rounded-lg p-2 text-sm" value={formData.hourly_rate} onChange={e => setFormData({ ...formData, hourly_rate: +e.target.value })} /></div>
-                                <div><label className="text-xs font-bold text-gray-500 mb-1 block">Monthly Salary</label><input type="number" className="w-full border rounded-lg p-2 text-sm" value={formData.monthly_salary} onChange={e => setFormData({ ...formData, monthly_salary: +e.target.value })} /></div>
+                                <div><label className="text-xs font-bold text-gray-500 mb-1 block">Hourly Rate</label><input type="number" className="w-full border rounded-md p-2 text-sm" value={formData.hourly_rate} onChange={e => setFormData({ ...formData, hourly_rate: +e.target.value })} /></div>
+                                <div><label className="text-xs font-bold text-gray-500 mb-1 block">Monthly Salary</label><input type="number" className="w-full border rounded-md p-2 text-sm" value={formData.monthly_salary} onChange={e => setFormData({ ...formData, monthly_salary: +e.target.value })} /></div>
                             </div>
 
                             {/* Skills */}
@@ -415,11 +416,11 @@ export default function DesignersManager() {
                                 <p className="flex items-center gap-2"><MapPin size={14} /> {selectedDesigner.city}, {selectedDesigner.state}</p>
                             </div>
                             <div className="grid grid-cols-2 gap-2 md:gap-4">
-                                <div className="p-3 border rounded-lg">
+                                <div className="p-3 border rounded-md">
                                     <p className="text-xs text-gray-500">Hourly</p>
                                     <p className="font-bold">{formatCurrency(selectedDesigner.hourly_rate)}</p>
                                 </div>
-                                <div className="p-3 border rounded-lg">
+                                <div className="p-3 border rounded-md">
                                     <p className="text-xs text-gray-500">Monthly</p>
                                     <p className="font-bold">{formatCurrency(selectedDesigner.monthly_salary)}</p>
                                 </div>

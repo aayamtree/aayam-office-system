@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import {
   Search, Plus, ArrowLeft, Edit, Trash2, X,
@@ -127,7 +128,7 @@ export default function PaperStockPage() {
       setShowModal(false);
     } catch (error) {
       console.error(error);
-      alert('Failed to save item');
+      toast.error('Failed to save item');
     } finally {
       setSubmitting(false);
     }
@@ -148,7 +149,7 @@ export default function PaperStockPage() {
         setShowRestockModal(false);
       } catch (error) {
         console.error(error);
-        alert('Failed to restock');
+        toast.error('Failed to restock');
       } finally {
         setSubmitting(false);
       }

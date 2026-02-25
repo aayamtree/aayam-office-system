@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import { X } from 'lucide-react';
 import { format } from 'date-fns';
 import MentionInput from '@/components/calendar/MentionInput';
@@ -26,7 +27,7 @@ export default function NewEventModal({ profile, defaultDate, onClose, onCreate 
         e.preventDefault();
 
         if (!profile?.id) {
-            alert('User not authenticated');
+            toast.info('User not authenticated');
             return;
         }
 
@@ -48,7 +49,7 @@ export default function NewEventModal({ profile, defaultDate, onClose, onCreate 
             onClose();
         } catch (error) {
             console.error('Failed to create event:', error);
-            alert('Failed to create event');
+            toast.error('Failed to create event');
         }
     };
 

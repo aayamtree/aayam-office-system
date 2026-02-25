@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { Bell, Send, AlertCircle, Users, Clock } from 'lucide-react';
@@ -68,9 +69,9 @@ export default function BroadcastPage() {
             setPriority('normal');
             setTargetAudience('all');
             loadHistory();
-            alert('Broadcast sent successfully! 📢');
+            toast.success('Broadcast sent successfully! 📢');
         } else {
-            alert('Error sending broadcast: ' + error.message);
+            toast.error(String('Error sending broadcast: ' + error.message));
         }
 
         setSending(false);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import { X, Loader2, Building2, Plus } from 'lucide-react';
 import { useVendors } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
@@ -53,7 +54,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
         e.preventDefault();
 
         if (!formData.name || !formData.phone) {
-            alert('Name and Phone are required');
+            toast.error('Name and Phone are required');
             return;
         }
 
@@ -66,12 +67,12 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
             });
 
             if (newVendor?.error) {
-                alert('❌ Failed to add vendor: ' + newVendor.error);
+                toast.error(String('❌ Failed to add vendor: ' + newVendor.error));
                 setSaving(false);
                 return;
             }
 
-            alert('✅ Vendor added successfully!');
+            toast.success('Vendor added successfully!');
             if (newVendor?.data) {
                 onSuccess?.(newVendor.data.id);
             }
@@ -91,7 +92,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
             });
         } catch (error: any) {
             console.error('Error adding vendor:', error);
-            alert('❌ Failed to add vendor: ' + error.message);
+            toast.error(String('❌ Failed to add vendor: ' + error.message));
         } finally {
             setSaving(false);
         }

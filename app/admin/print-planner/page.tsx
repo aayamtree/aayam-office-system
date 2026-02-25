@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import { PrintJobQueue } from '@/components/print-planner/PrintJobQueue';
 import { CreatePrintRunForm } from '@/components/print-planner/CreatePrintRunForm';
 import { ArrowLeft, ArrowRight, CheckCircle, Layers, Package, Settings2, Users, AlertTriangle, Ruler } from 'lucide-react';
@@ -64,7 +65,7 @@ export default function PrintPlannerPage() {
         if (selectedJobs.length > 0) {
             const existingJobType = selectedJobs[0].job_type;
             if (job.job_type !== existingJobType) {
-                alert(`Cannot add ${job.job_type} job to ${existingJobType} print run.\n\nOnly jobs with the same type can be batched together.`);
+                toast.error(`Cannot add ${job.job_type} job to ${existingJobType} print run.\n\nOnly jobs with the same type can be batched together.`);
                 return;
             }
         }
@@ -145,7 +146,7 @@ export default function PrintPlannerPage() {
         setSelectedJobs([]);
         setConfiguredJobs([]);
         setStep(1);
-        alert('Print run created successfully!');
+        toast.success('Print run created successfully!');
     };
 
     const handleClear = () => {

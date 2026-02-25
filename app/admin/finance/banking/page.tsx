@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { toast } from '@/lib/toast';
 import {
     Building2, Upload, RefreshCw, CheckCircle,
     AlertTriangle, Search, Plus, Trash2, ArrowUpRight, ArrowDownLeft,
@@ -473,7 +474,7 @@ export default function BankingPage() {
                                             const text = await navigator.clipboard.readText();
                                             setImportText(text);
                                         } catch (err) {
-                                            alert('Clipboard access denied. Please use Ctrl+V / Cmd+V to paste manually.');
+                                            toast.info('Clipboard access denied. Please use Ctrl+V / Cmd+V to paste manually.');
                                         }
                                     }}
                                     className="text-xs text-primary font-medium hover:underline flex items-center gap-1"

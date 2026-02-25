@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import {
     DndContext,
     closestCenter,
@@ -87,7 +88,7 @@ export default function PrintPlannerPage() {
     const createBatch = () => {
         if (selectedJobs.length === 0) return;
         const workflow = WORKFLOWS[selectedWorkflow];
-        alert(`Creating Batch with ${selectedJobs.length} jobs.\nWorkflow: ${workflow.name}\nStages: ${workflow.stages.join(' -> ')}`);
+        toast.info(`Creating Batch with ${selectedJobs.length} jobs.\nWorkflow: ${workflow.name}\nStages: ${workflow.stages.join(' -> ')}`);
         // Here we would call API to create row in 'print_batches' and link items
     };
 

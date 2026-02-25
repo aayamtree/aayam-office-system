@@ -47,7 +47,7 @@ export default function InvoicePendingWidget() {
     }, []);
 
     if (loading) return (
-        <div className="h-full flex items-center justify-center bg-white border rounded-lg">
+        <div className="h-full flex items-center justify-center bg-white border rounded-md">
             <span className="text-sm text-muted-foreground">Loading invoices...</span>
         </div>
     );
@@ -68,7 +68,7 @@ export default function InvoicePendingWidget() {
                     <FileText className="w-4 h-4" />
                     Invoice & E-Way Bill Pending
                 </h3>
-                <span className="px-2 py-0.5 bg-amber-200 text-amber-800 text-xs rounded-full font-medium">
+                <span className="px-2 py-0.5 bg-amber-200 text-amber-800 text-xs rounded-md font-medium">
                     {jobs.length} {jobs.length === 1 ? 'job' : 'jobs'}
                 </span>
             </div>

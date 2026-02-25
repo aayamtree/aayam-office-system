@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import { useRouter } from 'next/navigation';
 import {
   Plus, Search, Phone, Mail, Calendar, Clock, Edit, Trash2, X,
@@ -98,7 +99,7 @@ export default function MarketingFollowUpsPage() {
       resetForm();
       refetch();
     } catch (e) {
-      alert('Failed to save');
+      toast.error('Failed to save');
     } finally {
       setSubmitting(false);
     }
@@ -133,7 +134,7 @@ export default function MarketingFollowUpsPage() {
     if (followUp.leadId) {
       router.push(`/admin/marketing/quotations?new=true&leadId=${followUp.leadId}&followUpId=${followUp.id}`);
     } else {
-      alert('Error: No Lead linked to this follow-up.');
+      toast.error('Error: No Lead linked to this follow-up.');
     }
   };
 

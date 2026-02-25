@@ -620,7 +620,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                                                         <p className="text-xs text-gray-500 truncate">{item.subtitle}</p>
                                                     </div>
                                                     {item.badge && (
-                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${item.urgency === 'high' ? 'bg-red-100 text-red-700' :
+                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 ${item.urgency === 'high' ? 'bg-red-100 text-red-700' :
                                                                 item.urgency === 'medium' ? 'bg-amber-100 text-amber-700' :
                                                                     'bg-gray-100 text-gray-700'
                                                             }`}>

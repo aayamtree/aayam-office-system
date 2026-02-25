@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
@@ -454,11 +455,11 @@ export default function DesignerWorkspace() {
         }
 
         refetchJobs();
-        alert('File uploaded successfully!');
+        toast.success('File uploaded successfully!');
       }
 
     } catch (e: any) {
-      alert('Upload failed: ' + e.message);
+      toast.error(String('Upload failed: ' + e.message));
     }
   };
 

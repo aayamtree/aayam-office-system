@@ -34,7 +34,7 @@ export function StatusBadge({ label, variant = 'new', className = '' }: StatusBa
 
     return (
         <span
-            className={`inline-flex items-center px-2.5 py-1 text-[11px] font-semibold rounded-full ${variantClasses} ${className}`}
+            className={`inline-flex items-center px-2.5 py-1 text-[11px] font-semibold rounded-md ${variantClasses} ${className}`}
         >
             {label}
         </span>
@@ -67,7 +67,7 @@ export function CountBadge({ count, variant = 'primary' }: CountBadgeProps) {
 
     return (
         <span
-            className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full ${variantClasses}`}
+            className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-md ${variantClasses}`}
         >
             {count}
         </span>

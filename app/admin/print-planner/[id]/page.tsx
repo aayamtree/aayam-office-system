@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import { ArrowLeft, Plus, Trash2, CheckCircle, Printer, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { PrintRun, PrintRunJob, Job } from '@/types/database';
@@ -456,7 +457,7 @@ function AddJobsModal({
             onJobsAdded();
         } catch (error) {
             console.error('Error adding jobs:', error);
-            alert('Failed to add jobs');
+            toast.error('Failed to add jobs');
         } finally {
             setSubmitting(false);
         }

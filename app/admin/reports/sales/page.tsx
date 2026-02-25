@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { ArrowLeft, Download, Filter, Calendar, TrendingUp, Users, Package, IndianRupee } from 'lucide-react';
 
@@ -68,7 +69,7 @@ export default function SalesReportPage() {
     .slice(0, 5);
 
   const handleExport = (type: 'pdf' | 'excel') => {
-    alert(`📥 Exporting Sales Report as ${type.toUpperCase()}...\n\nIn production, this would generate a downloadable file.`);
+    toast.info(`📥 Exporting Sales Report as ${type.toUpperCase()}...\n\nIn production, this would generate a downloadable file.`);
   };
 
   return (
