@@ -98,16 +98,24 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
 
     // Redirect non-admin users
     useEffect(() => {
-        if (profile?.role === 'designer') router.replace('/admin/designers/tasks');
-        else if (profile?.role === 'dispatch') router.replace('/admin/dispatch');
-        else if (profile?.role === 'marketing') router.replace('/admin/marketing');
-        else if (profile?.role === 'cmyk') router.replace('/admin/cmyk-print');
+        if (!profile?.role) return;
+        if (profile.role === 'admin') return;
+
+        if (profile.role === 'designer') router.replace('/admin/designers/tasks');
+        else if (profile.role === 'dispatch') router.replace('/admin/dispatch');
+        else if (profile.role === 'marketing') router.replace('/admin/marketing');
+        else if (profile.role === 'cmyk') router.replace('/admin/cmyk-print');
+        else if (profile.role === 'finance') router.replace('/admin/finance');
+        else router.replace('/'); // Fallback
     }, [profile, router]);
 
     if (profile?.role && profile.role !== 'admin') {
         return (
             <div className="h-screen flex items-center justify-center">
-                <p className="text-sm text-muted-foreground">Redirecting to your dashboard...</p>
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-8 h-8 border-3 border-muted border-t-foreground rounded-full animate-spin" />
+                    <p className="text-sm text-muted-foreground">Redirecting to your workspace...</p>
+                </div>
             </div>
         );
     }
@@ -167,7 +175,7 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
             {isVisible('kpi') && (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <Link href="/admin/finance">
-                        <Card className="hover:shadow-md transition-shadow">
+                        <Card className="hover:shadow-sm transition-shadow">
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
                                 <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
                                 <IndianRupee className="h-4 w-4 text-muted-foreground" />
@@ -180,7 +188,7 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                     </Link>
 
                     <Link href="/admin/jobs">
-                        <Card className="hover:shadow-md transition-shadow">
+                        <Card className="hover:shadow-sm transition-shadow">
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
                                 <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
                                 <Package className="h-4 w-4 text-muted-foreground" />
@@ -193,7 +201,7 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                     </Link>
 
                     <Link href="/admin/finance/payments">
-                        <Card className="hover:shadow-md transition-shadow">
+                        <Card className="hover:shadow-sm transition-shadow">
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
                                 <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
                                 <CreditCard className="h-4 w-4 text-muted-foreground" />
@@ -206,7 +214,7 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                     </Link>
 
                     <Link href="/admin/sales/orders">
-                        <Card className="hover:shadow-md transition-shadow">
+                        <Card className="hover:shadow-sm transition-shadow">
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
                                 <CardTitle className="text-sm font-medium">Orders This Month</CardTitle>
                                 <Package className="h-4 w-4 text-muted-foreground" />
