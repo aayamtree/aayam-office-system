@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useConfirm } from '@/components/ConfirmModal';
 import WhatsAppButton from '@/components/shared/WhatsAppButton';
+import { logActivity } from '@/lib/activity-logger';
 
 // Sub-component: Client Jobs & Financial Summary
 function ClientJobsSection({ clientId }: { clientId: string }) {
@@ -149,10 +150,12 @@ export default function ClientsPage() {
   };
 
   const handleDelete = async (id: string) => {
+    const clientName = clients.find(c => c.id === id)?.name || 'Unknown';
     const { confirmed } = await confirm({ title: 'Delete Client', message: 'Delete this client?', variant: 'danger', confirmLabel: 'Delete' });
     if (confirmed) {
       try {
         await deleteClient(id);
+        logActivity({ action: 'delete', resourceType: 'client', resourceId: id, details: { description: `Deleted Client: ${clientName}` } });
       } catch (error) {
         console.error('Error:', error);
         toast.error('Error deleting');
@@ -166,13 +169,15 @@ export default function ClientsPage() {
     try {
       if (isEditing && selectedClient) {
         await updateClient(selectedClient.id, formData);
+        logActivity({ action: 'update', resourceType: 'client', resourceId: selectedClient.id, details: { description: `Updated Client: ${formData.name} (${formData.company || formData.phone})` } });
       } else {
         await createClient({
           ...formData,
           client_type: 'regular',
           credit_limit: 0,
-          created_by: profile?.id // Explicitly track creator
+          created_by: profile?.id
         });
+        logActivity({ action: 'create', resourceType: 'client', resourceId: 'new', details: { description: `Added Client: ${formData.name} — ${formData.phone}${formData.company ? ` (${formData.company})` : ''}` } });
       }
       setShowModal(false);
       setIsEditing(false);

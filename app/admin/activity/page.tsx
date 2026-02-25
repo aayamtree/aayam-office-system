@@ -62,11 +62,13 @@ export default function ActivityPage() {
   };
 
   const getActionColor = (action: string) => {
-    if (action.includes('Created') || action.includes('Added')) return 'text-gray-900';
-    if (action.includes('Updated') || action.includes('Completed')) return 'text-foreground';
-    if (action.includes('Deleted') || action.includes('Cancelled')) return 'text-red-600';
-    if (action.includes('Login') || action.includes('Logout')) return 'text-primary';
-    return 'text-gray-700';
+    if (action === 'create') return 'text-green-700 bg-green-50 border-green-200';
+    if (action === 'update') return 'text-blue-700 bg-blue-50 border-blue-200';
+    if (action === 'delete') return 'text-red-700 bg-red-50 border-red-200';
+    if (action === 'login' || action === 'logout') return 'text-gray-600 bg-gray-100 border-gray-200';
+    if (action === 'upload') return 'text-purple-700 bg-purple-50 border-purple-200';
+    if (action === 'approve') return 'text-emerald-700 bg-emerald-50 border-emerald-200';
+    return 'text-gray-600 bg-gray-100 border-gray-200';
   };
 
   // Stats calculation from actual logs
@@ -186,30 +188,33 @@ export default function ActivityPage() {
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`font-medium ${getActionColor(log.action)}`}>{log.action}</span>
-                    <span className={`px-2 py-0.5 text-xs rounded-md ${getModuleColor(log.module || 'System')}`}>
+                  {/* Description as primary title */}
+                  <p className="font-medium text-gray-900 text-sm leading-snug">
+                    {typeof log.details === 'object' && log.details?.description
+                      ? log.details.description
+                      : (log as any).description
+                      || `${log.action} ${(log as any).entity_type || log.module || ''}`
+                    }
+                  </p>
+                  {/* Action badge + module badge */}
+                  <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                    <span className={`px-1.5 py-0.5 text-xs font-medium rounded border ${getActionColor(log.action)}`}>
+                      {log.action}
+                    </span>
+                    <span className={`px-1.5 py-0.5 text-xs rounded-md ${getModuleColor(log.module || 'System')}`}>
                       {log.module || 'System'}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {typeof log.details === 'string'
-                      ? log.details
-                      : log.details?.description
-                      || (log as any).description
-                      || `${log.action} ${(log as any).entity_type || ''}`
-                    }
-                  </p>
-                  <div className="flex items-center gap-2 md:gap-4 mt-2 text-xs text-gray-400">
+                  {/* Meta: user + time */}
+                  <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
                     <span className="flex items-center gap-1">
-                      <User size={12} />
+                      <User size={11} />
                       {log.user?.full_name || 'System User'}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Calendar size={12} />
+                      <Calendar size={11} />
                       {formatDate(log.created_at)}
                     </span>
-                    <span className="hidden sm:block truncate max-w-[100px]">{log.ip_address}</span>
                   </div>
                 </div>
               </div>
