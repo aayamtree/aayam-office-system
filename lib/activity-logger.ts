@@ -47,35 +47,46 @@ export async function logActivity({
 }: LogActivityParams): Promise<void> {
     try {
         const { data: { user } } = await supabase.auth.getUser();
-
         if (!user) return;
 
-        // Derive module from resourceType
         const moduleMap: Record<string, string> = {
             'job': 'Sales', 'invoice': 'Finance', 'payment': 'Finance',
             'client': 'CRM', 'quotation': 'Sales', 'user': 'Settings',
-            'order': 'Sales', 'lead': 'CRM', 'delivery': 'Dispatch', 'file': 'System'
+            'order': 'Sales', 'lead': 'CRM', 'delivery': 'Dispatch', 'file': 'System',
+            'vendor': 'Finance'
         };
         const activityModule = resourceType ? (moduleMap[resourceType] || 'System') : 'System';
         const description = details?.description || `${action} ${resourceType || 'system'}`;
 
-        await supabase.from('activity_logs').insert({
+        // Core payload — uses only original columns that always exist
+        const corePayload = {
             user_id: user.id,
             action,
-            module: activityModule,
             entity_type: resourceType,
             entity_id: resourceId,
             description,
-            details: details || null,
-            metadata: details || {},
+            metadata: { ...details, module: activityModule },
             ip_address: null,
             user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : null
+        };
+
+        // Try extended insert first (with module + details columns from migration)
+        const { error } = await supabase.from('activity_logs').insert({
+            ...corePayload,
+            module: activityModule,
+            details: details || null,
         });
-    } catch (error) {
-        console.error('Failed to log activity:', error);
-        // Don't throw - activity logging should never break the app
+
+        // If extended insert fails (columns don't exist yet), fall back to core
+        if (error) {
+            await supabase.from('activity_logs').insert(corePayload);
+        }
+    } catch (err) {
+        console.error('Failed to log activity:', err);
+        // Never throw — activity logging should never break the app
     }
 }
+
 
 /**
  * Log login event
