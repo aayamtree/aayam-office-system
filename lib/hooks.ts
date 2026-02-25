@@ -2206,7 +2206,7 @@ export function useVendorPayments() {
 // =============================================
 export function useActivityLogs(limit = 100) {
   const { data, loading, error, refetch } = useSupabaseQuery<ActivityLog>('activity_logs', {
-    select: '*',
+    select: '*, user:profiles(id, full_name, role)',
     orderBy: { column: 'created_at', ascending: false },
     limit
   });
