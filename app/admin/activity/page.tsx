@@ -84,6 +84,33 @@ export default function ActivityPage() {
     return 'text-gray-600 bg-gray-100 border-gray-200';
   };
 
+  // Convert raw DB description into human-readable text
+  const humanReadable = (log: any): string => {
+    const rawDesc = typeof log.details === 'object' && log.details?.description
+      ? log.details.description
+      : log.description || '';
+    // If we already have a rich description (from new logger), show it
+    if (rawDesc && rawDesc !== 'login system' && rawDesc !== `${log.action} ${log.entity_type || 'system'}` && rawDesc.length > 5) {
+      return rawDesc;
+    }
+    // Human-friendly fallbacks by action type
+    const entityMap: Record<string, string> = {
+      job: 'Job', invoice: 'Invoice', payment: 'Payment', client: 'Client',
+      quotation: 'Quotation', user: 'User', order: 'Order', lead: 'Lead',
+      delivery: 'Delivery', file: 'File',
+    };
+    const entity = entityMap[log.entity_type] || '';
+    if (log.action === 'login') return 'User logged in';
+    if (log.action === 'logout') return 'User logged out';
+    if (log.action === 'create') return entity ? `${entity} added` : 'Record created';
+    if (log.action === 'update') return entity ? `${entity} updated` : 'Record updated';
+    if (log.action === 'delete') return entity ? `${entity} deleted` : 'Record deleted';
+    if (log.action === 'upload') return 'File uploaded';
+    if (log.action === 'approve') return `${entity || 'Item'} approved`;
+    if (log.action === 'export') return 'Data exported';
+    return rawDesc || log.action;
+  };
+
   // Stats calculation from actual logs
   const todayStr = new Date().toISOString().split('T')[0];
   const todayLogs = (logs || []).filter(l => new Date(l.created_at).toISOString().startsWith(todayStr)).length;
@@ -200,7 +227,7 @@ export default function ActivityPage() {
                 <th className="text-left px-4 py-2.5 font-semibold">Activity</th>
                 <th className="text-left px-4 py-2.5 font-semibold w-24">Module</th>
                 <th className="text-left px-4 py-2.5 font-semibold w-20">Action</th>
-                <th className="text-left px-4 py-2.5 font-semibold w-32">Date & Time</th>
+                <th className="text-left px-4 py-2.5 font-semibold w-28">Date</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -215,8 +242,8 @@ export default function ActivityPage() {
                     <td className="px-4 py-2 text-xs text-gray-600 font-medium">
                       {userMap[(log as any).user_id] || 'System'}
                     </td>
-                    <td className="px-4 py-2 text-sm text-gray-900 max-w-xs">
-                      {description}
+                    <td className="px-4 py-2 text-sm text-gray-900">
+                      {humanReadable(log)}
                     </td>
                     <td className="px-4 py-2">
                       <span className={`px-1.5 py-0.5 text-xs rounded-md ${getModuleColor(log.module || 'System')}`}>
