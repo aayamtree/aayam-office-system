@@ -1,25 +1,38 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Filter, User, Calendar, Clock, FileText, Package, Users, CreditCard, Truck, Settings, Printer, Loader2 } from 'lucide-react';
 import { useActivityLogs } from '@/lib/hooks';
+import { supabase } from '@/lib/supabase';
 import { formatDate } from '@/lib/utils';
 
 const modules = ['All', 'Sales', 'CRM', 'Finance', 'Dispatch', 'CMYK', 'Settings', 'System'];
 // const users = ['All', 'Admin User', 'Rahul Patel', 'Priya Shah', 'Amit Kumar']; // Removed hardcoded users
 
 export default function ActivityPage() {
-  const { logs, loading } = useActivityLogs(100); // Fetch 100 logs
+  const { logs, loading } = useActivityLogs(100);
   const [searchQuery, setSearchQuery] = useState('');
   const [moduleFilter, setModuleFilter] = useState('All');
   const [userFilter, setUserFilter] = useState('All');
   const [dateFilter, setDateFilter] = useState('');
+  const [userMap, setUserMap] = useState<Record<string, string>>({});
 
-  // Extract unique users dynamically from logs
-  const dynamicUsers = ['All', ...Array.from(new Set((logs || []).map(l => l.user?.full_name || 'Unknown')))];
+  // Fetch profiles separately — avoids needing FK join between activity_logs and profiles
+  useEffect(() => {
+    supabase.from('profiles').select('id, full_name').then(({ data }) => {
+      if (data) {
+        const map: Record<string, string> = {};
+        data.forEach((p: any) => { map[p.id] = p.full_name || 'User'; });
+        setUserMap(map);
+      }
+    });
+  }, []);
+
+  // Extract unique users dynamically from userMap (not from log.user which requires FK)
+  const dynamicUsers = ['All', ...Object.values(userMap)];
 
   const filteredLogs = (logs || []).filter(log => {
-    const userName = log.user?.full_name || 'Unknown';
+    const userName = userMap[(log as any).user_id] || 'Unknown';
     // Support both 'details' (new) and 'description' (legacy) columns
     const detailsText = typeof log.details === 'string'
       ? log.details
@@ -74,7 +87,7 @@ export default function ActivityPage() {
   // Stats calculation from actual logs
   const todayStr = new Date().toISOString().split('T')[0];
   const todayLogs = (logs || []).filter(l => new Date(l.created_at).toISOString().startsWith(todayStr)).length;
-  const uniqueUsersCount = new Set((logs || []).map(l => l.user_id)).size;
+  const uniqueUsersCount = new Set((logs || []).map((l: any) => l.user_id)).size;
   const salesActions = (logs || []).filter(l => l.module === 'Sales').length;
   const financeActions = (logs || []).filter(l => l.module === 'Finance').length;
 
@@ -209,7 +222,7 @@ export default function ActivityPage() {
                   <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
                     <span className="flex items-center gap-1">
                       <User size={11} />
-                      {log.user?.full_name || 'System User'}
+                      {userMap[(log as any).user_id] || 'System User'}
                     </span>
                     <span className="flex items-center gap-1">
                       <Calendar size={11} />
