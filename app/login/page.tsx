@@ -23,9 +23,22 @@ export default function LoginPage() {
     setIsLocalhost(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
   }, []);
 
+  // Clear the signing_out flag shortly after login page mounts
+  // (delay ensures the redirect-guard useEffect reads the flag first)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      sessionStorage.removeItem('aayam_signing_out');
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Redirect if already logged in — requires REAL session to avoid redirect loops
   // (stale cached profiles without a session would cause middleware to bounce back to /login)
   useEffect(() => {
+    // Don't auto-redirect if user just signed out
+    const justSignedOut = sessionStorage.getItem('aayam_signing_out') === 'true';
+    if (justSignedOut) return;
+
     if (!loading && profile && session && !hasRedirected.current) {
       hasRedirected.current = true;
       const target = profile.role === 'designer' ? '/admin/designers/tasks'
@@ -130,7 +143,7 @@ export default function LoginPage() {
                   type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oms-blue/20 focus:border-oms-blue transition-all"
+                  className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-oms-blue/20 focus:border-oms-blue transition-all"
                   placeholder="designer1, admin1, etc."
                   required
                   disabled={isLoading}
@@ -150,7 +163,7 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-oms-blue/20 focus:border-oms-blue transition-all"
+                  className="w-full pl-11 pr-12 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-oms-blue/20 focus:border-oms-blue transition-all"
                   placeholder="••••••••"
                   required
                   disabled={isLoading}
@@ -207,7 +220,7 @@ export default function LoginPage() {
                 console.log('🚀 BYPASS LOGIN - Localhost Testing Mode');
                 bypassLogin();
               }}
-              className="px-4 py-2 bg-oms-orange text-white rounded-lg text-sm font-semibold hover:bg-oms-orange/90 transition-colors"
+              className="px-4 py-2 bg-oms-orange text-white rounded-md text-sm font-semibold hover:bg-oms-orange/90 transition-colors"
             >
               ⚡ Quick Login (Localhost Only)
             </button>

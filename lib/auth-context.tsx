@@ -41,6 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(() => {
     // Try to load from local storage immediately to prevent flicker
     if (typeof window !== 'undefined') {
+      // Don't restore cached profile if user just signed out
+      if (sessionStorage.getItem('aayam_signing_out') === 'true') return null;
       const cached = localStorage.getItem('aayam_fallback_profile');
       if (cached) {
         try { return JSON.parse(cached); } catch { }
@@ -222,7 +224,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Listen for auth changes - but don't cause flickering
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (!mounted) return;
         // Only update on actual sign in/out events
         if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
@@ -230,7 +232,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(session?.user ?? null);
 
           if (session?.user) {
-            await fetchProfile(session.user.id, session.user.email);
+            // Don't await this so it doesn't block signInWithPassword from resolving
+            fetchProfile(session.user.id, session.user.email);
           } else {
             setProfile(null);
           }
@@ -300,7 +303,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Sign out
   const signOut = async () => {
-    // Optimistic Logout: Clear ALL auth-related local storage
+    // Set a flag FIRST so login page knows not to auto-redirect
+    sessionStorage.setItem('aayam_signing_out', 'true');
+
+    // 1. Perform Supabase signout FIRST (before clearing local state)
+    if (isConfigured) {
+      try {
+        await Promise.race([
+          supabase.auth.signOut({ scope: 'global' }),
+          new Promise(resolve => setTimeout(resolve, 5000)) // 5s timeout
+        ]);
+      } catch (e) {
+        console.error('SignOut API error:', e);
+      }
+    }
+
+    // 2. Clear ALL auth-related local storage AFTER signout completes
     localStorage.removeItem('aayam_fallback_profile');
     localStorage.removeItem('aayam_speed_role');
     localStorage.removeItem('aayam_bypass_mode');
@@ -316,36 +334,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     keysToRemove.forEach(key => localStorage.removeItem(key));
 
-    // Clear sessionStorage too
+    // Clear sessionStorage (except our signing_out flag)
+    const signingOut = sessionStorage.getItem('aayam_signing_out');
     sessionStorage.clear();
+    if (signingOut) sessionStorage.setItem('aayam_signing_out', 'true');
 
-    // Clear NextAuth cookies (from previous Google OAuth attempts)
+    // Clear NextAuth and Supabase cookies (SSR uses cookies for auth)
     document.cookie.split(';').forEach(c => {
       const name = c.split('=')[0].trim();
-      if (name.startsWith('next-auth') || name.startsWith('__Secure-next-auth')) {
+      if (
+        name.startsWith('next-auth') ||
+        name.startsWith('__Secure-next-auth') ||
+        name.startsWith('sb-') ||
+        name.startsWith('supabase')
+      ) {
         document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
         document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
       }
     });
 
-    // Clear React state
+    // 3. Clear React state
     setSession(null);
     setUser(null);
     setProfile(null);
 
-    // Perform Supabase signout with timeout to ensure it completes
-    if (isConfigured) {
-      try {
-        await Promise.race([
-          supabase.auth.signOut({ scope: 'global' }),
-          new Promise(resolve => setTimeout(resolve, 3000)) // 3s timeout
-        ]);
-      } catch (e) {
-        console.error('SignOut API error:', e);
-      }
-    }
-
-    // Force Navigation AFTER signout
+    // 4. Force Navigation AFTER everything is cleared
     if (typeof window !== 'undefined') {
       window.location.href = '/login';
     }
