@@ -2,19 +2,35 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Plus, Phone, Mail, MapPin, Edit, Trash2, Eye, X, ArrowLeft, Building2, Loader2, Package } from 'lucide-react';
+import { Search, Plus, Phone, Mail, MapPin, Edit, Trash2, Eye, X, ArrowLeft, Building2, Loader2, Package, Settings } from 'lucide-react';
 import { useVendors } from '@/lib/hooks';
+import { supabase } from '@/lib/supabase';
 import { Vendor } from '@/types/database';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useConfirm } from '@/components/ConfirmModal';
 
-const categories = ['Paper', 'Ink & Toner', 'Binding', 'Lamination', 'Machinery', 'Packaging', 'Other'];
+interface VendorCategory { id: string; name: string; color: string; }
+
 
 export default function VendorsPage() {
   const { vendors, loading, createVendor, updateVendor, deleteVendor } = useVendors();
 
-  const [saving, setSaving] = useState(false);
+  // Dynamic categories from Supabase
+  const [categories, setCategories] = useState<VendorCategory[]>([]);
+  const fetchCategories = async () => {
+    const { data } = await supabase
+      .from('vendor_categories')
+      .select('id, name, color')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
+    if (data) setCategories(data);
+  };
+  useEffect(() => { fetchCategories(); }, []);
+
+  const categoryNames = categories.map(c => c.name);
+  const defaultCategory = categoryNames[0] || 'Paper';
+
   const confirm = useConfirm();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -23,9 +39,10 @@ export default function VendorsPage() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', category: 'Paper', is_active: true, payment_terms: '',
+    name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', category: defaultCategory, is_active: true, payment_terms: '',
   });
 
   const filteredVendors = vendors.filter(vendor => {
@@ -36,7 +53,7 @@ export default function VendorsPage() {
   });
 
   const handleAddNew = () => {
-    setFormData({ name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', category: 'Paper', is_active: true, payment_terms: '' });
+    setFormData({ name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', category: defaultCategory, is_active: true, payment_terms: '' });
     setIsEditing(false);
     setSelectedVendor(null);
     setShowModal(true);
@@ -93,8 +110,8 @@ export default function VendorsPage() {
   };
 
   const getCategoryColor = (cat: string) => {
-    const colors: Record<string, string> = { 'Paper': 'bg-muted text-foreground', 'Ink & Toner': 'bg-gray-900 text-white', 'Binding': 'bg-amber-100 text-amber-700', 'Lamination': 'bg-gray-100 text-gray-900', 'Machinery': 'bg-red-100 text-red-700', 'Packaging': 'bg-gray-900 text-white' };
-    return colors[cat] || 'bg-gray-100 text-gray-700';
+    const found = categories.find(c => c.name === cat);
+    return found?.color || 'bg-gray-100 text-gray-700';
   };
 
   if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /><span className="ml-2">Loading...</span></div>;
@@ -129,7 +146,7 @@ export default function VendorsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            {categories.map(c => <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -310,7 +327,7 @@ export default function VendorsPage() {
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1">Name *</label><input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border rounded-md" /></div><div><label className="block text-sm font-medium mb-1">Company</label><input type="text" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} className="w-full px-3 py-2 border rounded-md" /></div></div>
               <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1">Phone *</label><input type="tel" required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })} className="w-full px-3 py-2 border rounded-md" /></div><div><label className="block text-sm font-medium mb-1">Email</label><input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border rounded-md" /></div></div>
-              <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1">Category</label><select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full px-3 py-2 border rounded-md">{categories.map(c => <option key={c} value={c}>{c}</option>)}</select></div><div><label className="block text-sm font-medium mb-1">GSTIN</label><input type="text" value={formData.gstin} onChange={(e) => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })} className="w-full px-3 py-2 border rounded-md" maxLength={15} /></div></div>
+              <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1">Category</label><select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full px-3 py-2 border rounded-md">{categories.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}</select></div><div><label className="block text-sm font-medium mb-1">GSTIN</label><input type="text" value={formData.gstin} onChange={(e) => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })} className="w-full px-3 py-2 border rounded-md" maxLength={15} /></div></div>
               <div><label className="block text-sm font-medium mb-1">Address</label><textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full px-3 py-2 border rounded-md" rows={2} /></div>
               <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1">City</label><input type="text" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="w-full px-3 py-2 border rounded-md" /></div><div><label className="block text-sm font-medium mb-1">Status</label><select value={formData.is_active ? 'active' : 'inactive'} onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'active' })} className="w-full px-3 py-2 border rounded-md"><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div>
               <div className="flex gap-3 pt-4"><button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 border rounded-md">Cancel</button><button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 flex items-center justify-center gap-2 shadow-sm font-semibold">{saving && <Loader2 className="w-4 h-4 md:w-4.5 md:h-4.5 animate-spin" />}{isEditing ? 'Update' : 'Add'}</button></div>

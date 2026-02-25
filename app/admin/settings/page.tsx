@@ -19,9 +19,10 @@ interface Profile {
 import DesignersManager from '@/components/settings/DesignersManager';
 import ProductionSettings from './production/page';
 import GoogleDriveSettings from '@/components/settings/GoogleDriveSettings';
+import VendorCategoriesManager from '@/components/settings/VendorCategoriesManager';
 
 export default function UserManagementPage() {
-  const [activeTab, setActiveTab] = useState<'users' | 'designers' | 'production' | 'drive'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'designers' | 'production' | 'drive' | 'vendor-categories'>('users');
 
   // ... (existing state for Users) ...
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -166,6 +167,15 @@ export default function UserManagementPage() {
                 }`}
             >
               Google Drive
+            </button>
+            <button
+              onClick={() => setActiveTab('vendor-categories')}
+              className={`px-3 md:px-4 py-2 rounded-md text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'vendor-categories'
+                ? 'bg-white text-foreground'
+                : 'text-gray-600 hover:text-gray-800'
+                }`}
+            >
+              Vendor Categories
             </button>
           </div>
         </div>
@@ -342,6 +352,10 @@ export default function UserManagementPage() {
         <DesignersManager />
       ) : activeTab === 'production' ? (
         <ProductionSettings />
+      ) : activeTab === 'vendor-categories' ? (
+        <div className="bg-white p-4 md:p-6 rounded-lg border">
+          <VendorCategoriesManager />
+        </div>
       ) : (
         <GoogleDriveSettings />
       )}
