@@ -184,62 +184,67 @@ export default function ActivityPage() {
         </div>
       </div>
 
-      {/* Activity List */}
+      {/* Activity Table */}
       <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="font-semibold text-gray-900">Recent Activity</h2>
-          <span className="text-sm text-gray-500">{filteredLogs.length} entries</span>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <h2 className="font-semibold text-gray-900 text-sm">Recent Activity</h2>
+          <span className="text-xs text-gray-400">{filteredLogs.length} entries</span>
         </div>
-        <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
-          {filteredLogs.map((log) => (
-            <div key={log.id} className="p-4 hover:bg-gray-50 transition-colors">
-              <div className="flex items-start gap-2 md:gap-4">
-                {/* Icon */}
-                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  {getModuleIcon(log.module)}
-                </div>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  {/* Description as primary title */}
-                  <p className="font-medium text-gray-900 text-sm leading-snug">
-                    {typeof log.details === 'object' && log.details?.description
-                      ? log.details.description
-                      : (log as any).description
-                      || `${log.action} ${(log as any).entity_type || log.module || ''}`
-                    }
-                  </p>
-                  {/* Action badge + module badge */}
-                  <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                    <span className={`px-1.5 py-0.5 text-xs font-medium rounded border ${getActionColor(log.action)}`}>
-                      {log.action}
-                    </span>
-                    <span className={`px-1.5 py-0.5 text-xs rounded-md ${getModuleColor(log.module || 'System')}`}>
-                      {log.module || 'System'}
-                    </span>
-                  </div>
-                  {/* Meta: user + time */}
-                  <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <User size={11} />
-                      {userMap[(log as any).user_id] || 'System User'}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar size={11} />
+        {/* Desktop Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-100 text-xs text-gray-500 uppercase tracking-wide">
+                <th className="text-left px-4 py-2.5 font-semibold w-36">User</th>
+                <th className="text-left px-4 py-2.5 font-semibold">Activity</th>
+                <th className="text-left px-4 py-2.5 font-semibold w-24">Module</th>
+                <th className="text-left px-4 py-2.5 font-semibold w-20">Action</th>
+                <th className="text-left px-4 py-2.5 font-semibold w-32">Date & Time</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {filteredLogs.map((log) => {
+                const description =
+                  (typeof log.details === 'object' && log.details?.description)
+                    ? log.details.description
+                    : (log as any).description
+                    || `${log.action} ${(log as any).entity_type || log.module || ''}`;
+                return (
+                  <tr key={log.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-2 text-xs text-gray-600 font-medium">
+                      {userMap[(log as any).user_id] || 'System'}
+                    </td>
+                    <td className="px-4 py-2 text-sm text-gray-900 max-w-xs">
+                      {description}
+                    </td>
+                    <td className="px-4 py-2">
+                      <span className={`px-1.5 py-0.5 text-xs rounded-md ${getModuleColor(log.module || 'System')}`}>
+                        {log.module || 'System'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2">
+                      <span className={`px-1.5 py-0.5 text-xs font-medium rounded border ${getActionColor(log.action)}`}>
+                        {log.action}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 text-xs text-gray-400 whitespace-nowrap">
                       {formatDate(log.created_at)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-          {filteredLogs.length === 0 && (
-            <div className="p-8 text-center text-gray-500">
-              {(logs || []).length === 0
-                ? 'No activity has been logged yet. Activity will appear here as users interact with the system.'
-                : 'No activity logs match your current filters.'}
-            </div>
-          )}
+                    </td>
+                  </tr>
+                );
+              })}
+              {filteredLogs.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-400">
+                    {(logs || []).length === 0
+                      ? 'No activity logged yet. Activity appears here as users interact with the system.'
+                      : 'No entries match your filters.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
