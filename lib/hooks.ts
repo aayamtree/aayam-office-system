@@ -1302,14 +1302,10 @@ export function useDashboardStats() {
 export function useQuotations() {
   const { user, profile } = useAuth();
 
-  // Build filter based on role
-  const filter = profile?.role === 'marketing'
-    ? [{ column: 'created_by', value: user?.id }]  // Marketing sees only their quotations
-    : undefined;  // Admin sees all
-
+  // Fetch all quotations — role-based filtering is done in the page
+  // (marketing: created_by = me OR lead.assigned_to = me)
   const { data, loading, error, refetch } = useSupabaseQuery<Quotation>('quotations', {
     select: '*, client:clients(*), lead:leads(*), items:quotation_items(*)',
-    filter,
     orderBy: { column: 'created_at', ascending: false }
   });
 

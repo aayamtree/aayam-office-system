@@ -23,8 +23,19 @@ export default function QuotationsPage() {
   const { categories: dbCategories } = useProductCategories();
   const confirm = useConfirm();
 
-  // Show all quotations
-  const quotations = allQuotations;
+  // Marketing: see quotes they created OR quotes for leads assigned to them
+  // Admin: see all quotes
+  const quotations = useMemo(() => {
+    if (profile?.role === 'marketing' && profile?.id) {
+      return allQuotations.filter(q => {
+        const q_ = q as any;
+        const createdByMe = q_.created_by === profile.id;
+        const assignedToMe = q_.lead?.assigned_to === profile.id;
+        return createdByMe || assignedToMe;
+      });
+    }
+    return allQuotations;
+  }, [allQuotations, profile]);
   const { clients: allClients } = useClients();
   const { leads: allLeads, convertToClient } = useLeads();
 
