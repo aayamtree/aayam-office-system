@@ -39,10 +39,12 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
             const { data, error } = await supabase
                 .from('pending_print_jobs')
                 .select('*')
+                .neq('is_on_hold', true)  // ← exclude on-hold jobs from Print Planner
                 .order('created_at', { ascending: true });
 
             if (error) throw error;
-            setJobs(data || []);
+            // Extra client-side safety: also filter out any on_hold that slipped through
+            setJobs((data || []).filter((j: any) => !j.is_on_hold));
         } catch (error) {
             console.error('Error fetching pending jobs:', error);
         } finally {

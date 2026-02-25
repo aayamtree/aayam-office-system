@@ -959,7 +959,11 @@ export default function DesignerWorkspace() {
                               if (!confirmed) return;
                               await supabase.from('jobs').update({
                                 is_on_hold: false,
-                                current_stage: selectedTask.pre_hold_stage || 'designing',
+                                // If it was in a print/locked stage before hold, return to designing
+                                // so the designer can open and work on it again
+                                current_stage: ['printing', 'finishing', 'quality_check', 'ready', 'delivered', 'sent_to_print', 'approval'].includes(selectedTask.pre_hold_stage || '')
+                                  ? 'designing'
+                                  : selectedTask.pre_hold_stage || 'designing',
                                 hold_reason: null,
                                 pre_hold_stage: null,
                               }).eq('id', selectedTask.realId);
