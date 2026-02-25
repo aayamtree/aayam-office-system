@@ -171,8 +171,8 @@ export default function VendorCategoriesManager() {
                         <button
                             onClick={() => handleToggle(cat)}
                             className={`text-xs px-2 py-0.5 rounded-md border transition-colors ${cat.is_active
-                                    ? 'border-gray-200 text-gray-500 hover:bg-gray-50'
-                                    : 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
+                                ? 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                                : 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
                                 }`}
                         >
                             {cat.is_active ? 'Hide' : 'Show'}
@@ -190,7 +190,7 @@ export default function VendorCategoriesManager() {
             </div>
 
             <p className="text-xs text-muted-foreground">
-                💡 Hidden categories won't appear in the vendor form, but existing vendor records are kept.
+                💡 Hidden categories won&apos;t appear in the vendor form, but existing vendor records are kept.
             </p>
         </div>
     );
