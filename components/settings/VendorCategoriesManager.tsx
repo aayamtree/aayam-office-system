@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Plus, Trash2, GripVertical, Loader2, Check, X } from 'lucide-react';
+import { useConfirm } from '@/components/ConfirmModal';
+import { toast } from '@/lib/toast';
+import { Plus, Trash2, GripVertical, Loader2 } from 'lucide-react';
 
 interface VendorCategory {
     id: string;
@@ -32,8 +34,7 @@ export default function VendorCategoriesManager() {
     const [newName, setNewName] = useState('');
     const [newColor, setNewColor] = useState(COLOR_OPTIONS[0].value);
     const [adding, setAdding] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
+    const confirm = useConfirm();
 
     const fetchCategories = async () => {
         setLoading(true);
@@ -48,8 +49,8 @@ export default function VendorCategoriesManager() {
     useEffect(() => { fetchCategories(); }, []);
 
     const notify = (msg: string, type: 'success' | 'error' = 'success') => {
-        if (type === 'success') { setSuccess(msg); setTimeout(() => setSuccess(null), 3000); }
-        else { setError(msg); setTimeout(() => setError(null), 4000); }
+        if (type === 'success') toast.success(msg);
+        else toast.error(msg);
     };
 
     const handleAdd = async () => {
@@ -77,7 +78,13 @@ export default function VendorCategoriesManager() {
     };
 
     const handleDelete = async (cat: VendorCategory) => {
-        if (!confirm(`Delete category "${cat.name}"? Existing vendors with this category won't be affected.`)) return;
+        const { confirmed } = await confirm({
+            title: 'Delete Category',
+            message: `Delete "${cat.name}"? Existing vendors with this category won't be affected.`,
+            variant: 'danger',
+            confirmLabel: 'Delete',
+        });
+        if (!confirmed) return;
         setSaving(true);
         const { error } = await supabase.from('vendor_categories').delete().eq('id', cat.id);
         if (error) notify(error.message, 'error');
@@ -107,18 +114,6 @@ export default function VendorCategoriesManager() {
                     Add, remove, or reorder categories used when adding vendors.
                 </p>
             </div>
-
-            {/* Feedback */}
-            {success && (
-                <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">
-                    <Check className="h-3.5 w-3.5" /> {success}
-                </div>
-            )}
-            {error && (
-                <div className="flex items-center gap-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">
-                    <X className="h-3.5 w-3.5" /> {error}
-                </div>
-            )}
 
             {/* Add new category */}
             <div className="flex gap-2 items-end">

@@ -11,6 +11,7 @@ import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { ConfirmProvider } from '@/components/ConfirmModal';
 import { SessionProvider } from 'next-auth/react';
 import { GlobalErrorBoundary } from '@/components/ErrorBoundary';
+import ToastContainer from '@/components/ToastContainer';
 
 export default function AdminLayout({
   children,
@@ -91,6 +92,9 @@ export default function AdminLayout({
 
           {/* Mobile Bottom Navigation */}
           <MobileBottomNav />
+
+          {/* Global toast notifications — replaces native alert() across app */}
+          <ToastContainer />
         </div>
       </ConfirmProvider>
     </SessionProvider>
