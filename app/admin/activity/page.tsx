@@ -6,6 +6,12 @@ import { useActivityLogs } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
 import { formatDate } from '@/lib/utils';
 
+const formatDateTime = (dateString: string): string => {
+  const d = new Date(dateString);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 const modules = ['All', 'Sales', 'CRM', 'Finance', 'Dispatch', 'CMYK', 'Settings', 'System'];
 
 export default function ActivityPage() {
@@ -199,7 +205,7 @@ export default function ActivityPage() {
                 <th className="text-left px-4 py-2 font-semibold">Activity</th>
                 <th className="text-left px-4 py-2 font-semibold w-24">Module</th>
                 <th className="text-left px-4 py-2 font-semibold w-20">Type</th>
-                <th className="text-left px-4 py-2 font-semibold w-28">Date</th>
+                <th className="text-left px-4 py-2 font-semibold w-36">Date & Time</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -222,7 +228,7 @@ export default function ActivityPage() {
                     </span>
                   </td>
                   <td className="px-4 py-2 text-xs text-gray-400 whitespace-nowrap">
-                    {formatDate(log.created_at)}
+                    {formatDateTime(log.created_at)}
                   </td>
                 </tr>
               ))}
