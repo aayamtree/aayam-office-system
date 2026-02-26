@@ -118,14 +118,15 @@ export default function CalendarPage() {
     const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     // Legend items based on role
+    const isMarketing = profile?.role === 'marketing';
     const legendItems = [
-        { color: 'bg-amber-400', label: 'Deadline' },
+        ...(isAdmin || !isMarketing ? [{ color: 'bg-amber-400', label: 'Deadline' }] : []),
         { color: 'bg-blue-400', label: 'Follow-up' },
-        { color: 'bg-green-400', label: 'Dispatch' },
+        ...(!isMarketing ? [{ color: 'bg-green-400', label: 'Dispatch' }] : []),
         { color: 'bg-violet-400', label: 'Event' },
-        { color: 'bg-rose-400', label: 'Invoice Due' },
-        { color: 'bg-orange-400', label: 'Print Run' },
-        { color: 'bg-purple-400', label: 'Lead' },
+        ...(isAdmin ? [{ color: 'bg-rose-400', label: 'Invoice Due' }] : []),
+        ...(!isMarketing ? [{ color: 'bg-orange-400', label: 'Print Run' }] : []),
+        ...(isAdmin || isMarketing ? [{ color: 'bg-purple-400', label: 'Lead' }] : []),
     ];
 
     return (

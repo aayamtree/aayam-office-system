@@ -37,35 +37,54 @@ export async function fetchCalendarBusinessData(
     userRole: string,
     userId: string
 ): Promise<CalendarItem[]> {
+    /**
+     * ROLE-BASED VISIBILITY RULES:
+     *  Admin      → everything system-wide
+     *  Marketing  → follow-ups (assigned), leads (assigned), quotation deadlines (created by / assigned)
+     *  Designer   → their own job deadlines, design task deadlines
+     *  Dispatch   → dispatches, job deadlines
+     *  (others)   → only their own events
+     */
     const isAdmin = userRole === 'admin';
     const isDesigner = userRole === 'designer';
+    const isMarketing = userRole === 'marketing';
+    const isDispatch = userRole === 'dispatch';
     const items: CalendarItem[] = [];
 
-    // 1. Job deadlines — designers see only their own
-    let jobsQuery = supabase.from('jobs')
-        .select('id, job_number, project_name, client_deadline, current_stage, designer_id')
-        .gte('client_deadline', startDate)
-        .lte('client_deadline', endDate)
-        .neq('current_stage', 'cancelled');
-    if (!isAdmin) {
+    // 1. Job deadlines
+    //    Admin → all | Designer → their own | Dispatch → all | Marketing → NONE
+    let jobsQuery = !isMarketing
+        ? supabase.from('jobs')
+            .select('id, job_number, project_name, client_deadline, current_stage, designer_id')
+            .gte('client_deadline', startDate)
+            .lte('client_deadline', endDate)
+            .neq('current_stage', 'cancelled')
+        : null;
+    if (jobsQuery && isDesigner) {
         jobsQuery = jobsQuery.eq('designer_id', userId);
     }
 
-    // 2. Follow-ups — ADMIN & MARKETING only (not designers)
-    const followUpsQuery = !isDesigner
+    // 2. Follow-ups → Admin + Marketing only (not designers, not dispatch)
+    let followUpsQuery = (isAdmin || isMarketing)
         ? supabase.from('follow_ups')
-            .select('id, notes, follow_up_date, lead_id, done_by')
+            .select('id, notes, follow_up_date, lead_id, done_by, assigned_to')
             .gte('follow_up_date', startDate)
             .lte('follow_up_date', endDate)
         : null;
+    // Marketing: only their own follow-ups
+    if (followUpsQuery && isMarketing) {
+        followUpsQuery = followUpsQuery.eq('assigned_to', userId);
+    }
 
-    // 3. Dispatches — all roles can see
-    const dispatchQuery = supabase.from('dispatches')
-        .select('id, dispatch_number, dispatch_date, status, job_id')
-        .gte('dispatch_date', startDate)
-        .lte('dispatch_date', endDate);
+    // 3. Dispatches → Admin + Dispatch role only (NOT marketing, NOT designers)
+    const dispatchQuery = (isAdmin || isDispatch)
+        ? supabase.from('dispatches')
+            .select('id, dispatch_number, dispatch_date, status, job_id')
+            .gte('dispatch_date', startDate)
+            .lte('dispatch_date', endDate)
+        : null;
 
-    // 4. Invoices — ADMIN ONLY (financial data)
+    // 4. Invoices → Admin ONLY (financial data)
     const invoiceQuery = isAdmin
         ? supabase.from('invoices')
             .select('id, invoice_number, due_date, payment_status, total_amount')
@@ -74,31 +93,33 @@ export async function fetchCalendarBusinessData(
             .neq('payment_status', 'paid')
         : null;
 
-    // 5. Print Runs — all roles can see
-    const printRunQuery = supabase.from('print_runs')
-        .select('id, print_run_number, deadline, status')
-        .gte('deadline', startDate)
-        .lte('deadline', endDate)
-        .neq('status', 'delivered');
+    // 5. Print Runs → Admin + Designers only (NOT marketing, NOT dispatch)
+    const printRunQuery = (isAdmin || isDesigner)
+        ? supabase.from('print_runs')
+            .select('id, print_run_number, deadline, status')
+            .gte('deadline', startDate)
+            .lte('deadline', endDate)
+            .neq('status', 'delivered')
+        : null;
 
-    // 6. Leads — ADMIN & MARKETING only (not designers)
-    let leadsQuery = !isDesigner
+    // 6. Leads → Admin + Marketing only, marketing sees only their assigned leads
+    let leadsQuery = (isAdmin || isMarketing)
         ? supabase.from('leads')
             .select('id, lead_number, name, company, deadline, status, assigned_to')
             .gte('deadline', startDate)
             .lte('deadline', endDate)
         : null;
-    if (leadsQuery && !isAdmin) {
+    if (leadsQuery && isMarketing) {
         leadsQuery = leadsQuery.eq('assigned_to', userId);
     }
 
     // Execute all queries in parallel — each is safe (returns [] on failure)
     const [jobs, followUps, dispatches, invoices, printRuns, leads] = await Promise.all([
-        safeQuery<any>(jobsQuery, 'jobs'),
+        jobsQuery ? safeQuery<any>(jobsQuery, 'jobs') : Promise.resolve([]),
         followUpsQuery ? safeQuery<any>(followUpsQuery, 'follow_ups') : Promise.resolve([]),
-        safeQuery<any>(dispatchQuery, 'dispatches'),
+        dispatchQuery ? safeQuery<any>(dispatchQuery, 'dispatches') : Promise.resolve([]),
         invoiceQuery ? safeQuery<any>(invoiceQuery, 'invoices') : Promise.resolve([]),
-        safeQuery<any>(printRunQuery, 'print_runs'),
+        printRunQuery ? safeQuery<any>(printRunQuery, 'print_runs') : Promise.resolve([]),
         leadsQuery ? safeQuery<any>(leadsQuery, 'leads') : Promise.resolve([]),
     ]);
 
