@@ -164,8 +164,9 @@ export default function DesignerWorkspace() {
       if (data) {
         const map: Record<string, string[]> = {};
         data.forEach((d: any) => {
-          // Items might be JSON string or array depending on DB driver behavior
-          map[d.job_type] = Array.isArray(d.items) ? d.items : JSON.parse(d.items || '[]');
+          const raw: any[] = Array.isArray(d.items) ? d.items : JSON.parse(d.items || '[]');
+          // Items may be strings (legacy) or objects { label, type, required }
+          map[d.job_type] = raw.map((i: any) => typeof i === 'string' ? i : (i.label || ''));
         });
         setChecklistConfig(map);
       }
