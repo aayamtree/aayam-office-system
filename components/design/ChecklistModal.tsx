@@ -144,7 +144,7 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
                     ) : !matchedChecklist ? (
                         <div className="text-center py-12 bg-gray-50 rounded-md border-2 border-dashed border-gray-200">
                             <AlertCircle className="mx-auto h-10 w-10 text-gray-300 mb-3" />
-                            <p className="text-gray-500 text-sm">No checklist template found for "{job.job_type}".</p>
+                            <p className="text-gray-500 text-sm">No checklist template found for &quot;{job.job_type}&quot;.</p>
                         </div>
                     ) : items.length === 0 ? (
                         <div className="text-center py-12 text-gray-400 text-sm">No items configured for this checklist.</div>
@@ -157,8 +157,8 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
 
                                 return (
                                     <div key={idx} className={`rounded-md border transition-all ${missing ? 'border-red-300 bg-red-50'
-                                            : filled ? 'border-green-200 bg-green-50'
-                                                : 'border-gray-200 bg-white'
+                                        : filled ? 'border-green-200 bg-green-50'
+                                            : 'border-gray-200 bg-white'
                                         }`}>
                                         {/* Item label row */}
                                         <div className="flex items-center gap-2 px-3 py-2">
@@ -181,8 +181,8 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
                                                     type="button"
                                                     onClick={() => setValue(item.label, !value)}
                                                     className={`flex items-center gap-2 w-full px-3 py-2 rounded-md border text-sm font-medium transition-all ${value
-                                                            ? 'bg-green-500 text-white border-green-500'
-                                                            : 'bg-white text-gray-600 border-gray-300 hover:border-primary/40'
+                                                        ? 'bg-green-500 text-white border-green-500'
+                                                        : 'bg-white text-gray-600 border-gray-300 hover:border-primary/40'
                                                         }`}
                                                 >
                                                     <CheckSquare size={16} />

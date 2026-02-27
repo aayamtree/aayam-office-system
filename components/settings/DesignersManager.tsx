@@ -308,7 +308,7 @@ export default function DesignersManager() {
                     <AlertCircle size={16} className="shrink-0 mt-0.5 text-amber-500" />
                     <span>
                         <strong>{activeDesigners - linkedDesigners} designer{activeDesigners - linkedDesigners > 1 ? 's' : ''}</strong> not linked to a user account.
-                        Their <strong>My Queue</strong> will not auto-filter and they won't receive task notifications.
+                        Their <strong>My Queue</strong> will not auto-filter and they won&apos;t receive task notifications.
                         Click <strong>Edit</strong> to link them.
                     </span>
                 </div>
