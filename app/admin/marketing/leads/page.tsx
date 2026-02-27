@@ -274,28 +274,66 @@ export default function LeadsPage() {
         );
     }
 
+    // Stat counts
+    const totalLeads = leads.length;
+    const followUpCount = leads.filter(l => l.status === 'follow_up').length;
+    const convertedCount = leads.filter(l => l.status === 'converted').length;
+    const lostCount = leads.filter(l => l.status === 'lost').length;
+
     return (
-        <div className="space-y-2 md:space-y-6 px-2 pb-12 md:pb-20 animate-fade-in text-sm lg:text-base">
+        <div className="space-y-2 md:space-y-4 lg:space-y-3 px-2 pb-12 md:pb-20 animate-fade-in">
 
             {/* HEADER */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 md:gap-4">
+            <div className="flex items-center justify-between gap-3">
                 <div>
-                    <h1 className="text-page-title text-gray-900">Leads & Enquiries (Marketing)</h1>
-                    <p className="text-gray-500 text-xs md:text-sm">Manage potential clients and follow-ups</p>
+                    <h1 className="text-page-title text-gray-900">Leads</h1>
+                    <p className="text-gray-500 text-xs md:text-sm">{filteredLeads.length} leads in system</p>
                 </div>
                 <button
                     onClick={handleAddNew}
-                    className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-md font-semibold transition-all shadow-sm text-sm md:text-base"
+                    className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-md font-semibold transition-all text-sm"
                 >
                     <Plus className="w-4 h-4" />
                     <span>New Lead</span>
                 </button>
             </div>
 
-            {/* FILTERS */}
-            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 bg-white p-3 md:p-4 rounded-lg md:rounded-lg border border-gray-100">
+            {/* STAT CARDS — Job Queue style */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+                <div className="bg-gray-900 border border-gray-800 rounded-md p-2 md:p-3">
+                    <div className="flex items-center gap-1 md:gap-2 mb-1">
+                        <User className="w-4 h-4 text-white" />
+                        <span className="text-xs text-white font-medium">Total Leads</span>
+                    </div>
+                    <p className="text-page-title text-white">{totalLeads}</p>
+                </div>
+                <div className="bg-muted border border-border rounded-md p-2 md:p-3">
+                    <div className="flex items-center gap-1 md:gap-2 mb-1">
+                        <Clock className="w-4 h-4 text-foreground" />
+                        <span className="text-xs text-foreground font-medium">Follow-ups</span>
+                    </div>
+                    <p className="text-page-title text-foreground">{followUpCount}</p>
+                </div>
+                <div className="bg-white border border-gray-300 rounded-md p-2 md:p-3">
+                    <div className="flex items-center gap-1 md:gap-2 mb-1">
+                        <CheckCircle className="w-4 h-4 text-gray-900" />
+                        <span className="text-xs text-gray-900 font-medium">Converted</span>
+                    </div>
+                    <p className="text-page-title text-gray-900">{convertedCount}</p>
+                </div>
+                <div className="bg-red-50 border border-red-200 rounded-md p-2 md:p-3">
+                    <div className="flex items-center gap-1 md:gap-2 mb-1">
+                        <AlertCircle className="w-4 h-4 text-red-600" />
+                        <span className="text-xs text-red-600 font-medium">Lost</span>
+                    </div>
+                    <p className="text-page-title text-red-700">{lostCount}</p>
+                </div>
+            </div>
+
+            {/* FILTERS — inline like Job Queue */}
+            <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <Input
                         type="text"
                         placeholder="Search name, phone, company..."
@@ -321,9 +359,9 @@ export default function LeadsPage() {
             </div>
 
             {/* LEAD LIST */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {filteredLeads.length === 0 ? (
-                    <div className="col-span-full py-8 md:py-12 text-center text-sm md:text-base text-gray-400 bg-gray-50 rounded-lg md:rounded-lg border-2 border-dashed border-gray-200">
+                    <div className="col-span-full py-8 md:py-12 text-center text-sm text-gray-400 bg-gray-50 rounded-md border border-dashed border-gray-200">
                         No leads found matching your search.
                         <br /><span className="text-xs text-gray-300">If you just added a lead, try refreshing the page manually.</span>
                     </div>
@@ -334,7 +372,7 @@ export default function LeadsPage() {
                         const headerTextColor = 'text-foreground';
 
                         return (
-                            <div key={lead.id} className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-sm transition-all border border-gray-100">
+                            <div key={lead.id} className="bg-white rounded-md overflow-hidden hover:shadow-sm transition-all border border-gray-200">
                                 {/* Colored Header */}
                                 <div className={`${headerBg} px-3 py-2.5 flex items-center justify-between`}>
                                     <span className={`${headerTextColor} font-mono text-sm font-bold`}>
@@ -466,7 +504,7 @@ export default function LeadsPage() {
             {/* EDIT/CREATE MODAL */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto ">
+                    <div className="bg-white rounded-md w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                         <div className="sticky top-0 bg-white p-5 border-b border-gray-100 flex justify-between items-center z-10">
                             <h2 className="text-page-title text-gray-900">{isEditing ? 'Edit Lead' : 'New Lead Card'}</h2>
                             <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
@@ -596,7 +634,7 @@ export default function LeadsPage() {
             {/* VIEW MODAL - Simplified for read-only view */}
             {showViewModal && selectedLead && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-                    <div className="bg-white rounded-lg w-full max-w-lg p-4 relative ">
+                    <div className="bg-white rounded-md w-full max-w-lg p-4 relative">
                         <button onClick={() => setShowViewModal(false)} className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full"><X className="w-4 h-4" /></button>
                         <h2 className="text-page-title text-gray-900 mb-1">{selectedLead.name}</h2>
                         <p className="text-gray-500 font-mono text-sm mb-3 md:mb-1.5">{selectedLead.lead_number}</p>

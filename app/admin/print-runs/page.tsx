@@ -351,31 +351,56 @@ export default function PrintRunsPage() {
                 </button>
             </div>
 
-            {/* Stat Cards — 6 columns */}
-            <div className="grid grid-cols-3 lg:grid-cols-6 gap-2">
-                {/* All */}
-                <button onClick={() => setFilter('all')} className={`border rounded-md p-2 text-left transition-all ${filter === 'all' ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200 hover:bg-gray-50'}`}>
-                    <div className="flex items-center gap-1 mb-0.5">
-                        <Package className={`w-3.5 h-3.5 ${filter === 'all' ? 'text-white' : 'text-gray-500'}`} />
-                        <span className={`text-xs font-medium ${filter === 'all' ? 'text-white' : 'text-gray-500'}`}>All</span>
+            {/* Stat Cards — Job Queue style (4 col) */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+                <button
+                    onClick={() => setFilter(filter === 'planned' ? 'all' : 'planned')}
+                    className={`text-left rounded-md p-2 md:p-3 border transition-all ${filter === 'planned'
+                        ? 'bg-gray-900 border-gray-800'
+                        : 'bg-muted border-border'}`}
+                >
+                    <div className="flex items-center gap-1 md:gap-2 mb-1">
+                        <Clock className={`w-4 h-4 ${filter === 'planned' ? 'text-white' : 'text-foreground'}`} />
+                        <span className={`text-xs font-medium ${filter === 'planned' ? 'text-white' : 'text-foreground'}`}>Planned</span>
                     </div>
-                    <p className={`text-lg font-bold ${filter === 'all' ? 'text-white' : 'text-gray-900'}`}>{counts.all}</p>
+                    <p className={`text-page-title ${filter === 'planned' ? 'text-white' : 'text-foreground'}`}>{counts.planned}</p>
                 </button>
-                {/* Status cards */}
-                {(Object.keys(STATUS_CONFIG) as Array<keyof typeof STATUS_CONFIG>).map(key => {
-                    const conf = STATUS_CONFIG[key];
-                    const Icon = conf.icon;
-                    const active = filter === key;
-                    return (
-                        <button key={key} onClick={() => setFilter(key)} className={`border rounded-md p-2 text-left transition-all ${active ? `${conf.color} border-current` : 'bg-white border-gray-200 hover:bg-gray-50'}`}>
-                            <div className="flex items-center gap-1 mb-0.5">
-                                <Icon className="w-3.5 h-3.5" />
-                                <span className="text-xs font-medium">{conf.label}</span>
-                            </div>
-                            <p className="text-lg font-bold">{counts[key]}</p>
-                        </button>
-                    );
-                })}
+                <button
+                    onClick={() => setFilter(filter === 'at_printer' ? 'all' : 'at_printer')}
+                    className={`text-left rounded-md p-2 md:p-3 border transition-all ${filter === 'at_printer'
+                        ? 'bg-gray-900 border-gray-800'
+                        : 'bg-white border-gray-300'}`}
+                >
+                    <div className="flex items-center gap-1 md:gap-2 mb-1">
+                        <Printer className={`w-4 h-4 ${filter === 'at_printer' ? 'text-white' : 'text-gray-900'}`} />
+                        <span className={`text-xs font-medium ${filter === 'at_printer' ? 'text-white' : 'text-gray-900'}`}>At Printer</span>
+                    </div>
+                    <p className={`text-page-title ${filter === 'at_printer' ? 'text-white' : 'text-gray-900'}`}>{counts.at_printer}</p>
+                </button>
+                <button
+                    onClick={() => setFilter(filter === 'printing_done' ? 'all' : 'printing_done')}
+                    className={`text-left rounded-md p-2 md:p-3 border transition-all ${filter === 'printing_done'
+                        ? 'bg-gray-900 border-gray-800'
+                        : 'bg-muted border-border'}`}
+                >
+                    <div className="flex items-center gap-1 md:gap-2 mb-1">
+                        <CheckCircle className={`w-4 h-4 ${filter === 'printing_done' ? 'text-white' : 'text-foreground'}`} />
+                        <span className={`text-xs font-medium ${filter === 'printing_done' ? 'text-white' : 'text-foreground'}`}>Printing Done</span>
+                    </div>
+                    <p className={`text-page-title ${filter === 'printing_done' ? 'text-white' : 'text-foreground'}`}>{counts.printing_done}</p>
+                </button>
+                <button
+                    onClick={() => setFilter(filter === 'dispatched' ? 'all' : 'dispatched')}
+                    className={`text-left rounded-md p-2 md:p-3 border transition-all ${filter === 'dispatched'
+                        ? 'bg-gray-900 border-gray-800'
+                        : 'bg-white border-gray-300'}`}
+                >
+                    <div className="flex items-center gap-1 md:gap-2 mb-1">
+                        <Truck className={`w-4 h-4 ${filter === 'dispatched' ? 'text-white' : 'text-gray-900'}`} />
+                        <span className={`text-xs font-medium ${filter === 'dispatched' ? 'text-white' : 'text-gray-900'}`}>Dispatched</span>
+                    </div>
+                    <p className={`text-page-title ${filter === 'dispatched' ? 'text-white' : 'text-gray-900'}`}>{counts.dispatched}</p>
+                </button>
             </div>
 
             {/* Cards Grid */}
