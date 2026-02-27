@@ -181,6 +181,7 @@ export interface Job extends BaseEntity {
 
   // Financial fields
   quote_per_piece: number;
+  design_charge?: number;   // Flat design fee (used for design_only / design_print jobs)
   subtotal: number;
   gst_rate: number;
   gst_amount: number;

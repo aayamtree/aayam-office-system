@@ -157,7 +157,7 @@ export default function JobsPage() {
 
   const [formData, setFormData] = useState({
     project_name: '', client_id: '', job_type: 'Design + Print', product_category: 'Other', quantity: 1, vendor_id: '',
-    designer_id: '', client_deadline: '', priority: 'normal', quote_per_piece: 0, gst_rate: 18, current_stage: 'new',
+    designer_id: '', client_deadline: '', priority: 'normal', quote_per_piece: 0, design_charge: 0, gst_rate: 18, current_stage: 'new',
     advance_required: true, advance_amount: 0
   });
 
@@ -246,19 +246,26 @@ export default function JobsPage() {
     setSaving(true);
 
     try {
-      const subtotal = formData.quantity * formData.quote_per_piece;
+      const jobType = formData.job_type;
+      const isDesign = jobType === 'Design Only' || jobType === 'design_only' || jobType === 'design_print';
+      const isPrint = jobType === 'Print Only' || jobType === 'print_only' || jobType === 'Design + Print' || jobType === 'design_print';
+
+      const printSubtotal = isPrint ? formData.quantity * formData.quote_per_piece : 0;
+      const designSubtotal = isDesign ? formData.design_charge : 0;
+      const subtotal = printSubtotal + designSubtotal;
       const gstAmount = subtotal * (formData.gst_rate / 100);
       const totalAmount = subtotal + gstAmount;
 
       const jobData = {
         project_name: formData.project_name,
-        client_id: formData.client_id || undefined, // Types generally prefer undefined over null for optional
+        client_id: formData.client_id || undefined,
         vendor_id: formData.vendor_id || undefined,
         designer_id: formData.designer_id || undefined,
         job_type: formData.job_type as 'print_only' | 'design_only' | 'design_print' | undefined,
         product_category: formData.product_category,
         quantity: formData.quantity,
         quote_per_piece: formData.quote_per_piece,
+        design_charge: formData.design_charge,
         subtotal,
         gst_rate: formData.gst_rate,
         gst_amount: gstAmount,
@@ -306,7 +313,7 @@ export default function JobsPage() {
   const resetForm = () => {
     setFormData({
       project_name: '', client_id: '', job_type: 'Design + Print', product_category: 'Other', quantity: 1, vendor_id: '',
-      designer_id: '', client_deadline: '', priority: 'normal', quote_per_piece: 0, gst_rate: 18, current_stage: 'new',
+      designer_id: '', client_deadline: '', priority: 'normal', quote_per_piece: 0, design_charge: 0, gst_rate: 18, current_stage: 'new',
       advance_required: true, advance_amount: 0
     });
   };
@@ -323,6 +330,7 @@ export default function JobsPage() {
       client_deadline: job.client_deadline || '',
       priority: job.priority || 'normal',
       quote_per_piece: job.quote_per_piece || 0,
+      design_charge: job.design_charge || 0,
       gst_rate: job.gst_rate || 18,
       current_stage: job.current_stage || 'new',
       advance_required: job.advance_required !== false,
@@ -453,6 +461,7 @@ export default function JobsPage() {
       client_deadline: '',
       priority: job.priority || 'normal',
       quote_per_piece: job.quote_per_piece || 0,
+      design_charge: job.design_charge || 0,
       gst_rate: job.gst_rate || 18,
       current_stage: 'new',
       advance_required: true,
@@ -869,35 +878,88 @@ export default function JobsPage() {
                 <p className="text-xs text-gray-500 mt-1">Used for production checklists, QC, and card tags</p>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 md:gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Quantity</label>
-                  <input type="number" min="1" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
-                    className="w-full px-3 py-2 border rounded-md" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Rate/Pc (₹)</label>
-                  <input type="number" min="0" step="0.01" value={formData.quote_per_piece} onChange={(e) => setFormData({ ...formData, quote_per_piece: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border rounded-md" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">GST %</label>
-                  <select value={formData.gst_rate} onChange={(e) => setFormData({ ...formData, gst_rate: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-md">
-                    <option value={0}>0%</option>
-                    <option value={5}>5%</option>
-                    <option value={12}>12%</option>
-                    <option value={18}>18%</option>
-                    <option value={28}>28%</option>
-                  </select>
-                </div>
-              </div>
+              {/* Pricing fields — dynamic based on job type */}
+              {(() => {
+                const jt = formData.job_type;
+                const showDesign = jt === 'Design Only' || jt === 'design_only' || jt === 'Design + Print' || jt === 'design_print';
+                const showPrint = jt === 'Print Only' || jt === 'print_only' || jt === 'Design + Print' || jt === 'design_print';
+                const printSubtotal = showPrint ? formData.quantity * formData.quote_per_piece : 0;
+                const designSubtotal = showDesign ? formData.design_charge : 0;
+                const subtotal = printSubtotal + designSubtotal;
+                return (
+                  <>
+                    {/* Design Charge — shown for Design Only & Design+Print */}
+                    {showDesign && (
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Design Charge (₹) <span className="text-gray-400 font-normal">— flat fee</span></label>
+                        <input
+                          type="number" min="0" step="0.01"
+                          value={formData.design_charge}
+                          onChange={(e) => setFormData({ ...formData, design_charge: parseFloat(e.target.value) || 0 })}
+                          className="w-full px-3 py-2 border rounded-md"
+                          placeholder="e.g. 2000"
+                        />
+                      </div>
+                    )}
 
-              {/* Amount Preview */}
-              <div className="bg-white rounded-md p-4 grid grid-cols-3 gap-2 md:gap-4 text-center">
-                <div><p className="text-xs text-gray-500">Subtotal</p><p className="font-semibold">{formatCurrency(formData.quantity * formData.quote_per_piece)}</p></div>
-                <div><p className="text-xs text-gray-500">GST ({formData.gst_rate}%)</p><p className="font-semibold text-foreground">{formatCurrency(formData.quantity * formData.quote_per_piece * formData.gst_rate / 100)}</p></div>
-                <div><p className="text-xs text-gray-500">Total</p><p className="font-bold text-primary">{formatCurrency(formData.quantity * formData.quote_per_piece * (1 + formData.gst_rate / 100))}</p></div>
-              </div>
+                    {/* Qty + Rate/Pc — shown for Print Only & Design+Print */}
+                    {showPrint && (
+                      <div className="grid grid-cols-2 gap-2 md:gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Quantity</label>
+                          <input type="number" min="1" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
+                            className="w-full px-3 py-2 border rounded-md" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Rate/Pc (₹)</label>
+                          <input type="number" min="0" step="0.01" value={formData.quote_per_piece} onChange={(e) => setFormData({ ...formData, quote_per_piece: parseFloat(e.target.value) || 0 })}
+                            className="w-full px-3 py-2 border rounded-md" />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* GST */}
+                    <div>
+                      <label className="block text-sm font-medium mb-1">GST %</label>
+                      <select value={formData.gst_rate} onChange={(e) => setFormData({ ...formData, gst_rate: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-md">
+                        <option value={0}>0%</option>
+                        <option value={5}>5%</option>
+                        <option value={12}>12%</option>
+                        <option value={18}>18% (default)</option>
+                        <option value={28}>28%</option>
+                      </select>
+                    </div>
+
+                    {/* Amount Preview */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-md p-3 space-y-1.5 text-sm">
+                      {showDesign && (
+                        <div className="flex justify-between text-gray-600">
+                          <span>Design Charge</span>
+                          <span className="font-medium">{formatCurrency(formData.design_charge)}</span>
+                        </div>
+                      )}
+                      {showPrint && (
+                        <div className="flex justify-between text-gray-600">
+                          <span>Print ({formData.quantity} × ₹{formData.quote_per_piece})</span>
+                          <span className="font-medium">{formatCurrency(printSubtotal)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-gray-600 border-t pt-1.5">
+                        <span>Subtotal</span>
+                        <span className="font-medium">{formatCurrency(subtotal)}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-500">
+                        <span>GST ({formData.gst_rate}%)</span>
+                        <span>{formatCurrency(subtotal * formData.gst_rate / 100)}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-900 font-bold border-t pt-1.5">
+                        <span>Total</span>
+                        <span className="text-primary">{formatCurrency(subtotal * (1 + formData.gst_rate / 100))}</span>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
 
               {/* Designer Selection */}
               <div>
@@ -997,11 +1059,17 @@ export default function JobsPage() {
                       placeholder="Enter advance amount collected"
                       className="w-full px-3 py-2 border rounded-md"
                     />
-                    {formData.quantity > 0 && formData.quote_per_piece > 0 && (
-                      <p className="text-xs text-amber-600 mt-1">
-                        50% of total = {formatCurrency(formData.quantity * formData.quote_per_piece * (1 + formData.gst_rate / 100) * 0.5)}
-                      </p>
-                    )}
+                    {(() => {
+                      const jt = formData.job_type;
+                      const isD = jt === 'Design Only' || jt === 'design_only' || jt === 'Design + Print' || jt === 'design_print';
+                      const isP = jt === 'Print Only' || jt === 'print_only' || jt === 'Design + Print' || jt === 'design_print';
+                      const total = ((isD ? formData.design_charge : 0) + (isP ? formData.quantity * formData.quote_per_piece : 0)) * (1 + formData.gst_rate / 100);
+                      return total > 0 ? (
+                        <p className="text-xs text-amber-600 mt-1">
+                          50% of total = {formatCurrency(total * 0.5)}
+                        </p>
+                      ) : null;
+                    })()}
                   </div>
                 )}
               </div>
