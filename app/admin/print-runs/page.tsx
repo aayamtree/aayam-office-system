@@ -303,14 +303,22 @@ export default function PrintRunsPage() {
 
 
 
-    // ─── Helpers ────────────────────────────────────────────
-    const filteredRuns = filter === 'all' ? runs : runs.filter(r => r.status === filter);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const overdueCount = runs.filter(r =>
+        r.deadline &&
+        new Date(r.deadline) < today &&
+        !['printing_done'].includes(r.status)
+    ).length;
+
+    const filteredRuns = filter === 'all' ? runs : filter === 'overdue'
+        ? runs.filter(r => r.deadline && new Date(r.deadline) < today && !['printing_done'].includes(r.status))
+        : runs.filter(r => r.status === filter);
     const counts: Record<string, number> = {
         all: runs.length,
         planned: runs.filter(r => r.status === 'planned').length,
         at_printer: runs.filter(r => r.status === 'at_printer').length,
         printing_done: runs.filter(r => r.status === 'printing_done').length,
-        dispatched: runs.filter(r => r.status === 'dispatched').length,
     };
 
     const formatDate = (d: string | null) => {
@@ -390,16 +398,16 @@ export default function PrintRunsPage() {
                     <p className={`text-page-title ${filter === 'printing_done' ? 'text-white' : 'text-foreground'}`}>{counts.printing_done}</p>
                 </button>
                 <button
-                    onClick={() => setFilter(filter === 'dispatched' ? 'all' : 'dispatched')}
-                    className={`text-left rounded-md p-2 md:p-3 border transition-all ${filter === 'dispatched'
+                    onClick={() => setFilter(filter === 'overdue' ? 'all' : 'overdue')}
+                    className={`text-left rounded-md p-2 md:p-3 border transition-all ${filter === 'overdue'
                         ? 'bg-gray-900 border-gray-800'
-                        : 'bg-white border-gray-300'}`}
+                        : 'bg-red-50 border-red-200'}`}
                 >
                     <div className="flex items-center gap-1 md:gap-2 mb-1">
-                        <Truck className={`w-4 h-4 ${filter === 'dispatched' ? 'text-white' : 'text-gray-900'}`} />
-                        <span className={`text-xs font-medium ${filter === 'dispatched' ? 'text-white' : 'text-gray-900'}`}>Dispatched</span>
+                        <AlertTriangle className={`w-4 h-4 ${filter === 'overdue' ? 'text-white' : 'text-red-600'}`} />
+                        <span className={`text-xs font-medium ${filter === 'overdue' ? 'text-white' : 'text-red-600'}`}>Overdue</span>
                     </div>
-                    <p className={`text-page-title ${filter === 'dispatched' ? 'text-white' : 'text-gray-900'}`}>{counts.dispatched}</p>
+                    <p className={`text-page-title ${filter === 'overdue' ? 'text-white' : 'text-red-700'}`}>{overdueCount}</p>
                 </button>
             </div>
 
