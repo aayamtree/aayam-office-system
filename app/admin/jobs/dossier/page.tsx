@@ -148,13 +148,13 @@ export default function JobDossierPage() {
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         placeholder="Search by job number, client, project, product..."
-                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
                     />
                 </div>
                 <select
                     value={stageFilter}
                     onChange={e => setStageFilter(e.target.value)}
-                    className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    className="px-3 py-2.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
                 >
                     <option value="all">All Stages</option>
                     {Object.entries(stageLabel).map(([key, label]) => (
@@ -165,11 +165,11 @@ export default function JobDossierPage() {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-3 gap-3">
-                <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
+                <div className="bg-blue-50 border border-blue-100 rounded-md p-3">
                     <p className="text-xs text-blue-600 font-medium">Revenue</p>
                     <p className="text-lg font-bold text-blue-900">{formatCurrency(totalRevenue)}</p>
                 </div>
-                <div className="bg-red-50 border border-red-100 rounded-lg p-3">
+                <div className="bg-red-50 border border-red-100 rounded-md p-3">
                     <p className="text-xs text-red-600 font-medium">Expenses</p>
                     <p className="text-lg font-bold text-red-900">{formatCurrency(totalExpenses)}</p>
                 </div>
@@ -198,7 +198,7 @@ export default function JobDossierPage() {
                             <Link
                                 key={job.id}
                                 href={`/admin/jobs/${job.id}`}
-                                className="block bg-white border border-gray-100 hover:border-gray-300 hover:shadow-sm rounded-lg p-4 transition-all"
+                                className="block bg-white border border-gray-100 hover:border-gray-300 hover:shadow-sm rounded-md p-4 transition-all"
                             >
                                 {/* Row 1: Job ID + Status + Client */}
                                 <div className="flex items-start justify-between gap-3 mb-2">

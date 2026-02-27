@@ -36,7 +36,7 @@ export default function CostCalculatorPage() {
         <div className="space-y-6 pb-10">
             {/* Header */}
             <div className="flex items-center gap-3">
-                <Link href="/admin/cmyk-print" className="p-2 hover:bg-white rounded-lg border border-gray-100 bg-gray-50 transition-colors">
+                <Link href="/admin/cmyk-print" className="p-2 hover:bg-white rounded-md border border-gray-100 bg-gray-50 transition-colors">
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </Link>
                 <div>
@@ -47,7 +47,7 @@ export default function CostCalculatorPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Input Section */}
-                <div className="bg-white rounded-lg border border-gray-100 p-6 space-y-5">
+                <div className="bg-white rounded-md border border-gray-100 p-6 space-y-5">
                     <h2 className="font-bold text-gray-900 flex items-center gap-2">
                         <Calculator className="w-5 h-5 text-gray-400" />
                         Input Parameters
@@ -67,7 +67,7 @@ export default function CostCalculatorPage() {
                             <select
                                 value={selectedPaperId}
                                 onChange={(e) => setSelectedPaperId(e.target.value)}
-                                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-gray-400"
+                                className="w-full px-3 py-2.5 border border-gray-200 rounded-md bg-white focus:ring-2 focus:ring-gray-400"
                             >
                                 {paperStock.map((p: PaperStock) => (
                                     <option key={p.id} value={p.id}>
@@ -80,7 +80,7 @@ export default function CostCalculatorPage() {
 
                     {/* Paper Info Card */}
                     {selectedPaper && (
-                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-100 grid grid-cols-2 gap-3 text-sm">
+                        <div className="bg-gray-50 rounded-md p-4 border border-gray-100 grid grid-cols-2 gap-3 text-sm">
                             <div>
                                 <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">GSM</p>
                                 <p className="font-medium text-gray-900">{selectedPaper.gsm || '-'}</p>
@@ -110,7 +110,7 @@ export default function CostCalculatorPage() {
                             min={1}
                             value={quantity}
                             onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
-                            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400"
+                            className="w-full px-3 py-2.5 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400"
                             placeholder="e.g. 1000"
                         />
                     </div>
@@ -123,7 +123,7 @@ export default function CostCalculatorPage() {
                             min={1}
                             value={upsPerSheet}
                             onChange={(e) => setUpsPerSheet(parseInt(e.target.value) || 1)}
-                            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400"
+                            className="w-full px-3 py-2.5 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400"
                             placeholder="e.g. 4"
                         />
                         <p className="text-xs text-gray-500 mt-1">Number of pieces that fit on one sheet</p>
@@ -133,7 +133,7 @@ export default function CostCalculatorPage() {
                 {/* Result Section */}
                 <div className="space-y-4">
                     {/* Main Cost Card */}
-                    <div className="bg-white rounded-lg border border-gray-100 p-6">
+                    <div className="bg-white rounded-md border border-gray-100 p-6">
                         <h2 className="font-bold text-gray-900 flex items-center gap-2 mb-5">
                             <IndianRupee className="w-5 h-5 text-gray-400" />
                             Cost Breakdown
@@ -158,7 +158,7 @@ export default function CostCalculatorPage() {
                                 <span className="font-bold text-gray-900 text-xl">{formatCurrency(paperCost)}</span>
                             </div>
 
-                            <div className="flex items-center justify-between py-3 bg-gray-50 px-4 -mx-2 rounded-lg">
+                            <div className="flex items-center justify-between py-3 bg-gray-50 px-4 -mx-2 rounded-md">
                                 <span className="text-gray-700 font-medium">Cost per Piece</span>
                                 <span className="font-bold text-primary text-xl">{formatCurrency(costPerPiece)}</span>
                             </div>
@@ -167,7 +167,7 @@ export default function CostCalculatorPage() {
 
                     {/* Stock Warning */}
                     {selectedPaper && sheetsNeeded > selectedPaper.quantity && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+                        <div className="bg-red-50 border border-red-200 rounded-md p-4 flex items-start gap-3">
                             <Package className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                             <div>
                                 <p className="text-sm font-medium text-red-800">Insufficient Stock</p>
@@ -180,7 +180,7 @@ export default function CostCalculatorPage() {
                     )}
 
                     {/* Formula Reference */}
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-xs text-gray-500">
+                    <div className="bg-gray-50 border border-gray-200 rounded-md p-4 text-xs text-gray-500">
                         <p className="font-semibold text-gray-700 mb-2">Formula:</p>
                         <ul className="space-y-1">
                             <li>• Sheets = ⌈ Quantity ÷ Ups per Sheet ⌉</li>

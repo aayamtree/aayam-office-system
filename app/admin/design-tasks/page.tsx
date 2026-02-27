@@ -65,7 +65,7 @@ export default function DesignTasksPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 p-4">
                 {designJobs.map(job => (
-                    <div key={job.id} className="bg-white rounded-lg border border-gray-200  transition-shadow p-5 flex flex-col">
+                    <div key={job.id} className="bg-white rounded-md border border-gray-200  transition-shadow p-5 flex flex-col">
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <span className="bg-gray-100 text-gray-600 text-xs font-mono px-2 py-1 rounded">{job.job_number}</span>
@@ -80,7 +80,7 @@ export default function DesignTasksPage() {
                             </span>
                         </div>
 
-                        <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg mb-4 line-clamp-3">
+                        <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md mb-4 line-clamp-3">
                             {job.description || 'No description provided.'}
                         </p>
 
@@ -122,7 +122,7 @@ export default function DesignTasksPage() {
                                 <>
                                     <button
                                         onClick={() => setChecklistJob(job)}
-                                        className="bg-white border border-gray-200 text-gray-700 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                                        className="bg-white border border-gray-200 text-gray-700 p-2 rounded-md hover:bg-gray-50 transition-colors"
                                         title="Quality Checklist"
                                     >
                                         <CheckSquare size={16} />
@@ -154,7 +154,7 @@ export default function DesignTasksPage() {
                 ))}
 
                 {designJobs.length === 0 && (
-                    <div className="col-span-full text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                    <div className="col-span-full text-center py-12 bg-gray-50 rounded-md border-2 border-dashed border-gray-200">
                         <Palette className="mx-auto h-12 w-12 text-gray-300 mb-3" />
                         <h3 className="text-lg font-medium text-gray-900">No pending designs</h3>
                         <p className="text-gray-500">Good job! Typically new orders will appear here.</p>

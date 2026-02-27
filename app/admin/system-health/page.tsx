@@ -122,7 +122,7 @@ export default function SystemHealthPage() {
 
             {/* Error */}
             {error && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
                     <AlertTriangle className="w-4 h-4 inline mr-2" />
                     {error}
                 </div>
@@ -130,7 +130,7 @@ export default function SystemHealthPage() {
 
             {/* Last Optimization Result */}
             {lastOptimize && (
-                <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-start gap-3">
+                <div className="p-4 bg-green-50 border border-green-200 rounded-md text-green-700 text-sm flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
                     <div>
                         <p className="font-semibold">Optimization Complete!</p>
@@ -150,7 +150,7 @@ export default function SystemHealthPage() {
             ) : healthData ? (
                 <>
                     {/* Status Banner */}
-                    <div className={`p-4 rounded-lg border flex items-center gap-3 ${statusColor}`}>
+                    <div className={`p-4 rounded-md border flex items-center gap-3 ${statusColor}`}>
                         {statusIcon}
                         <div>
                             <p className="font-bold capitalize">{healthData.status}</p>
@@ -164,7 +164,7 @@ export default function SystemHealthPage() {
                     {/* Metrics Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {/* Database */}
-                        <div className="bg-white p-4 rounded-lg border border-gray-100">
+                        <div className="bg-white p-4 rounded-md border border-gray-100">
                             <div className="flex items-center gap-2 mb-2">
                                 <Database className="w-4 h-4 text-gray-400" />
                                 <span className="text-xs font-bold text-gray-500 uppercase">Database</span>
@@ -176,7 +176,7 @@ export default function SystemHealthPage() {
                         </div>
 
                         {/* Response Time */}
-                        <div className="bg-white p-4 rounded-lg border border-gray-100">
+                        <div className="bg-white p-4 rounded-md border border-gray-100">
                             <div className="flex items-center gap-2 mb-2">
                                 <Clock className="w-4 h-4 text-gray-400" />
                                 <span className="text-xs font-bold text-gray-500 uppercase">API Speed</span>
@@ -188,7 +188,7 @@ export default function SystemHealthPage() {
                         {/* DB Size */}
                         {healthData.systemHealth && (
                             <>
-                                <div className="bg-white p-4 rounded-lg border border-gray-100">
+                                <div className="bg-white p-4 rounded-md border border-gray-100">
                                     <div className="flex items-center gap-2 mb-2">
                                         <HardDrive className="w-4 h-4 text-gray-400" />
                                         <span className="text-xs font-bold text-gray-500 uppercase">DB Size</span>
@@ -197,7 +197,7 @@ export default function SystemHealthPage() {
                                     <p className="text-xs text-gray-500">{healthData.systemHealth.total_indexes} indexes</p>
                                 </div>
 
-                                <div className="bg-white p-4 rounded-lg border border-gray-100">
+                                <div className="bg-white p-4 rounded-md border border-gray-100">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Server className="w-4 h-4 text-gray-400" />
                                         <span className="text-xs font-bold text-gray-500 uppercase">Connections</span>
@@ -210,7 +210,7 @@ export default function SystemHealthPage() {
                     </div>
 
                     {/* Table Stats */}
-                    <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+                    <div className="bg-white rounded-md border border-gray-100 overflow-hidden">
                         <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
                             <BarChart3 className="w-4 h-4 text-gray-500" />
                             <h3 className="font-bold text-sm text-gray-700">Table Statistics</h3>
@@ -262,7 +262,7 @@ export default function SystemHealthPage() {
                     </div>
 
                     {/* Performance Tips */}
-                    <div className="bg-white rounded-lg border border-gray-100 p-4">
+                    <div className="bg-white rounded-md border border-gray-100 p-4">
                         <div className="flex items-center gap-2 mb-3">
                             <Shield className="w-4 h-4 text-gray-500" />
                             <h3 className="font-bold text-sm text-gray-700">Performance Tips</h3>

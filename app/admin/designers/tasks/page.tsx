@@ -56,7 +56,7 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-lg  w-full max-w-lg overflow-hidden border border-gray-100">
+      <div className="bg-white rounded-md  w-full max-w-lg overflow-hidden border border-gray-100">
         <div className="bg-gray-900 p-4 text-white">
           <h2 className="text-page-title flex items-center gap-2">
             <Monitor size={24} /> Good Morning, {userName || 'Designer'}!
@@ -71,7 +71,7 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
                 <AlertTriangle size={16} /> Overdue Tasks ({overdue.length})
               </h3>
               {overdue.map(t => (
-                <div key={t.id} className="p-3 bg-red-50 border border-red-100 rounded-lg flex justify-between items-center">
+                <div key={t.id} className="p-3 bg-red-50 border border-red-100 rounded-md flex justify-between items-center">
                   <span className="text-sm font-medium text-red-900">{t.title}</span>
                   <span className="text-xs text-red-600 font-bold px-2 py-0.5 bg-white rounded-md">Due: {t.deadline}</span>
                 </div>
@@ -85,7 +85,7 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
                 <Calendar size={16} /> Due Today ({dueToday.length})
               </h3>
               {dueToday.map(t => (
-                <div key={t.id} className="p-3 bg-muted border border-gray-200 rounded-lg flex justify-between items-center">
+                <div key={t.id} className="p-3 bg-muted border border-gray-200 rounded-md flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-900">{t.title}</span>
                   <span className="text-xs text-primary font-bold px-2 py-0.5 bg-white rounded-md">Today</span>
                 </div>
@@ -491,10 +491,10 @@ export default function DesignerWorkspace() {
 
         {activeTab === 'board' ? (
           <div className="flex-1 overflow-x-auto overflow-y-hidden p-4 bg-gray-50">
-            <div className="flex bg-white p-4 rounded-lg mb-4 justify-between items-center sticky left-0 min-w-[768px]">
+            <div className="flex bg-white p-4 rounded-md mb-4 justify-between items-center sticky left-0 min-w-[768px]">
               <div className="flex items-center gap-2 md:gap-4">
                 <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2"><Layout size={20} /> Kanban Team Board</h2>
-                <div className="flex bg-gray-100 p-1 rounded-lg">
+                <div className="flex bg-gray-100 p-1 rounded-md">
                   <button onClick={() => setView('my_tasks')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">List</button>
                   <button onClick={() => setView('board')} className="px-3 py-1 text-xs font-bold bg-white text-primary rounded">Board</button>
                   <button onClick={() => setView('timeline')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Timeline</button>
@@ -515,7 +515,7 @@ export default function DesignerWorkspace() {
                 });
 
                 return (
-                  <div key={col.id} className="w-80 flex flex-col bg-gray-100/50 rounded-lg border border-gray-200/50">
+                  <div key={col.id} className="w-80 flex flex-col bg-gray-100/50 rounded-md border border-gray-200/50">
                     <div className={`p-4 font-bold text-sm uppercase tracking-wide flex justify-between items-center ${col.textColor}`}>
                       {col.title}
                       <span className="bg-gray-900 text-white px-2 py-0.5 rounded text-xs font-bold">{colTasks.length}</span>
@@ -529,88 +529,64 @@ export default function DesignerWorkspace() {
                         if (descLower.includes('print')) { TypeIcon = Printer; typeLabel = "Print"; }
                         if (descLower.includes('box') || descLower.includes('package')) { TypeIcon = Folder; typeLabel = "Pkg"; }
 
-                        // Urgency Border Logic
-                        let borderClass = col.border ? col.border.replace('border-', 'border-l-4 border-') : 'border-l-4 border-gray-400';
-                        if (task.rawDeadline && new Date(task.rawDeadline) < new Date()) borderClass = 'border-l-4 border-red-500'; // Overdue overrides status
+                        // Header color: overdue = red, otherwise use col accent
+                        const isOverdueCard = task.rawDeadline && new Date(task.rawDeadline) < new Date();
+                        const cardHeaderBg = isOverdueCard ? 'bg-red-600' : col.id === 'completed' ? 'bg-gray-700' : col.id === 'in_progress' ? 'bg-gray-900' : col.id === 'review' ? 'bg-gray-800' : 'bg-gray-600';
 
                         return (
                           <div key={task.id}
                             onClick={() => { setView('my_tasks'); setSelectedTaskId(task.id); }}
-                            className={`bg-white p-4 rounded-lg border border-gray-100  transition-shadow cursor-pointer group relative ${borderClass}`}
+                            className="bg-white rounded-md overflow-hidden border border-gray-200 transition-shadow cursor-pointer"
                           >
-                            {/* Revision Badge */}
-                            {!task.is_on_hold && task.revision_count > 0 && (
-                              <div className="absolute top-4 right-4 text-xs font-mono text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">Rev {task.revision_count}</div>
-                            )}
-
-                            <div className="flex justify-between items-start mb-2 pr-12">
-                              {/* Job Type Tag */}
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="flex items-center gap-1 text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded uppercase tracking-wider">
+                            {/* Dark header */}
+                            <div className={`${cardHeaderBg} px-3 py-1.5 flex items-center justify-between`}>
+                              <div className="flex items-center gap-1.5">
+                                <span className="flex items-center gap-1 text-xs font-bold text-white/80 bg-white/15 px-1.5 py-0.5 rounded-md uppercase">
                                   <TypeIcon size={10} /> {typeLabel}
                                 </span>
-                                {/* Priority Tag */}
-                                <span className={`text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wider ${task.priority === 'urgent' ? 'bg-red-50 text-red-600 border border-red-200' :
-                                  task.priority === 'high' ? 'bg-orange-50 text-orange-600 border border-orange-200' :
-                                    'bg-gray-100 text-gray-500 border border-gray-200'
-                                  }`}>
-                                  {task.priority || 'normal'}
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-white/20 text-white uppercase ${task.priority === 'urgent' ? '' : task.priority === 'high' ? '' : 'hidden'}`}>
+                                  {task.priority}
                                 </span>
-                                {/* Product Category Tag */}
-                                {(() => {
-                                  const catMap: Record<string, { label: string; bg: string; text: string }> = {
-                                    'box': { label: '📦 BOX', bg: 'bg-amber-100', text: 'text-amber-700' },
-                                    'pouch': { label: '👝 POUCH', bg: 'bg-rose-100', text: 'text-rose-700' },
-                                    'label': { label: '🏷️ LABEL', bg: 'bg-indigo-100', text: 'text-indigo-700' },
-                                    'sticker': { label: '⭐ STICKER', bg: 'bg-pink-100', text: 'text-pink-700' },
-                                  };
-                                  const c = catMap[task.productCategory?.toLowerCase()];
-                                  return c ? <span className={`text-xs font-bold px-2 py-0.5 rounded ${c.bg} ${c.text}`}>{c.label}</span> : null;
-                                })()}
                               </div>
-                            </div>
-
-                            <h4 className="font-bold text-gray-800 mb-1 line-clamp-2 leading-tight">{task.title}</h4>
-                            {task.current_stage === 'awaiting_admin' && (
-                              <div className="flex items-center gap-1.5 mb-1">
-                                <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-300">⏳ Awaiting Admin Approval</span>
-                              </div>
-                            )}
-                            <p className="text-xs text-gray-500 mb-3 font-medium">{task.clientName}</p>
-
-                            {/* Footer Info */}
-                            <div className="flex justify-between items-center border-t pt-3 mt-1">
-                              <div className="flex items-center gap-3">
-                                {/* Designer Name with Icon */}
-                                <span className="flex items-center gap-1 text-xs font-bold text-primary bg-muted border border-gray-200 px-2 py-0.5 rounded overflow-hidden text-ellipsis whitespace-nowrap max-w-[120px]">
-                                  <User size={10} className="shrink-0" />
-                                  {task.designerName || 'Unassigned'}
-                                </span>
-
-                                {/* Date / Risk */}
-                                {task.rawDeadline && (
-                                  <span className={`flex items-center gap-1 text-xs font-bold ${new Date(task.rawDeadline) < new Date() ? 'text-red-500' : 'text-gray-400'}`}>
-                                    {new Date(task.rawDeadline) < new Date() && <AlertTriangle size={10} />}
-                                    {task.deadline}
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* File Attachment Indicator */}
-                              {(task.files?.length > 0 || task.driveLink) && (
-                                <div className="flex items-center gap-1 text-gray-600" title={`${task.files?.length || 1} file(s) attached`}>
-                                  <Paperclip size={11} />
-                                  <span className="text-xs font-bold">{task.files?.length || 1}</span>
-                                </div>
+                              {task.revision_count > 0 && (
+                                <span className="text-[9px] font-mono text-white/80 bg-white/15 px-1.5 py-0.5 rounded-md">Rev {task.revision_count}</span>
                               )}
                             </div>
 
-                            {/* ON HOLD Banner — full width at bottom */}
-                            {task.is_on_hold && (
-                              <div className="-mx-4 -mb-4 mt-3 bg-amber-100 border-t border-amber-300 text-amber-800 text-xs font-bold text-center py-1.5 rounded-b-lg uppercase tracking-wider">
-                                ⏸️ ON HOLD
+                            {/* Body */}
+                            <div className="p-3">
+                              {task.current_stage === 'awaiting_admin' && (
+                                <div className="flex items-center gap-1.5 mb-1.5">
+                                  <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-300">⏳ Awaiting Admin Approval</span>
+                                </div>
+                              )}
+                              <h4 className="font-bold text-gray-800 mb-1 line-clamp-2 leading-tight text-sm">{task.title}</h4>
+                              <p className="text-xs text-gray-500 mb-2 font-medium">{task.clientName}</p>
+
+                              <div className="flex justify-between items-center border-t pt-2 mt-1">
+                                <span className="flex items-center gap-1 text-xs font-bold text-primary bg-muted border border-gray-200 px-2 py-0.5 rounded-md overflow-hidden text-ellipsis whitespace-nowrap max-w-[120px]">
+                                  <User size={10} className="shrink-0" />
+                                  {task.designerName || 'Unassigned'}
+                                </span>
+                                <div className="flex items-center gap-1.5">
+                                  {(task.files?.length > 0 || task.driveLink) && (
+                                    <span className="flex items-center gap-0.5 text-gray-500" title={`${task.files?.length || 1} file(s)`}><Paperclip size={10} /><span className="text-xs font-bold">{task.files?.length || 1}</span></span>
+                                  )}
+                                  {task.rawDeadline && (
+                                    <span className={`text-xs font-bold ${isOverdueCard ? 'text-red-500' : 'text-gray-400'}`}>
+                                      {isOverdueCard && <AlertTriangle size={9} className="inline mr-0.5" />}
+                                      {task.deadline}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                            )}
+
+                              {task.is_on_hold && (
+                                <div className="-mx-3 -mb-3 mt-2 bg-amber-100 border-t border-amber-300 text-amber-800 text-xs font-bold text-center py-1.5 rounded-b-md uppercase tracking-wider">
+                                  ⏸️ ON HOLD
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )
                       })}
@@ -626,7 +602,7 @@ export default function DesignerWorkspace() {
             <div className="flex bg-white p-4 justify-between items-center border-b">
               <div className="flex items-center gap-2 md:gap-4">
                 <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2"><GanttChart size={20} /> Production Timeline</h2>
-                <div className="flex bg-gray-100 p-1 rounded-lg">
+                <div className="flex bg-gray-100 p-1 rounded-md">
                   <button onClick={() => setView('my_tasks')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">List</button>
                   <button onClick={() => setView('board')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Board</button>
                   <button className="px-3 py-2 text-xs font-bold bg-white text-primary rounded">Timeline</button>
@@ -639,7 +615,7 @@ export default function DesignerWorkspace() {
             {/* Gantt Chart Body */}
             {/* Gantt Chart Body */}
             <div className="flex-1 overflow-x-auto overflow-y-auto p-2 md:p-4 bg-gray-50">
-              <div className="bg-white rounded-lg border border-gray-100 overflow-hidden min-w-[800px]">
+              <div className="bg-white rounded-md border border-gray-100 overflow-hidden min-w-[800px]">
                 {/* Header Row */}
                 <div className="grid grid-cols-12 bg-gray-50 border-b text-xs font-bold text-gray-500 uppercase tracking-wider h-10 items-center px-4">
                   <div className="col-span-3">Task / Designer</div>
@@ -692,11 +668,11 @@ export default function DesignerWorkspace() {
               <div className="p-4 pb-0 bg-gray-50/50 space-y-3">
                 {/* Work Summary Widget */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-white p-2 rounded-lg border border-gray-200">
+                  <div className="bg-white p-2 rounded-md border border-gray-200">
                     <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">This Month</p>
                     <p className="text-section text-primary">{thisMonthCount} <span className="text-xs text-gray-400 font-normal">Tasks</span></p>
                   </div>
-                  <div className="bg-white p-2 rounded-lg border border-gray-100">
+                  <div className="bg-white p-2 rounded-md border border-gray-100">
                     <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Last Month</p>
                     <p className="text-section text-gray-600">{lastMonthCount} <span className="text-xs text-gray-400 font-normal">Tasks</span></p>
                   </div>
@@ -746,7 +722,7 @@ export default function DesignerWorkspace() {
                     placeholder="Search project, date..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400 bg-white"
+                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 bg-white"
                   />
                 </div>
               </div>
@@ -755,7 +731,7 @@ export default function DesignerWorkspace() {
                 {(!forceShow && jobsLoading) ? (
                   <div className="flex justify-center py-10"><Loader2 className="animate-spin text-primary" /></div>
                 ) : jobsError ? (
-                  <div className="p-4 m-2 bg-red-50 text-red-600 text-xs rounded-lg border border-red-100 flex flex-col items-center gap-2">
+                  <div className="p-4 m-2 bg-red-50 text-red-600 text-xs rounded-md border border-red-100 flex flex-col items-center gap-2">
                     <AlertCircle size={20} />
                     <p className="font-bold underline">Error Loading Tasks</p>
                     <p>{String(jobsError)}</p>
@@ -781,10 +757,10 @@ export default function DesignerWorkspace() {
                       const isOverdue = now > end && task.status !== 'completed' && task.status !== 'delivered';
 
                       return (
-                        <div key={task.id} className="bg-white p-4 rounded-lg border border-gray-100  transition-shadow">
+                        <div key={task.id} className="bg-white p-4 rounded-md border border-gray-100  transition-shadow">
                           <div className="flex justify-between items-center mb-3">
                             <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-lg ${isOverdue ? 'bg-red-100 text-red-600' : 'bg-muted text-primary'}`}>
+                              <div className={`p-2 rounded-md ${isOverdue ? 'bg-red-100 text-red-600' : 'bg-muted text-primary'}`}>
                                 {isOverdue ? <AlertCircle size={18} /> : <Briefcase size={18} />}
                               </div>
                               <div>
@@ -816,7 +792,7 @@ export default function DesignerWorkspace() {
                   <div
                     key={task.id}
                     onClick={() => setSelectedTaskId(task.id)}
-                    className={`p-4 rounded-lg border cursor-pointer transition-all  group relative overflow-hidden
+                    className={`p-4 rounded-md border cursor-pointer transition-all  group relative overflow-hidden
                 ${selectedTaskId === task.id ? 'bg-muted border-border ring-1 ring-primary' : 'bg-white border-gray-100 hover:border-gray-300'}`}
                   >
                     {selectedTaskId === task.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-muted0"></div>}
@@ -911,7 +887,7 @@ export default function DesignerWorkspace() {
 
                     <div className="flex items-center gap-3 w-full md:w-auto">
                       {/* Priority Update */}
-                      <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-lg border w-full md:w-auto">
+                      <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-md border w-full md:w-auto">
                         <span className="text-xs font-bold text-gray-500 pl-2 uppercase whitespace-nowrap">Priority:</span>
                         <select
                           value={selectedTask.priority}
@@ -922,7 +898,7 @@ export default function DesignerWorkspace() {
                         </select>
                       </div>
 
-                      <div className={`flex-1 md:flex-none flex items-center gap-2 p-1 rounded-lg border w-full md:w-auto ${selectedTask.is_on_hold
+                      <div className={`flex-1 md:flex-none flex items-center gap-2 p-1 rounded-md border w-full md:w-auto ${selectedTask.is_on_hold
                         ? 'bg-amber-500 border-amber-500'
                         : ['printing', 'finishing', 'quality_check', 'ready', 'delivered'].includes(selectedTask.current_stage || '')
                           ? 'bg-gray-900 border-gray-900'
@@ -1016,7 +992,7 @@ export default function DesignerWorkspace() {
                               await logActivity({ action: 'update', resourceType: 'job', resourceId: selectedTask.realId, details: { description: `⏸️ ${selectedTask.taskId} put on hold by ${userName}. Reason: "${reason}"`, holdAction: 'hold' } });
                               refetchJobs();
                             }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg text-xs font-bold hover:bg-amber-200 border border-amber-300 transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 text-amber-700 rounded-md text-xs font-bold hover:bg-amber-200 border border-amber-300 transition-colors"
                           >
                             ⏸️ Hold
                           </button>
@@ -1035,7 +1011,7 @@ export default function DesignerWorkspace() {
 
                       if (!isAdmin && !isMyJob && selectedTask.designerId) {
                         return (
-                          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-md p-3">
                             <AlertTriangle size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
                             <div>
                               <p className="text-xs font-bold text-amber-800">This job is assigned to {assignedName}</p>
@@ -1048,7 +1024,7 @@ export default function DesignerWorkspace() {
                     })()}
 
                     {/* 1. Brief / Description */}
-                    <section className="bg-white p-4 rounded-lg border border-gray-100">
+                    <section className="bg-white p-4 rounded-md border border-gray-100">
                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                         <FileText size={16} className="text-primary" /> Design Brief & Instructions
                       </h4>
@@ -1058,7 +1034,7 @@ export default function DesignerWorkspace() {
                     </section>
 
                     {/* 2. Assets & Assignment */}
-                    <section className="bg-white p-4 rounded-lg border border-gray-100 space-y-6">
+                    <section className="bg-white p-4 rounded-md border border-gray-100 space-y-6">
                       {/* Google Drive Link */}
                       <div>
                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -1087,7 +1063,7 @@ export default function DesignerWorkspace() {
                         {selectedTask.files && selectedTask.files.length > 0 && (
                           <div className="space-y-1.5 mb-3">
                             {selectedTask.files.map((file: any, i: number) => (
-                              <div key={i} className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors">
+                              <div key={i} className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-md group hover:bg-gray-100 transition-colors">
                                 <Paperclip size={12} className="text-gray-600 flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
                                   <p className="text-xs font-medium text-gray-800 truncate">{file.name || `File ${i + 1}`}</p>
@@ -1149,7 +1125,7 @@ export default function DesignerWorkspace() {
 
                     {/* 5. Final Review & Checklist — hidden when locked or on hold */}
                     {!selectedTask.is_on_hold && !['printing', 'finishing', 'quality_check', 'ready', 'delivered'].includes(selectedTask.current_stage || '') && (
-                      <section className="bg-gradient-to-br bg-white p-4 rounded-lg border border-gray-200 space-y-4">
+                      <section className="bg-gradient-to-br bg-white p-4 rounded-md border border-gray-200 space-y-4">
                         <h4 className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-2">
                           <CheckCircle size={16} /> Pre-Print Checklist (Mandatory)
                         </h4>
@@ -1160,7 +1136,7 @@ export default function DesignerWorkspace() {
                         )}
                         <div className="grid grid-cols-2 gap-3">
                           {(checklistConfig[selectedTask.productCategory] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed']).map((label, i) => (
-                            <label key={i} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg cursor-pointer hover:border-border transition-colors">
+                            <label key={i} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-md cursor-pointer hover:border-border transition-colors">
                               <input type="checkbox"
                                 checked={!!checklist[`item_${i}`]}
                                 onChange={e => setChecklist(prev => ({ ...prev, [`item_${i}`]: e.target.checked }))}
@@ -1169,7 +1145,7 @@ export default function DesignerWorkspace() {
                               <span className="text-sm font-bold text-gray-600">{label}</span>
                             </label>
                           ))}
-                          <label className="col-span-2 flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg cursor-pointer hover:border-border transition-colors">
+                          <label className="col-span-2 flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-md cursor-pointer hover:border-border transition-colors">
                             <input type="checkbox"
                               checked={checklist.approval || false}
                               onChange={e => setChecklist(prev => ({ ...prev, approval: e.target.checked }))}
@@ -1194,7 +1170,7 @@ export default function DesignerWorkspace() {
                                     updateStatus(selectedTask.realId, 'completed');
                                   }
                                 }}
-                                className="w-full py-4 rounded-lg font-bold text-white flex items-center justify-center gap-2 transition-all
+                                className="w-full py-4 rounded-md font-bold text-white flex items-center justify-center gap-2 transition-all
                              disabled:bg-gray-300 disabled:cursor-not-allowed bg-gray-900 hover:bg-gray-900 hover:scale-[1.01]"
                               >
                                 {isComplete ? <><Printer size={20} /> Client Approved - Ready for Print</> : 'Complete Checklist to Finish'}
@@ -1232,19 +1208,19 @@ export default function DesignerWorkspace() {
                   <h2 className="text-sm">Quick Summary</h2>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <div className={`p-3 rounded-lg border ${overdueTasks.length > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-100'}`}>
+                  <div className={`p-3 rounded-md border ${overdueTasks.length > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-100'}`}>
                     <p className={`text-2xl font-black ${overdueTasks.length > 0 ? 'text-red-600' : 'text-gray-300'}`}>{overdueTasks.length}</p>
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Overdue</p>
                   </div>
-                  <div className="p-3 rounded-lg bg-blue-50 border border-blue-100">
+                  <div className="p-3 rounded-md bg-blue-50 border border-blue-100">
                     <p className="text-2xl font-black text-blue-600">{inProgressTasks.length}</p>
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">In Progress</p>
                   </div>
-                  <div className="p-3 rounded-lg bg-amber-50 border border-amber-100">
+                  <div className="p-3 rounded-md bg-amber-50 border border-amber-100">
                     <p className="text-2xl font-black text-amber-600">{reviewTasks.length}</p>
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">In Review</p>
                   </div>
-                  <div className="p-3 rounded-lg bg-green-50 border border-green-100">
+                  <div className="p-3 rounded-md bg-green-50 border border-green-100">
                     <p className="text-2xl font-black text-green-600">{doneTasks.length}</p>
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Completed</p>
                   </div>
@@ -1254,7 +1230,7 @@ export default function DesignerWorkspace() {
               {/* 2. My Stats */}
               <div className="p-4 border-b">
                 <div className="flex items-center gap-2 text-gray-900 font-bold mb-3">
-                  <div className="p-1.5 bg-emerald-100 text-emerald-600 rounded-lg">
+                  <div className="p-1.5 bg-emerald-100 text-emerald-600 rounded-md">
                     <BarChart3 size={16} />
                   </div>
                   <h2 className="text-sm">My Stats</h2>
@@ -1295,7 +1271,7 @@ export default function DesignerWorkspace() {
               <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="p-4 pb-2">
                   <div className="flex items-center gap-2 text-gray-900 font-bold mb-1">
-                    <div className="p-1.5 bg-orange-100 text-orange-600 rounded-lg">
+                    <div className="p-1.5 bg-orange-100 text-orange-600 rounded-md">
                       <Bell size={16} />
                     </div>
                     <h2 className="text-sm">Recent Notifications</h2>
@@ -1310,7 +1286,7 @@ export default function DesignerWorkspace() {
                   ) : (
                     <div className="space-y-2">
                       {sidebarNotifications.map((notif: any) => (
-                        <div key={notif.id} className={`p-3 rounded-lg text-xs border ${notif.priority === 'urgent' ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-100'}`}>
+                        <div key={notif.id} className={`p-3 rounded-md text-xs border ${notif.priority === 'urgent' ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-100'}`}>
                           <div className="flex items-start gap-2">
                             {notif.priority === 'urgent' ? (
                               <AlertCircle size={12} className="text-red-500 mt-0.5 flex-shrink-0" />

@@ -68,7 +68,7 @@ export default function PreferencesPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         {/* Invoice Settings */}
-        <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
+        <div className="bg-white rounded-md md:rounded-md p-3 md:p-4 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Invoice Settings</h2>
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-2 md:gap-4">
@@ -78,7 +78,7 @@ export default function PreferencesPage() {
                   type="text"
                   value={preferences.invoicePrefix}
                   onChange={(e) => setPreferences({ ...preferences, invoicePrefix: e.target.value.toUpperCase() })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-md"
                 />
               </div>
               <div>
@@ -87,7 +87,7 @@ export default function PreferencesPage() {
                   type="text"
                   value={preferences.orderPrefix}
                   onChange={(e) => setPreferences({ ...preferences, orderPrefix: e.target.value.toUpperCase() })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-md"
                 />
               </div>
               <div>
@@ -96,7 +96,7 @@ export default function PreferencesPage() {
                   type="text"
                   value={preferences.quotationPrefix}
                   onChange={(e) => setPreferences({ ...preferences, quotationPrefix: e.target.value.toUpperCase() })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-md"
                 />
               </div>
             </div>
@@ -105,7 +105,7 @@ export default function PreferencesPage() {
               <select
                 value={preferences.defaultGstRate}
                 onChange={(e) => setPreferences({ ...preferences, defaultGstRate: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                className="w-full px-3 py-2 border border-gray-200 rounded-md"
               >
                 <option value="0">0%</option>
                 <option value="5">5%</option>
@@ -119,7 +119,7 @@ export default function PreferencesPage() {
               <textarea
                 value={preferences.invoiceTerms}
                 onChange={(e) => setPreferences({ ...preferences, invoiceTerms: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                className="w-full px-3 py-2 border border-gray-200 rounded-md"
                 rows={3}
               />
             </div>
@@ -127,7 +127,7 @@ export default function PreferencesPage() {
         </div>
 
         {/* Notification Settings */}
-        <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
+        <div className="bg-white rounded-md md:rounded-md p-3 md:p-4 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Notifications</h2>
           <div className="space-y-4">
             {[
@@ -137,7 +137,7 @@ export default function PreferencesPage() {
               { key: 'orderAlerts', label: 'Order Alerts', desc: 'Notifications for new orders' },
               { key: 'paymentAlerts', label: 'Payment Alerts', desc: 'Alert on payment received' },
             ].map(item => (
-              <div key={item.key} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={item.key} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
                 <div>
                   <p className="font-medium text-gray-900">{item.label}</p>
                   <p className="text-xs text-gray-500">{item.desc}</p>
@@ -156,7 +156,7 @@ export default function PreferencesPage() {
         </div>
 
         {/* Display Settings */}
-        <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
+        <div className="bg-white rounded-md md:rounded-md p-3 md:p-4 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Display Settings</h2>
           <div className="space-y-4">
             <div>
@@ -164,7 +164,7 @@ export default function PreferencesPage() {
               <select
                 value={preferences.currency}
                 onChange={(e) => setPreferences({ ...preferences, currency: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                className="w-full px-3 py-2 border border-gray-200 rounded-md"
               >
                 <option value="INR">Indian Rupee (₹)</option>
                 <option value="USD">US Dollar ($)</option>
@@ -176,7 +176,7 @@ export default function PreferencesPage() {
               <select
                 value={preferences.dateFormat}
                 onChange={(e) => setPreferences({ ...preferences, dateFormat: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                className="w-full px-3 py-2 border border-gray-200 rounded-md"
               >
                 <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                 <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -188,7 +188,7 @@ export default function PreferencesPage() {
               <select
                 value={preferences.itemsPerPage}
                 onChange={(e) => setPreferences({ ...preferences, itemsPerPage: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                className="w-full px-3 py-2 border border-gray-200 rounded-md"
               >
                 <option value="10">10</option>
                 <option value="20">20</option>
@@ -200,7 +200,7 @@ export default function PreferencesPage() {
         </div>
 
         {/* Print Settings */}
-        <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
+        <div className="bg-white rounded-md md:rounded-md p-3 md:p-4 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Print Settings</h2>
           <div className="space-y-4">
             <div>
@@ -208,7 +208,7 @@ export default function PreferencesPage() {
               <select
                 value={preferences.printPaperSize}
                 onChange={(e) => setPreferences({ ...preferences, printPaperSize: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                className="w-full px-3 py-2 border border-gray-200 rounded-md"
               >
                 <option value="A4">A4</option>
                 <option value="A5">A5</option>
@@ -220,7 +220,7 @@ export default function PreferencesPage() {
               { key: 'printLogo', label: 'Print Logo', desc: 'Include company logo on prints' },
               { key: 'printTerms', label: 'Print Terms', desc: 'Include terms & conditions' },
             ].map(item => (
-              <div key={item.key} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={item.key} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
                 <div>
                   <p className="font-medium text-gray-900">{item.label}</p>
                   <p className="text-xs text-gray-500">{item.desc}</p>

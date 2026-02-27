@@ -438,7 +438,7 @@ export default function DispatchHistoryPage() {
               ) : (
                 <div className="space-y-3">
                   {qcReportRecords.map(record => (
-                    <div key={record.id} className={`p-4 rounded-lg border ${record.result === 'passed' ? 'bg-green-50 border-green-200' :
+                    <div key={record.id} className={`p-4 rounded-md border ${record.result === 'passed' ? 'bg-green-50 border-green-200' :
                       record.result === 'failed' ? 'bg-red-50 border-red-200' :
                         'bg-amber-50 border-amber-200'
                       }`}>

@@ -231,7 +231,7 @@ export default function AccountStatementPage() {
             </div>
 
             {/* Filters - Hide on print */}
-            <div className="bg-white rounded-lg border p-4 print:hidden">
+            <div className="bg-white rounded-md border p-4 print:hidden">
                 <div className="flex items-center gap-2 md:gap-4">
                     <Calendar size={18} className="text-gray-400" />
                     <div className="flex gap-2 md:gap-4 flex-1">
@@ -266,7 +266,7 @@ export default function AccountStatementPage() {
             </div>
 
             {/* Statement */}
-            <div className="bg-white rounded-lg border print:">
+            <div className="bg-white rounded-md border print:">
                 {/* Statement Header - Shows on print */}
                 <div className="p-4 border-b">
                     <div className="text-center mb-4">

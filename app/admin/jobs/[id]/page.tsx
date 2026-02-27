@@ -304,21 +304,21 @@ export default function JobDetailPage() {
 
             {/* Financial Summary — Bold & Clear */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
-                <div className="bg-blue-50 rounded-lg px-3 py-2">
+                <div className="bg-blue-50 rounded-md px-3 py-2">
                     <p className="text-xs text-blue-600 font-medium">Revenue</p>
                     <p className="text-sm font-bold text-blue-900">{formatCurrency(job.total_amount || 0)}</p>
                 </div>
-                <div className="bg-red-50 rounded-lg px-3 py-2">
+                <div className="bg-red-50 rounded-md px-3 py-2">
                     <p className="text-xs text-red-600 font-medium">Expense</p>
                     <p className="text-sm font-bold text-red-900">{formatCurrency(totalExpense)}</p>
                 </div>
-                <div className={`${profit >= 0 ? 'bg-green-50' : 'bg-red-50'} rounded-lg px-3 py-2`}>
+                <div className={`${profit >= 0 ? 'bg-green-50' : 'bg-red-50'} rounded-md px-3 py-2`}>
                     <p className={`text-xs font-medium ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {profit >= 0 ? 'Profit' : 'Loss'}
                     </p>
                     <p className={`text-sm font-bold ${profit >= 0 ? 'text-green-900' : 'text-red-900'}`}>{formatCurrency(Math.abs(profit))}</p>
                 </div>
-                <div className={`${(job as any).amount_received >= job.total_amount ? 'bg-green-50' : 'bg-amber-50'} rounded-lg px-3 py-2`}>
+                <div className={`${(job as any).amount_received >= job.total_amount ? 'bg-green-50' : 'bg-amber-50'} rounded-md px-3 py-2`}>
                     <p className={`text-xs font-medium ${(job as any).amount_received >= job.total_amount ? 'text-green-600' : 'text-amber-600'}`}>Paid</p>
                     <p className={`text-sm font-bold ${(job as any).amount_received >= job.total_amount ? 'text-green-900' : 'text-amber-900'}`}>
                         {formatCurrency((job as any).amount_received || 0)}
@@ -328,7 +328,7 @@ export default function JobDetailPage() {
 
             {/* Packing Details (from QC) */}
             {job.packing_info && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="bg-green-50 border border-green-200 rounded-md p-4">
                     <h3 className="text-sm font-semibold text-green-900 flex items-center gap-2 mb-3">
                         <Package className="w-4 h-4" />
                         Packing Details (from QC)
@@ -378,7 +378,7 @@ export default function JobDetailPage() {
                             type="text"
                             value={invoiceRef}
                             onChange={e => setInvoiceRef(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
                             placeholder="e.g. INV-2026-001"
                         />
                     </div>
@@ -388,19 +388,19 @@ export default function JobDetailPage() {
                             type="text"
                             value={ewayBillNo}
                             onChange={e => setEwayBillNo(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
                             placeholder="e.g. EWB123456789"
                         />
                     </div>
                 </div>
 
                 <div className="flex items-center gap-3 mb-3">
-                    <label className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer text-sm transition-colors">
+                    <label className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer text-sm transition-colors">
                         <Upload className="w-4 h-4 text-gray-600" />
                         Upload Invoice PDF
                         <input type="file" accept=".pdf,.jpg,.png" className="hidden" onChange={e => handleFileUpload(e, 'Invoice')} />
                     </label>
-                    <label className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer text-sm transition-colors">
+                    <label className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer text-sm transition-colors">
                         <Upload className="w-4 h-4 text-gray-600" />
                         Upload E-Way Bill
                         <input type="file" accept=".pdf,.jpg,.png" className="hidden" onChange={e => handleFileUpload(e, 'E-Way Bill')} />
@@ -411,7 +411,7 @@ export default function JobDetailPage() {
                 {uploadedFiles.length > 0 && (
                     <div className="mb-3 space-y-1">
                         {uploadedFiles.map((f, i) => (
-                            <div key={i} className="flex items-center gap-2 text-xs bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                            <div key={i} className="flex items-center gap-2 text-xs bg-green-50 border border-green-200 rounded-md px-3 py-2">
                                 <CheckCircle className="w-3.5 h-3.5 text-green-600 shrink-0" />
                                 <span className="text-green-800 font-medium">{f.label}:</span>
                                 <span className="text-green-700 truncate">{f.name}</span>
@@ -432,7 +432,7 @@ export default function JobDetailPage() {
 
             {/* QC Report */}
             {qcRecords.length > 0 && (
-                <div className="bg-white border border-gray-100 rounded-lg p-4">
+                <div className="bg-white border border-gray-100 rounded-md p-4">
                     <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 mb-3">
                         <ClipboardCheck className="w-4 h-4" />
                         QC Report
@@ -476,7 +476,7 @@ export default function JobDetailPage() {
 
             {/* Files */}
             {job.files && job.files.length > 0 && (
-                <div className="bg-white border border-gray-100 rounded-lg p-4">
+                <div className="bg-white border border-gray-100 rounded-md p-4">
                     <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 mb-3">
                         <FileText className="w-4 h-4" />
                         Files ({job.files.length})
@@ -488,7 +488,7 @@ export default function JobDetailPage() {
                                 href={file.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                                className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-50 transition-colors"
                             >
                                 <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
                                     <Download className="w-4 h-4 text-gray-500" />
@@ -507,7 +507,7 @@ export default function JobDetailPage() {
             )}
 
             {/* Activity Timeline */}
-            <div className="bg-white border border-gray-100 rounded-lg p-4">
+            <div className="bg-white border border-gray-100 rounded-md p-4">
                 <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 mb-3">
                     <Clock className="w-4 h-4" />
                     Activity Timeline
@@ -546,7 +546,7 @@ export default function JobDetailPage() {
             </div>
 
             {/* Job Info Summary at bottom */}
-            <div className="bg-gray-50 border border-gray-100 rounded-lg p-4">
+            <div className="bg-gray-50 border border-gray-100 rounded-md p-4">
                 <h3 className="text-sm font-semibold text-gray-900 mb-3">Job Details</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                     <div><span className="text-gray-500">Client:</span> <span className="font-medium text-gray-900">{job.client?.company || job.client?.name || '-'}</span></div>

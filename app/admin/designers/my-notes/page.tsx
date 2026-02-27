@@ -496,7 +496,7 @@ export default function MyNotes() {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-1 mb-4 bg-white rounded-lg p-1 border w-fit">
+                <div className="flex gap-1 mb-4 bg-white rounded-md p-1 border w-fit">
                     <button
                         onClick={() => setActiveTab('my_notes')}
                         className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'my_notes' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
@@ -543,7 +543,7 @@ export default function MyNotes() {
 
                         {/* Popular Tags */}
                         {allHashtags.length > 0 && (
-                            <div className="bg-white rounded-lg p-3 border">
+                            <div className="bg-white rounded-md p-3 border">
                                 <div className="flex items-center gap-2 mb-2">
                                     <Hash size={14} className="text-gray-500" />
                                     <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Tags</span>
@@ -574,7 +574,7 @@ export default function MyNotes() {
                                     <div
                                         key={note.id}
                                         onClick={() => selectNote(note)}
-                                        className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm ${selectedNote?.id === note.id
+                                        className={`p-3 rounded-md border cursor-pointer transition-all hover:shadow-sm ${selectedNote?.id === note.id
                                             ? `${style.bg} ${style.border} border-2`
                                             : 'bg-white border-gray-200 hover:border-gray-300'
                                             }`}
@@ -640,7 +640,7 @@ export default function MyNotes() {
                     {/* Right Panel - Editor */}
                     <div className="lg:col-span-2 order-1 lg:order-2">
                         {selectedNote ? (
-                            <div className="bg-white rounded-lg border h-full flex flex-col">
+                            <div className="bg-white rounded-md border h-full flex flex-col">
                                 {/* Editor Header */}
                                 <div className="p-4 border-b flex flex-col gap-3">
                                     <div className="flex items-center justify-between gap-3">
@@ -741,7 +741,7 @@ export default function MyNotes() {
 
                                     {/* Share Picker */}
                                     {showSharePicker && (
-                                        <div className="bg-gray-50 rounded-lg p-3 border">
+                                        <div className="bg-gray-50 rounded-md p-3 border">
                                             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Share with team members</p>
                                             <div className="flex flex-wrap gap-2">
                                                 {teamMembers.filter(m => m.id !== profile?.id).map(member => (
@@ -768,7 +768,7 @@ export default function MyNotes() {
 
                                     {/* Shared With Tags (visible inline) */}
                                     {sharedWith.length > 0 && (
-                                        <div className="flex items-center gap-2 flex-wrap bg-blue-50/50 rounded-lg px-3 py-2">
+                                        <div className="flex items-center gap-2 flex-wrap bg-blue-50/50 rounded-md px-3 py-2">
                                             <Send size={12} className="text-blue-500" />
                                             <span className="text-xs font-bold text-blue-500 uppercase tracking-wider">Shared with:</span>
                                             {sharedWith.map(uid => {
@@ -801,7 +801,7 @@ export default function MyNotes() {
                                     {showMentionDropdown && filteredMentionMembers.length > 0 && (
                                         <div
                                             ref={mentionDropdownRef}
-                                            className="absolute z-50 left-4 bg-white border border-gray-200 rounded-lg shadow-sm max-h-48 overflow-y-auto w-64"
+                                            className="absolute z-50 left-4 bg-white border border-gray-200 rounded-md shadow-sm max-h-48 overflow-y-auto w-64"
                                             style={{ top: '80px' }}
                                         >
                                             {filteredMentionMembers.slice(0, 8).map(member => (
@@ -833,7 +833,7 @@ export default function MyNotes() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="bg-white rounded-lg p-12 border h-full flex items-center justify-center min-h-[400px]">
+                            <div className="bg-white rounded-md p-12 border h-full flex items-center justify-center min-h-[400px]">
                                 <div className="text-center text-gray-400">
                                     <StickyNote className="mx-auto mb-4" size={64} />
                                     <p className="text-lg font-medium text-gray-500">Select a note or create a new one</p>

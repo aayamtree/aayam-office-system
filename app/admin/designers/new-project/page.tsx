@@ -311,7 +311,7 @@ export default function NewProjectPage() {
                         Back to Queue
                     </Link>
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-primary/10 rounded-lg">
+                        <div className="p-2.5 bg-primary/10 rounded-md">
                             <Briefcase size={22} className="text-primary" />
                         </div>
                         <div>
@@ -588,7 +588,7 @@ export default function NewProjectPage() {
                                 onDragLeave={handleDragLeave}
                                 onDrop={handleDrop}
                                 onClick={() => fileInputRef.current?.click()}
-                                className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${isDragging
+                                className={`border-2 border-dashed rounded-md p-8 text-center cursor-pointer transition-all ${isDragging
                                     ? 'border-primary bg-primary/5'
                                     : 'border-muted hover:border-muted-foreground/30 hover:bg-muted/30'
                                     }`}
@@ -668,7 +668,7 @@ export default function NewProjectPage() {
 
                     {/* Info Banner for Designers */}
                     {isDesignerRole && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
+                        <div className="bg-blue-50 border border-blue-200 rounded-md p-4 flex items-start gap-3">
                             <Info size={18} className="text-blue-600 shrink-0 mt-0.5" />
                             <div>
                                 <p className="text-sm font-semibold text-blue-900">Admin Approval Required</p>
@@ -680,7 +680,7 @@ export default function NewProjectPage() {
                     )}
 
                     {/* Action Buttons */}
-                    <div className="flex gap-3 items-center justify-end bg-card rounded-lg p-4 border sticky bottom-4">
+                    <div className="flex gap-3 items-center justify-end bg-card rounded-md p-4 border sticky bottom-4">
                         {uploadProgress && (
                             <div className="flex-1 flex items-center gap-2 text-sm text-muted-foreground">
                                 <Loader2 size={14} className="animate-spin" />

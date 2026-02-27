@@ -294,7 +294,7 @@ export default function RetailPOSPage() {
           </div>
         </div>
         <button onClick={() => setShowSettingsModal(true)}
-          className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+          className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">
           <Settings className="w-4 h-4 md:w-4.5 md:h-4.5" />
           <span className="hidden sm:inline">Manage Items</span>
         </button>
@@ -315,12 +315,12 @@ export default function RetailPOSPage() {
           {/* Categories */}
           <div className="flex flex-wrap gap-2 mb-4">
             <button onClick={() => setSelectedCategory('all')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${selectedCategory === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${selectedCategory === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
               All
             </button>
             {categories?.map(cat => (
               <button key={cat.id} onClick={() => setSelectedCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${selectedCategory === cat.id ? 'bg-gray-900 text-white' : `${cat.color} hover:opacity-80`}`}>
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${selectedCategory === cat.id ? 'bg-gray-900 text-white' : `${cat.color} hover:opacity-80`}`}>
                 {cat.name}
               </button>
             ))}
@@ -385,7 +385,7 @@ export default function RetailPOSPage() {
               </div>
             ) : (
               cart.map(item => (
-                <div key={item.id} className="bg-white p-3 rounded-lg border">
+                <div key={item.id} className="bg-white p-3 rounded-md border">
                   <div className="flex justify-between mb-2">
                     <span className="font-medium text-sm">{item.name}</span>
                     <button onClick={() => removeFromCart(item.id)} className="text-red-500"><Trash2 className="w-4 h-4" /></button>
@@ -428,13 +428,13 @@ export default function RetailPOSPage() {
       {/* Payment Modal */}
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-md animate-scale-in">
+          <div className="bg-white rounded-md w-full max-w-md animate-scale-in">
             <div className="p-5 border-b flex items-center justify-between">
               <h2 className="text-page-title">Payment</h2>
               <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
-              <div className="text-center bg-gray-900 rounded-lg p-4">
+              <div className="text-center bg-gray-900 rounded-md p-4">
                 <p className="text-sm text-gray-600">Total Amount</p>
                 <p className="text-page-title text-primary">{formatCurrency(grandTotal)}</p>
               </div>
@@ -443,7 +443,7 @@ export default function RetailPOSPage() {
                 <div className="grid grid-cols-3 gap-2">
                   {[{ id: 'cash', label: 'Cash', icon: Banknote }, { id: 'card', label: 'Card', icon: CreditCard }, { id: 'upi', label: 'UPI', icon: Smartphone }].map(method => (
                     <button key={method.id} onClick={() => setPaymentMethod(method.id as any)}
-                      className={`p-3 rounded-lg border-2 flex flex-col items-center gap-1 transition-all ${paymentMethod === method.id ? 'border-primary bg-primary' : 'border-gray-200 hover:border-gray-300'}`}>
+                      className={`p-3 rounded-md border-2 flex flex-col items-center gap-1 transition-all ${paymentMethod === method.id ? 'border-primary bg-primary' : 'border-gray-200 hover:border-gray-300'}`}>
                       <method.icon className="w-5 h-5" /><span className="text-sm">{method.label}</span>
                     </button>
                   ))}
@@ -477,11 +477,11 @@ export default function RetailPOSPage() {
       {/* Settings Modal (CRUD) */}
       {showSettingsModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+          <div className="bg-white rounded-md w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
             <div className="p-5 border-b bg-white flex items-center justify-between">
               <div className="flex items-center gap-2 md:gap-4">
                 <h2 className="text-page-title">Manage Items</h2>
-                <div className="flex bg-gray-100 p-1 rounded-lg">
+                <div className="flex bg-gray-100 p-1 rounded-md">
                   <button onClick={() => setActiveTab('products')} className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${activeTab === 'products' ? 'bg-white text-gray-900' : 'text-gray-500'}`}>Products</button>
                   <button onClick={() => setActiveTab('categories')} className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${activeTab === 'categories' ? 'bg-white text-gray-900' : 'text-gray-500'}`}>Categories</button>
                 </div>
@@ -494,7 +494,7 @@ export default function RetailPOSPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
                   {/* Product List */}
                   <div className="lg:col-span-2 space-y-4">
-                    <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+                    <div className="bg-white rounded-md border border-gray-100 overflow-hidden">
                       <table className="w-full">
                         <thead className="bg-gray-50 border-b border-gray-100">
                           <tr>
@@ -525,7 +525,7 @@ export default function RetailPOSPage() {
                   </div>
 
                   {/* Add/Edit Product Form */}
-                  <div className="bg-white rounded-lg border border-gray-100 p-5 h-fit">
+                  <div className="bg-white rounded-md border border-gray-100 p-5 h-fit">
                     <h3 className="font-bold text-gray-900 mb-4">{isEditingProduct ? 'Edit Product' : 'Add New Product'}</h3>
                     <form onSubmit={handleSaveProduct} className="space-y-4">
                       <div>
@@ -556,16 +556,16 @@ export default function RetailPOSPage() {
                   <div className="lg:col-span-2 space-y-4">
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       {categories?.map(c => (
-                        <div key={c.id} className={`p-4 rounded-lg border flex items-center justify-between ${c.color}`}>
+                        <div key={c.id} className={`p-4 rounded-md border flex items-center justify-between ${c.color}`}>
                           <span className="font-semibold">{c.name}</span>
-                          <button onClick={() => handleDeleteCategoryReq(c.id)} className="p-1.5 bg-white/50 rounded-lg hover:bg-white text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                          <button onClick={() => handleDeleteCategoryReq(c.id)} className="p-1.5 bg-white/50 rounded-md hover:bg-white text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       ))}
                     </div>
                   </div>
 
                   {/* Add Category Form */}
-                  <div className="bg-white rounded-lg border border-gray-100 p-5 h-fit">
+                  <div className="bg-white rounded-md border border-gray-100 p-5 h-fit">
                     <h3 className="font-bold text-gray-900 mb-4">Add New Category</h3>
                     <form onSubmit={handleSaveCategory} className="space-y-4">
                       <div>

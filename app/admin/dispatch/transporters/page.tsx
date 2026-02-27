@@ -179,13 +179,13 @@ export default function TransportersPage() {
             placeholder="Search transporters..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-md"
           />
         </div>
         <select
           value={stateFilter}
           onChange={(e) => setStateFilter(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-gray-200 rounded-lg"
+          className="px-4 py-2.5 bg-white border border-gray-200 rounded-md"
         >
           <option value="all">All States</option>
           {uniqueStates.map(state => (
@@ -208,7 +208,7 @@ export default function TransportersPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
               {stateTransporters.map((t) => (
-                <div key={t.id} className="bg-white rounded-lg p-4 border border-gray-100">
+                <div key={t.id} className="bg-white rounded-md p-4 border border-gray-100">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center">
@@ -262,7 +262,7 @@ export default function TransportersPage() {
       {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
+          <div className="bg-white rounded-md w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <h2 className="text-section text-gray-900">
                 {isEditing ? 'Edit Transporter' : 'Add Transporter'}
@@ -280,7 +280,7 @@ export default function TransportersPage() {
                   required
                   value={formData.company}
                   onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-md"
                   placeholder="e.g. Shree Ganesh Transport"
                 />
               </div>
@@ -293,7 +293,7 @@ export default function TransportersPage() {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md"
                     placeholder="e.g. Ramesh Patel"
                   />
                 </div>
@@ -304,7 +304,7 @@ export default function TransportersPage() {
                     required
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md"
                   />
                 </div>
               </div>
@@ -316,7 +316,7 @@ export default function TransportersPage() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md"
                   />
                 </div>
                 <div>
@@ -325,7 +325,7 @@ export default function TransportersPage() {
                     type="text"
                     value={formData.gstin}
                     onChange={(e) => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md"
                   />
                 </div>
               </div>
@@ -336,7 +336,7 @@ export default function TransportersPage() {
                   required
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-md"
                   rows={2}
                 />
               </div>
@@ -349,7 +349,7 @@ export default function TransportersPage() {
                     required
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md"
                   />
                 </div>
                 <div>
@@ -358,7 +358,7 @@ export default function TransportersPage() {
                     required
                     value={formData.state}
                     onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md"
                   >
                     <option value="">Select</option>
                     {indianStates.map(state => (
@@ -380,7 +380,7 @@ export default function TransportersPage() {
               </div>
 
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50">
+                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-md hover:bg-gray-50">
                   Cancel
                 </button>
                 <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 disabled:opacity-50 shadow-sm font-semibold">
@@ -395,7 +395,7 @@ export default function TransportersPage() {
       {/* View Modal */}
       {showViewModal && selectedTransporter && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto animate-scale-in">
+          <div className="bg-white rounded-md w-full max-w-md max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <h2 className="text-section text-gray-900">Transporter Details</h2>
               <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-md">
@@ -404,7 +404,7 @@ export default function TransportersPage() {
             </div>
 
             <div className="p-4 space-y-4">
-              <div className="flex items-center gap-2 md:gap-4 p-4 bg-muted rounded-lg">
+              <div className="flex items-center gap-2 md:gap-4 p-4 bg-muted rounded-md">
                 <div className="w-12 h-12 bg-gray-900 rounded-full flex items-center justify-center">
                   <Truck className="w-6 h-6 text-primary" />
                 </div>
@@ -415,27 +415,27 @@ export default function TransportersPage() {
               </div>
 
               <div className="space-y-3">
-                <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex justify-between p-3 bg-gray-50 rounded-md">
                   <span className="text-gray-500">Contact Person</span>
                   <span className="font-medium text-gray-900">{selectedTransporter.name}</span>
                 </div>
-                <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex justify-between p-3 bg-gray-50 rounded-md">
                   <span className="text-gray-500">Phone</span>
                   <a href={`tel:${selectedTransporter.phone}`} className="font-medium text-primary">{selectedTransporter.phone}</a>
                 </div>
                 {selectedTransporter.email && (
-                  <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex justify-between p-3 bg-gray-50 rounded-md">
                     <span className="text-gray-500">Email</span>
                     <span className="font-medium text-gray-900">{selectedTransporter.email}</span>
                   </div>
                 )}
                 {selectedTransporter.gstin && (
-                  <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex justify-between p-3 bg-gray-50 rounded-md">
                     <span className="text-gray-500">GST Number</span>
                     <span className="font-medium text-gray-900">{selectedTransporter.gstin}</span>
                   </div>
                 )}
-                <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="p-3 bg-gray-50 rounded-md">
                   <span className="text-gray-500 text-sm">Address</span>
                   <p className="font-medium text-gray-900 mt-1">{selectedTransporter.address}</p>
                   <p className="text-sm text-gray-600">{selectedTransporter.city}, {selectedTransporter.state}</p>

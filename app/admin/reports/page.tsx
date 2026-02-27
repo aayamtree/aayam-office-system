@@ -57,12 +57,12 @@ export default function ReportsPage() {
       {activeTab === 'cashflow' && <CashFlowStatement />}
 
       {/* Manual Journal Link */}
-      <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-lg md:rounded-lg p-3 md:p-4 text-white flex justify-between items-center">
+      <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-md md:rounded-md p-3 md:p-4 text-white flex justify-between items-center">
         <div>
           <h3 className="text-section mb-1">Manual Journal Entry</h3>
           <p className="text-gray-300 text-sm">Record accounting adjustments and non-cash transactions</p>
         </div>
-        <Link href="/admin/finance/journal" className="px-4 py-2 bg-white text-gray-900 rounded-lg font-bold hover:bg-gray-100 transition-colors">
+        <Link href="/admin/finance/journal" className="px-4 py-2 bg-white text-gray-900 rounded-md font-bold hover:bg-gray-100 transition-colors">
           Open Journal
         </Link>
       </div>
@@ -109,10 +109,10 @@ function ClientStatementGenerator() {
   });
 
   return (
-    <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100 animate-scale-in">
+    <div className="bg-white rounded-md md:rounded-md p-3 md:p-4 border border-gray-100 animate-scale-in">
       {/* ... Header UI ... */}
       <div className="flex items-center gap-3 mb-3 md:mb-1.5">
-        <div className="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center text-white">
+        <div className="w-10 h-10 bg-gray-900 rounded-md flex items-center justify-center text-white">
           <FileText size={20} />
         </div>
         <div>
@@ -190,9 +190,9 @@ function VendorStatementGenerator() {
   });
 
   return (
-    <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100 animate-scale-in">
+    <div className="bg-white rounded-md md:rounded-md p-3 md:p-4 border border-gray-100 animate-scale-in">
       <div className="flex items-center gap-3 mb-3 md:mb-1.5">
-        <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center text-destructive">
+        <div className="w-10 h-10 bg-amber-100 rounded-md flex items-center justify-center text-destructive">
           <Truck size={20} />
         </div>
         <div>
@@ -277,9 +277,9 @@ function CashFlowStatement() {
   const netFlow = totalIn - totalOut;
 
   return (
-    <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100 animate-scale-in">
+    <div className="bg-white rounded-md md:rounded-md p-3 md:p-4 border border-gray-100 animate-scale-in">
       <div className="flex items-center gap-3 mb-3 md:mb-1.5">
-        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-gray-900">
+        <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center text-gray-900">
           <ArrowRightLeft size={20} />
         </div>
         <div>
@@ -301,15 +301,15 @@ function CashFlowStatement() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4 mb-3 md:mb-1.5">
-        <div className="bg-white p-4 rounded-lg border border-green-100">
+        <div className="bg-white p-4 rounded-md border border-green-100">
           <p className="text-sm text-gray-900 font-medium">Total Inflow</p>
           <p className="text-page-title text-gray-900">₹{totalIn.toLocaleString()}</p>
         </div>
-        <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+        <div className="bg-red-50 p-4 rounded-md border border-red-100">
           <p className="text-sm text-red-600 font-medium">Total Outflow</p>
           <p className="text-page-title text-red-700">₹{totalOut.toLocaleString()}</p>
         </div>
-        <div className={`p-4 rounded-lg border ${netFlow >= 0 ? 'bg-gray-900 border-gray-300' : 'bg-white border-gray-100'}`}>
+        <div className={`p-4 rounded-md border ${netFlow >= 0 ? 'bg-gray-900 border-gray-300' : 'bg-white border-gray-100'}`}>
           <p className={`text-sm font-medium ${netFlow >= 0 ? 'text-primary' : 'text-destructive'}`}>Net Cash Flow</p>
           <p className={`text-page-title ${netFlow >= 0 ? 'text-primary' : 'text-amber-700'}`}>
             {netFlow >= 0 ? '+' : ''}₹{netFlow.toLocaleString()}
@@ -326,10 +326,10 @@ function CashFlowStatement() {
           { header: 'Type', accessor: (r: any) => r.type },
           { header: 'Mode', accessor: (r: any) => r.mode },
           { header: 'Amount', accessor: (r: any) => r.amount },
-        ], 'cashflow_report')} className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 border">
+        ], 'cashflow_report')} className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-md hover:bg-gray-50 border">
           <Download size={16} /> Export CSV
         </button>
-        <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+        <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
           <Printer size={16} /> Print Report
         </button>
       </div>
@@ -393,7 +393,7 @@ function StatementModal({ title, entity, period, ledger, onClose, columns, rever
               { header: 'Mode', accessor: (r: any) => r.mode !== '-' ? r.mode : '' },
               { header: 'Debit', accessor: (r: any) => r.debit || '' },
               { header: 'Credit', accessor: (r: any) => r.credit || '' },
-            ], `statement_${entity.name}`)} className="px-4 py-2 bg-white text-gray-700 rounded-lg flex items-center gap-2 hover:bg-gray-50 border">
+            ], `statement_${entity.name}`)} className="px-4 py-2 bg-white text-gray-700 rounded-md flex items-center gap-2 hover:bg-gray-50 border">
               <Download size={16} /> CSV
             </button>
             <button onClick={() => window.print()} className="px-4 py-2 bg-gray-900 text-white rounded-md flex items-center gap-2 hover:bg-gray-800">

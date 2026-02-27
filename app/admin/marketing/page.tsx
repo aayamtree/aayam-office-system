@@ -87,7 +87,7 @@ export default function MarketingDashboard() {
             ) : (
               <div className="space-y-2">
                 {todayFollowUps.map(lead => (
-                  <div key={lead.id} className="p-3 rounded-lg border hover:bg-muted/50 transition-colors flex items-center justify-between">
+                  <div key={lead.id} className="p-3 rounded-md border hover:bg-muted/50 transition-colors flex items-center justify-between">
                     <div>
                       <h3 className="text-sm font-medium">{lead.name}</h3>
                       <p className="text-xs text-muted-foreground">{lead.company}</p>
@@ -125,7 +125,7 @@ export default function MarketingDashboard() {
             ) : (
               <div className="space-y-2">
                 {overdueFollowUps.map(lead => (
-                  <div key={lead.id} className="p-3 rounded-lg border border-destructive/20 bg-destructive/5 hover:bg-destructive/10 transition-colors flex items-center justify-between">
+                  <div key={lead.id} className="p-3 rounded-md border border-destructive/20 bg-destructive/5 hover:bg-destructive/10 transition-colors flex items-center justify-between">
                     <div>
                       <h3 className="text-sm font-medium">{lead.name}</h3>
                       <Badge variant="destructive" className="mt-1 text-xs">

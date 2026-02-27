@@ -175,28 +175,28 @@ export default function VendorReportsPage() {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="bg-white rounded-lg p-4 border border-gray-100">
+                <div className="bg-white rounded-md p-4 border border-gray-100">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Total Jobs</p>
                     <p className="text-page-title text-gray-900">{totalJobs}</p>
                 </div>
-                <div className="bg-white rounded-lg p-4 border border-gray-100">
+                <div className="bg-white rounded-md p-4 border border-gray-100">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Total Billing</p>
                     <p className="text-page-title text-gray-900">{formatCurrency(totalBilling)}</p>
                 </div>
-                <div className="bg-white rounded-lg p-4 border border-gray-100">
+                <div className="bg-white rounded-md p-4 border border-gray-100">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Received</p>
                     <p className="text-page-title text-green-700">{formatCurrency(totalReceived)}</p>
                 </div>
-                <div className="bg-white rounded-lg p-4 border border-gray-100">
+                <div className="bg-white rounded-md p-4 border border-gray-100">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Pending</p>
                     <p className="text-page-title text-red-600">{formatCurrency(totalPending)}</p>
                 </div>
             </div>
 
             {/* Filters */}
-            <div className="bg-white p-4 rounded-lg border border-gray-100 flex flex-col sm:flex-row gap-3">
+            <div className="bg-white p-4 rounded-md border border-gray-100 flex flex-col sm:flex-row gap-3">
                 {/* View Mode Toggle */}
-                <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
+                <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-md">
                     <button
                         onClick={() => setViewMode('vendor')}
                         className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'vendor' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}
@@ -257,7 +257,7 @@ export default function VendorReportsPage() {
             </div>
 
             {/* Data Tables */}
-            <div className="bg-white rounded-lg border overflow-hidden">
+            <div className="bg-white rounded-md border overflow-hidden">
                 <div className="overflow-x-auto">
                     {/* By Vendor View */}
                     {viewMode === 'vendor' && (
@@ -281,7 +281,7 @@ export default function VendorReportsPage() {
                                         <tr key={idx} className="hover:bg-gray-50">
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                                                    <div className="w-8 h-8 bg-orange-100 rounded-md flex items-center justify-center">
                                                         <Building2 className="w-4 h-4 text-orange-600" />
                                                     </div>
                                                     <div>
@@ -334,7 +334,7 @@ export default function VendorReportsPage() {
                                         <tr key={idx} className="hover:bg-gray-50">
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                    <div className="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
                                                         <Users className="w-4 h-4 text-blue-600" />
                                                     </div>
                                                     <div>
@@ -383,7 +383,7 @@ export default function VendorReportsPage() {
                                     <tr key={idx} className="hover:bg-gray-50">
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                                <div className="w-8 h-8 bg-purple-100 rounded-md flex items-center justify-center">
                                                     <Printer className="w-4 h-4 text-purple-600" />
                                                 </div>
                                                 <p className="font-medium text-gray-900">{entry.type}</p>

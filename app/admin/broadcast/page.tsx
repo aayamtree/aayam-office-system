@@ -105,7 +105,7 @@ export default function BroadcastPage() {
             </div>
 
             {/* Send Form */}
-            <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 mb-1.5">
+            <div className="bg-white rounded-md md:rounded-md p-3 md:p-4 mb-1.5">
                 <h2 className="text-page-title text-gray-900 mb-4">Send Broadcast</h2>
 
                 <form onSubmit={handleSend} className="space-y-4">
@@ -117,7 +117,7 @@ export default function BroadcastPage() {
                         <textarea
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
                             rows={4}
                             placeholder="Type your announcement here..."
                             required
@@ -171,7 +171,7 @@ export default function BroadcastPage() {
                         <select
                             value={targetAudience}
                             onChange={(e) => setTargetAudience(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
                         >
                             {audiences.map((aud) => (
                                 <option key={aud.value} value={aud.value}>
@@ -194,7 +194,7 @@ export default function BroadcastPage() {
             </div>
 
             {/* Notification History */}
-            <div className="bg-white rounded-lg p-4">
+            <div className="bg-white rounded-md p-4">
                 <h2 className="text-page-title text-gray-900 mb-4 flex items-center gap-2">
                     <Clock size={20} />
                     Recent Broadcasts
@@ -212,7 +212,7 @@ export default function BroadcastPage() {
                             <div
                                 key={notif.id}
                                 className={`
-                  p-4 rounded-lg border-l-4
+                  p-4 rounded-md border-l-4
                   ${notif.priority === 'urgent'
                                         ? 'border-red-500 bg-red-50'
                                         : 'border-primary bg-muted'

@@ -87,7 +87,7 @@ export default function SalesPage() {
           <Card className="hover:shadow-sm transition-shadow h-full">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center">
                   <Users className="h-4 w-4 text-foreground" />
                 </div>
                 <div>
@@ -106,7 +106,7 @@ export default function SalesPage() {
           <Card className="hover:shadow-sm transition-shadow h-full">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center">
                   <FileText className="h-4 w-4 text-foreground" />
                 </div>
                 <div>
@@ -125,7 +125,7 @@ export default function SalesPage() {
           <Card className="hover:shadow-sm transition-shadow h-full">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center">
                   <ShoppingCart className="h-4 w-4 text-foreground" />
                 </div>
                 <div>
@@ -176,7 +176,7 @@ export default function SalesPage() {
           <CardContent>
             <div className="space-y-2">
               {recentJobs.length === 0 ? <p className="text-muted-foreground text-center py-4 text-sm">No recent orders</p> : recentJobs.map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                <div key={order.id} className="flex items-center justify-between p-3 rounded-md border hover:bg-muted/50 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center">
                       <ShoppingCart className="h-4 w-4 text-muted-foreground" />
@@ -206,7 +206,7 @@ export default function SalesPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Link href="/admin/sales/leads" className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+            <Link href="/admin/sales/leads" className="flex items-center gap-3 p-3 rounded-md border hover:bg-muted/50 transition-colors">
               <div className="w-8 h-8 bg-destructive/10 rounded-md flex items-center justify-center shrink-0">
                 <Clock className="h-4 w-4 text-destructive" />
               </div>
@@ -215,7 +215,7 @@ export default function SalesPage() {
                 <p className="text-xs text-destructive">{followUpsDue} due today</p>
               </div>
             </Link>
-            <Link href="/admin/sales/quotations" className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+            <Link href="/admin/sales/quotations" className="flex items-center gap-3 p-3 rounded-md border hover:bg-muted/50 transition-colors">
               <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center shrink-0">
                 <AlertCircle className="h-4 w-4 text-primary" />
               </div>
@@ -224,7 +224,7 @@ export default function SalesPage() {
                 <p className="text-xs text-primary">{pendingQuotesCount} pending review</p>
               </div>
             </Link>
-            <Link href="/admin/dispatch" className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+            <Link href="/admin/dispatch" className="flex items-center gap-3 p-3 rounded-md border hover:bg-muted/50 transition-colors">
               <div className="w-8 h-8 bg-muted rounded-md flex items-center justify-center shrink-0">
                 <CheckCircle className="h-4 w-4 text-foreground" />
               </div>

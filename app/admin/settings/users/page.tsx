@@ -66,7 +66,7 @@ export default function UserManagementPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-md border border-gray-200 overflow-hidden">
         <table className="w-full text-left">
           <thead className="bg-gray-50 border-b border-gray-100">
             <tr>
@@ -97,7 +97,7 @@ export default function UserManagementPage() {
                     value={profile.role}
                     disabled={updating === profile.id}
                     onChange={(e) => handleRoleChange(profile.id, e.target.value)}
-                    className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-gray-400 focus:border-gray-400 block w-full p-2.5"
+                    className="bg-white border border-gray-300 text-gray-900 text-sm rounded-md focus:ring-gray-400 focus:border-gray-400 block w-full p-2.5"
                   >
                     {roles.map(r => (
                       <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>

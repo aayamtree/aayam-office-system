@@ -96,7 +96,7 @@ export default function PrintPlannerPage() {
     const DraggableJob = ({ job, inBatch }: { job: Job, inBatch?: boolean }) => {
         return (
             <div
-                className={`p-3 rounded-lg border mb-2 cursor-pointer transition-all 
+                className={`p-3 rounded-md border mb-2 cursor-pointer transition-all 
           ${inBatch ? 'bg-gray-50 border-gray-300' : 'bg-white border-gray-200'}
         `}
                 onClick={() => !inBatch && addToBatch(job)}
@@ -148,7 +148,7 @@ export default function PrintPlannerPage() {
             <div className="flex-1 flex flex-col md:flex-row gap-3 md:gap-4 min-h-0">
 
                 {/* LEFT COLUMN: Input Queue */}
-                <div className="w-full md:w-1/3 flex flex-col bg-gray-50 rounded-lg border border-gray-200 overflow-hidden h-1/3 md:h-auto">
+                <div className="w-full md:w-1/3 flex flex-col bg-gray-50 rounded-md border border-gray-200 overflow-hidden h-1/3 md:h-auto">
                     <div className="p-4 border-b bg-white flex justify-between items-center sticky top-0">
                         <h3 className="font-bold text-gray-700 flex items-center gap-2">
                             <FileText className="w-4 h-4 md:w-4.5 md:h-4.5" /> Ready for Print ({poolJobs.length})
@@ -166,7 +166,7 @@ export default function PrintPlannerPage() {
                 </div>
 
                 {/* MIDDLE: Batch Composer */}
-                <div className="w-full md:flex-1 flex flex-col bg-white rounded-lg border-2 border-dashed border-gray-300 overflow-hidden relative h-2/3 md:h-auto">
+                <div className="w-full md:flex-1 flex flex-col bg-white rounded-md border-2 border-dashed border-gray-300 overflow-hidden relative h-2/3 md:h-auto">
 
                     {/* Batch Config Header */}
                     <div className="p-4 border-b bg-gray-100">
@@ -190,7 +190,7 @@ export default function PrintPlannerPage() {
                         <div className="flex items-center gap-2 overflow-x-auto pb-2">
                             {WORKFLOWS[selectedWorkflow].stages.map((stage, i) => (
                                 <div key={stage} className="flex items-center">
-                                    <div className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-bold text-gray-900 whitespace-nowrap">
+                                    <div className="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-xs font-bold text-gray-900 whitespace-nowrap">
                                         {stage}
                                     </div>
                                     {i < WORKFLOWS[selectedWorkflow].stages.length - 1 && (
@@ -204,7 +204,7 @@ export default function PrintPlannerPage() {
                     {/* Batch Content Area */}
                     <div className="flex-1 p-4 overflow-y-auto bg-white">
                         {selectedJobs.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-100 rounded-lg">
+                            <div className="h-full flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-100 rounded-md">
                                 <Box className="w-12 h-12 mb-4 opacity-50" />
                                 <p className="font-medium">Drag jobs here or click +</p>
                                 <p className="text-sm">Group jobs to optimize material usage</p>

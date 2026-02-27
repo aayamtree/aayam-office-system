@@ -213,26 +213,26 @@ export default function DesignerProjectsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white rounded-lg border p-3 sm:p-4">
+        <div className="bg-white rounded-md border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Projects</p>
           <p className="text-page-title text-gray-900">{totalProjects}</p>
         </div>
-        <div className="bg-white rounded-lg border p-3 sm:p-4">
+        <div className="bg-white rounded-md border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">In Progress</p>
           <p className="text-page-title text-foreground">{inProgress}</p>
         </div>
-        <div className="bg-white rounded-lg border p-3 sm:p-4">
+        <div className="bg-white rounded-md border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Completed</p>
           <p className="text-page-title text-gray-900">{completed}</p>
         </div>
-        <div className="bg-white rounded-lg border p-3 sm:p-4">
+        <div className="bg-white rounded-md border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">On Hold</p>
           <p className="text-page-title text-orange-600">{onHold}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border p-4">
+      <div className="bg-white rounded-md border p-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -260,88 +260,99 @@ export default function DesignerProjectsPage() {
       <div className="space-y-4">
         {filteredProjects.map((project: any) => {
           const daysRemaining = getDaysRemaining(project.endDate);
+          const headerBg = daysRemaining < 0 && project.status !== 'completed' ? 'bg-red-600'
+            : daysRemaining <= 3 && project.status !== 'completed' ? 'bg-gray-900'
+              : 'bg-gray-700';
           return (
-            <div key={project.id} className={`bg-white rounded-lg border p-4  transition-shadow ${daysRemaining < 0 && project.status !== 'completed' ? 'border-l-4 border-l-red-500' :
-              daysRemaining <= 3 && project.status !== 'completed' ? 'border-l-4 border-l-orange-400' : ''}`}>
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 md:gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span className="font-mono text-sm text-primary font-medium">{project.projectId}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${getStatusBadge(project.status)}`}>
-                      {projectStatuses.find(s => s.id === project.status)?.name}
-                    </span>
-                    {daysRemaining < 0 && project.status !== 'completed' && (
-                      <span className="text-xs px-2 py-0.5 rounded-md bg-red-100 text-red-700">
-                        Overdue by {Math.abs(daysRemaining)} days
-                      </span>
-                    )}
-                    {daysRemaining > 0 && daysRemaining <= 3 && project.status !== 'completed' && (
-                      <span className="text-xs px-2 py-0.5 rounded-md bg-orange-100 text-orange-700">
-                        {daysRemaining} days left
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="text-section text-gray-900">{project.name}</h3>
-                  <p className="text-sm text-gray-500">{project.description}</p>
-                  <div className="flex flex-wrap items-center gap-2 md:gap-4 text-sm text-gray-600 mt-2">
-                    <span className="flex items-center gap-1"><Briefcase size={14} />{project.clientName}</span>
-                    <span className="flex items-center gap-1"><Users size={14} />{project.teamNames.join(', ')}</span>
-                    <span className="flex items-center gap-1">
-                      <Calendar size={14} />
-                      {project.startDate && new Date(project.startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} -
-                      {project.endDate && new Date(project.endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                    </span>
-                  </div>
+            <div key={project.id} className="bg-white rounded-md overflow-hidden border border-gray-200 hover:shadow-sm transition-all">
+              {/* Dark header bar */}
+              <div className={`${headerBg} px-3 py-2 flex items-center justify-between`}>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs text-white/70">{project.projectId}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-md font-medium bg-white/20 text-white`}>
+                    {projectStatuses.find(s => s.id === project.status)?.name}
+                  </span>
                 </div>
-
-                <div className="flex items-center gap-2 md:gap-4">
-                  {/* Progress */}
-                  <div className="w-32">
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-gray-500">Progress</span>
-                      <span className="font-medium">{project.progress}%</span>
-                    </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${project.progress >= 100 ? 'bg-white0' :
-                        project.progress >= 50 ? 'bg-primary' : 'bg-orange-500'}`}
-                        style={{ width: `${project.progress}%` }} />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => { setSelectedProject(project); setShowDetailModal(true); }}
-                      className="p-2 text-foreground hover:bg-muted rounded-md"><Eye size={18} /></button>
-                    <button onClick={() => handleEdit(project)}
-                      className="p-2 text-gray-600 hover:bg-gray-100 rounded-md"><Edit size={18} /></button>
-                    <button onClick={() => handleDelete(project.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-md"><Trash2 size={18} /></button>
-                  </div>
+                <div className="flex items-center gap-1.5">
+                  {daysRemaining < 0 && project.status !== 'completed' && (
+                    <span className="text-xs px-2 py-0.5 rounded-md bg-white/25 text-white font-bold">
+                      {Math.abs(daysRemaining)}d overdue
+                    </span>
+                  )}
+                  {daysRemaining > 0 && daysRemaining <= 3 && project.status !== 'completed' && (
+                    <span className="text-xs px-2 py-0.5 rounded-md bg-white/25 text-white font-bold">
+                      {daysRemaining}d left
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* Task Progress (Real tasks from subquery) */}
-              {project.tasks.length > 0 && (
-                <div className="mt-4 pt-4 border-t">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Tasks ({project.tasks.length})</p>
-                  <div className="flex flex-wrap gap-2">
-                    {project.tasks.map((task: any) => (
-                      <span key={task.id} className={`text-xs px-2 py-1 rounded-lg ${task.status === 'completed' ? 'bg-gray-100 text-gray-900' :
-                        task.status === 'in_progress' ? 'bg-muted text-foreground' :
-                          task.status === 'review' ? 'bg-gray-900 text-white' :
-                            'bg-gray-100 text-gray-600'}`}>
-                        {task.name}
+              {/* Card body */}
+              <div className="p-3">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 md:gap-4">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-section text-gray-900">{project.name}</h3>
+                    <p className="text-sm text-gray-500">{project.description}</p>
+                    <div className="flex flex-wrap items-center gap-2 md:gap-4 text-sm text-gray-600 mt-2">
+                      <span className="flex items-center gap-1"><Briefcase size={14} />{project.clientName}</span>
+                      <span className="flex items-center gap-1"><Users size={14} />{project.teamNames.join(', ')}</span>
+                      <span className="flex items-center gap-1">
+                        <Calendar size={14} />
+                        {project.startDate && new Date(project.startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} -
+                        {project.endDate && new Date(project.endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                       </span>
-                    ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 md:gap-4">
+                    {/* Progress */}
+                    <div className="w-32">
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="text-gray-500">Progress</span>
+                        <span className="font-medium">{project.progress}%</span>
+                      </div>
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full ${project.progress >= 100 ? 'bg-white0' :
+                          project.progress >= 50 ? 'bg-primary' : 'bg-orange-500'}`}
+                          style={{ width: `${project.progress}%` }} />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => { setSelectedProject(project); setShowDetailModal(true); }}
+                        className="p-2 text-foreground hover:bg-muted rounded-md"><Eye size={18} /></button>
+                      <button onClick={() => handleEdit(project)}
+                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-md"><Edit size={18} /></button>
+                      <button onClick={() => handleDelete(project.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-md"><Trash2 size={18} /></button>
+                    </div>
                   </div>
                 </div>
-              )}
+
+                {/* Task Progress */}
+                {project.tasks.length > 0 && (
+                  <div className="mt-3 pt-3 border-t">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Tasks ({project.tasks.length})</p>
+                    <div className="flex flex-wrap gap-2">
+                      {project.tasks.map((task: any) => (
+                        <span key={task.id} className={`text-xs px-2 py-1 rounded-md ${task.status === 'completed' ? 'bg-gray-100 text-gray-900' :
+                          task.status === 'in_progress' ? 'bg-muted text-foreground' :
+                            task.status === 'review' ? 'bg-gray-900 text-white' :
+                              'bg-gray-100 text-gray-600'}`}>
+                          {task.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}
       </div>
 
       {filteredProjects.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-lg border">
+        <div className="text-center py-12 bg-white rounded-md border">
           <Briefcase className="mx-auto h-12 w-12 text-gray-300" />
           <h3 className="mt-3 text-lg font-medium text-gray-900">No projects found</h3>
           <p className="mt-1 text-gray-500">Create projects to manage design work</p>
@@ -351,7 +362,7 @@ export default function DesignerProjectsPage() {
       {/* Create/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-md w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
               <h2 className="text-page-title">{editingProject ? 'Edit Project' : 'Create Project'}</h2>
               <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-md"><X size={20} /></button>
@@ -382,7 +393,7 @@ export default function DesignerProjectsPage() {
                 <div className="flex flex-wrap gap-2">
                   {(designers || []).map((d: any) => (
                     <button key={d.id} type="button" onClick={() => handleTeamMemberToggle(d.id)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${formData.teamMembers.includes(d.id)
+                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${formData.teamMembers.includes(d.id)
                         ? 'bg-gray-900 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
                       {d.name}
@@ -428,7 +439,7 @@ export default function DesignerProjectsPage() {
       {showDetailModal && selectedProject && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           {/* Same Modal UI using selectedProject data */}
-          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-md w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
               <h2 className="text-page-title">{selectedProject.name}</h2>
               <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X size={20} /></button>
@@ -447,7 +458,7 @@ export default function DesignerProjectsPage() {
       {/* Gantt Chart Modal */}
       {showGanttModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-5xl max-h-[90vh] overflow-auto">
+          <div className="bg-white rounded-md w-full max-w-5xl max-h-[90vh] overflow-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between z-10">
               <h2 className="text-page-title">Gantt Chart View</h2>
               <button onClick={() => setShowGanttModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X size={20} /></button>

@@ -151,27 +151,27 @@ export default function BankAccountsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white rounded-lg border p-3 sm:p-4">
+        <div className="bg-white rounded-md border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Balance</p>
           <p className="text-page-title text-primary">{formatCurrency(totalBalance)}</p>
         </div>
-        <div className="bg-white rounded-lg border p-3 sm:p-4">
+        <div className="bg-white rounded-md border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Active Accounts</p>
           <p className="text-page-title text-gray-900">{activeAccounts}</p>
         </div>
         {/* Placeholder stats */}
-        <div className="bg-white rounded-lg border p-3 sm:p-4 opacity-50">
+        <div className="bg-white rounded-md border p-3 sm:p-4 opacity-50">
           <p className="text-xs sm:text-sm text-gray-500">Total Inflow</p>
           <p className="text-page-title text-gray-900">--</p>
         </div>
-        <div className="bg-white rounded-lg border p-3 sm:p-4 opacity-50">
+        <div className="bg-white rounded-md border p-3 sm:p-4 opacity-50">
           <p className="text-xs sm:text-sm text-gray-500">Total Outflow</p>
           <p className="text-page-title text-red-600">--</p>
         </div>
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-lg border p-4">
+      <div className="bg-white rounded-md border p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
@@ -187,10 +187,10 @@ export default function BankAccountsPage() {
       {/* Bank Accounts List */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-4">
         {filteredBanks.map(bank => (
-          <div key={bank.id} className={`bg-white rounded-lg border p-4  transition-shadow ${!bank.is_active ? 'opacity-60' : ''} ${bank.is_default ? 'ring-2 ring-primary' : ''}`}>
+          <div key={bank.id} className={`bg-white rounded-md border p-4  transition-shadow ${!bank.is_active ? 'opacity-60' : ''} ${bank.is_default ? 'ring-2 ring-primary' : ''}`}>
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center">
                   <Building className="w-6 h-6 text-foreground" />
                 </div>
                 <div>
@@ -213,7 +213,7 @@ export default function BankAccountsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 text-center py-3 bg-gray-50 rounded-lg mb-3">
+            <div className="grid grid-cols-3 gap-3 text-center py-3 bg-gray-50 rounded-md mb-3">
               <div>
                 <p className="text-xs text-gray-500">Opening</p>
                 <p className="font-semibold text-gray-700">{formatCurrency(bank.opening_balance)}</p>
@@ -245,7 +245,7 @@ export default function BankAccountsPage() {
       </div>
 
       {filteredBanks.length === 0 && !loading && (
-        <div className="text-center py-12 bg-white rounded-lg border">
+        <div className="text-center py-12 bg-white rounded-md border">
           <Building className="mx-auto h-12 w-12 text-gray-300" />
           <h3 className="mt-3 text-lg font-medium text-gray-900">No bank accounts found</h3>
           <p className="mt-1 text-gray-500">Add your first bank account to enable reconciliation</p>
@@ -258,7 +258,7 @@ export default function BankAccountsPage() {
       {/* Add/Edit Bank Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-md animate-scale-in">
+          <div className="bg-white rounded-md w-full max-w-md animate-scale-in">
             <div className="p-5 border-b flex items-center justify-between">
               <h2 className="text-page-title">{editingBank ? 'Edit Bank Account' : 'Add Bank Account'}</h2>
               <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
@@ -321,13 +321,13 @@ export default function BankAccountsPage() {
       {/* Bank Detail Modal */}
       {showDetailModal && selectedBank && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-md animate-scale-in">
+          <div className="bg-white rounded-md w-full max-w-md animate-scale-in">
             <div className="p-5 border-b flex items-center justify-between">
               <h2 className="text-page-title">{selectedBank.name}</h2>
               <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
-              <div className="text-center bg-gray-900 rounded-lg p-4">
+              <div className="text-center bg-gray-900 rounded-md p-4">
                 <p className="text-sm text-gray-600">Current Balance</p>
                 <p className="text-page-title text-primary">{formatCurrency(selectedBank.current_balance)}</p>
               </div>

@@ -127,7 +127,7 @@ export default function AdminMarketingDashboard() {
                     ) : (
                         <div className="space-y-2">
                             {teamMembers.map((member: any, idx: number) => (
-                                <div key={idx} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                                <div key={idx} className="flex items-center justify-between p-3 rounded-md border hover:bg-muted/50 transition-colors">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-sm font-semibold text-primary-foreground">
                                             {member.name.charAt(0)}
@@ -164,17 +164,17 @@ export default function AdminMarketingDashboard() {
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div className="p-3 rounded-lg border">
+                        <div className="p-3 rounded-md border">
                             <p className="text-xs text-muted-foreground mb-1">Total This Month</p>
                             <p className="text-lg font-semibold">₹0</p>
                             <p className="text-xs text-muted-foreground mt-1">0 eligible projects</p>
                         </div>
-                        <div className="p-3 rounded-lg border">
+                        <div className="p-3 rounded-md border">
                             <p className="text-xs text-muted-foreground mb-1">Paid Out</p>
                             <p className="text-lg font-semibold">₹0</p>
                             <p className="text-xs text-muted-foreground mt-1">Last month</p>
                         </div>
-                        <div className="p-3 rounded-lg border">
+                        <div className="p-3 rounded-md border">
                             <p className="text-xs text-muted-foreground mb-1">Pending</p>
                             <p className="text-lg font-semibold text-destructive">₹0</p>
                             <p className="text-xs text-muted-foreground mt-1">Awaiting payment</p>

@@ -471,123 +471,75 @@ export default function JobsPage() {
     );
   }
 
-  // JobCard Component 
-  const JobCard = ({ job }: { job: Job }) => (
-    <div
-      className={`group bg-white rounded-lg md:rounded-lg p-3 md:p-4   transition-all duration-300 hover:-translate-y-1 border border-transparent hover:border-gray-100 ring-1 ring-black/5 cursor-pointer relative overflow-hidden ${isOverdue(job.client_deadline, job.current_stage) ? 'ring-red-100 bg-red-50/30' : ''
-        }`}
-      onClick={() => handleViewDetail(job)}
-    >
-      {/* Overdue Indicator Strip */}
-      {isOverdue(job.client_deadline, job.current_stage) && (
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500" />
-      )}
-
-      <div className="flex items-start justify-between mb-3">
-        <Badge className={getPriorityBadge(job.priority || '')}>
-          {(job.priority || 'normal').toUpperCase()}
-        </Badge>
-        <Badge variant="default" className="font-mono">
-          {job.job_number}
-        </Badge>
-      </div>
-
-      <h4 className="font-semibold text-gray-900 mb-1 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
-        {job.project_name}
-      </h4>
-
-      <div className="flex items-center gap-2 mb-2">
-        <Building2 className="w-4 h-4 text-gray-400" />
-        <p className="text-sm text-gray-500 truncate">{job.client?.name || 'No client'}</p>
-      </div>
-
-      {/* Advance Warning Badge */}
-      {job.advance_required !== false && !job.advance_collected && job.current_stage !== 'new' && (
-        <div className="flex items-center gap-1.5 mb-3 px-2 py-1.5 bg-amber-50 border border-amber-200 rounded-md">
-          <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
-          <span className="text-xs font-medium text-amber-700">No advance collected</span>
+  // JobCard — dark header bar pattern
+  const JobCard = ({ job }: { job: Job }) => {
+    const overdue = isOverdue(job.client_deadline, job.current_stage);
+    const headerBg = overdue ? 'bg-red-600' : job.priority === 'urgent' ? 'bg-gray-900' : job.priority === 'high' ? 'bg-gray-800' : 'bg-gray-700';
+    return (
+      <div
+        className="bg-white rounded-md overflow-hidden border border-gray-200 hover:shadow-sm transition-all cursor-pointer"
+        onClick={() => handleViewDetail(job)}
+      >
+        {/* Dark header */}
+        <div className={`${headerBg} px-3 py-2 flex items-center justify-between`}>
+          <div className="flex items-center gap-1.5">
+            <Badge className={getPriorityBadge(job.priority || '')} style={{ fontSize: '9px', padding: '1px 5px' }}>
+              {(job.priority || 'normal').toUpperCase()}
+            </Badge>
+            {overdue && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-white/25 text-white">OVERDUE</span>}
+          </div>
+          <Badge variant="default" className="font-mono text-[10px]">{job.job_number}</Badge>
         </div>
-      )}
 
-      <div className="flex items-center justify-between text-xs pt-3 border-t border-gray-100 text-gray-500">
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className={getPaymentBadge(job.payment_status)}>
-            {formatCurrency(job.amount_received)} / {formatCurrency(job.total_amount)}
-          </Badge>
-          {/* File Attachment Indicator */}
-          {job.files && job.files.length > 0 && (
-            <span className="flex items-center gap-0.5 text-gray-600" title={`${job.files.length} file(s) attached`}>
-              <Paperclip className="w-3 h-3" />
-              <span className="text-xs font-bold">{job.files.length}</span>
-            </span>
+        {/* Body */}
+        <div className="p-3">
+          {job.advance_required !== false && !job.advance_collected && job.current_stage !== 'new' && (
+            <div className="flex items-center gap-1 mb-2 px-2 py-1 bg-amber-50 border border-amber-200 rounded-md">
+              <AlertTriangle className="w-3 h-3 text-amber-600 flex-shrink-0" />
+              <span className="text-xs text-amber-700">No advance</span>
+            </div>
           )}
+          <h4 className="font-semibold text-gray-900 mb-0.5 line-clamp-2 leading-snug text-sm">{job.project_name}</h4>
+          <div className="flex items-center gap-1.5 mb-2">
+            <Building2 className="w-3.5 h-3.5 text-gray-400" />
+            <p className="text-xs text-gray-500 truncate">{job.client?.name || 'No client'}</p>
+          </div>
+          <div className="flex items-center justify-between text-xs border-t border-gray-100 pt-2">
+            <Badge variant="outline" className={getPaymentBadge(job.payment_status)}>
+              {formatCurrency(job.amount_received)} / {formatCurrency(job.total_amount)}
+            </Badge>
+            <div className="flex items-center gap-1.5">
+              {job.files && job.files.length > 0 && (
+                <span className="flex items-center gap-0.5 text-gray-500" title={`${job.files.length} file(s)`}>
+                  <Paperclip className="w-3 h-3" />
+                  <span className="text-xs font-bold">{job.files.length}</span>
+                </span>
+              )}
+              {job.client_deadline && (
+                <span className={`flex items-center gap-1 font-medium ${overdue ? 'text-red-600' : 'text-gray-400'}`}>
+                  <Calendar className="w-3.5 h-3.5" />
+                  {formatDate(job.client_deadline)}
+                </span>
+              )}
+            </div>
+          </div>
+          {/* Hover actions */}
+          <div className="flex items-center justify-end gap-1 mt-2 pt-1.5 border-t border-gray-100">
+            <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleEdit(job); }} title="Edit"><Edit className="w-3.5 h-3.5" /></Button>
+            <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleRepeatOrder(job); }} title="Repeat"><Copy className="w-3.5 h-3.5" /></Button>
+            {job.current_stage === 'awaiting_admin' && (
+              <Button size="sm" onClick={(e) => { e.stopPropagation(); handleApproveDesignerProject(job); }} className="bg-green-600 hover:bg-green-700 text-white text-xs gap-1 h-6 px-2">✅ Approve</Button>
+            )}
+            {!['printing', 'finishing', 'quality_check', 'ready', 'dispatched', 'delivered'].includes(job.current_stage) && (
+              <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleOpenSendToPrinter(job); }} title="Send to Printer" className="text-orange-600 hover:text-orange-700"><Send className="w-3.5 h-3.5" /></Button>
+            )}
+            <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleAddPayment(job); }} title="Payment"><IndianRupee className="w-3.5 h-3.5" /></Button>
+            <Button size="icon" variant="destructive" onClick={(e) => { e.stopPropagation(); handleDelete(job.id); }} title="Delete"><Trash2 className="w-3.5 h-3.5" /></Button>
+          </div>
         </div>
-
-        {job.client_deadline && (
-          <span className={`flex items-center gap-1.5 font-medium ${isOverdue(job.client_deadline, job.current_stage) ? 'text-red-600' : 'text-gray-400'}`}>
-            <Calendar className="w-4 h-4" />
-            {formatDate(job.client_deadline)}
-          </span>
-        )}
       </div>
-
-      <div className="flex items-center justify-end gap-2 mt-3 pt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={(e) => { e.stopPropagation(); handleEdit(job); }}
-          title="Edit"
-        >
-          <Edit />
-        </Button>
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={(e) => { e.stopPropagation(); handleRepeatOrder(job); }}
-          title="Repeat Order"
-        >
-          <Copy />
-        </Button>
-        {job.current_stage === 'awaiting_admin' && (
-          <Button
-            size="sm"
-            onClick={(e) => { e.stopPropagation(); handleApproveDesignerProject(job); }}
-            title="Approve & Activate"
-            className="bg-green-600 hover:bg-green-700 text-white text-xs gap-1"
-          >
-            ✅ Approve
-          </Button>
-        )}
-        {!['printing', 'finishing', 'quality_check', 'ready', 'dispatched', 'delivered'].includes(job.current_stage) && (
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={(e) => { e.stopPropagation(); handleOpenSendToPrinter(job); }}
-            title="Send to Printer"
-            className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-          >
-            <Send />
-          </Button>
-        )}
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={(e) => { e.stopPropagation(); handleAddPayment(job); }}
-          title="Add Payment"
-        >
-          <IndianRupee />
-        </Button>
-        <Button
-          size="icon"
-          variant="destructive"
-          onClick={(e) => { e.stopPropagation(); handleDelete(job.id); }}
-          title="Delete"
-        >
-          <Trash2 />
-        </Button>
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="space-y-3 md:space-y-6 lg:space-y-8 animate-fade-in px-2 pb-10">
@@ -609,71 +561,72 @@ export default function JobsPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <div className="bg-white rounded-lg p-3 md:p-5 border border-gray-100 ">
-          <p className="text-xs md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Total Jobs</p>
-          <p className="text-page-title text-gray-900">{totalJobs}</p>
+      {/* Stats Cards — Job Queue style */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+        <div className="bg-gray-900 border border-gray-800 rounded-md p-2 md:p-3">
+          <div className="flex items-center gap-1 md:gap-2 mb-1">
+            <Briefcase className="w-4 h-4 text-white" />
+            <span className="text-xs text-white font-medium">Total Jobs</span>
+          </div>
+          <p className="text-page-title text-white">{totalJobs}</p>
         </div>
-        <div className="bg-white rounded-lg p-3 md:p-5 border border-gray-100 ">
-          <p className="text-xs md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Active</p>
-          <p className="text-page-title text-primary">{activeJobs}</p>
+        <div className="bg-muted border border-border rounded-md p-2 md:p-3">
+          <div className="flex items-center gap-1 md:gap-2 mb-1">
+            <Layers className="w-4 h-4 text-foreground" />
+            <span className="text-xs text-foreground font-medium">Active</span>
+          </div>
+          <p className="text-page-title text-foreground">{activeJobs}</p>
         </div>
-        <div className="bg-white rounded-lg p-3 md:p-5 border border-gray-100 ">
-          <p className="text-xs md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Revenue</p>
-          <p className="text-page-title text-gray-900 truncate" title={formatCurrency(totalRevenue)}>
-            {formatCurrency(totalRevenue)}
-          </p>
+        <div className="bg-white border border-gray-300 rounded-md p-2 md:p-3">
+          <div className="flex items-center gap-1 md:gap-2 mb-1">
+            <IndianRupee className="w-4 h-4 text-gray-900" />
+            <span className="text-xs text-gray-900 font-medium">Revenue</span>
+          </div>
+          <p className="text-page-title text-gray-900 truncate" title={formatCurrency(totalRevenue)}>{formatCurrency(totalRevenue)}</p>
         </div>
-        <div className="bg-white rounded-lg p-3 md:p-5 border border-gray-100 ">
-          <p className="text-xs md:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 md:mb-2">Pending</p>
-          <p className="text-page-title text-destructive truncate" title={formatCurrency(pendingPayments)}>
-            {formatCurrency(pendingPayments)}
-          </p>
+        <div className="bg-red-50 border border-red-200 rounded-md p-2 md:p-3">
+          <div className="flex items-center gap-1 md:gap-2 mb-1">
+            <AlertCircle className="w-4 h-4 text-red-600" />
+            <span className="text-xs text-red-600 font-medium">Pending</span>
+          </div>
+          <p className="text-page-title text-red-700 truncate" title={formatCurrency(pendingPayments)}>{formatCurrency(pendingPayments)}</p>
         </div>
       </div>
 
 
-      {/* Print Production Links */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
-        <Link href="/admin/print-planner" className="flex items-center gap-2 md:gap-4 bg-white p-5 rounded-lg border border-gray-100 hover:border-primary/20 transition-all group">
-          <div className="w-12 h-12 bg-gray-900 rounded-lg flex items-center justify-center transition-colors">
-            <Layers className="w-6 h-6 text-white" />
+      {/* Print Production Links — compact dark header cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <Link href="/admin/print-planner" className="bg-white rounded-md overflow-hidden border border-gray-200 hover:shadow-sm transition-all">
+          <div className="bg-gray-900 px-3 py-2 flex items-center gap-2">
+            <Layers className="w-4 h-4 text-white" />
+            <span className="text-white font-semibold text-sm">Print Planner</span>
+            <ArrowRight className="w-4 h-4 text-white/60 ml-auto" />
           </div>
-          <div>
-            <h3 className="font-bold text-gray-900">Print Planner</h3>
-            <p className="text-sm text-gray-500">Create production batches</p>
-          </div>
-          <ArrowRight className="w-5 h-5 ml-auto text-gray-300 group-hover:text-primary" />
+          <div className="p-3"><p className="text-gray-500 text-sm">Create production batches</p></div>
         </Link>
-        <Link href="/admin/production-queue" className="flex items-center gap-2 md:gap-4 bg-white p-5 rounded-lg border border-gray-100 hover:border-primary/20 transition-all group">
-          <div className="w-12 h-12 bg-gray-900 rounded-lg flex items-center justify-center transition-colors">
-            <Printer className="w-6 h-6 text-white" />
+        <Link href="/admin/production-queue" className="bg-white rounded-md overflow-hidden border border-gray-200 hover:shadow-sm transition-all">
+          <div className="bg-gray-700 px-3 py-2 flex items-center gap-2">
+            <Printer className="w-4 h-4 text-white" />
+            <span className="text-white font-semibold text-sm">Production Queue</span>
+            <ArrowRight className="w-4 h-4 text-white/60 ml-auto" />
           </div>
-          <div>
-            <h3 className="font-bold text-gray-900">Production Queue</h3>
-            <p className="text-sm text-gray-500">Track job status</p>
-          </div>
-          <ArrowRight className="w-5 h-5 ml-auto text-gray-300 group-hover:text-primary" />
+          <div className="p-3"><p className="text-gray-500 text-sm">Track job status</p></div>
         </Link>
       </div>
 
-      {/* Filters & Controls */}
-      <div className="flex flex-col xl:flex-row gap-3 md:gap-4 bg-white p-3 md:p-4 rounded-lg border border-gray-100">
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input
-              type="text"
-              placeholder="Search jobs, clients, or numbers..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+      {/* Filters — inline, no white box */}
+      <div className="flex flex-col xl:flex-row gap-3">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Input
+            type="text"
+            placeholder="Search jobs, clients, or numbers..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
         </div>
-
-        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <Select value={stageFilter} onValueChange={setStageFilter}>
             <SelectTrigger className="w-auto min-w-[120px] h-9 text-sm">
               <SelectValue placeholder="All Stages" />
@@ -683,7 +636,6 @@ export default function JobsPage() {
               {stages.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>
-
           <Select value={priorityFilter} onValueChange={setPriorityFilter}>
             <SelectTrigger className="w-auto min-w-[120px] h-9 text-sm">
               <SelectValue placeholder="All Priority" />
@@ -693,7 +645,6 @@ export default function JobsPage() {
               {priorities.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
             </SelectContent>
           </Select>
-
           <ToggleGroup
             type="single"
             value={viewMode}
@@ -714,7 +665,7 @@ export default function JobsPage() {
       {/* Empty State */}
       {
         filteredJobs.length === 0 && (
-          <div className="text-center py-24 bg-white rounded-lg border border-dashed border-gray-300">
+          <div className="text-center py-24 bg-white rounded-md border border-dashed border-gray-300">
             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
               <Briefcase className="w-8 h-8 text-gray-400" />
             </div>
@@ -737,7 +688,7 @@ export default function JobsPage() {
             {stages.map(stage => {
               const stageJobs = jobsByStage[stage.id] || [];
               return (
-                <div key={stage.id} className="min-w-[300px] w-80 flex-shrink-0 bg-white/50 rounded-lg border border-gray-200 flex flex-col max-h-full ">
+                <div key={stage.id} className="min-w-[300px] w-80 flex-shrink-0 bg-white/50 rounded-md border border-gray-200 flex flex-col max-h-full ">
                   {/* Column Header */}
                   <div className="p-3 border-b border-gray-100 flex items-center justify-between bg-white rounded-t-xl sticky top-0 z-10">
                     <div className="flex items-center gap-2">
@@ -767,7 +718,7 @@ export default function JobsPage() {
       {/* List View */}
       {
         viewMode === 'list' && filteredJobs.length > 0 && (
-          <div className="bg-white rounded-lg border overflow-hidden">
+          <div className="bg-white rounded-md border overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[800px]">
                 <thead className="bg-white border-b">
@@ -942,7 +893,7 @@ export default function JobsPage() {
               </div>
 
               {/* Amount Preview */}
-              <div className="bg-white rounded-lg p-4 grid grid-cols-3 gap-2 md:gap-4 text-center">
+              <div className="bg-white rounded-md p-4 grid grid-cols-3 gap-2 md:gap-4 text-center">
                 <div><p className="text-xs text-gray-500">Subtotal</p><p className="font-semibold">{formatCurrency(formData.quantity * formData.quote_per_piece)}</p></div>
                 <div><p className="text-xs text-gray-500">GST ({formData.gst_rate}%)</p><p className="font-semibold text-foreground">{formatCurrency(formData.quantity * formData.quote_per_piece * formData.gst_rate / 100)}</p></div>
                 <div><p className="text-xs text-gray-500">Total</p><p className="font-bold text-primary">{formatCurrency(formData.quantity * formData.quote_per_piece * (1 + formData.gst_rate / 100))}</p></div>
@@ -1018,7 +969,7 @@ export default function JobsPage() {
               </div>
 
               {/* Advance Payment Section */}
-              <div className="bg-amber-50/50 border border-amber-100 rounded-lg p-4 space-y-3">
+              <div className="bg-amber-50/50 border border-amber-100 rounded-md p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium flex items-center gap-2">
                     <IndianRupee className="w-4 h-4 text-amber-600" />
@@ -1117,7 +1068,7 @@ export default function JobsPage() {
       {
         showPaymentModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg w-full max-w-sm animate-scale-in">
+            <div className="bg-white rounded-md w-full max-w-sm animate-scale-in">
               <div className="p-4 border-b">
                 <h3 className="font-bold text-gray-900">Add Payment</h3>
                 <p className="text-sm text-gray-500">{selectedJob?.project_name}</p>
@@ -1167,9 +1118,9 @@ export default function JobsPage() {
       {/* Send to Printer Modal */}
       {showSendToPrinterModal && selectedJob && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-md animate-scale-in">
+          <div className="bg-white rounded-md w-full max-w-md animate-scale-in">
             <div className="p-4 border-b flex items-center gap-3">
-              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-orange-100 rounded-md flex items-center justify-center">
                 <Send className="w-5 h-5 text-orange-600" />
               </div>
               <div>
@@ -1216,7 +1167,7 @@ export default function JobsPage() {
               </div>
 
               {/* Job Info */}
-              <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-600">
+              <div className="bg-gray-50 rounded-md p-3 text-sm text-gray-600">
                 <div className="flex justify-between"><span>Client:</span><span className="font-medium text-gray-900">{selectedJob.client?.name || 'N/A'}</span></div>
                 <div className="flex justify-between mt-1"><span>Quantity:</span><span className="font-medium text-gray-900">{selectedJob.quantity}</span></div>
                 <div className="flex justify-between mt-1"><span>Current Stage:</span><span className="font-medium text-gray-900">{stages.find(s => s.id === selectedJob.current_stage)?.name || selectedJob.current_stage}</span></div>
@@ -1244,7 +1195,7 @@ export default function JobsPage() {
       {/* Approve Designer Project Dialog */}
       {showApproveDialog && approvingJob && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => !approving && setShowApproveDialog(false)}>
-          <div className="bg-white rounded-lg w-full max-w-sm animate-scale-in" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-md w-full max-w-sm animate-scale-in" onClick={e => e.stopPropagation()}>
             <div className="p-5 text-center">
               <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">✅</span>

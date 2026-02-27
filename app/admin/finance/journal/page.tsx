@@ -118,7 +118,7 @@ export default function ManualJournalPage() {
             </div>
 
             {/* Form */}
-            <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-md border border-gray-100 overflow-hidden">
                 {/* Top Info */}
                 <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 border-b bg-gray-50">
                     <div>
@@ -127,7 +127,7 @@ export default function ManualJournalPage() {
                             type="date"
                             value={date}
                             onChange={e => setDate(e.target.value)}
-                            className="w-full bg-white border border-gray-200 rounded-lg p-2"
+                            className="w-full bg-white border border-gray-200 rounded-md p-2"
                         />
                     </div>
                     <div>
@@ -137,7 +137,7 @@ export default function ManualJournalPage() {
                             placeholder="e.g. ADJ-001"
                             value={reference}
                             onChange={e => setReference(e.target.value)}
-                            className="w-full bg-white border border-gray-200 rounded-lg p-2"
+                            className="w-full bg-white border border-gray-200 rounded-md p-2"
                         />
                     </div>
                     <div>
@@ -147,7 +147,7 @@ export default function ManualJournalPage() {
                             placeholder="Reason for adjustment..."
                             value={notes}
                             onChange={e => setNotes(e.target.value)}
-                            className="w-full bg-white border border-gray-200 rounded-lg p-2"
+                            className="w-full bg-white border border-gray-200 rounded-md p-2"
                         />
                     </div>
                 </div>
@@ -256,7 +256,7 @@ export default function ManualJournalPage() {
 
             {/* Success / Error Messages */}
             {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg flex gap-3 items-start">
+                <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md flex gap-3 items-start">
                     <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
                     <div>
                         <h3 className="font-bold">Error Saving Journal</h3>
@@ -290,7 +290,7 @@ export default function ManualJournalPage() {
             )}
 
             {success && (
-                <div className="bg-white border border-green-200 text-gray-900 p-4 rounded-lg">
+                <div className="bg-white border border-green-200 text-gray-900 p-4 rounded-md">
                     <h3 className="font-bold">Success!</h3>
                     <p>Journal Entry saved successfully.</p>
                 </div>

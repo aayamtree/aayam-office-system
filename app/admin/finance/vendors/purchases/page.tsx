@@ -186,26 +186,26 @@ export default function VendorPurchasesPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white rounded-lg border p-3 sm:p-4">
+        <div className="bg-white rounded-md border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Total Purchases</p>
           <p className="text-page-title text-gray-900">{formatCurrency(totalPurchases)}</p>
         </div>
-        <div className="bg-white rounded-lg border p-3 sm:p-4">
+        <div className="bg-white rounded-md border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Paid to Vendors</p>
           <p className="text-page-title text-gray-900">{formatCurrency(totalPaid)}</p>
         </div>
-        <div className="bg-white rounded-lg border p-3 sm:p-4">
+        <div className="bg-white rounded-md border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Pending Payments</p>
           <p className="text-page-title text-red-600">{formatCurrency(totalPending)}</p>
         </div>
-        <div className="bg-white rounded-lg border p-3 sm:p-4">
+        <div className="bg-white rounded-md border p-3 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-500">Job-linked COGS</p>
           <p className="text-page-title text-primary">{formatCurrency(totalCOGS)}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border p-4">
+      <div className="bg-white rounded-md border p-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -253,7 +253,7 @@ export default function VendorPurchasesPage() {
           const isOverdue = purchase.payment_status === 'pending' && new Date(purchase.due_date || '') < new Date();
 
           return (
-            <div key={purchase.id} className={`bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-sm transition-all border ${isOverdue ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-100'}`}>
+            <div key={purchase.id} className={`bg-white rounded-md overflow-hidden shadow-sm hover:shadow-sm transition-all border ${isOverdue ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-100'}`}>
               {/* Colored Header */}
               <div className={`${headerBg} px-4 py-3 flex items-center justify-between`}>
                 <div className="flex items-center gap-2">
@@ -321,7 +321,7 @@ export default function VendorPurchasesPage() {
       </div>
 
       {filteredPurchases.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-lg border">
+        <div className="text-center py-12 bg-white rounded-md border">
           <FileText className="mx-auto h-12 w-12 text-gray-300" />
           <h3 className="mt-3 text-lg font-medium text-gray-900">No purchase bills found</h3>
           <p className="mt-1 text-gray-500">Add purchase bills to track expenses</p>
@@ -331,7 +331,7 @@ export default function VendorPurchasesPage() {
       {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-md w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
               <h2 className="text-page-title">{editingPurchase ? 'Edit Purchase' : 'Add Purchase Bill'}</h2>
               <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
@@ -420,7 +420,7 @@ export default function VendorPurchasesPage() {
                         setFormData({ ...formData, attachmentUrl: file.name });
                       }
                     }}
-                    className="w-full px-3 py-2 border rounded-md text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-900 file:text-white hover:file:bg-primary"
+                    className="w-full px-3 py-2 border rounded-md text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-900 file:text-white hover:file:bg-primary"
                   />
                   {formData.attachmentUrl && (
                     <p className="text-xs text-gray-900 mt-1">✓ {formData.attachmentUrl}</p>
@@ -430,7 +430,7 @@ export default function VendorPurchasesPage() {
               </div>
 
               {/* Calculation Preview */}
-              <div className="bg-gray-900 rounded-lg p-4 space-y-2">
+              <div className="bg-gray-900 rounded-md p-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal ({formData.quantity} × ₹{formData.rate})</span>
                   <span className="font-medium">{formatCurrency(totals.amount)}</span>
@@ -459,7 +459,7 @@ export default function VendorPurchasesPage() {
       {/* Detail Modal */}
       {showDetailModal && selectedPurchase && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-md w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
               <div>
                 <span className="font-mono text-primary">{selectedPurchase.bill_number}</span>
@@ -497,7 +497,7 @@ export default function VendorPurchasesPage() {
                 </div>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+              <div className="bg-gray-50 rounded-md p-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Quantity × Rate</span>
                   <span>{selectedPurchase.quantity} × ₹{selectedPurchase.rate}</span>

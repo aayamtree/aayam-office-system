@@ -59,7 +59,7 @@ export default function CommissionsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
                     <div className="bg-white rounded-md p-3 md:p-4 border border-gray-200">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-muted rounded-lg">
+                            <div className="p-2 bg-muted rounded-md">
                                 <Clock className="text-foreground" size={20} />
                             </div>
                             <p className="text-sm text-gray-500 font-medium">Pending</p>
@@ -79,7 +79,7 @@ export default function CommissionsPage() {
                     </div>
                     <div className="bg-white rounded-md p-3 md:p-4 border border-gray-200">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-white rounded-lg">
+                            <div className="p-2 bg-white rounded-md">
                                 <TrendingUp className="text-gray-900" size={20} />
                             </div>
                             <p className="text-sm text-gray-500 font-medium">Paid</p>
@@ -142,7 +142,7 @@ export default function CommissionsPage() {
                         ) : (
                             <div className="space-y-4">
                                 {commissions.map((commission) => (
-                                    <div key={commission.id} className="border border-gray-100 rounded-lg p-4 hover:border-primary/20 transition-all">
+                                    <div key={commission.id} className="border border-gray-100 rounded-md p-4 hover:border-primary/20 transition-all">
                                         {/* Commission card content */}
                                     </div>
                                 ))}
@@ -208,7 +208,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                             type="text"
                             value={formData.projectName}
                             onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
-                            className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
+                            className="w-full border-2 border-gray-200 rounded-md px-4 py-3 focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
                             placeholder="e.g., Pouch - ABC Company"
                         />
                     </div>
@@ -227,7 +227,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                     setFormData({ ...formData, projectTotal: e.target.value });
                                     setTimeout(handleCalculate, 100);
                                 }}
-                                className="w-full border-2 border-gray-200 rounded-lg pl-10 pr-4 py-3 text-section focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
+                                className="w-full border-2 border-gray-200 rounded-md pl-10 pr-4 py-3 text-section focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
                                 placeholder="56000"
                             />
                         </div>
@@ -266,7 +266,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                     setFormData({ ...formData, gstPercentage: e.target.value });
                                     setTimeout(handleCalculate, 100);
                                 }}
-                                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-section focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
+                                className="w-full border-2 border-gray-200 rounded-md px-4 py-3 text-section focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
                                 placeholder="18"
                             />
                             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">%</span>
@@ -284,7 +284,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                     setFormData({ ...formData, commissionType: e.target.value as any });
                                     setTimeout(handleCalculate, 100);
                                 }}
-                                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 font-bold focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
+                                className="w-full border-2 border-gray-200 rounded-md px-4 py-3 font-bold focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
                             >
                                 <option value="percentage">Percentage (%)</option>
                                 <option value="fixed">Fixed Amount (₹)</option>
@@ -302,7 +302,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
                                     setFormData({ ...formData, commissionValue: e.target.value });
                                     setTimeout(handleCalculate, 100);
                                 }}
-                                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-section focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
+                                className="w-full border-2 border-gray-200 rounded-md px-4 py-3 text-section focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
                                 placeholder="5"
                             />
                         </div>
@@ -310,7 +310,7 @@ function AddCommissionModal({ onClose }: { onClose: () => void }) {
 
                     {/* Live Calculation Result */}
                     {calculationResult && (
-                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg md:rounded-lg p-3 md:p-4 border-2 border-green-200">
+                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-md md:rounded-md p-3 md:p-4 border-2 border-green-200">
                             <h4 className="font-bold text-green-900 mb-4 flex items-center gap-2">
                                 <Calculator size={20} />
                                 Live Calculation

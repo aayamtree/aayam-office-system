@@ -159,13 +159,13 @@ export default function PaymentsPageNew() {
             </div>
 
             {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-4">
+                <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md mb-4">
                     Error: {error}
                 </div>
             )}
 
             {/* Table - Horizontal scroll on mobile */}
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-white rounded-md shadow overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-[640px]">
                         <thead className="bg-gray-50 border-b">
@@ -212,7 +212,7 @@ export default function PaymentsPageNew() {
 
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg w-full max-w-md p-4">
+                    <div className="bg-white rounded-md w-full max-w-md p-4">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-page-title">Record Payment</h2>
                             <button onClick={() => setShowModal(false)}>

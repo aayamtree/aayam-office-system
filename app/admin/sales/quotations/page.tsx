@@ -662,7 +662,7 @@ export default function QuotationsPage() {
                           {q.status === 'accepted' && (
                             <button
                               onClick={() => handleConvertToOrder(q)}
-                              className="px-3 py-1.5 bg-gray-100 text-gray-900 rounded-lg text-sm font-medium hover:bg-green-200"
+                              className="px-3 py-1.5 bg-gray-100 text-gray-900 rounded-md text-sm font-medium hover:bg-green-200"
                             >
                               → Order
                             </button>
@@ -670,7 +670,7 @@ export default function QuotationsPage() {
                           {(q.status === 'sent' || q.status === 'viewed' || q.status === 'draft') && (
                             <button
                               onClick={() => handleConvertToOrder(q)}
-                              className="p-2 hover:bg-muted text-primary rounded-lg"
+                              className="p-2 hover:bg-muted text-primary rounded-md"
                               title="Convert to Order"
                             >
                               <CheckCircle size={18} />
@@ -749,7 +749,7 @@ export default function QuotationsPage() {
                     type="date"
                     value={formData.validUntil}
                     onChange={(e) => setFormData({ ...formData, validUntil: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all"
                   />
                 </div>
 
@@ -759,7 +759,7 @@ export default function QuotationsPage() {
                     required
                     value={formData.orderType}
                     onChange={(e) => setFormData({ ...formData, orderType: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all"
                   >
                     <option value="print">Print Only</option>
                     <option value="design">Design Only</option>
@@ -779,7 +779,7 @@ export default function QuotationsPage() {
                       required
                       value={formData.productCategory}
                       onChange={(e) => setFormData({ ...formData, productCategory: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all"
                     >
                       <option value="">Select Product</option>
                       {dbCategories.map((c: any) => (
@@ -805,7 +805,7 @@ export default function QuotationsPage() {
                           placeholder="Description"
                           value={item.description}
                           onChange={(e) => updateItem(index, 'description', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                          className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
                         />
                       </div>
                       <div className="col-span-3 sm:col-span-2">
@@ -815,7 +815,7 @@ export default function QuotationsPage() {
                           min="1"
                           value={item.quantity}
                           onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                          className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
                         />
                       </div>
                       <div className="col-span-3 sm:col-span-2">
@@ -826,7 +826,7 @@ export default function QuotationsPage() {
                           step="any"
                           value={item.rate}
                           onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                          className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
                         />
                       </div>
                       <div className="col-span-5 sm:col-span-2 flex items-center justify-between">
@@ -858,7 +858,7 @@ export default function QuotationsPage() {
                         const tax = Math.round(formData.subtotal * (newRate / 100));
                         setFormData(prev => ({ ...prev, gstRate: newRate, totalTax: tax, totalAmount: prev.subtotal + tax }));
                       }}
-                      className="w-full px-2 py-1 border border-gray-200 rounded-lg bg-white text-sm"
+                      className="w-full px-2 py-1 border border-gray-200 rounded-md bg-white text-sm"
                     >
                       <option value="0">0%</option>
                       <option value="5">5%</option>

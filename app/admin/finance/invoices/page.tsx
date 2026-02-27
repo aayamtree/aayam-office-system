@@ -443,9 +443,9 @@ export default function InvoicesPage() {
       {/* Ready for Invoicing Alert (Data Flow: Jobs -> Finance) */}
       {
         pendingInvoicingJobs.length > 0 && (
-          <div className="bg-gradient-to-r bg-white p-4 rounded-lg border border-border-100">
+          <div className="bg-gradient-to-r bg-white p-4 rounded-md border border-border-100">
             <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 bg-gray-900 rounded-lg">
+              <div className="p-2 bg-gray-900 rounded-md">
                 <CheckCircle className="w-4 h-4 md:w-4.5 md:h-4.5 text-primary" />
               </div>
               <div>
@@ -455,7 +455,7 @@ export default function InvoicesPage() {
             </div>
             <div className="flex gap-2 md:gap-4 overflow-x-auto pb-2 scrollbar-none">
               {pendingInvoicingJobs.map((job: any) => (
-                <div key={job.id} className="min-w-[280px] bg-white p-3 rounded-lg border border-gray-200 flex flex-col justify-between  transition-shadow">
+                <div key={job.id} className="min-w-[280px] bg-white p-3 rounded-md border border-gray-200 flex flex-col justify-between  transition-shadow">
                   <div>
                     <div className="flex justify-between items-start mb-1">
                       <span className="text-xs font-mono text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded">{job.job_number}</span>
@@ -466,7 +466,7 @@ export default function InvoicesPage() {
                   </div>
                   <button
                     onClick={() => handleCreateFromJob(job)}
-                    className="mt-3 w-full py-2 text-xs font-bold text-primary bg-gray-900 hover:bg-gray-900 rounded-lg transition-colors flex items-center justify-center gap-1"
+                    className="mt-3 w-full py-2 text-xs font-bold text-primary bg-gray-900 hover:bg-gray-900 rounded-md transition-colors flex items-center justify-center gap-1"
                   >
                     <Plus className="w-4 h-4" /> Create Invoice
                   </button>
@@ -485,7 +485,7 @@ export default function InvoicesPage() {
           { status: 'paid', label: 'Paid', bg: 'bg-gray-100 border-green-200', text: 'text-gray-900' },
           { status: 'overdue', label: 'Overdue', bg: 'bg-red-100 border-red-200', text: 'text-red-700' },
         ].map((item) => (
-          <div key={item.status} className={`rounded-lg md:rounded-lg p-2 md:p-3 text-center border ${item.bg}`}>
+          <div key={item.status} className={`rounded-md md:rounded-md p-2 md:p-3 text-center border ${item.bg}`}>
             <p className={`text-lg md:text-page-title ${item.text}`}>{invoices.filter(i => i.payment_status === item.status).length}</p>
             <p className={`text-xs md:text-label ${item.text}`}>{item.label}</p>
           </div>
@@ -501,13 +501,13 @@ export default function InvoicesPage() {
             placeholder="Search invoices by number, client..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
+          className="px-4 py-2.5 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
         >
           <option value="all">All Status</option>
           <option value="pending">Pending</option>
@@ -520,9 +520,9 @@ export default function InvoicesPage() {
       {/* Orders List */}
       <div className="space-y-4">
         {invoicesLoading ? (
-          <div className="p-12 text-center text-gray-500 bg-white rounded-lg border border-gray-100">Loading invoices...</div>
+          <div className="p-12 text-center text-gray-500 bg-white rounded-md border border-gray-100">Loading invoices...</div>
         ) : filteredInvoices.length === 0 ? (
-          <div className="p-12 text-center text-gray-400 bg-white rounded-lg border border-gray-100">
+          <div className="p-12 text-center text-gray-400 bg-white rounded-md border border-gray-100">
             No invoices found matching your criteria.
           </div>
         ) : (
@@ -541,7 +541,7 @@ export default function InvoicesPage() {
                 const headerTextColor = inv.payment_status === 'partial' ? 'text-gray-900' : 'text-white';
 
                 return (
-                  <div key={inv.id} className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-sm transition-all border border-gray-100">
+                  <div key={inv.id} className="bg-white rounded-md overflow-hidden shadow-sm hover:shadow-sm transition-all border border-gray-100">
                     {/* Colored Header Tab */}
                     <div className={`${headerBg} px-4 py-2.5 flex items-center justify-between`}>
                       <span className={`${headerTextColor} font-semibold text-sm md:text-base`}>
@@ -598,14 +598,14 @@ export default function InvoicesPage() {
                         </button>
                         <button
                           onClick={() => handleWhatsAppShare(inv)}
-                          className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                          className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-md font-medium hover:bg-gray-50 transition-colors"
                           aria-label="Share via WhatsApp"
                         >
                           <MessageCircle className="w-4 h-4 md:w-4.5 md:h-4.5" />
                         </button>
                         <button
                           onClick={() => handleEdit(inv)}
-                          className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                          className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-md font-medium hover:bg-gray-50 transition-colors"
                           aria-label="Edit invoice"
                         >
                           <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
@@ -618,7 +618,7 @@ export default function InvoicesPage() {
             </div>
 
             {/* Desktop View: Table */}
-            <div className="hidden lg:block bg-white rounded-lg border border-gray-100 overflow-hidden">
+            <div className="hidden lg:block bg-white rounded-md border border-gray-100 overflow-hidden">
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
@@ -658,10 +658,10 @@ export default function InvoicesPage() {
                           <button onClick={() => { setSelectedInvoice(inv); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-md" title="View">
                             <Eye className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-500" />
                           </button>
-                          <button onClick={() => handleWhatsAppShare(inv)} className="p-2 hover:bg-white rounded-lg" title="Share on WhatsApp">
+                          <button onClick={() => handleWhatsAppShare(inv)} className="p-2 hover:bg-white rounded-md" title="Share on WhatsApp">
                             <MessageCircle className="w-4 h-4 md:w-4.5 md:h-4.5 text-foreground" />
                           </button>
-                          <button onClick={() => handleDownloadPDF(inv)} className="p-2 hover:bg-gray-900 rounded-lg" title="Download PDF">
+                          <button onClick={() => handleDownloadPDF(inv)} className="p-2 hover:bg-gray-900 rounded-md" title="Download PDF">
                             <Download className="w-4 h-4 md:w-4.5 md:h-4.5 text-primary" />
                           </button>
                           <button onClick={() => handleEdit(inv)} className="p-2 hover:bg-gray-100 rounded-md" title="Edit">
@@ -682,7 +682,7 @@ export default function InvoicesPage() {
       {
         showModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-md w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between p-5 border-b border-gray-100 sticky top-0 bg-white z-10">
                 <h2 className="text-page-title text-gray-900">
                   {isEditing ? 'Edit Invoice' : 'New Invoice'}
@@ -700,7 +700,7 @@ export default function InvoicesPage() {
                       required
                       value={formData.clientId}
                       onChange={(e) => setFormData({ ...formData, clientId: e.target.value, jobId: '' })}
-                      className="w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white text-sm md:text-base"
+                      className="w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white text-sm md:text-base"
                     >
                       <option value="">Select Client</option>
                       {clients.map(c => (
@@ -715,7 +715,7 @@ export default function InvoicesPage() {
                       value={formData.jobId}
                       onChange={(e) => setFormData({ ...formData, jobId: e.target.value })}
                       disabled={!formData.clientId}
-                      className="w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white disabled:bg-gray-100 disabled:text-gray-400 text-sm md:text-base"
+                      className="w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white disabled:bg-gray-100 disabled:text-gray-400 text-sm md:text-base"
                     >
                       <option value="">Select Job (Optional)</option>
                       {jobs
@@ -734,7 +734,7 @@ export default function InvoicesPage() {
                       value={formData.dueDate}
                       onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                       style={{ boxSizing: 'border-box', minWidth: 0 }}
-                      className="w-full max-w-[200px] sm:max-w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm md:text-base"
+                      className="w-full max-w-[200px] sm:max-w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm md:text-base"
                     />
                   </div>
                 </div>
@@ -747,14 +747,14 @@ export default function InvoicesPage() {
                   </div>
                   <div className="space-y-4">
                     {formData.items.map((item, index) => (
-                      <div key={index} className="grid grid-cols-12 gap-3 items-start bg-gray-50 p-3 rounded-lg border border-gray-100">
+                      <div key={index} className="grid grid-cols-12 gap-3 items-start bg-gray-50 p-3 rounded-md border border-gray-100">
                         <div className="col-span-12 sm:col-span-5">
                           <input
                             type="text"
                             placeholder="Description"
                             value={item.description}
                             onChange={(e) => updateItem(index, 'description', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
                           />
                         </div>
                         <div className="col-span-3 sm:col-span-2">
@@ -764,7 +764,7 @@ export default function InvoicesPage() {
                             min="1"
                             value={item.quantity}
                             onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
                           />
                         </div>
                         <div className="col-span-3 sm:col-span-2">
@@ -775,7 +775,7 @@ export default function InvoicesPage() {
                             step="0.01"
                             value={item.rate}
                             onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
                           />
                         </div>
                         <div className="col-span-5 sm:col-span-2 flex items-center justify-between">
@@ -792,7 +792,7 @@ export default function InvoicesPage() {
                 </div>
 
                 {/* Financials */}
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <div className="bg-gray-50 p-4 rounded-md border border-gray-100">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4 mb-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Subtotal</label>
@@ -807,7 +807,7 @@ export default function InvoicesPage() {
                           const tax = Math.round(formData.subtotal * (newRate / 100));
                           setFormData(prev => ({ ...prev, gstRate: newRate, totalTax: tax, totalAmount: prev.subtotal + tax }));
                         }}
-                        className="w-full px-2 py-1 border border-gray-200 rounded-lg bg-white text-sm"
+                        className="w-full px-2 py-1 border border-gray-200 rounded-md bg-white text-sm"
                       >
                         <option value="0">0%</option>
                         <option value="5">5%</option>
@@ -833,7 +833,7 @@ export default function InvoicesPage() {
                         type="number"
                         value={formData.paidAmount}
                         onChange={(e) => setFormData({ ...formData, paidAmount: parseFloat(e.target.value) || 0 })}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
                       />
                     </div>
                     <div>
@@ -841,7 +841,7 @@ export default function InvoicesPage() {
                       <select
                         value={formData.status}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
                       >
                         <option value="pending">Pending</option>
                         <option value="partial">Partial</option>
@@ -879,7 +879,7 @@ export default function InvoicesPage() {
       {
         showViewModal && selectedInvoice && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-md w-full max-w-lg max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between p-4 border-b border-gray-100">
                 <div>
                   <h2 className="text-page-title text-gray-900">{selectedInvoice.invoice_number}</h2>
@@ -897,7 +897,7 @@ export default function InvoicesPage() {
 
               <div className="p-4 space-y-6">
                 {/* Client Info */}
-                <div className="flex items-center gap-2 md:gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="flex items-center gap-2 md:gap-4 p-4 bg-gray-50 rounded-md border border-gray-100">
                   <div className="w-12 h-12 bg-gray-900 rounded-full flex items-center justify-center">
                     <User className="w-6 h-6 text-primary" />
                   </div>
@@ -924,7 +924,7 @@ export default function InvoicesPage() {
                 </div>
 
                 {/* Amount Details */}
-                <div className="bg-gray-900/50 rounded-lg p-5 border border-border-100 space-y-3">
+                <div className="bg-gray-900/50 rounded-md p-5 border border-border-100 space-y-3">
                   <div className="flex justify-between text-gray-600">
                     <span>Subtotal</span>
                     <span>{formatCurrency(selectedInvoice.subtotal)}</span>

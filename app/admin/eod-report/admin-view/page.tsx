@@ -91,7 +91,7 @@ export default function AdminEODDashboard() {
                 </div>
                 <Link
                     href="/admin/eod-report"
-                    className="px-4 py-2 bg-gray-100 text-gray-900 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+                    className="px-4 py-2 bg-gray-100 text-gray-900 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
                 >
                     ← My Report
                 </Link>
@@ -99,7 +99,7 @@ export default function AdminEODDashboard() {
 
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4">
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                <div className="bg-white rounded-md p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-2">
                         <CheckCircle className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-900" />
                         <span className="text-sm text-gray-500">Today Submitted</span>
@@ -108,7 +108,7 @@ export default function AdminEODDashboard() {
                     <p className="text-xs text-gray-400 mt-1">of {submissionStatus.length} total</p>
                 </div>
 
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                <div className="bg-white rounded-md p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-2">
                         <AlertCircle className="w-4 h-4 md:w-4.5 md:h-4.5 text-destructive" />
                         <span className="text-sm text-gray-500">Pending Today</span>
@@ -117,7 +117,7 @@ export default function AdminEODDashboard() {
                     <p className="text-xs text-gray-400 mt-1">waiting for EOD</p>
                 </div>
 
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                <div className="bg-white rounded-md p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-2">
                         <TrendingUp className="w-4 h-4 md:w-4.5 md:h-4.5 text-foreground" />
                         <span className="text-sm text-gray-500">Total Submissions</span>
@@ -126,7 +126,7 @@ export default function AdminEODDashboard() {
                     <p className="text-xs text-gray-400 mt-1">in selected period</p>
                 </div>
 
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                <div className="bg-white rounded-md p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-2">
                         <Clock className="w-4 h-4 md:w-4.5 md:h-4.5 text-primary" />
                         <span className="text-sm text-gray-500">Avg Work Hours</span>
@@ -137,13 +137,13 @@ export default function AdminEODDashboard() {
             </div>
 
             {/* Today's Submission Status */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="bg-white rounded-md border border-gray-200 p-4">
                 <h2 className="text-section text-gray-900 mb-4">Today&apos;s Status</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {submissionStatus.map(status => (
                         <div
                             key={status.user_id}
-                            className={`p-3 rounded-lg border ${status.submitted
+                            className={`p-3 rounded-md border ${status.submitted
                                 ? 'bg-white border-green-200'
                                 : 'bg-red-50 border-red-200'
                                 }`}
@@ -167,7 +167,7 @@ export default function AdminEODDashboard() {
             </div>
 
             {/* Filters */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="bg-white rounded-md border border-gray-200 p-4">
                 <div className="flex items-center gap-2 mb-3">
                     <Filter className="w-4 h-4 text-gray-500" />
                     <span className="font-medium text-gray-700">Filters & Search</span>
@@ -180,13 +180,13 @@ export default function AdminEODDashboard() {
                             placeholder="Search reports (use #hashtags)..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md"
                         />
                     </div>
                     <select
                         value={selectedUser}
                         onChange={(e) => setSelectedUser(e.target.value)}
-                        className="px-3 py-2 border border-gray-200 rounded-lg"
+                        className="px-3 py-2 border border-gray-200 rounded-md"
                     >
                         <option value="">All Users</option>
                         {uniqueUsers.map(userName => (
@@ -197,19 +197,19 @@ export default function AdminEODDashboard() {
                         type="date"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="px-3 py-2 border border-gray-200 rounded-lg"
+                        className="px-3 py-2 border border-gray-200 rounded-md"
                     />
                     <input
                         type="date"
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
-                        className="px-3 py-2 border border-gray-200 rounded-lg"
+                        className="px-3 py-2 border border-gray-200 rounded-md"
                     />
                 </div>
             </div>
 
             {/* Reports List */}
-            <div className="bg-white rounded-lg border border-gray-200">
+            <div className="bg-white rounded-md border border-gray-200">
                 <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                     <h2 className="font-semibold text-gray-900">Reports ({reports.length})</h2>
                     <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 rounded-md">
@@ -268,7 +268,7 @@ export default function AdminEODDashboard() {
                                                 <h4 className="text-sm font-semibold text-gray-700 mb-2">Task Updates ({report.task_updates.length})</h4>
                                                 <div className="space-y-3">
                                                     {report.task_updates.map((update: any) => (
-                                                        <div key={update.id} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                                                        <div key={update.id} className="bg-gray-50 rounded-md p-3 border border-gray-200">
                                                             <div className="flex items-center justify-between mb-2">
                                                                 <span className="font-medium text-sm text-gray-900">
                                                                     {update.job?.job_number} - {update.job?.project_name}
@@ -297,7 +297,7 @@ export default function AdminEODDashboard() {
                                         {report.overall_notes && (
                                             <div>
                                                 <h4 className="text-sm font-semibold text-gray-700 mb-1">Overall Notes</h4>
-                                                <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">{report.overall_notes}</p>
+                                                <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">{report.overall_notes}</p>
                                             </div>
                                         )}
 
@@ -305,7 +305,7 @@ export default function AdminEODDashboard() {
                                         {report.blockers && (
                                             <div>
                                                 <h4 className="text-sm font-semibold text-red-700 mb-1">Blockers</h4>
-                                                <p className="text-sm text-gray-600 bg-red-50 p-3 rounded-lg border border-red-200">{report.blockers}</p>
+                                                <p className="text-sm text-gray-600 bg-red-50 p-3 rounded-md border border-red-200">{report.blockers}</p>
                                             </div>
                                         )}
 
@@ -313,7 +313,7 @@ export default function AdminEODDashboard() {
                                         {report.tomorrow_plan && (
                                             <div>
                                                 <h4 className="text-sm font-semibold text-gray-700 mb-1">Tomorrow&apos;s Plan</h4>
-                                                <p className="text-sm text-gray-600 bg-muted p-3 rounded-lg border border-border">{report.tomorrow_plan}</p>
+                                                <p className="text-sm text-gray-600 bg-muted p-3 rounded-md border border-border">{report.tomorrow_plan}</p>
                                             </div>
                                         )}
 

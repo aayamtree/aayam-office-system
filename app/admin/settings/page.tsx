@@ -123,7 +123,7 @@ export default function UserManagementPage() {
   return (
     <div className="space-y-6">
       {/* Header Card - Stack on mobile, row on desktop */}
-      <div className="bg-white p-4 md:p-4 rounded-lg border space-y-4">
+      <div className="bg-white p-4 md:p-4 rounded-md border space-y-4">
         {/* Title Section */}
         <div>
           <h1 className="text-xl md:text-page-title text-gray-900">Settings & Team</h1>
@@ -132,7 +132,7 @@ export default function UserManagementPage() {
 
         {/* Tabs - Horizontal scroll on mobile */}
         <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-          <div className="flex bg-gray-100 p-1 rounded-lg min-w-max md:min-w-0">
+          <div className="flex bg-gray-100 p-1 rounded-md min-w-max md:min-w-0">
             <button
               onClick={() => setActiveTab('users')}
               className={`px-3 md:px-4 py-2 rounded-md text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'users'
@@ -196,7 +196,7 @@ export default function UserManagementPage() {
           </div>
 
           {/* Users Table - Horizontal scroll on mobile */}
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-md border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left min-w-[640px]">
                 <thead className="bg-gray-50 border-b border-gray-100">
@@ -228,7 +228,7 @@ export default function UserManagementPage() {
                           value={profile.role}
                           disabled={updating === profile.id}
                           onChange={(e) => handleRoleChange(profile.id, e.target.value)}
-                          className="bg-white border border-gray-300 text-gray-900 text-xs md:text-sm rounded-lg focus:ring-gray-400 focus:border-gray-400 block w-full p-2"
+                          className="bg-white border border-gray-300 text-gray-900 text-xs md:text-sm rounded-md focus:ring-gray-400 focus:border-gray-400 block w-full p-2"
                         >
                           {roles.map(r => (
                             <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
@@ -254,7 +254,7 @@ export default function UserManagementPage() {
           {/* ADD USER MODAL */}
           {showAddModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-              <div className="bg-white rounded-lg  w-full max-w-md overflow-hidden">
+              <div className="bg-white rounded-md  w-full max-w-md overflow-hidden">
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center">
                   <h2 className="text-section text-gray-900">Add New Team Member</h2>
                   <button
@@ -267,7 +267,7 @@ export default function UserManagementPage() {
 
                 <form onSubmit={handleCreateUser} className="p-4 space-y-4">
                   {creationError && (
-                    <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
+                    <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
                       {creationError}
                     </div>
                   )}
@@ -279,7 +279,7 @@ export default function UserManagementPage() {
                       required
                       value={newUser.fullName}
                       onChange={e => setNewUser({ ...newUser, fullName: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-gray-400 focus:border-gray-400"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-gray-400 focus:border-gray-400"
                       placeholder="e.g. Rahul Sharma"
                     />
                   </div>
@@ -310,7 +310,7 @@ export default function UserManagementPage() {
                       minLength={6}
                       value={newUser.password}
                       onChange={e => setNewUser({ ...newUser, password: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-gray-400 focus:border-gray-400"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-gray-400 focus:border-gray-400"
                       placeholder="Minimum 6 characters"
                     />
                   </div>
@@ -320,7 +320,7 @@ export default function UserManagementPage() {
                     <select
                       value={newUser.role}
                       onChange={e => setNewUser({ ...newUser, role: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-gray-400 focus:border-gray-400"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-gray-400 focus:border-gray-400"
                     >
                       {roles.map(r => (
                         <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
@@ -332,7 +332,7 @@ export default function UserManagementPage() {
                     <button
                       type="button"
                       onClick={() => setShowAddModal(false)}
-                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium"
                     >
                       Cancel
                     </button>
@@ -354,7 +354,7 @@ export default function UserManagementPage() {
       ) : activeTab === 'production' ? (
         <ProductionSettings />
       ) : activeTab === 'vendor-categories' ? (
-        <div className="bg-white p-4 md:p-6 rounded-lg border">
+        <div className="bg-white p-4 md:p-6 rounded-md border">
           <VendorCategoriesManager />
         </div>
       ) : (

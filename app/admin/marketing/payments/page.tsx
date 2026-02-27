@@ -87,26 +87,26 @@ export default function MarketingPaymentsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-white rounded-md border p-4">
           <p className="text-sm text-gray-500">Total Orders</p>
           <p className="text-page-title text-gray-900">{totalOrders}</p>
         </div>
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-white rounded-md border p-4">
           <p className="text-sm text-gray-500">Total Amount</p>
           <p className="text-page-title text-primary">{formatCurrency(totalAmount)}</p>
         </div>
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-white rounded-md border p-4">
           <p className="text-sm text-gray-500">Received</p>
           <p className="text-page-title text-gray-900">{formatCurrency(totalPaid)}</p>
         </div>
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-white rounded-md border p-4">
           <p className="text-sm text-gray-500">Pending</p>
           <p className="text-page-title text-destructive">{formatCurrency(totalPending)}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border p-4">
+      <div className="bg-white rounded-md border p-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -135,7 +135,7 @@ export default function MarketingPaymentsPage() {
         {filteredPayments.map(payment => {
           const progress = (payment.paidAmount / payment.totalAmount) * 100;
           return (
-            <div key={payment.id} className={`bg-white rounded-lg border p-4  transition-shadow ${payment.status === 'overdue' ? 'border-l-4 border-l-red-500' :
+            <div key={payment.id} className={`bg-white rounded-md border p-4  transition-shadow ${payment.status === 'overdue' ? 'border-l-4 border-l-red-500' :
               payment.status === 'pending' ? 'border-l-4 border-l-yellow-500' : ''}`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -186,7 +186,7 @@ export default function MarketingPaymentsPage() {
       </div>
 
       {filteredPayments.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-lg border">
+        <div className="text-center py-12 bg-white rounded-md border">
           <IndianRupee className="mx-auto h-12 w-12 text-gray-300" />
           <h3 className="mt-3 text-lg font-medium text-gray-900">No payment records found</h3>
           <p className="mt-1 text-gray-500">Payment status will appear here for your orders</p>
@@ -196,7 +196,7 @@ export default function MarketingPaymentsPage() {
       {/* Detail Modal */}
       {showDetailModal && selectedPayment && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-md w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b sticky top-0 bg-white rounded-t-2xl flex items-center justify-between">
               <div>
                 <span className="font-mono text-primary">{selectedPayment.orderId}</span>
@@ -231,7 +231,7 @@ export default function MarketingPaymentsPage() {
               </div>
 
               {/* Amount Summary */}
-              <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+              <div className="bg-gray-50 rounded-md p-4 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total Amount</span>
                   <span className="font-semibold">{formatCurrency(selectedPayment.totalAmount)}</span>
@@ -252,7 +252,7 @@ export default function MarketingPaymentsPage() {
                 {selectedPayment.payments.length > 0 ? (
                   <div className="space-y-2">
                     {selectedPayment.payments.map((p: any, index: number) => (
-                      <div key={index} className="flex items-center justify-between bg-white rounded-lg p-3">
+                      <div key={index} className="flex items-center justify-between bg-white rounded-md p-3">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
                             <CheckCircle size={16} className="text-gray-900" />

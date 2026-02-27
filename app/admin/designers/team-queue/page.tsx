@@ -71,7 +71,7 @@ export default function TeamQueue() {
                 {/* Designer Summary Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-1.5">
                     {designerCounts.map(d => (
-                        <div key={d.id} className="bg-white p-4 rounded-lg border text-center">
+                        <div key={d.id} className="bg-white p-4 rounded-md border text-center">
                             <div className="text-page-title text-primary">{d.count}</div>
                             <div className="text-sm text-gray-600 mt-1">{d.name}</div>
                         </div>
@@ -129,8 +129,8 @@ export default function TeamQueue() {
                         {statuses.map(status => {
                             const tasksInStatus = filteredTasks.filter(t => t.status === status.id);
                             return (
-                                <div key={status.id} className="bg-white rounded-lg p-4 border">
-                                    <div className={`${status.color} rounded-lg p-3 mb-4`}>
+                                <div key={status.id} className="bg-white rounded-md p-4 border">
+                                    <div className={`${status.color} rounded-md p-3 mb-4`}>
                                         <h3 className="font-bold text-gray-900">{status.name}</h3>
                                         <p className="text-sm text-gray-600">{tasksInStatus.length} tasks</p>
                                     </div>
@@ -138,7 +138,7 @@ export default function TeamQueue() {
                                     <div className="space-y-3">
                                         {tasksInStatus.map(task => (
                                             <Link key={task.id} href="/admin/designers/tasks">
-                                                <div className="bg-gray-50 rounded-lg p-3 border  transition-shadow cursor-pointer">
+                                                <div className="bg-gray-50 rounded-md p-3 border  transition-shadow cursor-pointer">
                                                     <h4 className="font-semibold text-sm text-gray-900 mb-2">{task.title}</h4>
                                                     <div className="text-xs text-gray-600 mb-2">{task.client}</div>
 
@@ -179,7 +179,7 @@ export default function TeamQueue() {
 
                 {/* Table View */}
                 {viewMode === 'table' && (
-                    <div className="bg-white rounded-lg md:rounded-lg border overflow-hidden">
+                    <div className="bg-white rounded-md md:rounded-md border overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[800px]">
                                 <thead className="bg-gray-50 border-b">

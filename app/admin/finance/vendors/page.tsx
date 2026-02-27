@@ -191,11 +191,11 @@ export default function VendorsPage() {
               const headerBg = categoryGradients[vendor.category || 'Paper'] || 'bg-gradient-to-r from-gray-400 to-gray-500';
 
               return (
-                <div key={vendor.id} className={`bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-sm transition-all border ${!vendor.is_active ? 'border-gray-300 opacity-60' : 'border-gray-100'}`}>
+                <div key={vendor.id} className={`bg-white rounded-md overflow-hidden shadow-sm hover:shadow-sm transition-all border ${!vendor.is_active ? 'border-gray-300 opacity-60' : 'border-gray-100'}`}>
                   {/* Colored Header */}
                   <div className={`${headerBg} px-4 py-3 flex items-center justify-between`}>
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-md bg-white/20 flex items-center justify-center">
                         <span className="text-white font-bold text-sm">{vendor.name?.charAt(0)}</span>
                       </div>
                       <div>
@@ -251,7 +251,7 @@ export default function VendorsPage() {
               );
             })}
             {filteredVendors.length === 0 && (
-              <div className="text-center py-12 bg-white rounded-lg border border-gray-100">
+              <div className="text-center py-12 bg-white rounded-md border border-gray-100">
                 <Package className="w-12 h-12 mx-auto text-gray-300 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-1">No vendors found</h3>
                 <p className="text-sm text-gray-500 mb-4">Try adjusting your filters</p>
@@ -263,7 +263,7 @@ export default function VendorsPage() {
           </div>
 
           {/* Desktop View: Table */}
-          <div className="hidden lg:block bg-white rounded-lg border border-gray-100 overflow-hidden">
+          <div className="hidden lg:block bg-white rounded-md border border-gray-100 overflow-hidden">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
@@ -335,7 +335,7 @@ export default function VendorsPage() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-md w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b"><h2 className="text-section">{isEditing ? 'Edit Vendor' : 'Add Vendor'}</h2><button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button></div>
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1">Name *</label><input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border rounded-md" /></div><div><label className="block text-sm font-medium mb-1">Company</label><input type="text" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} className="w-full px-3 py-2 border rounded-md" /></div></div>
@@ -351,11 +351,11 @@ export default function VendorsPage() {
 
       {showViewModal && selectedVendor && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-lg">
+          <div className="bg-white rounded-md w-full max-w-lg">
             <div className="flex items-center justify-between p-4 border-b"><h2 className="text-section">Vendor Details</h2><button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button></div>
             <div className="p-4 space-y-4">
               <div className="flex items-center gap-2 md:gap-4"><div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center"><span className="text-orange-600 font-bold text-2xl">{selectedVendor.name?.charAt(0)}</span></div><div><h3 className="text-section">{selectedVendor.name}</h3><p className="text-gray-500">{selectedVendor.company}</p><span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-md ${getCategoryColor(selectedVendor.category || 'Paper')}`}>{selectedVendor.category}</span></div></div>
-              <div className="space-y-3 p-4 bg-gray-50 rounded-lg"><div className="flex items-center gap-3"><Phone className="w-4 h-4 text-gray-400" /><span>{selectedVendor.phone}</span></div>{selectedVendor.email && <div className="flex items-center gap-3"><Mail className="w-4 h-4 text-gray-400" /><span>{selectedVendor.email}</span></div>}{selectedVendor.address && <div className="flex items-center gap-3"><MapPin className="w-4 h-4 text-gray-400" /><span>{selectedVendor.address}, {selectedVendor.city}</span></div>}{selectedVendor.gstin && <div className="flex items-center gap-3"><Building2 className="w-4 h-4 text-gray-400" /><span>GSTIN: {selectedVendor.gstin}</span></div>}</div>
+              <div className="space-y-3 p-4 bg-gray-50 rounded-md"><div className="flex items-center gap-3"><Phone className="w-4 h-4 text-gray-400" /><span>{selectedVendor.phone}</span></div>{selectedVendor.email && <div className="flex items-center gap-3"><Mail className="w-4 h-4 text-gray-400" /><span>{selectedVendor.email}</span></div>}{selectedVendor.address && <div className="flex items-center gap-3"><MapPin className="w-4 h-4 text-gray-400" /><span>{selectedVendor.address}, {selectedVendor.city}</span></div>}{selectedVendor.gstin && <div className="flex items-center gap-3"><Building2 className="w-4 h-4 text-gray-400" /><span>GSTIN: {selectedVendor.gstin}</span></div>}</div>
               <div className="flex gap-3">
                 <Link href={`/admin/finance/vendors/purchases?vendor=${selectedVendor.id}`} className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold">
                   <Package className="w-4 h-4 md:w-4.5 md:h-4.5" /> Record Bill

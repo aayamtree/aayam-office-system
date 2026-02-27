@@ -135,14 +135,14 @@ export default function ProductionSettings() {
 
     return (
         <div className="p-1 space-y-6">
-            <div className="bg-white p-4 rounded-lg border border-gray-100">
+            <div className="bg-white p-4 rounded-md border border-gray-100">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4 mb-3 md:mb-1.5">
                     <div>
                         <h2 className="text-section text-gray-900">Production Checklists</h2>
                         <p className="text-gray-500 text-sm mt-1">Configure standard quality checks for different job types.</p>
                     </div>
 
-                    <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+                    <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-md">
                         <button
                             onClick={() => setActiveCategory('design')}
                             className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeCategory === 'design'
@@ -175,7 +175,7 @@ export default function ProductionSettings() {
                 </div>
 
                 {isAddingNew && (
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-1.5 animate-in fade-in slide-in-from-top-2">
+                    <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-1.5 animate-in fade-in slide-in-from-top-2">
                         <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
                             <Plus className={`w-4 h-4 md:w-4.5 md:h-4.5 ${activeCategory === 'design' ? 'text-primary' : 'text-orange-600'}`} />
                             Add New {activeCategory === 'design' ? 'Pre-Print' : 'Dispatch QC'} Logic
@@ -187,7 +187,7 @@ export default function ProductionSettings() {
                                     placeholder="e.g. Wedding Card, Acrylic Board..."
                                     value={newJobType}
                                     onChange={e => setNewJobType(e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-gray-400/20 focus:border-gray-400"
+                                    className="w-full border border-gray-300 rounded-md px-4 py-2.5 focus:ring-2 focus:ring-gray-400/20 focus:border-gray-400"
                                     autoFocus
                                 />
                                 <p className="text-xs text-gray-500 mt-2 ml-1">
@@ -219,7 +219,7 @@ export default function ProductionSettings() {
                         <p>Loading configurations...</p>
                     </div>
                 ) : checklists.length === 0 ? (
-                    <div className="text-center py-20 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                    <div className="text-center py-20 bg-gray-50 rounded-md border border-dashed border-gray-300">
                         <AlertCircle className="mx-auto h-12 w-12 text-gray-300 mb-3" />
                         <h3 className="text-lg font-medium text-gray-900">No Checklists Found</h3>
                         <p className="text-gray-500">No checklist templates defined for {activeCategory} yet.</p>
@@ -233,12 +233,12 @@ export default function ProductionSettings() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                         {checklists.map(checklist => (
-                            <div key={checklist.id} className={`bg-white rounded-lg border transition-all ${editingId === checklist.id ? 'border-primary ring-4 ring-primary/10 relative z-10' : 'border-gray-200  hover:border-border'}`}>
+                            <div key={checklist.id} className={`bg-white rounded-md border transition-all ${editingId === checklist.id ? 'border-primary ring-4 ring-primary/10 relative z-10' : 'border-gray-200  hover:border-border'}`}>
 
                                 {/* Header */}
                                 <div className={`p-4 border-b flex justify-between items-center rounded-t-xl ${editingId === checklist.id ? 'bg-muted/50' : 'bg-gray-50/50'}`}>
                                     <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-lg ${activeCategory === 'design' ? 'bg-gray-900 text-white' : 'bg-orange-100 text-orange-600'}`}>
+                                        <div className={`p-2 rounded-md ${activeCategory === 'design' ? 'bg-gray-900 text-white' : 'bg-orange-100 text-orange-600'}`}>
                                             <Check className="w-4 h-4" strokeWidth={3} />
                                         </div>
                                         <h3 className="font-bold text-gray-800">{checklist.job_type}</h3>
@@ -247,12 +247,12 @@ export default function ProductionSettings() {
                                         {editingId === checklist.id ? (
                                             <>
                                                 <button onClick={handleSaveEdit} className="p-2 bg-white0 text-white rounded-md hover:bg-gray-800" title="Save Changes"><Save className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
-                                                <button onClick={() => setEditingId(null)} className="p-2 bg-white border text-gray-600 rounded-lg hover:bg-gray-50" title="Cancel Edit"><X className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
+                                                <button onClick={() => setEditingId(null)} className="p-2 bg-white border text-gray-600 rounded-md hover:bg-gray-50" title="Cancel Edit"><X className="w-4 h-4 md:w-4.5 md:h-4.5" /></button>
                                             </>
                                         ) : (
                                             <>
-                                                <button onClick={() => handleStartEdit(checklist)} className="p-2 bg-white border hover:bg-muted text-gray-600 hover:text-primary rounded-lg transition-colors" title="Edit Items"><Edit2 className="w-4 h-4" /></button>
-                                                <button onClick={() => deleteChecklist(checklist.id)} className="p-2 bg-white border hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-lg transition-colors" title="Delete Checklist"><Trash2 className="w-4 h-4" /></button>
+                                                <button onClick={() => handleStartEdit(checklist)} className="p-2 bg-white border hover:bg-muted text-gray-600 hover:text-primary rounded-md transition-colors" title="Edit Items"><Edit2 className="w-4 h-4" /></button>
+                                                <button onClick={() => deleteChecklist(checklist.id)} className="p-2 bg-white border hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-md transition-colors" title="Delete Checklist"><Trash2 className="w-4 h-4" /></button>
                                             </>
                                         )}
                                     </div>
@@ -271,7 +271,7 @@ export default function ProductionSettings() {
                                                             type="text"
                                                             value={item}
                                                             onChange={e => updateEditItem(idx, e.target.value)}
-                                                            className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:ring-2 focus:ring-gray-400/20 focus:border-gray-400"
+                                                            className="w-full border border-gray-200 rounded-md pl-8 pr-3 py-2 text-sm focus:ring-2 focus:ring-gray-400/20 focus:border-gray-400"
                                                             autoFocus={idx === editItems.length - 1} // Auto focus new item
                                                             placeholder="e.g. Check spelling..."
                                                         />

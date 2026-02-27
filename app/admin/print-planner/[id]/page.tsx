@@ -203,7 +203,7 @@ export default function PrintRunDetailPage() {
             {/* Content */}
             <div className="space-y-6">
                 {/* Summary */}
-                <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
+                <div className="bg-white rounded-md md:rounded-md p-3 md:p-4 border border-gray-100">
                     <h2 className="text-section text-gray-900 mb-4">Print Run Summary</h2>
                     <div className="grid grid-cols-5 gap-3 md:gap-4">
                         <div>
@@ -237,7 +237,7 @@ export default function PrintRunDetailPage() {
                 </div>
 
                 {/* Jobs Table */}
-                <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+                <div className="bg-white rounded-md border border-gray-100 overflow-hidden">
                     <div className="p-4 border-b border-gray-100">
                         <h2 className="text-section text-gray-900">Jobs in This Print Run</h2>
                     </div>
@@ -465,7 +465,7 @@ function AddJobsModal({
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-lg w-full max-w-4xl  overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-md w-full max-w-4xl  overflow-hidden max-h-[90vh] overflow-y-auto">
                 <div className="bg-gray-900 p-4 text-white flex items-center justify-between sticky top-0">
                     <div>
                         <h3 className="text-page-title">Add Jobs to Print Run</h3>
@@ -502,7 +502,7 @@ function AddJobsModal({
                                     return (
                                         <div
                                             key={job.id}
-                                            className={`p-4 rounded-lg border-2 transition-all ${isSelected
+                                            className={`p-4 rounded-md border-2 transition-all ${isSelected
                                                 ? 'bg-gray-900 border-gray-300'
                                                 : 'bg-white border-gray-200'
                                                 }`}
@@ -538,7 +538,7 @@ function AddJobsModal({
                                                                     min="0"
                                                                     value={quantities.quantity}
                                                                     onChange={(e) => updateJobQuantity(job.id, 'quantity', parseInt(e.target.value) || 0)}
-                                                                    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 ring-primary/20 focus:border-gray-400"
+                                                                    className="w-full border-2 border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 ring-primary/20 focus:border-gray-400"
                                                                     placeholder="0"
                                                                 />
                                                             </div>
@@ -552,7 +552,7 @@ function AddJobsModal({
                                                                     min="1"
                                                                     value={quantities.ups}
                                                                     onChange={(e) => updateJobQuantity(job.id, 'ups', parseInt(e.target.value) || 1)}
-                                                                    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 ring-primary/20 focus:border-gray-400"
+                                                                    className="w-full border-2 border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 ring-primary/20 focus:border-gray-400"
                                                                     placeholder="1"
                                                                 />
                                                             </div>
@@ -561,7 +561,7 @@ function AddJobsModal({
                                                                 <label className="block text-xs font-bold text-gray-700 mb-1">
                                                                     Sheets Required
                                                                 </label>
-                                                                <div className="w-full border-2 border-gray-300 bg-gray-900 rounded-lg px-3 py-2 text-sm font-bold text-primary">
+                                                                <div className="w-full border-2 border-gray-300 bg-gray-900 rounded-md px-3 py-2 text-sm font-bold text-primary">
                                                                     {sheets} sheets
                                                                 </div>
                                                             </div>

@@ -130,11 +130,11 @@ export default function ProductionQueuePage() {
                     {/* Design Stage */}
                     <button
                         onClick={() => setFilter(filter === 'design_stage' ? null : 'design_stage')}
-                        className={`bg-white rounded-lg md:rounded-lg p-3 md:p-4 border-2 transition-all  text-left ${filter === 'design_stage' ? 'border-purple-400 ring-4 ring-primary' : 'border-gray-100 hover:border-border'
+                        className={`bg-white rounded-md md:rounded-md p-3 md:p-4 border-2 transition-all  text-left ${filter === 'design_stage' ? 'border-purple-400 ring-4 ring-primary' : 'border-gray-100 hover:border-border'
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-muted rounded-lg">
+                            <div className="p-2 bg-muted rounded-md">
                                 <Palette className="text-primary" size={20} />
                             </div>
                         </div>
@@ -145,14 +145,14 @@ export default function ProductionQueuePage() {
                     {/* Print Ready */}
                     <button
                         onClick={() => setFilter(filter === 'print_ready' ? null : 'print_ready')}
-                        className={`bg-white rounded-lg md:rounded-lg p-3 md:p-4 border-2 transition-all  text-left relative ${filter === 'print_ready' ? 'border-green-400 ring-4 ring-green-100' : 'border-gray-100 hover:border-green-200'
+                        className={`bg-white rounded-md md:rounded-md p-3 md:p-4 border-2 transition-all  text-left relative ${filter === 'print_ready' ? 'border-green-400 ring-4 ring-green-100' : 'border-gray-100 hover:border-green-200'
                             }`}
                     >
                         {summary.print_ready > 0 && (
                             <div className="absolute top-4 right-4 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                         )}
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-green-50 rounded-lg">
+                            <div className="p-2 bg-green-50 rounded-md">
                                 <CheckCircle2 className="text-gray-900" size={20} />
                             </div>
                         </div>
@@ -163,11 +163,11 @@ export default function ProductionQueuePage() {
                     {/* Awaiting Approval */}
                     <button
                         onClick={() => setFilter(filter === 'awaiting_approval' ? null : 'awaiting_approval')}
-                        className={`bg-white rounded-lg md:rounded-lg p-3 md:p-4 border-2 transition-all  text-left ${filter === 'awaiting_approval' ? 'border-gray-400 ring-4 ring-amber-100' : 'border-gray-100 hover:border-gray-200'
+                        className={`bg-white rounded-md md:rounded-md p-3 md:p-4 border-2 transition-all  text-left ${filter === 'awaiting_approval' ? 'border-gray-400 ring-4 ring-amber-100' : 'border-gray-100 hover:border-gray-200'
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-amber-50 rounded-lg">
+                            <div className="p-2 bg-amber-50 rounded-md">
                                 <Clock className="text-destructive" size={20} />
                             </div>
                         </div>
@@ -178,7 +178,7 @@ export default function ProductionQueuePage() {
                     {/* High Priority */}
                     <button
                         onClick={() => setFilter(filter === 'high_priority' ? null : 'high_priority')}
-                        className={`bg-white rounded-lg md:rounded-lg p-3 md:p-4 border-2 transition-all  text-left relative ${filter === 'high_priority' ? 'border-red-400 ring-4 ring-red-100' : 'border-gray-100 hover:border-red-200'
+                        className={`bg-white rounded-md md:rounded-md p-3 md:p-4 border-2 transition-all  text-left relative ${filter === 'high_priority' ? 'border-red-400 ring-4 ring-red-100' : 'border-gray-100 hover:border-red-200'
                             }`}
                     >
                         {summary.high_priority > 0 && (
@@ -187,7 +187,7 @@ export default function ProductionQueuePage() {
                             </div>
                         )}
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-red-50 rounded-lg">
+                            <div className="p-2 bg-red-50 rounded-md">
                                 <AlertCircle className="text-red-600" size={20} />
                             </div>
                         </div>
@@ -198,11 +198,11 @@ export default function ProductionQueuePage() {
                     {/* In Production */}
                     <button
                         onClick={() => setFilter(filter === 'in_production' ? null : 'in_production')}
-                        className={`bg-white rounded-lg md:rounded-lg p-3 md:p-4 border-2 transition-all  text-left ${filter === 'in_production' ? 'border-gray-400 ring-4 ring-gray-100' : 'border-gray-100 hover:border-border'}
+                        className={`bg-white rounded-md md:rounded-md p-3 md:p-4 border-2 transition-all  text-left ${filter === 'in_production' ? 'border-gray-400 ring-4 ring-gray-100' : 'border-gray-100 hover:border-border'}
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-muted rounded-lg">
+                            <div className="p-2 bg-muted rounded-md">
                                 <Printer className="text-foreground" size={20} />
                             </div>
                         </div>
@@ -213,11 +213,11 @@ export default function ProductionQueuePage() {
                     {/* Total Active */}
                     <button
                         onClick={() => setFilter(null)}
-                        className={`bg-gray-900 rounded-lg md:rounded-lg p-3 md:p-4 border-2 transition-all  text-left ${!filter ? 'border-primary-400 ring-4 ring-primary' : 'border-gray-200 hover:border-border'
+                        className={`bg-gray-900 rounded-md md:rounded-md p-3 md:p-4 border-2 transition-all  text-left ${!filter ? 'border-primary-400 ring-4 ring-primary' : 'border-gray-200 hover:border-border'
                             }`}
                     >
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-white/20 rounded-lg">
+                            <div className="p-2 bg-white/20 rounded-md">
                                 <TrendingUp className="text-white" size={20} />
                             </div>
                         </div>
@@ -248,14 +248,14 @@ export default function ProductionQueuePage() {
                 )}
 
                 {/* Product Category Tabs */}
-                <div className="bg-white rounded-lg border border-gray-100 p-3">
+                <div className="bg-white rounded-md border border-gray-100 p-3">
                     <div className="flex items-center gap-2 overflow-x-auto">
                         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap mr-1">
                             <Package size={14} className="inline mr-1" />Type:
                         </span>
                         <button
                             onClick={() => setCategoryFilter('all')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${categoryFilter === 'all'
+                            className={`px-3 py-1.5 rounded-md text-xs font-bold whitespace-nowrap transition-all ${categoryFilter === 'all'
                                 ? 'bg-gray-900 text-white'
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
@@ -266,7 +266,7 @@ export default function ProductionQueuePage() {
                             <button
                                 key={cat}
                                 onClick={() => setCategoryFilter(categoryFilter === cat ? 'all' : cat)}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${categoryFilter === cat
+                                className={`px-3 py-1.5 rounded-md text-xs font-bold whitespace-nowrap transition-all ${categoryFilter === cat
                                     ? 'bg-gray-900 text-white'
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     }`}
@@ -277,7 +277,7 @@ export default function ProductionQueuePage() {
                     </div>
                 </div>
                 {/* Jobs Table */}
-                <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+                <div className="bg-white rounded-md border border-gray-100 overflow-hidden">
                     <div className="p-4 border-b border-gray-100">
                         <h2 className="text-section text-gray-900">
                             {filter ? `Filtered Jobs (${filteredJobs.length})` : `All Active Jobs (${jobs.length})`}

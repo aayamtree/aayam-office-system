@@ -147,7 +147,7 @@ export default function SalesOrdersPage() {
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-md border border-gray-100 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
@@ -199,12 +199,12 @@ export default function SalesOrdersPage() {
                                             {(so.status !== 'draft') && (
                                                 <>
                                                     {so.work_type.includes('design') && (
-                                                        <Link href="/admin/designers" className="p-1.5 text-primary hover:bg-gray-900 rounded-lg" title="View Design">
+                                                        <Link href="/admin/designers" className="p-1.5 text-primary hover:bg-gray-900 rounded-md" title="View Design">
                                                             <Palette className="w-4 h-4" />
                                                         </Link>
                                                     )}
                                                     {(so.work_type === 'print_only' || so.status === 'completed') && (
-                                                        <Link href="/admin/jobs" className="p-1.5 text-primary hover:bg-gray-900 rounded-lg" title="View Job">
+                                                        <Link href="/admin/jobs" className="p-1.5 text-primary hover:bg-gray-900 rounded-md" title="View Job">
                                                             <Printer className="w-4 h-4" />
                                                         </Link>
                                                     )}
@@ -222,7 +222,7 @@ export default function SalesOrdersPage() {
             {/* Modal - Create/Edit */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-lg w-full max-w-lg  overflow-hidden animate-scale-in">
+                    <div className="bg-white rounded-md w-full max-w-lg  overflow-hidden animate-scale-in">
                         <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
                             <h3 className="text-section text-gray-900">
                                 {isEditing ? 'Edit Order' : 'New Sales Order'}
@@ -253,7 +253,7 @@ export default function SalesOrdersPage() {
                                         key={type.id}
                                         type="button"
                                         onClick={() => setFormData({ ...formData, workType: type.id as any })}
-                                        className={`flex flex-col items-center justify-center p-3 rounded-lg border transition-all ${formData.workType === type.id
+                                        className={`flex flex-col items-center justify-center p-3 rounded-md border transition-all ${formData.workType === type.id
                                             ? 'border-primary bg-gray-900 text-white'
                                             : 'border-gray-200 hover:border-primary/20 text-gray-600'
                                             }`}

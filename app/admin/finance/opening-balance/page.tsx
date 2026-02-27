@@ -94,7 +94,7 @@ export default function OpeningBalancePage() {
       </div>
 
       {/* Status Banner */}
-      <div className={`rounded-lg p-4 flex items-center gap-3 ${openingBalance.isLocked ? 'bg-white border border-green-200' : 'bg-white border border-gray-200'}`}>
+      <div className={`rounded-md p-4 flex items-center gap-3 ${openingBalance.isLocked ? 'bg-white border border-green-200' : 'bg-white border border-gray-200'}`}>
         {openingBalance.isLocked ? (
           <>
             <CheckCircle className="w-5 h-5 text-gray-900 flex-shrink-0" />
@@ -116,27 +116,27 @@ export default function OpeningBalancePage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-4">
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-white rounded-md border p-4">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center">
               <Wallet className="w-5 h-5 text-gray-900" />
             </div>
             <span className="text-gray-600">Cash Opening</span>
           </div>
           <p className="text-page-title text-gray-900">{formatCurrency(openingBalance.cash)}</p>
         </div>
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-white rounded-md border p-4">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center">
               <Building className="w-5 h-5 text-foreground" />
             </div>
             <span className="text-gray-600">Bank Opening</span>
           </div>
           <p className="text-page-title text-foreground">{formatCurrency(totalBankBalance)}</p>
         </div>
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-white rounded-md border p-4">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-gray-900 rounded-md flex items-center justify-center">
               <IndianRupee className="w-5 h-5 text-primary" />
             </div>
             <span className="text-gray-600">Total Opening</span>
@@ -146,9 +146,9 @@ export default function OpeningBalancePage() {
       </div>
 
       {/* Cash Opening Balance */}
-      <div className="bg-white rounded-lg border p-5">
+      <div className="bg-white rounded-md border p-5">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center">
             <Wallet className="w-5 h-5 text-gray-900" />
           </div>
           <h2 className="text-section text-gray-900">Cash Opening Balance</h2>
@@ -166,10 +166,10 @@ export default function OpeningBalancePage() {
       </div>
 
       {/* Bank Opening Balances */}
-      <div className="bg-white rounded-lg border p-5">
+      <div className="bg-white rounded-md border p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center">
               <Building className="w-5 h-5 text-foreground" />
             </div>
             <h2 className="text-section text-gray-900">Bank Opening Balances</h2>
@@ -181,7 +181,7 @@ export default function OpeningBalancePage() {
 
         <div className="space-y-3">
           {(isEditing ? editData.banks : openingBalance.banks).map(bank => (
-            <div key={bank.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div key={bank.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-md">
               <div>
                 <p className="font-semibold text-gray-900">{bank.name}</p>
                 <p className="text-sm text-gray-500">A/c: {bank.accountNo}</p>

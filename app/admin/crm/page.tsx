@@ -53,7 +53,7 @@ export default function CRMPage() {
           <Card className="hover:shadow-sm transition-shadow h-full">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center">
                   <Users className="h-4 w-4 text-foreground" />
                 </div>
                 <div>
@@ -79,8 +79,8 @@ export default function CRMPage() {
           <CardContent>
             <div className="space-y-3">
               {recentActivity.map((item, index) => (
-                <div key={index} className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                <div key={index} className="flex items-center gap-3 p-3 rounded-md border hover:bg-muted/50 transition-colors">
+                  <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center shrink-0">
                     {item.type === 'client' ? <Users className="h-4 w-4" /> : <Building2 className="h-4 w-4" />}
                   </div>
                   <div className="flex-1 min-w-0">

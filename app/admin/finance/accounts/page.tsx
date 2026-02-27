@@ -36,7 +36,7 @@ export default function AccountsPage() {
             </div>
 
             {/* Total Balance Summary */}
-            <div className="bg-gray-900 rounded-lg md:rounded-lg p-3 md:p-4 text-white">
+            <div className="bg-gray-900 rounded-md md:rounded-md p-3 md:p-4 text-white">
                 <h2 className="text-sm font-medium opacity-90 mb-2">Total Available Balance</h2>
                 <p className="text-page-title">₹{grandTotal.toLocaleString()}</p>
                 <div className="mt-4 flex gap-3 md:gap-4 text-sm">
@@ -52,10 +52,10 @@ export default function AccountsPage() {
             </div>
 
             {/* Bank Accounts */}
-            <div className="bg-white rounded-lg border border-gray-200">
+            <div className="bg-white rounded-md border border-gray-200">
                 <div className="p-5 border-b flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+                        <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center">
                             <Building2 className="w-5 h-5 text-foreground" />
                         </div>
                         <div>
@@ -125,10 +125,10 @@ export default function AccountsPage() {
             </div>
 
             {/* Cash Accounts */}
-            <div className="bg-white rounded-lg border border-gray-200">
+            <div className="bg-white rounded-md border border-gray-200">
                 <div className="p-5 border-b flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center">
                             <Wallet className="w-5 h-5 text-gray-900" />
                         </div>
                         <div>
@@ -248,7 +248,7 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg w-full max-w-md ">
+            <div className="bg-white rounded-md w-full max-w-md ">
                 <div className="p-5 border-b flex justify-between items-center">
                     <h2 className="text-page-title">Add Bank Account</h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-black">✕</button>
@@ -388,7 +388,7 @@ function AddCashAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg w-full max-w-md ">
+            <div className="bg-white rounded-md w-full max-w-md ">
                 <div className="p-5 border-b flex justify-between items-center">
                     <h2 className="text-page-title">Add Cash Account</h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-black">✕</button>

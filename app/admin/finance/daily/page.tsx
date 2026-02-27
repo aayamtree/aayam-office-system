@@ -71,12 +71,12 @@ export default function DailyFinancePage() {
                         </Button>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-white/10 rounded-lg p-3">
+                        <div className="bg-white/10 rounded-md p-3">
                             <div className="flex items-center gap-2 mb-1"><Building2 className="h-4 w-4" /><p className="text-sm opacity-90">Bank Accounts</p></div>
                             <p className="text-lg font-bold">₹{totalBanks.toLocaleString()}</p>
                             <p className="text-xs opacity-75 mt-1">{bankAccounts.length} accounts</p>
                         </div>
-                        <div className="bg-white/10 rounded-lg p-3">
+                        <div className="bg-white/10 rounded-md p-3">
                             <div className="flex items-center gap-2 mb-1"><Wallet className="h-4 w-4" /><p className="text-sm opacity-90">Cash</p></div>
                             <p className="text-lg font-bold">₹{totalCash.toLocaleString()}</p>
                             <p className="text-xs opacity-75 mt-1">{cashAccounts.length} registers</p>
@@ -132,7 +132,7 @@ export default function DailyFinancePage() {
                     <CardContent>
                         <div className="space-y-2">
                             {bankAccounts.map((acc) => (
-                                <div key={acc.id} className="flex justify-between items-center p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                                <div key={acc.id} className="flex justify-between items-center p-3 rounded-md border hover:bg-muted/50 transition-colors">
                                     <div><p className="text-sm font-medium">{acc.name}</p><p className="text-xs text-muted-foreground">{acc.account_number}</p></div>
                                     <p className="text-sm font-semibold">₹{(acc.current_balance || 0).toLocaleString()}</p>
                                 </div>
@@ -151,7 +151,7 @@ export default function DailyFinancePage() {
                     <CardContent>
                         <div className="space-y-2">
                             {cashAccounts.map((acc) => (
-                                <div key={acc.id} className="flex justify-between items-center p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                                <div key={acc.id} className="flex justify-between items-center p-3 rounded-md border hover:bg-muted/50 transition-colors">
                                     <div><p className="text-sm font-medium">{acc.name}</p><p className="text-xs text-muted-foreground">📍 {acc.location}</p></div>
                                     <p className="text-sm font-semibold">₹{(acc.current_balance || 0).toLocaleString()}</p>
                                 </div>
@@ -170,13 +170,13 @@ export default function DailyFinancePage() {
                 <CardContent>
                     <div className="space-y-2">
                         {todayPayments.map((payment) => (
-                            <div key={payment.id} className="flex justify-between items-center p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                            <div key={payment.id} className="flex justify-between items-center p-3 rounded-md border hover:bg-muted/50 transition-colors">
                                 <div className="flex items-center gap-3"><ArrowDownRight className="h-4 w-4" /><div><p className="text-sm font-medium">{payment.clients?.name}</p><p className="text-xs text-muted-foreground">{payment.payment_mode}</p></div></div>
                                 <p className="text-sm font-semibold">+₹{payment.amount?.toLocaleString()}</p>
                             </div>
                         ))}
                         {todayExpenses.map((expense) => (
-                            <div key={expense.id} className="flex justify-between items-center p-3 rounded-lg border border-destructive/20 bg-destructive/5">
+                            <div key={expense.id} className="flex justify-between items-center p-3 rounded-md border border-destructive/20 bg-destructive/5">
                                 <div className="flex items-center gap-3"><ArrowUpRight className="h-4 w-4 text-destructive" /><div><p className="text-sm font-medium">{expense.vendors?.name}</p><p className="text-xs text-muted-foreground">{expense.payment_mode}</p></div></div>
                                 <p className="text-sm font-semibold text-destructive">-₹{expense.amount?.toLocaleString()}</p>
                             </div>

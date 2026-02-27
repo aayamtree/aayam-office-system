@@ -245,7 +245,7 @@ export default function BankingPage() {
 
             {/* Success Message */}
             {successMessage && (
-                <div className="bg-white border border-green-200 rounded-lg p-4 flex items-center justify-between">
+                <div className="bg-white border border-green-200 rounded-md p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <CheckCircle className="w-6 h-6 text-gray-900" />
                         <p className="text-green-800 font-medium">{successMessage}</p>
@@ -261,7 +261,7 @@ export default function BankingPage() {
 
             {/* Error Message */}
             {errorMessage && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+                <div className="bg-red-50 border border-red-200 rounded-md p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <AlertTriangle className="w-6 h-6 text-red-600" />
                         <p className="text-red-800 font-medium">{errorMessage}</p>
@@ -308,17 +308,17 @@ export default function BankingPage() {
 
             {/* Main Stats - Better mobile layout */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-                <div className="bg-white p-4 md:p-5 rounded-lg border border-gray-100">
+                <div className="bg-white p-4 md:p-5 rounded-md border border-gray-100">
                     <p className="text-xs md:text-sm text-gray-500">Bank Balance (System)</p>
                     <p className="text-xl md:text-page-title text-gray-900 truncate">₹{(bankAccounts.find(b => b.id === selectedAccountId)?.current_balance || 0).toLocaleString()}</p>
                 </div>
-                <div className="bg-white p-4 md:p-5 rounded-lg border border-gray-100">
+                <div className="bg-white p-4 md:p-5 rounded-md border border-gray-100">
                     <p className="text-xs md:text-sm text-gray-500">Need Categorization</p>
                     <p className="text-xl md:text-page-title text-orange-600">
                         {reconciledData.filter(r => !r.is_verified && r.status === 'unmatched_bank').length}
                     </p>
                 </div>
-                <div className="bg-white p-4 md:p-5 rounded-lg border border-gray-100">
+                <div className="bg-white p-4 md:p-5 rounded-md border border-gray-100">
                     <p className="text-xs md:text-sm text-gray-500">Verified</p>
                     <p className="text-xl md:text-page-title text-gray-900">
                         {reconciledData.filter(r => r.is_verified).length}
@@ -327,7 +327,7 @@ export default function BankingPage() {
             </div>
 
             {/* Reconciliation Grid - Responsive table */}
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-md border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-xs md:text-sm min-w-[800px]">
                         <thead className="bg-gray-50 border-b">
@@ -397,7 +397,7 @@ export default function BankingPage() {
                                             {!txn.is_verified && txn.status !== 'ignored' && (
                                                 <button
                                                     onClick={() => handleCategorize(txn)}
-                                                    className="p-1.5 hover:bg-gray-900 text-gray-600 hover:text-primary rounded-lg transition-colors"
+                                                    className="p-1.5 hover:bg-gray-900 text-gray-600 hover:text-primary rounded-md transition-colors"
                                                     title="Categorize Transaction"
                                                 >
                                                     <Edit3 className="w-4 h-4" />
@@ -408,7 +408,7 @@ export default function BankingPage() {
                                             {txn.status === 'ignored' ? (
                                                 <button
                                                     onClick={() => updateTransaction(txn.id, { reference_type: null })}
-                                                    className="p-1.5 hover:bg-muted text-gray-400 hover:text-foreground rounded-lg transition-colors"
+                                                    className="p-1.5 hover:bg-muted text-gray-400 hover:text-foreground rounded-md transition-colors"
                                                     title="Un-ignore (Track again)"
                                                 >
                                                     <Eye className="w-4 h-4" />
@@ -416,7 +416,7 @@ export default function BankingPage() {
                                             ) : (
                                                 <button
                                                     onClick={() => updateTransaction(txn.id, { reference_type: 'ignored' })}
-                                                    className="p-1.5 hover:bg-gray-100 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
+                                                    className="p-1.5 hover:bg-gray-100 text-gray-400 hover:text-gray-600 rounded-md transition-colors"
                                                     title="Ignore (Don't track)"
                                                 >
                                                     <EyeOff className="w-4 h-4" />
@@ -426,7 +426,7 @@ export default function BankingPage() {
                                             {/* Delete */}
                                             <button
                                                 onClick={() => deleteTransaction(txn.id)}
-                                                className="p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
+                                                className="p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-md transition-colors"
                                                 title="Delete Permanently"
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -457,13 +457,13 @@ export default function BankingPage() {
             {/* Import Modal */}
             {showImportModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-lg w-full max-w-2xl  animate-scale-in">
+                    <div className="bg-white rounded-md w-full max-w-2xl  animate-scale-in">
                         <div className="p-5 border-b flex justify-between">
                             <h2 className="text-section">Import HDFC Statement</h2>
                             <button onClick={() => setShowImportModal(false)} className="text-gray-500 hover:text-black">✕</button>
                         </div>
                         <div className="p-5">
-                            <div className="bg-muted p-4 rounded-lg text-sm text-foreground mb-4">
+                            <div className="bg-muted p-4 rounded-md text-sm text-foreground mb-4">
                                 <strong>Instructions:</strong> Open your Bank Statement in Excel. Copy the rows (Date, Description, Ref, Value Date, Withdrawal, Deposit) and paste them below.
                             </div>
                             <div className="flex justify-between items-center mb-2">
