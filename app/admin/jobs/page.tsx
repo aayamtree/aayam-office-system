@@ -9,7 +9,7 @@ import {
   IndianRupee, Edit, Trash2, X,
   AlertCircle, AlertTriangle, ChevronDown, LayoutGrid,
   List, Building2, UserPlus, Loader2,
-  Layers, Printer, ArrowRight, Download, Clock, Copy, Send, Paperclip
+  Layers, Printer, ArrowRight, Download, Clock, Copy, Send, Paperclip, Upload
 } from 'lucide-react';
 import {
   useJobs, useClients, useVendors, useDesigners, usePaymentsReceived
@@ -158,8 +158,9 @@ export default function JobsPage() {
   const [formData, setFormData] = useState({
     project_name: '', client_id: '', job_type: 'Design + Print', product_category: 'Other', quantity: 1, vendor_id: '',
     designer_id: '', client_deadline: '', priority: 'normal', quote_per_piece: 0, design_charge: 0, gst_rate: 18, current_stage: 'new',
-    advance_required: true, advance_amount: 0
+    advance_required: true, advance_amount: 0, advance_payment_mode: 'cash', advance_receipt_url: ''
   });
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
 
   // Quick add forms
   const [newClient, setNewClient] = useState({ name: '', company: '', phone: '', city: '' });
@@ -299,6 +300,28 @@ export default function JobsPage() {
         return;
       }
 
+      // If advance was collected, record it as a real payment in the financial system
+      if (formData.advance_amount > 0 && result.data?.id) {
+        const jobId = result.data.id;
+        const clientId = formData.client_id || undefined;
+        await createPaymentReceived({
+          job_id: jobId,
+          client_id: clientId,
+          amount: formData.advance_amount,
+          payment_mode: formData.advance_payment_mode as any,
+          payment_date: new Date().toISOString().split('T')[0],
+          notes: 'Advance payment collected at job creation',
+          attachment_url: formData.advance_receipt_url || undefined,
+        });
+        // Update job: set amount_received + payment_status
+        const paymentStatus = formData.advance_amount >= totalAmount - 1 ? 'paid' : 'partial';
+        await updateJob(jobId, {
+          amount_received: formData.advance_amount,
+          payment_status: paymentStatus as any,
+          advance_collected: true,
+        });
+      }
+
       setShowModal(false);
       setEditingJob(null);
       resetForm();
@@ -314,7 +337,7 @@ export default function JobsPage() {
     setFormData({
       project_name: '', client_id: '', job_type: 'Design + Print', product_category: 'Other', quantity: 1, vendor_id: '',
       designer_id: '', client_deadline: '', priority: 'normal', quote_per_piece: 0, design_charge: 0, gst_rate: 18, current_stage: 'new',
-      advance_required: true, advance_amount: 0
+      advance_required: true, advance_amount: 0, advance_payment_mode: 'cash', advance_receipt_url: ''
     });
   };
 
@@ -334,7 +357,9 @@ export default function JobsPage() {
       gst_rate: job.gst_rate || 18,
       current_stage: job.current_stage || 'new',
       advance_required: job.advance_required !== false,
-      advance_amount: job.advance_amount || 0
+      advance_amount: job.advance_amount || 0,
+      advance_payment_mode: 'cash',
+      advance_receipt_url: ''
     });
     setEditingJob(job);
     setShowModal(true);
@@ -465,7 +490,9 @@ export default function JobsPage() {
       gst_rate: job.gst_rate || 18,
       current_stage: 'new',
       advance_required: true,
-      advance_amount: 0
+      advance_amount: 0,
+      advance_payment_mode: 'cash',
+      advance_receipt_url: ''
     });
     setEditingJob(null); // This is a NEW job, not editing
     setShowModal(true);
@@ -1048,28 +1075,109 @@ export default function JobsPage() {
                   </button>
                 </div>
                 {formData.advance_required && (
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Advance Amount (₹)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="any"
-                      value={formData.advance_amount}
-                      onChange={(e) => setFormData({ ...formData, advance_amount: parseFloat(e.target.value) || 0 })}
-                      placeholder="Enter advance amount collected"
-                      className="w-full px-3 py-2 border rounded-md"
-                    />
-                    {(() => {
-                      const jt = formData.job_type;
-                      const isD = jt === 'Design Only' || jt === 'design_only' || jt === 'Design + Print' || jt === 'design_print';
-                      const isP = jt === 'Print Only' || jt === 'print_only' || jt === 'Design + Print' || jt === 'design_print';
-                      const total = ((isD ? formData.design_charge : 0) + (isP ? formData.quantity * formData.quote_per_piece : 0)) * (1 + formData.gst_rate / 100);
-                      return total > 0 ? (
-                        <p className="text-xs text-amber-600 mt-1">
-                          50% of total = {formatCurrency(total * 0.5)}
-                        </p>
-                      ) : null;
-                    })()}
+                  <div className="space-y-3">
+                    {/* Advance Amount */}
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Advance Amount (₹)</label>
+                      <input
+                        type="number" min="0" step="any"
+                        value={formData.advance_amount}
+                        onChange={(e) => setFormData({ ...formData, advance_amount: parseFloat(e.target.value) || 0 })}
+                        placeholder="Enter advance amount collected"
+                        className="w-full px-3 py-2 border rounded-md"
+                      />
+                      {(() => {
+                        const jt = formData.job_type;
+                        const isD = jt === 'Design Only' || jt === 'design_only' || jt === 'Design + Print' || jt === 'design_print';
+                        const isP = jt === 'Print Only' || jt === 'print_only' || jt === 'Design + Print' || jt === 'design_print';
+                        const total = ((isD ? formData.design_charge : 0) + (isP ? formData.quantity * formData.quote_per_piece : 0)) * (1 + formData.gst_rate / 100);
+                        return total > 0 ? (
+                          <p className="text-xs text-amber-600 mt-1">
+                            50% of total = {formatCurrency(total * 0.5)}
+                          </p>
+                        ) : null;
+                      })()}
+                    </div>
+
+                    {/* Payment Mode */}
+                    {formData.advance_amount > 0 && (
+                      <>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Payment Mode</label>
+                          <div className="grid grid-cols-3 gap-1.5">
+                            {[
+                              { id: 'cash', label: '💵 Cash' },
+                              { id: 'upi', label: '📲 UPI' },
+                              { id: 'bank_transfer', label: '🏦 Bank' },
+                              { id: 'neft', label: '🔁 NEFT' },
+                              { id: 'rtgs', label: '⚡ RTGS' },
+                              { id: 'cheque', label: '📝 Cheque' },
+                            ].map(mode => (
+                              <button
+                                key={mode.id}
+                                type="button"
+                                onClick={() => setFormData({ ...formData, advance_payment_mode: mode.id })}
+                                className={`px-2 py-1.5 rounded-md text-xs font-medium border transition-all ${formData.advance_payment_mode === mode.id
+                                  ? 'bg-amber-500 text-white border-amber-500'
+                                  : 'bg-white text-gray-600 border-gray-200 hover:border-amber-300'
+                                  }`}
+                              >
+                                {mode.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Receipt Upload */}
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Receipt / Screenshot <span className="text-gray-400">(optional)</span></label>
+                          {formData.advance_receipt_url ? (
+                            <div className="flex items-center gap-2 p-2 bg-white border border-green-200 rounded-md">
+                              <span className="text-green-600 text-xs font-medium flex-1">✅ Receipt uploaded</span>
+                              <a href={formData.advance_receipt_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline">View</a>
+                              <button type="button" onClick={() => setFormData({ ...formData, advance_receipt_url: '' })} className="text-xs text-red-500 hover:text-red-700">Remove</button>
+                            </div>
+                          ) : (
+                            <label className={`flex items-center gap-2 px-3 py-2 border-2 border-dashed border-amber-200 rounded-md cursor-pointer hover:border-amber-400 transition-colors ${uploadingReceipt ? 'opacity-50 pointer-events-none' : ''
+                              }`}>
+                              <Upload className="w-4 h-4 text-amber-500" />
+                              <span className="text-xs text-gray-500">{uploadingReceipt ? 'Uploading...' : 'Upload receipt (JPG, PNG, PDF)'}</span>
+                              <input
+                                type="file"
+                                accept="image/*,.pdf"
+                                className="hidden"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  setUploadingReceipt(true);
+                                  try {
+                                    const ext = file.name.split('.').pop();
+                                    const path = `advance-receipts/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+                                    const { error } = await supabase.storage.from('files').upload(path, file);
+                                    if (error) throw error;
+                                    const { data: { publicUrl } } = supabase.storage.from('files').getPublicUrl(path);
+                                    setFormData(prev => ({ ...prev, advance_receipt_url: publicUrl }));
+                                    toast.success('Receipt uploaded!');
+                                  } catch (err: any) {
+                                    toast.error('Upload failed: ' + err.message);
+                                  } finally {
+                                    setUploadingReceipt(false);
+                                  }
+                                }}
+                              />
+                            </label>
+                          )}
+                        </div>
+
+                        {/* Summary badge */}
+                        <div className="flex items-center gap-2 px-3 py-2 bg-amber-100 border border-amber-200 rounded-md">
+                          <IndianRupee className="w-3.5 h-3.5 text-amber-700" />
+                          <span className="text-xs text-amber-800 font-medium">
+                            {formatCurrency(formData.advance_amount)} will be recorded as {formData.advance_payment_mode.replace('_', ' ').toUpperCase()} payment
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
