@@ -12,6 +12,7 @@ import { Job, JobStatus } from '@/types/database';
 import { createBrowserClient } from '@supabase/ssr';
 import { Package } from 'lucide-react';
 import { useConfirm } from '@/components/ConfirmModal';
+import { logActivity } from '@/lib/logger';
 
 // Fallback checkpoints if no DB checklists found
 const FALLBACK_PRE_PRINT = [
@@ -296,6 +297,12 @@ export default function QCCheckPage() {
       console.warn('Could not send invoice notification:', err);
     }
 
+    // Log QC pass
+    logActivity('qc', 'Dispatch', selectedJob.id,
+      `QC-Dispatch PASSED for ${selectedJob.job_number} (${selectedJob.project_name}) — ${packingInfo.verified_qty} pcs, ${packingInfo.package_count} ${packingInfo.package_type}(s). By: ${profile?.full_name || 'dispatch'}`,
+      undefined, profile?.id
+    );
+
     setShowPackingStep(false);
     setShowQCModal(false);
   };
@@ -306,6 +313,11 @@ export default function QCCheckPage() {
 
     await updateJobStage(selectedJob.id, 'printing', `QC-Dispatch Failed/Rework. Reason: ${qcNotes}`);
 
+    // Log to activity
+    logActivity('qc', 'Dispatch', selectedJob.id,
+      `QC-Dispatch ${status.toUpperCase()} for ${selectedJob.job_number} (${selectedJob.project_name}). Reason: ${qcNotes || 'N/A'}. By: ${profile?.full_name || 'dispatch'}`,
+      undefined, profile?.id
+    );
     // Save QC audit record
     const checklistResult: Record<string, boolean> = {};
     activeItems.forEach(cp => { checklistResult[cp.label] = !!checkpoints[cp.id]?.checked; });

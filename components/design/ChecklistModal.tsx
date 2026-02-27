@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { useJobChecklists, useJobs } from '@/lib/hooks';
 import { Job } from '@/types/database';
+import { logActivity } from '@/lib/logger';
+import { useAuth } from '@/lib/auth-context';
 import type { ChecklistItem, ChecklistItemType } from '@/app/admin/settings/production/page';
 
 interface ChecklistModalProps {
@@ -42,6 +44,7 @@ const typeIcon: Record<ChecklistItemType, React.ReactNode> = {
 export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalProps) {
     const { checklists, loading: loadingChecklists } = useJobChecklists();
     const { updateJob } = useJobs();
+    const { profile } = useAuth();
 
     // progress: { [label]: true | string | number }
     const [progress, setProgress] = useState<Record<string, any>>({});
@@ -87,6 +90,11 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
         try {
             const { error } = await updateJob(job.id, { checklist_progress: progress });
             if (error) throw error;
+            // Log to activity trail
+            logActivity('checklist', 'Design', job.id,
+                `Checklist saved for ${job.job_number} (${job.project_name || ''}) by ${profile?.full_name || 'designer'}`,
+                undefined, profile?.id
+            );
             if (onSave) onSave();
             onClose();
         } catch {
