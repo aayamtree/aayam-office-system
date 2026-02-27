@@ -52,13 +52,15 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
         if (job.checklist_progress) setProgress(job.checklist_progress as Record<string, any>);
     }, [job]);
 
-    // Find matched template
+    // Match by product_category (Pouch, Banner etc.) first, then job_type, then Other
     const matchedChecklist = useMemo(() => {
-        if (!checklists || !job.job_type) return null;
-        return checklists.find(c => c.job_type.toLowerCase() === job.job_type?.toLowerCase())
+        if (!checklists) return null;
+        const productCat = (job as any).product_category || '';
+        return checklists.find(c => productCat && c.job_type.toLowerCase() === productCat.toLowerCase())
+            || checklists.find(c => c.job_type.toLowerCase() === job.job_type?.toLowerCase())
             || checklists.find(c => c.job_type === 'Other')
             || checklists[0];
-    }, [checklists, job.job_type]);
+    }, [checklists, job]);
 
     const items: ChecklistItem[] = useMemo(
         () => normalizeItems(matchedChecklist?.items || []),
@@ -105,7 +107,10 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
                             <CheckSquare size={18} className="text-white/70" />
                             Pre-Print Checklist
                         </h2>
-                        <p className="text-white/50 text-xs mt-0.5">{job.job_type || 'General'} · {job.job_number}</p>
+                        <p className="text-white/50 text-xs mt-0.5">
+                            Template: <span className="text-white/80 font-medium">{matchedChecklist?.job_type || 'Other'}</span>
+                            {' · '}{(job as any).product_category || job.job_type || 'General'}{' · '}{job.job_number}
+                        </p>
                     </div>
                     <button onClick={onClose} className="p-1.5 hover:bg-white/10 rounded-md text-white/60 hover:text-white transition-colors">
                         <X size={18} />
