@@ -108,11 +108,11 @@ export default function QCCheckPage() {
         );
         const checklist = match || designChecklists[0]; // Fall back to first checklist
         const items = typeof checklist.items === 'string' ? JSON.parse(checklist.items) : checklist.items;
-        preItems = (items || []).map((item: string, idx: number) => ({
+        preItems = (items || []).map((item: any, idx: number) => ({
           id: `pre_${idx}`,
-          label: item,
-          desc: '',
-          critical: idx < 2, // First 2 items are critical by default
+          label: typeof item === 'string' ? item : item.label,
+          desc: typeof item === 'string' ? '' : (item.placeholder || ''),
+          critical: typeof item === 'string' ? idx < 2 : !!item.required,
         }));
       }
       setPrePrintItems(preItems.length > 0 ? preItems : FALLBACK_PRE_PRINT);
@@ -126,11 +126,11 @@ export default function QCCheckPage() {
         );
         const checklist = match || dispatchChecklists[0];
         const items = typeof checklist.items === 'string' ? JSON.parse(checklist.items) : checklist.items;
-        postItems = (items || []).map((item: string, idx: number) => ({
+        postItems = (items || []).map((item: any, idx: number) => ({
           id: `post_${idx}`,
-          label: item,
-          desc: '',
-          critical: idx < 2,
+          label: typeof item === 'string' ? item : item.label,
+          desc: typeof item === 'string' ? '' : (item.placeholder || ''),
+          critical: typeof item === 'string' ? idx < 2 : !!item.required,
         }));
       }
       setPostPrintItems(postItems.length > 0 ? postItems : FALLBACK_POST_PRINT);

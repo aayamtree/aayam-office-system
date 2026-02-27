@@ -38,13 +38,20 @@ export default function DesignTasksPage() {
 
     function getChecklistProgress(job: any) {
         if (!checklists || !job.checklist_progress) return null;
-        const jobType = job.job_type || 'Other';
-        const template = checklists.find(c => (c.job_type || '').toLowerCase() === (jobType || '').toLowerCase()) || checklists[0];
+        const productCat = job.product_category || '';
+        const template =
+            checklists.find(c => productCat && c.job_type?.toLowerCase() === productCat.toLowerCase()) ||
+            checklists.find(c => c.job_type?.toLowerCase() === (job.job_type || '').toLowerCase()) ||
+            checklists[0];
 
         if (!template || !template.items?.length) return null;
 
         const total = template.items.length;
-        const completed = template.items.filter((i: string) => job.checklist_progress[i]).length;
+        // items can be strings (legacy) or objects { label, type, required }
+        const completed = template.items.filter((i: any) => {
+            const key = typeof i === 'string' ? i : i.label;
+            return !!job.checklist_progress[key];
+        }).length;
 
         return { completed, total, percentage: (completed / total) * 100 };
     }
