@@ -101,61 +101,67 @@ export default function UnifiedQueue() {
         const catTag = getCategoryTag(task.productCategory);
         const isEditable = task.isMyTask;
 
+        // Header bg varies by priority + overdue
+        const headerBg = isOverdue && task.status !== 'delivered'
+            ? 'bg-red-600'
+            : task.priority === 'urgent'
+                ? 'bg-gray-900'
+                : task.priority === 'high'
+                    ? 'bg-gray-800'
+                    : 'bg-gray-700';
+
         return (
             <Link
                 key={task.id}
                 href={isEditable ? '/admin/designers/tasks' : '#'}
                 onClick={(e) => !isEditable && e.preventDefault()}
             >
-                <div className={`p-4 rounded-lg border transition-all ${isEditable
-                    ? 'bg-white hover:border-gray-300 hover:shadow-sm cursor-pointer'
-                    : 'bg-gray-50/50 cursor-default opacity-80'
-                    } ${isOverdue && task.status !== 'delivered' ? 'border-l-4 border-l-red-400' : 'border-gray-200'}`}>
+                <div className={`bg-white rounded-md overflow-hidden border border-gray-200 hover:shadow-sm transition-all ${!isEditable ? 'opacity-80' : ''}`}>
 
-                    {/* Tags row */}
-                    <div className="flex items-center gap-1.5 flex-wrap mb-2">
-                        <span className="font-mono text-xs text-gray-400 tracking-wide">#{task.jobNumber}</span>
-                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${typeTag.bg} ${typeTag.text}`}>{typeTag.label}</span>
-                        {catTag && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${catTag.bg} ${catTag.text}`}>{catTag.label}</span>}
-                        {/* Priority inline */}
-                        {task.priority === 'urgent' && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">URGENT</span>}
-                        {task.priority === 'high' && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-orange-50 text-orange-600 border border-orange-200">HIGH</span>}
+                    {/* Dark header bar */}
+                    <div className={`${headerBg} px-3 py-2 flex items-center justify-between`}>
+                        <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-xs text-white/70 tracking-wide">#{task.jobNumber}</span>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${typeTag.bg} ${typeTag.text}`}>{typeTag.label}</span>
+                            {catTag && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${catTag.bg} ${catTag.text}`}>{catTag.label}</span>}
+                        </div>
+                        <div className="flex items-center gap-1">
+                            {task.priority === 'urgent' && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-white/25 text-white uppercase">URGENT</span>}
+                            {task.priority === 'high' && !isOverdue && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-white/25 text-white uppercase">HIGH</span>}
+                            {isOverdue && task.status !== 'delivered' && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-white/25 text-white">OVERDUE</span>}
+                        </div>
                     </div>
 
-                    {/* Title */}
-                    <h3 className="font-semibold text-sm text-gray-900 mb-1 leading-snug">{task.title}</h3>
-                    <p className="text-xs text-gray-500 mb-3">{task.client}</p>
+                    {/* Card body */}
+                    <div className="p-3">
+                        <p className="text-gray-500 text-xs mb-0.5">{task.client}</p>
+                        <h3 className="font-semibold text-sm text-gray-900 mb-2 leading-snug">{task.title}</h3>
 
-                    {/* Footer */}
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <span className={`flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded ${task.isMyTask && !isAdmin ? 'text-primary bg-muted' : 'text-gray-500 bg-gray-100'} border border-gray-200`}>
-                                <User size={10} />
-                                {task.designer}
-                            </span>
-                            <span className={`text-xs px-2 py-0.5 rounded font-medium ${task.status === 'awaiting_admin' ? 'bg-amber-50 text-amber-700 border border-amber-300' :
-                                task.status === 'designing' ? 'bg-violet-50 text-violet-600' :
-                                    task.status === 'approval' ? 'bg-amber-50 text-amber-600' :
-                                        task.status === 'printing' ? 'bg-emerald-50 text-emerald-600' :
-                                            'bg-gray-100 text-gray-600'
-                                }`}>
-                                {task.status === 'awaiting_admin' ? '⏳ Awaiting Approval' : task.status === 'new' ? 'To Do' : task.status === 'designing' ? 'Designing' : task.status === 'approval' ? 'Client Approval' : task.status}
-                            </span>
+                        {/* Footer */}
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className={`flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-md ${task.isMyTask && !isAdmin ? 'text-primary bg-muted' : 'text-gray-500 bg-gray-100'} border border-gray-200`}>
+                                    <User size={10} />
+                                    {task.designer}
+                                </span>
+                                <span className={`text-xs px-2 py-0.5 rounded-md font-medium bg-gray-100 text-gray-600`}>
+                                    {task.status === 'awaiting_admin' ? 'Awaiting Approval' : task.status === 'new' ? 'To Do' : task.status === 'designing' ? 'Designing' : task.status === 'approval' ? 'Client Approval' : task.status}
+                                </span>
+                            </div>
+                            {task.deadline && (
+                                <span className={`text-xs font-medium ${isOverdue && task.status !== 'delivered' ? 'text-red-500' : 'text-gray-400'}`}>
+                                    {new Date(task.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                                </span>
+                            )}
                         </div>
-                        {task.deadline && (
-                            <span className={`text-xs font-medium flex items-center gap-1 ${isOverdue && task.status !== 'delivered' ? 'text-red-500' : 'text-gray-400'}`}>
-                                {isOverdue && task.status !== 'delivered' && <AlertCircle size={10} />}
-                                {new Date(task.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                            </span>
+
+                        {/* Read-only indicator for team tasks */}
+                        {!isEditable && (
+                            <div className="mt-2 text-[9px] text-gray-400 uppercase tracking-wider text-center border-t pt-1.5">
+                                View Only
+                            </div>
                         )}
                     </div>
-
-                    {/* Read-only indicator for team tasks */}
-                    {!isEditable && (
-                        <div className="mt-2 text-[9px] text-gray-400 uppercase tracking-wider text-center border-t pt-2">
-                            View Only
-                        </div>
-                    )}
                 </div>
             </Link>
         );
@@ -217,7 +223,7 @@ export default function UnifiedQueue() {
                         placeholder="Search tasks, clients, designers..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-gray-300"
+                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-md text-sm bg-white focus:ring-2 focus:ring-gray-300"
                     />
                 </div>
 
