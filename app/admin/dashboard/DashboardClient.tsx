@@ -44,7 +44,6 @@ const WIDGET_LABELS: Record<string, string> = {
     'sales-perf': '📈 Sales Performance',
     'calendar': '📅 Calendar',
     'quick-notes': '🗒️ Quick Notes',
-    'recent-files': '📁 Recent Files',
     'recent-activity': '⚡ Recent Activity',
 };
 const ALL_WIDGET_KEYS = Object.keys(WIDGET_LABELS);
@@ -433,9 +432,6 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                     <RecentActivityWidget limit={10} />
                 </GlobalErrorBoundary>
             )}
-
-            {/* ── Recent Files (full width) ── */}
-            {isVisible('recent-files') && <GlobalErrorBoundary><RecentFilesWidget showAll={true} limit={15} /></GlobalErrorBoundary>}
         </div>
     );
 }
