@@ -25,6 +25,7 @@ import TeamWorkloadWidget from '@/components/dashboard/TeamWorkloadWidget';
 import DailySummaryWidget from '@/components/dashboard/DailySummaryWidget';
 import RecentFilesWidget from '@/components/dashboard/RecentFilesWidget';
 import InvoicePendingWidget from '@/components/dashboard/InvoicePendingWidget';
+import RecentActivityWidget from '@/components/dashboard/RecentActivityWidget';
 import { GlobalErrorBoundary } from '@/components/ErrorBoundary';
 
 import type { DashboardData } from '@/lib/dashboard-data';
@@ -44,6 +45,7 @@ const WIDGET_LABELS: Record<string, string> = {
     'calendar': '📅 Calendar',
     'quick-notes': '🗒️ Quick Notes',
     'recent-files': '📁 Recent Files',
+    'recent-activity': '⚡ Recent Activity',
 };
 const ALL_WIDGET_KEYS = Object.keys(WIDGET_LABELS);
 const WIDGET_VISIBILITY_KEY = 'aayam-dashboard-widgets-v2';
@@ -424,6 +426,13 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                 {isVisible('calendar') && <GlobalErrorBoundary><MiniCalendarWidget /></GlobalErrorBoundary>}
                 {isVisible('quick-notes') && <GlobalErrorBoundary><QuickNotesWidget /></GlobalErrorBoundary>}
             </div>
+
+            {/* ── Recent Activity (full width) ── */}
+            {isVisible('recent-activity') && (
+                <GlobalErrorBoundary>
+                    <RecentActivityWidget limit={10} />
+                </GlobalErrorBoundary>
+            )}
 
             {/* ── Recent Files (full width) ── */}
             {isVisible('recent-files') && <GlobalErrorBoundary><RecentFilesWidget showAll={true} limit={15} /></GlobalErrorBoundary>}

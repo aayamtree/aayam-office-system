@@ -104,9 +104,9 @@ export default function ActivityPage() {
   // Stats (from activity only)
   const totalLogs = merged.length;
   const uniqueUsers = new Set(merged.map((l: any) => l.user_name || l.user_id)).size;
-  const loginCount = activityLogs.filter((l: any) => ['login', 'LOGIN'].includes(l.action)).length;
+  const loginCount = activityLogs.filter((l: any) => ['login', 'LOGIN', 'logout', 'LOGOUT'].includes(l.action)).length;
   const dataChanges = activityLogs.filter((l: any) =>
-    ['create', 'CREATE', 'update', 'UPDATE', 'delete', 'DELETE', 'stage_change', 'upload', 'checklist', 'qc', 'payment'].includes(l.action)
+    !['login', 'LOGIN', 'logout', 'LOGOUT'].includes(l.action)
   ).length;
 
   const uniqueUserNames = ['', ...Array.from(new Set(merged.map((l: any) => l.user_name).filter(Boolean)))];
