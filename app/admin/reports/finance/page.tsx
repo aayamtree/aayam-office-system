@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { ArrowLeft, Download, Filter, TrendingUp, TrendingDown, IndianRupee, PieChart, Loader2 } from 'lucide-react';
-import { usePaymentsReceived, useExpenses, useVendorPayments } from '@/lib/hooks';
+import { usePaymentsReceived, useExpenses, useVendorPayments, useJobs } from '@/lib/hooks';
 import { exportToCSV } from '@/lib/csv-export';
 import { createBrowserClient } from '@supabase/ssr';
 import useSWR from 'swr';
@@ -41,8 +41,9 @@ export default function FinanceReportPage() {
   const { data: paymentsRaw, isLoading: loadingPayments } = usePaymentsReceivedDirect();
   const { expenses, loading: loadingExpenses } = useExpenses();
   const { vendorPayments, loading: loadingVendor } = useVendorPayments();
+  const { jobs, loading: loadingJobs } = useJobs();
 
-  const isLoading = loadingPayments || loadingExpenses || loadingVendor;
+  const isLoading = loadingPayments || loadingExpenses || loadingVendor || loadingJobs;
 
   // Default: start of current financial year (April 1), to today
   const fyStart = new Date().getMonth() >= 3
@@ -108,6 +109,17 @@ export default function FinanceReportPage() {
       .sort((a, b) => b.date.localeCompare(a.date))
     , [dateFiltered, typeFilter]);
 
+  // Total BILLED from jobs in the same date range
+  const totalBilled = useMemo(() =>
+    (jobs || []).filter((j: any) => {
+      const d = ((j.order_date || j.created_at) || '').split('T')[0];
+      return d >= dateFrom && d <= dateTo && j.current_stage !== 'cancelled';
+    }).reduce((s: number, j: any) => s + (Number(j.total_amount) || 0), 0)
+    , [jobs, dateFrom, dateTo]);
+
+  const outstandingTotal = Math.max(0, totalBilled - totalIncome);
+  const collectionRate = totalBilled > 0 ? Math.round((totalIncome / totalBilled) * 100) : 0;
+
   // Expense breakdown (always full date range)
   const expenseBreakdown = useMemo(() => {
     const map: Record<string, number> = {};
@@ -116,6 +128,7 @@ export default function FinanceReportPage() {
     });
     return Object.entries(map).sort((a, b) => b[1] - a[1]);
   }, [dateFiltered]);
+
 
   // Payment modes breakdown (income)
   const incomeModes = useMemo(() => {
@@ -200,33 +213,64 @@ export default function FinanceReportPage() {
         </div>
       </div>
 
-      {/* Stat Cards */}
+
+      {/* Stat Cards — AR View */}
       {isLoading ? (
         <div className="flex items-center justify-center h-32"><Loader2 size={24} className="animate-spin text-gray-400" /></div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-md p-4 text-white">
-            <div className="flex items-center gap-2 mb-2"><TrendingUp size={16} /><span className="text-xs opacity-90 font-medium uppercase tracking-wide">Total Income</span></div>
-            <p className="text-2xl font-bold">{fmtRs(totalIncome)}</p>
-            <p className="text-xs opacity-75 mt-1">{dateFiltered.filter(t => t.type === 'income').length} payments received</p>
+        <>
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            {/* Total Billed */}
+            <div className="bg-white rounded-md border border-gray-200 p-4">
+              <div className="flex items-center gap-2 mb-2 text-gray-500"><IndianRupee size={14} /><span className="text-xs font-bold uppercase tracking-wide">Total Billed</span></div>
+              <p className="text-2xl font-bold text-gray-900">{fmtRs(totalBilled)}</p>
+              <p className="text-xs text-gray-400 mt-1">all orders / invoices</p>
+            </div>
+            {/* Received */}
+            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-md p-4 text-white">
+              <div className="flex items-center gap-2 mb-2"><TrendingUp size={14} /><span className="text-xs font-bold uppercase tracking-wide opacity-90">Received</span></div>
+              <p className="text-2xl font-bold">{fmtRs(totalIncome)}</p>
+              <p className="text-xs opacity-75 mt-1">{dateFiltered.filter(t => t.type === 'income').length} payments · {collectionRate}% collected</p>
+            </div>
+            {/* Outstanding */}
+            <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-md p-4 text-white">
+              <div className="flex items-center gap-2 mb-2"><TrendingDown size={14} /><span className="text-xs font-bold uppercase tracking-wide opacity-90">Outstanding</span></div>
+              <p className="text-2xl font-bold">{fmtRs(outstandingTotal)}</p>
+              <p className="text-xs opacity-75 mt-1">still owed by clients</p>
+            </div>
+            {/* Expenses */}
+            <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-md p-4 text-white">
+              <div className="flex items-center gap-2 mb-2"><PieChart size={14} /><span className="text-xs font-bold uppercase tracking-wide opacity-90">Expenses</span></div>
+              <p className="text-2xl font-bold">{fmtRs(totalExpense)}</p>
+              <p className="text-xs opacity-75 mt-1">{dateFiltered.filter(t => t.type === 'expense').length} entries</p>
+            </div>
+            {/* Net Profit */}
+            <div className={`bg-gradient-to-br ${netProfit >= 0 ? 'from-gray-700 to-gray-900' : 'from-orange-600 to-red-700'} rounded-md p-4 text-white`}>
+              <div className="flex items-center gap-2 mb-2"><IndianRupee size={14} /><span className="text-xs font-bold uppercase tracking-wide opacity-90">Net Profit</span></div>
+              <p className="text-2xl font-bold">{netProfit < 0 ? '−' : ''}{fmtRs(Math.abs(netProfit))}</p>
+              <p className="text-xs opacity-75 mt-1">{netProfit >= 0 ? '✅ Profitable' : '⚠️ Loss'} · {profitMargin}% margin</p>
+            </div>
           </div>
-          <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-md p-4 text-white">
-            <div className="flex items-center gap-2 mb-2"><TrendingDown size={16} /><span className="text-xs opacity-90 font-medium uppercase tracking-wide">Total Expense</span></div>
-            <p className="text-2xl font-bold">{fmtRs(totalExpense)}</p>
-            <p className="text-xs opacity-75 mt-1">{dateFiltered.filter(t => t.type === 'expense').length} expense entries</p>
-          </div>
-          <div className={`bg-gradient-to-br ${netProfit >= 0 ? 'from-gray-700 to-gray-900' : 'from-orange-500 to-orange-600'} rounded-md p-4 text-white`}>
-            <div className="flex items-center gap-2 mb-2"><IndianRupee size={16} /><span className="text-xs opacity-90 font-medium uppercase tracking-wide">Net Profit</span></div>
-            <p className="text-2xl font-bold">{fmtRs(Math.abs(netProfit))}</p>
-            <p className="text-xs opacity-75 mt-1">{netProfit >= 0 ? '✅ Profitable' : '⚠️ Loss'}</p>
-          </div>
-          <div className="bg-gray-900 rounded-md p-4 text-white">
-            <div className="flex items-center gap-2 mb-2"><PieChart size={16} /><span className="text-xs opacity-90 font-medium uppercase tracking-wide">Profit Margin</span></div>
-            <p className="text-2xl font-bold">{profitMargin}%</p>
-            <p className="text-xs opacity-75 mt-1">{totalIncome === 0 ? 'No income recorded yet' : `on ₹${(totalIncome / 1000).toFixed(0)}K revenue`}</p>
-          </div>
-        </div>
+
+          {/* Collection Progress Bar */}
+          {totalBilled > 0 && (
+            <div className="bg-white rounded-md border border-gray-100 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Collection Progress</span>
+                <span className="text-xs text-gray-500">{collectionRate}% collected · ₹{outstandingTotal.toLocaleString('en-IN')} still pending</span>
+              </div>
+              <div className="w-full h-3 bg-red-100 rounded-full overflow-hidden">
+                <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${collectionRate}%` }} />
+              </div>
+              <div className="flex justify-between mt-1">
+                <span className="text-xs text-green-600 font-bold">✅ ₹{totalIncome.toLocaleString('en-IN')} received</span>
+                <span className="text-xs text-red-500 font-bold">🔴 ₹{outstandingTotal.toLocaleString('en-IN')} pending</span>
+              </div>
+            </div>
+          )}
+        </>
       )}
+
 
       {/* No data hint */}
       {!isLoading && totalIncome === 0 && totalExpense === 0 && (

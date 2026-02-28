@@ -1,9 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
-import { ArrowLeft, Download, Filter, Calendar, TrendingUp, Users, Package, IndianRupee } from 'lucide-react';
+import { ArrowLeft, Download, Filter, TrendingUp, Users, Package, IndianRupee, CheckCircle, Clock } from 'lucide-react';
+import { createBrowserClient } from '@supabase/ssr';
+import useSWR from 'swr';
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+function usePaymentsReceivedDirect() {
+  return useSWR('pr_direct_sales', async () => {
+    const { data } = await supabase
+      .from('payments_received')
+      .select('id, amount, payment_date, client_id');
+    return data || [];
+  }, { revalidateOnFocus: false });
+}
 
 interface SaleRecord {
   id: string;
@@ -20,7 +36,14 @@ import { useJobs } from '@/lib/hooks';
 
 export default function SalesReportPage() {
   const { jobs, loading } = useJobs();
-  const [dateFrom, setDateFrom] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
+  const { data: paymentsRaw } = usePaymentsReceivedDirect();
+
+  // Financial year start
+  const fyStart = new Date().getMonth() >= 3
+    ? `${new Date().getFullYear()}-04-01`
+    : `${new Date().getFullYear() - 1}-04-01`;
+
+  const [dateFrom, setDateFrom] = useState(fyStart);
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [clientFilter, setClientFilter] = useState('');
@@ -49,10 +72,21 @@ export default function SalesReportPage() {
     status: (job.current_stage === 'delivered' || job.current_stage === 'ready' ? 'completed' : (job.current_stage === 'cancelled' ? 'cancelled' : 'pending')) as 'completed' | 'pending' | 'cancelled'
   }));
 
-  const totalRevenue = filteredSales.filter(s => s.status !== 'cancelled').reduce((sum, s) => sum + s.amount, 0);
+  const totalBilled = filteredSales.filter(s => s.status !== 'cancelled').reduce((sum, s) => sum + s.amount, 0);
   const totalOrders = filteredSales.length;
-  const completedOrders = filteredSales.filter(s => s.status === 'completed').length;
-  const avgOrderValue = completedOrders > 0 ? Math.round(totalRevenue / completedOrders) : 0;
+
+  // Received = actual payments collected within the same date range
+  const receivedTotal = useMemo(() => {
+    return (paymentsRaw || []).filter((p: any) => {
+      const d = (p.payment_date || '').split('T')[0];
+      return d >= dateFrom && d <= dateTo;
+    }).reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0);
+  }, [paymentsRaw, dateFrom, dateTo]);
+
+  const pendingTotal = Math.max(0, totalBilled - receivedTotal);
+  const collectionRate = totalBilled > 0 ? Math.round((receivedTotal / totalBilled) * 100) : 0;
+
+  const avgOrderValue = totalOrders > 0 ? Math.round(totalBilled / totalOrders) : 0;
 
   const uniqueClients = Array.from(new Set(filteredSales.map(s => s.client)));
 
@@ -148,37 +182,61 @@ export default function SalesReportPage() {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats — AR View: Billed / Received / Pending / Orders */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-md md:rounded-md p-3 md:p-4 text-white">
-          <div className="flex items-center gap-2 mb-2">
-            <IndianRupee size={18} />
-            <span className="text-sm opacity-90">Total Revenue</span>
+        {/* Total Billed */}
+        <div className="bg-white rounded-md border border-gray-200 p-4">
+          <div className="flex items-center gap-2 mb-2 text-gray-500">
+            <IndianRupee size={15} /><span className="text-xs font-bold uppercase tracking-wide">Total Billed</span>
           </div>
-          <p className="text-page-title">₹{(totalRevenue / 1000).toFixed(1)}K</p>
+          <p className="text-2xl font-bold text-gray-900">₹{(totalBilled / 1000).toFixed(1)}K</p>
+          <p className="text-xs text-gray-400 mt-1">{totalOrders} orders · {avgOrderValue > 0 ? `avg ₹${(avgOrderValue / 1000).toFixed(0)}K` : ''}</p>
         </div>
-        <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-md md:rounded-md p-3 md:p-4 text-white">
+        {/* Received */}
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-md p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
-            <Package size={18} />
-            <span className="text-sm opacity-90">Total Orders</span>
+            <CheckCircle size={15} /><span className="text-xs font-bold uppercase tracking-wide">Received</span>
           </div>
-          <p className="text-page-title">{totalOrders}</p>
+          <p className="text-2xl font-bold">₹{(receivedTotal / 1000).toFixed(1)}K</p>
+          <p className="text-xs opacity-75 mt-1">{collectionRate}% collected</p>
         </div>
-        <div className="bg-gray-900 rounded-md md:rounded-md p-3 md:p-4 text-white">
+        {/* Pending */}
+        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-md p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
-            <TrendingUp size={18} />
-            <span className="text-sm opacity-90">Avg Order Value</span>
+            <Clock size={15} /><span className="text-xs font-bold uppercase tracking-wide">Pending</span>
           </div>
-          <p className="text-page-title">₹{(avgOrderValue / 1000).toFixed(1)}K</p>
+          <p className="text-2xl font-bold">₹{(pendingTotal / 1000).toFixed(1)}K</p>
+          <p className="text-xs opacity-75 mt-1">{100 - collectionRate}% outstanding</p>
         </div>
-        <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-md md:rounded-md p-3 md:p-4 text-white">
+        {/* Unique Clients */}
+        <div className="bg-gray-900 rounded-md p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
-            <Users size={18} />
-            <span className="text-sm opacity-90">Unique Clients</span>
+            <Users size={15} /><span className="text-xs font-bold uppercase tracking-wide">Clients</span>
           </div>
-          <p className="text-page-title">{uniqueClients.length}</p>
+          <p className="text-2xl font-bold">{uniqueClients.length}</p>
+          <p className="text-xs opacity-75 mt-1">unique clients</p>
         </div>
       </div>
+
+      {/* AR Progress Bar */}
+      {totalBilled > 0 && (
+        <div className="bg-white rounded-md border border-gray-100 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Collection Progress</span>
+            <span className="text-xs text-gray-500">{collectionRate}% collected · ₹{(pendingTotal).toLocaleString('en-IN')} still pending</span>
+          </div>
+          <div className="w-full h-3 bg-red-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-green-500 rounded-full transition-all"
+              style={{ width: `${collectionRate}%` }}
+            />
+          </div>
+          <div className="flex justify-between mt-1">
+            <span className="text-xs text-green-600 font-bold">✅ ₹{receivedTotal.toLocaleString('en-IN')} received</span>
+            <span className="text-xs text-red-500 font-bold">🔴 ₹{pendingTotal.toLocaleString('en-IN')} pending</span>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
         {/* Sales Table */}
