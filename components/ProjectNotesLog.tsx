@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { toast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -8,8 +8,12 @@ import { NoteTag, NoteSource } from '@/types/database';
 import { useConfirm } from '@/components/ConfirmModal';
 import {
     MessageSquare, Send, FileText, Lock,
-    AlertCircle, CheckCircle, Palette, RefreshCw, Loader2, MessageCircle, RotateCcw
+    AlertCircle, CheckCircle, Palette, RefreshCw, Loader2, MessageCircle, RotateCcw, Cloud, CloudOff
 } from 'lucide-react';
+import {
+    enqueueNote, dequeueNote, markFailed, getPendingNotes,
+    isNoteQueued, SYNC_INTERVAL_MS, QueuedNote
+} from '@/lib/note-queue';
 
 // Stages that are "locked" — past the design phase
 const LOCKED_STAGES = ['printing', 'finishing', 'quality_check', 'ready', 'delivered'];
@@ -58,6 +62,9 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
     const [notes, setNotes] = useState<NoteWithUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    // Track local-only notes that are queued but not yet confirmed by DB
+    const [pendingLocalIds, setPendingLocalIds] = useState<Set<string>>(new Set());
+    const syncingRef = useRef(false);
 
     // Form state
     const [content, setContent] = useState('');
@@ -140,7 +147,115 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
         return () => { supabase.removeChannel(channel); };
     }, [jobId, fetchNotes]);
 
-    // Add note — optimistic UI + parallel side-effects
+    // ─── Background queue flush ──────────────────────────────────────────────
+    const flushQueue = useCallback(async () => {
+        if (syncingRef.current) return;
+        const pending = getPendingNotes().filter(n => n.jobId === jobId);
+        if (pending.length === 0) return;
+
+        syncingRef.current = true;
+        const synced: string[] = [];
+
+        for (const qn of pending) {
+            try {
+                const { error } = await supabase.from('job_notes').insert([{
+                    job_id: qn.jobId,
+                    user_id: qn.userId,
+                    content: qn.content,
+                    tag: qn.tag,
+                    source: qn.source,
+                }]);
+                if (error) throw error;
+
+                // Side-effects for special tags
+                if (qn.tag === 'approved') {
+                    await Promise.allSettled([
+                        Promise.resolve(supabase.from('jobs').update({
+                            approval_status: 'approved', client_approval: true,
+                            approval_date: qn.createdAt, approval_by: qn.userId,
+                            approval_remark: qn.content,
+                        }).eq('id', qn.jobId))
+                    ]);
+                } else if (qn.tag === 'approved_closed') {
+                    await Promise.allSettled([
+                        Promise.resolve(supabase.from('jobs').update({
+                            approval_status: 'approved', client_approval: true,
+                            approval_date: qn.createdAt, approval_by: qn.userId,
+                            approval_remark: qn.content, current_stage: 'printing',
+                        }).eq('id', qn.jobId)),
+                        Promise.resolve(supabase.from('job_stage_history').insert([{
+                            job_id: qn.jobId, from_stage: currentStage, to_stage: 'printing',
+                            notes: `🔒 Approved & Closed — "${qn.content}"`,
+                        }]))
+                    ]);
+                } else if (qn.tag === 'correction' && isAdmin) {
+                    await Promise.allSettled([
+                        Promise.resolve(supabase.from('jobs').update({
+                            approval_status: 'changes_requested', client_approval: false,
+                            current_stage: 'designing',
+                        }).eq('id', qn.jobId)),
+                        Promise.resolve(supabase.from('job_stage_history').insert([{
+                            job_id: qn.jobId, from_stage: currentStage, to_stage: 'designing',
+                            notes: `🔄 Admin pullback — "${qn.content}"`,
+                        }]))
+                    ]);
+                    if (onStageChange) onStageChange();
+                }
+
+                dequeueNote(qn.localId);
+                synced.push(qn.localId);
+            } catch (e: any) {
+                markFailed(qn.localId, e.message || 'Unknown');
+            }
+        }
+
+        if (synced.length > 0) {
+            setPendingLocalIds(prev => {
+                const next = new Set(prev);
+                synced.forEach(id => next.delete(id));
+                return next;
+            });
+            fetchNotes(); // Refresh from DB to get real IDs
+        }
+        syncingRef.current = false;
+    }, [jobId, currentStage, isAdmin, onStageChange, fetchNotes]);
+
+    // ─── 30-second sync interval ─────────────────────────────────────────────
+    useEffect(() => {
+        // Flush immediately on mount (in case there are unsent notes from prev session)
+        flushQueue();
+        const interval = setInterval(flushQueue, SYNC_INTERVAL_MS);
+        return () => clearInterval(interval);
+    }, [flushQueue]);
+
+    // Restore any pending local notes for this job from queue into UI
+    useEffect(() => {
+        const pending = getPendingNotes().filter(n => n.jobId === jobId);
+        if (pending.length === 0) return;
+        const ids = new Set(pending.map(n => n.localId));
+        setPendingLocalIds(ids);
+        // Prepend to local display
+        const localNotes: NoteWithUser[] = pending.map(qn => ({
+            id: qn.localId,
+            job_id: qn.jobId,
+            user_id: qn.userId,
+            content: qn.content,
+            tag: qn.tag as NoteTag,
+            source: qn.source as NoteSource,
+            created_at: qn.createdAt,
+            user_name: 'You',
+            user_role: profile?.role || '',
+        }));
+        setNotes(prev => {
+            // Only add local notes not already in list
+            const existingIds = new Set(prev.map(n => n.id));
+            const toAdd = localNotes.filter(n => !existingIds.has(n.id));
+            return toAdd.length > 0 ? [...toAdd, ...prev] : prev;
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [jobId]);
+
+    // Add note — OFFLINE FIRST: save to localStorage → show in UI → sync in background
     const handleAddNote = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!content.trim() || !profile?.id || !jobId) return;
@@ -148,26 +263,39 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
         const trimmed = content.trim();
         const userName = profile.full_name || profile.email || 'Unknown';
 
-        // ── OPTIMISTIC UPDATE: add to UI immediately ──
+        // 1. Save to localStorage queue immediately
+        const queued = enqueueNote({
+            jobId,
+            userId: profile.id,
+            content: trimmed,
+            tag,
+            source,
+        });
+
+        // 2. Show in UI instantly (optimistic)
         const optimisticNote: NoteWithUser = {
-            id: `opt-${Date.now()}`,
+            id: queued.localId,
             job_id: jobId,
             user_id: profile.id,
             content: trimmed,
             tag,
             source,
-            created_at: new Date().toISOString(),
+            created_at: queued.createdAt,
             user_name: userName,
             user_role: profile.role || '',
         };
         setNotes(prev => [optimisticNote, ...prev]);
+        setPendingLocalIds(prev => new Set(Array.from(prev).concat(queued.localId)));
+
+
+        // 3. Clear form immediately
         setContent('');
         setTag('design_note');
         setSource('self');
 
+        // 4. Try to sync right away (fire-and-forget)
         setSaving(true);
         try {
-            // 1. Insert the note
             const { error: insertError } = await supabase.from('job_notes').insert([{
                 job_id: jobId,
                 user_id: profile.id,
@@ -177,67 +305,54 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
             }]);
             if (insertError) throw insertError;
 
-            // 2. Special-tag side-effects run in parallel (non-blocking for the note)
+            // Side-effects for special tags
             const sideEffects: Promise<any>[] = [];
-
             if (tag === 'approved') {
-                sideEffects.push(
-                    Promise.resolve(supabase.from('jobs').update({
-                        approval_status: 'approved',
-                        client_approval: true,
-                        approval_date: new Date().toISOString(),
-                        approval_by: profile.id,
-                        approval_remark: trimmed,
-                    }).eq('id', jobId))
-                );
+                sideEffects.push(Promise.resolve(supabase.from('jobs').update({
+                    approval_status: 'approved', client_approval: true,
+                    approval_date: new Date().toISOString(), approval_by: profile.id,
+                    approval_remark: trimmed,
+                }).eq('id', jobId)));
             } else if (tag === 'approved_closed') {
-                const noteText = `🔒 Approved & Closed — by ${userName}. "${trimmed}"`;
                 sideEffects.push(
                     Promise.resolve(supabase.from('jobs').update({
-                        approval_status: 'approved',
-                        client_approval: true,
-                        approval_date: new Date().toISOString(),
-                        approval_by: profile.id,
-                        approval_remark: trimmed,
-                        current_stage: 'printing',
+                        approval_status: 'approved', client_approval: true,
+                        approval_date: new Date().toISOString(), approval_by: profile.id,
+                        approval_remark: trimmed, current_stage: 'printing',
                     }).eq('id', jobId)),
                     Promise.resolve(supabase.from('job_stage_history').insert([{
-                        job_id: jobId, from_stage: currentStage, to_stage: 'printing', notes: noteText,
+                        job_id: jobId, from_stage: currentStage, to_stage: 'printing',
+                        notes: `🔒 Approved & Closed — by ${userName}. "${trimmed}"`,
                     }]))
                 );
             } else if (tag === 'correction' && isLocked && isAdmin) {
-                const noteText = `🔄 Revision ${revisionCount + 1} (Admin pullback) — by ${userName}. "${trimmed}"`;
                 sideEffects.push(
                     Promise.resolve(supabase.from('jobs').update({
-                        approval_status: 'changes_requested',
-                        client_approval: false,
+                        approval_status: 'changes_requested', client_approval: false,
                         current_stage: 'designing',
                     }).eq('id', jobId)),
                     Promise.resolve(supabase.from('job_stage_history').insert([{
-                        job_id: jobId, from_stage: currentStage, to_stage: 'designing', notes: noteText,
+                        job_id: jobId, from_stage: currentStage, to_stage: 'designing',
+                        notes: `🔄 Revision (Admin pullback) — by ${userName}. "${trimmed}"`,
                     }]))
                 );
             }
-
             if (sideEffects.length > 0) {
                 await Promise.allSettled(sideEffects);
-                if (tag === 'approved_closed' || tag === 'correction') {
-                    if (onStageChange) onStageChange();
-                }
+                if (tag === 'approved_closed' || tag === 'correction') onStageChange?.();
             }
 
-            // Realtime subscription will refresh the list automatically.
-            // Only manually refetch when not subscribed (fallback).
-        } catch (e: any) {
-            // Rollback optimistic update on error
-            setNotes(prev => prev.filter(n => n.id !== optimisticNote.id));
-            setContent(trimmed);
-            toast.error('Failed to save note: ' + (e.message || 'Unknown error'));
+            // Sync succeeded — remove from queue, clear pending indicator
+            dequeueNote(queued.localId);
+            setPendingLocalIds(prev => { const n = new Set(prev); n.delete(queued.localId); return n; });
+        } catch {
+            // Sync failed — note stays in localStorage, will retry in 30s
+            // No error shown — user already sees the note, it will silently retry
+            markFailed(queued.localId, 'Initial sync failed');
         } finally {
             setSaving(false);
         }
     };
-
 
     const handleDelete = async (noteId: string) => {
         const { confirmed } = await confirmDialog({ title: 'Delete Note', message: 'Are you sure you want to delete this note?', variant: 'danger', confirmLabel: 'Delete' });
@@ -362,11 +477,17 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
                                             <span className="text-[9px] text-gray-400 font-medium">{sourceConf.icon} {sourceConf.label}</span>
                                         </div>
                                         <div className="flex items-center gap-2 shrink-0">
+                                            {pendingLocalIds.has(note.id) && (
+                                                <span className="flex items-center gap-1 text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded animate-pulse">
+                                                    <Cloud size={9} /> Saving...
+                                                </span>
+                                            )}
                                             <span className="text-[10px] text-gray-400">{formatTime(note.created_at)}</span>
                                             {isOwnNote && !isLocked && (
                                                 <button onClick={() => handleDelete(note.id)} className="text-gray-300 hover:text-red-500 transition-colors" title="Delete">×</button>
                                             )}
                                         </div>
+
                                     </div>
                                     <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{note.content}</p>
                                 </div>
