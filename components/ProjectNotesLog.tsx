@@ -8,12 +8,24 @@ import { NoteTag, NoteSource } from '@/types/database';
 import { useConfirm } from '@/components/ConfirmModal';
 import {
     MessageSquare, Send, FileText, Lock,
-    AlertCircle, CheckCircle, Palette, RefreshCw, Loader2, MessageCircle, RotateCcw, Cloud, CloudOff
+    AlertCircle, CheckCircle, Palette, RefreshCw, Loader2, MessageCircle, RotateCcw, Cloud, AtSign
 } from 'lucide-react';
 import {
     enqueueNote, dequeueNote, markFailed, getPendingNotes,
-    isNoteQueued, SYNC_INTERVAL_MS, QueuedNote
+    SYNC_INTERVAL_MS
 } from '@/lib/note-queue';
+
+interface TeamMember { id: string; full_name: string; role?: string; }
+
+// Highlight @mentions in blue inside note text
+function renderWithMentions(text: string) {
+    const parts = text.split(/(@\w+)/g);
+    return parts.map((part, i) =>
+        /^@\w+$/.test(part)
+            ? <span key={i} className="text-blue-600 font-semibold bg-blue-50 px-0.5 rounded">{part}</span>
+            : <span key={i}>{part}</span>
+    );
+}
 
 // Stages that are "locked" — past the design phase
 const LOCKED_STAGES = ['printing', 'finishing', 'quality_check', 'ready', 'delivered'];
@@ -66,10 +78,17 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
     const [pendingLocalIds, setPendingLocalIds] = useState<Set<string>>(new Set());
     const syncingRef = useRef(false);
 
-    // Form state
     const [content, setContent] = useState('');
     const [tag, setTag] = useState<NoteTag>('design_note');
     const [source, setSource] = useState<NoteSource>('self');
+    // @mention state
+    const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
+    const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+    const [showMentionDrop, setShowMentionDrop] = useState(false);
+    const [mentionQuery, setMentionQuery] = useState('');
+    const [mentionCursorAt, setMentionCursorAt] = useState(-1); // position of '@' in content
+    const inputRef = useRef<HTMLInputElement>(null);
+
 
     // Is this job locked? (past design phase)
     const isLocked = LOCKED_STAGES.includes(currentStage);
@@ -97,6 +116,65 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
         }
         return { isApproved: approved, isClosed: closed, revisionCount: revisions };
     }, [notes]);
+
+    // Load team members for @mention dropdown once
+    useEffect(() => {
+        supabase.from('profiles').select('id, full_name, role')
+            .not('full_name', 'is', null).order('full_name')
+            .then(({ data }) => { if (data) setTeamMembers(data as TeamMember[]); });
+    }, []);
+
+    // Handle input change — detect @typing for mention dropdown
+    const handleContentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        const cursor = e.target.selectionStart ?? val.length;
+        const before = val.slice(0, cursor);
+        const atIdx = before.lastIndexOf('@');
+        if (atIdx !== -1 && !before.slice(atIdx).includes(' ')) {
+            const q = before.slice(atIdx + 1);
+            setMentionQuery(q);
+            setMentionCursorAt(atIdx);
+            setShowMentionDrop(true);
+        } else {
+            setShowMentionDrop(false);
+        }
+        // Extract all @mentions and update mentionedUserIds
+        const mentioned = (val.match(/@(\S+)/g) || []).map(m => m.slice(1).toLowerCase());
+        const ids = teamMembers.filter(t => mentioned.some(m => t.full_name.replace(/\s/g, '').toLowerCase().startsWith(m))).map(t => t.id);
+        setMentionedUserIds(ids);
+        setContent(val);
+    };
+
+    // Insert selected member into text at the @cursor
+    const insertMention = (member: TeamMember) => {
+        const slug = member.full_name.replace(/\s+/g, '');
+        const before = content.slice(0, mentionCursorAt);
+        const after = content.slice(mentionCursorAt + 1 + mentionQuery.length);
+        const newVal = `${before}@${slug} ${after}`;
+        setContent(newVal);
+        setShowMentionDrop(false);
+        setMentionedUserIds(prev => Array.from(new Set([...prev, member.id])));
+        setTimeout(() => inputRef.current?.focus(), 0);
+    };
+
+    // Fire @mention notifications (after note saves successfully)
+    const sendMentionNotifications = useCallback(async (
+        ids: string[], noteContent: string, jobRef: string
+    ) => {
+        if (ids.length === 0) return;
+        const senderName = profile?.full_name || profile?.email || 'Someone';
+        const preview = noteContent.length > 80 ? noteContent.slice(0, 80) + '…' : noteContent;
+        const inserts = ids.map(uid => ({
+            message: `💬 ${senderName} mentioned you in ${jobRef}: "${preview}"`,
+            target_user_id: uid,
+            target_audience: 'direct',
+            created_by: profile?.id,
+            priority: 'normal',
+        }));
+        // Fire and forget — no error shown, not critical path
+        await supabase.from('broadcast_notifications').insert(inserts).then();
+    }, [profile]);
+
 
     // Fetch notes
     const fetchNotes = useCallback(async () => {
@@ -292,6 +370,8 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
         setContent('');
         setTag('design_note');
         setSource('self');
+        setMentionedUserIds([]);
+        setShowMentionDrop(false);
 
         // 4. Try to sync right away (fire-and-forget)
         setSaving(true);
@@ -345,6 +425,10 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
             // Sync succeeded — remove from queue, clear pending indicator
             dequeueNote(queued.localId);
             setPendingLocalIds(prev => { const n = new Set(prev); n.delete(queued.localId); return n; });
+            // Fire @mention notifications (fire-and-forget, non-blocking)
+            if (mentionedUserIds.length > 0) {
+                sendMentionNotifications(mentionedUserIds, trimmed, `Job ${jobId.slice(0, 8).toUpperCase()}`);
+            }
         } catch {
             // Sync failed — note stays in localStorage, will retry in 30s
             // No error shown — user already sees the note, it will silently retry
@@ -489,7 +573,8 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
                                         </div>
 
                                     </div>
-                                    <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{note.content}</p>
+                                    <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{renderWithMentions(note.content)}</p>
+
                                 </div>
                             );
                         })
@@ -547,21 +632,51 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
                             )}
                         </div>
 
-                        {/* Input */}
-                        <div className="flex gap-2 items-center">
-                            <input
-                                type="text"
-                                value={content}
-                                onChange={(e) => setContent(e.target.value)}
-                                placeholder={
-                                    isLocked && isAdmin ? 'Describe why this needs to go back to designer...' :
-                                        tag === 'approved' ? 'What did the client say? (required)...' :
-                                            tag === 'approved_closed' ? 'Final remark before sending to print...' :
-                                                tag === 'correction' ? 'Describe the correction needed...' :
-                                                    'Add a note...'
-                                }
-                                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 ring-primary/20 outline-none"
-                            />
+                        {/* Input with @mention support */}
+                        <div className="flex gap-2 items-center relative">
+                            <div className="flex-1 relative">
+                                <input
+                                    ref={inputRef}
+                                    type="text"
+                                    value={content}
+                                    onChange={handleContentChange}
+                                    onKeyDown={(e) => {
+                                        if (showMentionDrop && e.key === 'Escape') setShowMentionDrop(false);
+                                    }}
+                                    placeholder={
+                                        isLocked && isAdmin ? 'Describe why... (type @ to mention)' :
+                                            tag === 'approved' ? 'What did the client say? (type @ to mention)...' :
+                                                tag === 'approved_closed' ? 'Final remark...' :
+                                                    tag === 'correction' ? 'Describe the correction... (type @ to alert someone)' :
+                                                        'Add a note... type @ to mention someone'
+                                    }
+                                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 ring-primary/20 outline-none"
+                                />
+                                {/* @mention dropdown */}
+                                {showMentionDrop && (
+                                    <div className="absolute bottom-full mb-1 left-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg w-56 max-h-40 overflow-y-auto">
+                                        {teamMembers
+                                            .filter(m => m.full_name.toLowerCase().includes(mentionQuery.toLowerCase()))
+                                            .slice(0, 8)
+                                            .map(member => (
+                                                <button
+                                                    key={member.id}
+                                                    type="button"
+                                                    onMouseDown={(e) => { e.preventDefault(); insertMention(member); }}
+                                                    className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 flex items-center gap-2"
+                                                >
+                                                    <span className="font-bold text-blue-600">@</span>
+                                                    <span className="font-medium text-gray-800">{member.full_name}</span>
+                                                    {member.role && <span className="text-gray-400 text-[9px] ml-auto">{member.role}</span>}
+                                                </button>
+                                            ))
+                                        }
+                                        {teamMembers.filter(m => m.full_name.toLowerCase().includes(mentionQuery.toLowerCase())).length === 0 && (
+                                            <p className="px-3 py-2 text-xs text-gray-400">No match for @{mentionQuery}</p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                             <button
                                 type="submit"
                                 disabled={!content.trim() || saving}
