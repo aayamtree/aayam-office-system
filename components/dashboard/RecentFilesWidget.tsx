@@ -1,28 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Paperclip, Upload, Download, FileText, Image as ImageIcon, File as FileIcon, ExternalLink, Clock } from 'lucide-react';
+import { Paperclip, Upload, FileText, Image as ImageIcon, File as FileIcon, ExternalLink, Clock, Bell } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { formatDistanceToNow } from 'date-fns';
 
-interface FileLogEntry {
+interface FileEntry {
     id: string;
-    action: string;
+    source: 'activity' | 'notification';
+    fileName?: string;
+    fileUrl?: string;
+    fileSize?: number;
+    fileType?: string;
+    location?: string;
+    userName?: string;
     created_at: string;
-    metadata: {
-        fileName?: string;
-        fileSize?: number;
-        fileType?: string;
-        fileUrl?: string;
-        uploadedTo?: string;
-        downloadedFrom?: string;
-        description?: string;
-    };
-    user: {
-        full_name?: string;
-        role?: string;
-    } | null;
+    message?: string;
 }
 
 function getFileIcon(fileType?: string) {
@@ -40,44 +34,74 @@ function formatFileSize(bytes?: number): string {
 }
 
 interface RecentFilesWidgetProps {
-    /** Show all files (admin) or only current user's files */
     showAll?: boolean;
-    /** Max entries to show */
     limit?: number;
-    /** Compact mode for sidebars */
     compact?: boolean;
 }
 
-export default function RecentFilesWidget({ showAll = false, limit = 10, compact = false }: RecentFilesWidgetProps) {
+export default function RecentFilesWidget({ showAll = false, limit = 15, compact = false }: RecentFilesWidgetProps) {
     const { profile } = useAuth();
-    const [fileLogs, setFileLogs] = useState<FileLogEntry[]>([]);
+    const [entries, setEntries] = useState<FileEntry[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchFileLogs = async () => {
+        const fetchFiles = async () => {
             if (!profile?.id) return;
 
-            let query = supabase
+            // Query 1: activity_logs with action='upload' OR entity_type='file'
+            let actQuery = supabase
                 .from('activity_logs')
-                .select('id, action, created_at, metadata, user:profiles(full_name, role)')
-                .in('action', ['upload', 'view'])
-                .eq('entity_type', 'file')
+                .select('id, action, created_at, metadata, user_name, entity_type, description')
+                .or('action.eq.upload,entity_type.eq.file')
+                .order('created_at', { ascending: false })
+                .limit(limit);
+            if (!showAll) actQuery = actQuery.eq('user_id', profile.id);
+            const { data: actData } = await actQuery;
+
+            // Query 2: broadcast_notifications that contain file-related keywords
+            const { data: notifData } = await supabase
+                .from('broadcast_notifications')
+                .select('id, message, created_at, sender_name')
+                .ilike('message', '%upload%')
                 .order('created_at', { ascending: false })
                 .limit(limit);
 
-            if (!showAll) {
-                query = query.eq('user_id', profile.id);
-            }
+            // Normalise activity_logs → FileEntry
+            const actEntries: FileEntry[] = (actData || []).map((l: any) => {
+                const meta = l.metadata || {};
+                return {
+                    id: `al-${l.id}`,
+                    source: 'activity',
+                    fileName: meta.fileName || (l.description ? l.description.split(' ')[1] : undefined),
+                    fileUrl: meta.fileUrl,
+                    fileSize: meta.fileSize,
+                    fileType: meta.fileType,
+                    location: meta.uploadedTo || meta.downloadedFrom || '',
+                    userName: l.user_name || '',
+                    created_at: l.created_at,
+                    message: l.description,
+                };
+            });
 
-            const { data, error } = await query;
+            // Normalise broadcast_notifications → FileEntry
+            const notifEntries: FileEntry[] = (notifData || []).map((n: any) => ({
+                id: `notif-${n.id}`,
+                source: 'notification',
+                message: n.message,
+                userName: n.sender_name || 'System',
+                created_at: n.created_at,
+            }));
 
-            if (!error && data) {
-                setFileLogs(data as unknown as FileLogEntry[]);
-            }
+            // Merge + sort by newest
+            const merged = [...actEntries, ...notifEntries]
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                .slice(0, limit);
+
+            setEntries(merged);
             setLoading(false);
         };
 
-        fetchFileLogs();
+        fetchFiles();
     }, [profile?.id, showAll, limit]);
 
     if (loading) {
@@ -95,36 +119,56 @@ export default function RecentFilesWidget({ showAll = false, limit = 10, compact
                     <Paperclip size={compact ? 16 : 18} className="text-primary" />
                     {showAll ? 'All File Activity' : 'My Recent Files'}
                 </h3>
-                <span className="text-xs text-gray-400 font-medium">{fileLogs.length} entries</span>
+                <span className="text-xs text-gray-400 font-medium">{entries.length} entries</span>
             </div>
 
-            {fileLogs.length === 0 ? (
+            {entries.length === 0 ? (
                 <div className="text-center py-6 text-gray-400">
                     <Paperclip className="w-8 h-8 mx-auto mb-2 opacity-30" />
                     <p className="text-sm">No file activity yet</p>
+                    <p className="text-xs text-gray-300 mt-1">Files uploaded to jobs will appear here</p>
                 </div>
             ) : (
                 <div className="space-y-2">
-                    {fileLogs.map((log) => {
-                        const isUpload = log.action === 'upload';
-                        const FileIconComponent = getFileIcon(log.metadata?.fileType);
-                        const fileName = log.metadata?.fileName || 'Unknown file';
-                        const location = log.metadata?.uploadedTo || log.metadata?.downloadedFrom || '';
+                    {entries.map((entry) => {
+                        const FileIconComponent = getFileIcon(entry.fileType);
 
-                        return (
-                            <div key={log.id} className={`flex items-start gap-3 ${compact ? 'py-1.5' : 'py-2 px-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors'}`}>
-                                {/* Icon */}
-                                <div className={`flex-shrink-0 mt-0.5 p-1.5 rounded ${isUpload ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
-                                    {isUpload ? <Upload size={12} /> : <Download size={12} />}
+                        // Notification-sourced entries
+                        if (entry.source === 'notification') {
+                            return (
+                                <div key={entry.id} className={`flex items-start gap-3 ${compact ? 'py-1.5' : 'py-2 px-3 bg-amber-50/60 rounded-lg'}`}>
+                                    <div className="flex-shrink-0 mt-0.5 p-1.5 rounded bg-amber-100 text-amber-600">
+                                        <Bell size={12} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-gray-800 line-clamp-2">{entry.message}</p>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            {showAll && entry.userName && (
+                                                <span className="text-[10px] font-bold text-primary">{entry.userName}</span>
+                                            )}
+                                            <span className="text-[10px] text-gray-300 flex items-center gap-0.5 flex-shrink-0 ml-auto">
+                                                <Clock size={8} />
+                                                {formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
+                            );
+                        }
 
-                                {/* Content */}
+                        // Activity-log sourced entries
+                        const fileName = entry.fileName || (entry.message ? entry.message : 'File');
+                        return (
+                            <div key={entry.id} className={`flex items-start gap-3 ${compact ? 'py-1.5' : 'py-2 px-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors'}`}>
+                                <div className="flex-shrink-0 mt-0.5 p-1.5 rounded bg-green-50 text-green-600">
+                                    <Upload size={12} />
+                                </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5">
                                         <FileIconComponent className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                                        {log.metadata?.fileUrl && !log.metadata.fileUrl.startsWith('data:') ? (
+                                        {entry.fileUrl && !entry.fileUrl.startsWith('data:') ? (
                                             <a
-                                                href={log.metadata.fileUrl}
+                                                href={entry.fileUrl}
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className="text-xs font-medium text-gray-800 truncate hover:text-primary hover:underline"
@@ -132,34 +176,29 @@ export default function RecentFilesWidget({ showAll = false, limit = 10, compact
                                                 {fileName}
                                             </a>
                                         ) : (
-                                            <span className="text-xs font-medium text-gray-800 truncate">{fileName}</span>
+                                            <span className="text-xs font-medium text-gray-800 truncate">
+                                                {entry.message || fileName}
+                                            </span>
                                         )}
-                                        {log.metadata?.fileSize && (
-                                            <span className="text-[10px] text-gray-400 flex-shrink-0">({formatFileSize(log.metadata.fileSize)})</span>
+                                        {entry.fileSize && (
+                                            <span className="text-[10px] text-gray-400 flex-shrink-0">({formatFileSize(entry.fileSize)})</span>
                                         )}
                                     </div>
-
                                     <div className="flex items-center gap-2 mt-0.5">
-                                        {showAll && log.user?.full_name && (
-                                            <span className="text-[10px] font-bold text-primary">
-                                                {log.user.full_name}
-                                            </span>
+                                        {showAll && entry.userName && (
+                                            <span className="text-[10px] font-bold text-primary">{entry.userName}</span>
                                         )}
-                                        {location && (
-                                            <span className="text-[10px] text-gray-400 truncate">
-                                                {isUpload ? '→' : '←'} {location}
-                                            </span>
+                                        {entry.location && (
+                                            <span className="text-[10px] text-gray-400 truncate">→ {entry.location}</span>
                                         )}
-                                        <span className="text-[10px] text-gray-300 flex items-center gap-0.5 flex-shrink-0">
+                                        <span className="text-[10px] text-gray-300 flex items-center gap-0.5 flex-shrink-0 ml-auto">
                                             <Clock size={8} />
-                                            {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
+                                            {formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}
                                         </span>
                                     </div>
                                 </div>
-
-                                {/* Open link */}
-                                {log.metadata?.fileUrl && !log.metadata.fileUrl.startsWith('data:') && (
-                                    <a href={log.metadata.fileUrl} target="_blank" rel="noreferrer" className="flex-shrink-0 p-1 text-gray-300 hover:text-primary">
+                                {entry.fileUrl && !entry.fileUrl.startsWith('data:') && (
+                                    <a href={entry.fileUrl} target="_blank" rel="noreferrer" className="flex-shrink-0 p-1 text-gray-300 hover:text-primary">
                                         <ExternalLink size={12} />
                                     </a>
                                 )}
