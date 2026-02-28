@@ -157,6 +157,9 @@ export default function DesignerWorkspace() {
   // Dynamic Checklist State
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
   const [checklistConfig, setChecklistConfig] = useState<Record<string, string[]>>({});
+  // Print File Upload State
+  const [printFileUploading, setPrintFileUploading] = useState(false);
+  const [printFileUrl, setPrintFileUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchChecklists = async () => {
@@ -177,6 +180,7 @@ export default function DesignerWorkspace() {
   // Reset checklist when task selection changes
   useEffect(() => {
     setChecklist({});
+    setPrintFileUrl(null);
   }, [selectedTaskId]);
 
   // Handle ?action=new → redirect to dedicated page
@@ -464,7 +468,71 @@ export default function DesignerWorkspace() {
     }
   };
 
+  // --- PRINT FILE UPLOAD ---
+  const handlePrintFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0 || !selectedTask) return;
+    const file = e.target.files[0];
+    const allowedExts = ['pdf', 'ai', 'eps', 'psd', 'tiff', 'tif', 'cdr', 'png'];
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    if (!allowedExts.includes(ext)) {
+      toast.error('Invalid file type. Please upload PDF, AI, EPS, PSD, TIFF, CDR, or PNG.');
+      return;
+    }
+    setPrintFileUploading(true);
+    try {
+      const safeName = `print-file-${selectedTask.realId}-${Date.now()}.${ext}`;
+      const filePath = `print-files/${selectedTask.realId}/${safeName}`;
+      const { error: uploadError } = await supabase.storage.from('files').upload(filePath, file);
+      if (uploadError) throw uploadError;
 
+      const { data: { publicUrl } } = supabase.storage.from('files').getPublicUrl(filePath);
+
+      // Save print_file_url to the job record
+      if (updateJob) {
+        await updateJob(selectedTask.realId, { print_file_url: publicUrl } as any);
+      }
+      setPrintFileUrl(publicUrl);
+
+      // Rich activity log — includes client name, company, job number
+      const { logActivity } = await import('@/lib/logger');
+      const clientDisplay = [selectedTask.client?.company, selectedTask.client?.name]
+        .filter(Boolean).join(' / ') || 'Unknown Client';
+      logActivity(
+        'print_file_upload',
+        'print_file',
+        selectedTask.realId,
+        `Print File submitted: "${file.name}" for ${selectedTask.title} (${selectedTask.taskId}) — Client: ${clientDisplay}. By: ${profile?.full_name || 'designer'} | ${(file.size / (1024 * 1024)).toFixed(2)} MB`,
+        {
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          fileUrl: publicUrl,
+          jobNumber: selectedTask.taskId,
+          projectName: selectedTask.title,
+          clientName: selectedTask.client?.name || '',
+          companyName: selectedTask.client?.company || '',
+          uploadedBy: profile?.full_name || '',
+        },
+        profile?.id
+      );
+
+      // Broadcast to admin/dispatch that print file is ready
+      await supabase.from('broadcast_notifications').insert({
+        message: `🖨️ Print File Ready: "${file.name}" submitted for ${selectedTask.title} (${selectedTask.taskId}) — ${clientDisplay}. Uploaded by ${profile?.full_name || 'designer'}.`,
+        priority: 'high',
+        target_audience: 'admin',
+        created_by: profile?.id,
+      });
+
+      refetchJobs();
+      toast.success('✅ Print file uploaded! Admin & Dispatch have been notified.');
+    } catch (err: any) {
+      toast.error('Upload failed: ' + err.message);
+    } finally {
+      setPrintFileUploading(false);
+      e.target.value = '';
+    }
+  };
 
 
 
@@ -1182,6 +1250,55 @@ export default function DesignerWorkspace() {
                         </div>
                       </section>
                     )}
+
+                    {/* ─── PRINT FILE SUBMISSION ── shows after checklist section ─── */}
+                    {(() => {
+                      const requiredList2 = checklistConfig[selectedTask.productCategory] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed'];
+                      const allDone = requiredList2.every((_, i) => checklist[`item_${i}`]) && checklist.approval;
+                      const existingPrintFileUrl = (selectedTask as any).print_file_url || printFileUrl;
+                      return (
+                        <section className={`p-4 rounded-md border-2 space-y-3 transition-all ${allDone ? 'border-blue-200 bg-blue-50/40' : 'border-gray-100 bg-gray-50 opacity-50 pointer-events-none'}`}>
+                          <h4 className="text-xs font-bold text-blue-700 uppercase tracking-widest flex items-center gap-2">
+                            <Printer size={15} /> Print File Submission
+                            {!allDone && <span className="text-gray-400 font-normal normal-case tracking-normal">— complete checklist first</span>}
+                          </h4>
+
+                          {existingPrintFileUrl ? (
+                            <div className="flex items-center gap-3 p-3 bg-white rounded-md border border-blue-100">
+                              <div className="p-2 bg-green-100 rounded-md text-green-600"><CheckCircle size={16} /></div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-green-700">Print File Submitted ✓</p>
+                                <a href={existingPrintFileUrl} target="_blank" rel="noreferrer"
+                                  className="text-xs text-blue-600 hover:underline truncate block">
+                                  View / Download File
+                                </a>
+                              </div>
+                              <label className="cursor-pointer text-xs text-gray-400 hover:text-gray-600 border border-gray-200 px-2 py-1 rounded-md">
+                                Replace
+                                <input type="file" className="hidden" accept=".pdf,.ai,.eps,.psd,.tiff,.tif,.cdr,.png" onChange={handlePrintFileUpload} />
+                              </label>
+                            </div>
+                          ) : (
+                            <label className={`flex flex-col items-center justify-center gap-2 p-6 rounded-md border-2 border-dashed cursor-pointer transition-colors ${allDone ? 'border-blue-300 bg-white hover:bg-blue-50' : 'border-gray-200'}`}>
+                              {printFileUploading ? (
+                                <><Loader2 size={24} className="animate-spin text-blue-500" /><span className="text-sm text-blue-500 font-semibold">Uploading print file...</span></>
+                              ) : (
+                                <>
+                                  <Upload size={24} className="text-blue-400" />
+                                  <span className="text-sm font-bold text-gray-700">Upload Print File</span>
+                                  <span className="text-xs text-gray-400">PDF · AI · EPS · PSD · TIFF · CDR · PNG</span>
+                                </>
+                              )}
+                              <input type="file" className="hidden" accept=".pdf,.ai,.eps,.psd,.tiff,.tif,.cdr,.png" onChange={handlePrintFileUpload} disabled={printFileUploading} />
+                            </label>
+                          )}
+                          <p className="text-[10px] text-center text-gray-400 font-medium uppercase tracking-wide">
+                            Admin &amp; Dispatch are notified automatically on upload
+                          </p>
+                        </section>
+                      );
+                    })()}
+
                   </div>
                 </>
               ) : (
