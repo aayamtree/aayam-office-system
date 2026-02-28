@@ -140,75 +140,104 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
         return () => { supabase.removeChannel(channel); };
     }, [jobId, fetchNotes]);
 
-    // Add note
+    // Add note — optimistic UI + parallel side-effects
     const handleAddNote = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!content.trim() || !profile?.id || !jobId) return;
 
+        const trimmed = content.trim();
+        const userName = profile.full_name || profile.email || 'Unknown';
+
+        // ── OPTIMISTIC UPDATE: add to UI immediately ──
+        const optimisticNote: NoteWithUser = {
+            id: `opt-${Date.now()}`,
+            job_id: jobId,
+            user_id: profile.id,
+            content: trimmed,
+            tag,
+            source,
+            created_at: new Date().toISOString(),
+            user_name: userName,
+            user_role: profile.role || '',
+        };
+        setNotes(prev => [optimisticNote, ...prev]);
+        setContent('');
+        setTag('design_note');
+        setSource('self');
+
         setSaving(true);
         try {
-            const { error } = await supabase.from('job_notes').insert([{
+            // 1. Insert the note
+            const { error: insertError } = await supabase.from('job_notes').insert([{
                 job_id: jobId,
                 user_id: profile.id,
-                content: content.trim(),
+                content: trimmed,
                 tag,
                 source,
             }]);
-            if (error) throw error;
+            if (insertError) throw insertError;
 
-            const userName = profile.full_name || profile.email || 'Unknown';
+            // 2. Special-tag side-effects run in parallel (non-blocking for the note)
+            const sideEffects: Promise<any>[] = [];
 
-            // --- SPECIAL TAG ACTIONS ---
             if (tag === 'approved') {
-                // "Approved" = mark approval, job STAYS with designer
-                await supabase.from('jobs').update({
-                    approval_status: 'approved',
-                    client_approval: true,
-                    approval_date: new Date().toISOString(),
-                    approval_by: profile.id,
-                    approval_remark: content.trim(),
-                }).eq('id', jobId);
-
+                sideEffects.push(
+                    Promise.resolve(supabase.from('jobs').update({
+                        approval_status: 'approved',
+                        client_approval: true,
+                        approval_date: new Date().toISOString(),
+                        approval_by: profile.id,
+                        approval_remark: trimmed,
+                    }).eq('id', jobId))
+                );
             } else if (tag === 'approved_closed') {
-                // "Approved & Closed" = final sign-off → move to printing (LOCKED)
-                const noteText = `🔒 Approved & Closed — by ${userName}. "${content.trim()}"`;
-                await supabase.from('jobs').update({
-                    approval_status: 'approved',
-                    client_approval: true,
-                    approval_date: new Date().toISOString(),
-                    approval_by: profile.id,
-                    approval_remark: content.trim(),
-                    current_stage: 'printing',
-                }).eq('id', jobId);
-                await supabase.from('job_stage_history').insert([{
-                    job_id: jobId, from_stage: currentStage, to_stage: 'printing', notes: noteText,
-                }]);
-                if (onStageChange) onStageChange();
-
+                const noteText = `🔒 Approved & Closed — by ${userName}. "${trimmed}"`;
+                sideEffects.push(
+                    Promise.resolve(supabase.from('jobs').update({
+                        approval_status: 'approved',
+                        client_approval: true,
+                        approval_date: new Date().toISOString(),
+                        approval_by: profile.id,
+                        approval_remark: trimmed,
+                        current_stage: 'printing',
+                    }).eq('id', jobId)),
+                    Promise.resolve(supabase.from('job_stage_history').insert([{
+                        job_id: jobId, from_stage: currentStage, to_stage: 'printing', notes: noteText,
+                    }]))
+                );
             } else if (tag === 'correction' && isLocked && isAdmin) {
-                // Admin pulling back from print queue
-                const noteText = `🔄 Revision ${revisionCount + 1} (Admin pullback) — by ${userName}. "${content.trim()}"`;
-                await supabase.from('jobs').update({
-                    approval_status: 'changes_requested',
-                    client_approval: false,
-                    current_stage: 'designing',
-                }).eq('id', jobId);
-                await supabase.from('job_stage_history').insert([{
-                    job_id: jobId, from_stage: currentStage, to_stage: 'designing', notes: noteText,
-                }]);
-                if (onStageChange) onStageChange();
+                const noteText = `🔄 Revision ${revisionCount + 1} (Admin pullback) — by ${userName}. "${trimmed}"`;
+                sideEffects.push(
+                    Promise.resolve(supabase.from('jobs').update({
+                        approval_status: 'changes_requested',
+                        client_approval: false,
+                        current_stage: 'designing',
+                    }).eq('id', jobId)),
+                    Promise.resolve(supabase.from('job_stage_history').insert([{
+                        job_id: jobId, from_stage: currentStage, to_stage: 'designing', notes: noteText,
+                    }]))
+                );
             }
 
-            setContent('');
-            setTag('design_note');
-            setSource('self');
-            await fetchNotes();
+            if (sideEffects.length > 0) {
+                await Promise.allSettled(sideEffects);
+                if (tag === 'approved_closed' || tag === 'correction') {
+                    if (onStageChange) onStageChange();
+                }
+            }
+
+            // Realtime subscription will refresh the list automatically.
+            // Only manually refetch when not subscribed (fallback).
         } catch (e: any) {
-            toast.error(String('Error adding note: ' + (e.message || 'Unknown error')));
+            // Rollback optimistic update on error
+            setNotes(prev => prev.filter(n => n.id !== optimisticNote.id));
+            setContent(trimmed);
+            toast.error('Failed to save note: ' + (e.message || 'Unknown error'));
         } finally {
             setSaving(false);
         }
     };
+
 
     const handleDelete = async (noteId: string) => {
         const { confirmed } = await confirmDialog({ title: 'Delete Note', message: 'Are you sure you want to delete this note?', variant: 'danger', confirmLabel: 'Delete' });
