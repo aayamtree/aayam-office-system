@@ -15,17 +15,26 @@ export async function logActivity(
             const { data: { user } } = await supabase.auth.getUser();
             uid = user?.id;
         } catch {
-            // Auth call failed — skip logging silently
             return;
         }
     }
-
     if (!uid) return;
 
+    // Fetch the user's real full_name to store alongside user_id
+    let userName: string | null = null;
     try {
-        // Fire-and-forget: don't block calling code on activity logging
+        const { data: prof } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', uid)
+            .single();
+        userName = prof?.full_name || null;
+    } catch { /* non-blocking */ }
+
+    try {
         supabase.from('activity_logs').insert([{
             user_id: uid,
+            user_name: userName,
             action,
             entity_type: entityType,
             entity_id: entityId,
