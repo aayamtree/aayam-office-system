@@ -159,7 +159,7 @@ export default function DesignerWorkspace() {
   const [checklistConfig, setChecklistConfig] = useState<Record<string, string[]>>({});
   // Print File Upload State
   const [printFileUploading, setPrintFileUploading] = useState(false);
-  const [printFileUrl, setPrintFileUrl] = useState<string | null>(null);
+  const [printFilesLocal, setPrintFilesLocal] = useState<{ name: string; url: string; size: number; type: string; uploaded_at: string; uploaded_by: string }[]>([]);
 
   useEffect(() => {
     const fetchChecklists = async () => {
@@ -180,7 +180,7 @@ export default function DesignerWorkspace() {
   // Reset checklist when task selection changes
   useEffect(() => {
     setChecklist({});
-    setPrintFileUrl(null);
+    setPrintFilesLocal([]);
   }, [selectedTaskId]);
 
   // Handle ?action=new → redirect to dedicated page
@@ -468,7 +468,7 @@ export default function DesignerWorkspace() {
     }
   };
 
-  // --- PRINT FILE UPLOAD ---
+  // --- PRINT FILE UPLOAD (multiple files supported) ---
   const handlePrintFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0 || !selectedTask) return;
     const file = e.target.files[0];
@@ -487,13 +487,25 @@ export default function DesignerWorkspace() {
 
       const { data: { publicUrl } } = supabase.storage.from('files').getPublicUrl(filePath);
 
-      // Save print_file_url to the job record
-      if (updateJob) {
-        await updateJob(selectedTask.realId, { print_file_url: publicUrl } as any);
-      }
-      setPrintFileUrl(publicUrl);
+      const newEntry = {
+        name: file.name,
+        url: publicUrl,
+        size: file.size,
+        type: file.type,
+        uploaded_at: new Date().toISOString(),
+        uploaded_by: profile?.full_name || 'designer',
+      };
 
-      // Rich activity log — includes client name, company, job number
+      // Fetch existing print_files array and append
+      if (updateJob) {
+        const { data: existing } = await supabase.from('jobs').select('print_files').eq('id', selectedTask.realId).single();
+        const existingArr = Array.isArray(existing?.print_files) ? existing.print_files : [];
+        const updatedArr = [...existingArr, newEntry];
+        await updateJob(selectedTask.realId, { print_files: updatedArr } as any);
+        setPrintFilesLocal(updatedArr);
+      }
+
+      // Rich activity log
       const { logActivity } = await import('@/lib/logger');
       const clientDisplay = [selectedTask.client?.company, selectedTask.client?.name]
         .filter(Boolean).join(' / ') || 'Unknown Client';
@@ -516,7 +528,7 @@ export default function DesignerWorkspace() {
         profile?.id
       );
 
-      // Broadcast to admin/dispatch that print file is ready
+      // Broadcast notification
       await supabase.from('broadcast_notifications').insert({
         message: `🖨️ Print File Ready: "${file.name}" submitted for ${selectedTask.title} (${selectedTask.taskId}) — ${clientDisplay}. Uploaded by ${profile?.full_name || 'designer'}.`,
         priority: 'high',
@@ -1251,49 +1263,54 @@ export default function DesignerWorkspace() {
                       </section>
                     )}
 
-                    {/* ─── PRINT FILE SUBMISSION ── shows after checklist section ─── */}
+                    {/* ─── PRINT FILE SUBMISSION (multiple files) ─── */}
                     {(() => {
                       const requiredList2 = checklistConfig[selectedTask.productCategory] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed'];
                       const allDone = requiredList2.every((_, i) => checklist[`item_${i}`]) && checklist.approval;
-                      const existingPrintFileUrl = (selectedTask as any).print_file_url || printFileUrl;
+                      const savedFiles: any[] = Array.isArray((selectedTask as any).print_files) ? (selectedTask as any).print_files : [];
+                      const displayFiles = printFilesLocal.length > 0 ? printFilesLocal : savedFiles;
                       return (
                         <section className={`p-4 rounded-md border-2 space-y-3 transition-all ${allDone ? 'border-blue-200 bg-blue-50/40' : 'border-gray-100 bg-gray-50 opacity-50 pointer-events-none'}`}>
-                          <h4 className="text-xs font-bold text-blue-700 uppercase tracking-widest flex items-center gap-2">
-                            <Printer size={15} /> Print File Submission
-                            {!allDone && <span className="text-gray-400 font-normal normal-case tracking-normal">— complete checklist first</span>}
-                          </h4>
-
-                          {existingPrintFileUrl ? (
-                            <div className="flex items-center gap-3 p-3 bg-white rounded-md border border-blue-100">
-                              <div className="p-2 bg-green-100 rounded-md text-green-600"><CheckCircle size={16} /></div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-bold text-green-700">Print File Submitted ✓</p>
-                                <a href={existingPrintFileUrl} target="_blank" rel="noreferrer"
-                                  className="text-xs text-blue-600 hover:underline truncate block">
-                                  View / Download File
-                                </a>
-                              </div>
-                              <label className="cursor-pointer text-xs text-gray-400 hover:text-gray-600 border border-gray-200 px-2 py-1 rounded-md">
-                                Replace
-                                <input type="file" className="hidden" accept=".pdf,.ai,.eps,.psd,.tiff,.tif,.cdr,.png" onChange={handlePrintFileUpload} />
-                              </label>
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-xs font-bold text-blue-700 uppercase tracking-widest flex items-center gap-2">
+                              <Printer size={15} /> Print File Submission
+                              {!allDone && <span className="text-gray-400 font-normal normal-case tracking-normal">— complete checklist first</span>}
+                            </h4>
+                            {displayFiles.length > 0 && (
+                              <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full">{displayFiles.length} file{displayFiles.length > 1 ? 's' : ''}</span>
+                            )}
+                          </div>
+                          {displayFiles.length > 0 && (
+                            <div className="space-y-2">
+                              {displayFiles.map((f: any, idx: number) => (
+                                <div key={idx} className="flex items-center gap-3 p-2.5 bg-white rounded-md border border-blue-100">
+                                  <div className="p-1.5 bg-green-100 rounded text-green-600 flex-shrink-0"><CheckCircle size={14} /></div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold text-gray-800 truncate">{f.name}</p>
+                                    <p className="text-[10px] text-gray-400">{f.uploaded_by} · {f.size ? `${(f.size / (1024 * 1024)).toFixed(1)} MB` : ''}</p>
+                                  </div>
+                                  <a href={f.url} target="_blank" rel="noreferrer"
+                                    className="flex-shrink-0 text-xs text-blue-600 hover:underline font-medium flex items-center gap-1">
+                                    <ExternalLink size={11} /> Open
+                                  </a>
+                                </div>
+                              ))}
                             </div>
-                          ) : (
-                            <label className={`flex flex-col items-center justify-center gap-2 p-6 rounded-md border-2 border-dashed cursor-pointer transition-colors ${allDone ? 'border-blue-300 bg-white hover:bg-blue-50' : 'border-gray-200'}`}>
-                              {printFileUploading ? (
-                                <><Loader2 size={24} className="animate-spin text-blue-500" /><span className="text-sm text-blue-500 font-semibold">Uploading print file...</span></>
-                              ) : (
-                                <>
-                                  <Upload size={24} className="text-blue-400" />
-                                  <span className="text-sm font-bold text-gray-700">Upload Print File</span>
-                                  <span className="text-xs text-gray-400">PDF · AI · EPS · PSD · TIFF · CDR · PNG</span>
-                                </>
-                              )}
-                              <input type="file" className="hidden" accept=".pdf,.ai,.eps,.psd,.tiff,.tif,.cdr,.png" onChange={handlePrintFileUpload} disabled={printFileUploading} />
-                            </label>
                           )}
+                          <label className={`flex flex-col items-center justify-center gap-2 p-4 rounded-md border-2 border-dashed cursor-pointer transition-colors ${allDone ? 'border-blue-300 bg-white hover:bg-blue-50' : 'border-gray-200'}`}>
+                            {printFileUploading ? (
+                              <><Loader2 size={20} className="animate-spin text-blue-500" /><span className="text-sm text-blue-500 font-semibold">Uploading...</span></>
+                            ) : (
+                              <>
+                                <Upload size={20} className="text-blue-400" />
+                                <span className="text-sm font-bold text-gray-700">{displayFiles.length > 0 ? '+ Add More Files' : 'Upload Print File'}</span>
+                                <span className="text-xs text-gray-400">PDF · AI · EPS · PSD · TIFF · CDR · PNG</span>
+                              </>
+                            )}
+                            <input type="file" className="hidden" accept=".pdf,.ai,.eps,.psd,.tiff,.tif,.cdr,.png" onChange={handlePrintFileUpload} disabled={printFileUploading} />
+                          </label>
                           <p className="text-[10px] text-center text-gray-400 font-medium uppercase tracking-wide">
-                            Admin &amp; Dispatch are notified automatically on upload
+                            Admin &amp; Dispatch are notified on every upload
                           </p>
                         </section>
                       );
