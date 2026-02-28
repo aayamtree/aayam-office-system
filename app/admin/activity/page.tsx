@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Loader2, Upload, FileText, RotateCcw, CheckSquare, Package, MessageSquare, PlusCircle, DollarSign, Bell, LogIn, ChevronDown } from 'lucide-react';
+import { Search, Loader2, Upload, FileText, RotateCcw, CheckSquare, Package, MessageSquare, PlusCircle, DollarSign, Bell, LogIn, ChevronDown, Printer } from 'lucide-react';
 import { useActivityLogs } from '@/lib/hooks';
 import { createBrowserClient } from '@supabase/ssr';
 import useSWR from 'swr';
@@ -12,11 +12,12 @@ const supabase = createBrowserClient(
 );
 
 // ─── Event type detection ─────────────────────────────────────────────────────
-type EventType = 'file_upload' | 'stage_change' | 'checklist' | 'qc' | 'payment' | 'note' | 'job_created' | 'login' | 'notification' | 'other';
+type EventType = 'file_upload' | 'print_file' | 'stage_change' | 'checklist' | 'qc' | 'payment' | 'note' | 'job_created' | 'login' | 'notification' | 'other';
 
 function detectEventType(action: string, description: string): EventType {
   const a = (action || '').toLowerCase();
   const d = (description || '').toLowerCase();
+  if (a === 'print_file_upload' || a.includes('print_file') || d.includes('print file submitted')) return 'print_file';
   if (a === 'upload' || a === 'logfileupload' || d.includes('upload')) return 'file_upload';
   if (a === 'checklist' || d.includes('checklist')) return 'checklist';
   if (a === 'qc' || d.includes('qc') || d.includes('quality check')) return 'qc';
@@ -31,6 +32,7 @@ function detectEventType(action: string, description: string): EventType {
 
 const EVENT_CONFIG: Record<EventType, { label: string; icon: React.ElementType; bg: string; text: string; dot: string }> = {
   file_upload: { label: 'File Upload', icon: Upload, bg: 'bg-violet-100', text: 'text-violet-700', dot: 'bg-violet-400' },
+  print_file: { label: 'Print File', icon: Printer, bg: 'bg-blue-100', text: 'text-blue-700', dot: 'bg-blue-500' },
   stage_change: { label: 'Stage Change', icon: RotateCcw, bg: 'bg-blue-100', text: 'text-blue-700', dot: 'bg-blue-400' },
   checklist: { label: 'Checklist', icon: CheckSquare, bg: 'bg-teal-100', text: 'text-teal-700', dot: 'bg-teal-400' },
   qc: { label: 'QC Check', icon: Package, bg: 'bg-orange-100', text: 'text-orange-700', dot: 'bg-orange-400' },
@@ -95,6 +97,7 @@ function useNotifications(limit = 100) {
 
 const EVENT_FILTERS = [
   { key: 'all', label: 'All Events' },
+  { key: 'print_file', label: '🖨️ Print Files' },
   { key: 'file_upload', label: '📤 Uploads' },
   { key: 'job_created', label: '🆕 New Jobs' },
   { key: 'stage_change', label: '🔄 Stage Changes' },
@@ -187,8 +190,8 @@ export default function ActivityPage() {
             key={f.key}
             onClick={() => setEventFilter(f.key)}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${eventFilter === f.key
-                ? 'bg-gray-900 text-white border-gray-900'
-                : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+              ? 'bg-gray-900 text-white border-gray-900'
+              : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
               }`}
           >
             {f.label}

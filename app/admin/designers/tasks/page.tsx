@@ -1204,8 +1204,8 @@ export default function DesignerWorkspace() {
 
 
 
-                    {/* 5. Final Review & Checklist — hidden when locked or on hold */}
-                    {!selectedTask.is_on_hold && !['printing', 'finishing', 'quality_check', 'ready', 'delivered'].includes(selectedTask.current_stage || '') && (
+                    {/* 5. Final Review, Print File & Checklist — hidden when locked or on hold */}
+                    {!selectedTask.is_on_hold && !['printing', 'finishing', 'quality_check', 'ready', 'delivered', 'completed'].includes(selectedTask.current_stage || '') && (
                       <section className="bg-gradient-to-br bg-white p-4 rounded-md border border-gray-200 space-y-4">
                         <h4 className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-2">
                           <CheckCircle size={16} /> Pre-Print Checklist (Mandatory)
@@ -1236,82 +1236,123 @@ export default function DesignerWorkspace() {
                           </label>
                         </div>
 
+                        {/* ─── PRINT FILE SUBMISSION — inside checklist, above submit button ─── */}
+                        {(() => {
+                          const requiredList3 = checklistConfig[selectedTask.productCategory] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed'];
+                          const allChecked = requiredList3.every((_, i) => checklist[`item_${i}`]) && checklist.approval;
+                          const savedFiles: any[] = Array.isArray((selectedTask as any).print_files) ? (selectedTask as any).print_files : [];
+                          const displayFiles = printFilesLocal.length > 0 ? printFilesLocal : savedFiles;
+                          return (
+                            <div className={`rounded-md border-2 p-3 space-y-2 transition-all ${allChecked ? 'border-blue-200 bg-blue-50/40' : 'border-gray-100 bg-gray-50 opacity-50 pointer-events-none'
+                              }`}>
+                              <div className="flex items-center justify-between">
+                                <h5 className="text-xs font-bold text-blue-700 uppercase tracking-widest flex items-center gap-2">
+                                  <Printer size={13} /> Print File Submission
+                                  {!allChecked && <span className="text-gray-400 font-normal normal-case tracking-normal">— complete checklist first</span>}
+                                </h5>
+                                {displayFiles.length > 0 && (
+                                  <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full">{displayFiles.length} file{displayFiles.length > 1 ? 's' : ''}</span>
+                                )}
+                              </div>
+                              {/* Uploaded file list */}
+                              {displayFiles.length > 0 && (
+                                <div className="space-y-1.5">
+                                  {displayFiles.map((f: any, idx: number) => (
+                                    <div key={idx} className="flex items-center gap-2 p-2 bg-white rounded-md border border-blue-100">
+                                      <CheckCircle size={12} className="text-green-500 flex-shrink-0" />
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-bold text-gray-800 truncate">{f.name}</p>
+                                        <p className="text-[10px] text-gray-400">{f.uploaded_by} · {f.size ? `${(f.size / (1024 * 1024)).toFixed(1)} MB` : ''}</p>
+                                      </div>
+                                      <a href={f.url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-0.5 flex-shrink-0">
+                                        <ExternalLink size={10} /> Open
+                                      </a>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {/* Upload zone */}
+                              <label className={`flex items-center justify-center gap-2 py-3 rounded-md border-2 border-dashed cursor-pointer transition-colors ${allChecked ? 'border-blue-300 bg-white hover:bg-blue-50' : 'border-gray-200'
+                                }`}>
+                                {printFileUploading ? (
+                                  <><Loader2 size={16} className="animate-spin text-blue-500" /><span className="text-sm text-blue-500 font-semibold">Uploading...</span></>
+                                ) : (
+                                  <><Upload size={16} className="text-blue-400" />
+                                    <span className="text-sm font-bold text-gray-700">{displayFiles.length > 0 ? '+ Add More Files' : 'Upload Print File'}</span>
+                                    <span className="text-xs text-gray-400">PDF · AI · EPS · PSD · TIFF</span></>
+                                )}
+                                <input type="file" className="hidden" accept=".pdf,.ai,.eps,.psd,.tiff,.tif,.cdr,.png" onChange={handlePrintFileUpload} disabled={printFileUploading} />
+                              </label>
+                              <p className="text-[10px] text-center text-gray-400">Admin &amp; Dispatch notified on every upload</p>
+                            </div>
+                          );
+                        })()}
+
                         <div className="pt-4 border-t border-gray-200">
                           {(() => {
                             const requiredList = checklistConfig[selectedTask.productCategory] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed'];
                             const allMainChecks = requiredList.every((_, i) => checklist[`item_${i}`]);
                             const isComplete = allMainChecks && checklist.approval;
+                            const savedFiles2: any[] = Array.isArray((selectedTask as any).print_files) ? (selectedTask as any).print_files : [];
+                            const hasFile = printFilesLocal.length > 0 || savedFiles2.length > 0;
+                            const canSubmit = isComplete && hasFile;
 
                             return (
-                              <button
-                                disabled={!isComplete}
-                                onClick={async () => {
-                                  const { confirmed } = await confirmDialog({ title: 'Send to Print', message: 'This will lock the task and send it to the print queue. Make sure all checks are done.', variant: 'success', confirmLabel: 'Send to Print' });
-                                  if (confirmed) {
-                                    updateStatus(selectedTask.realId, 'completed');
+                              <>
+                                <button
+                                  disabled={!canSubmit}
+                                  onClick={async () => {
+                                    const { confirmed } = await confirmDialog({ title: 'Send to Print', message: 'This will lock the task and send it to the print queue. Make sure all checks are done and print file is uploaded.', variant: 'success', confirmLabel: 'Send to Print' });
+                                    if (confirmed) {
+                                      updateStatus(selectedTask.realId, 'completed');
+                                    }
+                                  }}
+                                  className="w-full py-4 rounded-md font-bold text-white flex items-center justify-center gap-2 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed bg-gray-900 hover:bg-gray-900 hover:scale-[1.01]"
+                                >
+                                  {canSubmit
+                                    ? <><Printer size={20} /> Client Approved – Ready for Print</>
+                                    : isComplete
+                                      ? '⬆️ Upload Print File to Proceed'
+                                      : 'Complete Checklist to Finish'
                                   }
-                                }}
-                                className="w-full py-4 rounded-md font-bold text-white flex items-center justify-center gap-2 transition-all
-                             disabled:bg-gray-300 disabled:cursor-not-allowed bg-gray-900 hover:bg-gray-900 hover:scale-[1.01]"
-                              >
-                                {isComplete ? <><Printer size={20} /> Client Approved - Ready for Print</> : 'Complete Checklist to Finish'}
-                              </button>
-                            )
+                                </button>
+                                {!hasFile && isComplete && (
+                                  <p className="text-center text-xs text-amber-500 mt-1.5 font-semibold">⚠ Upload at least 1 print file before sending to print</p>
+                                )}
+                              </>
+                            );
                           })()}
                           <p className="text-center text-xs text-gray-400 mt-2 font-medium uppercase tracking-wide">Prevents costly print mistakes</p>
                         </div>
                       </section>
                     )}
 
-                    {/* ─── PRINT FILE SUBMISSION (multiple files) ─── */}
-                    {(() => {
-                      const requiredList2 = checklistConfig[selectedTask.productCategory] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed'];
-                      const allDone = requiredList2.every((_, i) => checklist[`item_${i}`]) && checklist.approval;
+                    {/* ─── PRINT FILES (read-only) — shown once job is sent to print/completed ─── */}
+                    {['printing', 'finishing', 'quality_check', 'ready', 'delivered', 'completed'].includes(selectedTask.current_stage || '') && (() => {
                       const savedFiles: any[] = Array.isArray((selectedTask as any).print_files) ? (selectedTask as any).print_files : [];
-                      const displayFiles = printFilesLocal.length > 0 ? printFilesLocal : savedFiles;
+                      if (savedFiles.length === 0) return null;
                       return (
-                        <section className={`p-4 rounded-md border-2 space-y-3 transition-all ${allDone ? 'border-blue-200 bg-blue-50/40' : 'border-gray-100 bg-gray-50 opacity-50 pointer-events-none'}`}>
+                        <section className="p-4 rounded-md border border-gray-200 bg-gray-50 space-y-2">
                           <div className="flex items-center justify-between">
-                            <h4 className="text-xs font-bold text-blue-700 uppercase tracking-widest flex items-center gap-2">
-                              <Printer size={15} /> Print File Submission
-                              {!allDone && <span className="text-gray-400 font-normal normal-case tracking-normal">— complete checklist first</span>}
-                            </h4>
-                            {displayFiles.length > 0 && (
-                              <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full">{displayFiles.length} file{displayFiles.length > 1 ? 's' : ''}</span>
-                            )}
+                            <h5 className="text-xs font-bold text-gray-700 uppercase tracking-widest flex items-center gap-2">
+                              <Lock size={13} /> Print Files Submitted
+                            </h5>
+                            <span className="text-xs bg-gray-200 text-gray-600 font-bold px-2 py-0.5 rounded-full">{savedFiles.length} file{savedFiles.length > 1 ? 's' : ''} · Locked</span>
                           </div>
-                          {displayFiles.length > 0 && (
-                            <div className="space-y-2">
-                              {displayFiles.map((f: any, idx: number) => (
-                                <div key={idx} className="flex items-center gap-3 p-2.5 bg-white rounded-md border border-blue-100">
-                                  <div className="p-1.5 bg-green-100 rounded text-green-600 flex-shrink-0"><CheckCircle size={14} /></div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-bold text-gray-800 truncate">{f.name}</p>
-                                    <p className="text-[10px] text-gray-400">{f.uploaded_by} · {f.size ? `${(f.size / (1024 * 1024)).toFixed(1)} MB` : ''}</p>
-                                  </div>
-                                  <a href={f.url} target="_blank" rel="noreferrer"
-                                    className="flex-shrink-0 text-xs text-blue-600 hover:underline font-medium flex items-center gap-1">
-                                    <ExternalLink size={11} /> Open
-                                  </a>
+                          <div className="space-y-1.5">
+                            {savedFiles.map((f: any, idx: number) => (
+                              <div key={idx} className="flex items-center gap-2 p-2 bg-white rounded-md border border-gray-100">
+                                <CheckCircle size={12} className="text-green-500 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-bold text-gray-800 truncate">{f.name}</p>
+                                  <p className="text-[10px] text-gray-400">{f.uploaded_by} · {f.size ? `${(f.size / (1024 * 1024)).toFixed(1)} MB` : ''}</p>
                                 </div>
-                              ))}
-                            </div>
-                          )}
-                          <label className={`flex flex-col items-center justify-center gap-2 p-4 rounded-md border-2 border-dashed cursor-pointer transition-colors ${allDone ? 'border-blue-300 bg-white hover:bg-blue-50' : 'border-gray-200'}`}>
-                            {printFileUploading ? (
-                              <><Loader2 size={20} className="animate-spin text-blue-500" /><span className="text-sm text-blue-500 font-semibold">Uploading...</span></>
-                            ) : (
-                              <>
-                                <Upload size={20} className="text-blue-400" />
-                                <span className="text-sm font-bold text-gray-700">{displayFiles.length > 0 ? '+ Add More Files' : 'Upload Print File'}</span>
-                                <span className="text-xs text-gray-400">PDF · AI · EPS · PSD · TIFF · CDR · PNG</span>
-                              </>
-                            )}
-                            <input type="file" className="hidden" accept=".pdf,.ai,.eps,.psd,.tiff,.tif,.cdr,.png" onChange={handlePrintFileUpload} disabled={printFileUploading} />
-                          </label>
-                          <p className="text-[10px] text-center text-gray-400 font-medium uppercase tracking-wide">
-                            Admin &amp; Dispatch are notified on every upload
-                          </p>
+                                <a href={f.url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-0.5 flex-shrink-0">
+                                  <ExternalLink size={10} /> Open
+                                </a>
+                              </div>
+                            ))}
+                          </div>
                         </section>
                       );
                     })()}
