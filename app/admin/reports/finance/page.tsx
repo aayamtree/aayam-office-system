@@ -1,9 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
-import { ArrowLeft, Download, Filter, TrendingUp, TrendingDown, IndianRupee, PieChart } from 'lucide-react';
+import { ArrowLeft, Download, Filter, TrendingUp, TrendingDown, IndianRupee, PieChart, Loader2 } from 'lucide-react';
+import { usePaymentsReceived, useExpenses, useVendorPayments } from '@/lib/hooks';
+import { exportToCSV } from '@/lib/csv-export';
+import { createBrowserClient } from '@supabase/ssr';
+import useSWR from 'swr';
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 interface Transaction {
   id: string;
@@ -13,216 +22,256 @@ interface Transaction {
   description: string;
   amount: number;
   paymentMode: string;
+  reference: string;
 }
 
-import { useInvoices, useExpenses, useVendorPayments } from '@/lib/hooks';
+// Direct query fallback for payments_received (avoids broken RPC)
+function usePaymentsReceivedDirect() {
+  return useSWR('payments_received_direct', async () => {
+    const { data, error } = await supabase
+      .from('payments_received')
+      .select('id, payment_number, payment_date, amount, payment_mode, notes, client:clients(name, company)')
+      .order('payment_date', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  }, { revalidateOnFocus: false });
+}
 
 export default function FinanceReportPage() {
-  const { invoices } = useInvoices();
-  const { expenses } = useExpenses();
-  const { vendorPayments } = useVendorPayments();
+  const { data: paymentsRaw, isLoading: loadingPayments } = usePaymentsReceivedDirect();
+  const { expenses, loading: loadingExpenses } = useExpenses();
+  const { vendorPayments, loading: loadingVendor } = useVendorPayments();
 
-  const [dateFrom, setDateFrom] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
-  const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
+  const isLoading = loadingPayments || loadingExpenses || loadingVendor;
+
+  // Default: start of current financial year (April 1), to today
+  const fyStart = new Date().getMonth() >= 3
+    ? `${new Date().getFullYear()}-04-01`
+    : `${new Date().getFullYear() - 1}-04-01`;
+  const today = new Date().toISOString().split('T')[0];
+
+  const [dateFrom, setDateFrom] = useState(fyStart);
+  const [dateTo, setDateTo] = useState(today);
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
-  // Combine logic
-  const transactions: Transaction[] = [
-    ...(invoices?.map(inv => ({
-      id: inv.id,
-      date: inv.invoice_date?.split('T')[0] || inv.created_at.split('T')[0],
+  // Build full transaction list from correct sources
+  const allTransactions: Transaction[] = useMemo(() => [
+    // INCOME = actual payments received from clients
+    ...(paymentsRaw?.map((p: any) => ({
+      id: p.id,
+      date: (p.payment_date || '').split('T')[0],
       type: 'income' as const,
-      category: 'Sales',
-      description: `Invoice ${inv.invoice_number}`,
-      amount: inv.total_amount,
-      paymentMode: 'Bank Transfer' // Placeholder as invoice doesn't store this directly usually
+      category: 'Client Payment',
+      description: `Payment from ${p.client?.company || p.client?.name || 'Client'}`,
+      amount: Number(p.amount) || 0,
+      paymentMode: p.payment_mode || 'Unknown',
+      reference: p.payment_number || '',
     })) || []),
-    ...(expenses?.map(exp => ({
+    // EXPENSE = general expenses
+    ...(expenses?.map((exp: any) => ({
       id: exp.id,
-      date: exp.expense_date.split('T')[0],
+      date: (exp.expense_date || '').split('T')[0],
       type: 'expense' as const,
-      category: exp.category,
-      description: exp.description || exp.category,
-      amount: exp.amount,
-      paymentMode: exp.payment_mode || 'Unknown'
+      category: exp.category || 'Expense',
+      description: exp.description || exp.category || '',
+      amount: Number(exp.amount) || 0,
+      paymentMode: exp.payment_mode || 'Unknown',
+      reference: exp.expense_number || '',
     })) || []),
-    ...(vendorPayments?.map(vp => ({
+    // EXPENSE = vendor payments
+    ...(vendorPayments?.map((vp: any) => ({
       id: vp.id,
-      date: vp.payment_date.split('T')[0],
+      date: (vp.payment_date || '').split('T')[0],
       type: 'expense' as const,
       category: 'Vendor Payment',
-      description: `Payment ${vp.payment_number} to ${vp.vendor?.company || vp.vendor?.name || 'Unknown'}`,
-      amount: vp.amount,
-      paymentMode: vp.payment_mode || 'Unknown'
-    })) || [])
-  ];
+      description: `${vp.vendor?.company || vp.vendor?.name || 'Vendor'}`,
+      amount: Number(vp.amount) || 0,
+      paymentMode: vp.payment_mode || 'Unknown',
+      reference: vp.payment_number || '',
+    })) || []),
+  ], [paymentsRaw, expenses, vendorPayments]);
 
-  const filteredTransactions = transactions.filter(t => {
-    const matchesDate = t.date >= dateFrom && t.date <= dateTo;
-    const matchesType = typeFilter === 'all' || t.type === typeFilter;
-    return matchesDate && matchesType;
-  }).sort((a, b) => b.date.localeCompare(a.date));
+  // Stats are ALWAYS computed from full date range (not affected by type filter)
+  const dateFiltered = useMemo(() =>
+    allTransactions.filter(t => t.date >= dateFrom && t.date <= dateTo)
+    , [allTransactions, dateFrom, dateTo]);
 
-  const totalIncome = filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-  const totalExpense = filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  const totalIncome = useMemo(() => dateFiltered.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0), [dateFiltered]);
+  const totalExpense = useMemo(() => dateFiltered.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0), [dateFiltered]);
   const netProfit = totalIncome - totalExpense;
   const profitMargin = totalIncome > 0 ? Math.round((netProfit / totalIncome) * 100) : 0;
 
-  // Expense breakdown
-  const expenseBreakdown = filteredTransactions
-    .filter(t => t.type === 'expense')
-    .reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount;
-      return acc;
-    }, {} as Record<string, number>);
+  // Table applies type filter on top of date filter
+  const filteredTransactions = useMemo(() =>
+    dateFiltered
+      .filter(t => typeFilter === 'all' || t.type === typeFilter)
+      .sort((a, b) => b.date.localeCompare(a.date))
+    , [dateFiltered, typeFilter]);
 
-  const expenseData = Object.entries(expenseBreakdown).sort((a, b) => b[1] - a[1]);
+  // Expense breakdown (always full date range)
+  const expenseBreakdown = useMemo(() => {
+    const map: Record<string, number> = {};
+    dateFiltered.filter(t => t.type === 'expense').forEach(t => {
+      map[t.category] = (map[t.category] || 0) + t.amount;
+    });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  }, [dateFiltered]);
 
-  // Payment mode breakdown - mostly relevant for income/expense
-  const paymentBreakdown = filteredTransactions
-    .reduce((acc, t) => {
-      acc[t.paymentMode] = (acc[t.paymentMode] || 0) + t.amount;
-      return acc;
-    }, {} as Record<string, number>);
+  // Payment modes breakdown (income)
+  const incomeModes = useMemo(() => {
+    const map: Record<string, number> = {};
+    dateFiltered.filter(t => t.type === 'income').forEach(t => {
+      map[t.paymentMode] = (map[t.paymentMode] || 0) + t.amount;
+    });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  }, [dateFiltered]);
 
-  const handleExport = (type: 'pdf' | 'excel') => {
-    toast.info(`📥 Exporting Finance Report as ${type.toUpperCase()}...\n\nIn production, this would generate a downloadable file.`);
+  const handleExport = () => {
+    exportToCSV(filteredTransactions, [
+      { header: 'Date', accessor: (r: any) => r.date },
+      { header: 'Type', accessor: (r: any) => r.type },
+      { header: 'Category', accessor: (r: any) => r.category },
+      { header: 'Description', accessor: (r: any) => r.description },
+      { header: 'Reference', accessor: (r: any) => r.reference },
+      { header: 'Mode', accessor: (r: any) => r.paymentMode },
+      { header: 'Amount', accessor: (r: any) => r.amount },
+    ], 'finance_report');
+    toast.success('Finance report exported as CSV');
   };
 
-  const getExpenseColor = (index: number) => {
-    const colors = ['bg-red-500', 'bg-white0', 'bg-primary', 'bg-primary', 'bg-white0', 'bg-pink-500'];
-    return colors[index % colors.length];
-  };
+  const fmtRs = (n: number) => n >= 100000
+    ? `₹${(n / 100000).toFixed(1)}L`
+    : n >= 1000
+      ? `₹${(n / 1000).toFixed(1)}K`
+      : `₹${n.toLocaleString('en-IN')}`;
+
+  const catColors = ['bg-red-500', 'bg-orange-400', 'bg-gray-700', 'bg-amber-500', 'bg-pink-500', 'bg-violet-500'];
 
   return (
-    <div className="space-y-2 md:space-y-4 lg:space-y-6">
+    <div className="space-y-4 pb-16 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center gap-3">
           <Link href="/admin/reports" className="p-2 hover:bg-gray-100 rounded-md">
             <ArrowLeft size={20} />
           </Link>
           <div>
             <h1 className="text-page-title text-gray-900">Finance Report</h1>
-            <p className="text-sm text-gray-500">Income, expenses & profit analysis</p>
+            <p className="text-sm text-gray-500">Income (payments received) · Expenses · Profit analysis</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => handleExport('pdf')} className="flex items-center gap-2 px-3 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100">
-            <Download size={16} />
-            <span>PDF</span>
+          <button onClick={handleExport} className="flex items-center gap-2 px-3 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-100 border border-gray-200 text-sm font-medium">
+            <Download size={15} /> Export CSV
           </button>
-          <button onClick={() => handleExport('excel')} className="flex items-center gap-2 px-3 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-100 border border-gray-200">
-            <Download size={16} />
-            <span>Excel</span>
+          <button onClick={() => window.print()} className="flex items-center gap-2 px-3 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 text-sm font-medium">
+            <Download size={15} /> Print
           </button>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-100">
+      <div className="bg-white rounded-md p-4 border border-gray-100">
         <div className="flex items-center gap-2 mb-3">
-          <Filter size={16} className="text-gray-500" />
-          <span className="font-medium text-gray-700">Filters</span>
+          <Filter size={15} className="text-gray-500" />
+          <span className="font-medium text-gray-700 text-sm">Filters</span>
+          <span className="ml-auto text-xs text-gray-400">Stats (cards above table) always show totals for the selected date range — the Type filter only affects the transaction list below.</span>
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <label className="text-xs text-gray-500">From Date</label>
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-md"
-            />
+            <label className="text-xs text-gray-500 block mb-1">From Date</label>
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm" />
           </div>
           <div>
-            <label className="text-xs text-gray-500">To Date</label>
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-md"
-            />
+            <label className="text-xs text-gray-500 block mb-1">To Date</label>
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm" />
           </div>
           <div>
-            <label className="text-xs text-gray-500">Type</label>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-md"
-            >
-              <option value="all">All</option>
-              <option value="income">Income</option>
-              <option value="expense">Expense</option>
+            <label className="text-xs text-gray-500 block mb-1">Show in Table</label>
+            <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm bg-white">
+              <option value="all">All Transactions</option>
+              <option value="income">Income Only</option>
+              <option value="expense">Expenses Only</option>
             </select>
           </div>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-3 md:p-4 text-white">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp size={18} />
-            <span className="text-sm opacity-90">Total Income</span>
+      {/* Stat Cards */}
+      {isLoading ? (
+        <div className="flex items-center justify-center h-32"><Loader2 size={24} className="animate-spin text-gray-400" /></div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-md p-4 text-white">
+            <div className="flex items-center gap-2 mb-2"><TrendingUp size={16} /><span className="text-xs opacity-90 font-medium uppercase tracking-wide">Total Income</span></div>
+            <p className="text-2xl font-bold">{fmtRs(totalIncome)}</p>
+            <p className="text-xs opacity-75 mt-1">{dateFiltered.filter(t => t.type === 'income').length} payments received</p>
           </div>
-          <p className="text-page-title">₹{(totalIncome / 1000).toFixed(1)}K</p>
-        </div>
-        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-lg p-3 md:p-4 text-white">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingDown size={18} />
-            <span className="text-sm opacity-90">Total Expense</span>
+          <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-md p-4 text-white">
+            <div className="flex items-center gap-2 mb-2"><TrendingDown size={16} /><span className="text-xs opacity-90 font-medium uppercase tracking-wide">Total Expense</span></div>
+            <p className="text-2xl font-bold">{fmtRs(totalExpense)}</p>
+            <p className="text-xs opacity-75 mt-1">{dateFiltered.filter(t => t.type === 'expense').length} expense entries</p>
           </div>
-          <p className="text-page-title">₹{(totalExpense / 1000).toFixed(1)}K</p>
-        </div>
-        <div className={`bg-gradient-to-br ${netProfit >= 0 ? 'from-gray-700 to-gray-800' : 'from-orange-500 to-orange-600'} rounded-lg p-3 md:p-4 text-white`}>
-          <div className="flex items-center gap-2 mb-2">
-            <IndianRupee size={18} />
-            <span className="text-sm opacity-90">Net Profit</span>
+          <div className={`bg-gradient-to-br ${netProfit >= 0 ? 'from-gray-700 to-gray-900' : 'from-orange-500 to-orange-600'} rounded-md p-4 text-white`}>
+            <div className="flex items-center gap-2 mb-2"><IndianRupee size={16} /><span className="text-xs opacity-90 font-medium uppercase tracking-wide">Net Profit</span></div>
+            <p className="text-2xl font-bold">{fmtRs(Math.abs(netProfit))}</p>
+            <p className="text-xs opacity-75 mt-1">{netProfit >= 0 ? '✅ Profitable' : '⚠️ Loss'}</p>
           </div>
-          <p className="text-page-title">₹{(netProfit / 1000).toFixed(1)}K</p>
-        </div>
-        <div className="bg-gray-900 rounded-lg p-3 md:p-4 text-white">
-          <div className="flex items-center gap-2 mb-2">
-            <PieChart size={18} />
-            <span className="text-sm opacity-90">Profit Margin</span>
+          <div className="bg-gray-900 rounded-md p-4 text-white">
+            <div className="flex items-center gap-2 mb-2"><PieChart size={16} /><span className="text-xs opacity-90 font-medium uppercase tracking-wide">Profit Margin</span></div>
+            <p className="text-2xl font-bold">{profitMargin}%</p>
+            <p className="text-xs opacity-75 mt-1">{totalIncome === 0 ? 'No income recorded yet' : `on ₹${(totalIncome / 1000).toFixed(0)}K revenue`}</p>
           </div>
-          <p className="text-page-title">{profitMargin}%</p>
         </div>
-      </div>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
-        {/* Transactions Table */}
-        <div className="lg:col-span-2 bg-white rounded-lg border border-gray-100 overflow-hidden">
-          <div className="p-4 border-b border-gray-100">
+      {/* No data hint */}
+      {!isLoading && totalIncome === 0 && totalExpense === 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-md p-4 text-sm text-amber-800">
+          <p className="font-bold mb-1">⚠️ No transactions found for {dateFrom} → {dateTo}</p>
+          <p>Make sure you have recorded <strong>Payments Received</strong> in Finance → Payments, and <strong>Expenses</strong> in Finance → Expenses. Also check the date range above.</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Transaction Table */}
+        <div className="lg:col-span-2 bg-white rounded-md border border-gray-100 overflow-hidden">
+          <div className="p-4 border-b border-gray-100 flex items-center justify-between">
             <h2 className="font-semibold text-gray-900">Transactions</h2>
+            <span className="text-xs text-gray-400">{filteredTransactions.length} records</span>
           </div>
-          <div className="overflow-x-auto max-h-96">
-            <table className="w-full">
+          <div className="overflow-x-auto max-h-[480px]">
+            <table className="w-full text-sm">
               <thead className="bg-gray-50 sticky top-0">
                 <tr>
-                  <th className="px-4 py-3 text-left text-label text-gray-500">Date</th>
-                  <th className="px-4 py-3 text-left text-label text-gray-500">Type</th>
-                  <th className="px-4 py-3 text-left text-label text-gray-500">Category</th>
-                  <th className="px-4 py-3 text-left text-label text-gray-500">Description</th>
-                  <th className="px-4 py-3 text-right text-label text-gray-500">Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Category</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Description</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredTransactions.map((t) => (
-                  <tr key={t.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-600">{t.date}</td>
+              <tbody className="divide-y divide-gray-50">
+                {filteredTransactions.length === 0 ? (
+                  <tr><td colSpan={5} className="py-12 text-center text-gray-400">No transactions for this period / filter</td></tr>
+                ) : filteredTransactions.map(t => (
+                  <tr key={`${t.type}-${t.id}`} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-gray-600">{new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 text-xs rounded-md ${t.type === 'income' ? 'bg-gray-100 text-gray-900' : 'bg-red-100 text-red-700'
-                        }`}>
-                        {t.type}
+                      <span className={`px-2 py-0.5 text-xs font-bold rounded-md ${t.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {t.type === 'income' ? 'IN' : 'OUT'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{t.category}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{t.description}</td>
-                    <td className={`px-4 py-3 text-sm font-medium text-right ${t.type === 'income' ? 'text-gray-900' : 'text-red-600'
-                      }`}>
-                      {t.type === 'income' ? '+' : '-'}₹{t.amount.toLocaleString()}
+                    <td className="px-4 py-3 text-xs text-gray-500">{t.category}</td>
+                    <td className="px-4 py-3 text-gray-700 font-medium">
+                      {t.description}
+                      {t.reference && <span className="ml-1 text-xs text-gray-400 font-normal">({t.reference})</span>}
+                    </td>
+                    <td className={`px-4 py-3 text-right font-mono font-bold ${t.type === 'income' ? 'text-green-700' : 'text-red-600'}`}>
+                      {t.type === 'income' ? '+' : '−'}₹{t.amount.toLocaleString('en-IN')}
                     </td>
                   </tr>
                 ))}
@@ -231,39 +280,60 @@ export default function FinanceReportPage() {
           </div>
         </div>
 
-        {/* Expense Breakdown */}
-        <div className="space-y-4">
-          <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-100">
-            <h2 className="font-semibold text-gray-900 mb-4">Expense Breakdown</h2>
-            <div className="space-y-3">
-              {expenseData.map(([category, amount], index) => (
-                <div key={category}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">{category}</span>
-                    <span className="font-medium text-gray-900">₹{amount.toLocaleString()}</span>
+        {/* Sidebar: Expense Breakdown + Income by Mode */}
+        <div className="space-y-3">
+          <div className="bg-white rounded-md p-4 border border-gray-100">
+            <h2 className="font-semibold text-gray-900 mb-3">Expense Breakdown</h2>
+            {expenseBreakdown.length === 0 ? (
+              <p className="text-xs text-gray-400">No expenses recorded</p>
+            ) : (
+              <div className="space-y-3">
+                {expenseBreakdown.map(([category, amount], index) => (
+                  <div key={category}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-600 truncate">{category}</span>
+                      <span className="font-bold text-gray-900 ml-2">{fmtRs(amount)}</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${catColors[index % catColors.length]} rounded-full transition-all`}
+                        style={{ width: `${totalExpense > 0 ? (amount / totalExpense) * 100 : 0}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${getExpenseColor(index)} rounded-full`}
-                      style={{ width: `${(amount / totalExpense) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-100">
-            <h2 className="font-semibold text-gray-900 mb-4">Payment Modes</h2>
-            <div className="space-y-3">
-              {Object.entries(paymentBreakdown).map(([mode, amount]) => (
-                <div key={mode} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
-                  <span className="text-gray-600">{mode}</span>
-                  <span className="font-semibold text-gray-900">₹{amount.toLocaleString()}</span>
-                </div>
-              ))}
-            </div>
+          <div className="bg-white rounded-md p-4 border border-gray-100">
+            <h2 className="font-semibold text-gray-900 mb-3">Income by Payment Mode</h2>
+            {incomeModes.length === 0 ? (
+              <p className="text-xs text-gray-400">No income recorded</p>
+            ) : (
+              <div className="space-y-2">
+                {incomeModes.map(([mode, amount]) => (
+                  <div key={mode} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-md">
+                    <span className="text-sm text-gray-600 capitalize">{mode.toLowerCase()}</span>
+                    <span className="font-bold text-gray-900">{fmtRs(amount)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
+
+          {/* Quick Summary */}
+          {!isLoading && (totalIncome > 0 || totalExpense > 0) && (
+            <div className="bg-gray-900 text-white rounded-md p-4 space-y-2 text-sm">
+              <p className="font-bold text-xs uppercase tracking-wide text-gray-400">Period Summary</p>
+              <div className="flex justify-between"><span className="text-gray-300">Gross Income</span><span className="font-bold text-green-400">{fmtRs(totalIncome)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-300">Total Expenses</span><span className="font-bold text-red-400">{fmtRs(totalExpense)}</span></div>
+              <div className="border-t border-gray-700 pt-2 flex justify-between">
+                <span className="text-gray-300">Net {netProfit >= 0 ? 'Profit' : 'Loss'}</span>
+                <span className={`font-bold text-base ${netProfit >= 0 ? 'text-green-400' : 'text-orange-400'}`}>{fmtRs(Math.abs(netProfit))}</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -3,9 +3,28 @@
 import Link from 'next/link';
 import { toast } from '@/lib/toast';
 import { BarChart3, TrendingUp, Truck, FileText, Download, Loader2, Search, Printer, Calendar, ArrowRightLeft, DollarSign } from 'lucide-react';
-import { useDashboardStats, useClients, useJobs, usePaymentsReceived, useVendors, usePurchaseBills, useVendorPayments, useExpenses } from '@/lib/hooks';
+import { useDashboardStats, useClients, useJobs, useVendors, usePurchaseBills, useVendorPayments, useExpenses } from '@/lib/hooks';
 import { useState } from 'react';
 import { exportToCSV } from '@/lib/csv-export';
+import { createBrowserClient } from '@supabase/ssr';
+import useSWR from 'swr';
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+// Direct payments_received query (bypasses unreliable RPC)
+function usePaymentsReceivedDirect() {
+  return useSWR('pr_direct', async () => {
+    const { data, error } = await supabase
+      .from('payments_received')
+      .select('id, payment_number, payment_date, amount, payment_mode, client:clients(name, company)')
+      .order('payment_date', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  }, { revalidateOnFocus: false });
+}
 
 export default function ReportsPage() {
   const { stats, loading } = useDashboardStats();
@@ -74,7 +93,7 @@ export default function ReportsPage() {
 function ClientStatementGenerator() {
   const { clients } = useClients();
   const { jobs } = useJobs();
-  const { paymentsReceived: payments } = usePaymentsReceived();
+  const { data: payments } = usePaymentsReceivedDirect();
 
   const [selectedClientId, setSelectedClientId] = useState('');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
@@ -94,7 +113,7 @@ function ClientStatementGenerator() {
       desc: j.project_name, debit: j.total_amount, credit: 0,
       mode: '-'
     })),
-    ...(payments?.filter(p => p.client_id === selectedClientId) || []).map(p => ({
+    ...(payments?.filter((p: any) => p.client_id === selectedClientId || p.client?.name) || []).map((p: any) => ({
       date: p.payment_date, type: 'PAYMENT', ref: p.payment_number,
       desc: 'Payment Received', debit: 0, credit: p.amount,
       mode: p.payment_mode
@@ -242,7 +261,7 @@ function VendorStatementGenerator() {
 }
 
 function CashFlowStatement() {
-  const { paymentsReceived: inflows } = usePaymentsReceived();
+  const { data: inflowsRaw } = usePaymentsReceivedDirect();
   const { vendorPayments: vendorOutflows } = useVendorPayments();
   const { expenses } = useExpenses();
 
@@ -252,13 +271,13 @@ function CashFlowStatement() {
   });
 
   const mergedFlow = [
-    ...(inflows || []).map(i => ({
+    ...(inflowsRaw || []).map((i: any) => ({
       date: i.payment_date, type: 'INFLOW', ref: i.payment_number,
-      desc: `Received from ${i.client?.name || 'Client'}`, amount: i.amount, mode: i.payment_mode
+      desc: `Received from ${i.client?.company || i.client?.name || 'Client'}`, amount: i.amount, mode: i.payment_mode
     })),
     ...(vendorOutflows || []).map(o => ({
       date: o.payment_date, type: 'OUTFLOW', ref: o.payment_number,
-      desc: `Paid to ${o.vendor?.name || 'Vendor'}`, amount: -o.amount, mode: o.payment_mode
+      desc: `Paid to Vendor (${o.payment_number})`, amount: -o.amount, mode: o.payment_mode
     })),
     ...(expenses || []).map(e => ({
       date: e.expense_date, type: 'EXPENSE', ref: e.expense_number,
