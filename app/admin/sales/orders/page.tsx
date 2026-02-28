@@ -69,6 +69,7 @@ export default function OrdersPage() {
     totalAmount: 0,
     priority: 'normal' as Job['priority'],
     currentStage: 'new' as Job['current_stage'],
+    jobType: 'Design + Print' as string,
     clientDeadline: '',
     notes: ''
   });
@@ -166,6 +167,7 @@ export default function OrdersPage() {
       totalAmount: 0,
       priority: 'normal',
       currentStage: 'new',
+      jobType: 'Design + Print',
       clientDeadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       notes: ''
     });
@@ -190,6 +192,7 @@ export default function OrdersPage() {
       totalAmount: job.total_amount,
       priority: job.priority,
       currentStage: job.current_stage,
+      jobType: (job as any).job_type || 'Design + Print',
       clientDeadline: job.client_deadline ? new Date(job.client_deadline).toISOString().split('T')[0] : '',
       notes: job.notes || ''
     });
@@ -241,6 +244,7 @@ export default function OrdersPage() {
           client_id: formData.clientId,
           project_name: formData.projectName,
           product_category: formData.productCategory || null,
+          job_type: formData.jobType,
           description: formData.description,
           quantity: formData.quantity,
           quote_per_piece: formData.ratePerPiece,
@@ -264,6 +268,7 @@ export default function OrdersPage() {
           client_id: formData.clientId,
           project_name: formData.projectName,
           product_category: formData.productCategory || null,
+          job_type: formData.jobType as any,
           description: formData.description,
           quantity: formData.quantity,
           quote_per_piece: formData.ratePerPiece,
@@ -716,6 +721,28 @@ export default function OrdersPage() {
                   )}
                 </div>
 
+                {/* Job Type */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Job Type *</label>
+                  <div className="flex gap-2">
+                    {['Design Only', 'Print Only', 'Design + Print'].map(t => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, jobType: t })}
+                        className={`flex-1 py-2.5 text-sm font-semibold rounded-md border-2 transition-all ${formData.jobType === t
+                            ? t === 'Design Only' ? 'bg-violet-600 border-violet-600 text-white'
+                              : t === 'Print Only' ? 'bg-blue-600 border-blue-600 text-white'
+                                : 'bg-gray-900 border-gray-900 text-white'
+                            : 'border-gray-200 text-gray-500 hover:border-gray-400'
+                          }`}
+                      >
+                        {t === 'Design Only' ? '🎨' : t === 'Print Only' ? '🖨️' : '🎨+🖨️'} {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Delivery Deadline</label>
                   <input
@@ -973,24 +1000,28 @@ export default function OrdersPage() {
                 </div>
               </div>
 
-              {/* Category badge */}
-              {getCategoryName(selectedJob) && (
-                <div className="flex items-center gap-2">
+              {/* Category + Job Type + Advance badges */}
+              <div className="flex flex-wrap items-center gap-2">
+                {getCategoryName(selectedJob) && (
                   <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1.5 rounded-md">
                     <Tag className="w-4 h-4" />{getCategoryName(selectedJob)}
                   </span>
-                  {selectedJob.amount_received > 0 && (
-                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-green-700 bg-green-100 px-3 py-1.5 rounded-md">
-                      <IndianRupee className="w-3.5 h-3.5" />Advance: {formatCurrency(selectedJob.amount_received)}
-                    </span>
-                  )}
-                </div>
-              )}
-              {!getCategoryName(selectedJob) && selectedJob.amount_received > 0 && (
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-green-700 bg-green-100 px-3 py-1.5 rounded-md">
-                  <IndianRupee className="w-3.5 h-3.5" />Advance: {formatCurrency(selectedJob.amount_received)}
-                </span>
-              )}
+                )}
+                {/* Job Type badge */}
+                {(selectedJob as any).job_type && (
+                  <span className={`inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md ${(selectedJob as any).job_type === 'Design Only' ? 'bg-violet-100 text-violet-700'
+                      : (selectedJob as any).job_type === 'Print Only' ? 'bg-blue-100 text-blue-700'
+                        : 'bg-gray-900 text-white'
+                    }`}>
+                    {(selectedJob as any).job_type === 'Design Only' ? '🎨' : (selectedJob as any).job_type === 'Print Only' ? '🖨️' : '🎨+🖨️'} {(selectedJob as any).job_type}
+                  </span>
+                )}
+                {selectedJob.amount_received > 0 && (
+                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-green-700 bg-green-100 px-3 py-1.5 rounded-md">
+                    <IndianRupee className="w-3.5 h-3.5" />Advance: {formatCurrency(selectedJob.amount_received)}
+                  </span>
+                )}
+              </div>
 
               <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div className="p-3 border rounded-md">
