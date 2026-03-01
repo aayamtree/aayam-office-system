@@ -591,82 +591,75 @@ td {
 
 @layer base {
   :root {
-    /* ─── Stone base (warm white/off-white) ─── */
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.147 0.004 49.25);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.147 0.004 49.25);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.147 0.004 49.25);
+    /* ─── Stone base (warm white) — bare HSL for Tailwind v3 hsl(var(--x)) ─── */
+    --background: 0 0% 100%;
+    --foreground: 20 6% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 6% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 6% 10%;
 
     /* ─── 🟡 Yellow primary (Shadcn Mira yellow) ─── */
-    --primary: oklch(0.852 0.199 91.936);
-    --primary-foreground: oklch(0.216 0.006 56.043);
+    --primary: 45 93% 47%;
+    --primary-foreground: 26 50% 15%;
 
-    /* ─── Secondary / Muted / Accent (stone tones) ─── */
-    --secondary: oklch(0.97 0.001 106.424);
-    --secondary-foreground: oklch(0.216 0.006 56.043);
-    --muted: oklch(0.97 0.001 106.424);
-    --muted-foreground: oklch(0.553 0.013 58.071);
-    --accent: oklch(0.95 0.015 91.936);
-    --accent-foreground: oklch(0.216 0.006 56.043);
+    /* ─── Secondary / Muted / Accent ─── */
+    --secondary: 45 10% 96%;
+    --secondary-foreground: 20 6% 10%;
+    --muted: 45 10% 96%;
+    --muted-foreground: 25 8% 44%;
+    --accent: 45 30% 92%;
+    --accent-foreground: 20 6% 10%;
 
     /* ─── Destructive ─── */
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.985 0 0);
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
 
     /* ─── Input / Border / Ring ─── */
-    --border: oklch(0.923 0.003 48.717);
-    --input: oklch(0.923 0.003 48.717);
-    --ring: oklch(0.852 0.199 91.936);
+    --border: 30 6% 90%;
+    --input: 30 6% 90%;
+    --ring: 45 93% 47%;
     --radius: 0.5rem;
 
     /* ─── Charts ─── */
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
 
-    /* ─── Sidebar — Mira Inverted (dark bg, yellow accent) ─── */
-    --sidebar: oklch(0.216 0.006 56.043);
-    --sidebar-foreground: oklch(0.985 0.001 106.423);
-    --sidebar-primary: oklch(0.852 0.199 91.936);
-    --sidebar-primary-foreground: oklch(0.216 0.006 56.043);
-    --sidebar-accent: oklch(0.268 0.007 34.298);
-    --sidebar-accent-foreground: oklch(0.985 0.001 106.423);
-    --sidebar-border: oklch(0.3 0.007 48.717);
-    --sidebar-ring: oklch(0.852 0.199 91.936);
+    /* ─── Sidebar — Mira Inverted (dark warm-stone bg) ─── */
+    /* Note: sidebar uses raw CSS values since Tailwind doesn't map --sidebar-* */
+    --sidebar: #292524;
+    --sidebar-foreground: #fafaf9;
+    --sidebar-primary: #eab308;
+    --sidebar-primary-foreground: #292524;
+    --sidebar-accent: #3d3836;
+    --sidebar-accent-foreground: #fafaf9;
+    --sidebar-border: #44403c;
+    --sidebar-ring: #eab308;
   }
 
   .dark {
-    --background: oklch(0.147 0.004 49.25);
-    --foreground: oklch(0.985 0.001 106.423);
-    --card: oklch(0.216 0.006 56.043);
-    --card-foreground: oklch(0.985 0.001 106.423);
-    --popover: oklch(0.216 0.006 56.043);
-    --popover-foreground: oklch(0.985 0.001 106.423);
-    --primary: oklch(0.852 0.199 91.936);
-    --primary-foreground: oklch(0.216 0.006 56.043);
-    --secondary: oklch(0.268 0.007 34.298);
-    --secondary-foreground: oklch(0.985 0.001 106.423);
-    --muted: oklch(0.268 0.007 34.298);
-    --muted-foreground: oklch(0.709 0.01 56.259);
-    --accent: oklch(0.268 0.007 34.298);
-    --accent-foreground: oklch(0.985 0.001 106.423);
-    --destructive: oklch(0.704 0.191 22.216);
-    --destructive-foreground: oklch(0.985 0 0);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.852 0.199 91.936);
-    --sidebar: oklch(0.216 0.006 56.043);
-    --sidebar-foreground: oklch(0.985 0.001 106.423);
-    --sidebar-primary: oklch(0.852 0.199 91.936);
-    --sidebar-primary-foreground: oklch(0.216 0.006 56.043);
-    --sidebar-accent: oklch(0.268 0.007 34.298);
-    --sidebar-accent-foreground: oklch(0.985 0.001 106.423);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.852 0.199 91.936);
+    --background: 20 6% 10%;
+    --foreground: 45 10% 97%;
+    --card: 20 8% 14%;
+    --card-foreground: 45 10% 97%;
+    --popover: 20 8% 14%;
+    --popover-foreground: 45 10% 97%;
+    --primary: 45 93% 47%;
+    --primary-foreground: 26 50% 15%;
+    --secondary: 20 8% 20%;
+    --secondary-foreground: 45 10% 97%;
+    --muted: 20 8% 20%;
+    --muted-foreground: 30 8% 63%;
+    --accent: 20 8% 20%;
+    --accent-foreground: 45 10% 97%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 20 8% 20%;
+    --input: 20 8% 20%;
+    --ring: 45 93% 47%;
   }
 }
 
