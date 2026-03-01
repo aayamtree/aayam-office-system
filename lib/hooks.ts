@@ -2108,20 +2108,45 @@ export function usePaymentsReceived() {
   const createPaymentReceived = async (payment: Omit<PaymentReceived, 'id' | 'created_at' | 'updated_at' | 'payment_number' | 'client' | 'bank_account'>) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
-    const { data: result, error } = await supabase.rpc('record_payment_received', {
+    // Try the RPC first (it also generates a payment number)
+    const { data: rpcResult, error: rpcError } = await supabase.rpc('record_payment_received', {
       p_client_id: payment.client_id,
       p_amount: payment.amount,
       p_payment_mode: payment.payment_mode,
       p_payment_date: payment.payment_date,
-      p_bank_account_id: payment.bank_account_id,
-      p_reference: payment.reference_number,
-      p_notes: payment.notes,
-      p_invoice_id: payment.invoice_id,
-      p_attachment_url: payment.attachment_url
+      p_bank_account_id: payment.bank_account_id ?? null,
+      p_reference: payment.reference_number ?? null,
+      p_notes: payment.notes ?? null,
+      p_invoice_id: payment.invoice_id ?? null,
+      p_attachment_url: payment.attachment_url ?? null,
     });
 
-    if (!error) await fetchData();
-    return { data: result, error: error?.message };
+    if (!rpcError) {
+      await fetchData();
+      return { data: rpcResult, error: null };
+    }
+
+    // RPC failed (e.g. function does not exist) — fall back to direct insert
+    console.warn('[payments_received] RPC failed, using direct insert:', rpcError.message);
+    const { data: directResult, error: directError } = await supabase
+      .from('payments_received')
+      .insert([{
+        client_id: payment.client_id ?? null,
+        job_id: (payment as any).job_id ?? null,
+        amount: payment.amount,
+        payment_mode: payment.payment_mode,
+        payment_date: payment.payment_date,
+        bank_account_id: payment.bank_account_id ?? null,
+        reference_number: payment.reference_number ?? null,
+        notes: payment.notes ?? null,
+        invoice_id: payment.invoice_id ?? null,
+        attachment_url: payment.attachment_url ?? null,
+      }])
+      .select()
+      .single();
+
+    if (!directError) await fetchData();
+    return { data: directResult, error: directError?.message ?? null };
   };
 
   const deletePaymentReceived = async (id: string) => {

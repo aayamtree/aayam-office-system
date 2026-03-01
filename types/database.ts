@@ -196,6 +196,7 @@ export interface Job extends BaseEntity {
   advance_required?: boolean;
   advance_collected?: boolean;
   advance_amount?: number;
+  advance_payment_mode?: string;  // 'cash' | 'upi' | 'bank_transfer' | 'cheque' | 'neft' | 'rtgs'
 
   // Dates
   order_date: string;

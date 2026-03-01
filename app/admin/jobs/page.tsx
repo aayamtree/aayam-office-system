@@ -279,6 +279,7 @@ export default function JobsPage() {
         advance_required: formData.advance_required,
         advance_collected: formData.advance_amount > 0,
         advance_amount: formData.advance_amount,
+        advance_payment_mode: formData.advance_amount > 0 ? formData.advance_payment_mode : undefined,
         files: [],
         order_date: new Date().toISOString(),
         discount_amount: 0,
@@ -304,15 +305,18 @@ export default function JobsPage() {
       if (formData.advance_amount > 0 && result.data?.id) {
         const jobId = result.data.id;
         const clientId = formData.client_id || undefined;
-        await createPaymentReceived({
+        const paymentRecordResult = await createPaymentReceived({
           job_id: jobId,
           client_id: clientId,
           amount: formData.advance_amount,
           payment_mode: formData.advance_payment_mode as any,
           payment_date: new Date().toISOString().split('T')[0],
-          notes: 'Advance payment collected at job creation',
+          notes: `Advance payment collected at job creation (${formData.advance_payment_mode.replace('_', ' ').toUpperCase()})`,
           attachment_url: formData.advance_receipt_url || undefined,
         });
+        if (paymentRecordResult?.error) {
+          console.error('[advance] Failed to record payment:', paymentRecordResult.error);
+        }
         // Update job: set amount_received + payment_status
         const paymentStatus = formData.advance_amount >= totalAmount - 1 ? 'paid' : 'partial';
         await updateJob(jobId, {
@@ -358,7 +362,7 @@ export default function JobsPage() {
       current_stage: job.current_stage || 'new',
       advance_required: job.advance_required !== false,
       advance_amount: job.advance_amount || 0,
-      advance_payment_mode: 'cash',
+      advance_payment_mode: (job as any).advance_payment_mode || 'cash',
       advance_receipt_url: ''
     });
     setEditingJob(job);
