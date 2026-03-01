@@ -407,7 +407,7 @@ td {
 
 /* Primary Button */
 .btn-primary {
-  @apply bg-gray-900 text-white px-4 py-2 rounded-md font-medium transition-opacity duration-150;
+  @apply bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium transition-opacity duration-150;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -416,11 +416,11 @@ td {
 
 /* Secondary Button */
 .btn-secondary {
-  @apply border border-gray-900 text-gray-900 px-4 py-2 rounded-md font-medium transition-colors duration-150;
+  @apply border border-primary text-primary px-4 py-2 rounded-md font-medium transition-colors duration-150;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  @apply bg-gray-900 text-white;
+  @apply bg-primary text-primary-foreground;
 }
 
 /* Attention Button (Delete/Urgent) */
@@ -489,9 +489,9 @@ td {
   @apply text-white/70 hover:text-white hover:bg-white/10 px-4 py-2 rounded-lg transition-colors cursor-pointer;
 }
 
-/* Sidebar Active Item */
+/* Sidebar Active Item — light sidebar, yellow active */
 .sidebar-item-active {
-  @apply bg-yellow-400/20 text-yellow-300 border-l-4 border-yellow-400;
+  @apply bg-primary text-primary-foreground border-l-4 border-primary;
 }
 
 /* =============================================

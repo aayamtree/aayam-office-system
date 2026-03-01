@@ -143,7 +143,7 @@ export default function LoginPage() {
                   type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-oms-blue/20 focus:border-oms-blue transition-all"
+                  className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                   placeholder="designer1, admin1, etc."
                   required
                   disabled={isLoading}
@@ -163,7 +163,7 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-12 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-oms-blue/20 focus:border-oms-blue transition-all"
+                  className="w-full pl-11 pr-12 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                   placeholder="••••••••"
                   required
                   disabled={isLoading}
@@ -180,10 +180,10 @@ export default function LoginPage() {
 
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2">
-                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-oms-blue focus:ring-oms-blue" />
+                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" />
                 <span className="text-body text-gray-600">Remember me</span>
               </label>
-              <button type="button" className="text-body text-oms-blue hover:opacity-80 font-medium">
+              <button type="button" className="text-body text-primary hover:opacity-80 font-medium">
                 Forgot password?
               </button>
             </div>
@@ -191,7 +191,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="btn-primary w-full py-3 text-white rounded-md font-semibold focus:ring-4 focus:ring-oms-blue/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full py-3 rounded-md font-semibold focus:ring-4 focus:ring-primary/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
