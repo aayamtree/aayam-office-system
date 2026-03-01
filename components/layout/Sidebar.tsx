@@ -307,8 +307,8 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-screen ${sidebarWidth} bg-background border-r border-border flex flex-col z-40 transition-all duration-200 ease-in-out ${isDesktop && hovered ? 'shadow-2xl' : ''
-        }`}
+      className={`fixed left-0 top-0 h-screen ${sidebarWidth} flex flex-col z-40 transition-all duration-200 ease-in-out ${isDesktop && hovered ? 'shadow-2xl' : ''}`}
+      style={{ background: 'var(--sidebar)', borderRight: '1px solid var(--sidebar-border)' }}
       onMouseEnter={() => {
         if (isDesktop && !locked) {
           setHovered(true);
@@ -323,19 +323,23 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
       }}
     >
       {/* Logo + Lock toggle */}
-      <div className={`border-b border-border ${isCollapsed ? 'p-3 flex justify-center' : 'p-4 flex items-center justify-between'}`}>
+      <div className={`${isCollapsed ? 'p-3 flex justify-center' : 'p-4 flex items-center justify-between'}`} style={{ borderBottom: '1px solid var(--sidebar-border)' }}>
         <Link
           href={profile?.role === 'designer' ? '/admin/designers/tasks' : '/admin/dashboard'}
           className="flex items-center gap-2"
           onClick={handleLinkClick}
         >
           <img src="/company-logo.png" alt="Aayam" className="w-8 h-8 rounded shrink-0" />
-          {!isCollapsed && <span className="font-bold text-foreground text-xl whitespace-nowrap">Aayam</span>}
+          {!isCollapsed && <span className="font-bold text-xl whitespace-nowrap" style={{ color: 'var(--sidebar-foreground)' }}>Aayam</span>}
         </Link>
         {!isCollapsed && isDesktop && (
           <button
             onClick={() => onLockedChange?.(!locked)}
-            className={`p-1.5 rounded-md transition-colors ${locked ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+            className={`p-1.5 rounded-md transition-colors`}
+            style={locked
+              ? { background: 'oklch(0.852 0.199 91.936 / 0.15)', color: 'var(--sidebar-primary)' }
+              : { color: 'oklch(0.985 0.001 106.423 / 0.5)' }
+            }
             title={locked ? 'Unlock sidebar (auto-collapse)' : 'Lock sidebar open'}
           >
             {locked ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
@@ -368,11 +372,11 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
                     href={item.href}
                     onClick={handleLinkClick}
                     title={item.name}
-                    className={`flex items-center justify-center w-full h-10 rounded-md transition-colors
-                      ${active
-                        ? 'bg-accent text-accent-foreground'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                      }`}
+                    className={`flex items-center justify-center w-full h-10 rounded-md transition-colors`}
+                    style={active
+                      ? { background: 'oklch(0.852 0.199 91.936 / 0.15)', color: 'var(--sidebar-primary)' }
+                      : { color: 'oklch(0.985 0.001 106.423 / 0.55)' }
+                    }
                   >
                     <Icon className="h-4 w-4" strokeWidth={1.5} />
                   </Link>
@@ -386,10 +390,11 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
                     <button
                       onClick={() => toggleExpanded(item.name)}
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors text-sm font-medium
-                        ${active
-                          ? 'bg-accent text-accent-foreground'
-                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                        }`}
+                        ${active ? 'border-l-2' : ''}`}
+                      style={active
+                        ? { background: 'oklch(0.852 0.199 91.936 / 0.12)', color: 'var(--sidebar-primary)', borderLeftColor: 'var(--sidebar-primary)' }
+                        : { color: 'oklch(0.985 0.001 106.423 / 0.6)' }
+                      }
                     >
                       <div className="flex items-center gap-2">
                         <Icon className="h-4 w-4" strokeWidth={1} />
@@ -405,10 +410,11 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
                       href={item.href}
                       onClick={handleLinkClick}
                       className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-sm font-medium
-                        ${active
-                          ? 'bg-accent text-accent-foreground'
-                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                        }`}
+                        ${active ? 'border-l-2' : ''}`}
+                      style={active
+                        ? { background: 'oklch(0.852 0.199 91.936 / 0.12)', color: 'var(--sidebar-primary)', borderLeftColor: 'var(--sidebar-primary)' }
+                        : { color: 'oklch(0.985 0.001 106.423 / 0.6)' }
+                      }
                     >
                       <Icon className="h-4 w-4" strokeWidth={1} />
                       <span className="whitespace-nowrap">{item.name}</span>
@@ -417,7 +423,7 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
 
                   {/* Submenu */}
                   {hasSubmenu && (isExpanded || item.name === 'Design Studio') && (
-                    <div className="ml-6 mt-1 space-y-1 border-l border-border pl-3">
+                    <div className="ml-6 mt-1 space-y-1 border-l pl-3" style={{ borderColor: 'var(--sidebar-border)' }}>
                       {item.submenu!.map((sub) => {
                         let badge = 0;
                         if (sub.name === 'Leads') badge = activeLeadsCount;
@@ -431,10 +437,11 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
                             href={sub.href}
                             onClick={handleLinkClick}
                             className={`flex items-center justify-between px-3 py-1.5 rounded-md text-sm transition-colors
-                              ${isSubActive(sub.href)
-                                ? 'bg-accent text-accent-foreground font-medium'
-                                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                              }`}
+                              ${isSubActive(sub.href) ? 'font-medium border-l-2' : ''}`}
+                            style={isSubActive(sub.href)
+                              ? { background: 'oklch(0.852 0.199 91.936 / 0.12)', color: 'var(--sidebar-primary)', borderLeftColor: 'var(--sidebar-primary)' }
+                              : { color: 'oklch(0.985 0.001 106.423 / 0.5)' }
+                            }
                           >
                             <span className="whitespace-nowrap">{sub.name}</span>
                             {showBadge && (
@@ -455,7 +462,7 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
       </ScrollArea>
 
       {/* User Profile */}
-      <div className={`border-t border-border ${isCollapsed ? 'p-2 flex justify-center' : 'p-4'}`}>
+      <div className={`border-t ${isCollapsed ? 'p-2 flex justify-center' : 'p-4'}`} style={{ borderColor: 'var(--sidebar-border)' }}>
         {isCollapsed ? (
           <Link href="/admin/settings/profile" title={profile?.full_name || 'Profile'}>
             <Avatar className="h-8 w-8">
