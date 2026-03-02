@@ -14,7 +14,6 @@ interface DossierJob {
     job_number: string;
     project_name: string;
     quantity: number;
-    actual_quantity?: number;
     product_category?: string;
     current_stage: string;
     priority: string;
@@ -119,7 +118,7 @@ export default function JobDossierPage() {
         const { data: jobsData, error: jobsErr } = await supabase
             .from('jobs')
             .select(`
-                id, job_number, project_name, quantity, actual_quantity,
+                id, job_number, project_name, quantity,
                 product_category, current_stage, priority, total_amount,
                 payment_status, amount_received, order_date, client_deadline,
                 completed_date, packing_info, invoice_reference, eway_bill_number,
