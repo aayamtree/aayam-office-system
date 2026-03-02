@@ -555,7 +555,7 @@ export default function PrintRunsPage() {
                         <div className="p-4 space-y-4">
                             {/* Specs Grid */}
                             <div className="grid grid-cols-2 gap-3 text-sm">
-                                <div><p className="text-gray-400 text-xs">Status</p><p className="font-medium capitalize">{STATUS_CONFIG[viewRun.status].label}</p></div>
+                                <div><p className="text-gray-400 text-xs">Status</p><p className="font-medium capitalize">{(STATUS_CONFIG[viewRun.status] || DEFAULT_STATUS).label}</p></div>
                                 <div><p className="text-gray-400 text-xs">Created</p><p className="font-medium">{formatDate(viewRun.created_at)}</p></div>
                                 {viewRun.machine_name && <div><p className="text-gray-400 text-xs">Machine</p><p className="font-medium">{viewRun.machine_name}</p></div>}
                                 {(viewRun.sheet_size_label || viewRun.sheet_size) && <div><p className="text-gray-400 text-xs">Sheet Size</p><p className="font-medium">{viewRun.sheet_size_label || viewRun.sheet_size}</p></div>}
