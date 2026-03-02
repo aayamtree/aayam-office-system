@@ -268,8 +268,8 @@ export default function ClientsPage() {
                     {/* Source Badge */}
                     {profile?.role === 'admin' && (
                       <div className="mb-3 pb-3 border-b border-gray-100">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-md ${client.created_by ? 'bg-muted text-foreground' : 'bg-gray-100 text-gray-600'}`}>
-                          {client.created_by ? 'Marketing Team' : 'Existing Client'}
+                        <span className={`px-2 py-1 text-xs font-medium rounded-md ${client.assigned_to ? 'bg-muted text-foreground' : 'bg-gray-100 text-gray-600'}`}>
+                          {client.assigned_to ? 'Marketing Lead' : 'Direct / Admin'}
                         </span>
                       </div>
                     )}
@@ -344,8 +344,8 @@ export default function ClientsPage() {
                     </td>
                     {profile?.role === 'admin' && (
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wide ${client.created_by ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'}`}>
-                          {client.created_by ? 'Marketing' : 'Existing'}
+                        <span className={`px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wide ${client.assigned_to ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                          {client.assigned_to ? 'Marketing' : 'Direct'}
                         </span>
                       </td>
                     )}

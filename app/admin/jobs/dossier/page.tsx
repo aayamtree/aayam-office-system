@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
     Search, FileText, Package, IndianRupee, Clock, CheckCircle,
     AlertTriangle, Loader2, TrendingUp, TrendingDown, Download,
-    RefreshCw, Filter, Calendar
+    RefreshCw, Calendar
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -29,11 +29,17 @@ interface DossierJob {
     client?: { id?: string; company?: string; name?: string };
 }
 
+interface DossierClient {
+    id: string;
+    company?: string;
+    name?: string;
+}
+
 const stageLabel: Record<string, string> = {
     new: 'New', awaiting_admin: 'Pending', designing: 'Designing',
     approval: 'Approval', printing: 'Printing', finishing: 'Finishing',
     quality_check: 'QC', ready: 'Ready', packed: 'Packed',
-    dispatched: 'Dispatched', completed: 'Done', cancelled: 'Cancelled',
+    dispatched: 'Dispatched', delivered: 'Delivered', completed: 'Done', cancelled: 'Cancelled',
 };
 
 const stageColor: Record<string, string> = {
@@ -42,10 +48,15 @@ const stageColor: Record<string, string> = {
     printing: 'bg-gray-800 text-white', finishing: 'bg-cyan-100 text-cyan-700',
     quality_check: 'bg-indigo-100 text-indigo-700', ready: 'bg-green-100 text-green-700',
     packed: 'bg-teal-100 text-teal-700', dispatched: 'bg-gray-200 text-gray-700',
-    completed: 'bg-emerald-100 text-emerald-700', cancelled: 'bg-red-100 text-red-700',
+    delivered: 'bg-emerald-100 text-emerald-700', completed: 'bg-emerald-100 text-emerald-700', cancelled: 'bg-red-100 text-red-700',
 };
 
-const COMPLETED_STAGES = ['dispatched', 'completed'];
+interface PurchaseBill {
+    job_id: string;
+    total_amount: number;
+}
+
+const COMPLETED_STAGES = ['dispatched', 'delivered', 'completed'];
 
 function getPaymentBadge(job: DossierJob) {
     const total = job.total_amount || 0;
@@ -100,6 +111,7 @@ function exportCSV(jobs: DossierJob[], expenses: Record<string, number>) {
 
 export default function JobDossierPage() {
     const [jobs, setJobs] = useState<DossierJob[]>([]);
+    const [allClients, setAllClients] = useState<DossierClient[]>([]);
     const [expenses, setExpenses] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -135,6 +147,16 @@ export default function JobDossierPage() {
 
         if (jobsData) setJobs(jobsData as DossierJob[]);
 
+        // Fetch ALL clients separately (not derived from jobs)
+        try {
+            const { data: clientsData } = await supabase
+                .from('clients')
+                .select('id, company, name')
+                .eq('is_active', true)
+                .order('company', { nullsFirst: false });
+            if (clientsData) setAllClients(clientsData as DossierClient[]);
+        } catch { /* ignore */ }
+
         // Expenses from purchase_bills — isolated so a missing table doesn't break everything
         try {
             const { data: billsData } = await supabase
@@ -152,16 +174,12 @@ export default function JobDossierPage() {
         setLoading(false);
     };
 
-    // Unique clients for the filter dropdown
-    const uniqueClients = useMemo(() => {
-        const seen = new Map<string, string>();
-        jobs.forEach(j => {
-            if (j.client?.id) {
-                seen.set(j.client.id, j.client.company || j.client.name || j.client.id);
-            }
-        });
-        return Array.from(seen.entries()).sort((a, b) => a[1].localeCompare(b[1]));
-    }, [jobs]);
+    // Deduplicated client list from ALL clients (not just from jobs)
+    const clientsForFilter = useMemo(() => {
+        return allClients
+            .map(c => ({ id: c.id, label: c.company || c.name || c.id }))
+            .sort((a, b) => a.label.localeCompare(b.label));
+    }, [allClients]);
 
     // Unique months (based on order_date)
     const uniqueMonths = useMemo(() => {
@@ -292,7 +310,7 @@ export default function JobDossierPage() {
                     onChange={e => setStageFilter(e.target.value)}
                     className="px-3 py-2.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                 >
-                    <option value="completed_dispatched">✅ Completed &amp; Dispatched</option>
+                    <option value="completed_dispatched">✅ Dispatched & Delivered</option>
                     <option value="all">All Stages</option>
                     {Object.entries(stageLabel).map(([key, label]) => (
                         <option key={key} value={key}>{label}</option>
@@ -305,8 +323,8 @@ export default function JobDossierPage() {
                     className="px-3 py-2.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                 >
                     <option value="all">All Clients</option>
-                    {uniqueClients.map(([id, name]) => (
-                        <option key={id} value={id}>{name}</option>
+                    {clientsForFilter.map(({ id, label }: { id: string; label: string }) => (
+                        <option key={id} value={id}>{label}</option>
                     ))}
                 </select>
                 {/* Month */}
