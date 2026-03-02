@@ -71,7 +71,7 @@ export default function LeadsPage() {
         }
     };
 
-    const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [statusFilter, setStatusFilter] = useState<string>('active'); // Default: hide moved/converted leads
     const [showModal, setShowModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -259,7 +259,15 @@ export default function LeadsPage() {
             lead.phone?.includes(s) ||
             (lead.lead_number || '').toLowerCase().includes(s);
 
-        const matchStatus = statusFilter === 'all' || lead.status === statusFilter;
+        // 'active' filter = new + contacted + quotation_shared only (NOT follow_up or converted)
+        const ACTIVE_STATUSES = ['new', 'contacted', 'quotation_shared'];
+        const matchStatus =
+            statusFilter === 'all'
+                ? true
+                : statusFilter === 'active'
+                    ? ACTIVE_STATUSES.includes(lead.status)
+                    : lead.status === statusFilter;
+
         return matchSearch && matchStatus;
     });
 
@@ -344,10 +352,11 @@ export default function LeadsPage() {
                 </div>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-auto min-w-[130px] h-9 text-sm">
-                        <SelectValue placeholder="All Status" />
+                        <SelectValue placeholder="Active Leads" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="active">🟢 Active Leads</SelectItem>
+                        <SelectItem value="all">All Leads</SelectItem>
                         <SelectItem value="new">New</SelectItem>
                         <SelectItem value="contacted">Contacted</SelectItem>
                         <SelectItem value="quotation_shared">Quotation Sent</SelectItem>

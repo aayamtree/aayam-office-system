@@ -33,7 +33,7 @@ export default function MarketingFollowUpsPage() {
   // Local State
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('pending'); // Default: hide quoted follow-ups
   const [showModal, setShowModal] = useState(false);
   const [editingFollowUp, setEditingFollowUp] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -59,8 +59,8 @@ export default function MarketingFollowUpsPage() {
     date: f.follow_up_date ? new Date(f.follow_up_date).toLocaleDateString('en-CA') : '',
     time: f.follow_up_date ? new Date(f.follow_up_date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) : '',
     notes: f.notes || '',
-    status: 'pending',
-    quotation: f.quotation, // Include quotation data
+    status: f.quotation ? 'quoted' : 'pending', // ← Detect quoted follow-ups
+    quotation: f.quotation,
     quotationNumber: f.quotation?.quote_number,
   }));
 
@@ -290,6 +290,16 @@ export default function MarketingFollowUpsPage() {
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
               {followUpTypes.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-auto min-w-[140px] h-9 text-sm">
+              <SelectValue placeholder="Pending" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pending">🟡 Pending</SelectItem>
+              <SelectItem value="all">All Follow-ups</SelectItem>
+              <SelectItem value="quoted">✅ Quoted</SelectItem>
             </SelectContent>
           </Select>
         </div>
