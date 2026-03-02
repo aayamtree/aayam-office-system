@@ -281,6 +281,8 @@ export default function JobDossierPage() {
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         placeholder="Job #, client, product..."
+                        autoComplete="off"
+                        name="dossier-search"
                         className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                     />
                 </div>
