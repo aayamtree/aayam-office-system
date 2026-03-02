@@ -171,7 +171,7 @@ export default function ClientsPage() {
         await updateClient(selectedClient.id, formData);
         logActivity({ userId: profile?.id || '', userName: profile?.full_name || 'Unknown', action: 'UPDATE', module: 'CRM', entityId: selectedClient.id, entityName: formData.name, description: `Updated Client: ${formData.name} (${formData.company || formData.phone})` });
       } else {
-        await createClient({ ...formData, client_type: 'regular', credit_limit: 0, created_by: profile?.id });
+        await createClient({ ...formData, client_type: 'regular', credit_limit: 0, created_by: profile?.id, source: 'direct' } as any);
         logActivity({ userId: profile?.id || '', userName: profile?.full_name || 'Unknown', action: 'CREATE', module: 'CRM', entityName: formData.name, description: `Added Client: ${formData.name} — ${formData.phone}${formData.company ? ` (${formData.company})` : ''}` });
       }
       setShowModal(false);
@@ -268,8 +268,9 @@ export default function ClientsPage() {
                     {/* Source Badge */}
                     {profile?.role === 'admin' && (
                       <div className="mb-3 pb-3 border-b border-gray-100">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-md ${client.assigned_to ? 'bg-muted text-foreground' : 'bg-gray-100 text-gray-600'}`}>
-                          {client.assigned_to ? 'Marketing Lead' : 'Direct / Admin'}
+                        <span className={`px-2 py-1 text-xs font-medium rounded-md ${(client as any).source === 'marketing' ? 'bg-muted text-foreground' : 'bg-gray-100 text-gray-600'
+                          }`}>
+                          {(client as any).source === 'marketing' ? 'Marketing Lead' : 'Direct / Admin'}
                         </span>
                       </div>
                     )}
@@ -344,8 +345,9 @@ export default function ClientsPage() {
                     </td>
                     {profile?.role === 'admin' && (
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wide ${client.assigned_to ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'}`}>
-                          {client.assigned_to ? 'Marketing' : 'Direct'}
+                        <span className={`px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wide ${(client as any).source === 'marketing' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'
+                          }`}>
+                          {(client as any).source === 'marketing' ? 'Marketing' : 'Direct'}
                         </span>
                       </td>
                     )}
