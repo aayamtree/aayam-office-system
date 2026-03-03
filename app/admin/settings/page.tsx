@@ -21,9 +21,10 @@ import DesignersManager from '@/components/settings/DesignersManager';
 import ProductionSettings from './production/page';
 import GoogleDriveSettings from '@/components/settings/GoogleDriveSettings';
 import VendorCategoriesManager from '@/components/settings/VendorCategoriesManager';
+import ProductCategoriesManager from '@/components/settings/ProductCategoriesManager';
 
 export default function UserManagementPage() {
-  const [activeTab, setActiveTab] = useState<'users' | 'designers' | 'production' | 'drive' | 'vendor-categories'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'designers' | 'production' | 'drive' | 'vendor-categories' | 'product-categories'>('users');
 
   // ... (existing state for Users) ...
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -177,6 +178,15 @@ export default function UserManagementPage() {
                 }`}
             >
               Vendor Categories
+            </button>
+            <button
+              onClick={() => setActiveTab('product-categories')}
+              className={`px-3 md:px-4 py-2 rounded-md text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'product-categories'
+                ? 'bg-white text-foreground'
+                : 'text-gray-600 hover:text-gray-800'
+                }`}
+            >
+              Product Categories
             </button>
           </div>
         </div>
@@ -356,6 +366,10 @@ export default function UserManagementPage() {
       ) : activeTab === 'vendor-categories' ? (
         <div className="bg-white p-4 md:p-6 rounded-md border">
           <VendorCategoriesManager />
+        </div>
+      ) : activeTab === 'product-categories' ? (
+        <div className="bg-white p-4 md:p-6 rounded-md border">
+          <ProductCategoriesManager />
         </div>
       ) : (
         <GoogleDriveSettings />
