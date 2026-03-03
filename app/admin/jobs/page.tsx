@@ -23,7 +23,7 @@ import VendorQuickAddModal from '@/components/shared/VendorQuickAddModal';
 import ProductCategoryQuickAdd from '@/components/shared/ProductCategoryQuickAdd';
 import JobTypeQuickAdd from '@/components/shared/JobTypeQuickAdd';
 import { useConfirm } from '@/components/ConfirmModal';
-import { getNextStage, getAdvanceLabel, getStageName, getStageColor } from '@/lib/job-workflow';
+import { getNextStage, getAdvanceLabel, getStageName, getStageColor, getStagesForJobType, normalizeJobType } from '@/lib/job-workflow';
 
 import PriorityQuickAdd from '@/components/shared/PriorityQuickAdd';
 import JobStageQuickAdd from '@/components/shared/JobStageQuickAdd';
@@ -63,14 +63,17 @@ export default function JobsPage() {
   const DEFAULT_STAGES = [
     { id: 'awaiting_admin', name: '⏳ Awaiting Approval', color: 'bg-amber-500', bg_light: 'bg-amber-50', border: 'border-amber-300', order_index: 0, is_active: true },
     { id: 'new', name: 'New', color: 'bg-gray-500', bg_light: 'bg-gray-50', border: 'border-gray-200', order_index: 1, is_active: true },
-    { id: 'designing', name: 'Design', color: 'bg-purple-500', bg_light: 'bg-purple-50', border: 'border-purple-200', order_index: 2, is_active: true },
-    { id: 'approval', name: 'Awaiting Client Approval', color: 'bg-yellow-500', bg_light: 'bg-yellow-50', border: 'border-yellow-200', order_index: 3, is_active: true },
-    { id: 'printing', name: 'Print', color: 'bg-blue-500', bg_light: 'bg-blue-50', border: 'border-blue-200', order_index: 4, is_active: true },
-    { id: 'finishing', name: 'Post Print', color: 'bg-cyan-500', bg_light: 'bg-cyan-50', border: 'border-cyan-200', order_index: 5, is_active: true },
-    { id: 'quality_check', name: 'QC Check', color: 'bg-emerald-500', bg_light: 'bg-emerald-50', border: 'border-emerald-200', order_index: 6, is_active: true },
-    { id: 'ready', name: 'Ready', color: 'bg-indigo-500', bg_light: 'bg-indigo-50', border: 'border-indigo-200', order_index: 7, is_active: true },
-    { id: 'dispatched', name: 'Dispatched', color: 'bg-orange-500', bg_light: 'bg-orange-50', border: 'border-orange-200', order_index: 8, is_active: true },
-    { id: 'delivered', name: 'Delivered', color: 'bg-green-500', bg_light: 'bg-green-50', border: 'border-green-200', order_index: 9, is_active: true },
+    { id: 'file_check', name: 'File Check', color: 'bg-purple-500', bg_light: 'bg-purple-50', border: 'border-purple-200', order_index: 2, is_active: true },
+    { id: 'designing', name: 'Design', color: 'bg-purple-500', bg_light: 'bg-purple-50', border: 'border-purple-200', order_index: 3, is_active: true },
+    { id: 'approval', name: 'Awaiting Client Approval', color: 'bg-yellow-500', bg_light: 'bg-yellow-50', border: 'border-yellow-200', order_index: 4, is_active: true },
+    { id: 'pre_print_qc', name: 'Pre Print QC', color: 'bg-cyan-500', bg_light: 'bg-cyan-50', border: 'border-cyan-200', order_index: 5, is_active: true },
+    { id: 'printing', name: 'Print', color: 'bg-blue-500', bg_light: 'bg-blue-50', border: 'border-blue-200', order_index: 6, is_active: true },
+    { id: 'finishing', name: 'Post Print', color: 'bg-cyan-500', bg_light: 'bg-cyan-50', border: 'border-cyan-200', order_index: 7, is_active: true },
+    { id: 'quality_check', name: 'QC Check', color: 'bg-emerald-500', bg_light: 'bg-emerald-50', border: 'border-emerald-200', order_index: 8, is_active: true },
+    { id: 'ready', name: 'Ready', color: 'bg-indigo-500', bg_light: 'bg-indigo-50', border: 'border-indigo-200', order_index: 9, is_active: true },
+    { id: 'dispatched', name: 'Dispatched', color: 'bg-orange-500', bg_light: 'bg-orange-50', border: 'border-orange-200', order_index: 10, is_active: true },
+    { id: 'delivered', name: 'Delivered', color: 'bg-green-500', bg_light: 'bg-green-50', border: 'border-green-200', order_index: 11, is_active: true },
+    { id: 'cancelled', name: 'Cancelled', color: 'bg-red-500', bg_light: 'bg-red-50', border: 'border-red-200', order_index: 12, is_active: true },
   ];
 
   const DEFAULT_PRIORITIES = [
@@ -578,8 +581,8 @@ export default function JobsPage() {
             )}
             {/* Smart next-stage advance button */}
             {!['awaiting_admin', 'delivered', 'cancelled'].includes(job.current_stage) && (() => {
-              const next = getNextStage(job.job_type, job.current_stage);
-              const label = getAdvanceLabel(job.job_type, job.current_stage);
+              const next = getNextStage(normalizeJobType(job.job_type), job.current_stage);
+              const label = getAdvanceLabel(normalizeJobType(job.job_type), job.current_stage);
               if (!next) return null;
               // Use 'Send to Printer' flow for stages that go to printing
               if (next === 'printing') {
@@ -1064,7 +1067,7 @@ export default function JobsPage() {
                   <label className="block text-sm font-medium mb-1">Current Stage</label>
                   <div className="flex gap-2">
                     <select value={formData.current_stage} onChange={(e) => setFormData({ ...formData, current_stage: e.target.value })} className="flex-1 px-3 py-2 border rounded-md">
-                      {stages.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      {getStagesForJobType(stages, formData.job_type).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
                     <Button
                       type="button"

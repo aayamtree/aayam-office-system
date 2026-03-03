@@ -126,3 +126,60 @@ export const ALL_WORKFLOW_STAGES = [
     'pre_print_qc', 'printing', 'finishing', 'quality_check',
     'ready', 'dispatched', 'delivered', 'cancelled',
 ];
+
+// ─── Label ↔ Enum Mapping ────────────────────────────────────────────────────
+
+/**
+ * Normalise any job type string to a WorkflowJobType enum key.
+ * Handles both DB enum ('print_only') and display labels ('Print Only').
+ * Unknown values fall back to 'design_print'.
+ */
+export function normalizeJobType(jobType: string | undefined): WorkflowJobType {
+    if (!jobType) return 'design_print';
+    const map: Record<string, WorkflowJobType> = {
+        // Enum values
+        print_only: 'print_only',
+        design_only: 'design_only',
+        design_print: 'design_print',
+        // Display labels (from job_types table names)
+        'Print Only': 'print_only',
+        'Design Only': 'design_only',
+        'Design + Print': 'design_print',
+        'Design+Print': 'design_print',
+        'design and print': 'design_print',
+        printing: 'print_only',
+    };
+    return map[jobType] ?? 'design_print';
+}
+
+/** Get the ordered stage IDs for a given job type (any format) */
+export function getWorkflowForJobType(jobType: string | undefined): string[] {
+    return JOB_WORKFLOWS[normalizeJobType(jobType)];
+}
+
+/**
+ * Filter a raw job_stages array (from DB) to only include stages
+ * valid for the given job type, in the correct workflow order.
+ * Always includes 'cancelled' at the end.
+ *
+ * @param stages  - array of stage objects with { id, name, ... }
+ * @param jobType - job type string (enum or label)
+ */
+export function getStagesForJobType(
+    stages: Array<{ id: string; name: string;[key: string]: any }>,
+    jobType: string | undefined
+): Array<{ id: string; name: string;[key: string]: any }> {
+    const flow = getWorkflowForJobType(jobType);
+    const ordered: typeof stages = [];
+    for (const stageId of flow) {
+        const found = stages.find(s => s.id === stageId);
+        if (found) ordered.push(found);
+        else ordered.push({ id: stageId, name: getStageName(stageId) }); // fallback if not in DB yet
+    }
+    // Always add cancelled at the end if it exists
+    const cancelled = stages.find(s => s.id === 'cancelled');
+    if (cancelled && !ordered.find(s => s.id === 'cancelled')) {
+        ordered.push(cancelled);
+    }
+    return ordered;
+}
