@@ -266,7 +266,10 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                         <select
                                             required
                                             value={formData.job_type}
-                                            onChange={(e) => setFormData({ ...formData, job_type: e.target.value as 'print_only' | 'design_only' | 'design_print' })}
+                                            onChange={(e) => {
+                                                const jt = e.target.value as 'print_only' | 'design_only' | 'design_print';
+                                                setFormData({ ...formData, job_type: jt, vendor_id: jt === 'design_only' ? '' : formData.vendor_id });
+                                            }}
                                             className="w-full border-2 border-gray-200 rounded-md px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
                                         >
                                             {JOB_TYPES.map(type => (
@@ -479,31 +482,34 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                             />
                                         </div>
 
-                                        <div>
-                                            <label className="block text-sm font-bold text-gray-700 mb-2">
-                                                Vendor
-                                            </label>
-                                            <div className="flex gap-2">
-                                                <select
-                                                    value={formData.vendor_id}
-                                                    onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })}
-                                                    className="flex-1 border-2 border-gray-200 rounded-md px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
-                                                >
-                                                    <option value="">None</option>
-                                                    {vendors.map(vendor => (
-                                                        <option key={vendor.id} value={vendor.id}>{vendor.name}</option>
-                                                    ))}
-                                                </select>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowVendorQuickAdd(true)}
-                                                    className="px-3 py-3 bg-muted text-foreground rounded-md hover:bg-muted/80 transition-all"
-                                                    title="Add New Vendor"
-                                                >
-                                                    <Plus size={20} />
-                                                </button>
+                                        {/* Vendor — hidden for Design Only */}
+                                        {formData.job_type !== 'design_only' && (
+                                            <div>
+                                                <label className="block text-sm font-bold text-gray-700 mb-2">
+                                                    Vendor
+                                                </label>
+                                                <div className="flex gap-2">
+                                                    <select
+                                                        value={formData.vendor_id}
+                                                        onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })}
+                                                        className="flex-1 border-2 border-gray-200 rounded-md px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
+                                                    >
+                                                        <option value="">None</option>
+                                                        {vendors.map(vendor => (
+                                                            <option key={vendor.id} value={vendor.id}>{vendor.name}</option>
+                                                        ))}
+                                                    </select>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowVendorQuickAdd(true)}
+                                                        className="px-3 py-3 bg-muted text-foreground rounded-md hover:bg-muted/80 transition-all"
+                                                        title="Add New Vendor"
+                                                    >
+                                                        <Plus size={20} />
+                                                    </button>
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

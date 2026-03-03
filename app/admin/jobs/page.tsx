@@ -1021,25 +1021,27 @@ export default function JobsPage() {
                 </select>
               </div>
 
-              {/* Vendor Selection */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Vendor</label>
-                <div className="flex gap-2">
-                  <select value={formData.vendor_id} onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })} className="flex-1 px-3 py-2 border rounded-md">
-                    <option value="">Select Vendor</option>
-                    {vendors.map(v => <option key={v.id} value={v.id}>{v.name} {v.category && `(${v.category})`}</option>)}
-                  </select>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => setShowAddVendorModal(true)}
-                  >
-                    <Plus />
-                    <span className="hidden sm:inline">Add</span>
-                  </Button>
+              {/* Vendor Selection — hidden for Design Only */}
+              {formData.job_type !== 'design_only' && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">Vendor</label>
+                  <div className="flex gap-2">
+                    <select value={formData.vendor_id} onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })} className="flex-1 px-3 py-2 border rounded-md">
+                      <option value="">Select Vendor</option>
+                      {vendors.map(v => <option key={v.id} value={v.id}>{v.name} {v.category && `(${v.category})`}</option>)}
+                    </select>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setShowAddVendorModal(true)}
+                    >
+                      <Plus />
+                      <span className="hidden sm:inline">Add</span>
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
