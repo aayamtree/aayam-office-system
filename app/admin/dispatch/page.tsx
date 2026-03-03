@@ -230,7 +230,12 @@ export default function DispatchPage() {
             </div>
             <div className="p-3">
               <p className="text-gray-500 text-xs mb-0.5">{job.client?.company || job.client?.name}</p>
-              <h3 className="text-gray-900 font-semibold text-sm mb-2 line-clamp-1">{job.project_name}</h3>
+              <h3 className="text-gray-900 font-semibold text-sm mb-1 line-clamp-1">{job.project_name}</h3>
+              {(job as any).product_category && (
+                <span className="inline-block text-[10px] font-bold px-2 py-0.5 mb-2 rounded-md bg-gray-900 text-white tracking-wide">
+                  {(job as any).product_category}
+                </span>
+              )}
               <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
                 <span>Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}</span>
               </div>
@@ -258,7 +263,12 @@ export default function DispatchPage() {
               </div>
               <div className="p-3">
                 <p className="text-gray-500 text-xs mb-0.5">{job.client?.company || job.client?.name}</p>
-                <h3 className="text-gray-900 font-semibold text-sm mb-2 line-clamp-1">{job.project_name}</h3>
+                <h3 className="text-gray-900 font-semibold text-sm mb-1 line-clamp-1">{job.project_name}</h3>
+                {(job as any).product_category && (
+                  <span className="inline-block text-[10px] font-bold px-2 py-0.5 mb-2 rounded-md bg-gray-900 text-white tracking-wide">
+                    {(job as any).product_category}
+                  </span>
+                )}
                 <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
                   <span>Qty: {job.quantity}</span>
                   <span>Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}</span>

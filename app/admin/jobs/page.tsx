@@ -540,6 +540,11 @@ export default function JobsPage() {
             </div>
           )}
           <h4 className="font-semibold text-gray-900 mb-0.5 line-clamp-2 leading-snug text-sm">{job.project_name}</h4>
+          {(job as any).product_category && (
+            <span className="inline-block text-[10px] font-bold px-2 py-0.5 mb-1.5 rounded-md bg-gray-900 text-white tracking-wide">
+              {(job as any).product_category}
+            </span>
+          )}
           <div className="flex items-center gap-1.5 mb-2">
             <Building2 className="w-3.5 h-3.5 text-gray-400" />
             <p className="text-xs text-gray-500 truncate">{job.client?.name || 'No client'}</p>
