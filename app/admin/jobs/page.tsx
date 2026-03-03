@@ -1022,7 +1022,7 @@ export default function JobsPage() {
               </div>
 
               {/* Vendor Selection — hidden for Design Only */}
-              {formData.job_type !== 'design_only' && (
+              {!['design_only', 'Design Only'].includes(formData.job_type) && (
                 <div>
                   <label className="block text-sm font-medium mb-1">Vendor</label>
                   <div className="flex gap-2">
