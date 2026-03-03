@@ -22,17 +22,30 @@ interface PrintJobQueueProps {
     disabledJobIds: Set<string>;
 }
 
-const JOB_TYPES = ['ALL', 'STICKER', 'POUCH', 'BOX', 'BANNER', 'FLEX', 'VINYL', 'LABEL'];
 
 export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: PrintJobQueueProps) {
     const [jobs, setJobs] = useState<PendingJob[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('ALL');
     const [searchTerm, setSearchTerm] = useState('');
+    const [jobTypes, setJobTypes] = useState<string[]>(['ALL']);
 
     useEffect(() => {
         fetchPendingJobs();
+        fetchCategories();
     }, []);
+
+    // Fetch job type filters from product_categories (central source)
+    const fetchCategories = async () => {
+        const { data } = await supabase
+            .from('product_categories')
+            .select('name')
+            .eq('is_active', true)
+            .order('name', { ascending: true });
+        if (data && data.length > 0) {
+            setJobTypes(['ALL', ...data.map((c: any) => c.name.toUpperCase())]);
+        }
+    };
 
     const fetchPendingJobs = async () => {
         try {
@@ -53,7 +66,7 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
     };
 
     const filteredJobs = jobs.filter(job => {
-        const matchesFilter = filter === 'ALL' || job.job_type === filter;
+        const matchesFilter = filter === 'ALL' || (job.job_type || '').toUpperCase() === filter;
         const matchesSearch = job.job_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
             job.client_name?.toLowerCase().includes(searchTerm.toLowerCase());
         return matchesFilter && matchesSearch;
@@ -111,10 +124,10 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                 />
             </div>
 
-            {/* Job Type Filters */}
+            {/* Job Type Filters — sourced from product_categories */}
             <div className="px-4 py-3 border-b border-gray-100">
                 <div className="flex gap-2 flex-wrap">
-                    {JOB_TYPES.map(type => (
+                    {jobTypes.map((type: string) => (
                         <button
                             key={type}
                             onClick={() => setFilter(type)}
