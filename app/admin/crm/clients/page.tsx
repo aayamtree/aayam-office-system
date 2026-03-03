@@ -100,16 +100,21 @@ export default function ClientsPage() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [marketingStaff, setMarketingStaff] = useState<{ id: string; full_name: string }[]>([]);
+  const [marketingStaff, setMarketingStaff] = useState<{ id: string; full_name: string; role: string }[]>([]);
+  const [allProfiles, setAllProfiles] = useState<{ id: string; full_name: string; role: string }[]>([]);
 
-  // Load marketing staff for admin assignment
+  // Load all profiles for 'Added by' traceability + marketing staff for assignment
   useEffect(() => {
     if (profile?.role === 'admin') {
       supabase
         .from('profiles')
-        .select('id, full_name')
-        .eq('role', 'marketing')
-        .then(({ data }) => setMarketingStaff(data || []));
+        .select('id, full_name, role')
+        .order('full_name')
+        .then(({ data }) => {
+          const profiles = data || [];
+          setAllProfiles(profiles);
+          setMarketingStaff(profiles.filter(p => p.role === 'marketing'));
+        });
     }
   }, [profile?.role]);
 
@@ -380,15 +385,28 @@ export default function ClientsPage() {
                       </div>
                     </td>
                     {profile?.role === 'admin' && (
-                      <td className="px-6 py-4">
-                        <div>
-                          <span className={`px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wide ${(client as any).source === 'marketing' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'
+                      <td className="px-4 py-4">
+                        <div className="space-y-0.5">
+                          {/* Source badge */}
+                          <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide ${(client as any).source === 'marketing' ? 'bg-gray-900 text-white' :
+                              (client as any).source === 'referral' ? 'bg-blue-100 text-blue-800' :
+                                (client as any).source === 'walk_in' ? 'bg-green-100 text-green-800' :
+                                  'bg-gray-100 text-gray-600'
                             }`}>
-                            {(client as any).source === 'marketing' ? 'Marketing' : 'Direct'}
+                            {(client as any).source === 'marketing' ? 'Marketing' :
+                              (client as any).source === 'referral' ? 'Referral' :
+                                (client as any).source === 'walk_in' ? 'Walk-in' : 'Direct'}
                           </span>
+                          {/* Marketing person (if sourced via marketing) */}
                           {(client as any).source === 'marketing' && (client as any).assigned_marketing_user_id && (
-                            <p className="text-[11px] text-gray-500 mt-0.5">
-                              {marketingStaff.find(s => s.id === (client as any).assigned_marketing_user_id)?.full_name || '—'}
+                            <p className="text-[11px] text-gray-800 font-semibold">
+                              👤 {allProfiles.find(s => s.id === (client as any).assigned_marketing_user_id)?.full_name || '—'}
+                            </p>
+                          )}
+                          {/* Added by — ALWAYS show so you can trace admin or marketing who created */}
+                          {(client as any).created_by && (
+                            <p className="text-[10px] text-gray-400">
+                              Added by: {allProfiles.find(s => s.id === (client as any).created_by)?.full_name || 'Unknown'}
                             </p>
                           )}
                         </div>
