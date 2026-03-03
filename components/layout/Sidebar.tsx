@@ -208,6 +208,7 @@ const menuItems: MenuItem[] = [
       { name: 'Production Settings', href: '/admin/settings/production' },
       { name: 'Google Drive', href: '/admin/settings/drive' },
       { name: 'Vendor Categories', href: '/admin/settings/vendor-categories' },
+      { name: 'Product Categories', href: '/admin/settings/product-categories' },
       { name: 'System Health', href: '/admin/system-health' },
     ]
   },
