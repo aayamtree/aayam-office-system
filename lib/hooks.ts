@@ -436,7 +436,7 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
       .single();
 
     // Auto-increment revision_count when moving BACK to designing from approval/later stages
-    const revisionTriggerStages = ['approval', 'printing', 'finishing', 'quality_check', 'ready'];
+    const revisionTriggerStages = ['approval', 'pre_print_qc', 'printing', 'finishing', 'quality_check', 'ready'];
     const shouldIncrementRevision = newStage === 'designing' && job?.current_stage && revisionTriggerStages.includes(job.current_stage);
 
     // Update job stage (and revision_count if applicable)

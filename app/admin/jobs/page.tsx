@@ -23,6 +23,7 @@ import VendorQuickAddModal from '@/components/shared/VendorQuickAddModal';
 import ProductCategoryQuickAdd from '@/components/shared/ProductCategoryQuickAdd';
 import JobTypeQuickAdd from '@/components/shared/JobTypeQuickAdd';
 import { useConfirm } from '@/components/ConfirmModal';
+import { getNextStage, getAdvanceLabel, getStageName, getStageColor } from '@/lib/job-workflow';
 
 import PriorityQuickAdd from '@/components/shared/PriorityQuickAdd';
 import JobStageQuickAdd from '@/components/shared/JobStageQuickAdd';
@@ -568,16 +569,30 @@ export default function JobsPage() {
               )}
             </div>
           </div>
-          {/* Hover actions */}
+          {/* Stage Actions */}
           <div className="flex items-center justify-end gap-1 mt-2 pt-1.5 border-t border-gray-100">
             <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleEdit(job); }} title="Edit"><Edit className="w-3.5 h-3.5" /></Button>
             <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleRepeatOrder(job); }} title="Repeat"><Copy className="w-3.5 h-3.5" /></Button>
             {job.current_stage === 'awaiting_admin' && (
               <Button size="sm" onClick={(e) => { e.stopPropagation(); handleApproveDesignerProject(job); }} className="bg-green-600 hover:bg-green-700 text-white text-xs gap-1 h-6 px-2">✅ Approve</Button>
             )}
-            {!['printing', 'finishing', 'quality_check', 'ready', 'dispatched', 'delivered'].includes(job.current_stage) && (
-              <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleOpenSendToPrinter(job); }} title="Send to Printer" className="text-orange-600 hover:text-orange-700"><Send className="w-3.5 h-3.5" /></Button>
-            )}
+            {/* Smart next-stage advance button */}
+            {!['awaiting_admin', 'delivered', 'cancelled'].includes(job.current_stage) && (() => {
+              const next = getNextStage(job.job_type, job.current_stage);
+              const label = getAdvanceLabel(job.job_type, job.current_stage);
+              if (!next) return null;
+              // Use 'Send to Printer' flow for stages that go to printing
+              if (next === 'printing') {
+                return (
+                  <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleOpenSendToPrinter(job); }} title={label} className="text-orange-600 hover:text-orange-700"><Send className="w-3.5 h-3.5" /></Button>
+                );
+              }
+              return (
+                <Button size="sm" onClick={(e) => { e.stopPropagation(); handleStageChange(job.id, next); }} className="text-[10px] h-6 px-2 bg-gray-800 text-white hover:bg-gray-700" title={label}>
+                  <ArrowRight className="w-3 h-3 mr-0.5" />{label.split(' ').slice(1).join(' ')}
+                </Button>
+              );
+            })()}
             <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleAddPayment(job); }} title="Payment"><IndianRupee className="w-3.5 h-3.5" /></Button>
             <Button size="icon" variant="destructive" onClick={(e) => { e.stopPropagation(); handleDelete(job.id); }} title="Delete"><Trash2 className="w-3.5 h-3.5" /></Button>
           </div>

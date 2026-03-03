@@ -24,8 +24,10 @@ const getDesignerStatus = (stage: string) => {
     'new': 'pending',
     'awaiting_admin': 'pending',  // Designer can see but not change stage
     'designing': 'in_progress',
-    'quality_check': 'review', // Internal Review
-    'approval': 'waiting',     // Waiting for Client
+    'file_check': 'in_progress',   // File Check — treat like active work
+    'pre_print_qc': 'review',      // Pre Print QC — internal review
+    'quality_check': 'review',     // Post-print QC
+    'approval': 'waiting',         // Waiting for Client
     'printing': 'completed',   // Ready for Print
     'completed': 'completed',
     'delivered': 'completed'
@@ -122,7 +124,7 @@ export default function DesignerWorkspace() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { jobs, loading: jobsLoading, error: jobsError, updateJobStage, createJob, updateJob, refetch: refetchJobs } = useJobs({
-    filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready', 'delivered'], op: 'in' }],
+    filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'file_check', 'designing', 'approval', 'pre_print_qc', 'printing', 'finishing', 'quality_check', 'ready', 'delivered'], op: 'in' }],
     limit: 200
   });
   const { clients } = useClients();
@@ -290,7 +292,7 @@ export default function DesignerWorkspace() {
   useEffect(() => {
     if (jobs) {
       const mappedTasks = (jobs || [])
-        .filter(job => ['new', 'awaiting_admin', 'designing', 'approval', 'printing', 'finishing', 'completed', 'delivered'].includes(job.current_stage || ''))
+        .filter(job => ['new', 'awaiting_admin', 'file_check', 'designing', 'approval', 'pre_print_qc', 'printing', 'finishing', 'completed', 'delivered'].includes(job.current_stage || ''))
         .map(job => {
           // Resolve Relationships (Manual Join)
           const client = (clients || []).find(c => c.id === job.client_id);

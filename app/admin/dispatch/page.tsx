@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
-import { Package, CheckCircle, Truck, Clock, AlertTriangle, ClipboardCheck, Loader2, X, Camera, MapPin, Building2, Search, FileText } from 'lucide-react';
+import { Package, CheckCircle, Truck, Clock, AlertTriangle, ClipboardCheck, Loader2, X, Camera, MapPin, Building2, Search, FileText, ShieldCheck } from 'lucide-react';
 import { useJobs, useDispatches } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { Job, Dispatch } from '@/types/database';
 import { supabase } from '@/lib/supabase';
+import { getStageName, getStageColor } from '@/lib/job-workflow';
 
 // ─── Transporter vendor ──────────────────────────────────────
 interface TransporterVendor {
@@ -19,7 +20,7 @@ interface TransporterVendor {
 export default function DispatchPage() {
   const { profile } = useAuth();
   const { jobs, loading: jobsLoading, updateJobStage } = useJobs({
-    filter: [{ column: 'current_stage', value: ['quality_check', 'ready'], op: 'in' }],
+    filter: [{ column: 'current_stage', value: ['pre_print_qc', 'quality_check', 'ready'], op: 'in' }],
     orderBy: { column: 'client_deadline', ascending: true }
   });
   const { dispatches, loading: dispatchesLoading, createDispatch } = useDispatches();
@@ -61,6 +62,7 @@ export default function DispatchPage() {
   });
 
   // ─── Derived Data ─────────────────────────────────────────
+  const prePrintQC = jobs.filter(j => j.current_stage === 'pre_print_qc');
   const pendingQC = jobs.filter(j => j.current_stage === 'quality_check');
   const readyToDispatch = jobs.filter(j => j.current_stage === 'ready');
 
@@ -76,9 +78,9 @@ export default function DispatchPage() {
   }).length;
 
   const stats = [
-    { label: 'Pending QC', value: pendingQC.length.toString(), sub: `${pendingQC.length} jobs awaiting QC`, icon: ClipboardCheck, color: 'bg-purple-500' },
+    { label: 'Pre Print QC', value: prePrintQC.length.toString(), sub: `${prePrintQC.length} awaiting file check`, icon: ShieldCheck, color: 'bg-cyan-500' },
+    { label: 'QC & Dispatch', value: pendingQC.length.toString(), sub: `${pendingQC.length} jobs awaiting QC`, icon: ClipboardCheck, color: 'bg-purple-500' },
     { label: 'Ready to Dispatch', value: readyToDispatch.length.toString(), sub: `${readyToDispatch.length} jobs ready`, icon: Package, color: 'bg-primary' },
-    { label: 'Dispatched', value: dispatches.length.toString(), sub: 'All time', icon: Truck, color: 'bg-green-500' },
     { label: 'Delayed', value: delayedCount.toString(), sub: 'Needs attention', icon: AlertTriangle, color: delayedCount > 0 ? 'bg-red-500' : 'bg-gray-300' },
   ];
 
@@ -214,18 +216,64 @@ export default function DispatchPage() {
         </div>
       </div>
 
-      {/* Pending QC & Ready to Dispatch — 3-col card grid */}
+      {/* Pre Print QC + QC & Dispatch + Ready — card grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {pendingQC.length === 0 && readyToDispatch.length === 0 && (
+        {prePrintQC.length === 0 && pendingQC.length === 0 && readyToDispatch.length === 0 && (
           <div className="col-span-full text-center py-10 text-gray-500">No jobs pending QC or dispatch</div>
         )}
+
+        {/* ── Pre Print QC ── */}
+        {prePrintQC.map((job) => (
+          <div key={job.id} className="bg-white rounded-md overflow-hidden border border-cyan-300 hover:shadow-sm transition-all">
+            <div className="bg-cyan-700 px-3 py-2 flex items-center justify-between">
+              <span className="text-white font-semibold text-sm">{job.job_number}</span>
+              <div className="flex items-center gap-1.5">
+                {job.priority === 'urgent' && <span className="text-xs px-2 py-0.5 bg-white/25 rounded-md font-bold text-white uppercase">{job.priority}</span>}
+                <span className="text-white/90 text-xs px-2 py-0.5 bg-white/15 rounded-md font-medium">Pre Print QC</span>
+              </div>
+            </div>
+            <div className="p-3">
+              <p className="text-gray-500 text-xs mb-0.5">{job.client?.company || job.client?.name}</p>
+              <h3 className="text-gray-900 font-semibold text-sm mb-1 line-clamp-1">{job.project_name}</h3>
+              {(job as any).product_category && (
+                <span className="inline-block text-[10px] font-bold px-2 py-0.5 mb-2 rounded-md bg-gray-900 text-white tracking-wide">
+                  {(job as any).product_category}
+                </span>
+              )}
+              <p className="text-xs text-gray-400 mb-1">Type: {job.job_type?.replace(/_/g, ' ') || '—'}</p>
+              <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                <span>Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}</span>
+              </div>
+              <div className="flex gap-2">
+                {/* design_only → deliver after pre_print_qc; print/design_print → go to printing */}
+                {job.job_type === 'design_only' ? (
+                  <button
+                    onClick={() => updateJobStage(job.id, 'delivered')}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+                  >
+                    <CheckCircle className="w-3.5 h-3.5" /> File OK → Deliver
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => updateJobStage(job.id, 'printing')}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-cyan-700 text-white rounded-md text-sm font-medium hover:bg-cyan-800 transition-colors"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" /> File OK → Send to Print
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {/* ── QC & Dispatch ── */}
         {pendingQC.map((job) => (
           <div key={job.id} className="bg-white rounded-md overflow-hidden border border-gray-200 hover:shadow-sm transition-all">
             <div className="bg-gray-700 px-3 py-2 flex items-center justify-between">
               <span className="text-white font-semibold text-sm">{job.job_number}</span>
               <div className="flex items-center gap-1.5">
                 {job.priority === 'urgent' && <span className="text-xs px-2 py-0.5 bg-white/25 rounded-md font-bold text-white uppercase">{job.priority}</span>}
-                <span className="text-white/90 text-xs px-2 py-0.5 bg-white/15 rounded-md font-medium">QC Check</span>
+                <span className="text-white/90 text-xs px-2 py-0.5 bg-white/15 rounded-md font-medium">QC & Dispatch</span>
               </div>
             </div>
             <div className="p-3">
