@@ -683,8 +683,12 @@ export function useLeads() {
         notes: lead.notes,
         is_active: true,
         outstanding_balance: 0,
-        assigned_to: lead.assigned_to || userId,  // Inherit ownership from lead
-        created_by: userId // User who converts
+        assigned_to: lead.assigned_to || userId,
+        created_by: userId,
+        // ✅ Mark as marketing-sourced with full traceability
+        source: 'marketing',
+        assigned_marketing_user_id: lead.assigned_to || userId,
+        source_lead_id: leadId,
       }])
       .select()
       .single();

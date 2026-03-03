@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import {
   Search, Plus, Phone, Mail, MapPin, Hash,
   Edit, Trash2, Eye, X, ArrowLeft, Building2, Loader2,
-  Briefcase, IndianRupee, ExternalLink
+  Briefcase, IndianRupee, ExternalLink, UserCheck
 } from 'lucide-react';
 import { useClients, useJobs } from '@/lib/hooks';
 import { Client } from '@/types/database';
@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useConfirm } from '@/components/ConfirmModal';
 import WhatsAppButton from '@/components/shared/WhatsAppButton';
 import { logActivity } from '@/lib/logActivity';
+import { supabase } from '@/lib/supabase';
 
 // Sub-component: Client Jobs & Financial Summary
 function ClientJobsSection({ clientId }: { clientId: string }) {
@@ -99,9 +100,25 @@ export default function ClientsPage() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [marketingStaff, setMarketingStaff] = useState<{ id: string; full_name: string }[]>([]);
+
+  // Load marketing staff for admin assignment
+  useEffect(() => {
+    if (profile?.role === 'admin') {
+      supabase
+        .from('profiles')
+        .select('id, full_name')
+        .eq('role', 'marketing')
+        .then(({ data }) => setMarketingStaff(data || []));
+    }
+  }, [profile?.role]);
 
   const [formData, setFormData] = useState({
-    name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', is_active: true, brand_name: '',
+    name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat',
+    is_active: true, brand_name: '',
+    // Marketing ownership fields (admin only)
+    source: 'direct' as string,
+    assigned_marketing_user_id: '' as string,
   });
 
   const filteredClients = clients.filter(client => {
@@ -111,16 +128,18 @@ export default function ClientsPage() {
       client.brand_name?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' ? client.is_active : !client.is_active);
 
-    // RBAC: Marketers only see their own clients
+    // RBAC: Marketers only see their own clients (by assignment or creation)
     if (profile?.role === 'marketing') {
-      if (client.created_by !== profile.id) return false;
+      const isAssigned = (client as any).assigned_marketing_user_id === profile.id;
+      const isCreated = client.created_by === profile.id;
+      if (!isAssigned && !isCreated) return false;
     }
 
     return matchesSearch && matchesStatus;
   });
 
   const handleAddNew = () => {
-    setFormData({ name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', is_active: true, brand_name: '' });
+    setFormData({ name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', is_active: true, brand_name: '', source: 'direct', assigned_marketing_user_id: '' });
     setIsEditing(false);
     setSelectedClient(null);
     setShowModal(true);
@@ -138,6 +157,8 @@ export default function ClientsPage() {
       state: client.state || 'Gujarat',
       is_active: client.is_active,
       brand_name: client.brand_name || '',
+      source: (client as any).source || 'direct',
+      assigned_marketing_user_id: (client as any).assigned_marketing_user_id || '',
     });
     setSelectedClient(client);
     setIsEditing(true);
@@ -168,10 +189,25 @@ export default function ClientsPage() {
     setSaving(true);
     try {
       if (isEditing && selectedClient) {
-        await updateClient(selectedClient.id, formData);
+        const updatePayload: any = { ...formData };
+        // Admin can change source + marketing person
+        if (profile?.role === 'admin') {
+          updatePayload.source = formData.source;
+          updatePayload.assigned_marketing_user_id = formData.assigned_marketing_user_id || null;
+        }
+        await updateClient(selectedClient.id, updatePayload);
         logActivity({ userId: profile?.id || '', userName: profile?.full_name || 'Unknown', action: 'UPDATE', module: 'CRM', entityId: selectedClient.id, entityName: formData.name, description: `Updated Client: ${formData.name} (${formData.company || formData.phone})` });
       } else {
-        await createClient({ ...formData, client_type: 'regular', credit_limit: 0, created_by: profile?.id, source: 'direct' } as any);
+        // Auto-set source based on who is creating
+        const isMarketingUser = profile?.role === 'marketing';
+        await createClient({
+          ...formData,
+          client_type: 'regular',
+          credit_limit: 0,
+          created_by: profile?.id,
+          source: isMarketingUser ? 'marketing' : (formData.source || 'direct'),
+          assigned_marketing_user_id: isMarketingUser ? profile.id : (formData.assigned_marketing_user_id || null),
+        } as any);
         logActivity({ userId: profile?.id || '', userName: profile?.full_name || 'Unknown', action: 'CREATE', module: 'CRM', entityName: formData.name, description: `Added Client: ${formData.name} — ${formData.phone}${formData.company ? ` (${formData.company})` : ''}` });
       }
       setShowModal(false);
@@ -345,10 +381,17 @@ export default function ClientsPage() {
                     </td>
                     {profile?.role === 'admin' && (
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wide ${(client as any).source === 'marketing' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'
-                          }`}>
-                          {(client as any).source === 'marketing' ? 'Marketing' : 'Direct'}
-                        </span>
+                        <div>
+                          <span className={`px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wide ${(client as any).source === 'marketing' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                            {(client as any).source === 'marketing' ? 'Marketing' : 'Direct'}
+                          </span>
+                          {(client as any).source === 'marketing' && (client as any).assigned_marketing_user_id && (
+                            <p className="text-[11px] text-gray-500 mt-0.5">
+                              {marketingStaff.find(s => s.id === (client as any).assigned_marketing_user_id)?.full_name || '—'}
+                            </p>
+                          )}
+                        </div>
                       </td>
                     )}
                     <td className="px-6 py-4">
@@ -420,6 +463,47 @@ export default function ClientsPage() {
               </div>
               <div><label className="block text-sm font-medium mb-1 text-gray-700">Address</label><textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" rows={2} /></div>
               <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1 text-gray-700">City</label><input type="text" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" /></div><div><label className="block text-sm font-medium mb-1 text-gray-700">Status</label><select value={formData.is_active ? 'active' : 'inactive'} onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'active' })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div>
+
+              {/* Admin: Source & Marketing Assignment */}
+              {profile?.role === 'admin' && (
+                <div className="border border-gray-200 rounded-md p-3 bg-gray-50 space-y-3">
+                  <p className="text-xs font-bold text-gray-600 uppercase flex items-center gap-1.5">
+                    <UserCheck className="w-3.5 h-3.5" /> Marketing Ownership
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium mb-1 text-gray-600">Source</label>
+                      <select
+                        value={formData.source}
+                        onChange={(e) => {
+                          const newSource = e.target.value;
+                          setFormData({ ...formData, source: newSource, assigned_marketing_user_id: newSource === 'direct' ? '' : formData.assigned_marketing_user_id });
+                        }}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                      >
+                        <option value="direct">Direct / Admin</option>
+                        <option value="marketing">Marketing</option>
+                        <option value="referral">Referral</option>
+                        <option value="walk_in">Walk-in</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1 text-gray-600">Assign to Marketing Person</label>
+                      <select
+                        value={formData.assigned_marketing_user_id}
+                        onChange={(e) => setFormData({ ...formData, assigned_marketing_user_id: e.target.value, source: e.target.value ? 'marketing' : formData.source })}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                        disabled={marketingStaff.length === 0}
+                      >
+                        <option value="">None / Unassigned</option>
+                        {marketingStaff.map(s => (
+                          <option key={s.id} value={s.id}>{s.full_name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="flex gap-3 pt-4"><button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors text-gray-700 font-semibold">Cancel</button><button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors disabled:opacity-50 font-semibold shadow-sm">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{isEditing ? 'Update' : 'Add'}</button></div>
             </form>
           </div>
