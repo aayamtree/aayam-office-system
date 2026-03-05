@@ -677,11 +677,11 @@ td {
 
 /* =============================================
    GLOBAL: Override bg-white & bg-gray-50 → Warm Cream
-   Applies to all pages with hardcoded white/gray backgrounds
+   Covers: bg-white, bg-white/50, bg-white/25, etc.
    ============================================= */
 @layer utilities {
   .bg-white {
-    background-color: #FAF9F5 !important;
+    background-color: rgb(250 249 245 / var(--tw-bg-opacity, 1)) !important;
   }
 
   /* Slightly deeper cream for table headers, hover rows, panels */
@@ -696,4 +696,41 @@ td {
   .hover\:bg-white:hover {
     background-color: #FAF9F5 !important;
   }
+}
+
+/* Direct override for all bg-white/XX opacity variants */
+[class~="bg-white\/10"] {
+  background-color: rgba(250, 249, 245, 0.1) !important;
+}
+
+[class~="bg-white\/15"] {
+  background-color: rgba(250, 249, 245, 0.15) !important;
+}
+
+[class~="bg-white\/20"] {
+  background-color: rgba(250, 249, 245, 0.2) !important;
+}
+
+[class~="bg-white\/25"] {
+  background-color: rgba(250, 249, 245, 0.25) !important;
+}
+
+[class~="bg-white\/50"] {
+  background-color: rgba(250, 249, 245, 0.5) !important;
+}
+
+[class~="bg-white\/60"] {
+  background-color: rgba(250, 249, 245, 0.6) !important;
+}
+
+[class~="bg-white\/75"] {
+  background-color: rgba(250, 249, 245, 0.75) !important;
+}
+
+[class~="bg-white\/80"] {
+  background-color: rgba(250, 249, 245, 0.8) !important;
+}
+
+[class~="bg-white\/90"] {
+  background-color: rgba(250, 249, 245, 0.9) !important;
 }
