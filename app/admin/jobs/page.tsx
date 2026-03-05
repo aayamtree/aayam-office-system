@@ -126,7 +126,12 @@ export default function JobsPage() {
   const [stageFilter, setStageFilter] = useState(searchParams.get('status') || 'all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [clientFilter, setClientFilter] = useState('all');
-  const [viewMode, setViewMode] = useState<'kanban' | 'list'>(searchParams.get('status') ? 'list' : 'kanban');
+  // Auto-default to list on mobile (< lg), kanban on desktop
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>(() => {
+    if (searchParams.get('status')) return 'list';
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) return 'list';
+    return 'kanban';
+  });
 
   const [showModal, setShowModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -781,78 +786,151 @@ export default function JobsPage() {
       {/* List View */}
       {
         viewMode === 'list' && filteredJobs.length > 0 && (
-          <div className="bg-white rounded-md border overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px]">
-                <thead className="bg-white border-b">
-                  <tr>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Job</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Client</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Stage</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Amount</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Deadline</th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {filteredJobs.map((job: Job) => (
-                    <tr key={job.id} className="hover:bg-white cursor-pointer" onClick={() => handleViewDetail(job)}>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-sm text-primary">{job.job_number}</span>
-                          <span className={`text-xs px-2 py-0.5 rounded-md ${getPriorityBadge(job.priority)}`}>{job.priority}</span>
-                          {job.files && job.files.length > 0 && (
-                            <span className="flex items-center gap-0.5 text-gray-600" title={`${job.files.length} file(s)`}>
-                              <Paperclip className="w-3 h-3" />
-                              <span className="text-xs font-bold">{job.files.length}</span>
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm font-medium">{job.project_name}</p>
-                      </td>
-                      <td className="px-4 py-3 text-sm">{job.client?.name || '-'}</td>
-                      <td className="px-4 py-3">
-                        <span className={`text-xs px-2 py-1 rounded-md text-white ${stages.find(s => s.id === job.current_stage)?.color}`}>
-                          {stages.find(s => s.id === job.current_stage)?.name}
+          <div>
+            {/* ── MOBILE: Card rows (< sm) ── */}
+            <div className="sm:hidden space-y-2">
+              {filteredJobs.map((job: Job) => {
+                const overdue = isOverdue(job.client_deadline, job.current_stage);
+                const stageMeta = stages.find(s => s.id === job.current_stage);
+                const next = getNextStage(normalizeJobType(job.job_type), job.current_stage);
+                const advLabel = getAdvanceLabel(normalizeJobType(job.job_type), job.current_stage);
+                return (
+                  <div
+                    key={job.id}
+                    className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+                    onClick={() => handleViewDetail(job)}
+                  >
+                    {/* Top bar: priority colour + job number */}
+                    <div className={`px-3 py-2 flex items-center justify-between ${overdue ? 'bg-red-600' : job.priority === 'urgent' ? 'bg-gray-900' : job.priority === 'high' ? 'bg-gray-800' : 'bg-gray-700'
+                      }`}>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${getPriorityBadge(job.priority || '')}`}>
+                          {(job.priority || 'normal').toUpperCase()}
                         </span>
-                      </td>
-                      <td className="px-4 py-3">
+                        {overdue && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-white/25 text-white">OVERDUE</span>}
+                      </div>
+                      <span className="font-mono text-[11px] font-bold text-white/90">{job.job_number}</span>
+                    </div>
+
+                    {/* Body */}
+                    <div className="px-3 py-2.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 leading-snug truncate">{job.project_name}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <Building2 className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                            <p className="text-xs text-gray-500 truncate">{job.client?.name || 'No client'}</p>
+                          </div>
+                        </div>
+                        {stageMeta && (
+                          <span className={`text-[10px] px-2 py-0.5 rounded-md text-white flex-shrink-0 ${stageMeta.color}`}>
+                            {stageMeta.name}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Payment + Deadline row */}
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
                         <span className={`text-xs px-2 py-0.5 rounded-md ${getPaymentBadge(job.payment_status)}`}>
                           {formatCurrency(job.amount_received)} / {formatCurrency(job.total_amount)}
                         </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
                         {job.client_deadline ? (
-                          <span className={isOverdue(job.client_deadline, job.current_stage) ? 'text-red-600 font-medium' : ''}>
+                          <span className={`flex items-center gap-1 text-xs ${overdue ? 'text-red-600 font-semibold' : 'text-gray-400'
+                            }`}>
+                            <Calendar className="w-3 h-3" />
                             {formatDate(job.client_deadline)}
                           </span>
-                        ) : '-'}
-                      </td>
-                      <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-1">
-                          <Button size="icon" variant="ghost" onClick={() => handleEdit(job)} title="Edit">
-                            <Edit />
+                        ) : null}
+                      </div>
+
+                      {/* Actions row */}
+                      <div className="flex items-center justify-end gap-1 mt-2 pt-1.5 border-t border-gray-100" onClick={e => e.stopPropagation()}>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleEdit(job)} title="Edit"><Edit className="w-3.5 h-3.5" /></Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleRepeatOrder(job)} title="Repeat"><Copy className="w-3.5 h-3.5" /></Button>
+                        {next === 'printing' && (
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-orange-600" onClick={() => handleOpenSendToPrinter(job)} title="Send to Printer"><Send className="w-3.5 h-3.5" /></Button>
+                        )}
+                        {next && next !== 'printing' && (
+                          <Button size="sm" className="h-7 text-[10px] px-2 bg-gray-800 text-white hover:bg-gray-700" onClick={() => handleStageChange(job.id, next)} title={advLabel}>
+                            <ArrowRight className="w-3 h-3 mr-0.5" />{advLabel.split(' ').slice(1).join(' ')}
                           </Button>
-                          <Button size="icon" variant="ghost" onClick={() => handleRepeatOrder(job)} title="Repeat Order">
-                            <Copy />
-                          </Button>
-                          {!['printing', 'finishing', 'quality_check', 'ready', 'dispatched', 'delivered'].includes(job.current_stage) && (
-                            <Button size="icon" variant="ghost" onClick={() => handleOpenSendToPrinter(job)} title="Send to Printer" className="text-orange-600 hover:text-orange-700 hover:bg-orange-50">
-                              <Send />
-                            </Button>
-                          )}
-                          <Button size="icon" variant="ghost" onClick={() => handleAddPayment(job)} title="Add Payment">
-                            <IndianRupee />
-                          </Button>
-                          <Button size="icon" variant="destructive" onClick={() => handleDelete(job.id)} title="Delete">
-                            <Trash2 />
-                          </Button>
-                        </div>
-                      </td>
+                        )}
+                        {job.current_stage === 'awaiting_admin' && (
+                          <Button size="sm" className="h-7 text-[10px] px-2 bg-green-600 text-white hover:bg-green-700" onClick={() => handleApproveDesignerProject(job)}>✅ Approve</Button>
+                        )}
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleAddPayment(job)} title="Payment"><IndianRupee className="w-3.5 h-3.5" /></Button>
+                        <Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => handleDelete(job.id)} title="Delete"><Trash2 className="w-3.5 h-3.5" /></Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ── DESKTOP: Full table (sm+) ── */}
+            <div className="hidden sm:block bg-white rounded-md border overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[800px]">
+                  <thead className="bg-white border-b">
+                    <tr>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Job</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Client</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Stage</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Amount</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Deadline</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y">
+                    {filteredJobs.map((job: Job) => (
+                      <tr key={job.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => handleViewDetail(job)}>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-sm text-primary">{job.job_number}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-md ${getPriorityBadge(job.priority)}`}>{job.priority}</span>
+                            {job.files && job.files.length > 0 && (
+                              <span className="flex items-center gap-0.5 text-gray-600" title={`${job.files.length} file(s)`}>
+                                <Paperclip className="w-3 h-3" />
+                                <span className="text-xs font-bold">{job.files.length}</span>
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm font-medium">{job.project_name}</p>
+                        </td>
+                        <td className="px-4 py-3 text-sm">{job.client?.name || '-'}</td>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs px-2 py-1 rounded-md text-white ${stages.find(s => s.id === job.current_stage)?.color}`}>
+                            {stages.find(s => s.id === job.current_stage)?.name}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs px-2 py-0.5 rounded-md ${getPaymentBadge(job.payment_status)}`}>
+                            {formatCurrency(job.amount_received)} / {formatCurrency(job.total_amount)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {job.client_deadline ? (
+                            <span className={isOverdue(job.client_deadline, job.current_stage) ? 'text-red-600 font-medium' : ''}>
+                              {formatDate(job.client_deadline)}
+                            </span>
+                          ) : '-'}
+                        </td>
+                        <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button size="icon" variant="ghost" onClick={() => handleEdit(job)} title="Edit"><Edit /></Button>
+                            <Button size="icon" variant="ghost" onClick={() => handleRepeatOrder(job)} title="Repeat Order"><Copy /></Button>
+                            {!['printing', 'finishing', 'quality_check', 'ready', 'dispatched', 'delivered'].includes(job.current_stage) && (
+                              <Button size="icon" variant="ghost" onClick={() => handleOpenSendToPrinter(job)} title="Send to Printer" className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"><Send /></Button>
+                            )}
+                            <Button size="icon" variant="ghost" onClick={() => handleAddPayment(job)} title="Add Payment"><IndianRupee /></Button>
+                            <Button size="icon" variant="destructive" onClick={() => handleDelete(job.id)} title="Delete"><Trash2 /></Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )
