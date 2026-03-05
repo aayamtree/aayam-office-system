@@ -221,7 +221,7 @@ button:disabled {
    CARD STYLES
    ============================================= */
 .card {
-  background: white;
+  background: #FAF9F5;
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-gray-200);
   box-shadow: var(--shadow-sm);
@@ -676,11 +676,24 @@ td {
 }
 
 /* =============================================
-   GLOBAL: Override bg-white → Warm Cream
-   Applies to all 50+ pages with hardcoded bg-white
+   GLOBAL: Override bg-white & bg-gray-50 → Warm Cream
+   Applies to all pages with hardcoded white/gray backgrounds
    ============================================= */
 @layer utilities {
   .bg-white {
+    background-color: #FAF9F5 !important;
+  }
+
+  /* Slightly deeper cream for table headers, hover rows, panels */
+  .bg-gray-50 {
+    background-color: #F2F0EA !important;
+  }
+
+  .hover\:bg-gray-50:hover {
+    background-color: #EDE9E0 !important;
+  }
+
+  .hover\:bg-white:hover {
     background-color: #FAF9F5 !important;
   }
 }
