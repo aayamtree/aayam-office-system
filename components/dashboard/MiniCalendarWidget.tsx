@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
@@ -27,8 +27,8 @@ export default function MiniCalendarWidget() {
     const { profile } = useAuth();
     const router = useRouter();
     const [currentMonth, setCurrentMonth] = useState(new Date());
+    const dayDetailRef = useRef<HTMLDivElement>(null);
 
-    // Fetch events for the visible range (full month + overflow days)
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
     const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
@@ -38,8 +38,6 @@ export default function MiniCalendarWidget() {
     const endDate = format(calendarEnd, 'yyyy-MM-dd');
 
     const { events, createEvent, toggleComplete, loading: eventsLoading } = useCalendarEvents(startDate, endDate);
-
-    // Fetch ALL business data via shared utility (role-aware)
     const [businessItems, setBusinessItems] = useState<CalendarItem[]>([]);
 
     useEffect(() => {
@@ -50,18 +48,14 @@ export default function MiniCalendarWidget() {
     }, [startDate, endDate, profile?.id, profile?.role]);
 
     const loading = eventsLoading;
-
-    // Combine personal events + business items
     const isAdmin = profile?.role === 'admin';
+
     const allItems = useMemo(() => {
         const items: CalendarItem[] = [];
-
-        // Personal calendar events (admin sees all, others see own + tagged)
         if (events && profile?.id) {
             const userEvents = isAdmin
                 ? events
                 : events.filter(e => e.user_id === profile.id || (e.tagged_users && e.tagged_users.includes(profile.id)));
-
             userEvents.forEach(e => {
                 items.push({
                     id: `event-${e.id}`,
@@ -75,16 +69,12 @@ export default function MiniCalendarWidget() {
                 });
             });
         }
-
-        // Business items
         items.push(...businessItems);
-
         return items;
     }, [events, profile?.id, isAdmin, businessItems]);
 
     const todayDate = new Date();
 
-    // Build calendar grid (weeks × 7 days)
     const calendarDays = useMemo(() => {
         const days = [];
         let day = calendarStart;
@@ -103,16 +93,67 @@ export default function MiniCalendarWidget() {
         return result;
     }, [calendarDays]);
 
-    // New event modal
     const [showNewEvent, setShowNewEvent] = useState(false);
     const [selectedDate, setSelectedDate] = useState<string>(format(todayDate, 'yyyy-MM-dd'));
 
-    const handleDayClick = (dateStr: string) => {
+    // Desktop: clicking opens new event modal
+    // Mobile: clicking selects date and shows event list below
+    const handleDayClick = (dateStr: string, isMobile: boolean) => {
         setSelectedDate(dateStr);
-        setShowNewEvent(true);
+        if (isMobile) {
+            setTimeout(() => {
+                dayDetailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 50);
+        } else {
+            setShowNewEvent(true);
+        }
     };
 
     const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    // Color dot map: bg-light → solid dot
+    const dotSolid: Record<string, string> = {
+        'bg-amber-100': 'bg-amber-400',
+        'bg-blue-100': 'bg-blue-400',
+        'bg-green-100': 'bg-green-500',
+        'bg-violet-100': 'bg-violet-500',
+        'bg-rose-100': 'bg-rose-400',
+        'bg-orange-100': 'bg-orange-400',
+        'bg-purple-100': 'bg-purple-500',
+        'bg-muted': 'bg-gray-400',
+    };
+
+    const typeLabel = (type: string) => {
+        if (type === 'printrun') return 'Print Run';
+        if (type === 'followup') return 'Follow-up';
+        if (type === 'invoicedue') return 'Invoice Due';
+        return type.charAt(0).toUpperCase() + type.slice(1);
+    };
+
+    // Get up to 3 unique-type dot classes for a date (mobile)
+    const getDayDots = (dateStr: string) => {
+        const dayItems = allItems.filter(e => e.date === dateStr);
+        const seen = new Set<string>();
+        const dots: string[] = [];
+        for (const item of dayItems) {
+            if (!seen.has(item.type) && dots.length < 3) {
+                seen.add(item.type);
+                const bg = item.color.split(' ')[0];
+                dots.push(dotSolid[bg] || 'bg-gray-400');
+            }
+        }
+        return dots;
+    };
+
+    const selectedDayItems = useMemo(() =>
+        allItems.filter(item => item.date === selectedDate),
+        [allItems, selectedDate]
+    );
+
+    const selectedDayEvents = useMemo(() => {
+        if (!events) return [];
+        return events.filter(e => e.start_date === selectedDate);
+    }, [events, selectedDate]);
 
     return (
         <>
@@ -124,28 +165,13 @@ export default function MiniCalendarWidget() {
                             {format(currentMonth, 'MMMM yyyy')}
                         </CardTitle>
                         <div className="flex items-center gap-1">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                            >
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
                                 <ChevronLeft className="h-4 w-4" />
                             </Button>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 text-xs"
-                                onClick={() => setCurrentMonth(new Date())}
-                            >
+                            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setCurrentMonth(new Date())}>
                                 Today
                             </Button>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                            >
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
                                 <ChevronRight className="h-4 w-4" />
                             </Button>
                             <div className="w-px h-5 bg-border mx-1" />
@@ -167,97 +193,180 @@ export default function MiniCalendarWidget() {
                         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-400" /> Lead</span>
                     </div>
                 </CardHeader>
-                <CardContent>
+
+                <CardContent className="px-2 pb-2 sm:px-6 sm:pb-6">
                     {loading ? (
                         <div className="text-sm text-muted-foreground text-center py-8">Loading...</div>
                     ) : (
-                        <div className="w-full">
-                            {/* Weekday Headers */}
-                            <div className="grid grid-cols-7 mb-1">
-                                {weekDays.map(day => (
-                                    <div
-                                        key={day}
-                                        className="text-center text-xs font-medium text-muted-foreground py-2"
-                                    >
-                                        {day}
-                                    </div>
-                                ))}
+                        <>
+                            {/* ══════════════════════════════
+                                DESKTOP GRID (sm+): with text labels
+                            ══════════════════════════════ */}
+                            <div className="hidden sm:block w-full">
+                                <div className="grid grid-cols-7 mb-1">
+                                    {weekDays.map(day => (
+                                        <div key={day} className="text-center text-xs font-medium text-muted-foreground py-2">{day}</div>
+                                    ))}
+                                </div>
+                                <div className="grid grid-cols-7 gap-px bg-border rounded-md overflow-hidden border border-border">
+                                    {weeks.map((week, weekIdx) =>
+                                        week.map((day, dayIdx) => {
+                                            const dateStr = format(day, 'yyyy-MM-dd');
+                                            const dayItems = allItems.filter(e => e.date === dateStr);
+                                            const inCurrentMonth = isSameMonth(day, currentMonth);
+                                            const today = isToday(day);
+                                            return (
+                                                <div
+                                                    key={`d-${weekIdx}-${dayIdx}`}
+                                                    onClick={() => handleDayClick(dateStr, false)}
+                                                    className={`min-h-[72px] md:min-h-[80px] p-1.5 cursor-pointer transition-colors group
+                                                        ${today ? 'bg-gray-100' : inCurrentMonth ? 'bg-background hover:bg-muted/50' : 'bg-muted/30'}`}
+                                                >
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <span className={`text-xs leading-none ${today ? 'bg-foreground text-background rounded-full w-5 h-5 flex items-center justify-center font-bold' : inCurrentMonth ? 'text-foreground font-medium' : 'text-muted-foreground/50'}`}>
+                                                            {format(day, 'd')}
+                                                        </span>
+                                                        {dayItems.length === 0 && <Plus className="h-3 w-3 text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity" />}
+                                                    </div>
+                                                    <div className="space-y-0.5">
+                                                        {dayItems.slice(0, 2).map(item => (
+                                                            <div
+                                                                key={item.id}
+                                                                onClick={e => {
+                                                                    e.stopPropagation();
+                                                                    if (item.type === 'event') {
+                                                                        const eventId = item.id.replace('event-', '');
+                                                                        toggleComplete(eventId, item.status !== 'completed');
+                                                                    } else if (item.link) {
+                                                                        router.push(item.link);
+                                                                    }
+                                                                }}
+                                                                className={`px-1 py-0.5 rounded text-[10px] leading-tight truncate cursor-pointer transition-colors hover:opacity-80 ${item.color}`}
+                                                                title={item.title}
+                                                            >
+                                                                {item.title}
+                                                            </div>
+                                                        ))}
+                                                        {dayItems.length > 2 && (
+                                                            <div className="text-[10px] text-muted-foreground text-center">+{dayItems.length - 2} more</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
                             </div>
 
-                            {/* Calendar Grid */}
-                            <div className="grid grid-cols-7 gap-px bg-border rounded-md overflow-hidden border border-border">
-                                {weeks.map((week, weekIdx) =>
-                                    week.map((day, dayIdx) => {
-                                        const dateStr = format(day, 'yyyy-MM-dd');
-                                        const dayItems = allItems.filter(e => e.date === dateStr);
-                                        const inCurrentMonth = isSameMonth(day, currentMonth);
-                                        const today = isToday(day);
+                            {/* ══════════════════════════════
+                                MOBILE GRID (< sm): compact dots only
+                            ══════════════════════════════ */}
+                            <div className="sm:hidden">
+                                {/* Day headers — single letter */}
+                                <div className="grid grid-cols-7 mb-0.5">
+                                    {weekDays.map(day => (
+                                        <div key={day} className="text-center text-[11px] font-semibold text-muted-foreground py-1.5 uppercase">
+                                            {day.slice(0, 1)}
+                                        </div>
+                                    ))}
+                                </div>
 
-                                        return (
-                                            <div
-                                                key={`${weekIdx}-${dayIdx}`}
-                                                onClick={() => handleDayClick(dateStr)}
-                                                className={`min-h-[72px] md:min-h-[80px] p-1.5 cursor-pointer transition-colors group ${today
-                                                    ? 'bg-gray-100'
-                                                    : inCurrentMonth
-                                                        ? 'bg-background hover:bg-muted/50'
-                                                        : 'bg-muted/30'
-                                                    }`}
-                                            >
-                                                {/* Day Number */}
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <span
-                                                        className={`text-xs leading-none ${today
-                                                            ? 'bg-foreground text-background rounded-full w-5 h-5 flex items-center justify-center font-bold'
-                                                            : inCurrentMonth
-                                                                ? 'text-foreground font-medium'
-                                                                : 'text-muted-foreground/50'
-                                                            }`}
-                                                    >
+                                {/* Compact date cells */}
+                                <div className="grid grid-cols-7">
+                                    {weeks.map((week, weekIdx) =>
+                                        week.map((day, dayIdx) => {
+                                            const dateStr = format(day, 'yyyy-MM-dd');
+                                            const dots = getDayDots(dateStr);
+                                            const inCurrentMonth = isSameMonth(day, currentMonth);
+                                            const today = isToday(day);
+                                            const isSelected = selectedDate === dateStr;
+                                            return (
+                                                <button
+                                                    key={`m-${weekIdx}-${dayIdx}`}
+                                                    onClick={() => handleDayClick(dateStr, true)}
+                                                    className="flex flex-col items-center py-1 focus:outline-none"
+                                                >
+                                                    <span className={`
+                                                        w-8 h-8 flex items-center justify-center rounded-full text-sm font-semibold transition-all
+                                                        ${today && isSelected ? 'bg-foreground text-background'
+                                                            : isSelected ? 'bg-muted text-foreground'
+                                                                : today ? 'bg-foreground text-background'
+                                                                    : inCurrentMonth ? 'text-foreground hover:bg-muted'
+                                                                        : 'text-muted-foreground/40'}
+                                                    `}>
                                                         {format(day, 'd')}
                                                     </span>
-                                                    {dayItems.length === 0 && (
-                                                        <Plus className="h-3 w-3 text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                    )}
-                                                </div>
+                                                    <div className="flex items-center justify-center gap-0.5 h-2 mt-0.5">
+                                                        {dots.map((dotCls, i) => (
+                                                            <span key={i} className={`w-1.5 h-1.5 rounded-full ${dotCls}`} />
+                                                        ))}
+                                                    </div>
+                                                </button>
+                                            );
+                                        })
+                                    )}
+                                </div>
 
-                                                {/* Items */}
-                                                <div className="space-y-0.5">
-                                                    {dayItems.slice(0, 2).map(item => (
-                                                        <div
-                                                            key={item.id}
-                                                            onClick={e => {
-                                                                e.stopPropagation();
-                                                                if (item.type === 'event') {
-                                                                    const eventId = item.id.replace('event-', '');
-                                                                    toggleComplete(eventId, item.status !== 'completed');
-                                                                } else if (item.link) {
-                                                                    router.push(item.link);
-                                                                }
-                                                            }}
-                                                            className={`px-1 py-0.5 rounded text-[10px] leading-tight truncate cursor-pointer transition-colors hover:opacity-80 ${item.color}`}
-                                                            title={item.title}
-                                                        >
-                                                            {item.title}
+                                {/* ── Selected Day Event List (mobile only) ── */}
+                                <div ref={dayDetailRef} className="mt-3 pt-3 border-t border-border scroll-mt-2">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div>
+                                            <p className="text-sm font-bold text-foreground">
+                                                {format(new Date(selectedDate + 'T00:00:00'), 'EEE, d MMM')}
+                                            </p>
+                                            <p className="text-[11px] text-muted-foreground">
+                                                {selectedDayItems.length === 0 ? 'Nothing scheduled' : `${selectedDayItems.length} item${selectedDayItems.length !== 1 ? 's' : ''}`}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => setShowNewEvent(true)}
+                                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-foreground text-background rounded-lg"
+                                        >
+                                            <Plus size={13} /> Add
+                                        </button>
+                                    </div>
+
+                                    {selectedDayItems.length === 0 ? (
+                                        <div className="py-5 text-center text-muted-foreground">
+                                            <Calendar className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                                            <p className="text-xs">Nothing on this day</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {selectedDayItems.map(item => {
+                                                const bgClass = item.color.split(' ')[0];
+                                                const dotColor = dotSolid[bgClass] || 'bg-gray-400';
+                                                return (
+                                                    <div
+                                                        key={item.id}
+                                                        onClick={() => {
+                                                            if (item.type === 'event') {
+                                                                const eventId = item.id.replace('event-', '');
+                                                                toggleComplete(eventId, item.status !== 'completed');
+                                                            } else if (item.link) {
+                                                                router.push(item.link);
+                                                            }
+                                                        }}
+                                                        className="flex items-start gap-2.5 px-3 py-2.5 bg-background rounded-lg border border-border active:bg-muted/50 transition-colors"
+                                                    >
+                                                        <span className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`} />
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-xs font-semibold text-foreground leading-snug truncate">{item.title}</p>
+                                                            <p className="text-[11px] text-muted-foreground mt-0.5">{typeLabel(item.type)}</p>
                                                         </div>
-                                                    ))}
-                                                    {dayItems.length > 2 && (
-                                                        <div className="text-[10px] text-muted-foreground text-center">
-                                                            +{dayItems.length - 2} more
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                )}
+                                                        {item.link && <ChevronRight size={14} className="text-muted-foreground/40 flex-shrink-0 mt-0.5" />}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
+                        </>
                     )}
                 </CardContent>
             </Card>
 
-            {/* New Event Modal */}
             {showNewEvent && (
                 <NewEventModal
                     profile={profile}
