@@ -172,9 +172,13 @@ module.exports = {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			/* Override bg-white → warm cream at build time.
+			   text-white / border-white remain pure white (separate keys). */
+			backgroundColor: {
+				white: '#FAF9F5',
 			}
-		}
+		},
 	},
 	plugins: [require("tailwindcss-animate")],
 }
-
