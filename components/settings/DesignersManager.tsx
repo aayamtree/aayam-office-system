@@ -189,8 +189,23 @@ export default function DesignersManager() {
 
             if (error) throw error;
 
+            // ── Auto-sync: update profiles.full_name to match designer name ──
+            // This ensures Users & Roles, Assign-to dropdowns, and all profile
+            // references show the correct name whenever the directory is updated.
+            if (formData.user_id) {
+                try {
+                    await supabase
+                        .from('profiles')
+                        .update({ full_name: formData.name })
+                        .eq('id', formData.user_id);
+                } catch {
+                    // Non-blocking — designer is saved, profile sync is best-effort
+                }
+            }
+
             toast.success(editingDesigner ? 'Designer updated!' : 'Designer added!');
             await fetchDesigners();
+            await fetchProfiles(); // Refresh profiles too so the UI reflects the sync
             resetForm();
         } catch (error) {
             console.error('Error saving designer:', error);
