@@ -128,7 +128,7 @@ export function MobileBottomNav() {
     return (
         <>
             {/* Bottom Nav Bar - Mobile Only */}
-            <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#FAF9F5] border-t border-gray-200 lg:hidden safe-area-bottom">
+            <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#FAF9F5] border-t border-gray-200 lg:hidden safe-area-bottom [transform:translateZ(0)] [-webkit-transform:translateZ(0)] [backface-visibility:hidden] [-webkit-backface-visibility:hidden]">
                 <div className="flex items-stretch justify-around h-16 px-2">
                     {/* Dynamic Tabs (4 slots) */}
                     {activeTabItems.map(item => {
