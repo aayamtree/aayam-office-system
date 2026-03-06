@@ -86,14 +86,6 @@ export default function QuotationsPage() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      console.log('URL Params:', {
-        new: params.get('new'),
-        clientId: params.get('clientId'),
-        leadId: params.get('leadId'),
-        followUpId: params.get('followUpId'),
-        highlight: params.get('highlight')
-      });
-
       // Handle highlight param — auto-fill search to jump to specific quote
       const highlightQuote = params.get('highlight');
       if (highlightQuote) {
@@ -107,8 +99,6 @@ export default function QuotationsPage() {
         const clientIdParam = params.get('clientId');
         const leadIdParam = params.get('leadId');
         const followUpId = params.get('followUpId');
-
-        console.log('Setting form data:', { clientIdParam, leadIdParam, followUpId });
 
         if (followUpId) {
           setFollowUpIdParam(followUpId);

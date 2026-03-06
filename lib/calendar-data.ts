@@ -18,7 +18,6 @@ async function safeQuery<T>(queryBuilder: any, label?: string): Promise<T[]> {
             console.warn(`[Calendar] ${label || 'query'} failed:`, error.message);
             return [];
         }
-        console.log(`[Calendar] ${label || 'query'}: ${(data ?? []).length} items`);
         return (data ?? []) as T[];
     } catch (e: any) {
         console.warn(`[Calendar] ${label || 'query'} exception:`, e?.message);

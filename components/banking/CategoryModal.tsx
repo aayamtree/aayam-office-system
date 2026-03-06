@@ -29,17 +29,9 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
 
     // Form state - Auto-detect transaction type based on transaction data
     const detectTransactionType = (): 'expense' | 'income' => {
-        // Debug: Log transaction object to see what fields are available
-        console.log('🔍 Transaction object:', transaction);
-        console.log('🔍 transaction_type:', (transaction as any).transaction_type);
-        console.log('🔍 type:', transaction.type);
-        console.log('🔍 amount:', transaction.amount);
-
         // Method 1: Check transaction_type field (outflow/inflow)
         if ('transaction_type' in transaction) {
-            const detectedType = (transaction as any).transaction_type === 'outflow' ? 'expense' : 'income';
-            console.log('✅ Detected from transaction_type:', detectedType);
-            return detectedType;
+            return (transaction as any).transaction_type === 'outflow' ? 'expense' : 'income';
         }
 
         // Method 2: Check type field (debit/credit) 
