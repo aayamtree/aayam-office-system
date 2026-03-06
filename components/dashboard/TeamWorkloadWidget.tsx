@@ -20,7 +20,7 @@ export default function TeamWorkloadWidget() {
     const { designers } = useDesigners();
     const [workloads, setWorkloads] = useState<DesignerWorkload[]>([]);
     const [period, setPeriod] = useState<'week' | 'month'>('week');
-    const [loading, setLoading] = useState(false); // start false — no skeleton flash
+    const [loading, setLoading] = useState(false); // never set to true — no skeleton flash
 
     useEffect(() => {
         if (designers.length > 0) {
@@ -29,7 +29,6 @@ export default function TeamWorkloadWidget() {
     }, [designers, period]);
 
     const fetchWorkload = async () => {
-        setLoading(true);
         try {
             const now = new Date();
             const startDate = new Date();
@@ -90,8 +89,6 @@ export default function TeamWorkloadWidget() {
             setWorkloads(result);
         } catch (error) {
             console.error('Error fetching workload:', error);
-        } finally {
-            setLoading(false);
         }
     };
 

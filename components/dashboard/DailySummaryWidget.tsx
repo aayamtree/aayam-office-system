@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Package, Truck, Palette, AlertTriangle, Clock } from 'lucide-react';
 
@@ -14,7 +15,6 @@ interface DailySummaryWidgetProps {
     initialStats?: Stats;
 }
 
-// Default empty stats — used when no server data is passed
 const EMPTY: Stats = {
     ordersThisMonth: 0,
     pendingDispatches: 0,
@@ -23,8 +23,13 @@ const EMPTY: Stats = {
 };
 
 export default function DailySummaryWidget({ initialStats }: DailySummaryWidgetProps) {
-    // Use server-provided data directly — no client fetch, no loading state
     const stats = initialStats ?? EMPTY;
+    const [dateStr, setDateStr] = useState('');
+
+    // Set date client-side only to avoid server/client hydration mismatch
+    useEffect(() => {
+        setDateStr(new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }));
+    }, []);
 
     const items = [
         {
@@ -60,9 +65,7 @@ export default function DailySummaryWidget({ initialStats }: DailySummaryWidgetP
                     <Clock className="w-4 h-4" />
                     Today&apos;s Summary
                 </h3>
-                <span className="text-xs text-white/50">
-                    {new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}
-                </span>
+                <span className="text-xs text-white/50">{dateStr}</span>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
