@@ -271,15 +271,34 @@ export default function NewProjectPage() {
 
             // Notify admins if designer-created
             if (isDesignerRole) {
-                const message = `🆕 New project "${formData.title}" created by ${profile?.full_name || 'Designer'}. Pricing & approval needed.`;
+                const assignedDesigner = designers?.find((d: any) => d.id === formData.designerId);
+                const assignedName = assignedDesigner?.name || profile?.full_name || 'Designer';
+                const creatorName = profile?.full_name || 'Designer';
+                const isDelegated = assignedDesigner && assignedDesigner.id !== profile?.id;
+
+                // Notify admin
+                const adminMessage = `🆕 New project "${formData.title}" submitted by ${creatorName}${isDelegated ? `, delegated to ${assignedName}` : ''
+                    }. Pricing & approval needed.`;
 
                 try {
                     await supabase.from('broadcast_notifications').insert({
-                        message,
+                        message: adminMessage,
                         priority: 'normal',
                         target_audience: 'admin',
                     });
-                } catch { } // Don't block on notification failure
+                } catch { }
+
+                // Notify the assigned designer if delegated to someone else
+                if (isDelegated && assignedDesigner?.user_id) {
+                    try {
+                        await supabase.from('broadcast_notifications').insert({
+                            message: `📋 ${creatorName} has delegated "${formData.title}" to you. Awaiting admin approval before work begins.`,
+                            priority: 'normal',
+                            target_audience: 'specific',
+                            target_user_id: assignedDesigner.user_id,
+                        });
+                    } catch { }
+                }
             }
 
             toast.error(String(isDesignerRole
@@ -369,52 +388,54 @@ export default function NewProjectPage() {
 
                             <div className="space-y-2">
                                 <Label className="text-sm font-semibold">Assign to</Label>
-                                {isDesignerRole ? (
-                                    // Designer is always assigned to themselves — show a locked badge
-                                    <div className="flex items-center gap-2 px-3 py-2 border rounded-md bg-muted/50">
-                                        <div className="w-7 h-7 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0">
-                                            <span className="text-white text-xs font-bold">
-                                                {profile?.full_name?.charAt(0) || 'M'}
-                                            </span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="text-sm font-semibold text-foreground">{profile?.full_name || 'Me'}</p>
-                                            <p className="text-xs text-muted-foreground">Assigned to you</p>
-                                        </div>
-                                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-md font-medium">You</span>
-                                    </div>
-                                ) : (
-                                    // Admin / other roles — full dropdown with 'Me' first
-                                    <Select
-                                        value={formData.designerId}
-                                        onValueChange={(val) => setFormData(prev => ({ ...prev, designerId: val }))}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select Designer" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {/* Me first */}
-                                            {(() => {
-                                                const me = designers?.find((d: any) => d.id === profile?.id || d.user_id === profile?.id);
-                                                const others = designers?.filter((d: any) => d.id !== profile?.id && d.user_id !== profile?.id);
-                                                return (
-                                                    <>
-                                                        {me && (
-                                                            <SelectItem value={me.id} className="font-semibold">
-                                                                ⭐ {me.name} (Me)
-                                                            </SelectItem>
-                                                        )}
-                                                        {others?.map((d: any) => (
-                                                            <SelectItem key={d.id} value={d.id}>
-                                                                {d.name}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </>
-                                                );
-                                            })()}
-                                        </SelectContent>
-                                    </Select>
-                                )}
+                                <Select
+                                    value={formData.designerId}
+                                    onValueChange={(val) => setFormData(prev => ({ ...prev, designerId: val }))}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select Designer" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {/* Self first — always at top */}
+                                        {(() => {
+                                            const me = designers?.find((d: any) => d.id === profile?.id || d.user_id === profile?.id);
+                                            const others = designers?.filter((d: any) => d.id !== profile?.id && d.user_id !== profile?.id);
+                                            return (
+                                                <>
+                                                    {me && (
+                                                        <SelectItem value={me.id}>
+                                                            <span className="font-semibold">{me.name} (Me)</span>
+                                                        </SelectItem>
+                                                    )}
+                                                    {others && others.length > 0 && (
+                                                        <>
+                                                            <div className="px-2 py-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider border-t mt-1 pt-2">
+                                                                Delegate to
+                                                            </div>
+                                                            {others.map((d: any) => (
+                                                                <SelectItem key={d.id} value={d.id}>
+                                                                    {d.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </>
+                                                    )}
+                                                </>
+                                            );
+                                        })()}
+                                    </SelectContent>
+                                </Select>
+                                {/* Show delegation note if someone else is selected */}
+                                {formData.designerId && (() => {
+                                    const me = designers?.find((d: any) => d.id === profile?.id || d.user_id === profile?.id);
+                                    const isDelegated = me && formData.designerId !== me.id;
+                                    if (!isDelegated) return null;
+                                    const assignedName = designers?.find((d: any) => d.id === formData.designerId)?.name;
+                                    return (
+                                        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1.5 rounded-md">
+                                            📤 Delegating to <strong>{assignedName}</strong> — both you and {assignedName} will be notified on admin approval.
+                                        </p>
+                                    );
+                                })()}
                             </div>
                         </div>
                     </div>
