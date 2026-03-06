@@ -217,9 +217,9 @@ export default function PrintPlannerPage() {
 
             {/* Step 1: Select Jobs */}
             {step === 1 && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    {/* Left: Job Queue (2/3) */}
-                    <div className="lg:col-span-2 h-[calc(100vh-280px)]">
+                <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4">
+                    {/* Job Queue — takes most of the screen on mobile */}
+                    <div className="lg:col-span-2 h-[60vh] lg:h-[calc(100vh-280px)]">
                         <PrintJobQueue
                             key={refreshKey}
                             onAddJob={handleAddJob}
@@ -228,8 +228,8 @@ export default function PrintPlannerPage() {
                         />
                     </div>
 
-                    {/* Right: Selected Jobs Summary (1/3) */}
-                    <div className="h-[calc(100vh-280px)] flex flex-col bg-white rounded-md border border-gray-200">
+                    {/* Selected Jobs — starts compact on mobile, grows with content */}
+                    <div className="flex flex-col bg-white rounded-md border border-gray-200 lg:h-[calc(100vh-280px)]">
                         <div className="p-4 border-b border-gray-200">
                             <div className="flex items-center justify-between">
                                 <h3 className="font-bold text-gray-900">
@@ -258,10 +258,11 @@ export default function PrintPlannerPage() {
                             )}
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                        {/* Job list — scrollable on desktop, natural height on mobile */}
+                        <div className="lg:flex-1 lg:overflow-y-auto p-3 space-y-2">
                             {selectedJobs.length === 0 ? (
-                                <div className="text-center py-12">
-                                    <Package className="mx-auto h-10 w-10 text-gray-200 mb-2" />
+                                <div className="py-6 text-center lg:py-12">
+                                    <Package className="mx-auto h-8 w-8 text-gray-200 mb-2 lg:h-10 lg:w-10" />
                                     <p className="text-sm text-gray-400">Click &quot;Add&quot; on jobs to select them</p>
                                 </div>
                             ) : (
@@ -294,7 +295,7 @@ export default function PrintPlannerPage() {
                                 disabled={selectedJobs.length === 0}
                                 className="w-full py-3 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
-                                Next: Configure UPS & Qty
+                                Next: Configure UPS &amp; Qty
                                 <ArrowRight size={16} />
                             </button>
                         </div>
