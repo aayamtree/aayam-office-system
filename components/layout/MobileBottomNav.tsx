@@ -273,8 +273,8 @@ export function MobileBottomNav() {
                                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-all ${isSelected
                                             ? 'bg-gray-900 text-white'
                                             : isFull
-                                                ? 'bg-gray-50 text-gray-300 cursor-not-allowed'
-                                                : 'bg-[#FAF9F5] text-gray-700 hover:bg-gray-100 border border-gray-100'
+                                                ? 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200 opacity-60'
+                                                : 'bg-[#FAF9F5] text-gray-700 hover:bg-gray-100 border border-gray-200'
                                             }`}
                                     >
                                         <Icon size={18} />
