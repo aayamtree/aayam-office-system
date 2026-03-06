@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -139,8 +139,6 @@ export default function DesignerWorkspace() {
   // UI State
 
 
-  // Daily Briefing State
-  const [showDailyBriefing, setShowDailyBriefing] = useState(false);
 
   /* Admin defaults to team_tasks, designers to board */
   const isAdmin = profile?.role === 'admin';
@@ -184,52 +182,7 @@ export default function DesignerWorkspace() {
     }
   }, [searchParams, router]);
 
-  // Check LocalStorage for Daily Briefing
-  useEffect(() => {
-    // Only check if we have data loaded and valid profile
-    if ((jobs || []).length > 0 && !jobsLoading && profile?.id) {
-      const today = new Date().toISOString().split('T')[0];
-      const lastSeen = localStorage.getItem('daily_briefing_seen_v2_' + profile.id); // Add version or specific key to avoid conflicts
-
-      if (lastSeen !== today) {
-        // Check if there's anything worth showing (due today or overdue)
-        // We need to use "tasks" state which is derived from jobs
-        // But tasks state might not be set instantly in same render cycle as jobs
-        // Safest to rely on `tasks` from state, so add tasks to dependency
-      }
-    }
-  }, [jobs, jobsLoading, profile?.id]);
-
-  // Real check with tasks dependency
-  useEffect(() => {
-    if (tasks.length > 0 && profile?.id) {
-      const today = new Date().toISOString().split('T')[0];
-      const lastSeen = localStorage.getItem('daily_briefing_seen_v2_' + profile.id);
-
-      if (lastSeen !== today) {
-        const relevantTasks = tasks.map(t => {
-          const isMyTask = !t.designerId || t.designerId === profile.id;
-          if (!isMyTask) return null;
-          const active = t.status !== 'completed' && t.status !== 'delivered';
-          const rawDeadline = t.rawDeadline ? t.rawDeadline.split('T')[0] : null;
-          const due = rawDeadline ? rawDeadline <= today : false;
-          return (active && due) ? t : null;
-        }).filter(Boolean);
-
-        if (relevantTasks.length > 0) {
-          setShowDailyBriefing(true);
-        }
-      }
-    }
-  }, [tasks, profile?.id]);
-
-  const handleCloseBriefing = () => {
-    const today = new Date().toISOString().split('T')[0];
-    if (profile?.id) {
-      localStorage.setItem('daily_briefing_seen_v2_' + profile.id, today);
-    }
-    setShowDailyBriefing(false);
-  }
+  // NOTE: Daily Briefing is handled globally by DailyBriefingTrigger in layout.tsx — no duplicate here needed
 
   // Update Priority
   const updatePriority = async (realId: string, priority: string) => {
@@ -238,9 +191,9 @@ export default function DesignerWorkspace() {
     }
   };
 
-  const setView = (view: string) => {
+  const setView = useCallback((view: string) => {
     router.push(`/admin/designers/tasks?view=${view}`);
-  };
+  }, [router]);
 
   // Kanban Columns - Fixed visibility with dark text on light backgrounds
   const kanbanColumns = [
@@ -291,7 +244,7 @@ export default function DesignerWorkspace() {
           const designer = (designers || []).find(d => d.id === job.designer_id);
 
           return {
-            id: parseInt(job.id.substring(0, 8), 16) || Math.floor(Math.random() * 1000000),
+            id: parseInt(job.id.replace(/-/g, '').substring(0, 8), 16) || job.id.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0),
             realId: job.id,
             taskId: job.job_number || 'JOB',
             title: job.project_name,
@@ -332,8 +285,11 @@ export default function DesignerWorkspace() {
     }
   }, [jobs, clients, designers]);
 
-  // --- LOGIC ---
-  const filteredTasks = tasks.filter(task => {
+  // --- LOGIC (memoized to prevent recomputation on every render) ---
+  // Pre-compute myDesignerRecord once instead of inside filteredTasks per-task
+  const myDesignerRecord = useMemo(() => designers.find((d: any) => d.id === profile?.id), [designers, profile?.id]);
+
+  const filteredTasks = useMemo(() => tasks.filter(task => {
     const matchesSearch =
       (task.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (task.clientName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -341,61 +297,66 @@ export default function DesignerWorkspace() {
       (task.productCategory && task.productCategory.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (task.deadline && task.deadline.includes(searchQuery));
 
-    // Team Logic with Admin Special Handling
-    // Since profiles IS the user, designer.id === profile.id (no separate user_id needed)
-    const myDesignerRecord = designers.find((d: any) => d.id === profile?.id);
     const isAssignedToMe = myDesignerRecord ? task.designerId === myDesignerRecord.id : task.designerId === profile?.id;
 
-    // Admin My Queue Logic: Show tasks needing admin attention + unassigned tasks
-    const needsAdminAttention = isAdmin && (
-      !task.designerId || // Unassigned tasks
-      task.current_stage === 'approval' || // Waiting for client approval (admin might need to follow up)
-      (task.rawDeadline && new Date(task.rawDeadline) < new Date() && task.status !== 'completed') // Overdue tasks
-    );
-
-    // View Matching Logic
     let matchesView = false;
     if (activeTab === 'team_tasks') {
-      matchesView = true; // Team view shows all tasks
+      matchesView = true;
     } else if (activeTab === 'my_tasks') {
       if (isAdmin) {
-        matchesView = true; // Admin sees all tasks (Team Queue)
+        matchesView = true;
       } else {
-        matchesView = isAssignedToMe || !task.designerId; // Designers see their tasks + unassigned
+        matchesView = isAssignedToMe || !task.designerId;
       }
     } else {
-      matchesView = true; // Other views (board, timeline, notes) show all
+      matchesView = true;
     }
 
     return matchesSearch && matchesView;
-  });
+  }), [tasks, searchQuery, myDesignerRecord, activeTab, isAdmin, profile?.id]);
 
-  const selectedTask = tasks.find(t => (t.id === selectedTaskId) || (t.realId === selectedTaskId)); // Handle ID mismatch
+  const selectedTask = useMemo(() => tasks.find(t => (t.id === selectedTaskId) || (t.realId === selectedTaskId)), [tasks, selectedTaskId]);
 
-  // Work Summary Stats
-  const thisMonthCount = tasks.filter(t => {
-    const d = new Date(t.createdAt);
+  // All stats memoized — computed once when tasks change, not on every render
+  const { thisMonthCount, lastMonthCount, completedThisWeek, totalRevisions, revisionRate, overdueTasks, inProgressTasks, reviewTasks, doneTasks } = useMemo(() => {
     const now = new Date();
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  }).length;
+    const nowMs = now.getTime();
+    const weekAgoMs = nowMs - 7 * 24 * 60 * 60 * 1000;
+    const thisMonth = now.getMonth();
+    const thisYear = now.getFullYear();
+    const printStages = ['printing', 'finishing', 'quality_check', 'ready', 'delivered'];
 
-  const lastMonthCount = tasks.filter(t => {
-    const d = new Date(t.createdAt);
-    const now = new Date();
-    return d.getMonth() === now.getMonth() - 1 && d.getFullYear() === now.getFullYear();
-  }).length;
+    let _thisMonth = 0, _lastMonth = 0, _completedWeek = 0, _totalRevisions = 0, _withRevisions = 0;
+    const _overdue: any[] = [], _inProgress: any[] = [], _review: any[] = [], _done: any[] = [];
 
+    for (const t of tasks) {
+      const created = t.createdAt ? new Date(t.createdAt) : null;
+      if (created) {
+        const m = created.getMonth(), y = created.getFullYear();
+        if (m === thisMonth && y === thisYear) _thisMonth++;
+        if (m === thisMonth - 1 && y === thisYear) _lastMonth++;
+        if (printStages.includes(t.current_stage || '') && created.getTime() >= weekAgoMs) _completedWeek++;
+      }
+      _totalRevisions += (t.revision_count || 0);
+      if ((t.revision_count || 0) > 0) _withRevisions++;
+      if (t.deadline && new Date(t.deadline).getTime() < nowMs && !printStages.includes(t.current_stage || '')) _overdue.push(t);
+      if (t.status === 'in_progress') _inProgress.push(t);
+      if (t.status === 'review') _review.push(t);
+      if (printStages.includes(t.current_stage || '')) _done.push(t);
+    }
 
-  // Sidebar Stats Helpers
-  const now = new Date();
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const completedThisWeek = tasks.filter(t => ['printing', 'finishing', 'quality_check', 'ready', 'delivered'].includes(t.current_stage || '') && t.createdAt && new Date(t.createdAt) >= weekAgo).length;
-  const totalRevisions = tasks.reduce((sum: number, t: any) => sum + (t.revision_count || 0), 0);
-  const revisionRate = tasks.length > 0 ? Math.round((tasks.filter((t: any) => (t.revision_count || 0) > 0).length / tasks.length) * 100) : 0;
-  const overdueTasks = tasks.filter(t => t.deadline && new Date(t.deadline) < now && !['printing', 'finishing', 'quality_check', 'ready', 'delivered'].includes(t.current_stage || ''));
-  const inProgressTasks = tasks.filter(t => t.status === 'in_progress');
-  const reviewTasks = tasks.filter(t => t.status === 'review');
-  const doneTasks = tasks.filter(t => ['printing', 'finishing', 'quality_check', 'ready', 'delivered'].includes(t.current_stage || ''));
+    return {
+      thisMonthCount: _thisMonth,
+      lastMonthCount: _lastMonth,
+      completedThisWeek: _completedWeek,
+      totalRevisions: _totalRevisions,
+      revisionRate: tasks.length > 0 ? Math.round((_withRevisions / tasks.length) * 100) : 0,
+      overdueTasks: _overdue,
+      inProgressTasks: _inProgress,
+      reviewTasks: _review,
+      doneTasks: _done,
+    };
+  }, [tasks]);
 
   // --- ACTIONS ---
   // Create Task (Now actually creates a JOB via hook if we unwired it, but for now mock action on local state is removed/replaced?)
@@ -559,7 +520,6 @@ export default function DesignerWorkspace() {
 
   return (
     <>
-      {showDailyBriefing && <DailyBriefingModal tasks={tasks.filter(t => !t.designerId || t.designerId === profile?.id)} onClose={handleCloseBriefing} userName={profile?.full_name?.split(' ')[0] || ''} />}
 
       <div className="flex flex-col md:flex-row bg-gray-50 md:h-[calc(100vh-4rem)] md:overflow-hidden h-auto overflow-y-auto">
 
@@ -717,8 +677,8 @@ export default function DesignerWorkspace() {
                       <div className="col-span-8 px-2 relative h-full flex items-center">
                         {/* Track */}
                         <div className="w-full h-2 bg-gray-100 rounded-full relative overflow-hidden">
-                          {/* Bar */}
-                          <div className={`h-full rounded-full ${isOverdue ? 'bg-red-500' : 'bg-muted0'}`} style={{ width: Math.random() * 60 + 20 + '%' }}></div>
+                          {/* Bar — deterministic progress based on actual dates, NOT Math.random() */}
+                          <div className={`h-full rounded-full ${isOverdue ? 'bg-red-500' : 'bg-gray-700'}`} style={{ width: (() => { const s = new Date(task.createdAt).getTime(); const e = task.rawDeadline ? new Date(task.rawDeadline).getTime() : Date.now() + 86400000; const elapsed = Math.max(0, Date.now() - s); const total = Math.max(e - s, 86400000); return Math.min(100, Math.round((elapsed / total) * 100)) + '%'; })() }}></div>
                         </div>
                         {/* Deadline Tooltip */}
                         <div className="absolute right-0 text-xs font-bold text-gray-400">
