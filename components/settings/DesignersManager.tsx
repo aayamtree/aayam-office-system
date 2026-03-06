@@ -132,7 +132,7 @@ export default function DesignersManager() {
 
     const totalDesigners = designers.length;
     const activeDesigners = designers.filter(d => d.is_active).length;
-    const linkedDesigners = designers.filter(d => d.user_id).length;
+    const freelanceDesigners = designers.filter(d => d.employment_type === 'freelance').length;
 
     const filteredDesigners = designers.filter(designer => {
         const matchesSearch = designer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -143,14 +143,6 @@ export default function DesignersManager() {
         return matchesSearch && matchesStatus && matchesSkill;
     });
 
-    // Get the linked profile for a designer
-    const getLinkedProfile = (userId?: string) =>
-        userId ? profiles.find(p => p.id === userId) : null;
-
-    // Which profiles are already linked to another designer (to prevent double-linking)
-    const usedUserIds = new Set(
-        designers.filter(d => d.id !== editingDesigner?.id && d.user_id).map(d => d.user_id!)
-    );
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -274,7 +266,7 @@ export default function DesignersManager() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
                 <div>
                     <h2 className="text-page-title text-gray-900">Designers Directory</h2>
-                    <p className="text-sm text-gray-500">{activeDesigners} active · {linkedDesigners} linked to user accounts</p>
+                    <p className="text-sm text-gray-500">{activeDesigners} active · {totalDesigners} total</p>
                 </div>
                 <button onClick={() => { resetForm(); setShowModal(true); }}
                     className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-md hover:bg-primary/90 transition-colors">
@@ -297,27 +289,15 @@ export default function DesignersManager() {
                     <div><p className="text-xs text-gray-500">Full-time</p><p className="text-section">{designers.filter(d => d.employment_type === 'full-time').length}</p></div>
                 </div>
                 <div className="bg-white p-3 rounded-md border flex items-center gap-3">
-                    <div className="p-2 bg-indigo-100 rounded-md text-indigo-600"><UserCheck size={18} /></div>
-                    <div><p className="text-xs text-gray-500">Linked</p><p className="text-section">{linkedDesigners}/{totalDesigners}</p></div>
+                    <div className="p-2 bg-purple-100 rounded-md text-purple-600"><Briefcase size={18} /></div>
+                    <div><p className="text-xs text-gray-500">Freelance</p><p className="text-section">{freelanceDesigners}</p></div>
                 </div>
             </div>
 
-            {/* Unlinked warning */}
-            {linkedDesigners < activeDesigners && (
-                <div className="flex items-start gap-2 px-4 py-3 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-800">
-                    <AlertCircle size={16} className="shrink-0 mt-0.5 text-amber-500" />
-                    <span>
-                        <strong>{activeDesigners - linkedDesigners} designer{activeDesigners - linkedDesigners > 1 ? 's' : ''}</strong> not linked to a user account.
-                        Their <strong>My Queue</strong> will not auto-filter and they won&apos;t receive task notifications.
-                        Click <strong>Edit</strong> to link them.
-                    </span>
-                </div>
-            )}
 
             {/* Cards Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2 md:gap-4">
                 {filteredDesigners.map(designer => {
-                    const linkedProfile = getLinkedProfile(designer.user_id);
                     return (
                         <div key={designer.id} className="bg-white rounded-md overflow-hidden border border-gray-200 transition-shadow group">
                             {/* Dark header */}
@@ -341,27 +321,19 @@ export default function DesignersManager() {
                             <div className="p-3 space-y-2">
                                 <div className="space-y-1 text-sm text-gray-600">
                                     <div className="flex items-center gap-2"><Phone size={13} className="text-gray-400" /> {designer.phone}</div>
-                                    {designer.email && <div className="flex items-center gap-2"><Mail size={13} className="text-gray-400" /> {designer.email}</div>}
+                                    {designer.email && <div className="flex items-center gap-2 text-xs text-gray-400"><Mail size={13} className="text-gray-300" /> {designer.email}</div>}
                                 </div>
 
                                 <div className="flex flex-wrap gap-1 h-6 overflow-hidden">
                                     {designer.skills?.slice(0, 3).map(s => <span key={s} className="text-xs bg-gray-100 px-2 py-0.5 rounded-md text-gray-600">{s}</span>)}
                                 </div>
 
-                                {/* Linked user account */}
-                                {linkedProfile ? (
-                                    <div className="flex items-center gap-2 px-2 py-1.5 bg-green-50 border border-green-200 rounded-md">
-                                        <UserCheck size={13} className="text-green-600 shrink-0" />
-                                        <span className="text-xs text-green-700 font-medium">{linkedProfile.full_name}</span>
-                                        <span className="text-[10px] text-green-500 ml-auto">{linkedProfile.email}</span>
-                                    </div>
-                                ) : (
-                                    <button onClick={() => handleEdit(designer)}
-                                        className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 bg-amber-50 border border-dashed border-amber-300 rounded-md hover:border-amber-500 transition-colors">
-                                        <Link size={12} className="text-amber-500" />
-                                        <span className="text-xs text-amber-600 font-medium">Link user account</span>
-                                    </button>
-                                )}
+                                {/* System user badge — profile IS the user */}
+                                <div className="flex items-center gap-2 px-2 py-1.5 bg-green-50 border border-green-200 rounded-md">
+                                    <UserCheck size={13} className="text-green-600 shrink-0" />
+                                    <span className="text-xs text-green-700 font-medium">System User</span>
+                                    <span className="text-[10px] text-green-500 ml-auto truncate">{designer.email}</span>
+                                </div>
 
                                 <div className="pt-2 border-t flex justify-between items-center text-sm">
                                     <span className="text-gray-500">Rate: <span className="text-gray-900 font-bold">{formatCurrency(designer.hourly_rate)}/hr</span></span>
@@ -408,28 +380,6 @@ export default function DesignersManager() {
                                 <div><label className="text-xs font-bold text-gray-500 mb-1 block">Monthly Salary</label><input type="number" className="w-full border rounded-md p-2 text-sm" value={formData.monthly_salary} onChange={e => setFormData({ ...formData, monthly_salary: +e.target.value })} /></div>
                             </div>
 
-                            {/* ── USER ACCOUNT LINK ── */}
-                            <div className="bg-blue-50 border border-blue-200 rounded-md p-3 space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <UserCheck size={14} className="text-blue-600" />
-                                    <label className="text-xs font-bold text-blue-700">Link to User Account</label>
-                                </div>
-                                <select
-                                    className="w-full border border-blue-200 rounded-md p-2 text-sm bg-white"
-                                    value={formData.user_id}
-                                    onChange={e => setFormData({ ...formData, user_id: e.target.value })}
-                                >
-                                    <option value="">— Not linked —</option>
-                                    {profiles.filter(p => !usedUserIds.has(p.id) || p.id === formData.user_id).map(p => (
-                                        <option key={p.id} value={p.id}>
-                                            {p.full_name} ({p.email}) — {p.role}
-                                        </option>
-                                    ))}
-                                </select>
-                                <p className="text-xs text-blue-600">
-                                    Linking enables <strong>My Queue</strong> auto-filter, task notifications, and system-wide identity matching.
-                                </p>
-                            </div>
 
                             {/* Skills */}
                             <div>
@@ -467,7 +417,6 @@ export default function DesignersManager() {
 
             {/* Detail Modal */}
             {showDetailModal && selectedDesigner && (() => {
-                const linkedProfile = getLinkedProfile(selectedDesigner.user_id);
                 return (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                         <div className="bg-white rounded-md w-full max-w-md relative overflow-hidden">
@@ -488,16 +437,12 @@ export default function DesignersManager() {
                                     {selectedDesigner.city && <p className="flex items-center gap-2"><MapPin size={14} /> {selectedDesigner.city}, {selectedDesigner.state}</p>}
                                 </div>
 
-                                {/* Linked user account */}
-                                <div className={`flex items-center gap-3 px-3 py-2.5 rounded-md border ${linkedProfile ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
-                                    <UserCheck size={16} className={linkedProfile ? 'text-green-600' : 'text-amber-500'} />
+                                {/* Profile is the user — show email directly */}
+                                <div className="flex items-center gap-3 px-3 py-2.5 rounded-md border bg-green-50 border-green-200">
+                                    <UserCheck size={16} className="text-green-600" />
                                     <div>
-                                        <p className="text-xs font-bold text-gray-600">User Account</p>
-                                        {linkedProfile ? (
-                                            <p className="text-sm font-medium text-green-700">{linkedProfile.full_name} <span className="text-xs text-green-500">({linkedProfile.email})</span></p>
-                                        ) : (
-                                            <p className="text-sm text-amber-600">Not linked — edit to connect</p>
-                                        )}
+                                        <p className="text-xs font-bold text-gray-600">System Login</p>
+                                        <p className="text-sm font-medium text-green-700">{selectedDesigner.email}</p>
                                     </div>
                                 </div>
 
