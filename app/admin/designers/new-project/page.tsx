@@ -369,22 +369,52 @@ export default function NewProjectPage() {
 
                             <div className="space-y-2">
                                 <Label className="text-sm font-semibold">Assign to</Label>
-                                <Select
-                                    value={formData.designerId}
-                                    onValueChange={(val) => setFormData(prev => ({ ...prev, designerId: val }))}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select Designer" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {designers?.map((d: any) => (
-                                            <SelectItem key={d.id} value={d.id}>
-                                                {d.name}
-                                                {(d.id === profile?.id || d.user_id === profile?.id) ? ' (You)' : ''}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                {isDesignerRole ? (
+                                    // Designer is always assigned to themselves — show a locked badge
+                                    <div className="flex items-center gap-2 px-3 py-2 border rounded-md bg-muted/50">
+                                        <div className="w-7 h-7 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0">
+                                            <span className="text-white text-xs font-bold">
+                                                {profile?.full_name?.charAt(0) || 'M'}
+                                            </span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-sm font-semibold text-foreground">{profile?.full_name || 'Me'}</p>
+                                            <p className="text-xs text-muted-foreground">Assigned to you</p>
+                                        </div>
+                                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-md font-medium">You</span>
+                                    </div>
+                                ) : (
+                                    // Admin / other roles — full dropdown with 'Me' first
+                                    <Select
+                                        value={formData.designerId}
+                                        onValueChange={(val) => setFormData(prev => ({ ...prev, designerId: val }))}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select Designer" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {/* Me first */}
+                                            {(() => {
+                                                const me = designers?.find((d: any) => d.id === profile?.id || d.user_id === profile?.id);
+                                                const others = designers?.filter((d: any) => d.id !== profile?.id && d.user_id !== profile?.id);
+                                                return (
+                                                    <>
+                                                        {me && (
+                                                            <SelectItem value={me.id} className="font-semibold">
+                                                                ⭐ {me.name} (Me)
+                                                            </SelectItem>
+                                                        )}
+                                                        {others?.map((d: any) => (
+                                                            <SelectItem key={d.id} value={d.id}>
+                                                                {d.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </>
+                                                );
+                                            })()}
+                                        </SelectContent>
+                                    </Select>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -668,11 +698,11 @@ export default function NewProjectPage() {
 
                     {/* Info Banner for Designers */}
                     {isDesignerRole && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-md p-4 flex items-start gap-3">
-                            <Info size={18} className="text-blue-600 shrink-0 mt-0.5" />
+                        <div className="bg-amber-50 border border-amber-200 rounded-md p-4 flex items-start gap-3">
+                            <Info size={18} className="text-amber-600 shrink-0 mt-0.5" />
                             <div>
-                                <p className="text-sm font-semibold text-blue-900">Admin Approval Required</p>
-                                <p className="text-xs text-blue-700 mt-0.5">
+                                <p className="text-sm font-semibold text-amber-900">Admin Approval Required</p>
+                                <p className="text-xs text-amber-700 mt-0.5">
                                     This project will be sent to admin for pricing and approval. You can start work only after admin confirms.
                                 </p>
                             </div>
