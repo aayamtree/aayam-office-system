@@ -127,7 +127,39 @@ export default function VendorsPage() {
     return found?.color || 'bg-gray-100 text-gray-700';
   };
 
-  if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /><span className="ml-2">Loading...</span></div>;
+  if (loading) return (
+    <div className="space-y-3">
+      {/* Mobile card skeletons */}
+      <div className="lg:hidden space-y-3">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="bg-white rounded-md overflow-hidden border border-gray-100 animate-pulse">
+            <div className="h-14 bg-gray-300" />
+            <div className="p-4 space-y-2">
+              <div className="h-4 w-2/3 bg-gray-200 rounded" />
+              <div className="h-3 w-1/2 bg-gray-200 rounded" />
+              <div className="flex justify-between pt-3 border-t border-gray-100">
+                <div className="h-5 w-16 bg-gray-200 rounded" />
+                <div className="flex gap-1">{[1, 2, 3, 4].map(j => <div key={j} className="h-8 w-8 bg-gray-200 rounded" />)}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* Desktop table skeleton */}
+      <div className="hidden lg:block bg-white rounded-md border overflow-hidden animate-pulse">
+        <div className="h-10 bg-gray-50 border-b" />
+        {[1, 2, 3, 4, 5].map(i => (
+          <div key={i} className="flex gap-6 px-6 py-4 border-b items-center">
+            <div className="flex items-center gap-3 flex-1"><div className="h-10 w-10 bg-gray-200 rounded-full" /><div className="space-y-1"><div className="h-4 w-28 bg-gray-200 rounded" /><div className="h-3 w-20 bg-gray-200 rounded" /></div></div>
+            <div className="h-4 w-24 bg-gray-200 rounded" />
+            <div className="h-5 w-20 bg-gray-200 rounded" />
+            <div className="h-5 w-16 bg-gray-200 rounded" />
+            <div className="flex gap-1 ml-auto">{[1, 2, 3, 4].map(j => <div key={j} className="h-8 w-8 bg-gray-200 rounded" />)}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-2 md:space-y-4 lg:space-y-6">

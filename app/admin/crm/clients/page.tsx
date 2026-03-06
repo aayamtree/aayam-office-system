@@ -224,7 +224,42 @@ export default function ClientsPage() {
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /><span className="ml-2">Loading...</span></div>;
+  if (loading) return (
+    <div className="space-y-3 px-2">
+      {/* Mobile card skeletons */}
+      <div className="lg:hidden space-y-3">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="bg-white rounded-md overflow-hidden border border-gray-200 animate-pulse">
+            <div className="h-10 bg-gray-700" />
+            <div className="p-3 space-y-2">
+              <div className="h-3 w-1/3 bg-gray-200 rounded" />
+              <div className="h-4 w-1/2 bg-gray-200 rounded" />
+              <div className="h-3 w-1/4 bg-gray-200 rounded" />
+              <div className="flex gap-2 pt-2">
+                <div className="flex-1 h-8 bg-gray-200 rounded" />
+                <div className="h-8 w-8 bg-gray-200 rounded" />
+                <div className="h-8 w-8 bg-gray-200 rounded" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* Desktop table skeleton */}
+      <div className="hidden lg:block bg-white rounded-md border overflow-hidden animate-pulse">
+        <div className="h-12 bg-gray-50 border-b" />
+        {[1, 2, 3, 4, 5, 6].map(i => (
+          <div key={i} className="flex gap-6 px-6 py-4 border-b items-center">
+            <div className="flex items-center gap-3 flex-1"><div className="h-10 w-10 bg-gray-200 rounded-full" /><div className="space-y-1"><div className="h-4 w-28 bg-gray-200 rounded" /><div className="h-3 w-20 bg-gray-200 rounded" /></div></div>
+            <div className="h-4 w-20 bg-gray-200 rounded" />
+            <div className="h-4 w-24 bg-gray-200 rounded" />
+            <div className="h-4 w-16 bg-gray-200 rounded" />
+            <div className="h-5 w-14 bg-gray-200 rounded" />
+            <div className="flex gap-1 ml-auto">{[1, 2, 3].map(j => <div key={j} className="h-8 w-8 bg-gray-200 rounded" />)}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 px-2 animate-fade-in">
