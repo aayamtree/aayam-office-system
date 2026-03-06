@@ -252,7 +252,14 @@ export default function QuickNotesWidget() {
 
                 {/* Notes List */}
                 {loading ? (
-                    <div className="text-sm text-muted-foreground text-center py-6">Loading...</div>
+                    <div className="space-y-2">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="p-2.5 rounded-md border bg-amber-50/40 border-amber-100 animate-pulse space-y-1.5">
+                                <div className="h-2.5 bg-amber-100 rounded w-5/6" />
+                                <div className="h-2 bg-amber-100/60 rounded w-1/3" />
+                            </div>
+                        ))}
+                    </div>
                 ) : displayNotes.length === 0 ? (
                     <div className="text-center py-6">
                         <StickyNote className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />

@@ -47,8 +47,13 @@ export default function InvoicePendingWidget() {
     }, []);
 
     if (loading) return (
-        <div className="h-full flex items-center justify-center bg-white border rounded-md">
-            <span className="text-sm text-muted-foreground">Loading invoices...</span>
+        <div className="h-full bg-white border rounded-md p-4 space-y-3">
+            {[1, 2, 3].map(i => (
+                <div key={i} className="bg-gray-50 rounded-lg p-3 space-y-2 animate-pulse">
+                    <div className="h-3 w-24 bg-gray-200 rounded" />
+                    <div className="h-2.5 w-36 bg-gray-100 rounded" />
+                </div>
+            ))}
         </div>
     );
     if (jobs.length === 0) return (

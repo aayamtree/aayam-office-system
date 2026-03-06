@@ -408,7 +408,7 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
 
             {/* ── Daily Summary + Team Workload + Sales Performance ── */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {isVisible('daily-summary') && <GlobalErrorBoundary><DailySummaryWidget /></GlobalErrorBoundary>}
+                {isVisible('daily-summary') && <GlobalErrorBoundary><DailySummaryWidget initialStats={dashboardStats} /></GlobalErrorBoundary>}
                 {isVisible('team-workload') && <GlobalErrorBoundary><TeamWorkloadWidget /></GlobalErrorBoundary>}
 
                 {isVisible('sales-perf') && (

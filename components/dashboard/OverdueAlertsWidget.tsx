@@ -126,8 +126,14 @@ export default function OverdueAlertsWidget() {
 
     if (loading) {
         return (
-            <div className="bg-white rounded-md border border-gray-100 p-4">
-                <div className="h-32 animate-pulse bg-gray-50 rounded-lg"></div>
+            <div className="bg-white rounded-md border border-gray-100 p-4 space-y-2">
+                <div className="flex items-center gap-2 mb-3">
+                    <div className="w-4 h-4 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-3 w-24 bg-gray-200 rounded animate-pulse" />
+                </div>
+                {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="h-12 rounded-md bg-gray-50 border border-gray-100 animate-pulse" />
+                ))}
             </div>
         );
     }

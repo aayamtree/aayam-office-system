@@ -1,44 +1,54 @@
 'use client';
 
 import Link from 'next/link';
-import { useDashboardStats } from '@/lib/hooks';
 import { Package, Truck, Palette, AlertTriangle, Clock } from 'lucide-react';
 
-export default function DailySummaryWidget() {
-    const { stats, loading } = useDashboardStats();
+interface Stats {
+    ordersThisMonth: number;
+    pendingDispatches: number;
+    pipeline: Record<string, number>;
+    todaysFocus: { jobsDue: number; jobsDelayed: number; jobsCompleted: number; paymentsDue: number };
+}
 
-    // Use data already computed by dashboard stats — no extra queries
+interface DailySummaryWidgetProps {
+    initialStats?: Stats;
+}
+
+// Default empty stats — used when no server data is passed
+const EMPTY: Stats = {
+    ordersThisMonth: 0,
+    pendingDispatches: 0,
+    pipeline: {},
+    todaysFocus: { jobsDue: 0, jobsDelayed: 0, jobsCompleted: 0, paymentsDue: 0 },
+};
+
+export default function DailySummaryWidget({ initialStats }: DailySummaryWidgetProps) {
+    // Use server-provided data directly — no client fetch, no loading state
+    const stats = initialStats ?? EMPTY;
+
     const items = [
         {
             icon: Package,
             label: 'New Orders',
             value: stats.ordersThisMonth,
-            color: 'bg-blue-50 text-blue-600 border-blue-100',
-            iconColor: 'text-blue-500',
             link: '/admin/sales/orders',
         },
         {
             icon: Truck,
             label: 'Dispatched',
             value: stats.pendingDispatches,
-            color: 'bg-green-50 text-green-600 border-green-100',
-            iconColor: 'text-green-500',
             link: '/admin/dispatch',
         },
         {
             icon: Palette,
             label: 'Design Pending',
             value: (stats.pipeline['designing'] || 0) + (stats.pipeline['approval'] || 0),
-            color: 'bg-purple-50 text-purple-600 border-purple-100',
-            iconColor: 'text-purple-500',
             link: '/admin/jobs/queue',
         },
         {
             icon: AlertTriangle,
             label: 'Overdue',
             value: stats.todaysFocus.jobsDelayed,
-            color: stats.todaysFocus.jobsDelayed > 0 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-gray-50 text-gray-600 border-gray-100',
-            iconColor: stats.todaysFocus.jobsDelayed > 0 ? 'text-red-500' : 'text-gray-400',
             link: '/admin/jobs',
         },
     ];
@@ -55,25 +65,21 @@ export default function DailySummaryWidget() {
                 </span>
             </div>
 
-            {loading ? (
-                <div className="text-center py-4 text-sm text-white/40">Loading...</div>
-            ) : (
-                <div className="grid grid-cols-2 gap-3">
-                    {items.map((item, i) => (
-                        <Link
-                            key={i}
-                            href={item.link}
-                            className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/5 hover:bg-white/20 transition-colors cursor-pointer block"
-                        >
-                            <div className="flex items-center gap-2 mb-2">
-                                <item.icon className="w-4 h-4 text-white/60" />
-                                <span className="text-xs text-white/60">{item.label}</span>
-                            </div>
-                            <p className="text-2xl font-bold">{item.value}</p>
-                        </Link>
-                    ))}
-                </div>
-            )}
+            <div className="grid grid-cols-2 gap-3">
+                {items.map((item, i) => (
+                    <Link
+                        key={i}
+                        href={item.link}
+                        className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/5 hover:bg-white/20 transition-colors cursor-pointer block"
+                    >
+                        <div className="flex items-center gap-2 mb-2">
+                            <item.icon className="w-4 h-4 text-white/60" />
+                            <span className="text-xs text-white/60">{item.label}</span>
+                        </div>
+                        <p className="text-2xl font-bold">{item.value}</p>
+                    </Link>
+                ))}
+            </div>
         </div>
     );
 }

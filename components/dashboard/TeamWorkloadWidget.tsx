@@ -123,7 +123,20 @@ export default function TeamWorkloadWidget() {
             </div>
 
             {loading ? (
-                <div className="text-center py-6 text-sm text-gray-400">Loading workload data...</div>
+                <div className="space-y-3">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-7 h-7 rounded-full bg-gray-100 animate-pulse" />
+                                    <div className="h-3 w-20 bg-gray-100 rounded animate-pulse" />
+                                </div>
+                                <div className="h-3 w-12 bg-gray-100 rounded animate-pulse" />
+                            </div>
+                            <div className="h-2 bg-gray-100 rounded-full animate-pulse" style={{ width: `${60 + i * 10}%` }} />
+                        </div>
+                    ))}
+                </div>
             ) : workloads.length === 0 ? (
                 <div className="text-center py-6">
                     <Users className="w-8 h-8 text-gray-300 mx-auto mb-2" />

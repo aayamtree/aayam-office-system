@@ -196,7 +196,18 @@ export default function MiniCalendarWidget() {
 
                 <CardContent className="px-2 pb-2 sm:px-6 sm:pb-6">
                     {loading ? (
-                        <div className="text-sm text-muted-foreground text-center py-8">Loading...</div>
+                        <div className="space-y-1">
+                            <div className="grid grid-cols-7 mb-1">
+                                {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
+                                    <div key={i} className="text-center text-xs font-medium text-muted-foreground py-2">{d}</div>
+                                ))}
+                            </div>
+                            <div className="grid grid-cols-7 gap-px">
+                                {Array.from({ length: 35 }).map((_, i) => (
+                                    <div key={i} className="min-h-[72px] md:min-h-[80px] bg-muted/30 animate-pulse rounded-sm" />
+                                ))}
+                            </div>
+                        </div>
                     ) : (
                         <>
                             {/* ══════════════════════════════
