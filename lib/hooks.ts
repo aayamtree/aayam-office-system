@@ -287,8 +287,10 @@ export function useDesigners() {
     orderBy: { column: 'full_name', ascending: true }
   });
 
-  // Map full_name → name for backward compatibility with existing UI
-  const designers = (data || []).map((p: any) => ({ ...p, name: p.full_name }));
+  // Map full_name → name for backward compatibility, and filter out profiles with no name
+  const designers = (data || [])
+    .filter((p: any) => p.full_name && p.full_name.trim() !== '')
+    .map((p: any) => ({ ...p, name: p.full_name }));
 
   return {
     designers,

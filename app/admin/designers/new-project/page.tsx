@@ -401,9 +401,9 @@ export default function NewProjectPage() {
                                             const me = designers?.find((d: any) =>
                                                 d.id === profile?.id || d.user_id === profile?.id
                                             );
-                                            // Other designers (excluding current user)
+                                            // Other designers (excluding current user, must have a name)
                                             const others = designers?.filter((d: any) =>
-                                                d.id !== (me?.id) && d.user_id !== profile?.id
+                                                d.id !== (me?.id) && d.user_id !== profile?.id && d.name && d.name.trim() !== ''
                                             ) || [];
 
                                             return (
