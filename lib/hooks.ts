@@ -348,7 +348,7 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
   const { user, profile } = useAuth();
   // Lightweight default: only fetch client/vendor names for list views
   // Pages needing full relations can pass select: '*, client:clients(*), ...' in options
-  const defaultSelect = '*, client:clients(id, name), vendor:vendors(id, name), designer:profiles(id, full_name)';
+  const defaultSelect = '*, client:clients(id, name), vendor:vendors(id, name)';
   const { data, loading, error, refetch } = useSupabaseQuery<Job>('jobs', {
     select: options?.select || defaultSelect,
     orderBy: { column: 'created_at', ascending: false },
@@ -912,7 +912,7 @@ export function useBankTransactions(accountId?: string) {
 // =============================================
 export function useDesignTasks() {
   const { data, loading, error, refetch } = useSupabaseQuery<DesignTask>('design_tasks', {
-    select: '*, client:clients(id, name, company), job:jobs(id, job_number, project_name, current_stage), designer:profiles(id, full_name, email)',
+    select: '*, client:clients(id, name, company), job:jobs(id, job_number, project_name, current_stage)',
     orderBy: { column: 'created_at', ascending: false }
   });
 
