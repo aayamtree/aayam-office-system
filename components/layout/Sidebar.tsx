@@ -202,7 +202,7 @@ const menuItems: MenuItem[] = [
     submenu: [
       { name: 'General', href: '/admin/settings' },
       { name: 'Company Info', href: '/admin/settings/company' },
-      { name: 'User Management', href: '/admin/settings/users' },
+
       { name: 'Notifications', href: '/admin/settings/notifications' },
       { name: 'Preferences', href: '/admin/settings/preferences' },
       { name: 'Production Settings', href: '/admin/settings/production' },
