@@ -20,7 +20,7 @@ export default function TeamWorkloadWidget() {
     const { designers } = useDesigners();
     const [workloads, setWorkloads] = useState<DesignerWorkload[]>([]);
     const [period, setPeriod] = useState<'week' | 'month'>('week');
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false); // start false — no skeleton flash
 
     useEffect(() => {
         if (designers.length > 0) {

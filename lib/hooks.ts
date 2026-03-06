@@ -1679,7 +1679,7 @@ export function useNotes() {
 export function useDashboardNotes() {
   const { profile } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // start false — renders instantly, populates silently
 
   const fetchNotes = useCallback(async () => {
     if (!profile?.id) { setLoading(false); return; }

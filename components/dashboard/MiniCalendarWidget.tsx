@@ -47,7 +47,7 @@ export default function MiniCalendarWidget() {
             .catch(err => console.error('Calendar data fetch error:', err));
     }, [startDate, endDate, profile?.id, profile?.role]);
 
-    const loading = eventsLoading;
+    const loading = false; // Always render the grid — events fill in silently
     const isAdmin = profile?.role === 'admin';
 
     const allItems = useMemo(() => {
