@@ -59,7 +59,7 @@ export default function RecentActivityWidget({ limit = 8 }: RecentActivityWidget
                     .limit(limit),
                 supabase
                     .from('broadcast_notifications')
-                    .select('id, message, created_at, sender_name, priority')
+                    .select('id, message, created_at, priority')
                     .order('created_at', { ascending: false })
                     .limit(limit),
             ]);
@@ -78,7 +78,7 @@ export default function RecentActivityWidget({ limit = 8 }: RecentActivityWidget
                 action: 'notification',
                 text: n.message,
                 time: n.created_at,
-                user: n.sender_name || 'System',
+                user: 'System',
                 source: 'notification',
             }));
 

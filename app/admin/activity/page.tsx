@@ -78,14 +78,14 @@ function useNotifications(limit = 100) {
   return useSWR('activity-notifs', async () => {
     const { data } = await supabase
       .from('broadcast_notifications')
-      .select('id, message, created_at, sender_name, priority')
+      .select('id, message, created_at, priority')
       .order('created_at', { ascending: false })
       .limit(limit);
     return (data || []).map((n: any) => {
       const extractedName = extractNameFromMessage(n.message || '');
       return {
         id: `n-${n.id}`,
-        user_name: n.sender_name || extractedName || 'System',
+        user_name: extractedName || 'System',
         description: n.message,
         action: 'notification',
         created_at: n.created_at,

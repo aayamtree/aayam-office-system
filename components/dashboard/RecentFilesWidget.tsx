@@ -61,7 +61,7 @@ export default function RecentFilesWidget({ showAll = false, limit = 15, compact
             // Query 2: broadcast_notifications that contain file-related keywords
             const { data: notifData } = await supabase
                 .from('broadcast_notifications')
-                .select('id, message, created_at, sender_name')
+                .select('id, message, created_at')
                 .ilike('message', '%upload%')
                 .order('created_at', { ascending: false })
                 .limit(limit);
@@ -88,7 +88,7 @@ export default function RecentFilesWidget({ showAll = false, limit = 15, compact
                 id: `notif-${n.id}`,
                 source: 'notification',
                 message: n.message,
-                userName: n.sender_name || 'System',
+                userName: 'System',
                 created_at: n.created_at,
             }));
 
