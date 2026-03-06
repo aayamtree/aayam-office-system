@@ -396,40 +396,42 @@ export default function NewProjectPage() {
                                         <SelectValue placeholder="Select Designer" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {/* Self first — always at top */}
                                         {(() => {
-                                            const me = designers?.find((d: any) => d.id === profile?.id || d.user_id === profile?.id);
-                                            const others = designers?.filter((d: any) => d.id !== profile?.id && d.user_id !== profile?.id);
+                                            // Find current user in designers list
+                                            const me = designers?.find((d: any) =>
+                                                d.id === profile?.id || d.user_id === profile?.id
+                                            );
+                                            // Other designers (excluding current user)
+                                            const others = designers?.filter((d: any) =>
+                                                d.id !== (me?.id) && d.user_id !== profile?.id
+                                            ) || [];
+
                                             return (
                                                 <>
-                                                    {me && (
-                                                        <SelectItem value={me.id}>
-                                                            <span className="font-semibold">{me.name} (Me)</span>
+                                                    {/* Current user first — use their actual name */}
+                                                    {me ? (
+                                                        <SelectItem value={me.id}>{me.name}</SelectItem>
+                                                    ) : profile?.full_name ? (
+                                                        // Fallback: user exists in profiles but not in designers table
+                                                        <SelectItem value={profile.id}>{profile.full_name}</SelectItem>
+                                                    ) : null}
+                                                    {/* All other designers */}
+                                                    {others.map((d: any) => (
+                                                        <SelectItem key={d.id} value={d.id}>
+                                                            {d.name}
                                                         </SelectItem>
-                                                    )}
-                                                    {others && others.length > 0 && (
-                                                        <>
-                                                            <div className="px-2 py-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider border-t mt-1 pt-2">
-                                                                Delegate to
-                                                            </div>
-                                                            {others.map((d: any) => (
-                                                                <SelectItem key={d.id} value={d.id}>
-                                                                    {d.name}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </>
-                                                    )}
+                                                    ))}
                                                 </>
                                             );
                                         })()}
                                     </SelectContent>
                                 </Select>
                                 {/* Show delegation note if someone else is selected */}
-                                {formData.designerId && (() => {
-                                    const me = designers?.find((d: any) => d.id === profile?.id || d.user_id === profile?.id);
-                                    const isDelegated = me && formData.designerId !== me.id;
-                                    if (!isDelegated) return null;
+                                {formData.designerId && formData.designerId !== profile?.id && (() => {
+                                    const meId = designers?.find((d: any) => d.id === profile?.id || d.user_id === profile?.id)?.id;
+                                    if (meId && formData.designerId === meId) return null;
                                     const assignedName = designers?.find((d: any) => d.id === formData.designerId)?.name;
+                                    if (!assignedName) return null;
                                     return (
                                         <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1.5 rounded-md">
                                             📤 Delegating to <strong>{assignedName}</strong> — both you and {assignedName} will be notified on admin approval.
