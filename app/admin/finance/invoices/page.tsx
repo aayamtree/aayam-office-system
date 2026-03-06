@@ -985,7 +985,7 @@ export default function InvoicesPage() {
                   </button>
                   <button
                     onClick={() => handleWhatsAppShare(selectedInvoice)}
-                    className="col-span-2 flex items-center justify-center gap-2 px-4 py-3 bg-white0 text-white font-semibold rounded-md hover:bg-gray-900 transition-colors"
+                    className="col-span-2 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition-colors"
                   >
                     <MessageCircle className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     Share on WhatsApp
@@ -996,7 +996,7 @@ export default function InvoicesPage() {
                 {selectedInvoice.amount_paid < selectedInvoice.total_amount && (
                   <button
                     onClick={() => handlePaymentReminder(selectedInvoice)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white0 text-white font-semibold rounded-md hover:bg-destructive transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-destructive text-white font-semibold rounded-md hover:bg-red-700 transition-colors"
                   >
                     <MessageCircle className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     Send Payment Reminder
