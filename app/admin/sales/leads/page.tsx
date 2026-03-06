@@ -275,7 +275,7 @@ export default function LeadsPage() {
                     <button onClick={() => handleEdit(lead)} className="p-1.5 text-gray-400 hover:text-foreground hover:bg-muted rounded-md transition-colors">
                       <Edit size={18} />
                     </button>
-                    <button onClick={() => handleDelete(lead.id, lead.name)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors">
+                    <button onClick={() => handleDelete(lead.id, lead.name)} className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors">
                       <Trash2 size={18} />
                     </button>
                   </div>

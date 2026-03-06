@@ -431,13 +431,13 @@ export default function LeadsPage() {
                                             )}
                                         </div>
                                         <div className="flex gap-1">
-                                            <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors" aria-label="View lead details">
+                                            <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors" aria-label="View lead details">
                                                 <Eye className="w-4 h-4" />
                                             </button>
-                                            <button onClick={() => handleEdit(lead)} className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors" aria-label="Edit lead">
+                                            <button onClick={() => handleEdit(lead)} className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors" aria-label="Edit lead">
                                                 <Edit className="w-4 h-4" />
                                             </button>
-                                            <button onClick={() => handleDelete(lead.id, lead.name)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" aria-label="Delete lead">
+                                            <button onClick={() => handleDelete(lead.id, lead.name)} className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" aria-label="Delete lead">
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>

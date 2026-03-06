@@ -301,15 +301,15 @@ export default function VendorPurchasesPage() {
 
                   <div className="flex items-center gap-1">
                     <button onClick={() => { setSelectedPurchase(purchase); setShowDetailModal(true); }}
-                      className="p-2 text-gray-400 hover:text-foreground hover:bg-muted rounded-md transition-colors">
+                      className="p-2 text-gray-600 hover:text-foreground hover:bg-muted rounded-md transition-colors">
                       <Eye className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     </button>
                     <button onClick={() => handleEdit(purchase)}
-                      className="p-2 text-gray-400 hover:text-foreground hover:bg-muted rounded-md transition-colors">
+                      className="p-2 text-gray-600 hover:text-foreground hover:bg-muted rounded-md transition-colors">
                       <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     </button>
                     <button onClick={() => handleDelete(purchase.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors">
+                      className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors">
                       <Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" />
                     </button>
                   </div>

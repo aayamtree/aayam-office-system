@@ -223,10 +223,10 @@ export default function MarketingFollowUpsPage() {
             )}
 
             <div className="p-4 flex gap-1">
-              <button onClick={() => handleEdit(followUp)} className="p-2 text-gray-400 hover:text-foreground hover:bg-muted rounded-md transition-colors" aria-label="Edit follow-up">
+              <button onClick={() => handleEdit(followUp)} className="p-2 text-gray-600 hover:text-foreground hover:bg-muted rounded-md transition-colors" aria-label="Edit follow-up">
                 <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
               </button>
-              <button onClick={() => handleDelete(followUp.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" aria-label="Delete follow-up">
+              <button onClick={() => handleDelete(followUp.id)} className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" aria-label="Delete follow-up">
                 <Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" />
               </button>
             </div>
