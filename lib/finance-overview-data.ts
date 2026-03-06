@@ -73,7 +73,6 @@ export async function fetchFinanceOverview(): Promise<FinanceOverviewData> {
     const today = now.toISOString().split('T')[0];
     const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const safe = async (fn: () => any, fallback: any) => {
         try { return await fn(); } catch { return fallback; }
     };
