@@ -336,8 +336,8 @@ export default function VendorsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="p-2 bg-muted text-foreground hover:bg-gray-900 hover:text-white rounded-md transition-colors" title="View Bills" aria-label="View vendor purchases">
-                          <Package className="w-4 h-4 md:w-4.5 md:h-4.5" />
+                        <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="p-2 hover:bg-gray-100 rounded-md transition-colors" title="View Bills" aria-label="View vendor purchases">
+                          <Package className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-500" />
                         </Link>
                         <button onClick={() => handleView(vendor)} className="p-2 hover:bg-gray-100 rounded-md" title="View Details" aria-label="View vendor details">
                           <Eye className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-500" />
