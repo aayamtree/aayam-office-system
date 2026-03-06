@@ -68,8 +68,9 @@ export default function FinanceClient({ data }: Props) {
             href: '/admin/finance/invoices',
             icon: FileText,
             title: 'Invoices',
-            color: 'from-slate-800 to-slate-900',
-            iconBg: 'bg-white/10',
+            iconColor: 'text-slate-700',
+            iconBg: 'bg-slate-100',
+            borderColor: 'border-l-slate-400',
             stat1: `${navStats.invoices.unpaid} unpaid`,
             stat2: navStats.invoices.overdueCount > 0 ? `${navStats.invoices.overdueCount} overdue` : 'None overdue',
             stat2Red: navStats.invoices.overdueCount > 0,
@@ -80,8 +81,9 @@ export default function FinanceClient({ data }: Props) {
             href: '/admin/finance/payments',
             icon: CreditCard,
             title: 'Payments',
-            color: 'from-emerald-700 to-emerald-900',
-            iconBg: 'bg-white/10',
+            iconColor: 'text-emerald-700',
+            iconBg: 'bg-emerald-50',
+            borderColor: 'border-l-emerald-500',
             stat1: formatCompact(navStats.payments.receivedThisMonth),
             stat2: 'received this month',
             stat2Red: false,
@@ -92,8 +94,9 @@ export default function FinanceClient({ data }: Props) {
             href: '/admin/finance/vendors',
             icon: ShoppingBag,
             title: 'Purchases',
-            color: 'from-violet-700 to-violet-900',
-            iconBg: 'bg-white/10',
+            iconColor: 'text-violet-700',
+            iconBg: 'bg-violet-50',
+            borderColor: 'border-l-violet-500',
             stat1: `${navStats.purchases.pendingBills} bills pending`,
             stat2: navStats.purchases.billsAmount > 0 ? formatCompact(navStats.purchases.billsAmount) + ' due' : 'All clear',
             stat2Red: navStats.purchases.pendingBills > 0,
@@ -104,8 +107,9 @@ export default function FinanceClient({ data }: Props) {
             href: '/admin/finance/expenses/quick',
             icon: TrendingDown,
             title: 'Expenses',
-            color: 'from-orange-600 to-orange-800',
-            iconBg: 'bg-white/10',
+            iconColor: 'text-orange-700',
+            iconBg: 'bg-orange-50',
+            borderColor: 'border-l-orange-500',
             stat1: formatCompact(navStats.expenses.thisMonth),
             stat2: `${navStats.expenses.count} entries this month`,
             stat2Red: false,
@@ -116,8 +120,9 @@ export default function FinanceClient({ data }: Props) {
             href: '/admin/finance/reports',
             icon: BarChart3,
             title: 'Reports',
-            color: 'from-blue-700 to-blue-900',
-            iconBg: 'bg-white/10',
+            iconColor: 'text-blue-700',
+            iconBg: 'bg-blue-50',
+            borderColor: 'border-l-blue-500',
             stat1: 'P&L · Cash · GST',
             stat2: 'Financial reports',
             stat2Red: false,
@@ -128,8 +133,9 @@ export default function FinanceClient({ data }: Props) {
             href: '/admin/finance/daily',
             icon: Calendar,
             title: 'Daily Summary',
-            color: 'from-gray-600 to-gray-800',
-            iconBg: 'bg-white/10',
+            iconColor: 'text-gray-700',
+            iconBg: 'bg-gray-100',
+            borderColor: 'border-l-gray-400',
             stat1: "Today's snapshot",
             stat2: overdueToday > 0 ? `${overdueToday} overdue items` : 'All on track',
             stat2Red: overdueToday > 0,
@@ -299,33 +305,38 @@ export default function FinanceClient({ data }: Props) {
                 </div>
             </div>
 
-            {/* ── Navigation Cards (Smart) ── */}
+            {/* ── Navigation Cards ── */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {navCards.map((card) => (
-                    <div key={card.href} className="bg-card border border-border rounded-lg overflow-hidden hover:shadow-sm transition-shadow group">
-                        {/* Gradient Header */}
-                        <div className={`bg-gradient-to-br ${card.color} px-3 py-3 flex items-center justify-between`}>
-                            <div className="flex items-center gap-2">
-                                <div className={`p-1.5 rounded-md ${card.iconBg}`}>
-                                    <card.icon className="h-3.5 w-3.5 text-white" />
+                    <div key={card.href} className={`bg-card border border-border border-l-4 ${card.borderColor} rounded-lg overflow-hidden hover:shadow-sm transition-all group`}>
+                        <Link href={card.href} className="block p-3 space-y-2.5">
+                            {/* Card Header row */}
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className={`p-1.5 rounded-md ${card.iconBg}`}>
+                                        <card.icon className={`h-3.5 w-3.5 ${card.iconColor}`} />
+                                    </div>
+                                    <span className="font-semibold text-sm text-foreground">{card.title}</span>
                                 </div>
-                                <span className="text-white font-semibold text-sm">{card.title}</span>
                             </div>
+                            {/* Stats */}
+                            <div>
+                                <p className="text-sm font-bold text-foreground tabular-nums">{card.stat1}</p>
+                                <p className={`text-xs mt-0.5 ${card.stat2Red ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}>
+                                    {card.stat2}
+                                </p>
+                            </div>
+                        </Link>
+                        {/* Action link at bottom */}
+                        <div className="px-3 pb-2.5">
                             <Link
                                 href={card.actionHref}
-                                className="text-[10px] text-white/70 hover:text-white bg-white/10 hover:bg-white/20 px-2 py-1 rounded transition-colors font-medium"
+                                className={`text-[11px] font-medium ${card.iconColor} hover:underline transition-colors`}
                                 onClick={e => e.stopPropagation()}
                             >
-                                {card.action}
+                                {card.action} →
                             </Link>
                         </div>
-                        {/* Stats Body */}
-                        <Link href={card.href} className="block p-3 space-y-1">
-                            <p className="text-sm font-semibold text-foreground">{card.stat1}</p>
-                            <p className={`text-xs ${card.stat2Red ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}>
-                                {card.stat2}
-                            </p>
-                        </Link>
                     </div>
                 ))}
             </div>
