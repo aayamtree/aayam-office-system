@@ -278,17 +278,20 @@ export function useVendors() {
 
 // =============================================
 // DESIGNERS HOOK
-// =============================================
-// =============================================
-// DESIGNERS HOOK (Linked to Profiles)
+// Single source of truth: reads from profiles table WHERE role = 'designer'
 // =============================================
 export function useDesigners() {
-  const { data: designers, loading, error, refetch } = useSupabaseQuery<any>('designers', {
-    orderBy: { column: 'name', ascending: true }
+  const { data, loading, error, refetch } = useSupabaseQuery<any>('profiles', {
+    select: 'id, full_name, email, role, is_active, phone, skills, hourly_rate, monthly_salary, employment_type, joining_date, city, state, document_url',
+    filter: [{ column: 'role', value: 'designer' }],
+    orderBy: { column: 'full_name', ascending: true }
   });
 
+  // Map full_name → name for backward compatibility with existing UI
+  const designers = (data || []).map((p: any) => ({ ...p, name: p.full_name }));
+
   return {
-    designers: designers || [],
+    designers,
     loading,
     error,
     refetch
@@ -343,7 +346,7 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
   const { user, profile } = useAuth();
   // Lightweight default: only fetch client/vendor names for list views
   // Pages needing full relations can pass select: '*, client:clients(*), ...' in options
-  const defaultSelect = '*, client:clients(id, name), vendor:vendors(id, name), designer:designers(id, name)';
+  const defaultSelect = '*, client:clients(id, name), vendor:vendors(id, name), designer:profiles(id, full_name)';
   const { data, loading, error, refetch } = useSupabaseQuery<Job>('jobs', {
     select: options?.select || defaultSelect,
     orderBy: { column: 'created_at', ascending: false },
@@ -907,7 +910,7 @@ export function useBankTransactions(accountId?: string) {
 // =============================================
 export function useDesignTasks() {
   const { data, loading, error, refetch } = useSupabaseQuery<DesignTask>('design_tasks', {
-    select: '*, client:clients(id, name, company), job:jobs(id, job_number, project_name, current_stage), designer:designers(id, name, email)',
+    select: '*, client:clients(id, name, company), job:jobs(id, job_number, project_name, current_stage), designer:profiles(id, full_name, email)',
     orderBy: { column: 'created_at', ascending: false }
   });
 

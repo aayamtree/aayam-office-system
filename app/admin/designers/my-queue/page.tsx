@@ -10,7 +10,7 @@ export default function UnifiedQueue() {
     const { profile } = useAuth();
     // PERF: Single query with joins instead of 3 separate queries (jobs + clients + designers)
     const { jobs, loading } = useJobs({
-        select: 'id, project_name, job_number, current_stage, priority, client_deadline, designer_id, job_type, product_category, client:clients(id, name, company), designer:designers(id, name, user_id)',
+        select: 'id, project_name, job_number, current_stage, priority, client_deadline, designer_id, job_type, product_category, client:clients(id, name, company), designer:profiles(id, full_name)',
         filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready'], op: 'in' }]
     });
     const [searchQuery, setSearchQuery] = useState('');
@@ -29,7 +29,7 @@ export default function UnifiedQueue() {
             id: job.id,
             title: job.project_name,
             client: job.client?.company || job.client?.name || 'Unknown',
-            designer: job.designer?.name || 'Unassigned',
+            designer: job.designer?.full_name || 'Unassigned',
             designerId: job.designer_id,
             status: job.current_stage || 'new',
             priority: job.priority || 'normal',

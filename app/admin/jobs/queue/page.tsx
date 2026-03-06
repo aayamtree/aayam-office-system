@@ -228,7 +228,7 @@ export default function JobQueuePage() {
                 <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
                   <span>Qty: {job.quantity}</span>
                   <span>Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : 'N/A'}</span>
-                  {job.designer?.name && <span className="text-gray-700 font-medium ml-auto">🎨 {job.designer.name}</span>}
+                  {(job.designer as any)?.full_name && <span className="text-gray-700 font-medium ml-auto">🎨 {(job.designer as any)?.full_name}</span>}
                 </div>
 
                 {/* Actions */}
@@ -377,12 +377,12 @@ export default function JobQueuePage() {
                       <>
                         <div className="flex justify-between items-center">
                           <span className="text-muted-foreground">Designer</span>
-                          <span className="font-semibold text-foreground">{selectedJob.designer?.name || <span className="text-amber-600 italic">Not assigned</span>}</span>
+                          <span className="font-semibold text-foreground">{(selectedJob.designer as any)?.full_name || <span className="text-amber-600 italic">Not assigned</span>}</span>
                         </div>
                         {selectedJob.designer?.phone && <div className="flex justify-between"><span className="text-muted-foreground">Designer Phone</span><span className="font-medium">{selectedJob.designer.phone}</span></div>}
                         {selectedJob.file_version && <div className="flex justify-between"><span className="text-muted-foreground">File Version</span><span className="font-medium">{selectedJob.file_version}</span></div>}
                         {selectedJob.notes && <div><span className="text-muted-foreground">Design Notes</span><p className="mt-0.5 text-foreground">{selectedJob.notes}</p></div>}
-                        {!selectedJob.designer?.name && <p className="text-amber-600 text-xs">⚠ No designer assigned. Please assign one from the Jobs page.</p>}
+                        {!(selectedJob.designer as any)?.full_name && <p className="text-amber-600 text-xs">⚠ No designer assigned. Please assign one from the Jobs page.</p>}
                       </>
                     )}
 
@@ -399,7 +399,7 @@ export default function JobQueuePage() {
                             {selectedJob.approval_status?.replace('_', ' ') || 'pending'}
                           </span>
                         </div>
-                        {selectedJob.designer?.name && <div className="flex justify-between"><span className="text-muted-foreground">Designer</span><span className="font-medium">{selectedJob.designer.name}</span></div>}
+                        {(selectedJob.designer as any)?.full_name && <div className="flex justify-between"><span className="text-muted-foreground">Designer</span><span className="font-medium">{(selectedJob.designer as any)?.full_name}</span></div>}
                         {selectedJob.approval_date && <div className="flex justify-between"><span className="text-muted-foreground">Sent On</span><span className="font-medium">{new Date(selectedJob.approval_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span></div>}
                         {selectedJob.approval_remark && <div><span className="text-muted-foreground">Client Remark</span><p className="mt-0.5 text-foreground italic">&ldquo;{selectedJob.approval_remark}&rdquo;</p></div>}
                         {selectedJob.file_version && <div className="flex justify-between"><span className="text-muted-foreground">File Version</span><span className="font-medium">{selectedJob.file_version}</span></div>}
@@ -422,7 +422,7 @@ export default function JobQueuePage() {
                           </>
                         )}
                         {!selectedJob.vendor?.name && <div className="flex justify-between"><span className="text-muted-foreground">Production</span><span className="font-medium text-foreground">In-house</span></div>}
-                        {selectedJob.designer?.name && <div className="flex justify-between"><span className="text-muted-foreground">Designed by</span><span className="font-medium">{selectedJob.designer.name}</span></div>}
+                        {(selectedJob.designer as any)?.full_name && <div className="flex justify-between"><span className="text-muted-foreground">Designed by</span><span className="font-medium">{(selectedJob.designer as any)?.full_name}</span></div>}
                       </>
                     )}
 

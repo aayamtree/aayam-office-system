@@ -314,7 +314,7 @@ export default function DesignerWorkspace() {
             driveLink: (job.files && job.files.length > 0 && typeof job.files[0] === 'object') ? job.files[0]?.url : (job.files?.[0] || ''),
             orderId: job.id,
             designerId: job.designer_id,
-            designerName: designer?.name || 'Unassigned',
+            designerName: designer?.full_name || designer?.name || 'Unassigned',
             createdAt: job.created_at,
             current_stage: job.current_stage,
             jobType: job.job_type || 'Design',
@@ -350,10 +350,9 @@ export default function DesignerWorkspace() {
       (task.deadline && task.deadline.includes(searchQuery));
 
     // Team Logic with Admin Special Handling
-    // Resolve the correct designer ID: try user_id first, then fall back to name match
-    const myDesignerRecord = designers.find(d => d.user_id === profile?.id)
-      || designers.find(d => d.name?.toLowerCase() === profile?.full_name?.toLowerCase());
-    const isAssignedToMe = myDesignerRecord ? task.designerId === myDesignerRecord.id : false;
+    // Since profiles IS the user, designer.id === profile.id (no separate user_id needed)
+    const myDesignerRecord = designers.find((d: any) => d.id === profile?.id);
+    const isAssignedToMe = myDesignerRecord ? task.designerId === myDesignerRecord.id : task.designerId === profile?.id;
 
     // Admin My Queue Logic: Show tasks needing admin attention + unassigned tasks
     const needsAdminAttention = isAdmin && (
@@ -449,7 +448,7 @@ export default function DesignerWorkspace() {
         logFileUpload({ fileName: file.name, fileSize: file.size, fileType: file.type, fileUrl: publicUrl, uploadedTo: `Job ${selectedTask.taskId}`, resourceId: selectedTask.realId });
 
         // Notify assigned designer if someone else uploaded
-        const myDesignerRec = designers.find((d: any) => d.user_id === profile?.id);
+        const myDesignerRec = designers.find((d: any) => d.id === profile?.id);
         const isMyJob = myDesignerRec ? selectedTask.designerId === myDesignerRec.id : false;
         if (!isMyJob && selectedTask.designerId && profile) {
           const uploaderName = profile.full_name || 'Someone';

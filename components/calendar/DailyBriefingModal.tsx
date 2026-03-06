@@ -78,20 +78,14 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
     // DESIGNER BRIEFING
     // ═══════════════════════════════════════════
     const fetchDesignerBriefing = async (designerId: string, today: string) => {
-        // Get designer record linked to this user
-        const { data: designerRecord } = await supabase
-            .from('designers')
-            .select('id')
-            .eq('user_id', designerId)
-            .maybeSingle();
-
-        const designerDbId = designerRecord?.id;
+        // profiles IS the user — designer_id in jobs = profile.id directly
+        const designerDbId = designerId;
 
         // Fetch design tasks assigned to this user
         const { data: tasks } = await supabase
             .from('design_tasks')
             .select('id, task_number, title, status, priority, deadline, client:clients(name, company)')
-            .eq('assigned_to', designerDbId || designerId)
+            .eq('assigned_to', designerDbId)
             .in('status', ['pending', 'in_progress', 'review', 'rework'])
             .order('priority', { ascending: false })
             .limit(15);
@@ -100,7 +94,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
         const { data: jobs } = await supabase
             .from('jobs')
             .select('id, job_number, project_name, current_stage, priority, client_deadline')
-            .eq('designer_id', designerDbId || designerId)
+            .eq('designer_id', designerDbId)
             .not('current_stage', 'in', '("delivered","cancelled","dispatched")')
             .order('client_deadline', { ascending: true })
             .limit(10);
@@ -621,8 +615,8 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                                                     </div>
                                                     {item.badge && (
                                                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 ${item.urgency === 'high' ? 'bg-red-100 text-red-700' :
-                                                                item.urgency === 'medium' ? 'bg-amber-100 text-amber-700' :
-                                                                    'bg-gray-100 text-gray-700'
+                                                            item.urgency === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                                                'bg-gray-100 text-gray-700'
                                                             }`}>
                                                             {item.badge}
                                                         </span>

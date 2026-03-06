@@ -84,11 +84,13 @@ export default function DesignersManager() {
         try {
             setLoading(true);
             const { data, error } = await supabase
-                .from('designers')
-                .select('*')
-                .order('created_at', { ascending: false });
+                .from('profiles')
+                .select('id, full_name, email, role, is_active, phone, skills, hourly_rate, monthly_salary, employment_type, joining_date, city, state, document_url')
+                .eq('role', 'designer')
+                .order('full_name');
             if (error) console.error('Error:', error);
-            setDesigners(data || []);
+            // Map full_name → name for internal UI use
+            setDesigners((data || []).map((p: any) => ({ ...p, name: p.full_name })));
         } catch (error) {
             console.error('Error fetching designers:', error);
         } finally {
@@ -154,10 +156,9 @@ export default function DesignersManager() {
         e.preventDefault();
         setSaving(true);
         try {
-            const designerData = {
-                name: formData.name,
-                phone: formData.phone,
-                email: formData.email || null,
+            const profileData = {
+                full_name: formData.name,
+                phone: formData.phone || null,
                 skills: formData.skills,
                 joining_date: formData.joining_date || null,
                 employment_type: formData.employment_type,
@@ -167,49 +168,28 @@ export default function DesignersManager() {
                 city: formData.city || null,
                 state: formData.state || null,
                 document_url: formData.document_url || null,
-                user_id: formData.user_id || null, // ← save linked account
             };
 
             let error;
             if (editingDesigner) {
-                ({ error } = await supabase.from('designers').update(designerData).eq('id', editingDesigner.id));
-            } else {
-                ({ error } = await supabase.from('designers').insert([designerData]));
+                // Update existing profile
+                ({ error } = await supabase
+                    .from('profiles')
+                    .update(profileData)
+                    .eq('id', editingDesigner.id));
             }
-
-            if (error && (error.message?.includes('column') || error.code === '42703')) {
-                // Fallback if column missing
-                const { document_url, user_id, ...safeData } = designerData;
-                if (editingDesigner) {
-                    ({ error } = await supabase.from('designers').update(safeData).eq('id', editingDesigner.id));
-                } else {
-                    ({ error } = await supabase.from('designers').insert([safeData]));
-                }
-            }
+            // Note: Creating a brand-new designer profile requires creating
+            // an auth user first (done via Supabase Auth / invite flow).
+            // The 'Add Designer' form here links/edits existing profiles.
 
             if (error) throw error;
 
-            // ── Auto-sync: update profiles.full_name to match designer name ──
-            // This ensures Users & Roles, Assign-to dropdowns, and all profile
-            // references show the correct name whenever the directory is updated.
-            if (formData.user_id) {
-                try {
-                    await supabase
-                        .from('profiles')
-                        .update({ full_name: formData.name })
-                        .eq('id', formData.user_id);
-                } catch {
-                    // Non-blocking — designer is saved, profile sync is best-effort
-                }
-            }
-
-            toast.success(editingDesigner ? 'Designer updated!' : 'Designer added!');
+            toast.success('Designer profile updated!');
             await fetchDesigners();
-            await fetchProfiles(); // Refresh profiles too so the UI reflects the sync
             resetForm();
         } catch (error) {
             console.error('Error saving designer:', error);
-            toast.error('Error saving designer');
+            toast.error('Error saving designer profile');
         } finally {
             setSaving(false);
         }
@@ -246,14 +226,19 @@ export default function DesignersManager() {
     };
 
     const handleDelete = async (id: string) => {
-        const { confirmed } = await confirm({ title: 'Delete Designer', message: 'Are you sure you want to delete this designer?', variant: 'danger', confirmLabel: 'Delete' });
+        const { confirmed } = await confirm({ title: 'Remove Designer', message: 'This will set the designer as inactive. Their account and jobs are preserved.', variant: 'danger', confirmLabel: 'Remove' });
         if (!confirmed) return;
         try {
-            const { error } = await supabase.from('designers').delete().eq('id', id);
+            // Demote to inactive — don't delete the profile (would break job history)
+            const { error } = await supabase
+                .from('profiles')
+                .update({ is_active: false })
+                .eq('id', id);
             if (error) throw error;
             setDesigners(designers.filter(d => d.id !== id));
+            toast.success('Designer set as inactive.');
         } catch (error) {
-            toast.error('Error deleting designer');
+            toast.error('Error removing designer');
         }
     };
 
