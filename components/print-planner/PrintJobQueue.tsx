@@ -10,7 +10,8 @@ interface PendingJob {
     project_name: string;
     client_id: string;
     client_name: string;
-    job_type: string;
+    job_type: string;         // work type: print_only / design_print
+    product_category?: string; // product type: POUCH / BOX / STICKER — used for grouping
     quantity?: number;
     urgency?: 'low' | 'normal' | 'high' | 'urgent';
     due_date?: string;
@@ -66,7 +67,9 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
     };
 
     const filteredJobs = jobs.filter(job => {
-        const matchesFilter = filter === 'ALL' || (job.job_type || '').toUpperCase() === filter;
+        // Filter by product_category (POUCH/BOX/STICKER), not job_type (print_only/design_print)
+        const productCat = (job.product_category || '').toUpperCase();
+        const matchesFilter = filter === 'ALL' || productCat === filter;
         const matchesSearch = job.job_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
             job.client_name?.toLowerCase().includes(searchTerm.toLowerCase());
         return matchesFilter && matchesSearch;
@@ -96,7 +99,8 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
 
     const isJobDisabled = (job: PendingJob) => {
         if (disabledJobIds.has(job.id)) return true;
-        if (selectedJobType && job.job_type !== selectedJobType) return true;
+        // Enforce same product_category (POUCH/BOX), not job_type (print_only)
+        if (selectedJobType && job.product_category !== selectedJobType) return true;
         return false;
     };
 
@@ -171,9 +175,14 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                                             <span className="font-mono text-sm font-bold text-gray-900">
                                                 {job.job_number}
                                             </span>
+                                            {job.product_category && (
+                                                <span className={`px-2 py-0.5 rounded-md text-xs font-bold ${getJobTypeColor(job.product_category.toUpperCase())}`}>
+                                                    {job.product_category}
+                                                </span>
+                                            )}
                                             {job.job_type && (
-                                                <span className={`px-2 py-0.5 rounded-md text-xs font-bold ${getJobTypeColor(job.job_type)}`}>
-                                                    {job.job_type}
+                                                <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-500">
+                                                    {job.job_type.replace('_', ' ')}
                                                 </span>
                                             )}
                                             {job.urgency && (

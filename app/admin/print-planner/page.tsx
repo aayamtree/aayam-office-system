@@ -29,7 +29,8 @@ interface PendingJob {
     project_name: string;
     client_id: string;
     client_name: string;
-    job_type: string;
+    job_type: string;          // work type: print_only / design_print
+    product_category?: string; // product type: POUCH / BOX / STICKER — used for batching
     quantity?: number;
     urgency?: 'low' | 'normal' | 'high' | 'urgent';
     due_date?: string;
@@ -63,9 +64,9 @@ export default function PrintPlannerPage() {
     // Step 1: Add job to selection
     const handleAddJob = (job: PendingJob) => {
         if (selectedJobs.length > 0) {
-            const existingJobType = selectedJobs[0].job_type;
-            if (job.job_type !== existingJobType) {
-                toast.error(`Cannot add ${job.job_type} job to ${existingJobType} print run.\n\nOnly jobs with the same type can be batched together.`);
+            const existingCategory = selectedJobs[0].product_category;
+            if (job.product_category !== existingCategory) {
+                toast.error(`Cannot mix product types in one print run.\n\nExisting: ${existingCategory || 'Unknown'}, Adding: ${job.product_category || 'Unknown'}\n\nOnly same product type (e.g. all POUCH or all BOX) can be batched together.`);
                 return;
             }
         }
@@ -156,7 +157,8 @@ export default function PrintPlannerPage() {
     };
 
     const selectedJobIds = new Set(selectedJobs.map(j => j.id));
-    const selectedJobType = selectedJobs.length > 0 ? selectedJobs[0].job_type : null;
+    // Lock by product_category (POUCH/BOX/STICKER), not job_type (print_only)
+    const selectedJobType = selectedJobs.length > 0 ? (selectedJobs[0].product_category || null) : null;
     const uniqueClients = Array.from(new Set(configuredJobs.map(j => j.client_name)));
     const isMultiClient = uniqueClients.length > 1;
     const totalSheets = configuredJobs.length > 0
