@@ -106,9 +106,10 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
 
     return (
         <div className="h-full flex flex-col bg-white rounded-md border border-gray-200">
-            {/* Header */}
-            <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center gap-3 mb-4">
+            {/* Header — compact on mobile */}
+            <div className="px-3 py-2 border-b border-gray-200 lg:p-6">
+                {/* Title row — hidden on mobile to save space */}
+                <div className="hidden lg:flex items-center gap-3 mb-4">
                     <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center">
                         <Package className="text-gray-700" size={20} />
                     </div>
@@ -117,6 +118,8 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                         <p className="text-sm text-gray-500">Ready for print assignment</p>
                     </div>
                 </div>
+                {/* Mobile title — one line */}
+                <p className="text-sm font-bold text-gray-900 mb-1.5 lg:hidden">Pending Print Jobs</p>
 
                 {/* Search */}
                 <input
@@ -124,18 +127,18 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                     placeholder="Search jobs or clients..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all outline-none"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all outline-none text-sm"
                 />
             </div>
 
-            {/* Job Type Filters — sourced from product_categories */}
-            <div className="px-4 py-3 border-b border-gray-100">
-                <div className="flex gap-2 flex-wrap">
+            {/* Job Type Filters — horizontal scroll on mobile, wrap on desktop */}
+            <div className="px-3 py-2 border-b border-gray-100">
+                <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-0.5 lg:flex-wrap lg:gap-2">
                     {jobTypes.map((type: string) => (
                         <button
                             key={type}
                             onClick={() => setFilter(type)}
-                            className={`px-4 py-2 rounded-md text-xs font-medium border whitespace-nowrap transition-all ${filter === type
+                            className={`px-3 py-1.5 rounded-md text-xs font-medium border whitespace-nowrap flex-shrink-0 transition-all ${filter === type
                                 ? 'bg-gray-900 text-white border-gray-900'
                                 : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
                                 }`}

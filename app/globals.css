@@ -734,3 +734,13 @@ td {
 [class~="bg-white\/90"] {
   background-color: rgba(250, 249, 245, 0.9) !important;
 }
+
+/* Hide scrollbar for horizontal scroll rows (filter tabs etc.) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
