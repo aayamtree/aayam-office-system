@@ -31,6 +31,10 @@ export interface DashboardData {
     };
     salesPerformance: { month: string; value: number; active?: boolean }[];
     recentJobs: any[];
+    // Month-over-month comparison data for KPI trend arrows
+    lastMonthOrders: number;
+    lastMonthRevenue: number;
+    lastMonthActiveJobs: number;
 }
 
 const EMPTY: DashboardData = {
@@ -42,6 +46,9 @@ const EMPTY: DashboardData = {
     vendorStats: { jobsAtVendor: 0, dueToday: 0, delayed: 0 },
     salesPerformance: [],
     recentJobs: [],
+    lastMonthOrders: 0,
+    lastMonthRevenue: 0,
+    lastMonthActiveJobs: 0,
 };
 
 // Server-side fetcher — runs on the server, never in the browser
@@ -54,6 +61,9 @@ export async function fetchDashboardData(): Promise<DashboardData> {
 
     // 6 months ago for sales performance
     const sixMonthsAgo = new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1).toISOString();
+    // Last month range
+    const startOfLastMonth = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString();
+    const endOfLastMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
 
     const safe = async <T>(fn: () => Promise<T>, fallback: T): Promise<T> => {
         try { return await fn(); } catch { return fallback; }
@@ -84,6 +94,9 @@ export async function fetchDashboardData(): Promise<DashboardData> {
             salesRes,
             // Recent jobs
             recentJobsRes,
+            // Last month comparison
+            lastMonthOrdersRes,
+            lastMonthRevenueRes,
         ] = await Promise.all([
             // 1. Client count
             safe(async () => supabase.from('clients').select('id', { count: 'exact', head: true }), { count: 0 } as any),
@@ -131,6 +144,12 @@ export async function fetchDashboardData(): Promise<DashboardData> {
 
             // 12. Recent jobs for table
             safe(async () => supabase.from('jobs').select('id, job_number, project_name, current_stage, total_amount, client:clients(name)').order('created_at', { ascending: false }).limit(5), { data: [] } as any),
+
+            // 13. Orders last month (for trend comparison)
+            safe(async () => supabase.from('jobs').select('id', { count: 'exact', head: true }).gte('created_at', startOfLastMonth).lt('created_at', endOfLastMonth).neq('current_stage', 'cancelled'), { count: 0 } as any),
+
+            // 14. Revenue last month (for trend comparison)
+            safe(async () => supabase.from('jobs').select('total_amount').gte('created_at', startOfLastMonth).lt('created_at', endOfLastMonth).neq('current_stage', 'cancelled'), { data: [] } as any),
         ]);
 
         // ── Process active jobs data (ONE query → many stats) ──
@@ -233,6 +252,9 @@ export async function fetchDashboardData(): Promise<DashboardData> {
             },
             salesPerformance,
             recentJobs: recentJobsRes.data || [],
+            lastMonthOrders: lastMonthOrdersRes.count || 0,
+            lastMonthRevenue: (lastMonthRevenueRes.data || []).reduce((s: number, j: any) => s + (j.total_amount || 0), 0),
+            lastMonthActiveJobs: 0, // Snapshot stat — not tracked historically, use 0
         };
     } catch (error) {
         console.error('Server dashboard fetch error:', error);

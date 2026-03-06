@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import {
     Package, CreditCard, IndianRupee, AlertTriangle, Clock,
     ArrowRight, Activity, Target, CheckCircle2, TrendingUp,
-    Settings, Eye, EyeOff,
+    Settings, Eye, EyeOff, TrendingDown, Minus,
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -125,6 +125,20 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
     const formatCurrency = (amount: number) =>
         new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 
+    // ── Trend Badge: shows ▲▼ vs last month ──────────────────────
+    const TrendBadge = ({ current, previous, isCurrency = false }: { current: number; previous: number; isCurrency?: boolean }) => {
+        if (previous === 0) return <span className="text-xs text-muted-foreground">New</span>;
+        const pct = Math.round(((current - previous) / previous) * 100);
+        if (pct === 0) return <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground"><Minus className="h-3 w-3" />same as last mo.</span>;
+        const up = pct > 0;
+        return (
+            <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${up ? 'text-emerald-600' : 'text-destructive'}`}>
+                {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                {up ? '+' : ''}{pct}% vs last mo.
+            </span>
+        );
+    };
+
     const pipelineStages = [
         { key: 'awaiting_admin', label: 'Pending', color: 'bg-orange-500' },
         { key: 'new', label: 'New', color: 'bg-blue-500' },
@@ -178,20 +192,20 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <Link href="/admin/finance">
                         <Card className="hover:shadow-sm transition-shadow">
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardHeader className="flex flex-row items-center justify-between pb-1">
                                 <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
                                 <IndianRupee className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">{formatCurrency(dashboardStats.totalRevenue)}</div>
-                                <p className="text-xs text-muted-foreground mt-1">Lifetime invoice total</p>
+                                <TrendBadge current={dashboardStats.totalRevenue} previous={dashboardStats.lastMonthRevenue} isCurrency />
                             </CardContent>
                         </Card>
                     </Link>
 
                     <Link href="/admin/jobs">
                         <Card className="hover:shadow-sm transition-shadow">
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardHeader className="flex flex-row items-center justify-between pb-1">
                                 <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
                                 <Package className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
@@ -204,7 +218,7 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
 
                     <Link href="/admin/finance/payments">
                         <Card className="hover:shadow-sm transition-shadow">
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardHeader className="flex flex-row items-center justify-between pb-1">
                                 <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
                                 <CreditCard className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
@@ -217,13 +231,13 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
 
                     <Link href="/admin/sales/orders">
                         <Card className="hover:shadow-sm transition-shadow">
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardHeader className="flex flex-row items-center justify-between pb-1">
                                 <CardTitle className="text-sm font-medium">Orders This Month</CardTitle>
                                 <Package className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">{dashboardStats.ordersThisMonth}</div>
-                                <p className="text-xs text-muted-foreground mt-1">New orders created</p>
+                                <TrendBadge current={dashboardStats.ordersThisMonth} previous={dashboardStats.lastMonthOrders} />
                             </CardContent>
                         </Card>
                     </Link>
@@ -240,36 +254,46 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid grid-cols-2 gap-3">
-                                <Link href="/admin/jobs" className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                                    <Clock className="h-4 w-4 text-amber-600 shrink-0" />
-                                    <div>
-                                        <span className="text-lg font-bold">{dashboardStats.todaysFocus.jobsDue}</span>
-                                        <span className="text-xs text-muted-foreground ml-1.5">Due</span>
-                                    </div>
-                                </Link>
-                                <Link href="/admin/jobs" className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                                    <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-                                    <div>
-                                        <span className="text-lg font-bold">{dashboardStats.todaysFocus.jobsDelayed}</span>
-                                        <span className="text-xs text-muted-foreground ml-1.5">Delayed</span>
-                                    </div>
-                                </Link>
-                                <Link href="/admin/jobs" className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                                    <div>
-                                        <span className="text-lg font-bold">{dashboardStats.todaysFocus.jobsCompleted}</span>
-                                        <span className="text-xs text-muted-foreground ml-1.5">Done</span>
-                                    </div>
-                                </Link>
-                                <Link href="/admin/finance" className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                                    <IndianRupee className="h-4 w-4 text-muted-foreground shrink-0" />
-                                    <div>
-                                        <span className="text-lg font-bold">{dashboardStats.todaysFocus.paymentsDue}</span>
-                                        <span className="text-xs text-muted-foreground ml-1.5">₹ Due</span>
-                                    </div>
-                                </Link>
-                            </div>
+                            {dashboardStats.todaysFocus.jobsDue === 0 &&
+                                dashboardStats.todaysFocus.jobsDelayed === 0 &&
+                                dashboardStats.todaysFocus.jobsCompleted === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-4 text-center gap-2">
+                                    <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+                                    <p className="text-sm font-medium text-emerald-700">All clear today! 🎉</p>
+                                    <p className="text-xs text-muted-foreground">No jobs due or delayed</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 gap-3">
+                                    <Link href="/admin/jobs" className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                                        <Clock className="h-4 w-4 text-amber-600 shrink-0" />
+                                        <div>
+                                            <span className="text-lg font-bold">{dashboardStats.todaysFocus.jobsDue}</span>
+                                            <span className="text-xs text-muted-foreground ml-1.5">Due</span>
+                                        </div>
+                                    </Link>
+                                    <Link href="/admin/jobs" className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                                        <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                                        <div>
+                                            <span className="text-lg font-bold">{dashboardStats.todaysFocus.jobsDelayed}</span>
+                                            <span className="text-xs text-muted-foreground ml-1.5">Delayed</span>
+                                        </div>
+                                    </Link>
+                                    <Link href="/admin/jobs" className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                                        <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                                        <div>
+                                            <span className="text-lg font-bold">{dashboardStats.todaysFocus.jobsCompleted}</span>
+                                            <span className="text-xs text-muted-foreground ml-1.5">Done</span>
+                                        </div>
+                                    </Link>
+                                    <Link href="/admin/finance" className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                                        <IndianRupee className="h-4 w-4 text-muted-foreground shrink-0" />
+                                        <div>
+                                            <span className="text-lg font-bold">{dashboardStats.todaysFocus.paymentsDue}</span>
+                                            <span className="text-xs text-muted-foreground ml-1.5">₹ Due</span>
+                                        </div>
+                                    </Link>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 )}
