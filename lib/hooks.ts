@@ -2545,7 +2545,7 @@ export function useDailyReports(userId?: string, dateFilter?: { start?: string; 
       .from('daily_work_reports')
       .select(`
         *,
-        user:user_profiles!daily_work_reports_user_id_fkey(id, full_name, role, email),
+        user:profiles(id, full_name, role, email),
         task_updates:report_task_updates(*, job:jobs(*, client:clients(*)))
       `)
       .order('report_date', { ascending: false });
@@ -2623,13 +2623,13 @@ export function useDailyReports(userId?: string, dateFilter?: { start?: string; 
 
     const today = new Date().toISOString().split('T')[0];
 
-    // Get all active users
+    // Get all active users from profiles table
     const { data: users, error: usersError } = await supabase
-      .from('user_profiles')
-      .select('id, full_name, role')
-      .eq('is_active', true);
+      .from('profiles')
+      .select('id, full_name, role');
 
-    if (usersError) return { data: [], error: usersError.message };
+    if (usersError || !users) return { data: [], error: usersError?.message };
+
 
     // Get today's reports
     const { data: reports, error: reportsError } = await supabase
