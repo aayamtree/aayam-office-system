@@ -963,7 +963,11 @@ export default function DesignerWorkspace() {
                           </span>
                         ) : ['printing', 'finishing', 'quality_check', 'ready', 'delivered'].includes(selectedTask.current_stage || '') ? (
                           <span className="flex items-center gap-2 text-white text-xs font-bold px-3 py-1">
-                            <Lock size={12} /> Locked — Sent to Print
+                            <Lock size={12} /> {(() => {
+                              const jt = (selectedTask.jobType || '').toLowerCase();
+                              const isDesignOnlyLocked = jt.includes('design') && !jt.includes('print');
+                              return isDesignOnlyLocked ? 'Locked — Design Delivered' : 'Locked — Sent to Print';
+                            })()}
                           </span>
                         ) : (
                           <>
@@ -1208,87 +1212,122 @@ export default function DesignerWorkspace() {
                           </label>
                         </div>
 
-                        {/* ─── PRINT FILE SUBMISSION — inside checklist, above submit button ─── */}
                         {(() => {
+                          // Detect Design Only job (no printing step)
+                          const jobTypeLower = (selectedTask.jobType || '').toLowerCase();
+                          const isDesignOnly = jobTypeLower.includes('design') && !jobTypeLower.includes('print');
+
                           const requiredList3 = checklistConfig[selectedTask.productCategory] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed'];
                           const allChecked = requiredList3.every((_, i) => checklist[`item_${i}`]) && checklist.approval;
                           const savedFiles: any[] = Array.isArray((selectedTask as any).print_files) ? (selectedTask as any).print_files : [];
                           const displayFiles = printFilesLocal.length > 0 ? printFilesLocal : savedFiles;
+
+                          // For Design Only: skip print-file upload zone
                           return (
-                            <div className={`rounded-md border-2 p-3 space-y-2 transition-all ${allChecked ? 'border-blue-200 bg-blue-50/40' : 'border-gray-100 bg-gray-50 opacity-50 pointer-events-none'
-                              }`}>
-                              <div className="flex items-center justify-between">
-                                <h5 className="text-xs font-bold text-blue-700 uppercase tracking-widest flex items-center gap-2">
-                                  <Printer size={13} /> Print File Submission
-                                  {!allChecked && <span className="text-gray-400 font-normal normal-case tracking-normal">— complete checklist first</span>}
-                                </h5>
-                                {displayFiles.length > 0 && (
-                                  <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full">{displayFiles.length} file{displayFiles.length > 1 ? 's' : ''}</span>
-                                )}
-                              </div>
-                              {/* Uploaded file list */}
-                              {displayFiles.length > 0 && (
-                                <div className="space-y-1.5">
-                                  {displayFiles.map((f: any, idx: number) => (
-                                    <div key={idx} className="flex items-center gap-2 p-2 bg-white rounded-md border border-blue-100">
-                                      <CheckCircle size={12} className="text-green-500 flex-shrink-0" />
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-bold text-gray-800 truncate">{f.name}</p>
-                                        <p className="text-[10px] text-gray-400">{f.uploaded_by} · {f.size ? `${(f.size / (1024 * 1024)).toFixed(1)} MB` : ''}</p>
-                                      </div>
-                                      <a href={f.url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-0.5 flex-shrink-0">
-                                        <ExternalLink size={10} /> Open
-                                      </a>
+                            <>
+                              {!isDesignOnly && (
+                                <div className={`rounded-md border-2 p-3 space-y-2 transition-all ${allChecked ? 'border-blue-200 bg-blue-50/40' : 'border-gray-100 bg-gray-50 opacity-50 pointer-events-none'
+                                  }`}>
+                                  <div className="flex items-center justify-between">
+                                    <h5 className="text-xs font-bold text-blue-700 uppercase tracking-widest flex items-center gap-2">
+                                      <Printer size={13} /> Print File Submission
+                                      {!allChecked && <span className="text-gray-400 font-normal normal-case tracking-normal">— complete checklist first</span>}
+                                    </h5>
+                                    {displayFiles.length > 0 && (
+                                      <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full">{displayFiles.length} file{displayFiles.length > 1 ? 's' : ''}</span>
+                                    )}
+                                  </div>
+                                  {/* Uploaded file list */}
+                                  {displayFiles.length > 0 && (
+                                    <div className="space-y-1.5">
+                                      {displayFiles.map((f: any, idx: number) => (
+                                        <div key={idx} className="flex items-center gap-2 p-2 bg-white rounded-md border border-blue-100">
+                                          <CheckCircle size={12} className="text-green-500 flex-shrink-0" />
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-bold text-gray-800 truncate">{f.name}</p>
+                                            <p className="text-[10px] text-gray-400">{f.uploaded_by} · {f.size ? `${(f.size / (1024 * 1024)).toFixed(1)} MB` : ''}</p>
+                                          </div>
+                                          <a href={f.url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-0.5 flex-shrink-0">
+                                            <ExternalLink size={10} /> Open
+                                          </a>
+                                        </div>
+                                      ))}
                                     </div>
-                                  ))}
+                                  )}
+                                  {/* Upload zone */}
+                                  <label className={`flex items-center justify-center gap-2 py-3 rounded-md border-2 border-dashed cursor-pointer transition-colors ${allChecked ? 'border-blue-300 bg-white hover:bg-blue-50' : 'border-gray-200'
+                                    }`}>
+                                    {printFileUploading ? (
+                                      <><Loader2 size={16} className="animate-spin text-blue-500" /><span className="text-sm text-blue-500 font-semibold">Uploading...</span></>
+                                    ) : (
+                                      <><Upload size={16} className="text-blue-400" />
+                                        <span className="text-sm font-bold text-gray-700">{displayFiles.length > 0 ? '+ Add More Files' : 'Upload Print File'}</span>
+                                        <span className="text-xs text-gray-400">PDF · AI · EPS · PSD · TIFF</span></>
+                                    )}
+                                    <input type="file" className="hidden" accept=".pdf,.ai,.eps,.psd,.tiff,.tif,.cdr,.png" onChange={handlePrintFileUpload} disabled={printFileUploading} />
+                                  </label>
+                                  <p className="text-[10px] text-center text-gray-400">Admin &amp; Dispatch notified on every upload</p>
                                 </div>
                               )}
-                              {/* Upload zone */}
-                              <label className={`flex items-center justify-center gap-2 py-3 rounded-md border-2 border-dashed cursor-pointer transition-colors ${allChecked ? 'border-blue-300 bg-white hover:bg-blue-50' : 'border-gray-200'
-                                }`}>
-                                {printFileUploading ? (
-                                  <><Loader2 size={16} className="animate-spin text-blue-500" /><span className="text-sm text-blue-500 font-semibold">Uploading...</span></>
-                                ) : (
-                                  <><Upload size={16} className="text-blue-400" />
-                                    <span className="text-sm font-bold text-gray-700">{displayFiles.length > 0 ? '+ Add More Files' : 'Upload Print File'}</span>
-                                    <span className="text-xs text-gray-400">PDF · AI · EPS · PSD · TIFF</span></>
-                                )}
-                                <input type="file" className="hidden" accept=".pdf,.ai,.eps,.psd,.tiff,.tif,.cdr,.png" onChange={handlePrintFileUpload} disabled={printFileUploading} />
-                              </label>
-                              <p className="text-[10px] text-center text-gray-400">Admin &amp; Dispatch notified on every upload</p>
-                            </div>
+
+                              {isDesignOnly && allChecked && (
+                                <div className="rounded-md border-2 border-green-200 bg-green-50/40 p-3">
+                                  <p className="text-xs font-bold text-green-700 flex items-center gap-2">
+                                    <CheckCircle size={13} /> Pre-Print QC complete — ready to deliver design file to client.
+                                  </p>
+                                </div>
+                              )}
+                            </>
                           );
                         })()}
 
                         <div className="pt-4 border-t border-gray-200">
                           {(() => {
+                            // Detect Design Only job
+                            const jobTypeLower = (selectedTask.jobType || '').toLowerCase();
+                            const isDesignOnly = jobTypeLower.includes('design') && !jobTypeLower.includes('print');
+
                             const requiredList = checklistConfig[selectedTask.productCategory] || ['Bleed Checked', 'CMYK Confirmed', 'Spelling Verified', 'Size Confirmed'];
                             const allMainChecks = requiredList.every((_, i) => checklist[`item_${i}`]);
                             const isComplete = allMainChecks && checklist.approval;
                             const savedFiles2: any[] = Array.isArray((selectedTask as any).print_files) ? (selectedTask as any).print_files : [];
                             const hasFile = printFilesLocal.length > 0 || savedFiles2.length > 0;
-                            const canSubmit = isComplete && hasFile;
+                            // Design Only: only needs checklist completion (no print file)
+                            const canSubmit = isDesignOnly ? isComplete : (isComplete && hasFile);
 
                             return (
                               <>
                                 <button
                                   disabled={!canSubmit}
                                   onClick={async () => {
-                                    const { confirmed } = await confirmDialog({ title: 'Send to Print', message: 'This will lock the task and send it to the print queue. Make sure all checks are done and print file is uploaded.', variant: 'success', confirmLabel: 'Send to Print' });
-                                    if (confirmed) {
-                                      updateStatus(selectedTask.realId, 'completed');
+                                    if (isDesignOnly) {
+                                      const { confirmed } = await confirmDialog({ title: 'Mark as Delivered', message: 'This will mark the design as delivered. The Pre-Print QC is complete and the design file is ready for the client.', variant: 'success', confirmLabel: 'Mark Delivered' });
+                                      if (confirmed) {
+                                        if (updateJobStage) await updateJobStage(selectedTask.realId, 'delivered');
+                                        refetchJobs();
+                                      }
+                                    } else {
+                                      const { confirmed } = await confirmDialog({ title: 'Send to Print', message: 'This will lock the task and send it to the print queue. Make sure all checks are done and print file is uploaded.', variant: 'success', confirmLabel: 'Send to Print' });
+                                      if (confirmed) {
+                                        updateStatus(selectedTask.realId, 'completed');
+                                      }
                                     }
                                   }}
                                   className="w-full py-4 rounded-md font-bold text-white flex items-center justify-center gap-2 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed bg-gray-900 hover:bg-gray-900 hover:scale-[1.01]"
                                 >
-                                  {canSubmit
-                                    ? <><Printer size={20} /> Client Approved – Ready for Print</>
-                                    : isComplete
-                                      ? '⬆️ Upload Print File to Proceed'
+                                  {isDesignOnly ? (
+                                    canSubmit
+                                      ? <><CheckCircle size={20} /> Pre-Print QC Done – Mark as Delivered</>
                                       : 'Complete Checklist to Finish'
-                                  }
+                                  ) : (
+                                    canSubmit
+                                      ? <><Printer size={20} /> Client Approved – Ready for Print</>
+                                      : isComplete
+                                        ? '⬆️ Upload Print File to Proceed'
+                                        : 'Complete Checklist to Finish'
+                                  )}
                                 </button>
-                                {!hasFile && isComplete && (
+                                {!isDesignOnly && !hasFile && isComplete && (
                                   <p className="text-center text-xs text-amber-500 mt-1.5 font-semibold">⚠ Upload at least 1 print file before sending to print</p>
                                 )}
                               </>
