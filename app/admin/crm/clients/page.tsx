@@ -291,68 +291,74 @@ export default function ClientsPage() {
 
       <div className="space-y-4">
         <>
-          {/* Mobile/Tablet View: Cards — left-border accent style */}
+          {/* Mobile/Tablet View: Queue-style cards */}
           <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
             {filteredClients.map((client) => (
-              <div key={client.id} className={`bg-card rounded-md border border-border border-l-4 ${client.is_active ? 'border-l-stone-400' : 'border-l-gray-300'} hover:shadow-sm transition-shadow`}>
-                {/* Card top strip */}
-                <div className={`${client.is_active ? 'bg-stone-50' : 'bg-gray-50'} px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md`}>
-                  <span className="text-xs font-bold text-foreground truncate">{client.company || client.name}</span>
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ml-2 shrink-0 ${client.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+              <div key={client.id} className="bg-white rounded-md border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+                {/* ── Header Bar ── */}
+                <div className={`px-3 py-2 flex items-center justify-between gap-2 ${client.is_active ? 'bg-gray-900' : 'bg-gray-500'}`}>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-5 h-5 rounded-md bg-white/10 text-white text-[9px] font-bold flex items-center justify-center flex-shrink-0">
+                      {client.name?.charAt(0)}
+                    </span>
+                    <span className="text-xs font-bold text-white truncate">{client.company || client.name}</span>
+                  </div>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md flex-shrink-0 border ${client.is_active ? 'bg-green-900/60 text-green-300 border-green-700' : 'bg-gray-600 text-gray-300 border-gray-500'}`}>
                     {client.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </div>
 
-                {/* Body */}
-                <div className="px-3 pt-2 pb-3 space-y-2">
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">{client.company ? client.name : 'Individual'}</p>
-                    {/* Brand Tags */}
-                    {client.brand_name && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {client.brand_name.split(/\s+/).filter(Boolean).map((tag, i) => (
-                          <span key={i} className="text-[9px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded font-medium">
-                            {tag.startsWith('#') ? tag : `#${tag}`}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1.5 text-xs text-foreground">
-                      <Phone className="w-3 h-3 text-muted-foreground shrink-0" />
-                      <span className="font-medium">{client.phone}</span>
+                {/* ── Body ── */}
+                <div className="p-3 space-y-2">
+                  {client.company && (
+                    <p className="text-[11px] text-gray-400 font-medium">{client.name}</p>
+                  )}
+                  {/* Brand Tags */}
+                  {client.brand_name && (
+                    <div className="flex flex-wrap gap-1">
+                      {client.brand_name.split(/\s+/).filter(Boolean).map((tag, i) => (
+                        <span key={i} className="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-medium">
+                          {tag.startsWith('#') ? tag : `#${tag}`}
+                        </span>
+                      ))}
                     </div>
+                  )}
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="flex items-center gap-1 text-gray-600">
+                      <Phone className="w-3 h-3 text-gray-400" />
+                      <span className="font-semibold text-gray-900">{client.phone}</span>
+                    </span>
                     {client.city && (
-                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                        <MapPin className="w-3 h-3 shrink-0" />
+                      <span className="flex items-center gap-1 text-gray-400">
+                        <MapPin className="w-3 h-3" />
                         <span>{client.city}</span>
-                      </div>
+                      </span>
                     )}
                   </div>
-
                   {profile?.role === 'admin' && (
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${(client as any).source === 'marketing' ? 'bg-violet-100 text-violet-700' : 'bg-muted text-muted-foreground'}`}>
-                      {(client as any).source === 'marketing' ? 'Marketing Lead' : 'Direct'}
+                    <span className={`inline-block text-[9px] px-1.5 py-0.5 rounded-md font-semibold ${(client as any).source === 'marketing' ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-500'}`}>
+                      {(client as any).source === 'marketing' ? '📣 Marketing Lead' : 'Direct'}
                     </span>
                   )}
+                </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-1.5 pt-1">
-                    <button onClick={() => handleView(client)} className="flex items-center gap-1 px-2.5 py-1.5 bg-card border border-border text-muted-foreground rounded text-xs font-medium hover:text-foreground hover:border-foreground/30 transition-colors">
-                      <Eye className="w-3 h-3" /> View
-                    </button>
-                    <button onClick={() => handleEdit(client)} className="p-1.5 border border-border text-muted-foreground rounded hover:text-foreground hover:border-foreground/30 transition-colors">
-                      <Edit className="w-3 h-3" />
-                    </button>
-                    <button onClick={() => handleDelete(client.id)} className="p-1.5 border border-red-200 text-red-400 rounded hover:text-red-600 hover:bg-red-50 transition-colors">
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
+                {/* ── Action Footer ── */}
+                <div className="flex items-center border-t border-gray-100">
+                  <button onClick={() => handleView(client)} className="flex-1 flex items-center justify-center gap-1 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                    <Eye className="w-3.5 h-3.5" /> View
+                  </button>
+                  <div className="w-px h-5 bg-gray-100" />
+                  <button onClick={() => handleEdit(client)} className="flex-1 flex items-center justify-center gap-1 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                    <Edit className="w-3.5 h-3.5" /> Edit
+                  </button>
+                  <div className="w-px h-5 bg-gray-100" />
+                  <button onClick={() => handleDelete(client.id)} className="flex-1 flex items-center justify-center gap-1 py-2 text-xs font-medium text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             ))}
+
             {filteredClients.length === 0 && (
               <div className="col-span-full text-center py-12 bg-card rounded-md border border-border">
                 <Building2 className="w-10 h-10 mx-auto text-muted-foreground/30 mb-3" />

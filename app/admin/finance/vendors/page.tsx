@@ -207,62 +207,66 @@ export default function VendorsPage() {
 
       <div className="space-y-4">
         <>
-          {/* Mobile/Tablet View: Cards — left-border accent style */}
+          {/* Mobile/Tablet View: Queue-style cards */}
           <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
             {filteredVendors.map((vendor) => (
-              <div key={vendor.id} className={`bg-card rounded-md border border-border border-l-4 border-l-orange-300 hover:shadow-sm transition-shadow ${!vendor.is_active ? 'opacity-60' : ''}`}>
-                {/* Card top strip */}
-                <div className="bg-orange-50/50 px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="w-5 h-5 rounded bg-orange-100 text-orange-600 text-[9px] font-bold flex items-center justify-center shrink-0">
+              <div key={vendor.id} className={`bg-white rounded-md border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden ${!vendor.is_active ? 'opacity-70' : ''}`}>
+                {/* ── Header Bar ── */}
+                <div className="bg-gray-900 px-3 py-2 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-5 h-5 rounded-md bg-white/10 text-white text-[9px] font-bold flex items-center justify-center flex-shrink-0">
                       {vendor.name?.charAt(0)}
                     </span>
-                    <span className="text-xs font-bold text-foreground truncate">{vendor.name}</span>
+                    <span className="text-xs font-bold text-white truncate">{vendor.company || vendor.name}</span>
                   </div>
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ml-2 shrink-0 ${getCategoryColor(vendor.category || 'Paper')}`}>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md flex-shrink-0 ${getCategoryColor(vendor.category || 'Paper')}`}>
                     {vendor.category}
                   </span>
                 </div>
 
-                {/* Body */}
-                <div className="px-3 pt-2 pb-3 space-y-2">
-                  <p className="text-[10px] text-muted-foreground">{vendor.company || 'Individual'}</p>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1.5 text-xs text-foreground">
-                      <Phone className="w-3 h-3 text-muted-foreground shrink-0" />
-                      <span className="font-medium">{vendor.phone}</span>
-                    </div>
+                {/* ── Body ── */}
+                <div className="p-3 space-y-2">
+                  {vendor.company && (
+                    <p className="text-[11px] text-gray-400 font-medium">{vendor.name}</p>
+                  )}
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="flex items-center gap-1 text-gray-600">
+                      <Phone className="w-3 h-3 text-gray-400" />
+                      <span className="font-semibold text-gray-900">{vendor.phone}</span>
+                    </span>
                     {vendor.city && (
-                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                        <MapPin className="w-3 h-3 shrink-0" />
+                      <span className="flex items-center gap-1 text-gray-400">
+                        <MapPin className="w-3 h-3" />
                         <span>{vendor.city}</span>
-                      </div>
+                      </span>
                     )}
                   </div>
+                  <span className={`inline-block text-[9px] px-1.5 py-0.5 rounded font-medium ${vendor.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                    {vendor.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
 
-                  {/* Actions Footer */}
-                  <div className="flex items-center justify-between pt-1 border-t border-border/50">
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${vendor.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                      {vendor.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                    <div className="flex items-center gap-0.5">
-                      <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors">
-                        <Package className="w-3.5 h-3.5" />
-                      </Link>
-                      <button onClick={() => handleView(vendor)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors">
-                        <Eye className="w-3.5 h-3.5" />
-                      </button>
-                      <button onClick={() => handleEdit(vendor)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors">
-                        <Edit className="w-3.5 h-3.5" />
-                      </button>
-                      <button onClick={() => handleDelete(vendor.id)} className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
+                {/* ── Action Footer ── */}
+                <div className="flex items-center border-t border-gray-100">
+                  <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="flex-1 flex items-center justify-center gap-1 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                    <Package className="w-3.5 h-3.5" /> Bills
+                  </Link>
+                  <div className="w-px h-5 bg-gray-100" />
+                  <button onClick={() => handleView(vendor)} className="flex-1 flex items-center justify-center gap-1 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                    <Eye className="w-3.5 h-3.5" /> View
+                  </button>
+                  <div className="w-px h-5 bg-gray-100" />
+                  <button onClick={() => handleEdit(vendor)} className="flex-1 flex items-center justify-center gap-1 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                    <Edit className="w-3.5 h-3.5" /> Edit
+                  </button>
+                  <div className="w-px h-5 bg-gray-100" />
+                  <button onClick={() => handleDelete(vendor.id)} className="flex-1 flex items-center justify-center gap-1 py-2 text-xs font-medium text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             ))}
+
             {filteredVendors.length === 0 && (
               <div className="col-span-full text-center py-12 bg-card rounded-md border border-border">
                 <Package className="w-10 h-10 mx-auto text-muted-foreground/30 mb-3" />
