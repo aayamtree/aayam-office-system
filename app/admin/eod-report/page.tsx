@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useDailyReports } from '@/lib/hooks';
 import { toast } from '@/hooks/use-toast';
@@ -13,6 +14,7 @@ import ProductChecklistCard from '@/components/eod/ProductChecklistCard';
 
 export default function EODReportPage() {
     const { profile } = useAuth();
+    const router = useRouter();
     const { fetchMyTodayTasks, submitEODReport, getMyReports, fetchProductChecklist } = useDailyReports();
 
     const [loading, setLoading] = useState(true);
@@ -56,6 +58,13 @@ export default function EODReportPage() {
     const currentHour = new Date().getHours();
     const isEODTime = currentHour >= 18 && currentHour < 19;
     const isPastEODTime = currentHour >= 19;
+
+    // Admins should never fill EOD — redirect them to the admin view
+    useEffect(() => {
+        if (profile?.role === 'admin') {
+            router.replace('/admin/eod-report/admin-view');
+        }
+    }, [profile?.role, router]);
 
     // Load data
     useEffect(() => {
