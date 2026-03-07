@@ -28,22 +28,31 @@ export function useSupabaseQuery<T>(
   tableName: string,
   options?: UseSupabaseQueryOptions
 ) {
-  const stableFilter = JSON.stringify(options?.filter);
-  const stableOrderBy = JSON.stringify(options?.orderBy);
-  const stableOptions = JSON.stringify(options);
+  // Serialize all options to stable strings — used as the SWR cache key AND
+  // as the source of truth inside the fetcher. This way the fetcher NEVER closes
+  // over a new `options` reference (which would make SWR see a "new" fetcher every
+  // render and schedule continuous quiet revalidations that flood the React scheduler).
+  const stableFilter = JSON.stringify(options?.filter ?? null);
+  const stableOrderBy = JSON.stringify(options?.orderBy ?? null);
+  const stableSelect = options?.select ?? '*';
+  const stableLimit = options?.limit ?? null;
+  const stablePage = options?.page ?? null;
+  const stablePageSize = options?.pageSize ?? null;
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Key for SWR cache
-  const key = isSupabaseConfigured() ? [tableName, stableFilter, stableOrderBy, options?.select, options?.limit, options?.page, options?.pageSize] : null;
+  // Key for SWR cache — all primitives / stable strings, never object references
+  const key = isSupabaseConfigured()
+    ? [tableName, stableFilter, stableOrderBy, stableSelect, stableLimit, stablePage, stablePageSize]
+    : null;
 
-  const fetcher = async () => {
-    let query = supabase
-      .from(tableName)
-      .select(options?.select || '*');
+  // Fetcher receives parameters from the key array — completely stable, no stale closures.
+  const fetcher = async ([_table, _filter, _orderBy, _select, _limit, _page, _pageSize]:
+    [string, string, string, string, number | null, number | null, number | null]) => {
+    let query = supabase.from(_table).select(_select);
 
-    // Apply filters (supports eq, neq, in, lte, gte)
-    if (options?.filter) {
-      options.filter.forEach(f => {
+    const filters: UseSupabaseQueryOptions['filter'] = _filter && _filter !== 'null' ? JSON.parse(_filter) : [];
+    if (filters && filters.length > 0) {
+      filters.forEach(f => {
         const op = f.op || 'eq';
         if (op === 'eq') query = query.eq(f.column, f.value);
         else if (op === 'neq') query = query.neq(f.column, f.value);
@@ -53,41 +62,35 @@ export function useSupabaseQuery<T>(
       });
     }
 
-    // Apply ordering
-    if (options?.orderBy) {
-      query = query.order(options.orderBy.column, {
-        ascending: options.orderBy.ascending ?? false
-      });
+    if (_orderBy && _orderBy !== 'null') {
+      const orderBy: UseSupabaseQueryOptions['orderBy'] = JSON.parse(_orderBy);
+      if (orderBy) query = query.order(orderBy.column, { ascending: orderBy.ascending ?? false });
     }
 
-    // Apply pagination (range) or simple limit
-    if (options?.page && options?.pageSize) {
-      const from = (options.page - 1) * options.pageSize;
-      const to = from + options.pageSize - 1;
+    if (_page && _pageSize) {
+      const from = (_page - 1) * _pageSize;
+      const to = from + _pageSize - 1;
       query = query.range(from, to);
-    } else if (options?.limit) {
-      query = query.limit(options.limit);
+    } else if (_limit) {
+      query = query.limit(_limit);
     }
 
     const { data: result, error: queryError } = await query;
-
     if (queryError) {
-      // If it's a missing table or column error (400/404/500 from PostgREST),
-      // return empty array instead of throwing to prevent SWR infinite retry loops
-      console.warn(`[useSupabaseQuery] ${tableName} error:`, queryError.message);
+      console.warn(`[useSupabaseQuery] ${_table} error:`, queryError.message);
       return [] as unknown as T[];
     }
     return (result as unknown as T[]) || [];
   };
 
   const { data, error, isLoading, mutate } = useSWR(key, fetcher, {
-    revalidateOnFocus: false,    // PERF: Don't refetch on tab switch — saves API calls
-    revalidateOnReconnect: true, // Refetch on reconnect
-    dedupingInterval: 30000,     // 30s dedup — navigating between pages reuses cached data
-    keepPreviousData: true,      // Show previous data while fetching new data
-    // PERF: No refreshInterval — no auto-polling. Data refreshes on writes via mutate().
-    fallbackData: [] as T[],     // Instant render with empty array, no loading state on revisit
+    revalidateOnFocus: false,
+    revalidateOnReconnect: true,
+    dedupingInterval: 30000,
+    keepPreviousData: true,
+    fallbackData: [] as T[],
   });
+
 
   // =============================================
   // REALTIME SUBSCRIPTION — Auto-refetch on changes
