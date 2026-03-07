@@ -29,8 +29,7 @@ SET
   employment_type = COALESCE(p.employment_type, d.employment_type, 'full-time'),
   joining_date = COALESCE(p.joining_date, d.joining_date),
   city         = COALESCE(p.city, d.city),
-  state        = COALESCE(p.state, d.state),
-  document_url = COALESCE(p.document_url, d.document_url)
+  state        = COALESCE(p.state, d.state)
 FROM designers d
 WHERE p.id = d.user_id
   AND d.user_id IS NOT NULL;

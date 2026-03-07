@@ -129,17 +129,16 @@ export default function VendorsPage() {
 
   if (loading) return (
     <div className="space-y-3">
-      {/* Mobile card skeletons */}
-      <div className="lg:hidden space-y-3">
+      <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
         {[1, 2, 3, 4].map(i => (
-          <div key={i} className="bg-white rounded-md overflow-hidden border border-gray-100 animate-pulse">
-            <div className="h-14 bg-gray-300" />
-            <div className="p-4 space-y-2">
-              <div className="h-4 w-2/3 bg-gray-200 rounded" />
-              <div className="h-3 w-1/2 bg-gray-200 rounded" />
-              <div className="flex justify-between pt-3 border-t border-gray-100">
-                <div className="h-5 w-16 bg-gray-200 rounded" />
-                <div className="flex gap-1">{[1, 2, 3, 4].map(j => <div key={j} className="h-8 w-8 bg-gray-200 rounded" />)}</div>
+          <div key={i} className="bg-card rounded-md border border-border border-l-4 border-l-orange-200 animate-pulse">
+            <div className="h-8 bg-muted rounded-t-md" />
+            <div className="p-3 space-y-2">
+              <div className="h-4 w-2/3 bg-muted rounded" />
+              <div className="h-3 w-1/2 bg-muted rounded" />
+              <div className="flex justify-between pt-3 border-t border-border">
+                <div className="h-5 w-16 bg-muted rounded" />
+                <div className="flex gap-1">{[1, 2, 3, 4].map(j => <div key={j} className="h-7 w-7 bg-muted rounded" />)}</div>
               </div>
             </div>
           </div>
@@ -208,87 +207,69 @@ export default function VendorsPage() {
 
       <div className="space-y-4">
         <>
-          {/* Mobile View: Cards */}
-          <div className="lg:hidden space-y-4">
-            {filteredVendors.map((vendor) => {
-              // Header color based on category
-              const categoryGradients: Record<string, string> = {
-                'Paper': 'bg-gradient-to-r from-gray-700 to-gray-800',
-                'Ink & Toner': 'bg-gradient-to-r from-purple-500 to-purple-600',
-                'Binding': 'bg-gradient-to-r from-amber-500 to-amber-600',
-                'Lamination': 'bg-gradient-to-r from-gray-500 to-gray-600',
-                'Machinery': 'bg-gradient-to-r from-red-500 to-red-600',
-                'Packaging': 'bg-gradient-to-r from-green-500 to-green-600',
-              };
-              const headerBg = categoryGradients[vendor.category || 'Paper'] || 'bg-gradient-to-r from-gray-400 to-gray-500';
+          {/* Mobile/Tablet View: Cards — left-border accent style */}
+          <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
+            {filteredVendors.map((vendor) => (
+              <div key={vendor.id} className={`bg-card rounded-md border border-border border-l-4 border-l-orange-300 hover:shadow-sm transition-shadow ${!vendor.is_active ? 'opacity-60' : ''}`}>
+                {/* Card top strip */}
+                <div className="bg-orange-50/50 px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="w-5 h-5 rounded bg-orange-100 text-orange-600 text-[9px] font-bold flex items-center justify-center shrink-0">
+                      {vendor.name?.charAt(0)}
+                    </span>
+                    <span className="text-xs font-bold text-foreground truncate">{vendor.name}</span>
+                  </div>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ml-2 shrink-0 ${getCategoryColor(vendor.category || 'Paper')}`}>
+                    {vendor.category}
+                  </span>
+                </div>
 
-              return (
-                <div key={vendor.id} className={`bg-white rounded-md overflow-hidden shadow-sm hover:shadow-sm transition-all border ${!vendor.is_active ? 'border-gray-300 opacity-60' : 'border-gray-100'}`}>
-                  {/* Colored Header */}
-                  <div className={`${headerBg} px-4 py-3 flex items-center justify-between`}>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-md bg-white/20 flex items-center justify-center">
-                        <span className="text-white font-bold text-sm">{vendor.name?.charAt(0)}</span>
-                      </div>
-                      <div>
-                        <span className="text-white font-bold text-sm block">{vendor.name}</span>
-                        <span className="text-white/80 text-xs">{vendor.company || 'Individual'}</span>
-                      </div>
+                {/* Body */}
+                <div className="px-3 pt-2 pb-3 space-y-2">
+                  <p className="text-[10px] text-muted-foreground">{vendor.company || 'Individual'}</p>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs text-foreground">
+                      <Phone className="w-3 h-3 text-muted-foreground shrink-0" />
+                      <span className="font-medium">{vendor.phone}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-md font-medium capitalize">
-                        {vendor.category}
-                      </span>
-                    </div>
+                    {vendor.city && (
+                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                        <MapPin className="w-3 h-3 shrink-0" />
+                        <span>{vendor.city}</span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* White Card Body */}
-                  <div className="p-4">
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Phone className="w-4 h-4 text-gray-400" />
-                        <span>{vendor.phone}</span>
-                      </div>
-                      {vendor.city && (
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <MapPin className="w-4 h-4 text-gray-400" />
-                          <span>{vendor.city}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Actions Footer */}
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                      <span className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase ${vendor.is_active ? 'bg-muted text-foreground' : 'bg-gray-100 text-gray-600'}`}>
-                        {vendor.is_active ? 'Active' : 'Inactive'}
-                      </span>
-
-                      <div className="flex items-center gap-1">
-                        <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="p-2 text-gray-400 hover:text-foreground hover:bg-muted rounded-md transition-colors" aria-label="View vendor purchases">
-                          <Package className="w-4 h-4" />
-                        </Link>
-                        <button onClick={() => handleView(vendor)} className="p-2 text-gray-400 hover:text-foreground hover:bg-muted rounded-md transition-colors" aria-label="View vendor details">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => handleEdit(vendor)} className="p-2 text-gray-400 hover:text-foreground hover:bg-muted rounded-md transition-colors" aria-label="Edit vendor">
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => handleDelete(vendor.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" aria-label="Delete vendor">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                  {/* Actions Footer */}
+                  <div className="flex items-center justify-between pt-1 border-t border-border/50">
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${vendor.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                      {vendor.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                    <div className="flex items-center gap-0.5">
+                      <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors">
+                        <Package className="w-3.5 h-3.5" />
+                      </Link>
+                      <button onClick={() => handleView(vendor)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors">
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => handleEdit(vendor)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors">
+                        <Edit className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => handleDelete(vendor.id)} className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
             {filteredVendors.length === 0 && (
-              <div className="text-center py-12 bg-white rounded-md border border-gray-100">
-                <Package className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-1">No vendors found</h3>
-                <p className="text-sm text-gray-500 mb-4">Try adjusting your filters</p>
-                <button onClick={handleAddNew} className="inline-flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-md text-sm font-bold">
-                  <Plus className="w-4 h-4" /> Add Vendor
+              <div className="col-span-full text-center py-12 bg-card rounded-md border border-border">
+                <Package className="w-10 h-10 mx-auto text-muted-foreground/30 mb-3" />
+                <h3 className="text-sm font-medium text-foreground mb-1">No vendors found</h3>
+                <p className="text-xs text-muted-foreground mb-3">Try adjusting your filters</p>
+                <button onClick={handleAddNew} className="inline-flex items-center gap-2 bg-foreground text-background px-3 py-2 rounded-md text-xs font-semibold hover:opacity-90">
+                  <Plus className="w-3.5 h-3.5" /> Add Vendor
                 </button>
               </div>
             )}

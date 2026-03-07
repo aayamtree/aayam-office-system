@@ -217,116 +217,117 @@ export default function DispatchPage() {
       </div>
 
       {/* Pre Print QC + QC & Dispatch + Ready — card grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
         {prePrintQC.length === 0 && pendingQC.length === 0 && readyToDispatch.length === 0 && (
           <div className="col-span-full text-center py-10 text-gray-500">No jobs pending QC or dispatch</div>
         )}
 
         {/* ── Pre Print QC ── */}
-        {prePrintQC.map((job) => (
-          <div key={job.id} className="bg-white rounded-md overflow-hidden border border-cyan-300 hover:shadow-sm transition-all">
-            <div className="bg-cyan-700 px-3 py-2 flex items-center justify-between">
-              <span className="text-white font-semibold text-sm">{job.job_number}</span>
-              <div className="flex items-center gap-1.5">
-                {job.priority === 'urgent' && <span className="text-xs px-2 py-0.5 bg-white/25 rounded-md font-bold text-white uppercase">{job.priority}</span>}
-                <span className="text-white/90 text-xs px-2 py-0.5 bg-white/15 rounded-md font-medium">Pre Print QC</span>
+        {prePrintQC.map((job) => {
+          const isOverdue = job.client_deadline && new Date(job.client_deadline) < new Date();
+          return (
+            <div key={job.id} className={`bg-card rounded-md border border-border border-l-4 border-l-cyan-400 hover:shadow-sm transition-shadow ${isOverdue ? 'ring-1 ring-red-200' : ''}`}>
+              <div className="bg-cyan-50/60 px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md">
+                <span className="text-[10px] font-mono text-muted-foreground">#{job.job_number}</span>
+                <div className="flex items-center gap-1">
+                  {job.priority === 'urgent' && <span className="text-[9px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded font-bold uppercase">Urgent</span>}
+                  <span className="text-[9px] px-1.5 py-0.5 bg-cyan-100 text-cyan-700 rounded font-semibold uppercase">Pre Print QC</span>
+                </div>
+              </div>
+              <div className="px-3 pt-2 pb-3 space-y-2">
+                <div>
+                  <p className="text-[10px] text-muted-foreground truncate">{job.client?.company || job.client?.name}</p>
+                  <h3 className="text-sm font-semibold text-foreground line-clamp-2 mt-0.5">{job.project_name}</h3>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {(job as any).product_category && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 font-medium">{(job as any).product_category}</span>
+                  )}
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{job.job_type?.replace(/_/g, ' ')}</span>
+                  {isOverdue && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">Overdue</span>}
+                </div>
+                <p className="text-[10px] text-muted-foreground">Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</p>
+                <div className="flex gap-1.5">
+                  {job.job_type === 'design_only' ? (
+                    <button onClick={() => updateJobStage(job.id, 'delivered')}
+                      className="flex items-center gap-1 px-2.5 py-1.5 bg-green-600 text-white rounded text-xs font-medium hover:bg-green-700 transition-colors">
+                      <CheckCircle className="w-3 h-3" /> File OK → Deliver
+                    </button>
+                  ) : (
+                    <button onClick={() => updateJobStage(job.id, 'printing')}
+                      className="flex items-center gap-1 px-2.5 py-1.5 bg-cyan-600 text-white rounded text-xs font-medium hover:bg-cyan-700 transition-colors">
+                      <ShieldCheck className="w-3 h-3" /> File OK → Print
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="p-3">
-              <p className="text-gray-500 text-xs mb-0.5">{job.client?.company || job.client?.name}</p>
-              <h3 className="text-gray-900 font-semibold text-sm mb-1 line-clamp-1">{job.project_name}</h3>
-              {(job as any).product_category && (
-                <span className="inline-block text-[10px] font-bold px-2 py-0.5 mb-2 rounded-md bg-gray-900 text-white tracking-wide">
-                  {(job as any).product_category}
-                </span>
-              )}
-              <p className="text-xs text-gray-400 mb-1">Type: {job.job_type?.replace(/_/g, ' ') || '—'}</p>
-              <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
-                <span>Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}</span>
-              </div>
-              <div className="flex gap-2">
-                {/* design_only → deliver after pre_print_qc; print/design_print → go to printing */}
-                {job.job_type === 'design_only' ? (
-                  <button
-                    onClick={() => updateJobStage(job.id, 'delivered')}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
-                  >
-                    <CheckCircle className="w-3.5 h-3.5" /> File OK → Deliver
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => updateJobStage(job.id, 'printing')}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-cyan-700 text-white rounded-md text-sm font-medium hover:bg-cyan-800 transition-colors"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5" /> File OK → Send to Print
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
+          );
+        })}
 
         {/* ── QC & Dispatch ── */}
-        {pendingQC.map((job) => (
-          <div key={job.id} className="bg-white rounded-md overflow-hidden border border-gray-200 hover:shadow-sm transition-all">
-            <div className="bg-gray-700 px-3 py-2 flex items-center justify-between">
-              <span className="text-white font-semibold text-sm">{job.job_number}</span>
-              <div className="flex items-center gap-1.5">
-                {job.priority === 'urgent' && <span className="text-xs px-2 py-0.5 bg-white/25 rounded-md font-bold text-white uppercase">{job.priority}</span>}
-                <span className="text-white/90 text-xs px-2 py-0.5 bg-white/15 rounded-md font-medium">QC & Dispatch</span>
+        {pendingQC.map((job) => {
+          const isOverdue = job.client_deadline && new Date(job.client_deadline) < new Date();
+          return (
+            <div key={job.id} className={`bg-card rounded-md border border-border border-l-4 border-l-violet-400 hover:shadow-sm transition-shadow ${isOverdue ? 'ring-1 ring-red-200' : ''}`}>
+              <div className="bg-violet-50/60 px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md">
+                <span className="text-[10px] font-mono text-muted-foreground">#{job.job_number}</span>
+                <div className="flex items-center gap-1">
+                  {job.priority === 'urgent' && <span className="text-[9px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded font-bold uppercase">Urgent</span>}
+                  <span className="text-[9px] px-1.5 py-0.5 bg-violet-100 text-violet-700 rounded font-semibold uppercase">QC</span>
+                </div>
+              </div>
+              <div className="px-3 pt-2 pb-3 space-y-2">
+                <div>
+                  <p className="text-[10px] text-muted-foreground truncate">{job.client?.company || job.client?.name}</p>
+                  <h3 className="text-sm font-semibold text-foreground line-clamp-2 mt-0.5">{job.project_name}</h3>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {(job as any).product_category && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 font-medium">{(job as any).product_category}</span>
+                  )}
+                  {isOverdue && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">Overdue</span>}
+                </div>
+                <p className="text-[10px] text-muted-foreground">Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</p>
+                <Link href="/admin/dispatch/qc-check"
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-card border border-border text-muted-foreground rounded text-xs font-medium hover:text-foreground hover:border-foreground/30 transition-colors">
+                  <ClipboardCheck className="w-3 h-3" /> Start QC
+                </Link>
               </div>
             </div>
-            <div className="p-3">
-              <p className="text-gray-500 text-xs mb-0.5">{job.client?.company || job.client?.name}</p>
-              <h3 className="text-gray-900 font-semibold text-sm mb-1 line-clamp-1">{job.project_name}</h3>
-              {(job as any).product_category && (
-                <span className="inline-block text-[10px] font-bold px-2 py-0.5 mb-2 rounded-md bg-gray-900 text-white tracking-wide">
-                  {(job as any).product_category}
-                </span>
-              )}
-              <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
-                <span>Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}</span>
-              </div>
-              <Link
-                href="/admin/dispatch/qc-check"
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors"
-              >
-                <ClipboardCheck className="w-3.5 h-3.5" />
-                Start QC
-              </Link>
-            </div>
-          </div>
-        ))}
+          );
+        })}
 
         {readyToDispatch.map((job) => {
           const hasInvoice = (job as any).invoices && (job as any).invoices.length > 0;
+          const isOverdue = job.client_deadline && new Date(job.client_deadline) < new Date();
           return (
-            <div key={job.id} className="bg-white rounded-md overflow-hidden border border-gray-200 hover:shadow-sm transition-all">
-              <div className="bg-gray-900 px-3 py-2 flex items-center justify-between">
-                <span className="text-white font-semibold text-sm">{job.job_number}</span>
-                <div className="flex items-center gap-1.5">
-                  {job.priority === 'urgent' && <span className="text-xs px-2 py-0.5 bg-white/25 rounded-md font-bold text-white uppercase">{job.priority}</span>}
-                  <span className="text-white/90 text-xs px-2 py-0.5 bg-white/15 rounded-md font-medium">Ready</span>
+            <div key={job.id} className={`bg-card rounded-md border border-border border-l-4 border-l-green-400 hover:shadow-sm transition-shadow ${isOverdue ? 'ring-1 ring-red-200' : ''}`}>
+              <div className="bg-green-50/60 px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md">
+                <span className="text-[10px] font-mono text-muted-foreground">#{job.job_number}</span>
+                <div className="flex items-center gap-1">
+                  {job.priority === 'urgent' && <span className="text-[9px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded font-bold uppercase">Urgent</span>}
+                  <span className="text-[9px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-semibold uppercase">Ready</span>
                 </div>
               </div>
-              <div className="p-3">
-                <p className="text-gray-500 text-xs mb-0.5">{job.client?.company || job.client?.name}</p>
-                <h3 className="text-gray-900 font-semibold text-sm mb-1 line-clamp-1">{job.project_name}</h3>
-                {(job as any).product_category && (
-                  <span className="inline-block text-[10px] font-bold px-2 py-0.5 mb-2 rounded-md bg-gray-900 text-white tracking-wide">
-                    {(job as any).product_category}
-                  </span>
-                )}
-                <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
-                  <span>Qty: {job.quantity}</span>
-                  <span>Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : '-'}</span>
+              <div className="px-3 pt-2 pb-3 space-y-2">
+                <div>
+                  <p className="text-[10px] text-muted-foreground truncate">{job.client?.company || job.client?.name}</p>
+                  <h3 className="text-sm font-semibold text-foreground line-clamp-2 mt-0.5">{job.project_name}</h3>
                 </div>
+                <div className="flex flex-wrap gap-1">
+                  {(job as any).product_category && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 font-medium">{(job as any).product_category}</span>
+                  )}
+                  {isOverdue && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">Overdue</span>}
+                </div>
+                <p className="text-[10px] text-muted-foreground">Qty: {job.quantity} &bull; Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</p>
                 {(job as any).packing_info && (
-                  <p className="text-xs text-green-700 mb-2 font-medium">
+                  <p className="text-[10px] text-green-700 font-medium">
                     📦 {(job as any).packing_info.package_count} {(job as any).packing_info.package_type}(s) · ~{(job as any).packing_info.approx_weight_kg}kg
                   </p>
                 )}
-                <div className="flex gap-2">
+                <div className="flex gap-1.5 flex-wrap">
                   {!hasInvoice && (
                     <button
                       onClick={async () => {
@@ -342,18 +343,18 @@ export default function DispatchPage() {
                           console.warn('Failed to send invoice request:', err);
                         }
                       }}
-                      className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors ${invoiceRequested.has(job.id)
-                        ? 'bg-green-100 text-green-700 cursor-default'
-                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                      className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded whitespace-nowrap transition-colors ${invoiceRequested.has(job.id)
+                          ? 'bg-green-100 text-green-700 cursor-default'
+                          : 'bg-card border border-border text-muted-foreground hover:text-foreground'
                         }`}
                     >
-                      <FileText className="w-3 h-3 inline mr-1" />
+                      <FileText className="w-3 h-3" />
                       {invoiceRequested.has(job.id) ? 'Requested ✓' : 'Request Invoice'}
                     </button>
                   )}
                   <button
                     onClick={() => handleOpenDispatch(job)}
-                    className={`flex-1 px-3 py-1.5 text-white text-xs font-medium rounded-md whitespace-nowrap ${hasInvoice ? 'bg-gray-900 hover:bg-gray-800' : 'bg-amber-500 hover:bg-amber-600'}`}
+                    className={`flex items-center gap-1 px-2.5 py-1.5 text-white text-xs font-medium rounded whitespace-nowrap ${hasInvoice ? 'bg-foreground hover:opacity-90' : 'bg-amber-500 hover:bg-amber-600'}`}
                   >
                     {hasInvoice ? 'Dispatch Now' : '⚠️ Dispatch'}
                   </button>

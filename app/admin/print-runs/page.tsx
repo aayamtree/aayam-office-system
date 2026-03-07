@@ -63,12 +63,12 @@ interface TransporterVendor {
 }
 
 // ─── Status Config ─────────────────────────────────────────
-const DEFAULT_STATUS = { label: 'Unknown', icon: Clock, color: 'bg-gray-100 text-gray-800', headerBg: 'bg-gray-500', dot: 'bg-gray-400' };
+const DEFAULT_STATUS = { label: 'Unknown', icon: Clock, color: 'bg-stone-100 text-stone-700', borderColor: 'border-l-stone-400', tintBg: 'bg-stone-50', dot: 'bg-stone-400' };
 const STATUS_CONFIG: Record<string, typeof DEFAULT_STATUS> = {
-    planned: { label: 'Planned', icon: Clock, color: 'bg-amber-100 text-amber-800', headerBg: 'bg-amber-600', dot: 'bg-amber-500' },
-    at_printer: { label: 'At Printer', icon: Printer, color: 'bg-orange-100 text-orange-800', headerBg: 'bg-orange-600', dot: 'bg-orange-500' },
-    printing_done: { label: 'Printing Done', icon: CheckCircle, color: 'bg-blue-100 text-blue-800', headerBg: 'bg-blue-600', dot: 'bg-blue-500' },
-    dispatched: { label: 'Dispatched', icon: Truck, color: 'bg-green-100 text-green-800', headerBg: 'bg-green-600', dot: 'bg-green-500' },
+    planned: { label: 'Planned', icon: Clock, color: 'bg-amber-100 text-amber-800', borderColor: 'border-l-amber-400', tintBg: 'bg-amber-50/60', dot: 'bg-amber-500' },
+    at_printer: { label: 'At Printer', icon: Printer, color: 'bg-orange-100 text-orange-800', borderColor: 'border-l-orange-400', tintBg: 'bg-orange-50/60', dot: 'bg-orange-500' },
+    printing_done: { label: 'Printing Done', icon: CheckCircle, color: 'bg-blue-100 text-blue-800', borderColor: 'border-l-blue-400', tintBg: 'bg-blue-50/60', dot: 'bg-blue-500' },
+    dispatched: { label: 'Dispatched', icon: Truck, color: 'bg-green-100 text-green-800', borderColor: 'border-l-green-400', tintBg: 'bg-green-50/60', dot: 'bg-green-500' },
 };
 
 const NEXT_STATUS: Record<string, string | null> = {
@@ -413,13 +413,13 @@ export default function PrintRunsPage() {
 
             {/* Cards Grid */}
             {filteredRuns.length === 0 ? (
-                <div className="bg-white rounded-md border border-gray-200 p-12 text-center">
-                    <Printer size={40} className="mx-auto text-gray-300 mb-3" />
-                    <p className="text-gray-500 font-medium">No print runs found</p>
-                    <p className="text-sm text-gray-400 mt-1">Create a print run from the Print Planner</p>
+                <div className="bg-card rounded-md border border-border p-12 text-center">
+                    <Printer size={36} className="mx-auto text-muted-foreground/30 mb-3" />
+                    <p className="text-muted-foreground font-medium text-sm">No print runs found</p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">Create a print run from the Print Planner</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
                     {filteredRuns.map(run => {
                         const statusConf = STATUS_CONFIG[run.status] || DEFAULT_STATUS;
                         const isUpdating = updating === run.id;
@@ -427,50 +427,46 @@ export default function PrintRunsPage() {
                         const nextLabel = getNextLabel(run.status);
 
                         return (
-                            <div key={run.id} className={`bg-white rounded-md overflow-hidden border hover:shadow-sm transition-all ${isOverdue ? 'border-red-300 ring-1 ring-red-100' : 'border-gray-200'}`}>
-                                {/* Colored Header */}
-                                <div className={`${statusConf.headerBg} px-3 py-2 flex items-center justify-between`}>
-                                    <span className="text-white font-semibold text-sm">{run.print_run_number}</span>
-                                    <div className="flex items-center gap-1.5">
+                            <div key={run.id} className={`bg-card rounded-md border border-border border-l-4 ${statusConf.borderColor} hover:shadow-sm transition-shadow ${isOverdue ? 'ring-1 ring-red-200' : ''}`}>
+                                {/* Light tinted top strip */}
+                                <div className={`${statusConf.tintBg} px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md`}>
+                                    <span className="text-[10px] font-mono text-muted-foreground">{run.print_run_number}</span>
+                                    <div className="flex items-center gap-1">
                                         {isOverdue && (
-                                            <span className="text-xs px-2 py-0.5 bg-white/25 rounded-md font-bold uppercase text-white">OVERDUE</span>
+                                            <span className="text-[9px] px-1.5 py-0.5 bg-red-50 text-red-600 border border-red-200 rounded font-bold uppercase">Overdue</span>
                                         )}
                                         {run.delivery_mode === 'direct_to_client' && (
-                                            <span className="text-xs px-2 py-0.5 bg-white/25 rounded-md font-bold text-white">DIRECT</span>
+                                            <span className="text-[9px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded font-medium">Direct</span>
                                         )}
-                                        <span className="text-white/90 text-xs px-2 py-0.5 bg-white/15 rounded-md font-medium">
+                                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold uppercase ${statusConf.color}`}>
                                             {statusConf.label}
                                         </span>
                                     </div>
                                 </div>
 
                                 {/* Body */}
-                                <div className="p-3">
-                                    <p className="text-gray-500 text-xs mb-0.5">{run.vendor_name || 'No vendor'}</p>
-                                    <h3 className="text-gray-900 font-semibold text-sm mb-1 line-clamp-1">
-                                        {[run.machine_name, run.sheet_size_label || run.sheet_size, run.material_name].filter(Boolean).join(' · ') || 'No specs'}
-                                    </h3>
+                                <div className="px-3 pt-2 pb-3 space-y-2">
+                                    <div>
+                                        <p className="text-[10px] text-muted-foreground truncate">{run.vendor_name || 'No vendor'}</p>
+                                        <h3 className="text-sm font-semibold text-foreground line-clamp-2 mt-0.5">
+                                            {[run.machine_name, run.sheet_size_label || run.sheet_size, run.material_name].filter(Boolean).join(' · ') || 'No specs'}
+                                        </h3>
+                                    </div>
 
                                     {/* Client names & jobs */}
                                     {run.jobs.length > 0 && (() => {
                                         const uniqueClients = Array.from(new Set(run.jobs.map(j => j.client_name).filter(Boolean)));
                                         return (
-                                            <div className="mb-2">
-                                                <p className="text-xs font-bold text-gray-800 mb-0.5">
+                                            <div>
+                                                <p className="text-[10px] font-semibold text-foreground truncate">
                                                     👤 {uniqueClients.join(', ') || 'No client'}
                                                 </p>
-                                                <div className="flex flex-wrap gap-1">
+                                                <div className="flex flex-wrap gap-1 mt-0.5">
                                                     {run.jobs.map(job => (
-                                                        <span key={job.id} className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">
+                                                        <span key={job.id} className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded">
                                                             <span className="font-bold">{job.job_number}</span>
-                                                            <span className="text-gray-400">·</span>
-                                                            <span className="truncate max-w-[100px]">{job.item_name || 'Unnamed'}</span>
-                                                            {job.job_type && (
-                                                                <>
-                                                                    <span className="text-gray-400">·</span>
-                                                                    <span className="capitalize text-gray-500">{job.job_type}</span>
-                                                                </>
-                                                            )}
+                                                            <span className="opacity-50">·</span>
+                                                            <span className="truncate max-w-[80px]">{job.item_name || 'Unnamed'}</span>
                                                         </span>
                                                     ))}
                                                 </div>
@@ -478,57 +474,54 @@ export default function PrintRunsPage() {
                                         );
                                     })()}
 
-                                    <div className="flex items-center gap-3 text-xs text-gray-500 mb-3 flex-wrap">
+                                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground flex-wrap">
                                         <span>{run.jobs.length} job{run.jobs.length !== 1 ? 's' : ''}</span>
                                         {run.deadline && (
                                             <span className="flex items-center gap-0.5">
-                                                <Calendar size={11} />{formatDate(run.deadline)}
+                                                <Calendar size={9} />{formatDate(run.deadline)}
                                             </span>
                                         )}
                                         {run.total_amount && run.total_amount > 0 && (
-                                            <span className="font-bold text-gray-700 flex items-center gap-0.5 ml-auto">
-                                                <IndianRupee size={11} />₹{run.total_amount.toLocaleString()}
+                                            <span className="font-bold text-foreground flex items-center gap-0.5 ml-auto">
+                                                <IndianRupee size={9} />₹{run.total_amount.toLocaleString()}
                                             </span>
                                         )}
                                     </div>
 
                                     {/* Paper supply badge */}
                                     {run.paper_vendor_name && (
-                                        <div className="mb-3 flex items-center gap-2 text-xs">
-                                            <span className={`px-2 py-0.5 rounded-md font-medium ${run.paper_payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                                                }`}>
-                                                📄 Paper: {run.paper_vendor_name} · ₹{(run.paper_total || 0).toLocaleString()} · {run.paper_payment_status}
-                                            </span>
-                                        </div>
+                                        <span className={`inline-flex text-[9px] px-1.5 py-0.5 rounded font-medium ${run.paper_payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                                            📄 Paper: {run.paper_vendor_name} · ₹{(run.paper_total || 0).toLocaleString()} · {run.paper_payment_status}
+                                        </span>
                                     )}
 
                                     {/* Actions */}
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-1.5 flex-wrap pt-0.5">
                                         <button
                                             onClick={() => setViewRun(run)}
-                                            className="flex-1 px-3 py-1.5 bg-white border border-gray-200 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5"
+                                            className="flex items-center gap-1 px-2.5 py-1.5 bg-card border border-border text-muted-foreground rounded text-xs font-medium hover:text-foreground hover:border-foreground/30 transition-colors"
                                         >
-                                            <Eye className="w-3.5 h-3.5" /> View
+                                            <Eye className="w-3 h-3" /> View
                                         </button>
 
                                         {nextLabel && (
                                             <button
                                                 onClick={() => handleNextStep(run)}
                                                 disabled={isUpdating}
-                                                className="flex-1 px-3 py-1.5 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
+                                                className="flex items-center gap-1 px-2.5 py-1.5 bg-foreground text-background rounded text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
                                             >
                                                 {isUpdating ? (
-                                                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                    <div className="w-3 h-3 border-2 border-background border-t-transparent rounded-full animate-spin" />
                                                 ) : (
-                                                    <ArrowRight className="w-3.5 h-3.5" />
+                                                    <ArrowRight className="w-3 h-3" />
                                                 )}
                                                 {nextLabel}
                                             </button>
                                         )}
                                         {run.status === 'dispatched' && (
-                                            <button disabled className="flex-1 px-3 py-1.5 bg-green-50 text-green-700 rounded-md text-sm font-medium border border-green-200 flex items-center justify-center gap-1.5 opacity-80">
-                                                <CheckCircle className="w-3.5 h-3.5" /> Done
-                                            </button>
+                                            <span className="flex items-center gap-1 px-2.5 py-1.5 bg-green-50 text-green-700 rounded text-xs font-medium border border-green-200 opacity-80">
+                                                <CheckCircle className="w-3 h-3" /> Done
+                                            </span>
                                         )}
                                     </div>
                                 </div>
@@ -544,12 +537,12 @@ export default function PrintRunsPage() {
             {viewRun && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setViewRun(null)}>
                     <div className="bg-white rounded-lg w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                        <div className={`${(STATUS_CONFIG[viewRun.status] || DEFAULT_STATUS).headerBg} px-4 py-3 flex items-center justify-between rounded-t-lg sticky top-0`}>
+                        <div className={`${(STATUS_CONFIG[viewRun.status] || DEFAULT_STATUS).tintBg} px-4 py-3 flex items-center justify-between rounded-t-lg sticky top-0 border-b border-border/50`}>
                             <div>
-                                <h2 className="text-white font-bold text-base">{viewRun.print_run_number}</h2>
-                                <p className="text-white/70 text-xs">{viewRun.vendor_name || 'No vendor'}</p>
+                                <h2 className="text-foreground font-bold text-base">{viewRun.print_run_number}</h2>
+                                <p className="text-muted-foreground text-xs">{viewRun.vendor_name || 'No vendor'}</p>
                             </div>
-                            <button onClick={() => setViewRun(null)} className="text-white/70 hover:text-white"><X size={18} /></button>
+                            <button onClick={() => setViewRun(null)} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
                         </div>
 
                         <div className="p-4 space-y-4">

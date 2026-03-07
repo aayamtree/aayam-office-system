@@ -227,18 +227,17 @@ export default function ClientsPage() {
   if (loading) return (
     <div className="space-y-3 px-2">
       {/* Mobile card skeletons */}
-      <div className="lg:hidden space-y-3">
+      <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
         {[1, 2, 3, 4].map(i => (
-          <div key={i} className="bg-white rounded-md overflow-hidden border border-gray-200 animate-pulse">
-            <div className="h-10 bg-gray-700" />
+          <div key={i} className="bg-card rounded-md border border-border border-l-4 border-l-stone-300 animate-pulse">
+            <div className="h-8 bg-muted rounded-t-md" />
             <div className="p-3 space-y-2">
-              <div className="h-3 w-1/3 bg-gray-200 rounded" />
-              <div className="h-4 w-1/2 bg-gray-200 rounded" />
-              <div className="h-3 w-1/4 bg-gray-200 rounded" />
+              <div className="h-3 w-1/3 bg-muted rounded" />
+              <div className="h-4 w-1/2 bg-muted rounded" />
               <div className="flex gap-2 pt-2">
-                <div className="flex-1 h-8 bg-gray-200 rounded" />
-                <div className="h-8 w-8 bg-gray-200 rounded" />
-                <div className="h-8 w-8 bg-gray-200 rounded" />
+                <div className="flex-1 h-7 bg-muted rounded" />
+                <div className="h-7 w-7 bg-muted rounded" />
+                <div className="h-7 w-7 bg-muted rounded" />
               </div>
             </div>
           </div>
@@ -292,97 +291,76 @@ export default function ClientsPage() {
 
       <div className="space-y-4">
         <>
-          {/* Mobile View: Cards */}
-          <div className="lg:hidden space-y-4">
-            {filteredClients.map((client) => {
-              const headerBg = client.is_active ? 'bg-gray-900' : 'bg-gray-400';
+          {/* Mobile/Tablet View: Cards — left-border accent style */}
+          <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
+            {filteredClients.map((client) => (
+              <div key={client.id} className={`bg-card rounded-md border border-border border-l-4 ${client.is_active ? 'border-l-stone-400' : 'border-l-gray-300'} hover:shadow-sm transition-shadow`}>
+                {/* Card top strip */}
+                <div className={`${client.is_active ? 'bg-stone-50' : 'bg-gray-50'} px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md`}>
+                  <span className="text-xs font-bold text-foreground truncate">{client.company || client.name}</span>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ml-2 shrink-0 ${client.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                    {client.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
 
-              return (
-                <div key={client.id} className="bg-white rounded-md overflow-hidden hover:shadow-sm transition-all border border-gray-200">
-                  {/* Header */}
-                  <div className={`${headerBg} px-4 py-2.5 flex items-center justify-between`}>
-                    <span className="text-white font-semibold text-sm">
-                      {client.company || client.name}
-                    </span>
-                    <span className="text-white/90 text-xs px-2 py-0.5 bg-white/15 rounded-md font-medium">
-                      {client.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-
-                  {/* Body */}
-                  <div className="p-3">
-                    <p className="text-gray-500 text-sm mb-1">
-                      {client.company ? client.name : 'Individual'}
-                    </p>
-
+                {/* Body */}
+                <div className="px-3 pt-2 pb-3 space-y-2">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">{client.company ? client.name : 'Individual'}</p>
                     {/* Brand Tags */}
                     {client.brand_name && (
-                      <div className="flex flex-wrap gap-1 mb-2">
+                      <div className="flex flex-wrap gap-1 mt-1">
                         {client.brand_name.split(/\s+/).filter(Boolean).map((tag, i) => (
-                          <span key={i} className="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-md font-medium">
+                          <span key={i} className="text-[9px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded font-medium">
                             {tag.startsWith('#') ? tag : `#${tag}`}
                           </span>
                         ))}
                       </div>
                     )}
+                  </div>
 
-                    <div className="space-y-1.5 mb-3">
-                      <div className="flex items-center gap-2 text-gray-900 text-sm">
-                        <Phone className="w-3.5 h-3.5 text-gray-400" />
-                        <span className="font-medium">{client.phone}</span>
-                      </div>
-                      {client.city && (
-                        <div className="flex items-center gap-2 text-gray-600 text-xs">
-                          <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                          <span>{client.city}</span>
-                        </div>
-                      )}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs text-foreground">
+                      <Phone className="w-3 h-3 text-muted-foreground shrink-0" />
+                      <span className="font-medium">{client.phone}</span>
                     </div>
-
-                    {/* Source Badge */}
-                    {profile?.role === 'admin' && (
-                      <div className="mb-3 pb-3 border-b border-gray-100">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-md ${(client as any).source === 'marketing' ? 'bg-muted text-foreground' : 'bg-gray-100 text-gray-600'
-                          }`}>
-                          {(client as any).source === 'marketing' ? 'Marketing Lead' : 'Direct / Admin'}
-                        </span>
+                    {client.city && (
+                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                        <MapPin className="w-3 h-3 shrink-0" />
+                        <span>{client.city}</span>
                       </div>
                     )}
+                  </div>
 
-                    {/* Actions */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleView(client)}
-                        className="flex-1 px-3 py-1.5 bg-white border border-gray-200 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        View
-                      </button>
-                      <button
-                        onClick={() => handleEdit(client)}
-                        className="px-3 py-1.5 border border-gray-200 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors"
-                      >
-                        <Edit className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(client.id)}
-                        className="px-3 py-1.5 border border-red-200 text-red-500 rounded-md text-sm font-medium hover:bg-red-50 transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                  {profile?.role === 'admin' && (
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${(client as any).source === 'marketing' ? 'bg-violet-100 text-violet-700' : 'bg-muted text-muted-foreground'}`}>
+                      {(client as any).source === 'marketing' ? 'Marketing Lead' : 'Direct'}
+                    </span>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex gap-1.5 pt-1">
+                    <button onClick={() => handleView(client)} className="flex items-center gap-1 px-2.5 py-1.5 bg-card border border-border text-muted-foreground rounded text-xs font-medium hover:text-foreground hover:border-foreground/30 transition-colors">
+                      <Eye className="w-3 h-3" /> View
+                    </button>
+                    <button onClick={() => handleEdit(client)} className="p-1.5 border border-border text-muted-foreground rounded hover:text-foreground hover:border-foreground/30 transition-colors">
+                      <Edit className="w-3 h-3" />
+                    </button>
+                    <button onClick={() => handleDelete(client.id)} className="p-1.5 border border-red-200 text-red-400 rounded hover:text-red-600 hover:bg-red-50 transition-colors">
+                      <Trash2 className="w-3 h-3" />
+                    </button>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
             {filteredClients.length === 0 && (
-              <div className="text-center py-12 bg-white rounded-md border border-gray-200">
-                <Building2 className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-1">No clients found</h3>
-                <p className="text-sm text-gray-500 mb-4">Try adjusting your filters</p>
+              <div className="col-span-full text-center py-12 bg-card rounded-md border border-border">
+                <Building2 className="w-10 h-10 mx-auto text-muted-foreground/30 mb-3" />
+                <h3 className="text-sm font-medium text-foreground mb-1">No clients found</h3>
+                <p className="text-xs text-muted-foreground mb-3">Try adjusting your filters</p>
                 {profile?.role !== 'marketing' && (
-                  <button onClick={handleAddNew} className="inline-flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-gray-800 shadow-sm">
-                    <Plus className="w-4 h-4" /> Add Client
+                  <button onClick={handleAddNew} className="inline-flex items-center gap-2 bg-foreground text-background px-3 py-2 rounded-md text-xs font-semibold hover:opacity-90">
+                    <Plus className="w-3.5 h-3.5" /> Add Client
                   </button>
                 )}
               </div>
