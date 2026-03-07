@@ -28,10 +28,6 @@ export function useSupabaseQuery<T>(
   tableName: string,
   options?: UseSupabaseQueryOptions
 ) {
-  // Serialize all options to stable strings — used as the SWR cache key AND
-  // as the source of truth inside the fetcher. This way the fetcher NEVER closes
-  // over a new `options` reference (which would make SWR see a "new" fetcher every
-  // render and schedule continuous quiet revalidations that flood the React scheduler).
   const stableFilter = JSON.stringify(options?.filter ?? null);
   const stableOrderBy = JSON.stringify(options?.orderBy ?? null);
   const stableSelect = options?.select ?? '*';
@@ -40,17 +36,20 @@ export function useSupabaseQuery<T>(
   const stablePageSize = options?.pageSize ?? null;
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Key for SWR cache — all primitives / stable strings, never object references
+  // Key uses stable primitives — never object references
   const key = isSupabaseConfigured()
     ? [tableName, stableFilter, stableOrderBy, stableSelect, stableLimit, stablePage, stablePageSize]
     : null;
 
-  // Fetcher receives parameters from the key array — completely stable, no stale closures.
-  const fetcher = async ([_table, _filter, _orderBy, _select, _limit, _page, _pageSize]:
-    [string, string, string, string, number | null, number | null, number | null]) => {
-    let query = supabase.from(_table).select(_select);
+  // Simple fetcher — closes over stable string locals, NOT over the `options` object.
+  // `options` itself is a new reference every render, but the locals above are
+  // recalculated from it and primitives/strings don't change reference.
+  const fetcher = async () => {
+    let query = supabase.from(tableName).select(stableSelect);
 
-    const filters: UseSupabaseQueryOptions['filter'] = _filter && _filter !== 'null' ? JSON.parse(_filter) : [];
+    const filters: UseSupabaseQueryOptions['filter'] = stableFilter && stableFilter !== 'null'
+      ? JSON.parse(stableFilter)
+      : [];
     if (filters && filters.length > 0) {
       filters.forEach(f => {
         const op = f.op || 'eq';
@@ -62,22 +61,22 @@ export function useSupabaseQuery<T>(
       });
     }
 
-    if (_orderBy && _orderBy !== 'null') {
-      const orderBy: UseSupabaseQueryOptions['orderBy'] = JSON.parse(_orderBy);
+    if (stableOrderBy && stableOrderBy !== 'null') {
+      const orderBy: UseSupabaseQueryOptions['orderBy'] = JSON.parse(stableOrderBy);
       if (orderBy) query = query.order(orderBy.column, { ascending: orderBy.ascending ?? false });
     }
 
-    if (_page && _pageSize) {
-      const from = (_page - 1) * _pageSize;
-      const to = from + _pageSize - 1;
+    if (stablePage && stablePageSize) {
+      const from = (stablePage - 1) * stablePageSize;
+      const to = from + stablePageSize - 1;
       query = query.range(from, to);
-    } else if (_limit) {
-      query = query.limit(_limit);
+    } else if (stableLimit) {
+      query = query.limit(stableLimit);
     }
 
     const { data: result, error: queryError } = await query;
     if (queryError) {
-      console.warn(`[useSupabaseQuery] ${_table} error:`, queryError.message);
+      console.warn(`[useSupabaseQuery] ${tableName} error:`, queryError.message);
       return [] as unknown as T[];
     }
     return (result as unknown as T[]) || [];
@@ -89,6 +88,9 @@ export function useSupabaseQuery<T>(
     dedupingInterval: 30000,
     keepPreviousData: true,
     fallbackData: [] as T[],
+    // Never auto-retry on error — our fetcher already returns [] on error.
+    // Without this, SWR retries with exponential backoff that floods the network.
+    onErrorRetry: () => { },
   });
 
 
