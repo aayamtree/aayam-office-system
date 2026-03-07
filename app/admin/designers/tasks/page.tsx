@@ -302,7 +302,7 @@ export default function DesignerWorkspace() {
 
       setTasks(mappedTasks);
     }
-  }, [jobs, clients, designers]);
+  }, [JSON.stringify(jobs?.map(j => j.id)), JSON.stringify(clients?.map(c => c.id)), JSON.stringify(designers?.map(d => d.id))]);
 
   // --- LOGIC (memoized to prevent recomputation on every render) ---
   // Pre-compute myDesignerRecord once instead of inside filteredTasks per-task

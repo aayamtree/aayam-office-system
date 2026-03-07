@@ -87,7 +87,8 @@ export default function NewProjectPage() {
                 setFormData(prev => ({ ...prev, designerId: currentDesigner.id }));
             }
         }
-    }, [profile, designers, formData.designerId]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [profile?.id, designers.length, formData.designerId]);
 
 
     // Handle Drive link change with verification
