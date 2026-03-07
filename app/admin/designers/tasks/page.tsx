@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, Suspense } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -119,14 +119,19 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
 // Mock for Logs until real DB table exists
 
 
-export default function DesignerWorkspace() {
+// ─── Stable filter options hoisted outside component so they never recreate ───
+// If defined inline inside the component, a new array is created on EVERY render,
+// which causes SWR to schedule revalidations and floods the React event queue.
+const JOBS_QUERY_OPTIONS = {
+  filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'file_check', 'designing', 'approval', 'pre_print_qc', 'printing', 'finishing', 'quality_check', 'ready', 'delivered'] as string[], op: 'in' as const }],
+  limit: 200
+};
+
+function DesignerWorkspaceInner() {
   const { profile } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { jobs, loading: jobsLoading, error: jobsError, updateJobStage, createJob, updateJob, refetch: refetchJobs } = useJobs({
-    filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'file_check', 'designing', 'approval', 'pre_print_qc', 'printing', 'finishing', 'quality_check', 'ready', 'delivered'], op: 'in' }],
-    limit: 200
-  });
+  const { jobs, loading: jobsLoading, error: jobsError, updateJobStage, createJob, updateJob, refetch: refetchJobs } = useJobs(JOBS_QUERY_OPTIONS);
   const { clients } = useClients();
   const { designers } = useDesigners();
 
@@ -1442,13 +1447,13 @@ export default function DesignerWorkspace() {
   );
 }
 
-// Helper for download icon
-function DownloadButton() {
+// Wrap in Suspense — required by Next.js 14 for any component calling useSearchParams().
+// Without this, Next.js re-renders the entire subtree on every navigation event,
+// which floods the React scheduler and kills click event processing.
+export default function DesignerWorkspace() {
   return (
-    <button className="text-gray-400 hover:text-primary transition-colors">
-      <div className="p-2 hover:bg-muted rounded-md transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
-      </div>
-    </button>
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" /></div>}>
+      <DesignerWorkspaceInner />
+    </Suspense>
   );
 }
