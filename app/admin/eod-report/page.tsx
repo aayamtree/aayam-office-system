@@ -183,7 +183,7 @@ export default function EODReportPage() {
                 .map(taskId => ({
                     job_id: taskId,
                     task_status: taskUpdates[taskId].task_status,
-                    product_category: taskUpdates[taskId].product_category,
+                    // product_category is local-only (used for checklist fetch) — NOT a DB column
                     status_update: taskUpdates[taskId].status_update,
                     completion_percentage: taskUpdates[taskId].completion_percentage,
                     time_spent: taskUpdates[taskId].time_spent,
@@ -193,6 +193,7 @@ export default function EODReportPage() {
                     print_checklist_done: taskUpdates[taskId].print_checklist_done,
                     client_comments: taskUpdates[taskId].client_comments
                 }));
+
 
             const { error } = await submitEODReport({
                 user_id: profile.id,

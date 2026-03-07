@@ -100,7 +100,7 @@ export default function CalendarPage() {
 
     const selectedDayEvents = useMemo(() => {
         if (!events) return [];
-        return events.filter(e => e.start_date === selectedDate);
+        return events.filter(e => (e.start_time || e.start_date || '').split('T')[0] === selectedDate);
     }, [events, selectedDate]);
 
     const handleDayClick = (dateStr: string) => {

@@ -2285,8 +2285,36 @@ export function useCalendarEvents(startDate?: string, endDate?: string) {
     // user_id should be provided by the component
     if (!event.user_id) throw new Error('user_id is required');
 
+    // The DB table stores start_time as a TIMESTAMP, but NewEventModal
+    // provides start_date (DATE string) + optional start_time (time string).
+    // Map them into a proper ISO timestamp for the DB.
+    let startTimestamp: string;
+    if (event.start_date) {
+      if (event.start_time && !event.all_day) {
+        // Combine date + time into ISO timestamp
+        startTimestamp = `${event.start_date}T${event.start_time}:00`;
+      } else {
+        // All-day: use midnight UTC
+        startTimestamp = `${event.start_date}T00:00:00`;
+      }
+    } else if (event.start_time) {
+      // Already a full timestamp
+      startTimestamp = event.start_time;
+    } else {
+      startTimestamp = new Date().toISOString();
+    }
+
     const newEvent = {
-      ...event,
+      user_id: event.user_id,
+      title: event.title || '',
+      description: event.description,
+      event_type: event.event_type || 'task',
+      start_time: startTimestamp,
+      all_day: event.all_day ?? true,
+      priority: event.priority || 'normal',
+      color: event.color || '#3b82f6',
+      status: event.status || 'pending',
+      is_recurring: false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -2306,7 +2334,10 @@ export function useCalendarEvents(startDate?: string, endDate?: string) {
         tagged_user_id: userId
       }));
 
-      await supabase.from('calendar_event_mentions').insert(mentions);
+      // Fire-and-forget — don't fail event creation if mentions table is missing
+      supabase.from('calendar_event_mentions').insert(mentions).then(({ error }) => {
+        if (error) console.warn('Could not create event mentions:', error.message);
+      });
     }
 
     refetch();
