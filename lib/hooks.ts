@@ -2537,13 +2537,17 @@ export function useDailyReports(userId?: string, dateFilter?: { start?: string; 
     return { data: data || [], error: error?.message };
   };
 
-  // Admin: Get all team reports
+  // Admin: Get all team reports (with user profile join to fix 'Unknown' names)
   const getAllReports = async (filters?: { userId?: string; startDate?: string; endDate?: string; searchQuery?: string }) => {
     if (!isSupabaseConfigured()) return { data: [], error: null };
 
     let query = supabase
       .from('daily_work_reports')
-      .select('*, task_updates:report_task_updates(*, job:jobs(*, client:clients(*)))')
+      .select(`
+        *,
+        user:user_profiles!daily_work_reports_user_id_fkey(id, full_name, role, email),
+        task_updates:report_task_updates(*, job:jobs(*, client:clients(*)))
+      `)
       .order('report_date', { ascending: false });
 
     if (filters?.userId) query = query.eq('user_id', filters.userId);
@@ -2565,6 +2569,28 @@ export function useDailyReports(userId?: string, dateFilter?: { start?: string; 
     }
 
     return { data: filteredData, error: error?.message };
+  };
+
+  // Admin: Rate an EOD report (1-5 stars + optional comment)
+  const rateReport = async (reportId: string, rating: number, comment?: string) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    try {
+      const { data, error } = await supabase
+        .from('daily_work_reports')
+        .update({
+          admin_rating: rating,
+          admin_comment: comment || null,
+          admin_rated_at: new Date().toISOString(),
+          admin_rated_by: (await supabase.auth.getUser()).data.user?.id
+        })
+        .eq('id', reportId)
+        .select()
+        .single();
+      if (error) throw error;
+      return { data, error: null };
+    } catch (e: any) {
+      return { data: null, error: e.message };
+    }
   };
 
   // Search reports by hashtag or text
@@ -2672,7 +2698,8 @@ export function useDailyReports(userId?: string, dateFilter?: { start?: string; 
     getAllReports,
     searchReports,
     getTodaySubmissionStatus,
-    fetchProductChecklist // Add new function
+    fetchProductChecklist,
+    rateReport
   };
 }
 
