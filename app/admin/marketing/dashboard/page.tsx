@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { useLeads, useFollowUps } from '@/lib/hooks';
+import { useLeads, useFollowUps, useCommissions } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
 import {
     Users, TrendingUp, AlertCircle, CheckCircle, Clock, Calendar,
@@ -12,11 +12,13 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 
+
 export default function AdminMarketingDashboard() {
     const router = useRouter();
     const { profile } = useAuth();
     const { leads, loading: leadsLoading } = useLeads();
     const { followUps, loading: followUpsLoading } = useFollowUps();
+    const { stats: commissionStats, loading: commLoading } = useCommissions();
 
     const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
     useEffect(() => {
@@ -153,7 +155,7 @@ export default function AdminMarketingDashboard() {
                 <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <IndianRupee className="h-4 w-4" />
+                            <IndianRupee className="h-4 w-4 text-yellow-500" />
                             <CardTitle className="text-sm font-medium">Commission Overview</CardTitle>
                         </div>
                         <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => router.push('/admin/marketing/commissions')}>
@@ -163,26 +165,29 @@ export default function AdminMarketingDashboard() {
                     <p className="text-xs text-muted-foreground">This month&apos;s earnings summary</p>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div className="p-3 rounded-md border">
-                            <p className="text-xs text-muted-foreground mb-1">Total This Month</p>
-                            <p className="text-lg font-semibold">₹0</p>
-                            <p className="text-xs text-muted-foreground mt-1">0 eligible projects</p>
+                    <div className="grid grid-cols-3 gap-3">
+                        <div className="p-3 rounded-md bg-amber-50 border border-amber-200">
+                            <p className="text-xs text-amber-600 font-medium mb-1">⏳ Eligible</p>
+                            <p className="text-base font-bold text-amber-900">
+                                {commLoading ? '...' : `₹${commissionStats.pendingAmount.toLocaleString('en-IN')}`}
+                            </p>
+                            <p className="text-xs text-amber-600 mt-0.5">{commissionStats.pendingCount} job{commissionStats.pendingCount !== 1 ? 's' : ''}</p>
                         </div>
-                        <div className="p-3 rounded-md border">
-                            <p className="text-xs text-muted-foreground mb-1">Paid Out</p>
-                            <p className="text-lg font-semibold">₹0</p>
-                            <p className="text-xs text-muted-foreground mt-1">Last month</p>
+                        <div className="p-3 rounded-md bg-blue-50 border border-blue-200">
+                            <p className="text-xs text-blue-600 font-medium mb-1">✅ Approved</p>
+                            <p className="text-base font-bold text-blue-900">
+                                {commLoading ? '...' : `₹${commissionStats.approvedAmount.toLocaleString('en-IN')}`}
+                            </p>
+                            <p className="text-xs text-blue-600 mt-0.5">{commissionStats.approvedCount} job{commissionStats.approvedCount !== 1 ? 's' : ''}</p>
                         </div>
-                        <div className="p-3 rounded-md border">
-                            <p className="text-xs text-muted-foreground mb-1">Pending</p>
-                            <p className="text-lg font-semibold text-destructive">₹0</p>
-                            <p className="text-xs text-muted-foreground mt-1">Awaiting payment</p>
+                        <div className="p-3 rounded-md bg-green-50 border border-green-200">
+                            <p className="text-xs text-green-600 font-medium mb-1">💰 Paid Out</p>
+                            <p className="text-base font-bold text-green-900">
+                                {commLoading ? '...' : `₹${commissionStats.paidAmount.toLocaleString('en-IN')}`}
+                            </p>
+                            <p className="text-xs text-green-600 mt-0.5">{commissionStats.paidCount} job{commissionStats.paidCount !== 1 ? 's' : ''}</p>
                         </div>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-3 text-center">
-                        💡 Commission system will be configured based on GST calculations
-                    </p>
                 </CardContent>
             </Card>
         </div>

@@ -2703,189 +2703,11 @@ export function useDailyReports(userId?: string, dateFilter?: { start?: string; 
   };
 }
 
-// =============================================
-// COMMISSIONS HOOK
-// =============================================
-export function useCommissions() {
-  const { user, profile } = useAuth();
+// NOTE: Old useCommissions (referencing separate 'commissions' table) removed.
+// Commission data now lives directly on the jobs table via commission_* columns.
+// See useCommissions() at the bottom of this file.
 
-  // Build filter based on role
-  const filter = profile?.role === 'admin'
-    ? undefined // Admin sees all commissions
-    : [{ column: 'marketing_person_id', value: user?.id }]; // Marketing users see only their own
 
-  const { data, loading, error, refetch } = useSupabaseQuery<Commission>('commissions', {
-    select: '*, marketing_person:profiles!marketing_person_id(id, full_name, email, role)',
-    filter,
-    orderBy: { column: 'created_at', ascending: false }
-  });
-
-  const createCommission = async (commission: Omit<Commission, 'id' | 'created_at' | 'updated_at' | 'gst_amount' | 'base_amount' | 'commission_amount'>) => {
-    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
-
-    const payload = {
-      ...commission,
-      created_by: user?.id,
-    };
-
-    const { data: newCommission, error: insertError } = await supabase
-      .from('commissions')
-      .insert([payload])
-      .select('*, marketing_person:profiles!marketing_person_id(*)')
-      .single();
-
-    if (insertError) {
-      console.error('Error creating commission:', insertError);
-      return { error: insertError.message };
-    }
-
-    if (user) {
-      logActivity(
-        'Created Commission',
-        'Commissions',
-        newCommission.id,
-        `Created commission for ${commission.project_name || 'project'}: ₹${commission.project_total_amount}`,
-        undefined, user?.id
-      );
-    }
-
-    refetch();
-    return { data: newCommission, error: null };
-  };
-
-  const updateCommission = async (id: string, updates: Partial<Commission>) => {
-    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
-
-    const { data: updatedCommission, error: updateError } = await supabase
-      .from('commissions')
-      .update(updates)
-      .eq('id', id)
-      .select('*, marketing_person:profiles!marketing_person_id(*)')
-      .single();
-
-    if (updateError) {
-      console.error('Error updating commission:', updateError);
-      return { error: updateError.message };
-    }
-
-    if (user) {
-      logActivity(
-        'Updated Commission',
-        'Commissions',
-        id,
-        `Updated commission status to ${updates.status || 'updated'}`,
-        undefined, user?.id
-      );
-    }
-
-    refetch();
-    return { data: updatedCommission, error: null };
-  };
-
-  const deleteCommission = async (id: string) => {
-    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
-
-    const { error: deleteError } = await supabase
-      .from('commissions')
-      .delete()
-      .eq('id', id);
-
-    if (deleteError) {
-      console.error('Error deleting commission:', deleteError);
-      return { error: deleteError.message };
-    }
-
-    if (user) {
-      logActivity(
-        'Deleted Commission',
-        'Commissions',
-        id,
-        'Deleted commission record',
-        undefined, user?.id
-      );
-    }
-
-    refetch();
-    return { error: null };
-  };
-
-  const markAsPaid = async (id: string, paymentReference?: string) => {
-    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
-
-    const updates = {
-      status: 'paid' as const,
-      paid_at: new Date().toISOString(),
-      paid_by: user?.id,
-      payment_reference: paymentReference
-    };
-
-    const { data: updatedCommission, error: updateError } = await supabase
-      .from('commissions')
-      .update(updates)
-      .eq('id', id)
-      .select('*, marketing_person:profiles!marketing_person_id(*)')
-      .single();
-
-    if (updateError) {
-      console.error('Error marking commission as paid:', updateError);
-      return { error: updateError.message };
-    }
-
-    if (user) {
-      logActivity(
-        'Marked Commission Paid',
-        'Commissions',
-        id,
-        `Marked commission as paid${paymentReference ? ` (Ref: ${paymentReference})` : ''}`,
-        undefined, user?.id
-      );
-    }
-
-    refetch();
-    return { data: updatedCommission, error: null };
-  };
-
-  const approveCommission = async (id: string) => {
-    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
-
-    const { data: updatedCommission, error: updateError } = await supabase
-      .from('commissions')
-      .update({ status: 'approved' })
-      .eq('id', id)
-      .select('*, marketing_person:profiles!marketing_person_id(*)')
-      .single();
-
-    if (updateError) {
-      console.error('Error approving commission:', updateError);
-      return { error: updateError.message };
-    }
-
-    if (user) {
-      logActivity(
-        'Approved Commission',
-        'Commissions',
-        id,
-        'Approved commission for payment',
-        undefined, user?.id
-      );
-    }
-
-    refetch();
-    return { data: updatedCommission, error: null };
-  };
-
-  return {
-    commissions: data,
-    loading,
-    error,
-    refetch,
-    createCommission,
-    updateCommission,
-    deleteCommission,
-    markAsPaid,
-    approveCommission
-  };
-}
 
 // =============================================
 // ACTIVITY FEED HOOK
@@ -2947,3 +2769,124 @@ export function useActivityFeed(limit: number = 20) {
 // NOTE: useUserNotes removed — user_notes table was dropped.
 // Dashboard sticky notes use useDashboardNotes() → notes table instead.
 
+// =============================================
+// COMMISSION HOOK
+// Reads commission data directly from jobs table — no separate table.
+// commission_status: 'none' | 'eligible' | 'approved' | 'paid'
+// =============================================
+export function useCommissions(filterUserId?: string) {
+  const { profile } = useAuth();
+  const [commissions, setCommissions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    pendingCount: 0, pendingAmount: 0,
+    approvedCount: 0, approvedAmount: 0,
+    paidCount: 0, paidAmount: 0,
+    thisMonthAmount: 0,
+  });
+
+  const fetchCommissions = useCallback(async () => {
+    if (!isSupabaseConfigured()) { setLoading(false); return; }
+    const userId = filterUserId || (profile?.role === 'marketing' ? profile.id : null);
+
+    let query = supabase
+      .from('jobs')
+      .select(`
+        id, job_number, project_name, total_amount, amount_received,
+        commission_user_id, commission_percentage, commission_amount,
+        commission_status, commission_paid_at, created_at, gst_percentage,
+        commission_user:profiles!commission_user_id(id, full_name, commission_rate),
+        client:clients(name, company)
+      `)
+      .neq('commission_status', 'none')
+      .order('created_at', { ascending: false });
+
+    if (userId) query = query.eq('commission_user_id', userId);
+
+    const { data, error } = await query;
+    if (error) { console.error('Commission fetch error:', error); setLoading(false); return; }
+
+    const jobs = data || [];
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+
+    setStats({
+      pendingCount: jobs.filter(j => j.commission_status === 'eligible').length,
+      pendingAmount: jobs.filter(j => j.commission_status === 'eligible').reduce((s, j) => s + (j.commission_amount || 0), 0),
+      approvedCount: jobs.filter(j => j.commission_status === 'approved').length,
+      approvedAmount: jobs.filter(j => j.commission_status === 'approved').reduce((s, j) => s + (j.commission_amount || 0), 0),
+      paidCount: jobs.filter(j => j.commission_status === 'paid').length,
+      paidAmount: jobs.filter(j => j.commission_status === 'paid').reduce((s, j) => s + (j.commission_amount || 0), 0),
+      thisMonthAmount: jobs
+        .filter(j => j.commission_status !== 'none' && j.created_at >= monthStart)
+        .reduce((s, j) => s + (j.commission_amount || 0), 0),
+    });
+
+    setCommissions(jobs);
+    setLoading(false);
+  }, [profile?.id, profile?.role, filterUserId]);
+
+  useEffect(() => { fetchCommissions(); }, [fetchCommissions]);
+
+  // Admin: approve — set final % and recalculate amount
+  const approveCommission = async (jobId: string, commissionPercentage: number, gstPercentage: number = 18) => {
+    if (!isSupabaseConfigured()) return { error: 'DB not configured' };
+    const { data: job } = await supabase.from('jobs').select('total_amount').eq('id', jobId).single();
+    if (!job) return { error: 'Job not found' };
+    const gstAmt = (job.total_amount * gstPercentage) / (100 + gstPercentage);
+    const base = job.total_amount - gstAmt;
+    const commissionAmount = parseFloat(((base * commissionPercentage) / 100).toFixed(2));
+    const { error } = await supabase.from('jobs').update({
+      commission_percentage: commissionPercentage,
+      commission_amount: commissionAmount,
+      commission_status: 'approved',
+    }).eq('id', jobId);
+    if (!error) fetchCommissions();
+    return { error: error?.message };
+  };
+
+  // Admin: mark as physically paid out
+  const markCommissionPaid = async (jobId: string) => {
+    if (!isSupabaseConfigured()) return { error: 'DB not configured' };
+    const { error } = await supabase.from('jobs').update({
+      commission_status: 'paid',
+      commission_paid_at: new Date().toISOString(),
+    }).eq('id', jobId);
+    if (!error) fetchCommissions();
+    return { error: error?.message };
+  };
+
+  return { commissions, loading, stats, approveCommission, markCommissionPaid, refetch: fetchCommissions };
+}
+
+// Call this when a job becomes fully paid (amount_received >= total_amount)
+// Auto-sets commission_status = 'eligible' if a marketing person is linked
+export async function autoSetCommissionEligible(jobId: string) {
+  if (!isSupabaseConfigured()) return;
+  const { data: job } = await supabase
+    .from('jobs')
+    .select('commission_user_id, commission_status, total_amount, gst_percentage, client_id')
+    .eq('id', jobId)
+    .single();
+  if (!job || job.commission_status !== 'none') return;
+
+  let marketingUserId = job.commission_user_id;
+  if (!marketingUserId && job.client_id) {
+    const { data: client } = await supabase.from('clients').select('assigned_marketing_user_id').eq('id', job.client_id).single();
+    marketingUserId = client?.assigned_marketing_user_id;
+  }
+  if (!marketingUserId) return;
+
+  const { data: marketer } = await supabase.from('profiles').select('commission_rate').eq('id', marketingUserId).single();
+  const gstPct = job.gst_percentage || 18;
+  const gstAmt = (job.total_amount * gstPct) / (100 + gstPct);
+  const base = job.total_amount - gstAmt;
+  const rate = marketer?.commission_rate || 5;
+  const commissionAmount = parseFloat(((base * rate) / 100).toFixed(2));
+
+  await supabase.from('jobs').update({
+    commission_user_id: marketingUserId,
+    commission_percentage: rate,
+    commission_amount: commissionAmount,
+    commission_status: 'eligible',
+  }).eq('id', jobId);
+}

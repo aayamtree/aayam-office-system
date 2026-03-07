@@ -4,366 +4,238 @@ import { useState } from 'react';
 import { toast } from '@/lib/toast';
 import { useAuth } from '@/lib/auth-context';
 import {
-    IndianRupee, Plus, Download, Calculator,
-    CheckCircle, Clock, TrendingUp, AlertCircle
+    IndianRupee, CheckCircle, Clock, TrendingUp, Loader2,
+    AlertCircle, Briefcase, ChevronDown, ChevronUp, X
 } from 'lucide-react';
-import { calculateCommission, COMMON_GST_RATES, formatCurrency, CommissionInput } from '@/lib/commission-calculator';
+import { useCommissions } from '@/lib/hooks';
+import { formatDate } from '@/lib/utils';
+
+const fmtCur = (n: number) =>
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
+
+const STATUS_COLORS: Record<string, string> = {
+    eligible: 'bg-amber-100 text-amber-800 border-amber-200',
+    approved: 'bg-blue-100 text-blue-800 border-blue-200',
+    paid: 'bg-green-100 text-green-800 border-green-200',
+};
 
 export default function CommissionsPage() {
     const { profile } = useAuth();
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'paid'>('all');
+    const isAdmin = profile?.role === 'admin';
 
-    // TODO: Replace with real data hook
-    const commissions: any[] = [];
-    const loading = false;
+    // Marketing user sees only their own; admin sees all
+    const { commissions, loading, stats, approveCommission, markCommissionPaid } = useCommissions();
 
-    // Only admin and marketing can access this page
+    const [filter, setFilter] = useState<'all' | 'eligible' | 'approved' | 'paid'>('all');
+    const [approveModal, setApproveModal] = useState<{ jobId: string; name: string; defaultPct: number; gstPct: number } | null>(null);
+    const [pctInput, setPctInput] = useState('5');
+    const [saving, setSaving] = useState(false);
+
     if (profile?.role !== 'admin' && profile?.role !== 'marketing') {
         return (
             <div className="flex items-center justify-center py-20">
                 <div className="text-center">
                     <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-                    <h2 className="text-page-title text-gray-900">Access Denied</h2>
-                    <p className="text-gray-500 mt-2">This page is only accessible to admins.</p>
+                    <h2 className="text-lg font-bold text-gray-900">Access Denied</h2>
                 </div>
             </div>
         );
     }
 
-    return (
-        <div className="space-y-4 md:space-y-6 max-w-7xl">
-            {/* Header */}
-            <div>
-                <div>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-page-title text-gray-900 flex items-center gap-3">
-                                <IndianRupee className="text-primary" size={32} />
-                                Commission Management
-                            </h1>
-                            <p className="text-gray-500 mt-1">Track and manage marketing commissions with flexible GST</p>
-                        </div>
-                        <button
-                            onClick={() => setShowAddModal(true)}
-                            className="px-4 py-2 bg-gray-900 text-white rounded-md font-semibold hover:bg-gray-800 transition-all flex items-center gap-2">
-                            <Plus size={20} />
-                            Add Commission
-                        </button>
-                    </div>
-                </div>
-            </div>
+    const filtered = filter === 'all' ? commissions : commissions.filter(c => c.commission_status === filter);
 
-            <div className="space-y-6">
-                {/* Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
-                    <div className="bg-white rounded-md p-3 md:p-4 border border-gray-200">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-muted rounded-md">
-                                <Clock className="text-foreground" size={20} />
-                            </div>
-                            <p className="text-sm text-gray-500 font-medium">Pending</p>
-                        </div>
-                        <p className="text-page-title text-gray-900">₹0</p>
-                        <p className="text-xs text-gray-400 mt-1">0 projects</p>
-                    </div>
-                    <div className="bg-white rounded-md p-3 md:p-4 border border-gray-200">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-muted rounded-md">
-                                <CheckCircle className="text-foreground" size={20} />
-                            </div>
-                            <p className="text-sm text-gray-500 font-medium">Approved</p>
-                        </div>
-                        <p className="text-page-title text-gray-900">₹0</p>
-                        <p className="text-xs text-gray-400 mt-1">0 projects</p>
-                    </div>
-                    <div className="bg-white rounded-md p-3 md:p-4 border border-gray-200">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-white rounded-md">
-                                <TrendingUp className="text-gray-900" size={20} />
-                            </div>
-                            <p className="text-sm text-gray-500 font-medium">Paid</p>
-                        </div>
-                        <p className="text-page-title text-gray-900">₹0</p>
-                        <p className="text-xs text-gray-400 mt-1">0 projects</p>
-                    </div>
-                    <div className="bg-white rounded-md p-3 md:p-4 border border-gray-200">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-muted rounded-md">
-                                <IndianRupee className="text-primary" size={20} />
-                            </div>
-                            <p className="text-sm text-gray-500 font-medium">Total This Month</p>
-                        </div>
-                        <p className="text-page-title text-gray-900 font-semibold">₹0</p>
-                        <p className="text-xs text-gray-400 mt-1">Eligible commissions</p>
-                    </div>
-                </div>
+    const handleApprove = async () => {
+        if (!approveModal) return;
+        setSaving(true);
+        const { error } = await approveCommission(approveModal.jobId, parseFloat(pctInput), approveModal.gstPct);
+        setSaving(false);
+        if (error) { toast.error('Failed: ' + error); return; }
+        toast.success('Commission approved!');
+        setApproveModal(null);
+    };
 
-                {/* Filters */}
-                <div className="bg-white rounded-md p-3 md:p-4 border border-gray-200">
-                    <div className="flex items-center justify-between gap-2 md:gap-4">
-                        <div className="flex items-center gap-3">
-                            {(['all', 'pending', 'approved', 'paid'] as const).map((f) => (
-                                <button
-                                    key={f}
-                                    onClick={() => setFilter(f)}
-                                    className={`px-4 py-2 rounded-md text-sm font-semibold transition-all capitalize ${filter === f
-                                        ? 'bg-gray-900 text-white'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                        }`}>
-                                    {f}
-                                </button>
-                            ))}
-                        </div>
-                        <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-all text-sm font-bold flex items-center gap-2">
-                            <Download size={16} />
-                            Export
-                        </button>
-                    </div>
-                </div>
-
-                {/* Commissions List */}
-                <div className="bg-white rounded-md border border-gray-200">
-                    <div className="p-4 border-b border-gray-100">
-                        <h2 className="text-page-title text-gray-900">Commission Records</h2>
-                        <p className="text-sm text-gray-500 mt-1">All commission calculations with GST breakdown</p>
-                    </div>
-                    <div className="p-4">
-                        {loading ? (
-                            <div className="text-center py-12">
-                                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-border-600"></div>
-                            </div>
-                        ) : commissions.length === 0 ? (
-                            <div className="text-center py-12">
-                                <IndianRupee className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                                <p className="text-gray-500 font-medium">No commissions added yet</p>
-                                <p className="text-sm text-gray-400 mt-1">Click &quot;Add Commission&quot; to create your first entry</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {commissions.map((commission) => (
-                                    <div key={commission.id} className="border border-gray-100 rounded-md p-4 hover:border-primary/20 transition-all">
-                                        {/* Commission card content */}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Add Commission Modal */}
-            {showAddModal && <AddCommissionModal onClose={() => setShowAddModal(false)} />}
-        </div>
-    );
-}
-
-// Add Commission Modal with Live Calculator
-function AddCommissionModal({ onClose }: { onClose: () => void }) {
-    const [formData, setFormData] = useState({
-        projectName: '',
-        projectTotal: '',
-        gstPercentage: '18',
-        commissionType: 'percentage' as 'percentage' | 'fixed',
-        commissionValue: '5',
-    });
-
-    const [calculationResult, setCalculationResult] = useState<any>(null);
-
-    // Calculate in real-time
-    const handleCalculate = () => {
-        if (!formData.projectTotal || !formData.gstPercentage || !formData.commissionValue) {
-            setCalculationResult(null);
-            return;
-        }
-
-        const input: CommissionInput = {
-            projectTotalAmount: parseFloat(formData.projectTotal),
-            gstPercentage: parseFloat(formData.gstPercentage),
-            commissionType: formData.commissionType,
-            commissionValue: parseFloat(formData.commissionValue),
-        };
-
-        const result = calculateCommission(input);
-        setCalculationResult(result);
+    const handleMarkPaid = async (jobId: string) => {
+        const { error } = await markCommissionPaid(jobId);
+        if (error) { toast.error('Failed: ' + error); return; }
+        toast.success('Commission marked as paid!');
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-md w-full max-w-3xl overflow-hidden max-h-[90vh] overflow-y-auto">
-                {/* Header */}
-                <div className="bg-gray-900 p-4 text-white">
-                    <h3 className="text-page-title flex items-center gap-3">
-                        <Calculator size={28} />
-                        Add Commission with GST Calculator
-                    </h3>
-                    <p className="text-white/80 text-sm mt-1">User-configurable GST rates for all printing materials</p>
-                </div>
-
-                <div className="p-4 space-y-6">
-                    {/* Project Name */}
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Project Name</label>
-                        <input
-                            type="text"
-                            value={formData.projectName}
-                            onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
-                            className="w-full border-2 border-gray-200 rounded-md px-4 py-3 focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
-                            placeholder="e.g., Pouch - ABC Company"
-                        />
-                    </div>
-
-                    {/* Project Total */}
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">
-                            Project Total Amount (including GST) <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">₹</span>
-                            <input
-                                type="number"
-                                value={formData.projectTotal}
-                                onChange={(e) => {
-                                    setFormData({ ...formData, projectTotal: e.target.value });
-                                    setTimeout(handleCalculate, 100);
-                                }}
-                                className="w-full border-2 border-gray-200 rounded-md pl-10 pr-4 py-3 text-section focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
-                                placeholder="56000"
-                            />
-                        </div>
-                    </div>
-
-                    {/* GST Percentage */}
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">
-                            GST Percentage (User-Configurable) <span className="text-red-500">*</span>
-                        </label>
-                        <div className="grid grid-cols-5 gap-2 mb-3">
-                            {COMMON_GST_RATES.map((rate) => (
-                                <button
-                                    key={rate.value}
-                                    onClick={() => {
-                                        if (rate.value > 0) {
-                                            setFormData({ ...formData, gstPercentage: rate.value.toString() });
-                                            setTimeout(handleCalculate, 100);
-                                        }
-                                    }}
-                                    className={`px-3 py-2 rounded-md text-sm font-semibold transition-all ${formData.gstPercentage === rate.value.toString()
-                                        ? 'bg-gray-900 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        }`}
-                                >
-                                    {rate.value > 0 ? `${rate.value}%` : 'Custom'}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="relative">
-                            <input
-                                type="number"
-                                step="0.01"
-                                value={formData.gstPercentage}
-                                onChange={(e) => {
-                                    setFormData({ ...formData, gstPercentage: e.target.value });
-                                    setTimeout(handleCalculate, 100);
-                                }}
-                                className="w-full border-2 border-gray-200 rounded-md px-4 py-3 text-section focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
-                                placeholder="18"
-                            />
-                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">%</span>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-2">💡 Enter any GST % - policies change and you work with all materials!</p>
-                    </div>
-
-                    {/* Commission Type & Value */}
-                    <div className="grid grid-cols-2 gap-2 md:gap-4">
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Commission Type</label>
-                            <select
-                                value={formData.commissionType}
-                                onChange={(e) => {
-                                    setFormData({ ...formData, commissionType: e.target.value as any });
-                                    setTimeout(handleCalculate, 100);
-                                }}
-                                className="w-full border-2 border-gray-200 rounded-md px-4 py-3 font-bold focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
-                            >
-                                <option value="percentage">Percentage (%)</option>
-                                <option value="fixed">Fixed Amount (₹)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">
-                                Commission Value {formData.commissionType === 'percentage' ? '(%)' : '(₹)'}
-                            </label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                value={formData.commissionValue}
-                                onChange={(e) => {
-                                    setFormData({ ...formData, commissionValue: e.target.value });
-                                    setTimeout(handleCalculate, 100);
-                                }}
-                                className="w-full border-2 border-gray-200 rounded-md px-4 py-3 text-section focus:ring-4 ring-green-500/20 focus:border-green-500 transition-all"
-                                placeholder="5"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Live Calculation Result */}
-                    {calculationResult && (
-                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-md md:rounded-md p-3 md:p-4 border-2 border-green-200">
-                            <h4 className="font-bold text-green-900 mb-4 flex items-center gap-2">
-                                <Calculator size={20} />
-                                Live Calculation
-                            </h4>
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-gray-600">Project Total (incl. GST)</span>
-                                    <span className="font-bold text-gray-900">{formatCurrency(calculationResult.projectTotalAmount)}</span>
-                                </div>
-                                <div className="flex justify-between items-center text-red-600">
-                                    <span className="text-sm">GST ({calculationResult.gstPercentage}%)</span>
-                                    <span className="font-bold">- {formatCurrency(calculationResult.gstAmount)}</span>
-                                </div>
-                                <div className="border-t-2 border-green-200 pt-2"></div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm font-bold text-gray-700">Base Amount (excl. GST)</span>
-                                    <span className="font-bold text-gray-900">{formatCurrency(calculationResult.baseAmount)}</span>
-                                </div>
-                                <div className="flex justify-between items-center text-foreground">
-                                    <span className="text-sm">
-                                        Commission ({formData.commissionType === 'percentage' ? `${calculationResult.commissionValue}%` : 'Fixed'})
-                                    </span>
-                                    <span className="font-bold">× {formData.commissionType === 'percentage' ? `${calculationResult.commissionValue}%` : formatCurrency(calculationResult.commissionValue)}</span>
-                                </div>
-                                <div className="border-t-2 border-green-300 pt-3 mt-3"></div>
-                                <div className="flex justify-between items-center bg-gray-900 text-white rounded-md p-3">
-                                    <span className="font-bold">Final Commission</span>
-                                    <span className="text-page-title">{formatCurrency(calculationResult.commissionAmount)}</span>
-                                </div>
-                            </div>
-                            <p className="text-xs text-gray-600 mt-3 italic">{calculationResult.breakdown}</p>
-                        </div>
-                    )}
-                </div>
-
-                {/* Footer */}
-                <div className="p-4 border-t-2 border-gray-100 bg-gray-50 flex gap-2 md:gap-4 justify-end">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 border-2 border-gray-300 rounded-md font-bold text-gray-700 hover:bg-gray-100 transition-all"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={() => {
-                            toast.info('Commission saving feature coming soon - database table creation needed!');
-                            onClose();
-                        }}
-                        className="px-8 py-2 bg-gray-900 text-white rounded-md font-semibold hover:bg-gray-800 transition-all">
-                        Save Commission
-                    </button>
+        <div className="space-y-4 max-w-5xl">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-page-title text-gray-900 flex items-center gap-2">
+                        <IndianRupee className="w-6 h-6 text-yellow-500" />
+                        {isAdmin ? 'Commission Management' : 'My Commissions'}
+                    </h1>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                        {isAdmin ? 'Marketing staff commissions — tied to jobs, auto from full payment' : 'Your earnings from converted jobs'}
+                    </p>
                 </div>
             </div>
+
+            {/* Stat Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+                <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Clock className="w-4 h-4 text-amber-600" />
+                        <span className="text-xs font-medium text-amber-700">Eligible (Pending)</span>
+                    </div>
+                    <p className="text-lg font-bold text-amber-900">{fmtCur(stats.pendingAmount)}</p>
+                    <p className="text-xs text-amber-600">{stats.pendingCount} job{stats.pendingCount !== 1 ? 's' : ''}</p>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                        <CheckCircle className="w-4 h-4 text-blue-600" />
+                        <span className="text-xs font-medium text-blue-700">Approved</span>
+                    </div>
+                    <p className="text-lg font-bold text-blue-900">{fmtCur(stats.approvedAmount)}</p>
+                    <p className="text-xs text-blue-600">{stats.approvedCount} job{stats.approvedCount !== 1 ? 's' : ''}</p>
+                </div>
+                <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                        <TrendingUp className="w-4 h-4 text-green-600" />
+                        <span className="text-xs font-medium text-green-700">Paid Out</span>
+                    </div>
+                    <p className="text-lg font-bold text-green-900">{fmtCur(stats.paidAmount)}</p>
+                    <p className="text-xs text-green-600">{stats.paidCount} job{stats.paidCount !== 1 ? 's' : ''}</p>
+                </div>
+                <div className="bg-gray-900 border border-gray-800 rounded-md p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                        <IndianRupee className="w-4 h-4 text-yellow-400" />
+                        <span className="text-xs font-medium text-white">This Month</span>
+                    </div>
+                    <p className="text-lg font-bold text-white">{fmtCur(stats.thisMonthAmount)}</p>
+                    <p className="text-xs text-gray-400">All statuses</p>
+                </div>
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex gap-2 flex-wrap">
+                {(['all', 'eligible', 'approved', 'paid'] as const).map(f => (
+                    <button
+                        key={f}
+                        onClick={() => setFilter(f)}
+                        className={`px-3 py-1.5 rounded-md text-xs font-semibold capitalize transition-all ${filter === f ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                    >
+                        {f === 'eligible' ? '⏳ Eligible' : f === 'approved' ? '✅ Approved' : f === 'paid' ? '💰 Paid' : 'All'}
+                    </button>
+                ))}
+            </div>
+
+            {/* Commission List */}
+            <div className="space-y-2">
+                {loading ? (
+                    <div className="flex items-center justify-center py-12">
+                        <Loader2 className="animate-spin w-6 h-6 text-gray-400" />
+                    </div>
+                ) : filtered.length === 0 ? (
+                    <div className="text-center py-12 bg-gray-50 rounded-md border border-dashed border-gray-200">
+                        <IndianRupee className="mx-auto w-10 h-10 text-gray-300 mb-3" />
+                        <p className="text-gray-500 font-medium">No commissions yet</p>
+                        <p className="text-xs text-gray-400 mt-1">Commissions are automatically created when a linked job is fully paid</p>
+                    </div>
+                ) : (
+                    filtered.map((job) => (
+                        <div key={job.id} className="bg-white rounded-md border border-gray-200 overflow-hidden hover:shadow-sm transition-shadow">
+                            {/* Header bar */}
+                            <div className="bg-gray-900 px-3 py-2 flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <Briefcase className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0" />
+                                    <span className="text-xs font-bold text-white truncate">{job.project_name}</span>
+                                    <span className="text-gray-400 text-xs font-mono">{job.job_number}</span>
+                                </div>
+                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border capitalize flex-shrink-0 ${STATUS_COLORS[job.commission_status] || 'bg-gray-100 text-gray-600'}`}>
+                                    {job.commission_status}
+                                </span>
+                            </div>
+
+                            {/* Body */}
+                            <div className="p-3 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
+                                {isAdmin && job.commission_user && (
+                                    <div>
+                                        <span className="text-xs text-gray-400">Marketer</span>
+                                        <p className="font-semibold text-gray-900">{(job.commission_user as any).full_name}</p>
+                                    </div>
+                                )}
+                                <div>
+                                    <span className="text-xs text-gray-400">Job Total</span>
+                                    <p className="font-semibold text-gray-900">{fmtCur(job.total_amount)}</p>
+                                </div>
+                                <div>
+                                    <span className="text-xs text-gray-400">Commission %</span>
+                                    <p className="font-semibold text-gray-900">{job.commission_percentage ?? '—'}%</p>
+                                </div>
+                                <div>
+                                    <span className="text-xs text-gray-400">Commission Amt</span>
+                                    <p className="font-bold text-green-700">{fmtCur(job.commission_amount || 0)}</p>
+                                </div>
+                                {job.commission_paid_at && (
+                                    <div>
+                                        <span className="text-xs text-gray-400">Paid On</span>
+                                        <p className="font-medium text-gray-900">{formatDate(job.commission_paid_at)}</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Admin Actions */}
+                            {isAdmin && job.commission_status !== 'paid' && (
+                                <div className="flex items-center border-t border-gray-100">
+                                    {job.commission_status === 'eligible' && (
+                                        <button
+                                            onClick={() => { setPctInput(String(job.commission_percentage || 5)); setApproveModal({ jobId: job.id, name: job.project_name, defaultPct: job.commission_percentage || 5, gstPct: job.gst_percentage || 18 }); }}
+                                            className="flex-1 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50 transition-colors text-center"
+                                        >
+                                            ✅ Set % & Approve
+                                        </button>
+                                    )}
+                                    {job.commission_status === 'approved' && (
+                                        <button
+                                            onClick={() => handleMarkPaid(job.id)}
+                                            className="flex-1 py-2 text-xs font-semibold text-green-700 hover:bg-green-50 transition-colors text-center"
+                                        >
+                                            💰 Mark as Paid
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    ))
+                )}
+            </div>
+
+            {/* Approve Modal */}
+            {approveModal && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                    <div className="bg-white rounded-md w-full max-w-sm p-5 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-bold text-gray-900">Approve Commission</h3>
+                            <button onClick={() => setApproveModal(null)} className="p-1 hover:bg-gray-100 rounded-md">
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                        <p className="text-sm text-gray-600">Job: <span className="font-semibold">{approveModal.name}</span></p>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1.5">Commission Percentage (%)</label>
+                            <input
+                                type="number" step="0.5" min="0" max="100"
+                                value={pctInput}
+                                onChange={e => setPctInput(e.target.value)}
+                                className="w-full border border-gray-200 rounded-md px-3 py-2 text-lg font-bold focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
+                            />
+                            <p className="text-xs text-gray-400 mt-1">GST rate used: {approveModal.gstPct}%</p>
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={() => setApproveModal(null)} className="flex-1 py-2 border border-gray-200 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
+                            <button onClick={handleApprove} disabled={saving} className="flex-1 py-2 bg-gray-900 text-white rounded-md text-sm font-semibold hover:bg-gray-800 disabled:opacity-50 flex items-center justify-center gap-2">
+                                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                                Approve
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
