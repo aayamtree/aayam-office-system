@@ -22,21 +22,27 @@ export default function TeamWorkloadWidget() {
     const [period, setPeriod] = useState<'week' | 'month'>('week');
     const [loading, setLoading] = useState(false); // never set to true — no skeleton flash
 
+    // PERF FIX: useDesigners() returns a new array reference every render (due to .map())
+    // so [designers] as a dependency causes this effect to fire 70+ times/second.
+    // Use designers.length as a stable primitive — only re-fetch when count changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         if (designers.length > 0) {
-            fetchWorkload();
+            fetchWorkload(designers);
         }
-    }, [designers, period]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [designers.length, period]);
 
-    const fetchWorkload = async () => {
+    const fetchWorkload = async (currentDesigners: typeof designers) => {
         try {
-            const now = new Date();
+            // Compute startDate ONCE per fetch call, not per render
             const startDate = new Date();
             if (period === 'week') {
-                startDate.setDate(now.getDate() - 7);
+                startDate.setDate(startDate.getDate() - 7);
             } else {
-                startDate.setDate(now.getDate() - 30);
+                startDate.setDate(startDate.getDate() - 30);
             }
+            const startISO = startDate.toISOString(); // stable — computed once per call
 
             // Fetch jobs assigned to designers in this period
             const { data: jobs } = await supabase
@@ -44,13 +50,13 @@ export default function TeamWorkloadWidget() {
                 .select('designer_id, current_stage, created_at')
                 .not('designer_id', 'is', null)
                 .neq('current_stage', 'cancelled')
-                .gte('created_at', startDate.toISOString());
+                .gte('created_at', startISO);
 
             // Also fetch design_tasks as secondary source
             const { data: tasks } = await supabase
                 .from('design_tasks')
                 .select('assigned_to, status, created_at')
-                .gte('created_at', startDate.toISOString());
+                .gte('created_at', startISO);
 
             // Group by designer from jobs
             const grouped: Record<string, { done: number; total: number }> = {};
@@ -76,7 +82,7 @@ export default function TeamWorkloadWidget() {
                 }
             });
 
-            const result: DesignerWorkload[] = designers
+            const result: DesignerWorkload[] = currentDesigners
                 .filter(d => (d as any).is_active !== false)
                 .map(d => ({
                     designer_id: d.id,
@@ -91,6 +97,7 @@ export default function TeamWorkloadWidget() {
             console.error('Error fetching workload:', error);
         }
     };
+
 
     const maxTasks = Math.max(...workloads.map(w => w.tasks_allotted), 1);
 
