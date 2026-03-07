@@ -2944,67 +2944,6 @@ export function useActivityFeed(limit: number = 20) {
   return { activities, loading };
 }
 
-// =============================================
-// USER NOTES HOOK (Dashboard Sticky Notes)
-// =============================================
-export function useUserNotes() {
-  const { profile } = useAuth();
-  const userId = profile?.id;
+// NOTE: useUserNotes removed — user_notes table was dropped.
+// Dashboard sticky notes use useDashboardNotes() → notes table instead.
 
-  const { data, loading, error, refetch } = useSupabaseQuery<UserNote>('user_notes', {
-    select: '*',
-    orderBy: { column: 'created_at', ascending: false }
-  });
-
-  // Filter client-side: my notes + shared notes tagging me
-  const notes = (data || []).filter(n =>
-    n.user_id === userId ||
-    (n.note_type === 'shared' && n.tagged_users?.includes(userId || '')) ||
-    n.note_type === 'pinned'
-  );
-
-  const createNote = async (content: string, noteType: 'personal' | 'pinned' | 'shared' = 'personal', taggedUsers?: string[], jobId?: string) => {
-    if (!isSupabaseConfigured() || !userId) return { error: 'Not configured' };
-
-    const { data, error } = await supabase
-      .from('user_notes')
-      .insert([{
-        user_id: userId,
-        content,
-        note_type: noteType,
-        tagged_users: taggedUsers || [],
-        job_id: jobId || null,
-        is_archived: false
-      }])
-      .select()
-      .single();
-
-    if (!error) refetch();
-    return { data, error: error?.message };
-  };
-
-  const updateNote = async (id: string, updates: { content?: string; note_type?: string; is_archived?: boolean }) => {
-    if (!isSupabaseConfigured()) return { error: 'Not configured' };
-
-    const { error } = await supabase
-      .from('user_notes')
-      .update(updates)
-      .eq('id', id);
-
-    if (!error) refetch();
-    return { error: error?.message };
-  };
-
-  const archiveNote = async (id: string) => updateNote(id, { is_archived: true });
-
-  return {
-    notes: notes.filter(n => !n.is_archived),
-    archivedNotes: notes.filter(n => n.is_archived),
-    loading,
-    error,
-    refetch,
-    createNote,
-    updateNote,
-    archiveNote
-  };
-}
