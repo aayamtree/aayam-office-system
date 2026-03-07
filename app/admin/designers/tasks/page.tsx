@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, useMemo, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import DriveConnectionStatus from '@/components/drive/DriveConnectionStatus';
 import { useJobs, useClients, useDesigners } from '@/lib/hooks';
@@ -127,10 +127,23 @@ const JOBS_QUERY_OPTIONS = {
   limit: 200
 };
 
-function DesignerWorkspaceInner() {
+export default function DesignerWorkspace() {
   const { profile } = useAuth();
-  const searchParams = useSearchParams();
   const router = useRouter();
+
+  // Safe URL param reader — avoids useSearchParams() which requires Suspense
+  // and causes Next.js App Router to block client-side navigation when wrapping
+  // an entire large page component.
+  const [activeView, setActiveView] = useState<string>('');
+  useEffect(() => {
+    const readView = () => {
+      const params = new URLSearchParams(window.location.search);
+      setActiveView(params.get('view') || '');
+    };
+    readView();
+    window.addEventListener('popstate', readView);
+    return () => window.removeEventListener('popstate', readView);
+  }, []);
   const { jobs, loading: jobsLoading, error: jobsError, updateJobStage, createJob, updateJob, refetch: refetchJobs } = useJobs(JOBS_QUERY_OPTIONS);
   const { clients } = useClients();
   const { designers } = useDesigners();
@@ -148,7 +161,7 @@ function DesignerWorkspaceInner() {
   /* Admin defaults to team_tasks, designers to board */
   const isAdmin = profile?.role === 'admin';
   const confirmDialog = useConfirm();
-  const activeTab = (searchParams.get('view') || (isAdmin ? 'team_tasks' : 'board'));
+  const activeTab = activeView || (isAdmin ? 'team_tasks' : 'board');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Dynamic Checklist State
@@ -182,10 +195,11 @@ function DesignerWorkspaceInner() {
 
   // Handle ?action=new → redirect to dedicated page
   useEffect(() => {
-    if (searchParams.get('action') === 'new') {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('action') === 'new') {
       router.push('/admin/designers/new-project');
     }
-  }, [searchParams, router]);
+  }, [router]);
 
   // NOTE: Daily Briefing is handled globally by DailyBriefingTrigger in layout.tsx — no duplicate here needed
 
@@ -1447,13 +1461,4 @@ function DesignerWorkspaceInner() {
   );
 }
 
-// Wrap in Suspense — required by Next.js 14 for any component calling useSearchParams().
-// Without this, Next.js re-renders the entire subtree on every navigation event,
-// which floods the React scheduler and kills click event processing.
-export default function DesignerWorkspace() {
-  return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" /></div>}>
-      <DesignerWorkspaceInner />
-    </Suspense>
-  );
-}
+
