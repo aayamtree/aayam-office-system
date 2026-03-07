@@ -24,63 +24,83 @@ export default function Timeline() {
         }))
         .sort((a, b) => a.deadline.getTime() - b.deadline.getTime());
 
+    // Stage accent colors — left-border palette aligned with app theme
+    const stageAccent: Record<string, { border: string; tint: string; badge: string }> = {
+        new: { border: 'border-l-stone-400', tint: 'bg-stone-50/80', badge: 'bg-stone-100 text-stone-700' },
+        awaiting_admin: { border: 'border-l-amber-400', tint: 'bg-amber-50/80', badge: 'bg-amber-100 text-amber-700' },
+        designing: { border: 'border-l-indigo-400', tint: 'bg-indigo-50/80', badge: 'bg-indigo-100 text-indigo-700' },
+        approval: { border: 'border-l-violet-400', tint: 'bg-violet-50/80', badge: 'bg-violet-100 text-violet-700' },
+        printing: { border: 'border-l-orange-400', tint: 'bg-orange-50/80', badge: 'bg-orange-100 text-orange-700' },
+        finishing: { border: 'border-l-yellow-400', tint: 'bg-yellow-50/80', badge: 'bg-yellow-100 text-yellow-700' },
+        quality_check: { border: 'border-l-cyan-400', tint: 'bg-cyan-50/80', badge: 'bg-cyan-100 text-cyan-700' },
+        ready: { border: 'border-l-green-400', tint: 'bg-green-50/80', badge: 'bg-green-100 text-green-700' },
+    };
+
     if (loading) {
-        return <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
-        </div>;
+        return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5 px-2">
+                {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="bg-card rounded-md border border-border border-l-4 border-l-stone-300 animate-pulse">
+                        <div className="h-8 bg-muted rounded-t-md" />
+                        <div className="p-3 space-y-2">
+                            <div className="h-4 w-3/4 bg-muted rounded" />
+                            <div className="h-3 w-1/2 bg-muted rounded" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
     }
 
     return (
         <div className="space-y-2 md:space-y-4 px-2 animate-fade-in">
             <div>
-                <h1 className="text-page-title text-gray-900">Production Timeline</h1>
-                <p className="text-xs md:text-sm text-gray-500">{activeTasks.length} active jobs with deadlines</p>
+                <h1 className="text-page-title text-foreground">Production Timeline</h1>
+                <p className="text-xs md:text-sm text-muted-foreground">{activeTasks.length} active jobs with deadlines</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
                 {activeTasks.map((task) => {
                     const daysLeft = Math.ceil((task.deadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                     const isOverdue = daysLeft < 0;
                     const isUrgent = task.priority === 'urgent';
-
-                    // Header bg: overdue = red, urgent = dark gray, normal = gray-900/muted
-                    const headerBg = isOverdue ? 'bg-red-600' : isUrgent ? 'bg-gray-800' : 'bg-gray-900';
+                    const accent = stageAccent[task.status] || stageAccent.new;
 
                     return (
-                        <div key={task.id} className="bg-white rounded-md overflow-hidden border border-gray-200 hover:shadow-sm transition-all">
-                            {/* Dark header bar */}
-                            <div className={`${headerBg} px-3 py-2 flex items-center justify-between`}>
-                                <div className="flex items-center gap-1.5">
-                                    {isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-white/80" />}
-                                    <span className="text-white font-semibold text-sm truncate max-w-[160px]">{task.title}</span>
+                        <div key={task.id} className={`bg-card rounded-md border border-border border-l-4 ${accent.border} hover:shadow-sm transition-shadow ${isOverdue ? 'ring-1 ring-red-200' : ''}`}>
+                            {/* Tinted top strip */}
+                            <div className={`${accent.tint} px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md`}>
+                                <div className="flex items-center gap-1 min-w-0">
+                                    {isOverdue && <AlertTriangle className="w-3 h-3 text-red-500 shrink-0" />}
+                                    <span className="text-xs font-bold text-foreground truncate">{task.title}</span>
                                 </div>
-                                <div className="flex items-center gap-1.5 shrink-0">
-                                    {isOverdue && (
-                                        <span className="text-xs px-2 py-0.5 bg-white/25 rounded-md font-bold text-white">
+                                <div className="flex items-center gap-1 shrink-0 ml-1">
+                                    {isUrgent && !isOverdue && (
+                                        <span className="text-[9px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded font-bold uppercase">Urgent</span>
+                                    )}
+                                    {isOverdue ? (
+                                        <span className="text-[9px] px-1.5 py-0.5 bg-red-50 text-red-600 border border-red-200 rounded font-bold">
                                             {Math.abs(daysLeft)}d overdue
                                         </span>
-                                    )}
-                                    {isUrgent && !isOverdue && (
-                                        <span className="text-xs px-2 py-0.5 bg-white/25 rounded-md font-bold text-white uppercase">urgent</span>
-                                    )}
-                                    {!isOverdue && (
-                                        <span className="text-white/80 text-xs">{daysLeft}d left</span>
+                                    ) : (
+                                        <span className="text-[9px] text-muted-foreground">{daysLeft}d left</span>
                                     )}
                                 </div>
                             </div>
 
                             {/* Card body */}
-                            <div className="p-3">
-                                <p className="text-gray-500 text-xs mb-2">
+                            <div className="px-3 pt-2 pb-3 space-y-2">
+                                <p className="text-[10px] text-muted-foreground">
                                     {task.deadline.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                                 </p>
-                                <div className="flex items-center gap-2">
-                                    <span className="flex items-center gap-1 text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md">
-                                        <User size={10} />
+                                <p className="text-[10px] text-muted-foreground truncate">{task.client}</p>
+                                <div className="flex flex-wrap items-center gap-1">
+                                    <span className="flex items-center gap-1 text-[9px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                                        <User size={9} />
                                         {task.designer}
                                     </span>
-                                    <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md capitalize">
-                                        {task.status?.replace('_', ' ')}
+                                    <span className={`text-[9px] px-1.5 py-0.5 rounded capitalize ${accent.badge}`}>
+                                        {task.status?.replace(/_/g, ' ')}
                                     </span>
                                 </div>
                             </div>
@@ -89,9 +109,9 @@ export default function Timeline() {
                 })}
 
                 {activeTasks.length === 0 && (
-                    <div className="col-span-full bg-white rounded-md border border-gray-200 p-12 text-center">
-                        <Calendar className="mx-auto mb-3 text-gray-300" size={40} />
-                        <p className="text-gray-500 font-medium">No tasks with deadlines</p>
+                    <div className="col-span-full bg-card rounded-md border border-border p-12 text-center">
+                        <Calendar className="mx-auto mb-3 text-muted-foreground/30" size={36} />
+                        <p className="text-muted-foreground font-medium text-sm">No tasks with deadlines</p>
                     </div>
                 )}
             </div>

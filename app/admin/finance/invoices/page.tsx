@@ -443,33 +443,33 @@ export default function InvoicesPage() {
       {/* Ready for Invoicing Alert (Data Flow: Jobs -> Finance) */}
       {
         pendingInvoicingJobs.length > 0 && (
-          <div className="bg-gradient-to-r bg-white p-4 rounded-md border border-border-100">
+          <div className="bg-card rounded-md border border-border p-4">
             <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 bg-gray-900 rounded-md">
-                <CheckCircle className="w-4 h-4 md:w-4.5 md:h-4.5 text-primary" />
+              <div className="p-1.5 bg-muted rounded-md">
+                <CheckCircle className="w-3.5 h-3.5 text-muted-foreground" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-900">Completed Jobs Pending Invoice</h3>
-                <p className="text-xs text-gray-500">Recently dispatched jobs ready for billing</p>
+                <h3 className="font-bold text-foreground text-sm">Completed Jobs Pending Invoice</h3>
+                <p className="text-[10px] text-muted-foreground">Recently dispatched jobs ready for billing</p>
               </div>
             </div>
-            <div className="flex gap-2 md:gap-4 overflow-x-auto pb-2 scrollbar-none">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
               {pendingInvoicingJobs.map((job: any) => (
-                <div key={job.id} className="min-w-[280px] bg-white p-3 rounded-md border border-gray-200 flex flex-col justify-between  transition-shadow">
-                  <div>
-                    <div className="flex justify-between items-start mb-1">
-                      <span className="text-xs font-mono text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded">{job.job_number}</span>
-                      <span className="text-xs font-bold text-primary">₹{job.total_amount}</span>
-                    </div>
-                    <p className="font-semibold text-gray-800 text-sm truncate" title={job.project_name}>{job.project_name}</p>
-                    <p className="text-xs text-gray-500 truncate">{job.client?.company || 'Unknown Client'}</p>
+                <div key={job.id} className="min-w-[220px] bg-card border border-border border-l-4 border-l-amber-400 rounded-md flex flex-col justify-between hover:shadow-sm transition-shadow">
+                  <div className="bg-amber-50/60 px-3 py-1.5 border-b border-border/50 rounded-tr-md flex items-center justify-between">
+                    <span className="text-[9px] font-mono text-muted-foreground">{job.job_number}</span>
+                    <span className="text-[9px] font-bold text-amber-700">₹{job.total_amount}</span>
                   </div>
-                  <button
-                    onClick={() => handleCreateFromJob(job)}
-                    className="mt-3 w-full py-2 text-xs font-bold text-primary bg-gray-900 hover:bg-gray-900 rounded-md transition-colors flex items-center justify-center gap-1"
-                  >
-                    <Plus className="w-4 h-4" /> Create Invoice
-                  </button>
+                  <div className="px-3 pt-1.5 pb-2.5">
+                    <p className="font-semibold text-foreground text-xs truncate" title={job.project_name}>{job.project_name}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{job.client?.company || 'Unknown Client'}</p>
+                    <button
+                      onClick={() => handleCreateFromJob(job)}
+                      className="mt-2 w-full py-1.5 text-[10px] font-bold bg-foreground text-background rounded flex items-center justify-center gap-1 hover:opacity-90 transition-opacity"
+                    >
+                      <Plus className="w-3 h-3" /> Create Invoice
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -528,87 +528,81 @@ export default function InvoicesPage() {
         ) : (
           <>
             {/* Mobile View: Cards */}
-            <div className="lg:hidden space-y-4">
+            <div className="lg:hidden space-y-2.5">
               {filteredInvoices.map((inv) => {
-                // Determine header color based on status
-                const headerColors = {
-                  'paid': 'bg-gradient-to-r from-gray-700 to-gray-800',
-                  'partial': 'bg-gradient-to-r from-yellow-400 to-yellow-500',
-                  'pending': 'bg-gradient-to-r from-green-500 to-green-600',
-                  'overdue': 'bg-gradient-to-r from-red-500 to-red-600',
+                // Left border color based on status
+                const borderColors: Record<string, string> = {
+                  'paid': 'border-l-green-400',
+                  'partial': 'border-l-amber-400',
+                  'pending': 'border-l-stone-400',
+                  'overdue': 'border-l-red-400',
                 };
-                const headerBg = headerColors[inv.payment_status as keyof typeof headerColors] || 'bg-gradient-to-r from-gray-400 to-gray-500';
-                const headerTextColor = inv.payment_status === 'partial' ? 'text-gray-900' : 'text-white';
+                const tintBgs: Record<string, string> = {
+                  'paid': 'bg-green-50/60',
+                  'partial': 'bg-amber-50/60',
+                  'pending': 'bg-stone-50/60',
+                  'overdue': 'bg-red-50/60',
+                };
+                const borderColor = borderColors[inv.payment_status] || 'border-l-stone-300';
+                const tintBg = tintBgs[inv.payment_status] || 'bg-stone-50';
 
                 return (
-                  <div key={inv.id} className="bg-white rounded-md overflow-hidden shadow-sm hover:shadow-sm transition-all border border-gray-100">
-                    {/* Colored Header Tab */}
-                    <div className={`${headerBg} px-4 py-2.5 flex items-center justify-between`}>
-                      <span className={`${headerTextColor} font-semibold text-sm md:text-base`}>
-                        {inv.invoice_number}
-                      </span>
-                      <span className={`${headerTextColor}/90 text-sm`}>
-                        {formatDate(inv.invoice_date)}
-                      </span>
+                  <div key={inv.id} className={`bg-card rounded-md border border-border border-l-4 ${borderColor} hover:shadow-sm transition-shadow`}>
+                    {/* Tinted strip */}
+                    <div className={`${tintBg} px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md`}>
+                      <span className="text-[10px] font-mono font-bold text-muted-foreground">{inv.invoice_number}</span>
+                      <span className="text-[9px] text-muted-foreground">{formatDate(inv.invoice_date)}</span>
                     </div>
 
-                    {/* White Card Body */}
-                    <div className="p-4">
-                      {/* Client/Subtitle */}
-                      <p className="text-gray-500 text-sm mb-1">
-                        {inv.client?.company || 'Unknown Client'}
-                      </p>
+                    {/* Card Body */}
+                    <div className="px-4 py-3">
+                      {/* Client */}
+                      <p className="text-[10px] text-muted-foreground">{inv.client?.company || 'Unknown Client'}</p>
+                      <h3 className="text-foreground font-bold text-sm mb-2">{inv.client?.name || 'No Contact Name'}</h3>
 
-                      {/* Client Name */}
-                      <h3 className="text-gray-900 font-bold text-lg mb-4">
-                        {inv.client?.name || 'No Contact Name'}
-                      </h3>
-
-                      {/* Price & Status Row */}
-                      <div className="flex items-center justify-between mb-4">
+                      {/* Price & Status */}
+                      <div className="flex items-center justify-between mb-2">
                         <div>
-                          <span className="text-gray-900 font-bold text-2xl font-bold">
-                            {formatCurrency(inv.total_amount)}
-                          </span>
+                          <span className="text-foreground font-bold text-xl">{formatCurrency(inv.total_amount)}</span>
                           {inv.amount_paid > 0 && inv.amount_paid < inv.total_amount && (
-                            <p className="text-xs text-gray-500 mt-1">Paid: {formatCurrency(inv.amount_paid)}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Paid: {formatCurrency(inv.amount_paid)}</p>
                           )}
                         </div>
-                        <span className={`px-3 py-1.5 text-xs font-semibold rounded-md ${getStatusColor(inv.payment_status)}`}>
+                        <span className={`px-2 py-0.5 text-[9px] font-semibold rounded border ${getStatusColor(inv.payment_status)}`}>
                           {inv.payment_status}
                         </span>
                       </div>
 
-                      {/* Due Date Info */}
+                      {/* Due Date */}
                       {inv.due_date && (
-                        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4 pb-4 border-b border-gray-100">
-                          <Calendar className="w-4 h-4 text-gray-400" />
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-3 pb-2 border-b border-border/50">
+                          <Calendar className="w-3 h-3" />
                           <span>Due: {formatDate(inv.due_date)}</span>
                         </div>
                       )}
 
                       {/* Action Buttons */}
-                      <div className="flex gap-2">
+                      <div className="flex gap-1.5">
                         <button
                           onClick={() => handleDownloadPDF(inv)}
-                          className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-semibold shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                          className="flex items-center gap-1 px-2.5 py-1.5 bg-foreground text-background rounded text-xs font-medium hover:opacity-90 transition-opacity"
                         >
-                          <Download className="w-4 h-4 md:w-4.5 md:h-4.5" />
+                          <Download className="w-3 h-3" />
                           <span className="hidden sm:inline">Download</span>
                         </button>
                         <button
                           onClick={() => handleWhatsAppShare(inv)}
-                          className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-md font-medium hover:bg-gray-50 transition-colors"
+                          className="px-2.5 py-1.5 border border-border text-muted-foreground rounded text-xs hover:text-foreground transition-colors"
                           aria-label="Share via WhatsApp"
                         >
-                          <MessageCircle className="w-4 h-4 md:w-4.5 md:h-4.5" />
+                          <MessageCircle className="w-3 h-3" />
                         </button>
                         <button
                           onClick={() => handleEdit(inv)}
-                          className="px-4 py-2.5 border-2 border-gray-900 text-gray-900 rounded-md font-medium hover:bg-gray-50 transition-colors"
+                          className="px-2.5 py-1.5 border border-border text-muted-foreground rounded text-xs hover:text-foreground transition-colors"
                           aria-label="Edit invoice"
                         >
-                          <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
+                          <Edit className="w-3 h-3" />
                         </button>
                       </div>
                     </div>

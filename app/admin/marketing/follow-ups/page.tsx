@@ -157,77 +157,67 @@ export default function MarketingFollowUpsPage() {
     const isOverdue = followUp.date < today;
     const isToday = followUp.date === today;
 
-    // Determine header color based on date status
-    const headerColors = {
-      overdue: 'bg-gradient-to-r from-red-500 to-red-600',
-      today: 'bg-gradient-to-r from-gray-700 to-gray-800',
-      upcoming: 'bg-gradient-to-r from-gray-800 to-gray-900',
-    };
-    const headerBg = isOverdue ? headerColors.overdue : isToday ? headerColors.today : headerColors.upcoming;
+    // Left border + tint based on urgency
+    const borderColor = isOverdue ? 'border-l-red-400' : isToday ? 'border-l-amber-400' : 'border-l-stone-400';
+    const tintBg = isOverdue ? 'bg-red-50/60' : isToday ? 'bg-amber-50/60' : 'bg-stone-50/60';
 
     return (
-      <div className="bg-white rounded-md overflow-hidden shadow-sm hover:shadow-sm transition-all border border-gray-100">
-        {/* Colored Header */}
-        <div className={`${headerBg} px-4 py-3 flex items-center justify-between`}>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-md bg-white/20 flex items-center justify-center">
-              <TypeIcon className="w-4 h-4 md:w-4.5 md:h-4.5 text-white" />
-            </div>
-            <span className="text-white font-semibold text-sm md:text-base">
-              {followUp.clientName}
-            </span>
+      <div className={`bg-card rounded-md border border-border border-l-4 ${borderColor} hover:shadow-sm transition-shadow ${isOverdue ? 'ring-1 ring-red-100' : ''}`}>
+        {/* Tinted strip */}
+        <div className={`${tintBg} px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md`}>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <TypeIcon className="w-3 h-3 text-muted-foreground shrink-0" />
+            <span className="text-xs font-bold text-foreground truncate">{followUp.clientName}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 shrink-0 ml-1">
             {followUp.companyName && (
-              <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-md font-medium hidden sm:inline-block">
-                {followUp.companyName}
-              </span>
+              <span className="text-[9px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded hidden sm:inline-block">{followUp.companyName}</span>
             )}
-            <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-md font-medium capitalize">
-              {typeInfo.name}
-            </span>
+            <span className="text-[9px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded capitalize">{typeInfo.name}</span>
           </div>
         </div>
 
-        {/* White Card Body */}
-        <div className="p-5">
-          <p className="text-sm text-gray-600 mb-3">{cleanNotes}</p>
+        {/* Card Body */}
+        <div className="px-3 pt-2 pb-3 space-y-2">
+          <p className="text-xs text-muted-foreground">{cleanNotes}</p>
 
-          <div className="flex items-center gap-4 mb-4 text-sm text-gray-500">
-            <span className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
+          <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+            <span className="flex items-center gap-0.5">
+              <Calendar className="w-3 h-3" />
               {formatDate(followUp.date)}
             </span>
-            <span className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              {followUp.time ? new Date(`2000-01-01T${followUp.time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : ''}
-            </span>
+            {followUp.time && (
+              <span className="flex items-center gap-0.5">
+                <Clock className="w-3 h-3" />
+                {new Date(`2000-01-01T${followUp.time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+              </span>
+            )}
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+          <div className="flex items-center justify-between pt-1.5 border-t border-border/50">
             {followUp.quotation ? (
               <button
                 onClick={() => handleViewQuote(followUp)}
-                className="px-4 py-2 bg-gray-900 text-white rounded-md font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+                className="flex items-center gap-1 px-2.5 py-1.5 bg-foreground text-background rounded text-xs font-medium hover:opacity-90 transition-opacity"
               >
-                <CheckCircle className="w-4 h-4" /> View Quote {followUp.quotationNumber}
+                <CheckCircle className="w-3 h-3" /> View Quote {followUp.quotationNumber}
               </button>
             ) : (
               <button
                 onClick={() => handleCreateQuote(followUp)}
-                className="px-4 py-2 bg-gray-900 text-white rounded-md font-semibold hover:bg-gray-800 transition-colors flex items-center gap-2 shadow-sm"
+                className="flex items-center gap-1 px-2.5 py-1.5 bg-foreground text-background rounded text-xs font-medium hover:opacity-90 transition-opacity"
               >
-                <FileText className="w-4 h-4" /> Create Quote
+                <FileText className="w-3 h-3" /> Create Quote
               </button>
             )}
 
-            <div className="p-4 flex gap-1">
-              <button onClick={() => handleEdit(followUp)} className="p-2 text-gray-600 hover:text-foreground hover:bg-muted rounded-md transition-colors" aria-label="Edit follow-up">
-                <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
+            <div className="flex gap-0.5">
+              <button onClick={() => handleEdit(followUp)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors">
+                <Edit className="w-3 h-3" />
               </button>
-              <button onClick={() => handleDelete(followUp.id)} className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" aria-label="Delete follow-up">
-                <Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" />
+              <button onClick={() => handleDelete(followUp.id)} className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded transition-colors">
+                <Trash2 className="w-3 h-3" />
               </button>
             </div>
           </div>

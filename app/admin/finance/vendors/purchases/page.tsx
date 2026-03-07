@@ -241,76 +241,79 @@ export default function VendorPurchasesPage() {
       </div>
 
       {/* Purchase List */}
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         {filteredPurchases.map(purchase => {
-          // Determine header color based on payment status
-          const headerColors: Record<string, string> = {
-            'paid': 'bg-gradient-to-r from-green-500 to-green-600',
-            'partial': 'bg-gradient-to-r from-orange-500 to-orange-600',
-            'pending': 'bg-gradient-to-r from-red-500 to-red-600',
+          // Border color based on payment status
+          const borderColors: Record<string, string> = {
+            'paid': 'border-l-green-400',
+            'partial': 'border-l-amber-400',
+            'pending': 'border-l-red-400',
           };
-          const headerBg = headerColors[purchase.payment_status] || 'bg-gradient-to-r from-gray-400 to-gray-500';
+          const tintBgs: Record<string, string> = {
+            'paid': 'bg-green-50/60',
+            'partial': 'bg-amber-50/60',
+            'pending': 'bg-red-50/60',
+          };
+          const borderColor = borderColors[purchase.payment_status] || 'border-l-stone-300';
+          const tintBg = tintBgs[purchase.payment_status] || 'bg-stone-50';
           const isOverdue = purchase.payment_status === 'pending' && new Date(purchase.due_date || '') < new Date();
 
           return (
-            <div key={purchase.id} className={`bg-white rounded-md overflow-hidden shadow-sm hover:shadow-sm transition-all border ${isOverdue ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-100'}`}>
-              {/* Colored Header */}
-              <div className={`${headerBg} px-4 py-3 flex items-center justify-between`}>
-                <div className="flex items-center gap-2">
-                  <span className="text-white font-mono text-sm font-bold">
-                    {purchase.bill_number}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-md font-medium hidden sm:inline-block">
+            <div key={purchase.id} className={`bg-card rounded-md border border-border border-l-4 ${borderColor} hover:shadow-sm transition-shadow ${isOverdue ? 'ring-1 ring-red-200' : ''}`}>
+              {/* Left-border accent strip */}
+              <div className={`${tintBg} px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md`}>
+                <span className="text-[10px] font-mono font-bold text-muted-foreground">{purchase.bill_number}</span>
+                <div className="flex items-center gap-1.5">
+                  {isOverdue && <span className="text-[9px] px-1.5 py-0.5 bg-red-50 text-red-600 border border-red-200 rounded font-bold">Overdue</span>}
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-semibold ${getStatusBadge(purchase.payment_status)}`}>
                     {purchase.product_type}
                   </span>
-                  <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-md font-medium capitalize">
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold capitalize ${getStatusBadge(purchase.payment_status)}`}>
                     {purchase.payment_status}
                   </span>
                 </div>
               </div>
 
-              {/* White Card Body */}
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">{purchase.description}</h3>
+              {/* Body */}
+              <div className="px-4 py-3">
+                <h3 className="font-semibold text-foreground mb-2 text-sm">{purchase.description}</h3>
 
-                <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-4">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground mb-3">
                   <span className="flex items-center gap-1">
-                    <Building2 className="w-4 h-4" />
+                    <Building2 className="w-3 h-3" />
                     {purchase.vendor?.name || 'Unknown Vendor'}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Package className="w-4 h-4" />
+                    <Package className="w-3 h-3" />
                     {purchase.job?.project_name ? `${purchase.job.job_number} - ${purchase.job.project_name}` : 'General Stock'}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
+                    <Calendar className="w-3 h-3" />
                     Due: {purchase.due_date ? formatDate(purchase.due_date) : 'N/A'}
                   </span>
                 </div>
 
                 {/* Amount and Actions */}
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                  <div className="text-left">
-                    <p className="text-2xl font-bold text-gray-900">{formatCurrency(purchase.total_amount)}</p>
-                    <p className="text-xs text-gray-500">
+                <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                  <div>
+                    <p className="text-lg font-bold text-foreground">{formatCurrency(purchase.total_amount)}</p>
+                    <p className="text-[10px] text-muted-foreground">
                       Paid: <span className="text-foreground font-medium">{formatCurrency(purchase.amount_paid)}</span>
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0.5">
                     <button onClick={() => { setSelectedPurchase(purchase); setShowDetailModal(true); }}
-                      className="p-2 text-gray-600 hover:text-foreground hover:bg-muted rounded-md transition-colors">
-                      <Eye className="w-4 h-4 md:w-4.5 md:h-4.5" />
+                      className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors">
+                      <Eye className="w-3.5 h-3.5" />
                     </button>
                     <button onClick={() => handleEdit(purchase)}
-                      className="p-2 text-gray-600 hover:text-foreground hover:bg-muted rounded-md transition-colors">
-                      <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
+                      className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors">
+                      <Edit className="w-3.5 h-3.5" />
                     </button>
                     <button onClick={() => handleDelete(purchase.id)}
-                      className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors">
-                      <Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" />
+                      className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
