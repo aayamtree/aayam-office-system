@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 // PERF: Removed useDashboardStats (25 queries!) — sidebar only needs 2 badge counts
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -224,7 +224,6 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false, onLockedChange }: SidebarProps) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { profile, signOut } = useAuth();
   const [expandedItems, setExpandedItems] = useState<string[]>(['Design Studio', 'Marketing', 'Sales & Finance', 'CRM', 'Dispatch']);
   const [hovered, setHovered] = useState(false);
@@ -265,10 +264,11 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
     if (href.includes('?')) {
       const [path, query] = href.split('?');
       if (pathname !== path) return false;
+      // Read current query from window.location.search (stable, no re-render on URL change)
+      const currentParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
       const subParams = new URLSearchParams(query);
-      const entries = Array.from(subParams.entries());
-      for (const [key, val] of entries) {
-        if (searchParams.get(key) !== val) return false;
+      for (const [key, val] of Array.from(subParams.entries())) {
+        if (currentParams.get(key) !== val) return false;
       }
       return true;
     }
