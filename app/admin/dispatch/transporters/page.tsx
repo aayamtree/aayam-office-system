@@ -208,52 +208,55 @@ export default function TransportersPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
               {stateTransporters.map((t) => (
-                <div key={t.id} className="bg-white rounded-md p-4 border border-gray-100">
+                <div key={t.id} className="bg-white rounded-md p-4 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center">
-                        <Truck className="w-4 h-4 md:w-4.5 md:h-4.5 text-primary" />
+                      <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center flex-shrink-0">
+                        <Truck className="w-4 h-4 text-primary" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900">{t.company || t.name}</h3>
-                        <p className="text-sm text-gray-500">{t.name}</p> {/* Contact Person */}
+                        <p className="text-xs text-gray-500">{t.name}</p>
                       </div>
                     </div>
-                    <span className={`px-2 py-0.5 text-xs rounded-md ${t.is_active ? 'bg-gray-100 text-gray-900' : 'bg-red-100 text-red-500'}`}>
+                    <span className={`px-2 py-0.5 text-xs font-medium rounded-md flex-shrink-0 ${t.is_active ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
                       {t.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </div>
 
-                  <div className="space-y-1 text-sm mb-3">
+                  <div className="space-y-1.5 text-sm mb-3">
                     <div className="flex items-center gap-2 text-gray-600">
-                      <Phone className="w-4 h-4" />
-                      <a href={`tel:${t.phone}`} className="text-primary">{t.phone}</a>
+                      <Phone className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                      <a href={`tel:${t.phone}`} className="text-primary font-medium hover:underline">{t.phone}</a>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
-                      <MapPin className="w-4 h-4" />
-                      <span>{t.city}, {t.state}</span>
+                      <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                      <span className="text-xs">{t.city}, {t.state}</span>
                     </div>
                     {t.gstin && (
                       <div className="flex items-center gap-2 text-gray-600">
-                        <FileText className="w-4 h-4" />
-                        <span className="text-xs">{t.gstin}</span>
+                        <FileText className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                        <span className="text-xs font-mono text-gray-500">{t.gstin}</span>
                       </div>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-                    <button onClick={() => handleView(t)} className="flex-1 flex items-center justify-center gap-1 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md">
-                      <Eye className="w-4 h-4" /> View
+                  <div className="flex items-center gap-1 pt-2.5 border-t border-gray-100">
+                    <button onClick={() => handleView(t)} className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 rounded-md transition-colors">
+                      <Eye className="w-3.5 h-3.5" /> View
                     </button>
-                    <button onClick={() => handleEdit(t)} className="flex-1 flex items-center justify-center gap-1 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md">
-                      <Edit className="w-4 h-4" /> Edit
+                    <div className="w-px h-4 bg-gray-200" />
+                    <button onClick={() => handleEdit(t)} className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 rounded-md transition-colors">
+                      <Edit className="w-3.5 h-3.5" /> Edit
                     </button>
-                    <button onClick={() => handleDelete(t.id)} className="flex-1 flex items-center justify-center gap-1 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md">
-                      <Trash2 className="w-4 h-4" /> Delete
+                    <div className="w-px h-4 bg-gray-200" />
+                    <button onClick={() => handleDelete(t.id)} className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 rounded-md transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" /> Delete
                     </button>
                   </div>
                 </div>
               ))}
+
             </div>
           </div>
         ))}
