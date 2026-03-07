@@ -173,8 +173,15 @@ module.exports = {
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
 			},
-			/* Override bg-white → warm cream at build time.
-			   text-white / border-white remain pure white (separate keys). */
+			keyframes: {
+				'slide-in-right': {
+					'0%': { transform: 'translateX(100%)' },
+					'100%': { transform: 'translateX(0)' },
+				},
+			},
+			animation: {
+				'slide-in-right': 'slide-in-right 0.22s cubic-bezier(0.32, 0.72, 0, 1)',
+			},
 			backgroundColor: {
 				white: '#FAF9F5',
 			}
