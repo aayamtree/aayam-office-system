@@ -138,7 +138,7 @@ export default function AdminEODDashboard() {
                     <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
                     <p className="text-sm text-amber-800">
                         <span className="font-bold">{reportsWithBlockers} report{reportsWithBlockers !== 1 ? 's' : ''}</span> have blockers in the selected period.
-                        Click a designer's name to see their blocker details.
+                        Click a designer&apos;s name to see their blocker details.
                     </p>
                 </div>
             )}
@@ -152,8 +152,8 @@ export default function AdminEODDashboard() {
                             key={status.user_id}
                             onClick={() => openDesignerDrawerFromStatus(status)}
                             className={`p-3 rounded-md border text-left transition-all hover:scale-[1.02] hover:shadow-sm ${status.submitted
-                                    ? 'bg-white border-green-200 hover:border-green-300'
-                                    : 'bg-red-50 border-red-200 hover:border-red-300'
+                                ? 'bg-white border-green-200 hover:border-green-300'
+                                : 'bg-red-50 border-red-200 hover:border-red-300'
                                 }`}
                             title="Click to view designer profile"
                         >
