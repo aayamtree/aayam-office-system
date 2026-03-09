@@ -2890,3 +2890,40 @@ export async function autoSetCommissionEligible(jobId: string) {
     commission_status: 'eligible',
   }).eq('id', jobId);
 }
+
+// =============================================
+// WORK LOGS HOOK
+// Fetches auto-captured work activity for a user/date.
+// Used to pre-populate the EOD report.
+// =============================================
+export function useWorkLogs(userId?: string, date?: string) {
+  const { profile } = useAuth();
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const targetUser = userId || profile?.id;
+  const targetDate = date || new Date().toISOString().split('T')[0];
+
+  const fetchLogs = useCallback(async () => {
+    if (!targetUser || !isSupabaseConfigured()) { setLoading(false); return; }
+
+    const { data, error } = await supabase
+      .from('work_logs')
+      .select('*')
+      .eq('user_id', targetUser)
+      .eq('log_date', targetDate)
+      .order('created_at', { ascending: true });
+
+    if (!error) setLogs(data || []);
+    setLoading(false);
+  }, [targetUser, targetDate]);
+
+  useEffect(() => { fetchLogs(); }, [fetchLogs]);
+
+  // Build a ready-to-use summary string for the EOD "what did you do today" field
+  const todaySummary = logs.length > 0
+    ? logs.map((l, i) => `${i + 1}. ${l.description}`).join('\n')
+    : '';
+
+  return { logs, loading, todaySummary, refetch: fetchLogs };
+}

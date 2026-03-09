@@ -12,6 +12,7 @@ import { ConfirmProvider } from '@/components/ConfirmModal';
 import { SessionProvider } from 'next-auth/react';
 import { GlobalErrorBoundary } from '@/components/ErrorBoundary';
 import ToastContainer from '@/components/ToastContainer';
+import EODNudge from '@/components/eod/EODNudge';
 
 export default function AdminLayout({
   children,
@@ -95,6 +96,9 @@ export default function AdminLayout({
 
           {/* Global toast notifications — replaces native alert() across app */}
           <ToastContainer />
+
+          {/* EOD Nudge — appears at 5:30pm for non-admin staff who haven't submitted yet */}
+          {profile && profile.role !== 'admin' && <EODNudge />}
         </div>
       </ConfirmProvider>
     </SessionProvider>

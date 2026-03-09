@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { useDailyReports } from '@/lib/hooks';
+import { useDailyReports, useWorkLogs } from '@/lib/hooks';
+import { WorkLog } from '@/lib/work-logger';
 import { toast } from '@/hooks/use-toast';
 import {
     Clock, CheckCircle, AlertCircle, ChevronDown, ChevronRight, ChevronLeft,
@@ -23,6 +24,7 @@ export default function EODReportPage() {
     const [pastReports, setPastReports] = useState<any[]>([]);
     const [todayReport, setTodayReport] = useState<any>(null);
     const [expandedReport, setExpandedReport] = useState<string | null>(null);
+    const [autoLogCount, setAutoLogCount] = useState(0);
 
     // History month navigation
     const [historyMonth, setHistoryMonth] = useState(() => {
@@ -38,6 +40,9 @@ export default function EODReportPage() {
     const [blockers, setBlockers] = useState('');
     const [tomorrowPlan, setTomorrowPlan] = useState('');
     const [workHours, setWorkHours] = useState<number>(8);
+
+    // Auto work logs — pre-populate EOD notes
+    const { todaySummary: workLogSummary, logs: workLogs } = useWorkLogs(profile?.id);
 
     // Task updates state
     const [taskUpdates, setTaskUpdates] = useState<Record<string, {
@@ -120,6 +125,10 @@ export default function EODReportPage() {
                     setBlockers(existingReport.blockers || '');
                     setTomorrowPlan(existingReport.tomorrow_plan || '');
                     setWorkHours(existingReport.work_hours || 8);
+                } else if (workLogSummary) {
+                    // No existing report — pre-populate from auto-logged work activities
+                    setOverallNotes(workLogSummary);
+                    setAutoLogCount(workLogs.length);
                 }
             }
         } catch (e) {
@@ -481,15 +490,23 @@ export default function EODReportPage() {
                             <h2 className="text-section text-gray-900">Overall Summary</h2>
 
                             <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">Overall Notes</label>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="block text-xs font-medium text-gray-700">Overall Notes</label>
+                                    {autoLogCount > 0 && !todayReport && (
+                                        <span className="text-[10px] px-2 py-0.5 bg-amber-100 text-amber-700 rounded-md border border-amber-200 font-semibold">
+                                            ⚡ Auto-filled from {autoLogCount} activity log{autoLogCount !== 1 ? 's' : ''} today
+                                        </span>
+                                    )}
+                                </div>
                                 <textarea
-                                    rows={2}
+                                    rows={overallNotes ? Math.max(3, overallNotes.split('\n').length + 1) : 2}
                                     value={overallNotes}
                                     onChange={(e) => setOverallNotes(e.target.value)}
                                     placeholder="General notes about your day..."
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm font-mono text-xs"
                                 />
                             </div>
+
 
                             <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">Blockers / Issues</label>
