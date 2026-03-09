@@ -202,7 +202,6 @@ const menuItems: MenuItem[] = [
     submenu: [
       { name: 'General', href: '/admin/settings' },
       { name: 'Company Info', href: '/admin/settings/company' },
-
       { name: 'Notifications', href: '/admin/settings/notifications' },
       { name: 'Preferences', href: '/admin/settings/preferences' },
       { name: 'Production Settings', href: '/admin/settings/production' },
@@ -210,9 +209,11 @@ const menuItems: MenuItem[] = [
       { name: 'Vendor Categories', href: '/admin/settings/vendor-categories' },
       { name: 'Product Categories', href: '/admin/settings/product-categories' },
       { name: 'System Health', href: '/admin/system-health' },
+      { name: '📖 Admin Guide', href: '/admin/guide' },
     ]
   },
 ];
+
 
 interface SidebarProps {
   isOpen: boolean;
