@@ -87,6 +87,7 @@ const menuItems: MenuItem[] = [
       { name: 'Timeline', href: '/admin/designers/timeline' },
       { name: 'My Notes', href: '/admin/designers/my-notes' },
       { name: '+ New Project', href: '/admin/designers/new-project' },
+      { name: '📖 My Guide', href: '/admin/designers/guide' },
     ]
   },
   {
@@ -101,6 +102,7 @@ const menuItems: MenuItem[] = [
       { name: 'Quotations', href: '/admin/marketing/quotations' },
       { name: 'My Orders', href: '/admin/marketing/orders' },
       { name: 'Commissions', href: '/admin/marketing/commissions' },
+      { name: '📖 My Guide', href: '/admin/marketing/guide' },
     ]
   },
   {
@@ -126,6 +128,7 @@ const menuItems: MenuItem[] = [
       { name: 'Banking', href: '/admin/finance/banking' },
       { name: 'Purchase Bills', href: '/admin/finance/vendors/purchases' },
       { name: 'Vendors', href: '/admin/finance/vendors' },
+      { name: '📖 My Guide', href: '/admin/finance/guide' },
     ]
   },
   {
@@ -138,6 +141,7 @@ const menuItems: MenuItem[] = [
       { name: 'QC & Packing', href: '/admin/dispatch/qc-check' },
       { name: 'Delivery History', href: '/admin/dispatch/history' },
       { name: 'Transporters', href: '/admin/dispatch/transporters' },
+      { name: '📖 My Guide', href: '/admin/dispatch/guide' },
     ]
   },
   {
