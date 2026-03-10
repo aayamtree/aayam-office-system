@@ -71,6 +71,7 @@ export default function OrdersPage() {
     currentStage: 'new' as Job['current_stage'],
     jobType: 'Design + Print' as string,
     clientDeadline: '',
+    assignedTo: '',  // IMP-4: Assigned To field
     notes: ''
   });
 
@@ -169,6 +170,7 @@ export default function OrdersPage() {
       currentStage: 'new',
       jobType: 'Design + Print',
       clientDeadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      assignedTo: profile?.id || user?.id || '',  // IMP-4: default to current user
       notes: ''
     });
     setShowAdvance(false);
@@ -194,6 +196,7 @@ export default function OrdersPage() {
       currentStage: job.current_stage,
       jobType: (job as any).job_type || 'Design + Print',
       clientDeadline: job.client_deadline ? new Date(job.client_deadline).toISOString().split('T')[0] : '',
+      assignedTo: (job as any).sales_person_id || '',  // IMP-4: pre-fill assignedTo from DB
       notes: job.notes || ''
     });
     setCategorySearch('');
@@ -208,7 +211,10 @@ export default function OrdersPage() {
     e.stopPropagation();
     const { confirmed } = await confirm({ title: 'Delete Order', message: 'Are you sure you want to delete this order?', variant: 'danger', confirmLabel: 'Delete' });
     if (confirmed) {
-      await deleteJob(id);
+      const result = await deleteJob(id);
+      if (result?.error) {
+        toast.error('Cannot delete order — it has linked invoice or dispatch records. Please delete those records first, then try again.');
+      }
     }
   };
 
@@ -257,6 +263,7 @@ export default function OrdersPage() {
           priority: formData.priority,
           current_stage: formData.currentStage,
           client_deadline: formData.clientDeadline,
+          sales_person_id: formData.assignedTo || (profile?.id || user?.id),  // IMP-4
           notes: formData.notes
         } as any);
         if (result?.error) {
@@ -285,7 +292,7 @@ export default function OrdersPage() {
           files: [],
           client_deadline: formData.clientDeadline,
           notes: formData.notes,
-          sales_person_id: profile?.id || user?.id,
+          sales_person_id: formData.assignedTo || (profile?.id || user?.id),  // IMP-4
         } as any);
         if (result?.error) {
           toast.error(String('Failed to create: ' + result.error));
@@ -731,10 +738,10 @@ export default function OrdersPage() {
                         type="button"
                         onClick={() => setFormData({ ...formData, jobType: t })}
                         className={`flex-1 py-2.5 text-sm font-semibold rounded-md border-2 transition-all ${formData.jobType === t
-                            ? t === 'Design Only' ? 'bg-violet-600 border-violet-600 text-white'
-                              : t === 'Print Only' ? 'bg-blue-600 border-blue-600 text-white'
-                                : 'bg-gray-900 border-gray-900 text-white'
-                            : 'border-gray-200 text-gray-500 hover:border-gray-400'
+                          ? t === 'Design Only' ? 'bg-violet-600 border-violet-600 text-white'
+                            : t === 'Print Only' ? 'bg-blue-600 border-blue-600 text-white'
+                              : 'bg-gray-900 border-gray-900 text-white'
+                          : 'border-gray-200 text-gray-500 hover:border-gray-400'
                           }`}
                       >
                         {t === 'Design Only' ? '🎨' : t === 'Print Only' ? '🖨️' : '🎨+🖨️'} {t}
@@ -839,6 +846,26 @@ export default function OrdersPage() {
                     <option value="delivered">Delivered</option>
                   </select>
                 </div>
+
+                {/* IMP-4: Assigned To — shows for admin role */}
+                {(profile?.role === 'admin' || profile?.role === 'marketing') && teamMembers.length > 0 && (
+                  <div className="col-span-1 sm:col-span-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                      <User className="w-4 h-4 text-gray-400" /> Assigned To (Sales Person)
+                    </label>
+                    <select
+                      value={formData.assignedTo}
+                      onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 bg-white"
+                    >
+                      <option value="">— Self (current user) —</option>
+                      {teamMembers.map(m => (
+                        <option key={m.id} value={m.id}>{m.full_name}</option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-400 mt-1">This tracks accountability for order follow-up</p>
+                  </div>
+                )}
 
                 {/* Advance Payment Section */}
                 <div className="col-span-1 sm:col-span-2">
@@ -1010,8 +1037,8 @@ export default function OrdersPage() {
                 {/* Job Type badge */}
                 {(selectedJob as any).job_type && (
                   <span className={`inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-md ${(selectedJob as any).job_type === 'Design Only' ? 'bg-violet-100 text-violet-700'
-                      : (selectedJob as any).job_type === 'Print Only' ? 'bg-blue-100 text-blue-700'
-                        : 'bg-gray-900 text-white'
+                    : (selectedJob as any).job_type === 'Print Only' ? 'bg-blue-100 text-blue-700'
+                      : 'bg-gray-900 text-white'
                     }`}>
                     {(selectedJob as any).job_type === 'Design Only' ? '🎨' : (selectedJob as any).job_type === 'Print Only' ? '🖨️' : '🎨+🖨️'} {(selectedJob as any).job_type}
                   </span>

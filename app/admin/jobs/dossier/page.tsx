@@ -116,7 +116,7 @@ export default function JobDossierPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [stageFilter, setStageFilter] = useState('completed_dispatched'); // default: completed jobs
+    const [stageFilter, setStageFilter] = useState('all'); // IMP-8: default to All instead of dispatched/delivered
     const [clientFilter, setClientFilter] = useState('all');
     const [monthFilter, setMonthFilter] = useState('all');
 
@@ -197,7 +197,10 @@ export default function JobDossierPage() {
         let result = jobs;
 
         // Stage filter
-        if (stageFilter === 'completed_dispatched') {
+        const ACTIVE_STAGES = ['new', 'awaiting_admin', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready', 'packed', 'pre_print_qc'];
+        if (stageFilter === 'active_only') {
+            result = result.filter(j => ACTIVE_STAGES.includes(j.current_stage));
+        } else if (stageFilter === 'completed_dispatched') {
             result = result.filter(j => COMPLETED_STAGES.includes(j.current_stage));
         } else if (stageFilter !== 'all') {
             result = result.filter(j => j.current_stage === stageFilter);

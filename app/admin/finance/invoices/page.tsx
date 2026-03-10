@@ -13,9 +13,10 @@ import { useInvoices, useClients, useJobs } from '@/lib/hooks';
 import { Invoice, Client, InvoiceItem } from '@/types/database';
 import { formatDate } from '@/lib/utils';
 import { logActivity } from '@/lib/logger';
+import { supabase } from '@/lib/supabase';
 
 export default function InvoicesPage() {
-  const { invoices, loading: invoicesLoading, createInvoice, updateInvoice, saveInvoiceItems } = useInvoices();
+  const { invoices, loading: invoicesLoading, createInvoice, updateInvoice, saveInvoiceItems, refetch: refetchInvoices } = useInvoices();
   const { clients } = useClients();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -334,6 +335,8 @@ export default function InvoicesPage() {
       }
 
       setShowModal(false);
+      // BUG-10: Refresh invoice list immediately so the stale 'Pending Invoice' banner disappears
+      refetchInvoices();
     } catch (error) {
       console.error('Error saving invoice:', error);
       toast.error('Failed to save invoice');
@@ -342,12 +345,21 @@ export default function InvoicesPage() {
     }
   };
 
+  // BUG-03: Compute effective display status — show 'overdue' if past due date and not paid
+  const today = new Date().toISOString().split('T')[0];
+  const getEffectiveStatus = (inv: Invoice): string => {
+    if (inv.payment_status === 'paid') return 'paid';
+    if (inv.due_date && inv.due_date < today && inv.payment_status === 'pending') return 'overdue';
+    return inv.payment_status;
+  };
+
   const filteredInvoices = invoices.filter(inv => {
+    const effectiveStatus = getEffectiveStatus(inv);
     const matchesSearch =
       (inv.invoice_number || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (inv.client?.company || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (inv.client?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || inv.payment_status === statusFilter;
+    const matchesStatus = statusFilter === 'all' || effectiveStatus === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -361,6 +373,18 @@ export default function InvoicesPage() {
     return colors[status] || 'bg-gray-100 text-gray-700';
   };
 
+  // BUG-12: Delete invoice with confirmation
+  const handleDeleteInvoice = async (inv: Invoice) => {
+    if (!window.confirm(`Delete invoice ${inv.invoice_number}? This action cannot be undone.`)) return;
+    const { error } = await supabase.from('invoices').delete().eq('id', inv.id);
+    if (error) {
+      toast.error('Cannot delete invoice: ' + error.message);
+    } else {
+      toast.success('Invoice deleted successfully.');
+      refetchInvoices();
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -371,12 +395,13 @@ export default function InvoicesPage() {
 
   const { jobs } = useJobs();
 
-  // Jobs ready for invoicing (Dispatched/Delivered but not fully paid?)
-  // Ideally check if invoice exists, but for now we show dispatched jobs.
+  // BUG-10: Jobs ready for invoicing — only show jobs WITHOUT an existing invoice
+  const invoicedJobIds = new Set(invoices.map(inv => inv.job_id).filter(Boolean));
   const pendingInvoicingJobs = jobs.filter(j =>
     (['dispatched', 'delivered'].includes(j.current_stage)) &&
-    j.payment_status !== 'paid'
-  ).slice(0, 5); // Show top 5 recent
+    j.payment_status !== 'paid' &&
+    !invoicedJobIds.has(j.id)  // Exclude jobs that already have an invoice
+  ).slice(0, 5);
 
   const handleCreateFromJob = (job: any) => {
     // Pre-fill invoice with Job Data
@@ -543,8 +568,9 @@ export default function InvoicesPage() {
                   'pending': 'bg-stone-50/60',
                   'overdue': 'bg-red-50/60',
                 };
-                const borderColor = borderColors[inv.payment_status] || 'border-l-stone-300';
-                const tintBg = tintBgs[inv.payment_status] || 'bg-stone-50';
+                const effStatus = getEffectiveStatus(inv);
+                const borderColor = borderColors[effStatus] || 'border-l-stone-300';
+                const tintBg = tintBgs[effStatus] || 'bg-stone-50';
 
                 return (
                   <div key={inv.id} className={`bg-card rounded-md border border-border border-l-4 ${borderColor} hover:shadow-sm transition-shadow`}>
@@ -556,11 +582,11 @@ export default function InvoicesPage() {
 
                     {/* Card Body */}
                     <div className="px-4 py-3">
-                      {/* Client */}
-                      <p className="text-[10px] text-muted-foreground">{inv.client?.company || 'Unknown Client'}</p>
-                      <h3 className="text-foreground font-bold text-sm mb-2">{inv.client?.name || 'No Contact Name'}</h3>
+                      {/* Client — BUG-11: show dash instead of Unknown */}
+                      <p className="text-[10px] text-muted-foreground">{inv.client?.company || '—'}</p>
+                      <h3 className="text-foreground font-bold text-sm mb-2">{inv.client?.name || '—'}</h3>
 
-                      {/* Price & Status */}
+                      {/* Price & Status — BUG-03: use effective status */}
                       <div className="flex items-center justify-between mb-2">
                         <div>
                           <span className="text-foreground font-bold text-xl">{formatCurrency(inv.total_amount)}</span>
@@ -568,8 +594,8 @@ export default function InvoicesPage() {
                             <p className="text-[10px] text-muted-foreground mt-0.5">Paid: {formatCurrency(inv.amount_paid)}</p>
                           )}
                         </div>
-                        <span className={`px-2 py-0.5 text-[9px] font-semibold rounded border ${getStatusColor(inv.payment_status)}`}>
-                          {inv.payment_status}
+                        <span className={`px-2 py-0.5 text-[9px] font-semibold rounded border ${getStatusColor(getEffectiveStatus(inv))}`}>
+                          {getEffectiveStatus(inv)}
                         </span>
                       </div>
 
@@ -632,8 +658,8 @@ export default function InvoicesPage() {
                         <p className="text-xs text-gray-400 mt-1">{formatDate(inv.invoice_date)}</p>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="font-medium text-gray-900">{inv.client?.company || 'Unknown'}</p>
-                        <p className="text-sm text-gray-500">{inv.client?.name}</p>
+                        <p className="font-medium text-gray-900">{inv.client?.company || '—'}</p>
+                        <p className="text-sm text-gray-500">{inv.client?.name || '—'}</p>
                       </td>
                       <td className="px-6 py-4">
                         <p className="font-semibold text-gray-900">{formatCurrency(inv.total_amount)}</p>
@@ -643,8 +669,9 @@ export default function InvoicesPage() {
                       </td>
                       <td className="px-6 py-4 text-gray-600">{inv.due_date ? formatDate(inv.due_date) : '-'}</td>
                       <td className="px-6 py-4">
-                        <span className={`px-3 py-1 text-xs rounded-md border ${getStatusColor(inv.payment_status)}`}>
-                          {inv.payment_status}
+                        {/* BUG-03: Show computed effective status (overdue if past due date) */}
+                        <span className={`px-3 py-1 text-xs rounded-md border ${getStatusColor(getEffectiveStatus(inv))}`}>
+                          {getEffectiveStatus(inv)}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -660,6 +687,10 @@ export default function InvoicesPage() {
                           </button>
                           <button onClick={() => handleEdit(inv)} className="p-2 hover:bg-gray-100 rounded-md" title="Edit">
                             <Edit className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-500" />
+                          </button>
+                          {/* BUG-12: Delete button (admin-only via confirmation dialog) */}
+                          <button onClick={() => handleDeleteInvoice(inv)} className="p-2 hover:bg-red-50 rounded-md" title="Delete Invoice">
+                            <Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5 text-red-400 hover:text-red-600" />
                           </button>
                         </div>
                       </td>

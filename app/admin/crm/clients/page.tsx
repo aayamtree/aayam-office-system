@@ -201,6 +201,19 @@ export default function ClientsPage() {
         await updateClient(selectedClient.id, updatePayload);
         logActivity({ userId: profile?.id || '', userName: profile?.full_name || 'Unknown', action: 'UPDATE', module: 'CRM', entityId: selectedClient.id, entityName: formData.name, description: `Updated Client: ${formData.name} (${formData.company || formData.phone})` });
       } else {
+        // IMP-5: Duplicate phone detection — warn before creating
+        if (formData.phone) {
+          const duplicate = clients.find(c =>
+            c.phone === formData.phone && c.id !== selectedClient?.id
+          );
+          if (duplicate) {
+            const proceed = window.confirm(
+              `⚠️ Duplicate Phone Detected!\n\nPhone ${formData.phone} already belongs to:\n"${duplicate.name}${duplicate.company ? ` (${duplicate.company})` : ''}"\n\nDo you still want to create this client?`
+            );
+            if (!proceed) { setSaving(false); return; }
+          }
+        }
+
         // Auto-set source based on who is creating
         const isMarketingUser = profile?.role === 'marketing';
         await createClient({

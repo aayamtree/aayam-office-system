@@ -295,7 +295,9 @@ export default function LeadsPage() {
             <div className="flex items-center justify-between gap-3">
                 <div>
                     <h1 className="text-page-title text-gray-900">Leads</h1>
-                    <p className="text-gray-500 text-xs md:text-sm">{filteredLeads.length} leads in system</p>
+                    <p className="text-gray-500 text-xs md:text-sm">
+                        {filteredLeads.length} {statusFilter === 'active' ? 'active leads' : statusFilter === 'all' ? 'total leads' : `leads with status: ${statusFilter}`}
+                    </p>
                 </div>
                 <button
                     onClick={handleAddNew}

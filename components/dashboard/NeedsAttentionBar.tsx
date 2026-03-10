@@ -204,7 +204,7 @@ export default function NeedsAttentionBar({
         } : null,
         followUpsDue > 0 ? {
             key: 'followups_due',
-            label: 'Follow-ups Due',
+            label: 'Lead Follow-ups Due',
             count: followUpsDue,
             color: 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100',
             icon: <Users className="w-3.5 h-3.5" />,
