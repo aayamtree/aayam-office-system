@@ -491,7 +491,22 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
       .delete()
       .eq('id', id);
 
-    if (!error) refetch();
+    // Supabase PostgREST may return error=null even on FK constraint violations.
+    // Verify by checking if the row still exists after the delete attempt.
+    if (!error) {
+      const { count } = await supabase
+        .from('jobs')
+        .select('id', { count: 'exact', head: true })
+        .eq('id', id);
+
+      if (count && count > 0) {
+        // Row still exists — delete was blocked (FK constraint or RLS)
+        return { error: 'This order has linked invoice or dispatch records. Delete those first, then try again.' };
+      }
+      refetch();
+      return { error: null };
+    }
+
     return { error: error?.message };
   };
 
