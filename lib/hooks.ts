@@ -2240,13 +2240,42 @@ export function useVendorPayments() {
 // ACTIVITY LOGS HOOK
 // =============================================
 export function useActivityLogs(limit = 100) {
-  const { data, loading, error, refetch } = useSupabaseQuery<ActivityLog>('activity_logs', {
-    select: '*',
-    orderBy: { column: 'created_at', ascending: false },
-    limit
-  });
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  return { logs: data, loading, error, refetch };
+  const fetchLogs = useCallback(async () => {
+    if (!isSupabaseConfigured()) { setLoading(false); return; }
+    setLoading(true);
+    try {
+      const { data, error: err } = await supabase
+        .from('activity_logs')
+        .select(`
+          id, action, entity_type, entity_id, description, metadata,
+          created_at, ip_address,
+          profiles ( full_name, role )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (err) { setError(err.message); }
+      else {
+        // Map profiles.full_name → user_name for activity page compatibility
+        setLogs((data || []).map((l: any) => ({
+          ...l,
+          user_name: l.profiles?.full_name || null,
+        })));
+      }
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [limit]);
+
+  useEffect(() => { fetchLogs(); }, [fetchLogs]);
+
+  return { logs, loading, error, refetch: fetchLogs };
 }
 
 // =============================================

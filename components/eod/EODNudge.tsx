@@ -36,7 +36,7 @@ export default function EODNudge() {
 
             // Check if EOD already submitted today
             const { data: report } = await supabase
-                .from('daily_reports')
+                .from('daily_work_reports')
                 .select('id')
                 .eq('user_id', profile.id)
                 .eq('report_date', today)
