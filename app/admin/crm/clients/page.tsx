@@ -417,23 +417,43 @@ export default function ClientsPage() {
                     {profile?.role === 'admin' && (
                       <td className="px-4 py-4">
                         <div className="space-y-0.5">
-                          {/* Source badge */}
-                          <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide ${(client as any).source === 'marketing' ? 'bg-gray-900 text-white' :
-                            (client as any).source === 'referral' ? 'bg-blue-100 text-blue-800' :
-                              (client as any).source === 'walk_in' ? 'bg-green-100 text-green-800' :
-                                'bg-gray-100 text-gray-600'
-                            }`}>
-                            {(client as any).source === 'marketing' ? 'Marketing' :
-                              (client as any).source === 'referral' ? 'Referral' :
-                                (client as any).source === 'walk_in' ? 'Walk-in' : 'Direct'}
-                          </span>
-                          {/* Marketing person (if sourced via marketing) */}
-                          {(client as any).source === 'marketing' && (client as any).assigned_marketing_user_id && (
-                            <p className="text-[11px] text-gray-800 font-semibold">
-                              👤 {allProfiles.find(s => s.id === (client as any).assigned_marketing_user_id)?.full_name || '—'}
-                            </p>
-                          )}
-                          {/* Added by — ALWAYS show so you can trace admin or marketing who created */}
+                          {/* Source badge — auto-correct if stored as 'direct' but created by marketing user */}
+                          {(() => {
+                            const createdByProfile = allProfiles.find(p => p.id === (client as any).created_by);
+                            const isCreatedByMarketing = createdByProfile?.role === 'marketing';
+                            // If stored as 'direct' but created by a marketing user, show Marketing
+                            const effectiveSource = ((client as any).source === 'direct' && isCreatedByMarketing)
+                              ? 'marketing'
+                              : ((client as any).source || 'direct');
+                            const badgeClass = effectiveSource === 'marketing' ? 'bg-gray-900 text-white' :
+                              effectiveSource === 'referral' ? 'bg-blue-100 text-blue-800' :
+                                effectiveSource === 'walk_in' ? 'bg-green-100 text-green-800' :
+                                  'bg-gray-100 text-gray-600';
+                            const badgeLabel = effectiveSource === 'marketing' ? 'Marketing' :
+                              effectiveSource === 'referral' ? 'Referral' :
+                                effectiveSource === 'walk_in' ? 'Walk-in' : 'Direct';
+                            return (
+                              <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide ${badgeClass}`}>
+                                {badgeLabel}
+                              </span>
+                            );
+                          })()}
+                          {/* Marketing person — show if marketing source or if created by marketing user */}
+                          {(() => {
+                            const createdByProfile = allProfiles.find(p => p.id === (client as any).created_by);
+                            const isCreatedByMarketing = createdByProfile?.role === 'marketing';
+                            const effectiveSource = ((client as any).source === 'direct' && isCreatedByMarketing) ? 'marketing' : (client as any).source;
+                            if (effectiveSource === 'marketing') {
+                              const marketingPerson = (client as any).assigned_marketing_user_id
+                                ? allProfiles.find(s => s.id === (client as any).assigned_marketing_user_id)?.full_name
+                                : isCreatedByMarketing ? createdByProfile?.full_name : null;
+                              return marketingPerson ? (
+                                <p className="text-[11px] text-gray-800 font-semibold">👤 {marketingPerson}</p>
+                              ) : null;
+                            }
+                            return null;
+                          })()}
+                          {/* Added by */}
                           {(client as any).created_by && (
                             <p className="text-[10px] text-gray-400">
                               Added by: {allProfiles.find(s => s.id === (client as any).created_by)?.full_name || 'Unknown'}
@@ -498,42 +518,45 @@ export default function ClientsPage() {
           <div className="bg-white rounded-md w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b"><h2 className="text-section text-gray-900">{isEditing ? 'Edit Client' : 'Add Client'}</h2><button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button></div>
             <form onSubmit={handleSubmit} className="p-4 space-y-3">
-              <div className="border border-gray-800 rounded-md p-3 bg-gray-900 space-y-2">
-                <p className="text-xs font-bold text-white uppercase flex items-center gap-1.5">
-                  <UserCheck className="w-3.5 h-3.5" /> Marketing Ownership
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium mb-1 text-gray-400">Source</label>
-                    <select
-                      value={formData.source}
-                      onChange={(e) => {
-                        const s = e.target.value;
-                        setFormData({ ...formData, source: s, assigned_marketing_user_id: s === 'direct' ? '' : formData.assigned_marketing_user_id });
-                      }}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-md text-sm bg-gray-800 text-white focus:outline-none"
-                    >
-                      <option value="direct">Direct / Admin</option>
-                      <option value="marketing">Marketing</option>
-                      <option value="referral">Referral</option>
-                      <option value="walk_in">Walk-in</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium mb-1 text-gray-400">Marketing Person</label>
-                    <select
-                      value={formData.assigned_marketing_user_id}
-                      onChange={(e) => setFormData({ ...formData, assigned_marketing_user_id: e.target.value, source: e.target.value ? 'marketing' : formData.source })}
-                      className="w-full px-3 py-2 border border-gray-600 rounded-md text-sm bg-gray-800 text-white focus:outline-none"
-                    >
-                      <option value="">None</option>
-                      {marketingStaff.map(s => (
-                        <option key={s.id} value={s.id}>{s.full_name}</option>
-                      ))}
-                    </select>
+              {/* Marketing Ownership — Admin only. Marketing users can never change source. */}
+              {profile?.role === 'admin' && (
+                <div className="border border-gray-800 rounded-md p-3 bg-gray-900 space-y-2">
+                  <p className="text-xs font-bold text-white uppercase flex items-center gap-1.5">
+                    <UserCheck className="w-3.5 h-3.5" /> Marketing Ownership
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium mb-1 text-gray-400">Source</label>
+                      <select
+                        value={formData.source}
+                        onChange={(e) => {
+                          const s = e.target.value;
+                          setFormData({ ...formData, source: s, assigned_marketing_user_id: s === 'direct' ? '' : formData.assigned_marketing_user_id });
+                        }}
+                        className="w-full px-3 py-2 border border-gray-600 rounded-md text-sm bg-gray-800 text-white focus:outline-none"
+                      >
+                        <option value="direct">Direct / Admin</option>
+                        <option value="marketing">Marketing</option>
+                        <option value="referral">Referral</option>
+                        <option value="walk_in">Walk-in</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1 text-gray-400">Marketing Person</label>
+                      <select
+                        value={formData.assigned_marketing_user_id}
+                        onChange={(e) => setFormData({ ...formData, assigned_marketing_user_id: e.target.value, source: e.target.value ? 'marketing' : formData.source })}
+                        className="w-full px-3 py-2 border border-gray-600 rounded-md text-sm bg-gray-800 text-white focus:outline-none"
+                      >
+                        <option value="">None</option>
+                        {marketingStaff.map(s => (
+                          <option key={s.id} value={s.id}>{s.full_name}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1 text-gray-700">Name *</label><input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" /></div><div><label className="block text-sm font-medium mb-1 text-gray-700">Company</label><input type="text" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" /></div></div>
               <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1 text-gray-700">Phone *</label><input type="tel" required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" /></div><div><label className="block text-sm font-medium mb-1 text-gray-700">Email</label><input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" /></div></div>
