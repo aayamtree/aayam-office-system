@@ -102,7 +102,7 @@ export default function LeadsPage() {
     useEffect(() => {
         supabase.from('profiles')
             .select('id, full_name, role')
-            .in('role', ['marketing', 'admin'])
+            .eq('role', 'marketing')   // Only marketing staff handle leads & follow-ups
             .eq('is_active', true)
             .then(({ data }) => {
                 if (data) setStaffList(data);
@@ -583,7 +583,7 @@ export default function LeadsPage() {
                                     >
                                         {staffList.map(s => (
                                             <option key={s.id} value={s.id}>
-                                                {s.full_name} ({s.role})
+                                                {s.full_name}
                                             </option>
                                         ))}
                                     </select>
