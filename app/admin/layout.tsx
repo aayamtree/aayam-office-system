@@ -13,6 +13,7 @@ import { SessionProvider } from 'next-auth/react';
 import { GlobalErrorBoundary } from '@/components/ErrorBoundary';
 import ToastContainer from '@/components/ToastContainer';
 import EODNudge from '@/components/eod/EODNudge';
+import RouteGuard from '@/components/layout/RouteGuard';
 
 export default function AdminLayout({
   children,
@@ -84,10 +85,12 @@ export default function AdminLayout({
           {/* Daily Briefing - Auto shows once per day on login */}
           {profile && <DailyBriefingTrigger />}
 
-          {/* Main Content — wrapped in GlobalErrorBoundary so no page ever goes fully blank */}
+          {/* Main Content — RouteGuard enforces RBAC per role before rendering */}
           <main className={`pt-20 lg:pt-24 px-4 md:px-6 lg:px-8 py-6 min-h-screen transition-[margin] duration-200 ease-in-out ${(sidebarHovered || sidebarLocked) ? 'lg:ml-64' : 'lg:ml-16'}`}>
             <GlobalErrorBoundary>
-              {children}
+              <RouteGuard>
+                {children}
+              </RouteGuard>
             </GlobalErrorBoundary>
           </main>
 
