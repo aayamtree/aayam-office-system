@@ -216,7 +216,7 @@ export default function QuotationsPage() {
     const items = q.items || [];
     // The gstRate in formData is for new items, existing items have their own gst_rate
     // For editing, we can take the gstRate from the first item if available, or default
-    const gstRate = items.length > 0 ? items[0].gst_rate : 18;
+    const gstRate = items.length > 0 ? (items[0].gst_rate ?? 18) : 18;  // ?? so 0% is preserved
 
     setFormData({
       clientId: q.client_id || '',
@@ -295,7 +295,7 @@ export default function QuotationsPage() {
 
         quote_per_piece: q.items?.[0]?.rate || 0,
         subtotal: q.subtotal,
-        gst_rate: q.items?.[0]?.gst_rate || 18,
+        gst_rate: q.items?.[0]?.gst_rate ?? 18,  // ?? not || so 0% GST is preserved
         gst_amount: q.gst_amount,
         discount_amount: q.discount_amount,
         total_amount: q.total_amount,
