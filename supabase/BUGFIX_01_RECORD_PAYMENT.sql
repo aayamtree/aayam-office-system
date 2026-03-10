@@ -1,36 +1,33 @@
 -- ============================================================
--- BUG-01 FIX: Add p_cash_account_id to record_payment_received
--- E2E Test Report: March 2026
+-- BUG-01 FIX (COMPLETE): record_payment_received
+-- Aayam Office System — E2E Test Report March 2026
 -- ============================================================
--- STEP 1: Drop ALL existing overloaded versions of this function.
--- This is required because Postgres won't let you CREATE OR REPLACE
--- when multiple overloads exist with different argument lists.
+-- PROBLEM: Two issues:
+--   1. payments_received TABLE is missing cash_account_id column
+--   2. record_payment_received FUNCTION had multiple overloads
+--      and didn't accept p_cash_account_id parameter
+-- SOLUTION: Fix the table schema FIRST, then recreate the function
+-- ============================================================
+-- Run this entire script in Supabase SQL Editor at once.
 -- ============================================================
 
--- Drop all known overloads (IF EXISTS prevents error if one doesn't exist)
-DROP FUNCTION IF EXISTS public.record_payment_received(
-    uuid, numeric, text, date, uuid, text, text, text, uuid, text
-) CASCADE;
+-- ────────────────────────────────────────────────────────────
+-- STEP 1: Add missing column to payments_received TABLE
+-- (IF NOT EXISTS = safe to run multiple times)
+-- ────────────────────────────────────────────────────────────
+ALTER TABLE public.payments_received
+    ADD COLUMN IF NOT EXISTS cash_account_id UUID REFERENCES public.cash_accounts(id) ON DELETE SET NULL;
 
-DROP FUNCTION IF EXISTS public.record_payment_received(
-    uuid, numeric, text, date, uuid, uuid, text, text, uuid, text
-) CASCADE;
+-- Also ensure other columns exist that the function may reference
+ALTER TABLE public.payments_received
+    ADD COLUMN IF NOT EXISTS attachment_url TEXT;
 
-DROP FUNCTION IF EXISTS public.record_payment_received(
-    uuid, numeric, text, date
-) CASCADE;
+ALTER TABLE public.payments_received
+    ADD COLUMN IF NOT EXISTS invoice_id UUID REFERENCES public.invoices(id) ON DELETE SET NULL;
 
-DROP FUNCTION IF EXISTS public.record_payment_received(
-    p_client_id uuid, p_amount numeric, p_payment_mode text, p_payment_date date,
-    p_bank_account_id uuid, p_reference text, p_notes text, p_invoice_id uuid, p_attachment_url text
-) CASCADE;
-
-DROP FUNCTION IF EXISTS public.record_payment_received(
-    p_client_id uuid, p_amount numeric, p_payment_mode text, p_payment_date date,
-    p_bank_account_id uuid, p_notes text, p_invoice_id uuid
-) CASCADE;
-
--- Nuclear option: drop all overloads by name regardless of args
+-- ────────────────────────────────────────────────────────────
+-- STEP 2: Drop ALL existing overloads of record_payment_received
+-- ────────────────────────────────────────────────────────────
 DO $$
 DECLARE
     r RECORD;
@@ -45,10 +42,9 @@ BEGIN
     END LOOP;
 END $$;
 
--- ============================================================
--- STEP 2: Create the new unified function with p_cash_account_id
--- ============================================================
-
+-- ────────────────────────────────────────────────────────────
+-- STEP 3: Create the unified function with all required params
+-- ────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.record_payment_received(
     p_client_id       UUID,
     p_amount          NUMERIC,
@@ -113,7 +109,7 @@ BEGIN
     SET outstanding_balance = GREATEST(0, COALESCE(outstanding_balance, 0) - p_amount)
     WHERE id = p_client_id;
 
-    -- Update bank account balance if bank payment
+    -- Update bank account balance if bank/UPI payment
     IF p_bank_account_id IS NOT NULL AND p_payment_mode != 'cash' THEN
         UPDATE bank_accounts
         SET current_balance = COALESCE(current_balance, 0) + p_amount
@@ -131,17 +127,25 @@ BEGIN
 END;
 $$;
 
--- Grant execute permission
+-- Grant execute permission to authenticated users
 GRANT EXECUTE ON FUNCTION public.record_payment_received TO authenticated;
 GRANT EXECUTE ON FUNCTION public.record_payment_received TO anon;
 
--- ============================================================
--- VERIFY: Check function was created with correct signature
--- ============================================================
+-- ────────────────────────────────────────────────────────────
+-- STEP 4: Verify — run this to confirm it worked
+-- ────────────────────────────────────────────────────────────
 SELECT
     p.proname AS function_name,
-    pg_get_function_arguments(p.oid) AS arguments
+    pg_get_function_arguments(p.oid) AS arguments,
+    'OK' AS status
 FROM pg_proc p
 JOIN pg_namespace n ON p.pronamespace = n.oid
 WHERE n.nspname = 'public'
 AND p.proname = 'record_payment_received';
+
+-- Also verify the column exists in the table
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name = 'payments_received'
+  AND column_name IN ('cash_account_id', 'invoice_id', 'attachment_url');
