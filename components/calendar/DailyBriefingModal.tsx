@@ -540,88 +540,105 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
         admin: '👑 Admin',
     };
 
+    // ── Role color palette ──────────────────────────────────────
+    const roleTheme: Record<string, { from: string; to: string; accent: string; light: string; emoji: string }> = {
+        admin: { from: 'from-slate-800', to: 'to-slate-900', accent: 'bg-white/15', light: 'bg-slate-50', emoji: '👑' },
+        designer: { from: 'from-violet-700', to: 'to-purple-900', accent: 'bg-white/15', light: 'bg-violet-50', emoji: '🎨' },
+        marketing: { from: 'from-blue-600', to: 'to-indigo-800', accent: 'bg-white/15', light: 'bg-blue-50', emoji: '📢' },
+        dispatch: { from: 'from-orange-600', to: 'to-amber-800', accent: 'bg-white/15', light: 'bg-orange-50', emoji: '📦' },
+        cmyk: { from: 'from-cyan-700', to: 'to-teal-900', accent: 'bg-white/15', light: 'bg-cyan-50', emoji: '🖨️' },
+        finance: { from: 'from-green-700', to: 'to-emerald-900', accent: 'bg-white/15', light: 'bg-green-50', emoji: '💰' },
+    };
+    const theme = roleTheme[role] || roleTheme.admin;
+
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
-            <div className="bg-white rounded-lg max-w-xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
-                {/* Header */}
-                <div className="bg-gray-900 p-5 text-white">
-                    <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                            <h2 className="text-xl font-bold mb-0.5">
-                                Good {getTimeOfDay()}, {profile?.full_name?.split(' ')[0] || 'User'}! 👋
-                            </h2>
-                            <p className="text-white/70 text-sm">
-                                {format(new Date(), 'EEEE, MMMM d, yyyy')} · {roleLabel[role] || role}
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10"
+                style={{ animation: 'modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1)' }}>
+
+                {/* ── Gradient Header ───────────────────────────────── */}
+                <div className={`bg-gradient-to-br ${theme.from} ${theme.to} px-6 pt-6 pb-5 relative overflow-hidden`}>
+                    {/* Decorative circles */}
+                    <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/5 pointer-events-none" />
+                    <div className="absolute -bottom-12 -left-6 w-32 h-32 rounded-full bg-white/5 pointer-events-none" />
+
+                    {/* Top row */}
+                    <div className="relative flex items-start justify-between mb-4">
+                        <div>
+                            <div className="flex items-center gap-2 mb-0.5">
+                                <span className="text-2xl">{theme.emoji}</span>
+                                <h2 className="text-xl font-bold text-white tracking-tight">
+                                    Good {getTimeOfDay()}, {profile?.full_name?.split(' ')[0] || 'User'}!
+                                </h2>
+                            </div>
+                            <p className="text-white/60 text-xs pl-9">
+                                {format(new Date(), 'EEEE, MMMM d')} &nbsp;·&nbsp; {role.charAt(0).toUpperCase() + role.slice(1)}
                             </p>
                         </div>
-                        <button
-                            onClick={onClose}
-                            className="p-2 hover:bg-white/20 rounded-md transition-colors"
-                        >
+                        <button onClick={onClose}
+                            className="p-1.5 rounded-lg hover:bg-white/15 transition-colors text-white/70 hover:text-white">
                             <X className="w-4 h-4" />
                         </button>
                     </div>
 
-                    {/* Quick Stats */}
+                    {/* Stat chips */}
                     {!loading && (
-                        <div className="grid grid-cols-3 gap-2 mt-4">
+                        <div className="grid grid-cols-3 gap-2 relative">
                             {stats.map(stat => (
-                                <div key={stat.label} className={`${stat.color} backdrop-blur-sm rounded-lg p-3`}>
-                                    <div className="text-2xl font-bold">{stat.value}</div>
-                                    <div className="text-xs text-white/80">{stat.label}</div>
+                                <div key={stat.label}
+                                    className="bg-white/10 hover:bg-white/15 transition-colors rounded-xl px-3 py-2.5 text-center border border-white/10">
+                                    <div className={`text-2xl font-black text-white mb-0.5 ${stat.value > 0 ? 'text-yellow-300' : ''}`}>
+                                        {stat.value}
+                                    </div>
+                                    <div className="text-[10px] text-white/70 leading-tight font-medium">{stat.label}</div>
                                 </div>
                             ))}
                         </div>
                     )}
                 </div>
 
-                {/* Content */}
-                <div className="p-5 overflow-y-auto max-h-[calc(90vh-260px)]">
+                {/* ── Body ─────────────────────────────────────────── */}
+                <div className="bg-white overflow-y-auto max-h-[50vh]">
                     {loading ? (
-                        <div className="text-center py-12">
-                            <Loader2 className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-3" />
-                            <p className="text-gray-500 text-sm">Loading your briefing...</p>
+                        <div className="flex flex-col items-center justify-center py-10">
+                            <Loader2 className="w-7 h-7 animate-spin text-gray-300 mb-3" />
+                            <p className="text-gray-400 text-sm">Loading your briefing…</p>
                         </div>
                     ) : totalItems === 0 ? (
-                        <div className="text-center py-10">
-                            <CheckCircle className="w-14 h-14 text-green-500 mx-auto mb-3" />
-                            <h3 className="text-lg font-bold text-gray-900 mb-1">
-                                All Caught Up! 🎉
-                            </h3>
-                            <p className="text-gray-500 text-sm">
-                                No pending items for today. Great job!
-                            </p>
+                        <div className="flex flex-col items-center justify-center py-10 px-6">
+                            <div className="w-16 h-16 rounded-full bg-green-50 border-2 border-green-100 flex items-center justify-center mb-3">
+                                <CheckCircle className="w-8 h-8 text-green-500" />
+                            </div>
+                            <h3 className="text-base font-bold text-gray-900 mb-1">All Caught Up! 🎉</h3>
+                            <p className="text-gray-400 text-sm text-center">No pending items for today. Have a great day!</p>
                         </div>
                     ) : (
-                        <div className="space-y-5">
+                        <div className="divide-y divide-gray-50">
                             {sections.map(section => (
-                                <div key={section.title}>
+                                <div key={section.title} className="px-5 py-3.5">
                                     <div className="flex items-center gap-2 mb-2">
                                         {section.icon}
-                                        <h3 className="font-bold text-sm text-gray-900">{section.title}</h3>
+                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">{section.title}</span>
                                     </div>
                                     <div className="space-y-1.5">
                                         {section.items.map(item => (
-                                            <Link
-                                                key={item.id}
-                                                href={item.href}
-                                                onClick={onClose}
-                                                className={`block p-2.5 rounded-md border-l-4 hover:shadow-sm transition-all ${urgencyBorder[item.urgency]}`}
-                                            >
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <div className="min-w-0 flex-1">
-                                                        <p className="text-sm font-semibold text-gray-900 truncate">{item.title}</p>
-                                                        <p className="text-xs text-gray-500 truncate">{item.subtitle}</p>
-                                                    </div>
-                                                    {item.badge && (
-                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 ${item.urgency === 'high' ? 'bg-red-100 text-red-700' :
-                                                            item.urgency === 'medium' ? 'bg-amber-100 text-amber-700' :
-                                                                'bg-gray-100 text-gray-700'
-                                                            }`}>
-                                                            {item.badge}
-                                                        </span>
-                                                    )}
+                                            <Link key={item.id} href={item.href} onClick={onClose}
+                                                className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 group transition-colors">
+                                                {/* Urgency dot */}
+                                                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${item.urgency === 'high' ? 'bg-red-500' :
+                                                        item.urgency === 'medium' ? 'bg-amber-400' : 'bg-gray-300'
+                                                    }`} />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-gray-700">{item.title}</p>
+                                                    {item.subtitle && <p className="text-xs text-gray-400 truncate">{item.subtitle}</p>}
                                                 </div>
+                                                {item.badge && (
+                                                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md tracking-wide flex-shrink-0 ${item.urgency === 'high' ? 'bg-red-100 text-red-600' :
+                                                            item.urgency === 'medium' ? 'bg-amber-100 text-amber-600' :
+                                                                'bg-gray-100 text-gray-500'
+                                                        }`}>{item.badge}</span>
+                                                )}
+                                                <ArrowRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-400 flex-shrink-0" />
                                             </Link>
                                         ))}
                                     </div>
@@ -631,26 +648,27 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                     )}
                 </div>
 
-                {/* Footer */}
-                <div className="border-t border-gray-100 p-4 bg-gray-50 flex items-center justify-between">
-                    <button
-                        onClick={onClose}
-                        className="text-sm text-gray-500 hover:text-gray-700"
-                    >
+                {/* ── Footer ───────────────────────────────────────── */}
+                <div className="bg-gray-50 border-t border-gray-100 px-5 py-3 flex items-center justify-between gap-3">
+                    <button onClick={onClose}
+                        className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
                         I&apos;ll check this later
                     </button>
                     <button
-                        onClick={() => {
-                            onClose();
-                            window.location.href = footerLink.href;
-                        }}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm rounded-md transition-colors font-medium"
-                    >
+                        onClick={() => { onClose(); window.location.href = footerLink.href; }}
+                        className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-white text-sm font-semibold bg-gradient-to-r ${theme.from} ${theme.to} hover:opacity-90 transition-opacity`}>
                         {footerLink.label}
                         <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                 </div>
             </div>
+
+            <style jsx global>{`
+                @keyframes modalIn {
+                    0%  { opacity: 0; transform: scale(0.92) translateY(12px); }
+                    100%{ opacity: 1; transform: scale(1)    translateY(0);    }
+                }
+            `}</style>
         </div>
     );
 }
