@@ -585,14 +585,33 @@ export default function QuotationsPage() {
 
                       {/* Action Buttons */}
                       <div className="flex gap-2">
-                        {(q.status === 'sent' || q.status === 'viewed' || q.status === 'draft' || q.status === 'accepted') && (
+                        {(q.status === 'sent' || q.status === 'viewed' || q.status === 'draft') && (
                           <button
                             onClick={() => handleConvertToOrder(q)}
                             className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
                           >
                             <CheckCircle size={18} />
-                            <span className="hidden sm:inline">{q.status === 'accepted' ? 'Create Order' : 'Accept'}</span>
+                            <span className="hidden sm:inline">Accept</span>
                           </button>
+                        )}
+                        {q.status === 'accepted' && (
+                          (q as any).converted_to_job_id
+                            ? (
+                              // Already converted — show a locked green chip
+                              <div className="flex-1 px-4 py-2.5 bg-green-50 border border-green-200 text-green-800 rounded-md font-medium flex items-center justify-center gap-2 cursor-default">
+                                <CheckCircle size={18} className="text-green-600" />
+                                <span>Order Already Created</span>
+                              </div>
+                            ) : (
+                              // Not yet converted — show active button
+                              <button
+                                onClick={() => handleConvertToOrder(q)}
+                                className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                              >
+                                <CheckCircle size={18} />
+                                <span className="hidden sm:inline">Create Order</span>
+                              </button>
+                            )
                         )}
                         <button
                           onClick={() => handleEdit(q)}
@@ -650,12 +669,22 @@ export default function QuotationsPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
                           {q.status === 'accepted' && (
-                            <button
-                              onClick={() => handleConvertToOrder(q)}
-                              className="px-3 py-1.5 bg-gray-100 text-gray-900 rounded-md text-sm font-medium hover:bg-green-200"
-                            >
-                              → Order
-                            </button>
+                            (q as any).converted_to_job_id
+                              ? (
+                                // Already converted — show locked badge, NOT a clickable button
+                                <span className="px-3 py-1.5 bg-green-100 text-green-800 rounded-md text-sm font-medium flex items-center gap-1 cursor-default" title="Order already created from this quotation">
+                                  <CheckCircle size={14} /> Order Created
+                                </span>
+                              ) : (
+                                // Not yet converted — show active button
+                                <button
+                                  onClick={() => handleConvertToOrder(q)}
+                                  className="px-3 py-1.5 bg-gray-100 text-gray-900 rounded-md text-sm font-medium hover:bg-green-200 transition-colors"
+                                  title="Convert this quotation to an order"
+                                >
+                                  → Order
+                                </button>
+                              )
                           )}
                           {(q.status === 'sent' || q.status === 'viewed' || q.status === 'draft') && (
                             <button
