@@ -195,18 +195,18 @@ export default function MarketingFollowUpsPage() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-between pt-1.5 border-t border-border/50">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between pt-1.5 border-t border-border/50 gap-2">
             {followUp.quotation ? (
               <button
                 onClick={() => handleViewQuote(followUp)}
-                className="flex items-center gap-1 px-2.5 py-1.5 bg-foreground text-background rounded text-xs font-medium hover:opacity-90 transition-opacity"
+                className="flex items-center justify-center gap-1 px-2.5 py-1.5 bg-foreground text-background rounded text-xs font-medium hover:opacity-90 transition-opacity w-full sm:w-auto min-h-[44px] sm:min-h-0"
               >
                 <CheckCircle className="w-3 h-3" /> View Quote {followUp.quotationNumber}
               </button>
             ) : (
               <button
                 onClick={() => handleCreateQuote(followUp)}
-                className="flex items-center gap-1 px-2.5 py-1.5 bg-foreground text-background rounded text-xs font-medium hover:opacity-90 transition-opacity"
+                className="flex items-center justify-center gap-1 px-2.5 py-1.5 bg-foreground text-background rounded text-xs font-medium hover:opacity-90 transition-opacity w-full sm:w-auto min-h-[44px] sm:min-h-0"
               >
                 <FileText className="w-3 h-3" /> Create Quote
               </button>

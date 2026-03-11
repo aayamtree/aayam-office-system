@@ -22,9 +22,10 @@ import ProductionSettings from './production/page';
 import GoogleDriveSettings from '@/components/settings/GoogleDriveSettings';
 import VendorCategoriesManager from '@/components/settings/VendorCategoriesManager';
 import ProductCategoriesManager from '@/components/settings/ProductCategoriesManager';
+import PairDropSettings from '@/components/settings/PairDropSettings';
 
 export default function UserManagementPage() {
-  const [activeTab, setActiveTab] = useState<'users' | 'designers' | 'production' | 'drive' | 'vendor-categories' | 'product-categories'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'designers' | 'production' | 'drive' | 'vendor-categories' | 'product-categories' | 'file-transfer'>('users');
 
   // ... (existing state for Users) ...
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -187,6 +188,15 @@ export default function UserManagementPage() {
                 }`}
             >
               Product Categories
+            </button>
+            <button
+              onClick={() => setActiveTab('file-transfer')}
+              className={`px-3 md:px-4 py-2 rounded-md text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'file-transfer'
+                ? 'bg-white text-[#B8860B]'
+                : 'text-gray-600 hover:text-gray-800'
+                }`}
+            >
+              File Transfer
             </button>
           </div>
         </div>
@@ -370,6 +380,10 @@ export default function UserManagementPage() {
       ) : activeTab === 'product-categories' ? (
         <div className="bg-white p-4 md:p-6 rounded-md border">
           <ProductCategoriesManager />
+        </div>
+      ) : activeTab === 'file-transfer' ? (
+        <div className="bg-white p-4 md:p-6 rounded-md border">
+          <PairDropSettings />
         </div>
       ) : (
         <GoogleDriveSettings />

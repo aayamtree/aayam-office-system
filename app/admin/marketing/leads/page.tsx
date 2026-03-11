@@ -396,126 +396,172 @@ export default function LeadsPage() {
 
                         return (
                             <div key={lead.id} className="bg-white rounded-md overflow-hidden hover:shadow-sm transition-all border border-gray-200">
-                                {/* Colored Header */}
-                                <div className={`${headerBg} px-3 py-2.5 flex items-center justify-between`}>
-                                    <span className={`${headerTextColor} font-mono text-sm font-bold`}>
-                                        {lead.lead_number}
-                                    </span>
-                                    <div className="flex items-center gap-2">
-                                        {/* Assigned To — visible for admin */}
-                                        {profile?.role === 'admin' && lead.assigned_to && (
-                                            <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-md font-medium">
-                                                👤 {staffList.find(s => s.id === lead.assigned_to)?.full_name || 'Unassigned'}
-                                            </span>
-                                        )}
-                                        <span className={`${headerTextColor}/90 text-xs px-3 py-1 bg-white/20 rounded-md font-medium capitalize`}>
+                                {/* ── MOBILE layout (< md) ── */}
+                                <div className="md:hidden">
+                                    {/* Row 1: name + status */}
+                                    <div className="flex items-center justify-between px-3 py-2 bg-muted border-b border-border">
+                                        <span className="font-bold text-gray-900 text-sm truncate max-w-[160px]">{lead.name}</span>
+                                        <span className="text-xs px-2 py-0.5 bg-white/70 rounded capitalize text-gray-700 font-medium shrink-0">
                                             {lead.status.replace('_', ' ')}
                                         </span>
                                     </div>
-                                </div>
-
-                                {/* White Card Body */}
-                                <div className="p-4">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-900 text-lg leading-tight mb-1">{lead.name}</h3>
-                                            {lead.company && <p className="text-gray-500 text-sm font-medium">{lead.company}</p>}
-
-                                            {/* Origin Badge — shows when lead was assigned by someone else */}
-                                            {lead.created_by && lead.assigned_to && lead.created_by !== lead.assigned_to && (
-                                                <div className="mt-1.5">
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                                                        📌 Assigned by {staffList.find(s => s.id === lead.created_by)?.full_name || 'Admin'}
-                                                    </span>
-                                                </div>
-                                            )}
-
-                                            {/* Project Type Badge */}
-                                            {lead.project_type && (
-                                                <div className="mt-2">
-                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold ${lead.project_type === 'print' ? 'bg-gray-900 text-white' :
-                                                        lead.project_type === 'design' ? 'bg-pink-100 text-pink-700' :
-                                                            'bg-gray-900 text-white'
-                                                        }`}>
-                                                        {lead.project_type === 'print' ? '🖨️ Print Only' :
-                                                            lead.project_type === 'design' ? '🎨 Design Only' :
-                                                                '✨ Design + Print'}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex gap-1">
-                                            <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors" aria-label="View lead details">
+                                    {/* Row 2: company + phone */}
+                                    <div className="flex items-center justify-between px-3 py-2 border-b border-border/60 gap-2">
+                                        <span className="text-xs text-gray-500 truncate">{lead.company || <span className="italic text-gray-300">No company</span>}</span>
+                                        <a href={`tel:${lead.phone}`} className="text-xs font-medium text-gray-700 shrink-0 flex items-center gap-1">
+                                            <Phone className="w-3 h-3" />{lead.phone}
+                                        </a>
+                                    </div>
+                                    {/* Row 3: date + actions */}
+                                    <div className="flex items-center justify-between px-3 py-2 gap-2">
+                                        <span className="text-[11px] text-gray-400">
+                                            {(() => {
+                                                const diff = Math.floor((Date.now() - new Date(lead.created_at).getTime()) / 86400000);
+                                                if (diff === 0) return 'Today';
+                                                if (diff === 1) return 'Yesterday';
+                                                if (diff < 7) return `${diff} days ago`;
+                                                return new Date(lead.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+                                            })()}
+                                        </span>
+                                        <div className="flex items-center gap-1">
+                                            <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="View">
                                                 <Eye className="w-4 h-4" />
                                             </button>
-                                            <button onClick={() => handleEdit(lead)} className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors" aria-label="Edit lead">
+                                            <button onClick={() => handleEdit(lead)} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Edit">
                                                 <Edit className="w-4 h-4" />
                                             </button>
-                                            <button onClick={() => handleDelete(lead.id, lead.name)} className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" aria-label="Delete lead">
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+                                            {lead.status !== 'converted' && lead.status !== 'follow_up' && (
+                                                <button onClick={() => handleMoveToFollowUp(lead)} className="p-2 text-white bg-gray-900 hover:bg-gray-800 rounded-md min-h-[44px] flex items-center justify-center gap-1 px-3 text-xs font-medium" aria-label="Follow-up">
+                                                    <CheckCircle className="w-3 h-3" /> Follow-up
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* ── DESKTOP layout (md+) ── */}
+                                <div className="hidden md:block">
+                                    {/* Colored Header */}
+                                    <div className={`${headerBg} px-3 py-2.5 flex items-center justify-between`}>
+                                        <span className={`${headerTextColor} font-mono text-sm font-bold`}>
+                                            {lead.lead_number}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            {/* Assigned To — visible for admin */}
+                                            {profile?.role === 'admin' && lead.assigned_to && (
+                                                <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-md font-medium">
+                                                    👤 {staffList.find(s => s.id === lead.assigned_to)?.full_name || 'Unassigned'}
+                                                </span>
+                                            )}
+                                            <span className={`${headerTextColor}/90 text-xs px-3 py-1 bg-white/20 rounded-md font-medium capitalize`}>
+                                                {lead.status.replace('_', ' ')}
+                                            </span>
                                         </div>
                                     </div>
 
-                                    {/* Project Details Summary */}
-                                    {(lead.quantity || lead.estimated_amount || lead.deadline) && (
-                                        <div className="grid grid-cols-3 gap-2 mb-3 p-2 bg-gray-50 rounded-lg">
-                                            {lead.quantity && (
-                                                <div className="text-center">
-                                                    <p className="text-xs text-gray-500 font-medium">Qty</p>
-                                                    <p className="text-sm font-bold text-gray-900">{lead.quantity.toLocaleString()}</p>
+                                    {/* White Card Body */}
+                                    <div className="p-4">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div className="flex-1">
+                                                <h3 className="font-bold text-gray-900 text-lg leading-tight mb-1">{lead.name}</h3>
+                                                {lead.company && <p className="text-gray-500 text-sm font-medium">{lead.company}</p>}
+
+                                                {/* Origin Badge — shows when lead was assigned by someone else */}
+                                                {lead.created_by && lead.assigned_to && lead.created_by !== lead.assigned_to && (
+                                                    <div className="mt-1.5">
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                                                            📌 Assigned by {staffList.find(s => s.id === lead.created_by)?.full_name || 'Admin'}
+                                                        </span>
+                                                    </div>
+                                                )}
+
+                                                {/* Project Type Badge */}
+                                                {lead.project_type && (
+                                                    <div className="mt-2">
+                                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold ${lead.project_type === 'print' ? 'bg-gray-900 text-white' :
+                                                            lead.project_type === 'design' ? 'bg-pink-100 text-pink-700' :
+                                                                'bg-gray-900 text-white'
+                                                            }`}>
+                                                            {lead.project_type === 'print' ? '🖨️ Print Only' :
+                                                                lead.project_type === 'design' ? '🎨 Design Only' :
+                                                                    '✨ Design + Print'}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex gap-1">
+                                                <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors" aria-label="View lead details">
+                                                    <Eye className="w-4 h-4" />
+                                                </button>
+                                                <button onClick={() => handleEdit(lead)} className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors" aria-label="Edit lead">
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                                <button onClick={() => handleDelete(lead.id, lead.name)} className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" aria-label="Delete lead">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Project Details Summary */}
+                                        {(lead.quantity || lead.estimated_amount || lead.deadline) && (
+                                            <div className="grid grid-cols-3 gap-2 mb-3 p-2 bg-gray-50 rounded-lg">
+                                                {lead.quantity && (
+                                                    <div className="text-center">
+                                                        <p className="text-xs text-gray-500 font-medium">Qty</p>
+                                                        <p className="text-sm font-bold text-gray-900">{lead.quantity.toLocaleString()}</p>
+                                                    </div>
+                                                )}
+                                                {lead.estimated_amount && (
+                                                    <div className="text-center">
+                                                        <p className="text-xs text-gray-500 font-medium">Amount</p>
+                                                        <p className="text-sm font-bold text-gray-900">₹{lead.estimated_amount.toLocaleString()}</p>
+                                                    </div>
+                                                )}
+                                                {lead.deadline && (
+                                                    <div className="text-center">
+                                                        <p className="text-xs text-gray-500 font-medium">Deadline</p>
+                                                        <p className="text-xs font-bold text-gray-900">{formatDate(lead.deadline)}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        <div className="space-y-2 mt-4">
+                                            <div className="flex items-center gap-2 text-gray-600">
+                                                <div className="w-8 h-8 rounded-md bg-white flex items-center justify-center text-gray-900 shrink-0">
+                                                    <Phone className="w-4 h-4" />
+                                                </div>
+                                                <span className="font-medium">{lead.phone}</span>
+                                            </div>
+
+                                            {lead.next_follow_up && (
+                                                <div className="flex items-center gap-2 text-gray-600 bg-white p-2 rounded-lg border border-gray-200">
+                                                    <Clock className="w-4 h-4" />
+                                                    <span className="text-xs font-bold">Follow up: {formatDate(lead.next_follow_up)}</span>
                                                 </div>
                                             )}
-                                            {lead.estimated_amount && (
-                                                <div className="text-center">
-                                                    <p className="text-xs text-gray-500 font-medium">Amount</p>
-                                                    <p className="text-sm font-bold text-gray-900">₹{lead.estimated_amount.toLocaleString()}</p>
-                                                </div>
-                                            )}
-                                            {lead.deadline && (
-                                                <div className="text-center">
-                                                    <p className="text-xs text-gray-500 font-medium">Deadline</p>
-                                                    <p className="text-xs font-bold text-gray-900">{formatDate(lead.deadline)}</p>
-                                                </div>
+
+                                            {lead.requirement && (
+                                                <p className="text-sm text-gray-500 line-clamp-2 bg-gray-50 p-2 rounded-lg italic">
+                                                    &quot;{lead.requirement}&quot;
+                                                </p>
                                             )}
                                         </div>
-                                    )}
 
-                                    <div className="space-y-2 mt-4">
-                                        <div className="flex items-center gap-2 text-gray-600">
-                                            <div className="w-8 h-8 rounded-md bg-white flex items-center justify-center text-gray-900 shrink-0">
-                                                <Phone className="w-4 h-4" />
-                                            </div>
-                                            <span className="font-medium">{lead.phone}</span>
+                                        {/* Action Footer */}
+                                        <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
+                                            {lead.status !== 'converted' && lead.status !== 'follow_up' && (
+                                                <button
+                                                    onClick={() => handleMoveToFollowUp(lead)}
+                                                    className="px-4 py-2 bg-gray-900 text-white rounded-md font-semibold hover:bg-gray-800 transition-colors flex items-center gap-2 shadow-sm"
+                                                >
+                                                    <CheckCircle className="w-4 h-4" /> Move to Follow-up
+                                                </button>
+                                            )}
+                                            {(lead.status === 'converted' || lead.status === 'follow_up') && (
+                                                <span className="text-sm text-gray-500">—</span>
+                                            )}
                                         </div>
-
-                                        {lead.next_follow_up && (
-                                            <div className="flex items-center gap-2 text-gray-600 bg-white p-2 rounded-lg border border-gray-200">
-                                                <Clock className="w-4 h-4" />
-                                                <span className="text-xs font-bold">Follow up: {formatDate(lead.next_follow_up)}</span>
-                                            </div>
-                                        )}
-
-                                        {lead.requirement && (
-                                            <p className="text-sm text-gray-500 line-clamp-2 bg-gray-50 p-2 rounded-lg italic">
-                                                &quot;{lead.requirement}&quot;
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {/* Action Footer */}
-                                    <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
-                                        {lead.status !== 'converted' && lead.status !== 'follow_up' && (
-                                            <button
-                                                onClick={() => handleMoveToFollowUp(lead)}
-                                                className="px-4 py-2 bg-gray-900 text-white rounded-md font-semibold hover:bg-gray-800 transition-colors flex items-center gap-2 shadow-sm"
-                                            >
-                                                <CheckCircle className="w-4 h-4" /> Move to Follow-up
-                                            </button>
-                                        )}
-                                        {(lead.status === 'converted' || lead.status === 'follow_up') && (
-                                            <span className="text-sm text-gray-500">—</span>
-                                        )}
                                     </div>
                                 </div>
                             </div>

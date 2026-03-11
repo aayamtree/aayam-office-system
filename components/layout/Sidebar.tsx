@@ -25,6 +25,7 @@ import {
   User,
   PanelLeftClose,
   PanelLeft,
+  Share2,
 } from 'lucide-react';
 
 // Shadcn Components
@@ -193,6 +194,12 @@ const menuItems: MenuItem[] = [
     allowedRoles: ['admin', 'finance'],
   },
   {
+    name: 'Team Files',
+    icon: Share2,
+    href: '/admin/team/files',
+    allowedRoles: ['admin', 'finance', 'designer', 'marketing', 'dispatch', 'cmyk'],
+  },
+  {
     name: 'My Profile',
     icon: Settings,
     href: '/admin/settings/profile',
@@ -294,11 +301,8 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
     return () => window.removeEventListener('resize', checkDesktop);
   }, []);
 
-  // On mobile: only render sidebar when explicitly opened
-  // On desktop: always render (collapsed or expanded)
-  if (!isDesktop && !isOpen) {
-    return null;
-  }
+  // Desktop: collapsed = icon strip (64px), expanded on hover/lock = full 256px
+  // Mobile: always rendered; translate-x controls visibility (smooth slide animation)
 
   // Desktop: collapsed = icon strip (64px), expanded on hover = full sidebar (256px) as overlay
   // When LOCKED, sidebar stays expanded regardless of hover
@@ -311,9 +315,12 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
     return item.allowedRoles.includes(userRole);
   });
 
+  // Mobile translate: slide off-screen when closed, slide in when open
+  const mobileTranslate = !isDesktop ? (isOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full') : '';
+
   return (
     <aside
-      className={`fixed left-0 top-0 h-screen ${sidebarWidth} bg-background border-r border-border flex flex-col z-40 transition-all duration-200 ease-in-out ${isDesktop && hovered ? 'shadow-xl' : ''}`}
+      className={`fixed left-0 top-0 h-screen ${sidebarWidth} bg-background border-r border-border flex flex-col z-40 transition-all duration-300 ease-in-out ${isDesktop && hovered ? 'shadow-xl' : ''} ${mobileTranslate}`}
       onMouseEnter={() => {
         if (isDesktop && !locked) {
           setHovered(true);

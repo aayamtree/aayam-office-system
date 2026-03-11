@@ -6,8 +6,9 @@ import { useAuth } from '@/lib/auth-context';
 import {
     LayoutDashboard, Briefcase, Printer, Palette, Megaphone,
     IndianRupee, Truck, Users, FileText, Calendar, Settings,
-    User, ChevronUp, X, Check, GripVertical, LogOut
+    User, ChevronUp, X, Check, GripVertical, LogOut, Plus, Share2
 } from 'lucide-react';
+import QuickAddSheet from './QuickAddSheet';
 
 interface NavItem {
     id: string;
@@ -31,6 +32,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
     { id: 'reports', label: 'Reports', icon: FileText, href: '/admin/reports', roles: ['admin', 'finance'] },
     { id: 'eod', label: 'EOD', icon: FileText, href: '/admin/eod-report', roles: ['admin', 'finance', 'designer', 'marketing', 'dispatch'] },
     { id: 'settings', label: 'Settings', icon: Settings, href: '/admin/settings', roles: ['admin'] },
+    { id: 'files', label: 'Files', icon: Share2, href: '/admin/team/files', roles: ['admin', 'finance', 'designer', 'marketing', 'dispatch', 'cmyk'] },
 ];
 
 // Default tabs per role (first 3 before Account)
@@ -51,6 +53,7 @@ export function MobileBottomNav() {
     const { profile, signOut } = useAuth();
     const [showCustomizer, setShowCustomizer] = useState(false);
     const [showAccountMenu, setShowAccountMenu] = useState(false);
+    const [showQuickAdd, setShowQuickAdd] = useState(false);
     const [selectedTabs, setSelectedTabs] = useState<string[]>([]);
     const [tempTabs, setTempTabs] = useState<string[]>([]);
 
@@ -168,14 +171,26 @@ export function MobileBottomNav() {
                         </span>
                     </button>
 
-                    {/* Customize Button */}
-                    <button
-                        onClick={openCustomizer}
-                        className="flex flex-col items-center justify-center w-10 gap-0.5 text-gray-300"
-                        aria-label="Customize tabs"
-                    >
-                        <ChevronUp size={14} />
-                    </button>
+                    {/* Admin: Quick Add FAB ─ Non-admin: Customize chevron */}
+                    {userRole === 'admin' ? (
+                        <button
+                            onClick={() => setShowQuickAdd(true)}
+                            className="flex flex-col items-center justify-center w-14 gap-0.5"
+                            aria-label="Quick Add"
+                        >
+                            <div className="w-11 h-11 rounded-full bg-[#B8860B] flex items-center justify-center shadow-md -mt-4">
+                                <Plus className="w-5 h-5 text-white" />
+                            </div>
+                        </button>
+                    ) : (
+                        <button
+                            onClick={openCustomizer}
+                            className="flex flex-col items-center justify-center w-10 gap-0.5 text-gray-300"
+                            aria-label="Customize tabs"
+                        >
+                            <ChevronUp size={14} />
+                        </button>
+                    )}
                 </div>
 
                 {/* Account popup menu */}
@@ -202,6 +217,9 @@ export function MobileBottomNav() {
                     </>
                 )}
             </nav>
+
+            {/* Quick Add Sheet — Admin only */}
+            {showQuickAdd && <QuickAddSheet onClose={() => setShowQuickAdd(false)} />}
 
             {/* Customizer Modal */}
             {showCustomizer && (

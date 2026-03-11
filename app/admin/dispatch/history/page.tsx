@@ -196,7 +196,7 @@ export default function DispatchHistoryPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white border border-gray-200 rounded-md p-3 text-center">
           <p className="text-page-title text-amber-700">{qcPassedCount}</p>
           <p className="text-xs text-destructive font-medium">Pending / Packed</p>

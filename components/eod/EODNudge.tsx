@@ -64,7 +64,7 @@ export default function EODNudge() {
     if (!show || dismissed) return null;
 
     return (
-        <div className="fixed bottom-4 right-4 z-50 max-w-sm w-full animate-in slide-in-from-bottom-4 duration-300">
+        <div className="fixed bottom-20 lg:bottom-4 right-4 z-50 max-w-sm w-full animate-in slide-in-from-bottom-4 duration-300">
             <div className="bg-gray-900 text-white rounded-md shadow-xl border border-gray-700 overflow-hidden">
                 {/* Top accent bar */}
                 <div className="h-1 bg-gradient-to-r from-yellow-400 to-orange-400" />
