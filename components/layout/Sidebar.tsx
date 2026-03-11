@@ -465,7 +465,7 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
           <Link href="/admin/settings/profile" title={profile?.full_name || 'Profile'}>
             <Avatar className="h-8 w-8">
               <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} />
-              <AvatarFallback>{profile?.full_name?.charAt(0) || 'A'}</AvatarFallback>
+              <AvatarFallback>{profile?.full_name?.charAt(0)?.toUpperCase() || profile?.email?.charAt(0)?.toUpperCase() || '?'}</AvatarFallback>
             </Avatar>
           </Link>
         ) : (
@@ -480,7 +480,7 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
               <Button variant="ghost" className="w-full justify-start px-2 h-auto py-2">
                 <Avatar className="h-8 w-8 mr-2">
                   <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} />
-                  <AvatarFallback>{profile?.full_name?.charAt(0) || 'A'}</AvatarFallback>
+                  <AvatarFallback>{profile?.full_name?.charAt(0)?.toUpperCase() || profile?.email?.charAt(0)?.toUpperCase() || '?'}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col items-start text-left flex-1 min-w-0">
                   <span className="text-sm font-medium truncate w-full whitespace-nowrap">{profile?.full_name}</span>

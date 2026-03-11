@@ -259,8 +259,8 @@ export default function LeadsPage() {
             lead.phone?.includes(s) ||
             (lead.lead_number || '').toLowerCase().includes(s);
 
-        // 'active' filter = new + contacted + quotation_shared only (NOT follow_up or converted)
-        const ACTIVE_STATUSES = ['new', 'contacted', 'quotation_shared'];
+        // 'active' filter = new + contacted + quotation_shared + follow_up (all pipeline statuses, NOT converted/lost)
+        const ACTIVE_STATUSES = ['new', 'contacted', 'quotation_shared', 'follow_up'];
         const matchStatus =
             statusFilter === 'all'
                 ? true

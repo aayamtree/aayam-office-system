@@ -49,7 +49,7 @@ export default function CMYKPrintPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold tracking-tight">CMYK Print Station</h1>
-          <p className="text-sm text-muted-foreground">Welcome, {profile?.full_name || 'Operator'}</p>
+          <p className="text-sm text-muted-foreground">Welcome, {profile?.full_name || profile?.email?.split('@')[0] || 'CMYK User'}</p>
         </div>
         <DriveConnectionStatus />
       </div>
@@ -169,9 +169,7 @@ export default function CMYKPrintPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium">Pending Jobs</CardTitle>
-              <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
-                <Link href="/admin/jobs/queue">View All</Link>
-              </Button>
+              <span className="text-xs text-muted-foreground">In queue</span>
             </div>
           </CardHeader>
           <CardContent>

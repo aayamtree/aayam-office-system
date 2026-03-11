@@ -12,8 +12,12 @@ import { useAuth } from '@/lib/auth-context';
 const ROUTE_PERMISSIONS: { prefix: string; allowed: string[] }[] = [
     // Finance — admin only
     { prefix: '/admin/finance', allowed: ['admin'] },
-    // Settings — admin only
+    // Settings Profile — all authenticated roles can view/edit their own profile
+    { prefix: '/admin/settings/profile', allowed: ['admin', 'marketing', 'designer', 'dispatch', 'cmyk', 'finance', 'production', 'sales', 'manager'] },
+    // Settings (other) — admin only
     { prefix: '/admin/settings', allowed: ['admin'] },
+    // Marketing — admin + marketing only (SECURITY: non-marketing roles must not see leads/pipeline)
+    { prefix: '/admin/marketing', allowed: ['admin', 'marketing'] },
     // Sales Orders & Quotations — admin + marketing
     { prefix: '/admin/sales', allowed: ['admin', 'marketing'] },
     // CRM — admin + marketing
