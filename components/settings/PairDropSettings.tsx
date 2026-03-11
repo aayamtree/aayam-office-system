@@ -147,7 +147,7 @@ export default function PairDropSettings() {
                 <p className="pl-2">docker run -d --restart=always --name pairdrop \</p>
                 <p className="pl-8">-p 3000:3000 lscr.io/linuxserver/pairdrop</p>
                 <br />
-                <p className="font-sans text-gray-500">Then enter: http://[machine's local IP]:3000</p>
+                <p className="font-sans text-gray-500">Then enter: http://[machine&apos;s local IP]:3000</p>
             </div>
         </div>
     );
