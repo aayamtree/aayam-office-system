@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import ProjectNotesLog from '@/components/ProjectNotesLog';
 import { useConfirm } from '@/components/ConfirmModal';
+import PairDropBanner from '@/components/layout/PairDropBanner';
 
 // --- HELPERS ---
 const getDesignerStatus = (stage: string) => {
@@ -730,6 +731,9 @@ export default function DesignerWorkspace() {
                     <p className="text-section text-gray-600">{lastMonthCount} <span className="text-xs text-gray-400 font-normal">Tasks</span></p>
                   </div>
                 </div>
+
+                {/* PairDrop quick-link — shows only when URL is configured */}
+                <PairDropBanner />
 
                 {/* View Tabs - Color Blocks */}
                 <div className="grid grid-cols-4 gap-1 mt-4 px-1">
