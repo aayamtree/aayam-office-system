@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/lib/auth-context';
 import DriveConnectionStatus from '@/components/drive/DriveConnectionStatus';
-import { useLeads, useFollowUps } from '@/lib/hooks';
+import { useLeads } from '@/lib/hooks';
 import Link from 'next/link';
 import { Users, Calendar, AlertCircle, CheckCircle, Clock, ArrowRight, Phone, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/Badge';
 export default function MarketingDashboard() {
   const { profile } = useAuth();
   const { leads, loading } = useLeads();
-  const { followUps, loading: followUpsLoading } = useFollowUps();
 
   const myLeads = leads.filter(lead => {
     if (profile?.role === 'marketing') {
@@ -30,16 +29,13 @@ export default function MarketingDashboard() {
   const overdueFollowUps = myLeads.filter(l => l.status === 'follow_up' && isOverdue(l.next_follow_up));
   const convertedLeads = myLeads.filter(l => l.status === 'converted');
 
-  if (loading || followUpsLoading) {
+  if (loading) {
     return <div className="p-10 text-center text-muted-foreground">Loading Dashboard...</div>;
   }
 
-  // Match the Follow-ups page default filter: only 'pending' (no linked quotation)
-  const pendingFollowUps = followUps.filter((f: any) => !f.quotation);
-
   const statCards = [
     { label: "Today's Follow-ups", value: todayFollowUps.length, change: 'Action Required', icon: Calendar },
-    { label: 'Pending Follow-ups', value: pendingFollowUps.length, change: 'Awaiting action', icon: Clock },
+    { label: 'Overdue Follow-ups', value: overdueFollowUps.length, change: 'Missed follow-ups', icon: Clock },
     { label: 'New Leads', value: newLeads.length, change: 'Waiting for contact', icon: Users },
     { label: 'Converted', value: convertedLeads.length, change: 'Successful deals', icon: TrendingUp },
   ];

@@ -232,8 +232,20 @@ export default function LeadsPage() {
 
             if (result.error) throw new Error(result.error);
 
+            // Auto-create a follow_ups record when status is set to follow_up via edit form
+            // (handleMoveToFollowUp already does this, but direct edit doesn't)
+            const savedLeadId = isEditing ? selectedLead!.id : result.data?.id;
+            if (formData.status === 'follow_up' && savedLeadId) {
+                await createFollowUp({
+                    lead_id: savedLeadId,
+                    follow_up_date: formData.nextFollowUp || new Date().toISOString().split('T')[0],
+                    notes: `Follow-up scheduled. Requirement: ${formData.requirement || 'N/A'}`,
+                    status: 'pending'
+                });
+            }
+
             // 3. Success & Refresh
-            toast.error(String(isEditing ? 'Lead updated successfully!' : 'Lead created successfully!'));
+            toast.success(isEditing ? 'Lead updated successfully!' : 'Lead created successfully!');
             setShowModal(false);
 
             // FORCE REFRESH THE LIST
