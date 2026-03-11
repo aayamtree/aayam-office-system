@@ -568,7 +568,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                             <div className="flex items-center gap-2 mb-0.5">
                                 <span className="text-2xl">{theme.emoji}</span>
                                 <h2 className="text-xl font-bold text-white tracking-tight">
-                                    Good {getTimeOfDay()}, {profile?.full_name?.split(' ')[0] || 'User'}!
+                                    Good {getTimeOfDay()}, {profile?.full_name?.split(' ')[0] || profile?.email?.split('@')[0] || 'there'}!
                                 </h2>
                             </div>
                             <p className="text-white/60 text-xs pl-9">
@@ -626,7 +626,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                                                 className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 group transition-colors">
                                                 {/* Urgency dot */}
                                                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${item.urgency === 'high' ? 'bg-red-500' :
-                                                        item.urgency === 'medium' ? 'bg-amber-400' : 'bg-gray-300'
+                                                    item.urgency === 'medium' ? 'bg-amber-400' : 'bg-gray-300'
                                                     }`} />
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-gray-700">{item.title}</p>
@@ -634,8 +634,8 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                                                 </div>
                                                 {item.badge && (
                                                     <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md tracking-wide flex-shrink-0 ${item.urgency === 'high' ? 'bg-red-100 text-red-600' :
-                                                            item.urgency === 'medium' ? 'bg-amber-100 text-amber-600' :
-                                                                'bg-gray-100 text-gray-500'
+                                                        item.urgency === 'medium' ? 'bg-amber-100 text-amber-600' :
+                                                            'bg-gray-100 text-gray-500'
                                                         }`}>{item.badge}</span>
                                                 )}
                                                 <ArrowRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-400 flex-shrink-0" />
