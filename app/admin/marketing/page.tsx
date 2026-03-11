@@ -34,9 +34,12 @@ export default function MarketingDashboard() {
     return <div className="p-10 text-center text-muted-foreground">Loading Dashboard...</div>;
   }
 
+  // Match the Follow-ups page default filter: only 'pending' (no linked quotation)
+  const pendingFollowUps = followUps.filter((f: any) => !f.quotation);
+
   const statCards = [
     { label: "Today's Follow-ups", value: todayFollowUps.length, change: 'Action Required', icon: Calendar },
-    { label: 'Follow-ups', value: followUps.length, change: 'Total follow-ups logged', icon: Clock },
+    { label: 'Pending Follow-ups', value: pendingFollowUps.length, change: 'Awaiting action', icon: Clock },
     { label: 'New Leads', value: newLeads.length, change: 'Waiting for contact', icon: Users },
     { label: 'Converted', value: convertedLeads.length, change: 'Successful deals', icon: TrendingUp },
   ];

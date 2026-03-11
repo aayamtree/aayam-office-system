@@ -66,22 +66,26 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
     if (profile) {
         const role = profile.role;
         for (const { prefix, allowed } of ROUTE_PERMISSIONS) {
-            if (pathname.startsWith(prefix) && !allowed.includes(role)) {
-                return (
-                    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-                        <div className="text-6xl mb-4">🔒</div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Restricted</h2>
-                        <p className="text-gray-500 mb-6">
-                            You don&apos;t have permission to view this page.
-                        </p>
-                        <button
-                            onClick={() => router.push('/admin/dashboard')}
-                            className="px-6 py-2.5 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 transition-colors"
-                        >
-                            Go to Dashboard
-                        </button>
-                    </div>
-                );
+            if (pathname.startsWith(prefix)) {
+                // First matching rule wins — same logic as the useEffect above
+                if (!allowed.includes(role)) {
+                    return (
+                        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+                            <div className="text-6xl mb-4">🔒</div>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Restricted</h2>
+                            <p className="text-gray-500 mb-6">
+                                You don&apos;t have permission to view this page.
+                            </p>
+                            <button
+                                onClick={() => router.push('/admin/dashboard')}
+                                className="px-6 py-2.5 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 transition-colors"
+                            >
+                                Go to Dashboard
+                            </button>
+                        </div>
+                    );
+                }
+                break; // Role IS allowed — stop checking further rules
             }
         }
     }
