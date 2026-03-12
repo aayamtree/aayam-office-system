@@ -5,7 +5,7 @@ import { toast } from '@/lib/toast';
 import {
     Building2, Upload, RefreshCw, CheckCircle,
     AlertTriangle, Search, Plus, Trash2, ArrowUpRight, ArrowDownLeft,
-    Eye, EyeOff, ClipboardCopy, Edit3, Tag
+    Eye, EyeOff, ClipboardCopy, Edit3, Tag, Settings2, Star, Pencil, X
 } from 'lucide-react';
 import {
     useBankTransactions, usePaymentsReceived,
@@ -17,7 +17,53 @@ import { useExpenseCategories, useIncomeCategories } from '@/lib/categorization-
 
 export default function BankingPage() {
     const [selectedAccountId, setSelectedAccountId] = useState('');
-    const { bankAccounts, loading: loadingAccounts, error: errorAccounts } = useBankAccounts();
+    const {
+        bankAccounts, loading: loadingAccounts, error: errorAccounts,
+        createBankAccount, updateBankAccount, deleteBankAccount, setDefaultAccount
+    } = useBankAccounts();
+
+    // ── Manage Accounts modal state ──
+    const [showManageModal, setShowManageModal] = useState(false);
+    const [editingAccount, setEditingAccount] = useState<any>(null); // null = add new
+    const [showAccountForm, setShowAccountForm] = useState(false);
+    type AccType = 'current' | 'savings' | 'od' | 'cc';
+    const [accountForm, setAccountForm] = useState<{ name: string; bank_name: string; account_number: string; ifsc_code: string; account_type: AccType; opening_balance: number }>({
+        name: '', bank_name: '', account_number: '', ifsc_code: '', account_type: 'current', opening_balance: 0
+    });
+    const [savingAccount, setSavingAccount] = useState(false);
+
+    const openAddForm = () => {
+        setEditingAccount(null);
+        setAccountForm({ name: '', bank_name: '', account_number: '', ifsc_code: '', account_type: 'current', opening_balance: 0 });
+        setShowAccountForm(true);
+    };
+    const openEditForm = (acc: any) => {
+        setEditingAccount(acc);
+        setAccountForm({ name: acc.name || '', bank_name: acc.bank_name || '', account_number: acc.account_number || '', ifsc_code: acc.ifsc_code || '', account_type: (acc.account_type || 'current') as AccType, opening_balance: acc.opening_balance || 0 });
+        setShowAccountForm(true);
+    };
+    const handleSaveAccount = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSavingAccount(true);
+        if (editingAccount) {
+            const { error } = await updateBankAccount(editingAccount.id, accountForm);
+            if (error) toast.error(error); else toast.success('Account updated!');
+        } else {
+            const { error } = await createBankAccount({ ...accountForm, is_default: bankAccounts.length === 0 } as any);
+            if (error) toast.error(error); else toast.success('Account added!');
+        }
+        setSavingAccount(false);
+        setShowAccountForm(false);
+    };
+    const handleDelete = async (id: string) => {
+        if (!confirm('Delete this bank account? All linked transactions will also be removed.')) return;
+        const { error } = await deleteBankAccount(id);
+        if (error) toast.error(error); else toast.success('Account deleted.');
+    };
+    const handleSetDefault = async (id: string) => {
+        await setDefaultAccount(id);
+        toast.success('Default account updated.');
+    };
     const {
         transactions: bankTxns,
         importTransactions,
@@ -222,7 +268,7 @@ export default function BankingPage() {
                 <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
                     {bankAccounts.length === 0 && (
                         <span className="text-xs text-red-500 font-medium">
-                            No accounts found. <a href="/admin/finance/banks" className="underline">Add one here</a>
+                            No accounts found. Click &quot;Manage Accounts&quot; to add one.
                         </span>
                     )}
                     <select
@@ -233,6 +279,12 @@ export default function BankingPage() {
                         <option value="">Select Account</option>
                         {bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name} - {b.account_number}</option>)}
                     </select>
+                    <button
+                        onClick={() => setShowManageModal(true)}
+                        className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 bg-white border border-gray-200 text-gray-700 rounded-md hover:bg-gray-50 whitespace-nowrap text-sm font-semibold"
+                    >
+                        <Settings2 className="w-4 h-4" /> Manage Accounts
+                    </button>
                     <button
                         onClick={() => setShowImportModal(true)}
                         disabled={!selectedAccountId}
@@ -515,6 +567,101 @@ export default function BankingPage() {
                 />
             )}
 
+            {/* ── Manage Accounts Modal ── */}
+            {showManageModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-md w-full max-w-lg max-h-[90vh] flex flex-col">
+                        <div className="p-4 border-b flex justify-between items-center shrink-0">
+                            <h2 className="font-semibold text-gray-900">Manage Bank Accounts</h2>
+                            <button onClick={() => { setShowManageModal(false); setShowAccountForm(false); }} className="text-gray-400 hover:text-gray-700"><X className="w-5 h-5" /></button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                            {/* Account list */}
+                            {bankAccounts.map(acc => (
+                                <div key={acc.id} className="border border-gray-200 rounded-md p-3 flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-md bg-gray-100 flex items-center justify-center shrink-0">
+                                        <Building2 className="w-4 h-4 text-gray-500" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-sm font-semibold text-gray-900 truncate">{acc.name}</p>
+                                            {acc.is_default && <span className="text-xs px-1.5 py-0.5 bg-[#B8860B]/10 text-[#B8860B] rounded font-medium">Default</span>}
+                                        </div>
+                                        <p className="text-xs text-gray-500">{acc.bank_name} · {acc.account_number}</p>
+                                        <p className="text-xs text-gray-400">Balance: ₹{(acc.current_balance || 0).toLocaleString()}</p>
+                                    </div>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        {!acc.is_default && (
+                                            <button onClick={() => handleSetDefault(acc.id)} title="Set as default" className="p-1.5 text-gray-400 hover:text-[#B8860B] rounded">
+                                                <Star className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                        <button onClick={() => openEditForm(acc)} className="p-1.5 text-gray-400 hover:text-gray-700 rounded">
+                                            <Pencil className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={() => handleDelete(acc.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            {bankAccounts.length === 0 && (
+                                <p className="text-center text-sm text-gray-400 py-4">No bank accounts yet. Add your first account below.</p>
+                            )}
+
+                            {/* Add / Edit form */}
+                            {showAccountForm ? (
+                                <form onSubmit={handleSaveAccount} className="border border-gray-200 rounded-md p-4 space-y-3 bg-gray-50">
+                                    <p className="text-sm font-semibold text-gray-900">{editingAccount ? 'Edit Account' : 'Add New Account'}</p>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="col-span-2">
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Display Name *</label>
+                                            <input required value={accountForm.name} onChange={e => setAccountForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. HDFC Current" className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#B8860B]" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Bank Name *</label>
+                                            <input required value={accountForm.bank_name} onChange={e => setAccountForm(p => ({ ...p, bank_name: e.target.value }))} placeholder="HDFC Bank" className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#B8860B]" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Account Type</label>
+                                            <select value={accountForm.account_type} onChange={e => setAccountForm(p => ({ ...p, account_type: e.target.value as 'current' | 'savings' | 'od' | 'cc' }))} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#B8860B]">
+                                                <option value="current">Current</option>
+                                                <option value="savings">Savings</option>
+                                                <option value="od">OD / Overdraft</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Account Number *</label>
+                                            <input required value={accountForm.account_number} onChange={e => setAccountForm(p => ({ ...p, account_number: e.target.value }))} placeholder="01234567890" className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm font-mono outline-none focus:border-[#B8860B]" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">IFSC Code</label>
+                                            <input value={accountForm.ifsc_code} onChange={e => setAccountForm(p => ({ ...p, ifsc_code: e.target.value.toUpperCase() }))} placeholder="HDFC0001234" className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm font-mono outline-none focus:border-[#B8860B]" />
+                                        </div>
+                                        {!editingAccount && (
+                                            <div className="col-span-2">
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">Opening Balance (₹)</label>
+                                                <input type="number" value={accountForm.opening_balance} onChange={e => setAccountForm(p => ({ ...p, opening_balance: parseFloat(e.target.value) || 0 }))} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#B8860B]" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex gap-2 pt-1">
+                                        <button type="button" onClick={() => setShowAccountForm(false)} className="flex-1 py-2 border border-gray-200 rounded-md text-sm text-gray-600 hover:bg-gray-100">Cancel</button>
+                                        <button type="submit" disabled={savingAccount} className="flex-1 py-2 bg-[#B8860B] text-white rounded-md text-sm font-semibold disabled:opacity-60">
+                                            {savingAccount ? 'Saving…' : editingAccount ? 'Update' : 'Add Account'}
+                                        </button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <button onClick={openAddForm} className="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-gray-300 rounded-md text-sm text-gray-500 hover:border-[#B8860B] hover:text-[#B8860B] transition-colors">
+                                    <Plus className="w-4 h-4" /> Add New Account
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

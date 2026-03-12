@@ -445,6 +445,7 @@ export interface VendorPayment extends BaseEntity {
 // Bank Account
 export interface BankAccount extends BaseEntity {
   name: string;
+  bank_name?: string;
   account_number: string;
   ifsc_code?: string;
   branch?: string;

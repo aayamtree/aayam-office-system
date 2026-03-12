@@ -19,10 +19,6 @@ export default function CompanyPage() {
     state: 'Gujarat',
     pincode: '360001',
     website: 'www.aayamgraphics.com',
-    bankName: 'State Bank of India',
-    accountNumber: '1234567890',
-    ifscCode: 'SBIN0001234',
-    accountType: 'Current',
   });
 
   const [logo, setLogo] = useState<string>('');
@@ -221,49 +217,14 @@ export default function CompanyPage() {
           </div>
         </div>
 
-        {/* Bank Details */}
+        {/* Bank Accounts — managed from Banking page */}
         <div className="lg:col-span-3 bg-white rounded-md md:rounded-md p-3 md:p-4 border border-gray-100">
-          <h2 className="text-section text-gray-900 mb-4">Bank Details</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
-              <input
-                type="text"
-                value={formData.bankName}
-                onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-md"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
-              <input
-                type="text"
-                value={formData.accountNumber}
-                onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-md"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">IFSC Code</label>
-              <input
-                type="text"
-                value={formData.ifscCode}
-                onChange={(e) => setFormData({ ...formData, ifscCode: e.target.value.toUpperCase() })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-md"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Account Type</label>
-              <select
-                value={formData.accountType}
-                onChange={(e) => setFormData({ ...formData, accountType: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-md"
-              >
-                <option value="Current">Current</option>
-                <option value="Savings">Savings</option>
-              </select>
-            </div>
-          </div>
+          <h2 className="text-section text-gray-900 mb-2">Bank Accounts</h2>
+          <p className="text-sm text-gray-500 mb-3">Bank accounts are managed from the Banking page — you can add multiple accounts, set a default, and import statements there.</p>
+          <Link href="/admin/finance/banking" className="inline-flex items-center gap-1.5 text-sm font-medium text-[#B8860B] hover:underline">
+            <Building2 className="w-4 h-4" />
+            Go to Banking → Manage Accounts
+          </Link>
         </div>
       </div>
     </div>
