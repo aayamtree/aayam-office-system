@@ -449,7 +449,7 @@ export interface BankAccount extends BaseEntity {
   account_number: string;
   ifsc_code?: string;
   branch?: string;
-  account_type: 'current' | 'savings' | 'od' | 'cc';
+  account_type: 'current' | 'savings' | 'od' | 'cc' | 'cash';
 
   opening_balance: number;
   current_balance: number;

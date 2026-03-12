@@ -26,11 +26,13 @@ export default function BankingPage() {
     const [showManageModal, setShowManageModal] = useState(false);
     const [editingAccount, setEditingAccount] = useState<any>(null); // null = add new
     const [showAccountForm, setShowAccountForm] = useState(false);
-    type AccType = 'current' | 'savings' | 'od' | 'cc';
+    type AccType = 'current' | 'savings' | 'od' | 'cc' | 'cash';
     const [accountForm, setAccountForm] = useState<{ name: string; bank_name: string; account_number: string; ifsc_code: string; account_type: AccType; opening_balance: number }>({
         name: '', bank_name: '', account_number: '', ifsc_code: '', account_type: 'current', opening_balance: 0
     });
     const [savingAccount, setSavingAccount] = useState(false);
+
+    const isCash = (type: string) => type === 'cash';
 
     const openAddForm = () => {
         setEditingAccount(null);
@@ -249,6 +251,10 @@ export default function BankingPage() {
         return reconciledData;
     }, [reconciledData, statusFilter]);
 
+    // Derived: selected account object
+    const selectedAccount = bankAccounts.find(b => b.id === selectedAccountId);
+    const selectedIsCash = selectedAccount?.account_type === 'cash';
+
     // ------------------------------------------------------------------
     // RENDER
     // ------------------------------------------------------------------
@@ -277,7 +283,11 @@ export default function BankingPage() {
                         className="flex-1 sm:flex-none px-3 md:px-4 py-2 md:py-2.5 bg-white border rounded-md text-sm"
                     >
                         <option value="">Select Account</option>
-                        {bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name} - {b.account_number}</option>)}
+                        {bankAccounts.map(b => (
+                            <option key={b.id} value={b.id}>
+                                {b.account_type === 'cash' ? '💵' : '🏦'} {b.name}{b.account_type !== 'cash' && b.account_number ? ` - ${b.account_number}` : ''}
+                            </option>
+                        ))}
                     </select>
                     <button
                         onClick={() => setShowManageModal(true)}
@@ -285,14 +295,28 @@ export default function BankingPage() {
                     >
                         <Settings2 className="w-4 h-4" /> Manage Accounts
                     </button>
-                    <button
-                        onClick={() => setShowImportModal(true)}
-                        disabled={!selectedAccountId}
-                        className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap text-sm font-semibold shadow-sm"
-                    >
-                        <Upload className="w-4 h-4" /> Import Statement
-                    </button>
+                    {/* Import Statement only for bank accounts */}
+                    {!selectedIsCash && (
+                        <button
+                            onClick={() => setShowImportModal(true)}
+                            disabled={!selectedAccountId}
+                            className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap text-sm font-semibold shadow-sm"
+                        >
+                            <Upload className="w-4 h-4" /> Import Statement
+                        </button>
+                    )}
                 </div>
+
+                {/* Cash account notice */}
+                {selectedIsCash && (
+                    <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-md px-4 py-3">
+                        <span className="text-lg leading-none">💵</span>
+                        <div>
+                            <p className="text-sm font-semibold text-amber-900">Cash Account — Physical Ledger</p>
+                            <p className="text-xs text-amber-700 mt-0.5">This is a cash-on-hand account. Bank reconciliation, statement import, and bank reference fields don&apos;t apply to cash. Transactions recorded here represent physical cash movements only.</p>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Success Message */}
@@ -579,16 +603,20 @@ export default function BankingPage() {
                         <div className="flex-1 overflow-y-auto p-4 space-y-3">
                             {/* Account list */}
                             {bankAccounts.map(acc => (
-                                <div key={acc.id} className="border border-gray-200 rounded-md p-3 flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-md bg-gray-100 flex items-center justify-center shrink-0">
-                                        <Building2 className="w-4 h-4 text-gray-500" />
+                                <div key={acc.id} className={`border rounded-md p-3 flex items-center gap-3 ${acc.account_type === 'cash' ? 'border-amber-100 bg-amber-50/40' : 'border-gray-200'}`}>
+                                    <div className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 text-base ${acc.account_type === 'cash' ? 'bg-amber-100' : 'bg-gray-100'}`}>
+                                        {acc.account_type === 'cash' ? '💵' : <Building2 className="w-4 h-4 text-gray-500" />}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
                                             <p className="text-sm font-semibold text-gray-900 truncate">{acc.name}</p>
                                             {acc.is_default && <span className="text-xs px-1.5 py-0.5 bg-[#B8860B]/10 text-[#B8860B] rounded font-medium">Default</span>}
+                                            {acc.account_type === 'cash' && <span className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded font-medium">Cash</span>}
                                         </div>
-                                        <p className="text-xs text-gray-500">{acc.bank_name} · {acc.account_number}</p>
+                                        {acc.account_type === 'cash'
+                                            ? <p className="text-xs text-amber-700">Physical Ledger · No bank data</p>
+                                            : <p className="text-xs text-gray-500">{acc.bank_name && `${acc.bank_name} · `}{acc.account_number}</p>
+                                        }
                                         <p className="text-xs text-gray-400">Balance: ₹{(acc.current_balance || 0).toLocaleString()}</p>
                                     </div>
                                     <div className="flex items-center gap-1 shrink-0">
@@ -607,41 +635,88 @@ export default function BankingPage() {
                                 </div>
                             ))}
                             {bankAccounts.length === 0 && (
-                                <p className="text-center text-sm text-gray-400 py-4">No bank accounts yet. Add your first account below.</p>
+                                <p className="text-center text-sm text-gray-400 py-4">No accounts yet. Add a bank or cash account below.</p>
                             )}
 
                             {/* Add / Edit form */}
                             {showAccountForm ? (
                                 <form onSubmit={handleSaveAccount} className="border border-gray-200 rounded-md p-4 space-y-3 bg-gray-50">
                                     <p className="text-sm font-semibold text-gray-900">{editingAccount ? 'Edit Account' : 'Add New Account'}</p>
+
+                                    {/* Account category selector — only shown when adding new */}
+                                    {!editingAccount && (
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Account Category *</label>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setAccountForm(p => ({ ...p, account_type: 'current', bank_name: '', account_number: '', ifsc_code: '' }))}
+                                                    className={`py-2.5 rounded-md border text-xs font-semibold transition-colors ${!isCash(accountForm.account_type) ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200'}`}
+                                                >
+                                                    🏦 Bank Account
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setAccountForm(p => ({ ...p, account_type: 'cash', bank_name: '', account_number: '', ifsc_code: '' }))}
+                                                    className={`py-2.5 rounded-md border text-xs font-semibold transition-colors ${isCash(accountForm.account_type) ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200'}`}
+                                                >
+                                                    💵 Cash Account
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Cash info notice */}
+                                    {isCash(accountForm.account_type) && (
+                                        <div className="bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
+                                            <p className="text-xs text-amber-800">
+                                                <strong>Cash Account</strong> — represents physical money on hand. No bank details required. Bank reconciliation and statement import are not applicable.
+                                            </p>
+                                        </div>
+                                    )}
+
                                     <div className="grid grid-cols-2 gap-3">
+                                        {/* Name — always shown */}
                                         <div className="col-span-2">
                                             <label className="block text-xs font-medium text-gray-600 mb-1">Display Name *</label>
-                                            <input required value={accountForm.name} onChange={e => setAccountForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. HDFC Current" className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#B8860B]" />
+                                            <input required value={accountForm.name} onChange={e => setAccountForm(p => ({ ...p, name: e.target.value }))}
+                                                placeholder={isCash(accountForm.account_type) ? 'e.g. Office Cash, Petty Cash' : 'e.g. HDFC Current'}
+                                                className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#B8860B]" />
                                         </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-1">Bank Name *</label>
-                                            <input required value={accountForm.bank_name} onChange={e => setAccountForm(p => ({ ...p, bank_name: e.target.value }))} placeholder="HDFC Bank" className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#B8860B]" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-1">Account Type</label>
-                                            <select value={accountForm.account_type} onChange={e => setAccountForm(p => ({ ...p, account_type: e.target.value as 'current' | 'savings' | 'od' | 'cc' }))} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#B8860B]">
-                                                <option value="current">Current</option>
-                                                <option value="savings">Savings</option>
-                                                <option value="od">OD / Overdraft</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-1">Account Number *</label>
-                                            <input required value={accountForm.account_number} onChange={e => setAccountForm(p => ({ ...p, account_number: e.target.value }))} placeholder="01234567890" className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm font-mono outline-none focus:border-[#B8860B]" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-1">IFSC Code</label>
-                                            <input value={accountForm.ifsc_code} onChange={e => setAccountForm(p => ({ ...p, ifsc_code: e.target.value.toUpperCase() }))} placeholder="HDFC0001234" className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm font-mono outline-none focus:border-[#B8860B]" />
-                                        </div>
+
+                                        {/* Bank-only fields */}
+                                        {!isCash(accountForm.account_type) && (
+                                            <>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-600 mb-1">Bank Name *</label>
+                                                    <input required value={accountForm.bank_name} onChange={e => setAccountForm(p => ({ ...p, bank_name: e.target.value }))} placeholder="HDFC Bank" className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#B8860B]" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-600 mb-1">Account Type</label>
+                                                    <select value={accountForm.account_type} onChange={e => setAccountForm(p => ({ ...p, account_type: e.target.value as 'current' | 'savings' | 'od' | 'cc' }))} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#B8860B]">
+                                                        <option value="current">Current</option>
+                                                        <option value="savings">Savings</option>
+                                                        <option value="od">OD / Overdraft</option>
+                                                        <option value="cc">Cash Credit</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-600 mb-1">Account Number *</label>
+                                                    <input required value={accountForm.account_number} onChange={e => setAccountForm(p => ({ ...p, account_number: e.target.value }))} placeholder="01234567890" className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm font-mono outline-none focus:border-[#B8860B]" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-600 mb-1">IFSC Code</label>
+                                                    <input value={accountForm.ifsc_code} onChange={e => setAccountForm(p => ({ ...p, ifsc_code: e.target.value.toUpperCase() }))} placeholder="HDFC0001234" className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm font-mono outline-none focus:border-[#B8860B]" />
+                                                </div>
+                                            </>
+                                        )}
+
+                                        {/* Opening Balance — shown only when adding new */}
                                         {!editingAccount && (
                                             <div className="col-span-2">
-                                                <label className="block text-xs font-medium text-gray-600 mb-1">Opening Balance (₹)</label>
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">
+                                                    {isCash(accountForm.account_type) ? 'Current Cash in Hand (₹)' : 'Opening Balance (₹)'}
+                                                </label>
                                                 <input type="number" value={accountForm.opening_balance} onChange={e => setAccountForm(p => ({ ...p, opening_balance: parseFloat(e.target.value) || 0 }))} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#B8860B]" />
                                             </div>
                                         )}
