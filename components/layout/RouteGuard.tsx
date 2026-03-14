@@ -26,10 +26,17 @@ const ROUTE_PERMISSIONS: { prefix: string; allowed: string[] }[] = [
     { prefix: '/admin/jobs', allowed: ['admin', 'designer', 'production'] },
     // Dispatch — admin + dispatch roles
     { prefix: '/admin/dispatch', allowed: ['admin', 'dispatch', 'production'] },
-    // Design Studio — admin + designers
+    // Designer Board & Studio — admin + designers only
+    { prefix: '/admin/designers', allowed: ['admin', 'designer'] },
     { prefix: '/admin/design-studio', allowed: ['admin', 'designer'] },
     // Print Planner — admin only (financial planning)
     { prefix: '/admin/print-planner', allowed: ['admin'] },
+    // CMYK Print — admin + cmyk
+    { prefix: '/admin/cmyk-print', allowed: ['admin', 'cmyk', 'finance'] },
+    // Reports — admin only
+    { prefix: '/admin/reports', allowed: ['admin', 'finance'] },
+    // Activity Log — admin only
+    { prefix: '/admin/activity', allowed: ['admin'] },
     // EOD Admin View — admin only
     { prefix: '/admin/eod-report/admin-view', allowed: ['admin'] },
 ];

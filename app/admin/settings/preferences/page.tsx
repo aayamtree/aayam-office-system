@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 export default function PreferencesPage() {
   const [preferences, setPreferences] = useState({
@@ -30,13 +31,26 @@ export default function PreferencesPage() {
   });
 
   const [isSaving, setIsSaving] = useState(false);
+  const [loadingPrefs, setLoadingPrefs] = useState(true);
 
-  const handleSave = () => {
+  // Load from Supabase on mount
+  useEffect(() => {
+    supabase.from('app_settings').select('value').eq('key', 'preferences').single()
+      .then(({ data }) => {
+        if (data?.value) {
+          try { setPreferences(p => ({ ...p, ...JSON.parse(data.value) })); } catch { /* ignore */ }
+        }
+        setLoadingPrefs(false);
+      });
+  }, []);
+
+  const handleSave = async () => {
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      toast.success('Preferences saved successfully!');
-    }, 1000);
+    const { error } = await supabase.from('app_settings')
+      .upsert({ key: 'preferences', value: JSON.stringify(preferences) }, { onConflict: 'key' });
+    if (error) toast.error('Failed to save: ' + error.message);
+    else toast.success('Preferences saved!');
+    setIsSaving(false);
   };
 
   const handleToggle = (key: keyof typeof preferences) => {
