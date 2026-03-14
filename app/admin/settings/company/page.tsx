@@ -1,28 +1,53 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
-import { ArrowLeft, Save, Upload, Building2 } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Building2, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+
+const DEFAULT_COMPANY = {
+  companyName: '',
+  tagline: '',
+  email: '',
+  phone: '',
+  altPhone: '',
+  gstNumber: '',
+  panNumber: '',
+  address: '',
+  city: '',
+  state: '',
+  pincode: '',
+  website: '',
+};
 
 export default function CompanyPage() {
-  const [formData, setFormData] = useState({
-    companyName: 'Aayam Graphics',
-    tagline: 'Print & Design Solutions',
-    email: 'info@aayamgraphics.com',
-    phone: '9876543210',
-    altPhone: '9876543211',
-    gstNumber: '24AABCU9603R1ZM',
-    panNumber: 'AABCU9603R',
-    address: '123 Print Street, Industrial Area',
-    city: 'Rajkot',
-    state: 'Gujarat',
-    pincode: '360001',
-    website: 'www.aayamgraphics.com',
-  });
-
+  const [formData, setFormData] = useState(DEFAULT_COMPANY);
   const [logo, setLogo] = useState<string>('');
+  const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Load from Supabase on mount
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'company_info')
+        .single();
+
+      if (!error && data?.value) {
+        try {
+          const parsed = JSON.parse(data.value);
+          setFormData({ ...DEFAULT_COMPANY, ...parsed });
+          if (parsed.logo) setLogo(parsed.logo);
+        } catch { /* ignore parse error */ }
+      }
+      setLoading(false);
+    };
+    load();
+  }, []);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -33,13 +58,30 @@ export default function CompanyPage() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      toast.success('Company settings saved successfully!');
-    }, 1000);
+    const payload = JSON.stringify({ ...formData, logo });
+
+    const { error } = await supabase
+      .from('app_settings')
+      .upsert({ key: 'company_info', value: payload }, { onConflict: 'key' });
+
+    if (error) {
+      toast.error('Failed to save: ' + error.message);
+    } else {
+      toast.success('Company settings saved!');
+    }
+    setIsSaving(false);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh] gap-2 text-gray-400">
+        <Loader2 className="w-5 h-5 animate-spin" />
+        <span className="text-sm">Loading company info…</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-2 md:space-y-4 lg:space-y-6">
@@ -59,14 +101,14 @@ export default function CompanyPage() {
           disabled={isSaving}
           className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-md hover:bg-gray-800 disabled:bg-gray-400 shadow-sm font-semibold"
         >
-          <Save className="w-4 h-4 md:w-4.5 md:h-4.5" />
-          <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
+          {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          <span>{isSaving ? 'Saving…' : 'Save Changes'}</span>
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
         {/* Logo Section */}
-        <div className="bg-white rounded-md md:rounded-md p-3 md:p-4 border border-gray-100">
+        <div className="bg-white rounded-md p-3 md:p-4 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Company Logo</h2>
           <div className="flex flex-col items-center">
             <label className="w-32 h-32 rounded-md border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 overflow-hidden">
@@ -80,145 +122,81 @@ export default function CompanyPage() {
               )}
               <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
             </label>
-            <p className="text-xs text-gray-500 mt-3 text-center">
-              Recommended: 200x200px, PNG or JPG
-            </p>
+            <p className="text-xs text-gray-500 mt-3 text-center">Recommended: 200x200px, PNG or JPG</p>
           </div>
         </div>
 
         {/* Basic Info */}
-        <div className="lg:col-span-2 bg-white rounded-md md:rounded-md p-3 md:p-4 border border-gray-100">
+        <div className="lg:col-span-2 bg-white rounded-md p-3 md:p-4 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Basic Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Company Name *</label>
-              <input
-                type="text"
-                value={formData.companyName}
-                onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-md"
-              />
+              <input type="text" value={formData.companyName} onChange={(e) => setFormData({ ...formData, companyName: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tagline</label>
-              <input
-                type="text"
-                value={formData.tagline}
-                onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-md"
-              />
+              <input type="text" value={formData.tagline} onChange={(e) => setFormData({ ...formData, tagline: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-md"
-              />
+              <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
-              <input
-                type="text"
-                value={formData.website}
-                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-md"
-              />
+              <input type="text" value={formData.website} onChange={(e) => setFormData({ ...formData, website: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-md"
-              />
+              <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Alt Phone</label>
-              <input
-                type="tel"
-                value={formData.altPhone}
-                onChange={(e) => setFormData({ ...formData, altPhone: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-md"
-              />
+              <input type="tel" value={formData.altPhone} onChange={(e) => setFormData({ ...formData, altPhone: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md" />
             </div>
           </div>
         </div>
 
         {/* Tax Info */}
-        <div className="bg-white rounded-md md:rounded-md p-3 md:p-4 border border-gray-100">
+        <div className="bg-white rounded-md p-3 md:p-4 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Tax Information</h2>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">GST Number</label>
-              <input
-                type="text"
-                value={formData.gstNumber}
-                onChange={(e) => setFormData({ ...formData, gstNumber: e.target.value.toUpperCase() })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-md"
-                placeholder="22AAAAA0000A1Z5"
-              />
+              <input type="text" value={formData.gstNumber} onChange={(e) => setFormData({ ...formData, gstNumber: e.target.value.toUpperCase() })} className="w-full px-3 py-2 border border-gray-200 rounded-md" placeholder="22AAAAA0000A1Z5" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">PAN Number</label>
-              <input
-                type="text"
-                value={formData.panNumber}
-                onChange={(e) => setFormData({ ...formData, panNumber: e.target.value.toUpperCase() })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-md"
-                placeholder="AAAAA0000A"
-              />
+              <input type="text" value={formData.panNumber} onChange={(e) => setFormData({ ...formData, panNumber: e.target.value.toUpperCase() })} className="w-full px-3 py-2 border border-gray-200 rounded-md" placeholder="AAAAA0000A" />
             </div>
           </div>
         </div>
 
         {/* Address */}
-        <div className="lg:col-span-2 bg-white rounded-md md:rounded-md p-3 md:p-4 border border-gray-100">
+        <div className="lg:col-span-2 bg-white rounded-md p-3 md:p-4 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-4">Address</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Street Address *</label>
-              <textarea
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-md"
-                rows={2}
-              />
+              <textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md" rows={2} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
-              <input
-                type="text"
-                value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-md"
-              />
+              <input type="text" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
-              <input
-                type="text"
-                value={formData.state}
-                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-md"
-              />
+              <input type="text" value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Pincode</label>
-              <input
-                type="text"
-                value={formData.pincode}
-                onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-md"
-              />
+              <input type="text" value={formData.pincode} onChange={(e) => setFormData({ ...formData, pincode: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md" />
             </div>
           </div>
         </div>
 
         {/* Bank Accounts — managed from Banking page */}
-        <div className="lg:col-span-3 bg-white rounded-md md:rounded-md p-3 md:p-4 border border-gray-100">
+        <div className="lg:col-span-3 bg-white rounded-md p-3 md:p-4 border border-gray-100">
           <h2 className="text-section text-gray-900 mb-2">Bank Accounts</h2>
           <p className="text-sm text-gray-500 mb-3">Bank accounts are managed from the Banking page — you can add multiple accounts, set a default, and import statements there.</p>
           <Link href="/admin/finance/banking" className="inline-flex items-center gap-1.5 text-sm font-medium text-[#B8860B] hover:underline">
