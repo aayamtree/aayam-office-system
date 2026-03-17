@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from '@/lib/toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession, signIn } from 'next-auth/react';
 import { useClients, useDesigners, useProductCategories } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
@@ -27,7 +27,7 @@ import { Separator } from '@/components/ui/separator';
 import {
     ArrowLeft, Briefcase, CalendarIcon, CheckCircle, Cloud, FileText,
     Image, File as FileIcon, Info, Loader2,
-    Upload, X
+    Upload, X, Play, Pause, RotateCcw, CheckSquare, ArrowRightLeft
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -42,7 +42,46 @@ export default function NewProjectPage() {
     const [creating, setCreating] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<string>('');
 
-    // Project type simplified — always 'new'
+    // Status update for existing task (when opened via ?task_id=xxx)
+    const searchParams = useSearchParams();
+    const taskId = searchParams?.get('task_id');
+    const [currentStatus, setCurrentStatus] = useState<string>('');
+    const [statusUpdating, setStatusUpdating] = useState(false);
+
+    const STATUS_ACTIONS = [
+        { status: 'live',     label: 'Live',     icon: Play,            color: 'bg-green-100 text-green-700 border-green-300 hover:bg-green-200' },
+        { status: 'hold',     label: 'Hold',     icon: Pause,           color: 'bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200' },
+        { status: 'review',   label: 'Review',   icon: CheckSquare,     color: 'bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200' },
+        { status: 'end',      label: 'End',      icon: RotateCcw,       color: 'bg-emerald-100 text-emerald-700 border-emerald-300 hover:bg-emerald-200' },
+        { status: 'transfer', label: 'Transfer', icon: ArrowRightLeft,  color: 'bg-violet-100 text-violet-700 border-violet-300 hover:bg-violet-200' },
+    ];
+
+    const handleStatusChange = async (newStatus: string) => {
+        if (!taskId || statusUpdating) return;
+        setStatusUpdating(true);
+        try {
+            const res = await fetch(`/api/design-tasks/${taskId}/status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ new_status: newStatus }),
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || 'Status update failed');
+            setCurrentStatus(newStatus);
+            toast.success(`Task moved to ${newStatus.toUpperCase()}`);
+        } catch (e: any) {
+            toast.error(e.message);
+        } finally {
+            setStatusUpdating(false);
+        }
+    };
+
+    // Load existing task status when task_id is present
+    useEffect(() => {
+        if (!taskId) return;
+        supabase.from('design_tasks').select('current_status').eq('id', taskId).single()
+            .then(({ data }) => { if (data?.current_status) setCurrentStatus(data.current_status); });
+    }, [taskId]);
 
     // Form data
     const [formData, setFormData] = useState({
@@ -353,6 +392,30 @@ export default function NewProjectPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Status Action Bar — visible when editing an existing task (?task_id=xxx) */}
+            {taskId && (
+                <div className="bg-card border rounded-xl px-5 py-4 flex flex-wrap items-center gap-3">
+                    <span className="text-sm font-semibold text-foreground mr-1">Change Status:</span>
+                    {STATUS_ACTIONS.map(({ status, label, icon: Icon, color }) => (
+                        <button
+                            key={status}
+                            type="button"
+                            disabled={statusUpdating || currentStatus === status}
+                            onClick={() => handleStatusChange(status)}
+                            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all
+                                ${color}
+                                ${currentStatus === status ? 'ring-2 ring-offset-1 ring-current opacity-100 scale-105' : 'opacity-80'}
+                                disabled:cursor-not-allowed`}
+                        >
+                            <Icon size={14} />
+                            {label}
+                            {currentStatus === status && <span className="ml-1 text-[10px] font-bold uppercase tracking-wide">(current)</span>}
+                        </button>
+                    ))}
+                    {statusUpdating && <Loader2 size={16} className="animate-spin text-muted-foreground ml-1" />}
+                </div>
+            )}
 
             {/* Form */}
             <div>

@@ -21,6 +21,7 @@ import {
   Megaphone,
   Bell,
   Calendar,
+  Clock,
   LogOut,
   User,
   PanelLeftClose,
@@ -88,23 +89,21 @@ const menuItems: MenuItem[] = [
       { name: 'Timeline',      href: '/admin/designers/timeline' },
       { name: 'My Notes',      href: '/admin/designers/my-notes' },
       { name: '+ New Project', href: '/admin/designers/new-project' },
-      { name: 'Attendance',    href: '/admin/designers/attendance', adminOnly: true },
       { name: 'Dossier',       href: '/admin/designers/dossier',    adminOnly: true },
       { name: '📖 My Guide',   href: '/admin/designers/guide' },
     ]
   },
   {
-    name: 'Designer Module',
-    icon: Palette,
-    href: '/admin/designer-module',
-    allowedRoles: ['admin', 'designer'],
-    submenu: [
-      { name: 'My Tasks',       href: '/admin/designer-module' },
-      { name: '+ New Task',     href: '/admin/designer-module/new-task' },
-      { name: 'Dossier Search', href: '/admin/designer-module/dossier-search' },
-      { name: 'Dashboard',      href: '/admin/designer-module/dashboard',   adminOnly: true },
-      { name: 'Attendance',     href: '/admin/designer-module/attendance',   adminOnly: true },
-    ]
+    name: 'Studio Dashboard',
+    icon: LayoutDashboard,
+    href: '/admin/designer-module/dashboard',
+    allowedRoles: ['admin'],
+  },
+  {
+    name: 'Attendance',
+    icon: Clock,
+    href: '/admin/designers/attendance',
+    allowedRoles: ['admin'],
   },
   {
     name: 'Marketing',
