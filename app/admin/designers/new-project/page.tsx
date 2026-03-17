@@ -587,10 +587,14 @@ export default function NewProjectPage() {
                                             const me = designers?.find((d: any) =>
                                                 d.id === profile?.id || d.user_id === profile?.id
                                             );
-                                            // Other designers (excluding current user, must have a name)
-                                            const others = designers?.filter((d: any) =>
-                                                d.id !== (me?.id) && d.user_id !== profile?.id && d.name && d.name.trim() !== ''
-                                            ) || [];
+                                            // Other designers (excluding current user, must have a real name)
+                                            const others = designers?.filter((d: any) => {
+                                                const n = d.name || '';
+                                                return d.id !== (me?.id) &&
+                                                    d.user_id !== profile?.id &&
+                                                    n.trim() !== '' &&
+                                                    !/^Designer\s*\d+$/i.test(n.trim()); // hide Designer 5/6/7/8 placeholder accounts
+                                            }) || [];
 
                                             return (
                                                 <>
