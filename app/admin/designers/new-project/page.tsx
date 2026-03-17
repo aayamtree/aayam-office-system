@@ -97,7 +97,8 @@ export default function NewProjectPage() {
     const [formData, setFormData] = useState({
         title: '',
         clientId: '',
-        brandName: '',
+        brandId: '',       // UUID from brands table (if migration run)
+        brandName: '',     // text name always stored for display
         designerId: '',
         jobType: 'Design',
         productCategory: '',
@@ -142,14 +143,39 @@ export default function NewProjectPage() {
 
     // Fetch brands when client changes
     const [clientBrands, setClientBrands] = useState<{ id: string; name: string }[]>([]);
+    const [addingBrand, setAddingBrand] = useState(false);
+    const [newBrandInput, setNewBrandInput] = useState('');
     useEffect(() => {
-        if (!formData.clientId) { setClientBrands([]); setFormData(prev => ({ ...prev, brandName: '' })); return; }
+        if (!formData.clientId) {
+            setClientBrands([]);
+            setFormData(prev => ({ ...prev, brandId: '', brandName: '' }));
+            return;
+        }
         fetch(`/api/clients/${formData.clientId}/brands`)
             .then(r => r.ok ? r.json() : { data: [] })
             .then(j => setClientBrands(j.data || []))
             .catch(() => setClientBrands([]));
     }, [formData.clientId]);
 
+    const handleCreateBrand = async () => {
+        const name = newBrandInput.trim();
+        if (!name || !formData.clientId) return;
+        try {
+            const res = await fetch(`/api/clients/${formData.clientId}/brands`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name }),
+            });
+            const json = await res.json();
+            const newBrand = json.data;
+            if (newBrand) {
+                setClientBrands(prev => [...prev.filter(b => b.id !== newBrand.id), newBrand]);
+                setFormData(prev => ({ ...prev, brandId: newBrand.id, brandName: newBrand.name }));
+            }
+        } catch { }
+        setNewBrandInput('');
+        setAddingBrand(false);
+    };
 
     // Handle Drive link change with verification
     const handleDriveLinkChange = async (link: string) => {
@@ -610,24 +636,54 @@ export default function NewProjectPage() {
                                 <p className="text-xs text-muted-foreground border rounded-md px-3 py-2 bg-muted/30">
                                     Select a client first to see brand options
                                 </p>
+                            ) : addingBrand ? (
+                                /* Inline new brand input */
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        autoFocus
+                                        value={newBrandInput}
+                                        onChange={e => setNewBrandInput(e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleCreateBrand(); } if (e.key === 'Escape') { setAddingBrand(false); setNewBrandInput(''); } }}
+                                        placeholder="Type new brand name..."
+                                        className="flex-1 px-3 py-2 border rounded-md text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary/30"
+                                    />
+                                    <button type="button" onClick={handleCreateBrand}
+                                        className="px-3 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-md hover:bg-primary/90">
+                                        Save
+                                    </button>
+                                    <button type="button" onClick={() => { setAddingBrand(false); setNewBrandInput(''); }}
+                                        className="px-3 py-2 border rounded-md text-sm hover:bg-muted">
+                                        Cancel
+                                    </button>
+                                </div>
                             ) : clientBrands.length === 0 ? (
-                                <div className="space-y-1">
+                                /* No brands yet — free text input + option to save as brand */
+                                <div className="flex gap-2">
                                     <input
                                         type="text"
                                         value={formData.brandName}
-                                        onChange={e => setFormData(prev => ({ ...prev, brandName: e.target.value }))}
-                                        placeholder="+ Type brand name (no brands found for this client)"
-                                        className="w-full px-3 py-2 border rounded-md text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary/30"
+                                        onChange={e => setFormData(prev => ({ ...prev, brandName: e.target.value, brandId: '' }))}
+                                        placeholder="+ Type brand name"
+                                        className="flex-1 px-3 py-2 border rounded-md text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary/30"
                                     />
+                                    {formData.brandName && (
+                                        <button type="button" onClick={() => { setNewBrandInput(formData.brandName); handleCreateBrand(); }}
+                                            className="px-3 py-2 text-xs border rounded-md hover:bg-muted text-muted-foreground">
+                                            Save brand
+                                        </button>
+                                    )}
                                 </div>
                             ) : (
+                                /* Has brands — show dropdown with real UUIDs */
                                 <Select
-                                    value={formData.brandName}
+                                    value={formData.brandId}
                                     onValueChange={(val) => {
                                         if (val === '__add_new') {
-                                            setFormData(prev => ({ ...prev, brandName: '' }));
+                                            setAddingBrand(true);
                                         } else {
-                                            setFormData(prev => ({ ...prev, brandName: val }));
+                                            const chosen = clientBrands.find(b => b.id === val);
+                                            setFormData(prev => ({ ...prev, brandId: val, brandName: chosen?.name || val }));
                                         }
                                     }}
                                 >
@@ -636,13 +692,19 @@ export default function NewProjectPage() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {clientBrands.map((b) => (
-                                            <SelectItem key={b.id} value={b.name || b.id}>{b.name || b.id}</SelectItem>
+                                            <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
                                         ))}
                                         <SelectItem value="__add_new" className="text-primary font-medium border-t mt-1 pt-1">
-                                            + Add Brand
+                                            + Add New Brand
                                         </SelectItem>
                                     </SelectContent>
                                 </Select>
+                            )}
+                            {/* Show selected brand name as confirmation */}
+                            {formData.brandName && !addingBrand && (
+                                <p className="text-xs text-muted-foreground">
+                                    Selected: <span className="font-semibold text-foreground">{formData.brandName}</span>
+                                </p>
                             )}
                         </div>
 
