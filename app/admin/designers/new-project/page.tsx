@@ -184,7 +184,7 @@ export default function NewProjectPage() {
                 client_id: formData.clientId,
                 designer_id: formData.designerId || user?.id,
                 job_type: formData.jobType,
-                brand_name: formData.brandName || null,
+                brand_name: (formData.brandName === '__add_new' || !formData.brandName) ? null : formData.brandName,
                 product_category: formData.productCategory || null,
                 client_deadline: formData.deadline ? formData.deadline.toISOString().split('T')[0] : null,
                 priority: formData.priority,
@@ -477,7 +477,7 @@ export default function NewProjectPage() {
                                 <Select
                                     value={formData.brandName}
                                     onValueChange={(val) => {
-                                        if (val === '__add_new__') {
+                                        if (val === '__add_new') {
                                             setFormData(prev => ({ ...prev, brandName: '' }));
                                         } else {
                                             setFormData(prev => ({ ...prev, brandName: val }));
@@ -485,14 +485,13 @@ export default function NewProjectPage() {
                                     }}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select Brand" />
+                                        <SelectValue placeholder="Select brand..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">— No brand —</SelectItem>
                                         {clientBrands.map((b) => (
-                                            <SelectItem key={b.id} value={b.name}>{b.name}</SelectItem>
+                                            <SelectItem key={b.id} value={b.name || b.id}>{b.name || b.id}</SelectItem>
                                         ))}
-                                        <SelectItem value="__add_new__" className="text-primary font-medium border-t mt-1 pt-1">
+                                        <SelectItem value="__add_new" className="text-primary font-medium border-t mt-1 pt-1">
                                             + Add Brand
                                         </SelectItem>
                                     </SelectContent>
