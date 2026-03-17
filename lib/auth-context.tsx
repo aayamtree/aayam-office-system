@@ -265,6 +265,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) return { error: error.message };
+
+      // Fire attendance login (non-blocking)
+      setTimeout(() => fireAttendanceLogin(), 500);
+
       return { error: null };
     } catch (error: any) {
       return { error: error.message || 'An error occurred' };
@@ -301,10 +305,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Attendance: fire login API and start heartbeat for designers
+  const fireAttendanceLogin = async () => {
+    try { await fetch('/api/attendance/login', { method: 'POST' }); } catch (e) { /* non-blocking */ }
+  };
+
+  const fireAttendanceLogout = async () => {
+    try { await fetch('/api/attendance/logout', { method: 'POST' }); } catch (e) { /* non-blocking */ }
+  };
+
+  // Start heartbeat interval — returned cleanup fn stops it
+  const startHeartbeat = () => {
+    const interval = setInterval(async () => {
+      try { await fetch('/api/attendance/heartbeat', { method: 'POST' }); } catch (e) { }
+    }, 5 * 60 * 1000); // every 5 minutes
+    return () => clearInterval(interval);
+  };
+
   // Sign out
   const signOut = async () => {
     // Set a flag FIRST so login page knows not to auto-redirect
     sessionStorage.setItem('aayam_signing_out', 'true');
+
+    // 0. Fire attendance logout (non-blocking, best effort)
+    try { await fetch('/api/attendance/logout', { method: 'POST' }); } catch (e) { }
 
     // 1. Perform Supabase signout FIRST (before clearing local state)
     if (isConfigured) {

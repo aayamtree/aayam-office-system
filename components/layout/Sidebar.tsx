@@ -92,6 +92,17 @@ const menuItems: MenuItem[] = [
     ]
   },
   {
+    name: 'Designer Module',
+    icon: Palette,
+    href: '/admin/designer-module',
+    allowedRoles: ['admin', 'designer'],
+    submenu: [
+      { name: 'My Tasks', href: '/admin/designer-module' },
+      { name: '+ New Task', href: '/admin/designer-module/new-task' },
+      { name: 'Dossier Search', href: '/admin/designer-module/dossier-search' },
+    ]
+  },
+  {
     name: 'Marketing',
     icon: Megaphone,
     href: '/admin/marketing',

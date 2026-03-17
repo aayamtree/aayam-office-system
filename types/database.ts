@@ -1072,7 +1072,6 @@ export interface QcRecord {
   print_run?: PrintRun;
 }
 
-// Input types for new tables
 export type MachineInput = Omit<Machine, 'id' | 'created_at' | 'updated_at'>;
 export type SheetSizeInput = Omit<SheetSize, 'id' | 'created_at' | 'updated_at'>;
 export type MaterialInput = Omit<Material, 'id' | 'created_at' | 'updated_at'>;
@@ -1081,3 +1080,105 @@ export type PrintRunInput = Omit<PrintRun, 'id' | 'created_at' | 'updated_at' | 
 export type PrintRunJobInput = Omit<PrintRunJob, 'id' | 'created_at' | 'updated_at' | 'added_at' | 'print_run' | 'job'>;
 export type PaymentSplitInput = Omit<PaymentSplit, 'id' | 'created_at' | 'updated_at' | 'payment' | 'bank_account'>;
 export type UserNoteInput = Omit<UserNote, 'id' | 'created_at' | 'updated_at' | 'creator' | 'job'>;
+
+// =============================================
+// DESIGNER MODULE TYPES (Step 1–9)
+// =============================================
+
+export type DesignerAttendanceStatus = 'active' | 'idle' | 'logged_out' | 'absent';
+export type DesignTaskStatus = 'created' | 'live' | 'hold' | 'review' | 'rework' | 'end';
+export type DesignTaskPriority = 'normal' | 'urgent' | 'critical';
+export type ProductTypeCategory = 'packaging' | 'print' | 'digital' | 'other';
+export type DossierEntryType =
+  | 'TASK_CREATED' | 'LIVE_STARTED' | 'LIVE_PAUSED' | 'HOLD_APPLIED'
+  | 'TASK_TRANSFERRED' | 'REVIEW_STARTED' | 'REWORK_CREATED' | 'TASK_ENDED'
+  | 'STATUS_CHANGED';
+
+export interface DesignerAttendance {
+  id: string;
+  designer_id: string;
+  date: string;
+  first_login_time: string;
+  last_logout_time?: string;
+  last_heartbeat_time?: string;
+  status: DesignerAttendanceStatus;
+  total_minutes_worked: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductTypeNew {
+  id: string;
+  name: string;
+  category: ProductTypeCategory;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface DesignTaskNew extends BaseEntity {
+  task_code: string;
+  client_id?: string;
+  brand_id?: string;
+  product_type_id?: string;
+  description?: string;
+  dimensions?: string;
+  deadline?: string;
+  priority: DesignTaskPriority;
+  current_status: DesignTaskStatus;
+  rework_count: number;
+  created_by?: string;
+  assigned_to?: string;
+  is_draft: boolean;
+
+  // Joined data
+  client?: Client;
+  product_type?: ProductTypeNew;
+  assigned_user?: Profile;
+  created_user?: Profile;
+  task_status_history?: TaskStatusHistoryEntry[];
+  task_time_sessions?: TaskTimeSession[];
+}
+
+export interface TaskStatusHistoryEntry {
+  id: string;
+  task_id: string;
+  from_status?: DesignTaskStatus;
+  to_status: DesignTaskStatus;
+  changed_by?: string;
+  changed_at: string;
+  reason?: string;
+  rework_number?: number;
+  changer?: { full_name: string };
+}
+
+export interface TaskTimeSession {
+  id: string;
+  task_id: string;
+  designer_id: string;
+  session_start: string;
+  session_end?: string;
+  duration_minutes?: number;
+  pause_reason?: string;
+  created_at: string;
+}
+
+export interface TaskTransfer {
+  id: string;
+  task_id: string;
+  transferred_from?: string;
+  transferred_to: string;
+  transferred_by?: string;
+  reason?: string;
+  transferred_at: string;
+}
+
+export interface DossierEntry {
+  id: string;
+  task_id: string;
+  entry_type: DossierEntryType;
+  actor_id?: string;
+  data_json: Record<string, any>;
+  created_at: string;
+  actor?: Profile;
+}
+
