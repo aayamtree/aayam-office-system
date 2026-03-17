@@ -205,7 +205,7 @@ export default function DesignerModulePage() {
             {myActiveTasks.length === 0 ? (
               <div className="bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 p-8 text-center">
                 <Inbox size={32} className="mx-auto text-gray-300 mb-2" />
-                <p className="text-sm text-gray-500">No active tasks — you're all caught up!</p>
+                <p className="text-sm text-gray-500">No active tasks — you&apos;re all caught up!</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
