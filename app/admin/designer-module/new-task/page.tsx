@@ -21,6 +21,7 @@ export default function NewTaskPage() {
 
   // Form state
   const [clientId, setClientId] = useState('');
+  const [brandName, setBrandName] = useState('');
   const [productTypeId, setProductTypeId] = useState('');
   const [description, setDescription] = useState('');
   const [dimensions, setDimensions] = useState('');
@@ -28,6 +29,9 @@ export default function NewTaskPage() {
   const [priority, setPriority] = useState('normal');
   const [assignedTo, setAssignedTo] = useState(profile?.id || '');
   const [isDraft, setIsDraft] = useState(false);
+  const [commonBrands, setCommonBrands] = useState<string[]>([]);
+  const [showBrandSuggest, setShowBrandSuggest] = useState(false);
+  const brandRef = useRef<HTMLDivElement>(null);
 
   // Data
   const [clients, setClients] = useState<Client[]>([]);
@@ -76,6 +80,7 @@ export default function NewTaskPage() {
       try {
         const d = JSON.parse(draft);
         setClientId(d.clientId || '');
+        setBrandName(d.brandName || '');
         setProductTypeId(d.productTypeId || '');
         setDescription(d.description || '');
         setDimensions(d.dimensions || '');
@@ -87,15 +92,35 @@ export default function NewTaskPage() {
     }
   }, []);
 
+  // Load brand suggestions when client changes (uses brand_name on client record)
+  useEffect(() => {
+    if (!clientId) { setCommonBrands([]); return; }
+    const client = clients.find(c => c.id === clientId);
+    if (!client) return;
+    // Parse brand_name field if it exists as hashtags e.g. "#tiger #cobra"
+    const raw = (client as any).brand_name || '';
+    const parsed = raw.split(/[,\s#]+/).map((s: string) => s.trim()).filter(Boolean);
+    setCommonBrands(parsed);
+  }, [clientId, clients]);
+
+  // Close brand dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (brandRef.current && !brandRef.current.contains(e.target as Node)) setShowBrandSuggest(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
   // Auto-save draft every 30s
   useEffect(() => {
     const interval = setInterval(() => {
       localStorage.setItem(DRAFT_KEY, JSON.stringify({
-        clientId, productTypeId, description, dimensions, deadline, priority, assignedTo
+        clientId, brandName, productTypeId, description, dimensions, deadline, priority, assignedTo
       }));
     }, 30000);
     return () => clearInterval(interval);
-  }, [clientId, productTypeId, description, dimensions, deadline, priority, assignedTo]);
+  }, [clientId, brandName, productTypeId, description, dimensions, deadline, priority, assignedTo]);
 
   // Close client dropdown on outside click
   useEffect(() => {
@@ -140,6 +165,7 @@ export default function NewTaskPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           client_id: clientId,
+          brand_name: brandName || null,
           product_type_id: productTypeId,
           description,
           dimensions: dimensions || null,
@@ -261,6 +287,31 @@ export default function NewTaskPage() {
           )}
           {errors.client && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle size={11} />{errors.client}</p>}
         </div>
+
+        {/* Brand (optional, appears after client selected) */}
+        {clientId && (
+          <div ref={brandRef} className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Brand <span className="text-xs text-gray-400">(optional)</span>
+            </label>
+            <input
+              value={brandName}
+              onChange={e => setBrandName(e.target.value)}
+              onFocus={() => setShowBrandSuggest(commonBrands.length > 0)}
+              placeholder="e.g. Tiger Brand, Cobra..."
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary/30"
+            />
+            {showBrandSuggest && commonBrands.length > 0 && (
+              <div className="absolute z-40 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
+                {commonBrands.map(b => (
+                  <button key={b} type="button"
+                    onClick={() => { setBrandName(b); setShowBrandSuggest(false); }}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 capitalize">{b}</button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 2. Product Type */}
         <div>

@@ -47,7 +47,7 @@ interface MenuItem {
   icon: any;
   href: string;
   allowedRoles?: string[];
-  submenu?: { name: string; href: string }[];
+  submenu?: { name: string; href: string; adminOnly?: boolean }[];
 }
 
 const menuItems: MenuItem[] = [
@@ -97,9 +97,11 @@ const menuItems: MenuItem[] = [
     href: '/admin/designer-module',
     allowedRoles: ['admin', 'designer'],
     submenu: [
-      { name: 'My Tasks', href: '/admin/designer-module' },
-      { name: '+ New Task', href: '/admin/designer-module/new-task' },
+      { name: 'My Tasks',       href: '/admin/designer-module' },
+      { name: '+ New Task',     href: '/admin/designer-module/new-task' },
       { name: 'Dossier Search', href: '/admin/designer-module/dossier-search' },
+      { name: 'Dashboard',      href: '/admin/designer-module/dashboard',   adminOnly: true },
+      { name: 'Attendance',     href: '/admin/designer-module/attendance',   adminOnly: true },
     ]
   },
   {

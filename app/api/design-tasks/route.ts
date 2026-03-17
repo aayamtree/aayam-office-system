@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
       // ── New Designer Module columns ──
       client_id,
       brand_id,
+      brand_name: body.brand_name || null,
       product_type_id,
       description,
       dimensions,
