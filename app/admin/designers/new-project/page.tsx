@@ -42,9 +42,10 @@ export default function NewProjectPage() {
     const [creating, setCreating] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<string>('');
 
-    // Status update for existing task (when opened via ?task_id=xxx)
+    // Status update for existing job (when opened via ?job_id=xxx)
     const searchParams = useSearchParams();
-    const taskId = searchParams?.get('task_id');
+    const taskId = searchParams?.get('task_id');   // keep for backward compat
+    const jobId  = searchParams?.get('job_id') || taskId;  // prefer job_id
     const [currentStatus, setCurrentStatus] = useState<string>('');
     const [statusUpdating, setStatusUpdating] = useState(false);
     const [showTransferPanel, setShowTransferPanel] = useState(false);
@@ -58,18 +59,18 @@ export default function NewProjectPage() {
     ];
 
     const handleStatusChange = async (newStatus: string, extraPayload?: Record<string, any>) => {
-        if (!taskId || statusUpdating) return;
+        if (!jobId || statusUpdating) return;
         setStatusUpdating(true);
         try {
-            const res = await fetch(`/api/design-tasks/${taskId}/status`, {
-                method: 'POST',
+            const res = await fetch(`/api/jobs/${jobId}/designer-status`, {
+                method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ new_status: newStatus, ...extraPayload }),
+                body: JSON.stringify({ designer_status: newStatus, ...extraPayload }),
             });
             const json = await res.json();
             if (!res.ok) throw new Error(json.error || 'Status update failed');
             setCurrentStatus(newStatus);
-            toast.success(`Task moved to ${newStatus.toUpperCase()}`);
+            toast.success(`Status set to ${newStatus.toUpperCase()}`);
         } catch (e: any) {
             toast.error(e.message);
         } finally {
@@ -80,18 +81,19 @@ export default function NewProjectPage() {
     const handleTransfer = async () => {
         if (!transferToId) { toast.error('Please select a designer to transfer to'); return; }
         const chosen = designers?.find((d: any) => d.id === transferToId);
-        await handleStatusChange('transfer', { assigned_to: transferToId });
+        await handleStatusChange('transfer', { designer_id: transferToId });
         toast.success(`Transferred to ${chosen?.name || 'designer'}`);
         setShowTransferPanel(false);
         setTransferToId('');
     };
 
     // Load existing task status when task_id is present
+    // Load existing job's designer_status when job_id is present
     useEffect(() => {
-        if (!taskId) return;
-        supabase.from('design_tasks').select('current_status').eq('id', taskId).single()
-            .then(({ data }) => { if (data?.current_status) setCurrentStatus(data.current_status); });
-    }, [taskId]);
+        if (!jobId) return;
+        supabase.from('jobs').select('designer_status').eq('id', jobId).single()
+            .then(({ data }) => { if (data?.designer_status) setCurrentStatus(data.designer_status); });
+    }, [jobId]);
 
     // Form data
     const [formData, setFormData] = useState({

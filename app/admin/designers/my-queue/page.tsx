@@ -46,7 +46,7 @@ const jobTypeBadge: Record<string, { label: string; bg: string; text: string }> 
 export default function UnifiedQueue() {
     const { profile } = useAuth();
     const { jobs, loading } = useJobs({
-        select: 'id, project_name, job_number, current_stage, priority, client_deadline, designer_id, job_type, product_category, client:clients(id, name, company), designer:profiles(id, full_name)',
+        select: 'id, project_name, job_number, current_stage, priority, client_deadline, designer_id, job_type, product_category, designer_status, client:clients(id, name, company), designer:profiles(id, full_name)',
         filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready'], op: 'in' }]
     });
     const [searchQuery, setSearchQuery] = useState('');
@@ -69,7 +69,7 @@ export default function UnifiedQueue() {
             designer: job.designer?.full_name || 'Unassigned',
             designerId: job.designer_id,
             status: job.current_stage || 'new',
-            taskStatus: job.task_status || job.current_status || null, // design status (live/hold/review/end)
+            taskStatus: job.designer_status || null, // from jobs.designer_status — single source of truth
             priority: job.priority || 'normal',
             deadline: job.client_deadline,
             jobNumber: job.job_number,
