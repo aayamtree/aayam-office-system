@@ -69,11 +69,13 @@ export default function UnifiedQueue() {
             designer: job.designer?.full_name || 'Unassigned',
             designerId: job.designer_id,
             status: job.current_stage || 'new',
+            taskStatus: job.task_status || job.current_status || null, // design status (live/hold/review/end)
             priority: job.priority || 'normal',
             deadline: job.client_deadline,
             jobNumber: job.job_number,
             jobType: job.job_type || 'Design',
-            isMyTask: isAdmin || job.designer_id === myDesigner?.id,
+            // Fix: compare designer_id directly to profile.id — most reliable match
+            isMyTask: isAdmin || job.designer_id === profile?.id,
         }));
 
     const visibleTasks = showAll ? allTasks : allTasks.filter(t => t.isMyTask);
@@ -217,6 +219,18 @@ export default function UnifiedQueue() {
                                                             <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold uppercase ${cfg.badgeBg} ${cfg.badgeText}`}>
                                                                 {cfg.label}
                                                             </span>
+                                                            {/* Designer task status chip (Live / Hold / Review / End) */}
+                                                            {task.taskStatus && (
+                                                                <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase
+                                                                    ${task.taskStatus === 'live' ? 'bg-emerald-100 text-emerald-700' : ''}
+                                                                    ${task.taskStatus === 'hold' ? 'bg-amber-100 text-amber-700' : ''}
+                                                                    ${task.taskStatus === 'review' ? 'bg-sky-100 text-sky-700' : ''}
+                                                                    ${task.taskStatus === 'end' ? 'bg-stone-100 text-stone-600' : ''}
+                                                                    ${task.taskStatus === 'transfer' ? 'bg-violet-100 text-violet-700' : ''}
+                                                                `}>
+                                                                    {task.taskStatus}
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
 
