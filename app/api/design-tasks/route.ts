@@ -76,7 +76,8 @@ export async function POST(request: NextRequest) {
       actual_hours: 0,              // old column default
       // ── New Designer Module columns ──
       client_id,
-      brand_name: brand_name || body.brand_name || null,   // text field — no FK
+      // brand_name NOT inserted here — column doesn't exist in DB yet
+      // brand_name is stored safely in dossier_entries.data_json.brand_name below
       product_type_id,
       description,
       dimensions,
