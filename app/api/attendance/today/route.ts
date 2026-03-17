@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
   // Two separate queries — avoids PostgREST join direction issues
   const [designersResult, attendanceResult] = await Promise.all([
-    supabase.from('profiles').select('id, full_name, email').eq('role', 'designer').eq('is_active', true),
+    supabase.from('profiles').select('id, full_name, email').eq('role', 'designer').eq('is_active', true).not('full_name', 'ilike', 'Designer _'),
     supabase.from('designer_attendance').select('*').eq('date', today),
   ]);
 

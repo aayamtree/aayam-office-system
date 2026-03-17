@@ -23,7 +23,8 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('id, full_name, email')
       .eq('role', 'designer')
-      .eq('is_active', true),
+      .eq('is_active', true)
+      .not('full_name', 'ilike', 'Designer _'),  // exclude placeholder accounts (Designer 5, 6, etc.)
     supabase
       .from('designer_attendance')
       .select('designer_id, date, status, first_login_time, last_heartbeat_time, total_minutes_worked')

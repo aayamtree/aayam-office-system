@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     recentDossierRes,
     timeSessionsRes,
   ] = await Promise.all([
-    supabase.from('profiles').select('id, full_name, email').eq('role', 'designer').eq('is_active', true),
+    supabase.from('profiles').select('id, full_name, email').eq('role', 'designer').eq('is_active', true).not('full_name', 'ilike', 'Designer _'),
     supabase.from('designer_attendance').select('*').eq('date', today),
     supabase.from('design_tasks').select('id, task_code, current_status, priority, deadline, assigned_to, rework_count, client_id, created_at, updated_at').neq('is_draft', true),
     supabase.from('dossier_entries').select('id, entry_type, task_id, actor_id, created_at').order('created_at', { ascending: false }).limit(10),
