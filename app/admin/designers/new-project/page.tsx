@@ -451,7 +451,10 @@ export default function NewProjectPage() {
                     <div className="border-t pt-3 mt-1">
                         <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Transfer to:</p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-                            {(designers || []).map((d: any) => {
+                            {(designers || []).filter((d: any) => {
+                                const n = d.name || d.full_name || '';
+                                return n && !/^Designer\s*\d+$/i.test(n.trim());
+                            }).map((d: any) => {
                                 const name = d.name || d.full_name || d.email || 'Designer';
                                 const initials = name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
                                 const isSelected = transferToId === d.id;
