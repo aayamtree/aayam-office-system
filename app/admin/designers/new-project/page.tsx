@@ -94,7 +94,7 @@ export default function NewProjectPage() {
     // Fetch brands when client changes
     const [clientBrands, setClientBrands] = useState<{ id: string; name: string }[]>([]);
     useEffect(() => {
-        if (!formData.clientId) { setClientBrands([]); setFormData(prev => ({ ...prev, brandId: '' })); return; }
+        if (!formData.clientId) { setClientBrands([]); setFormData(prev => ({ ...prev, brandName: '' })); return; }
         fetch(`/api/clients/${formData.clientId}/brands`)
             .then(r => r.ok ? r.json() : { data: [] })
             .then(j => setClientBrands(j.data || []))
@@ -454,28 +454,51 @@ export default function NewProjectPage() {
                              </div>
                          </div>
 
-                        {/* Brand — shown after client is selected */}
-                        {formData.clientId && (
-                            <div className="space-y-2">
-                                <Label className="text-sm font-semibold">
-                                    Brand <span className="text-xs text-muted-foreground">(optional)</span>
-                                </Label>
+                        {/* Brand field — always visible */}
+                        <div className="space-y-2">
+                            <Label className="text-sm font-semibold">
+                                Brand <span className="text-xs text-muted-foreground">(optional)</span>
+                            </Label>
+                            {!formData.clientId ? (
+                                <p className="text-xs text-muted-foreground border rounded-md px-3 py-2 bg-muted/30">
+                                    Select a client first to see brand options
+                                </p>
+                            ) : clientBrands.length === 0 ? (
+                                <div className="space-y-1">
+                                    <input
+                                        type="text"
+                                        value={formData.brandName}
+                                        onChange={e => setFormData(prev => ({ ...prev, brandName: e.target.value }))}
+                                        placeholder="+ Type brand name (no brands found for this client)"
+                                        className="w-full px-3 py-2 border rounded-md text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary/30"
+                                    />
+                                </div>
+                            ) : (
                                 <Select
                                     value={formData.brandName}
-                                    onValueChange={(val) => setFormData(prev => ({ ...prev, brandName: val }))}
+                                    onValueChange={(val) => {
+                                        if (val === '__add_new__') {
+                                            setFormData(prev => ({ ...prev, brandName: '' }));
+                                        } else {
+                                            setFormData(prev => ({ ...prev, brandName: val }));
+                                        }
+                                    }}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder={clientBrands.length === 0 ? 'No brands for this client' : 'Select Brand'} />
+                                        <SelectValue placeholder="Select Brand" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="">— No brand —</SelectItem>
                                         {clientBrands.map((b) => (
                                             <SelectItem key={b.id} value={b.name}>{b.name}</SelectItem>
                                         ))}
+                                        <SelectItem value="__add_new__" className="text-primary font-medium border-t mt-1 pt-1">
+                                            + Add Brand
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
-                            </div>
-                        )}
+                            )}
+                        </div>
 
                     </div>
 

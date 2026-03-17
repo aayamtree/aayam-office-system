@@ -13,64 +13,73 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // Fetch all design tasks
+  // Fetch all design tasks — only select columns guaranteed to exist
   const { data: tasks, error } = await supabase
     .from('design_tasks')
-    .select('id, task_code, current_status, brand_name, created_at, client_id, assigned_to, created_by')
+    .select('id, task_code, current_status, created_at, client_id, assigned_to, created_by')
     .order('created_at', { ascending: false });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('dossier-list tasks error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   const taskList = tasks || [];
   if (taskList.length === 0) return NextResponse.json({ data: [] });
 
-  // Fetch dossier counts per task
-  const taskIds = taskList.map(t => t.id);
-  const { data: dossierCounts } = await supabase
+  // Fetch dossier counts per task — also fetch brand_name from data_json if stored there
+  const taskIds = taskList.map((t: any) => t.id);
+  const { data: dossierRows } = await supabase
     .from('dossier_entries')
-    .select('task_id')
-    .in('task_id', taskIds);
+    .select('task_id, data_json, entry_type')
+    .in('task_id', taskIds)
+    .order('created_at', { ascending: true });
 
+  // Build count map and grab brand_name from TASK_CREATED dossier data_json
   const countMap: Record<string, number> = {};
-  (dossierCounts || []).forEach((d: any) => {
+  const brandMap: Record<string, string> = {};
+  (dossierRows || []).forEach((d: any) => {
     countMap[d.task_id] = (countMap[d.task_id] || 0) + 1;
+    if (d.entry_type === 'TASK_CREATED' && d.data_json?.brand_name && !brandMap[d.task_id]) {
+      brandMap[d.task_id] = d.data_json.brand_name;
+    }
   });
 
   // Fetch client names
-  const clientIds = Array.from(new Set(taskList.map(t => t.client_id).filter(Boolean)));
-  let clientMap: Record<string, string> = {};
+  const clientIds = Array.from(new Set(taskList.map((t: any) => t.client_id).filter(Boolean)));
+  const clientMap: Record<string, string> = {};
   if (clientIds.length > 0) {
     const { data: clients } = await supabase
       .from('clients')
       .select('id, name, company')
-      .in('id', clientIds);
+      .in('id', clientIds as string[]);
     (clients || []).forEach((c: any) => {
-      clientMap[c.id] = c.company || c.name;
+      clientMap[c.id] = c.company || c.name || '—';
     });
   }
 
   // Fetch designer names
   const designerIds = Array.from(new Set(
-    taskList.flatMap(t => [t.assigned_to, t.created_by].filter(Boolean))
+    taskList.flatMap((t: any) => [t.assigned_to, t.created_by].filter(Boolean))
   ));
-  let profileMap: Record<string, string> = {};
+  const profileMap: Record<string, string> = {};
   if (designerIds.length > 0) {
     const { data: profiles } = await supabase
       .from('profiles')
       .select('id, full_name')
-      .in('id', designerIds);
+      .in('id', designerIds as string[]);
     (profiles || []).forEach((p: any) => {
-      profileMap[p.id] = p.full_name || 'Unknown';
+      profileMap[p.id] = p.full_name || '—';
     });
   }
 
-  const enriched = taskList.map(t => ({
+  const enriched = taskList.map((t: any) => ({
     id: t.id,
-    task_code: t.task_code,
-    current_status: t.current_status,
-    brand_name: t.brand_name || null,
+    task_code: t.task_code || '—',
+    current_status: t.current_status || 'created',
+    brand_name: brandMap[t.id] || null,
     created_at: t.created_at,
-    client_name: clientMap[t.client_id] || '—',
+    client_name: t.client_id ? (clientMap[t.client_id] || '—') : '—',
     designer_name: profileMap[t.assigned_to] || profileMap[t.created_by] || '—',
     dossier_count: countMap[t.id] || 0,
   }));
