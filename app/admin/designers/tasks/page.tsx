@@ -124,6 +124,7 @@ function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClos
 // If defined inline inside the component, a new array is created on EVERY render,
 // which causes SWR to schedule revalidations and floods the React event queue.
 const JOBS_QUERY_OPTIONS = {
+  select: '*, designer_status',
   filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'file_check', 'designing', 'approval', 'pre_print_qc', 'printing', 'finishing', 'quality_check', 'ready', 'delivered'] as string[], op: 'in' as const }],
   limit: 200
 };
@@ -293,6 +294,7 @@ export default function DesignerWorkspace() {
             hold_reason: job.hold_reason || '',
             pre_hold_stage: job.pre_hold_stage || '',
             revision_count: job.revision_count || 0,
+            designer_status: (job as any).designer_status || null,  // live/hold/review/end
             status: job.is_on_hold ? 'on_hold' : getDesignerStatus(job.current_stage)
           };
         })
@@ -589,8 +591,8 @@ export default function DesignerWorkspace() {
 
                         return (
                           <div key={task.id}
-                            onClick={() => { setView('my_tasks'); setSelectedTaskId(task.id); }}
-                            className="bg-white rounded-md overflow-hidden border border-gray-200 transition-shadow cursor-pointer"
+                            onClick={() => { setSelectedTaskId(task.id); setView('my_tasks'); }}
+                            className="bg-white rounded-md overflow-hidden border border-gray-200 transition-shadow cursor-pointer hover:shadow-md"
                           >
                             {/* Dark header */}
                             <div className={`${cardHeaderBg} px-3 py-1.5 flex items-center justify-between`}>
@@ -623,6 +625,18 @@ export default function DesignerWorkspace() {
                                   {task.designerName || 'Unassigned'}
                                 </span>
                                 <div className="flex items-center gap-1.5">
+                                  {/* Designer Status Chip */}
+                                  {task.designer_status && (
+                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase
+                                      ${task.designer_status === 'live' ? 'bg-emerald-100 text-emerald-700' : ''}
+                                      ${task.designer_status === 'hold' ? 'bg-amber-100 text-amber-700' : ''}
+                                      ${task.designer_status === 'review' ? 'bg-sky-100 text-sky-700' : ''}
+                                      ${task.designer_status === 'end' ? 'bg-stone-100 text-stone-600' : ''}
+                                      ${task.designer_status === 'transfer' ? 'bg-violet-100 text-violet-700' : ''}
+                                    `}>
+                                      {task.designer_status}
+                                    </span>
+                                  )}
                                   {(task.files?.length > 0 || task.driveLink) && (
                                     <span className="flex items-center gap-0.5 text-gray-500" title={`${task.files?.length || 1} file(s)`}><Paperclip size={10} /><span className="text-xs font-bold">{task.files?.length || 1}</span></span>
                                   )}

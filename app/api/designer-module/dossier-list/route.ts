@@ -13,7 +13,6 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // Fetch user role
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
@@ -21,52 +20,30 @@ export async function GET(request: NextRequest) {
     .single();
   const isDesigner = profile?.role === 'designer';
 
-  // Debug: log user id and role to Vercel logs to verify ID matches design_tasks.assigned_to
-  console.log('[dossier-list] user.id:', user.id, '| role:', profile?.role, '| isDesigner:', isDesigner);
-
-  // Fetch design tasks — role-filtered
+  // ── Read from jobs table (single source of truth) ──────────────────────────
   let query = supabase
-    .from('design_tasks')
-    .select('id, task_code, current_status, created_at, client_id, assigned_to, created_by')
+    .from('jobs')
+    .select('id, job_number, project_name, current_stage, designer_status, created_at, client_id, designer_id, brand_name')
+    .not('current_stage', 'in', '("delivered","cancelled")')
     .order('created_at', { ascending: false });
 
+  // Designers only see their own jobs
   if (isDesigner) {
-    // Designers only see their own tasks
-    query = query.eq('assigned_to', user.id);
+    query = query.eq('designer_id', user.id);
   }
 
-  const { data: tasks, error } = await query;
-
-  console.log('[dossier-list] tasks returned:', tasks?.length ?? 0, '| error:', error?.message ?? 'none');
+  const { data: jobs, error } = await query;
 
   if (error) {
-    console.error('dossier-list tasks error:', error);
+    console.error('[dossier-list] jobs error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const taskList = tasks || [];
-  if (taskList.length === 0) return NextResponse.json({ data: [] });
+  const jobList = jobs || [];
+  if (jobList.length === 0) return NextResponse.json({ data: [] });
 
-  // Fetch dossier counts per task — also fetch brand_name from data_json if stored there
-  const taskIds = taskList.map((t: any) => t.id);
-  const { data: dossierRows } = await supabase
-    .from('dossier_entries')
-    .select('task_id, data_json, entry_type')
-    .in('task_id', taskIds)
-    .order('created_at', { ascending: true });
-
-  // Build count map and grab brand_name from TASK_CREATED dossier data_json
-  const countMap: Record<string, number> = {};
-  const brandMap: Record<string, string> = {};
-  (dossierRows || []).forEach((d: any) => {
-    countMap[d.task_id] = (countMap[d.task_id] || 0) + 1;
-    if (d.entry_type === 'TASK_CREATED' && d.data_json?.brand_name && !brandMap[d.task_id]) {
-      brandMap[d.task_id] = d.data_json.brand_name;
-    }
-  });
-
-  // Fetch client names
-  const clientIds = Array.from(new Set(taskList.map((t: any) => t.client_id).filter(Boolean)));
+  // ── Fetch client names ──────────────────────────────────────────────────────
+  const clientIds = Array.from(new Set(jobList.map((j: any) => j.client_id).filter(Boolean)));
   const clientMap: Record<string, string> = {};
   if (clientIds.length > 0) {
     const { data: clients } = await supabase
@@ -78,10 +55,8 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  // Fetch designer names
-  const designerIds = Array.from(new Set(
-    taskList.flatMap((t: any) => [t.assigned_to, t.created_by].filter(Boolean))
-  ));
+  // ── Fetch designer names ────────────────────────────────────────────────────
+  const designerIds = Array.from(new Set(jobList.map((j: any) => j.designer_id).filter(Boolean)));
   const profileMap: Record<string, string> = {};
   if (designerIds.length > 0) {
     const { data: profiles } = await supabase
@@ -93,15 +68,35 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const enriched = taskList.map((t: any) => ({
-    id: t.id,
-    task_code: t.task_code || '—',
-    current_status: t.current_status || 'created',
-    brand_name: brandMap[t.id] || null,
-    created_at: t.created_at,
-    client_name: t.client_id ? (clientMap[t.client_id] || '—') : '—',
-    designer_name: profileMap[t.assigned_to] || profileMap[t.created_by] || '—',
-    dossier_count: countMap[t.id] || 0,
+  // ── Fetch dossier entry counts linked to jobs ────────────────────────────────
+  // dossier_entries.job_id references jobs.id (direct link preferred)
+  // Fallback: count any entries where task_id = job.id
+  const jobIds = jobList.map((j: any) => j.id);
+  const countMap: Record<string, number> = {};
+  if (jobIds.length > 0) {
+    const { data: entries } = await supabase
+      .from('dossier_entries')
+      .select('task_id')
+      .in('task_id', jobIds);
+    (entries || []).forEach((e: any) => {
+      countMap[e.task_id] = (countMap[e.task_id] || 0) + 1;
+    });
+  }
+
+  const enriched = jobList.map((j: any) => ({
+    id: j.id,
+    // Use job_number as the task code for display
+    task_code: j.job_number || j.id.substring(0, 8).toUpperCase(),
+    current_status: j.designer_status || j.current_stage || 'created',
+    brand_name: j.brand_name || null,
+    created_at: j.created_at,
+    client_name: j.client_id ? (clientMap[j.client_id] || '—') : '—',
+    designer_name: j.designer_id ? (profileMap[j.designer_id] || '—') : '—',
+    dossier_count: countMap[j.id] || 0,
+    // Extra fields for richer display
+    project_name: j.project_name,
+    current_stage: j.current_stage,
+    designer_status: j.designer_status,
   }));
 
   return NextResponse.json({ data: enriched });
