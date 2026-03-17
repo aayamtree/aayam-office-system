@@ -47,23 +47,24 @@ export default function NewProjectPage() {
     const taskId = searchParams?.get('task_id');
     const [currentStatus, setCurrentStatus] = useState<string>('');
     const [statusUpdating, setStatusUpdating] = useState(false);
+    const [showTransferPanel, setShowTransferPanel] = useState(false);
+    const [transferToId, setTransferToId] = useState<string>('');
 
     const STATUS_ACTIONS = [
-        { status: 'live',     label: 'Live',     icon: Play,            color: 'bg-green-100 text-green-700 border-green-300 hover:bg-green-200' },
-        { status: 'hold',     label: 'Hold',     icon: Pause,           color: 'bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200' },
-        { status: 'review',   label: 'Review',   icon: CheckSquare,     color: 'bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200' },
-        { status: 'end',      label: 'End',      icon: RotateCcw,       color: 'bg-emerald-100 text-emerald-700 border-emerald-300 hover:bg-emerald-200' },
-        { status: 'transfer', label: 'Transfer', icon: ArrowRightLeft,  color: 'bg-violet-100 text-violet-700 border-violet-300 hover:bg-violet-200' },
+        { status: 'live',   label: 'Live',   icon: Play,        color: 'bg-green-100 text-green-700 border-green-300 hover:bg-green-200' },
+        { status: 'hold',   label: 'Hold',   icon: Pause,       color: 'bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200' },
+        { status: 'review', label: 'Review', icon: CheckSquare, color: 'bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200' },
+        { status: 'end',    label: 'End',    icon: RotateCcw,   color: 'bg-emerald-100 text-emerald-700 border-emerald-300 hover:bg-emerald-200' },
     ];
 
-    const handleStatusChange = async (newStatus: string) => {
+    const handleStatusChange = async (newStatus: string, extraPayload?: Record<string, any>) => {
         if (!taskId || statusUpdating) return;
         setStatusUpdating(true);
         try {
             const res = await fetch(`/api/design-tasks/${taskId}/status`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ new_status: newStatus }),
+                body: JSON.stringify({ new_status: newStatus, ...extraPayload }),
             });
             const json = await res.json();
             if (!res.ok) throw new Error(json.error || 'Status update failed');
@@ -74,6 +75,15 @@ export default function NewProjectPage() {
         } finally {
             setStatusUpdating(false);
         }
+    };
+
+    const handleTransfer = async () => {
+        if (!transferToId) { toast.error('Please select a designer to transfer to'); return; }
+        const chosen = designers?.find((d: any) => d.id === transferToId);
+        await handleStatusChange('transfer', { assigned_to: transferToId });
+        toast.success(`Transferred to ${chosen?.name || 'designer'}`);
+        setShowTransferPanel(false);
+        setTransferToId('');
     };
 
     // Load existing task status when task_id is present
@@ -394,30 +404,97 @@ export default function NewProjectPage() {
             </div>
 
             {/* Status Action Bar — always visible */}
-            <div className="bg-card border rounded-xl px-5 py-4 flex flex-wrap items-center gap-3">
-                <span className="text-sm font-semibold text-foreground mr-1">
-                    {taskId ? 'Change Status:' : 'Task Status:'}
-                </span>
-                {STATUS_ACTIONS.map(({ status, label, icon: Icon, color }) => (
+            <div className="bg-card border rounded-xl px-5 py-4 space-y-3">
+                <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-sm font-semibold text-foreground mr-1">
+                        {taskId ? 'Change Status:' : 'Task Status:'}
+                    </span>
+
+                    {/* Regular status buttons */}
+                    {STATUS_ACTIONS.map(({ status, label, icon: Icon, color }) => (
+                        <button
+                            key={status}
+                            type="button"
+                            disabled={statusUpdating}
+                            onClick={() => taskId ? handleStatusChange(status) : setCurrentStatus(status)}
+                            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all
+                                ${color}
+                                ${currentStatus === status ? 'ring-2 ring-offset-1 ring-current opacity-100 scale-105' : 'opacity-70 hover:opacity-100'}
+                                disabled:cursor-not-allowed`}
+                        >
+                            <Icon size={14} />
+                            {label}
+                            {currentStatus === status && <span className="ml-1 text-[10px] font-bold">✓</span>}
+                        </button>
+                    ))}
+
+                    {/* Transfer button — separate, opens designer picker */}
                     <button
-                        key={status}
                         type="button"
                         disabled={statusUpdating}
-                        onClick={() => taskId
-                            ? handleStatusChange(status)
-                            : setCurrentStatus(status)
-                        }
+                        onClick={() => setShowTransferPanel(prev => !prev)}
                         className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all
-                            ${color}
-                            ${currentStatus === status ? 'ring-2 ring-offset-1 ring-current opacity-100 scale-105' : 'opacity-70 hover:opacity-100'}
+                            bg-violet-100 text-violet-700 border-violet-300 hover:bg-violet-200
+                            ${showTransferPanel ? 'ring-2 ring-violet-300 scale-105' : 'opacity-70 hover:opacity-100'}
                             disabled:cursor-not-allowed`}
                     >
-                        <Icon size={14} />
-                        {label}
-                        {currentStatus === status && <span className="ml-1 text-[10px] font-bold uppercase tracking-wide">✓</span>}
+                        <ArrowRightLeft size={14} />
+                        Transfer
+                        {showTransferPanel ? ' ▲' : ' ▾'}
                     </button>
-                ))}
-                {statusUpdating && <Loader2 size={16} className="animate-spin text-muted-foreground ml-1" />}
+
+                    {statusUpdating && <Loader2 size={16} className="animate-spin text-muted-foreground" />}
+                </div>
+
+                {/* Inline designer picker — shown when Transfer is clicked */}
+                {showTransferPanel && (
+                    <div className="border-t pt-3 mt-1">
+                        <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Transfer to:</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+                            {(designers || []).map((d: any) => {
+                                const name = d.name || d.full_name || d.email || 'Designer';
+                                const initials = name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
+                                const isSelected = transferToId === d.id;
+                                return (
+                                    <button
+                                        key={d.id}
+                                        type="button"
+                                        onClick={() => setTransferToId(d.id)}
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm text-left transition-all
+                                            ${isSelected
+                                                ? 'bg-violet-100 border-violet-400 text-violet-800 font-semibold ring-1 ring-violet-300'
+                                                : 'bg-muted/30 border-border hover:bg-muted/60 text-foreground'}`}
+                                    >
+                                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0
+                                            ${isSelected ? 'bg-violet-500 text-white' : 'bg-primary/10 text-primary'}`}>
+                                            {initials}
+                                        </span>
+                                        <span className="truncate">{name}</span>
+                                        {isSelected && <span className="ml-auto text-violet-600">✓</span>}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                disabled={!transferToId || statusUpdating}
+                                onClick={handleTransfer}
+                                className="px-4 py-1.5 bg-violet-600 text-white text-sm font-semibold rounded-lg hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+                            >
+                                {statusUpdating ? <Loader2 size={14} className="animate-spin" /> : <ArrowRightLeft size={14} />}
+                                Confirm Transfer
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => { setShowTransferPanel(false); setTransferToId(''); }}
+                                className="px-4 py-1.5 text-sm font-medium border rounded-lg hover:bg-muted"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Form */}
