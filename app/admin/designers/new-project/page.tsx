@@ -393,29 +393,32 @@ export default function NewProjectPage() {
                 </div>
             </div>
 
-            {/* Status Action Bar — visible when editing an existing task (?task_id=xxx) */}
-            {taskId && (
-                <div className="bg-card border rounded-xl px-5 py-4 flex flex-wrap items-center gap-3">
-                    <span className="text-sm font-semibold text-foreground mr-1">Change Status:</span>
-                    {STATUS_ACTIONS.map(({ status, label, icon: Icon, color }) => (
-                        <button
-                            key={status}
-                            type="button"
-                            disabled={statusUpdating || currentStatus === status}
-                            onClick={() => handleStatusChange(status)}
-                            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all
-                                ${color}
-                                ${currentStatus === status ? 'ring-2 ring-offset-1 ring-current opacity-100 scale-105' : 'opacity-80'}
-                                disabled:cursor-not-allowed`}
-                        >
-                            <Icon size={14} />
-                            {label}
-                            {currentStatus === status && <span className="ml-1 text-[10px] font-bold uppercase tracking-wide">(current)</span>}
-                        </button>
-                    ))}
-                    {statusUpdating && <Loader2 size={16} className="animate-spin text-muted-foreground ml-1" />}
-                </div>
-            )}
+            {/* Status Action Bar — always visible */}
+            <div className="bg-card border rounded-xl px-5 py-4 flex flex-wrap items-center gap-3">
+                <span className="text-sm font-semibold text-foreground mr-1">
+                    {taskId ? 'Change Status:' : 'Task Status:'}
+                </span>
+                {STATUS_ACTIONS.map(({ status, label, icon: Icon, color }) => (
+                    <button
+                        key={status}
+                        type="button"
+                        disabled={statusUpdating}
+                        onClick={() => taskId
+                            ? handleStatusChange(status)
+                            : setCurrentStatus(status)
+                        }
+                        className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all
+                            ${color}
+                            ${currentStatus === status ? 'ring-2 ring-offset-1 ring-current opacity-100 scale-105' : 'opacity-70 hover:opacity-100'}
+                            disabled:cursor-not-allowed`}
+                    >
+                        <Icon size={14} />
+                        {label}
+                        {currentStatus === status && <span className="ml-1 text-[10px] font-bold uppercase tracking-wide">✓</span>}
+                    </button>
+                ))}
+                {statusUpdating && <Loader2 size={16} className="animate-spin text-muted-foreground ml-1" />}
+            </div>
 
             {/* Form */}
             <div>
