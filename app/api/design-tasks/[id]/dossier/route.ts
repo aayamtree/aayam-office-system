@@ -37,10 +37,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     (profiles || []).forEach((p: any) => { actorMap[p.id] = p; });
   }
 
-  const enriched = (entries || []).map((e: any) => ({
-    ...e,
-    actor: e.actor_id ? actorMap[e.actor_id] || null : null,
-  }));
+  const enriched = (entries || []).map((e: any) => {
+    const actorName = e.actor_id ? (actorMap[e.actor_id]?.full_name || null) : null;
+    const performedByName = actorName || e.data_json?.performed_by_name || e.performed_by_name || 'Unknown';
+    return {
+      ...e,
+      actor: e.actor_id ? actorMap[e.actor_id] || null : null,
+      performed_by_name: performedByName,
+    };
+  });
 
   return NextResponse.json({ data: enriched });
 }

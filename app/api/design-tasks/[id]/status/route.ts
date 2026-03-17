@@ -163,13 +163,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       task_id: id,
       entry_type: entryType,
       actor_id: user.id,
-      performed_by_name: performedByName,
+      performed_by_name: performedByName,   // only saved if column exists
       data_json: {
         from_status: task.current_status,
         to_status: new_status,
         reason: reason || null,
         rework_number: reworkNumber,
         timestamp: new Date().toISOString(),
+        performed_by_name: performedByName,  // also in JSON — always works
       },
     });
   } catch (e) { console.warn('dossier_entries insert failed (non-critical):', e); }

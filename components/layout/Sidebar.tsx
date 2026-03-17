@@ -89,6 +89,7 @@ const menuItems: MenuItem[] = [
       { name: 'My Notes',      href: '/admin/designers/my-notes' },
       { name: '+ New Project', href: '/admin/designers/new-project' },
       { name: 'Attendance',    href: '/admin/designers/attendance', adminOnly: true },
+      { name: 'Dossier',       href: '/admin/designers/dossier',    adminOnly: true },
       { name: '📖 My Guide',   href: '/admin/designers/guide' },
     ]
   },

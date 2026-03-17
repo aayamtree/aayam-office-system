@@ -50,7 +50,9 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { client_id, brand_id, product_type_id, description, dimensions, deadline, priority, assigned_to, is_draft } = body;
+  const { client_id, brand_name, product_type_id, description, dimensions, deadline, priority, assigned_to, is_draft } = body;
+  // brand_id is also accepted but only used if it's a real UUID (brands table exists)
+  // brand_name is always used as text fallback — no FK required
 
   // Validate required fields
   if (!client_id || !product_type_id || !description) {
@@ -74,8 +76,7 @@ export async function POST(request: NextRequest) {
       actual_hours: 0,              // old column default
       // ── New Designer Module columns ──
       client_id,
-      brand_id,
-      brand_name: body.brand_name || null,
+      brand_name: brand_name || body.brand_name || null,   // text field — no FK
       product_type_id,
       description,
       dimensions,
@@ -91,12 +92,23 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Write dossier entry
+  // Fetch creator's name for performed_by_name
+  const { data: creatorProfile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
+  const creatorName = creatorProfile?.full_name || user.email || 'Unknown';
+
+  // Write dossier entry with performed_by_name in both column and data_json
   await supabase.from('dossier_entries').insert({
     task_id: data.id,
     entry_type: 'TASK_CREATED',
     actor_id: user.id,
-    data_json: { task_code: taskCode, client_id, assigned_to: assigned_to || user.id },
+    performed_by_name: creatorName,   // stored only if column exists
+    data_json: {
+      task_code: taskCode,
+      client_id,
+      assigned_to: assigned_to || user.id,
+      brand_name: brand_name || null,
+      performed_by_name: creatorName,  // always stored in JSON
+    },
   });
 
   return NextResponse.json({ data }, { status: 201 });

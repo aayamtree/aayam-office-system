@@ -48,7 +48,7 @@ export default function NewProjectPage() {
     const [formData, setFormData] = useState({
         title: '',
         clientId: '',
-        brandId: '',
+        brandName: '',
         designerId: '',
         jobType: 'Design',
         productCategory: '',
@@ -99,7 +99,6 @@ export default function NewProjectPage() {
             .then(r => r.ok ? r.json() : { data: [] })
             .then(j => setClientBrands(j.data || []))
             .catch(() => setClientBrands([]));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formData.clientId]);
 
 
@@ -185,7 +184,7 @@ export default function NewProjectPage() {
                 client_id: formData.clientId,
                 designer_id: formData.designerId || user?.id,
                 job_type: formData.jobType,
-                brand_id: formData.brandId || null,
+                brand_name: formData.brandName || null,
                 product_category: formData.productCategory || null,
                 client_deadline: formData.deadline ? formData.deadline.toISOString().split('T')[0] : null,
                 priority: formData.priority,
@@ -462,8 +461,8 @@ export default function NewProjectPage() {
                                     Brand <span className="text-xs text-muted-foreground">(optional)</span>
                                 </Label>
                                 <Select
-                                    value={formData.brandId}
-                                    onValueChange={(val) => setFormData(prev => ({ ...prev, brandId: val }))}
+                                    value={formData.brandName}
+                                    onValueChange={(val) => setFormData(prev => ({ ...prev, brandName: val }))}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder={clientBrands.length === 0 ? 'No brands for this client' : 'Select Brand'} />
@@ -471,7 +470,7 @@ export default function NewProjectPage() {
                                     <SelectContent>
                                         <SelectItem value="">— No brand —</SelectItem>
                                         {clientBrands.map((b) => (
-                                            <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                                            <SelectItem key={b.id} value={b.name}>{b.name}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>

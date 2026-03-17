@@ -29,11 +29,14 @@ export async function GET(
 
   // Parse brand_name from hashtag/comma format: "#tiger #cobra" or "Tiger, Cobra"
   const raw = (client as any).brand_name || '';
-  const brands = raw
-    .split(/[,\s#]+/)
-    .map((s: string) => s.trim())
-    .filter(Boolean)
-    .map((name: string, idx: number) => ({ id: `brand_${idx}`, name }));
+  let brands: { id: string; name: string }[] = [];
+  if (raw.trim()) {
+    brands = raw
+      .split(/[,\s#]+/)
+      .map((s: string) => s.trim())
+      .filter(Boolean)
+      .map((name: string) => ({ id: name, name: name.charAt(0).toUpperCase() + name.slice(1) }));
+  }
 
   return NextResponse.json({ data: brands, client: { id: client.id, name: client.company || client.name } });
 }
