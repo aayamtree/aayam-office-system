@@ -259,8 +259,8 @@ export default function NewProjectPage() {
                 client_id: formData.clientId,
                 designer_id: formData.designerId || user?.id,
                 job_type: formData.jobType,
-                // brand_name column doesn't exist in jobs table — skip to avoid schema cache error
-                // Brand is captured in formData.brandName for reference only
+                brand_id: formData.brandId || null,     // UUID FK to brands table
+                brand_name: formData.brandName || null,  // text copy for fast display
                 product_category: formData.productCategory || null,
                 client_deadline: formData.deadline ? formData.deadline.toISOString().split('T')[0] : null,
                 priority: formData.priority,
