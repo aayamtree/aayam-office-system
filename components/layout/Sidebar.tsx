@@ -84,11 +84,12 @@ const menuItems: MenuItem[] = [
     href: '/admin/designers/tasks?view=board',
     allowedRoles: ['admin', 'designer'],
     submenu: [
-      { name: 'Queue', href: '/admin/designers/my-queue' },
-      { name: 'Timeline', href: '/admin/designers/timeline' },
-      { name: 'My Notes', href: '/admin/designers/my-notes' },
+      { name: 'Queue',         href: '/admin/designers/my-queue' },
+      { name: 'Timeline',      href: '/admin/designers/timeline' },
+      { name: 'My Notes',      href: '/admin/designers/my-notes' },
       { name: '+ New Project', href: '/admin/designers/new-project' },
-      { name: '📖 My Guide', href: '/admin/designers/guide' },
+      { name: 'Attendance',    href: '/admin/designers/attendance', adminOnly: true },
+      { name: '📖 My Guide',   href: '/admin/designers/guide' },
     ]
   },
   {

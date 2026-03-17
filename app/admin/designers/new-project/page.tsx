@@ -48,6 +48,7 @@ export default function NewProjectPage() {
     const [formData, setFormData] = useState({
         title: '',
         clientId: '',
+        brandId: '',
         designerId: '',
         jobType: 'Design',
         productCategory: '',
@@ -89,6 +90,17 @@ export default function NewProjectPage() {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [profile?.id, designers.length, formData.designerId]);
+
+    // Fetch brands when client changes
+    const [clientBrands, setClientBrands] = useState<{ id: string; name: string }[]>([]);
+    useEffect(() => {
+        if (!formData.clientId) { setClientBrands([]); setFormData(prev => ({ ...prev, brandId: '' })); return; }
+        fetch(`/api/clients/${formData.clientId}/brands`)
+            .then(r => r.ok ? r.json() : { data: [] })
+            .then(j => setClientBrands(j.data || []))
+            .catch(() => setClientBrands([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formData.clientId]);
 
 
     // Handle Drive link change with verification
@@ -173,6 +185,7 @@ export default function NewProjectPage() {
                 client_id: formData.clientId,
                 designer_id: formData.designerId || user?.id,
                 job_type: formData.jobType,
+                brand_id: formData.brandId || null,
                 product_category: formData.productCategory || null,
                 client_deadline: formData.deadline ? formData.deadline.toISOString().split('T')[0] : null,
                 priority: formData.priority,
@@ -435,12 +448,36 @@ export default function NewProjectPage() {
                                     if (!assignedName) return null;
                                     return (
                                         <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1.5 rounded-md">
-                                            📤 Delegating to <strong>{assignedName}</strong> — both you and {assignedName} will be notified on admin approval.
-                                        </p>
-                                    );
-                                })()}
+                                             📤 Delegating to <strong>{assignedName}</strong> — both you and {assignedName} will be notified on admin approval.
+                                         </p>
+                                     );
+                                 })()}
+                             </div>
+                         </div>
+
+                        {/* Brand — shown after client is selected */}
+                        {formData.clientId && (
+                            <div className="space-y-2">
+                                <Label className="text-sm font-semibold">
+                                    Brand <span className="text-xs text-muted-foreground">(optional)</span>
+                                </Label>
+                                <Select
+                                    value={formData.brandId}
+                                    onValueChange={(val) => setFormData(prev => ({ ...prev, brandId: val }))}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder={clientBrands.length === 0 ? 'No brands for this client' : 'Select Brand'} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="">— No brand —</SelectItem>
+                                        {clientBrands.map((b) => (
+                                            <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
-                        </div>
+                        )}
+
                     </div>
 
                     <Separator />

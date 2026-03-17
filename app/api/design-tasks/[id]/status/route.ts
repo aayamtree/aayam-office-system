@@ -84,11 +84,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   // Handle time session on status change
   if (new_status === 'live') {
+    // Determine session type based on rework_count
+    const sessionType = (task.rework_count || 0) > 0 ? 'rework' : 'design';
     // Start a new time session
     await supabase.from('task_time_sessions').insert({
       task_id: id,
       designer_id: user.id,
       session_start: new Date().toISOString(),
+      session_type: sessionType,
     });
   } else if (task.current_status === 'live') {
     // Pause/end the open session
@@ -136,6 +139,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   // Write dossier entry (non-critical — wrap in try-catch)
   try {
+    // Fetch actor's name for performed_by_name
+    const { data: actorProfile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .single();
+    const performedByName = actorProfile?.full_name || user.email || 'Unknown';
+
     const entryType = new_status === 'rework'
       ? 'REWORK_CREATED'
       : new_status === 'end'
@@ -152,6 +163,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       task_id: id,
       entry_type: entryType,
       actor_id: user.id,
+      performed_by_name: performedByName,
       data_json: {
         from_status: task.current_status,
         to_status: new_status,
