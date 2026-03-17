@@ -21,6 +21,9 @@ export async function GET(request: NextRequest) {
     .single();
   const isDesigner = profile?.role === 'designer';
 
+  // Debug: log user id and role to Vercel logs to verify ID matches design_tasks.assigned_to
+  console.log('[dossier-list] user.id:', user.id, '| role:', profile?.role, '| isDesigner:', isDesigner);
+
   // Fetch design tasks — role-filtered
   let query = supabase
     .from('design_tasks')
@@ -33,6 +36,8 @@ export async function GET(request: NextRequest) {
   }
 
   const { data: tasks, error } = await query;
+
+  console.log('[dossier-list] tasks returned:', tasks?.length ?? 0, '| error:', error?.message ?? 'none');
 
   if (error) {
     console.error('dossier-list tasks error:', error);

@@ -18,19 +18,24 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // Fetch tasks assigned to the current user only
+  // Fetch tasks assigned to the current user — flat fields only, no FK joins
   const { data: tasks, error } = await supabase
     .from('design_tasks')
     .select(`
       id,
       task_code,
+      task_number,
+      title,
       current_status,
+      priority,
+      deadline,
       created_at,
+      updated_at,
       client_id,
       assigned_to,
-      created_by,
-      assigned_user:profiles!assigned_to(id, full_name, email),
-      client:clients(id, name, company)
+      product_type_id,
+      description,
+      drive_link
     `)
     .eq('assigned_to', user.id)
     .order('created_at', { ascending: false });
