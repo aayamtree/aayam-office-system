@@ -292,9 +292,13 @@ export function useDesigners() {
     orderBy: { column: 'full_name', ascending: true }
   });
 
-  // Map full_name → name for backward compatibility, and filter out profiles with no name
+  // Map full_name → name for backward compat
+  // Filter: must have a real name AND not be a placeholder like "Designer 5", "Designer 6" etc.
   const designers = (data || [])
-    .filter((p: any) => p.full_name && p.full_name.trim() !== '')
+    .filter((p: any) => {
+      const n = (p.full_name || '').trim();
+      return n !== '' && !/^Designer\s*\d+$/i.test(n);
+    })
     .map((p: any) => ({ ...p, name: p.full_name }));
 
   return {
