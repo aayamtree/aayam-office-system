@@ -13,11 +13,26 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // Fetch all design tasks — only select columns guaranteed to exist
-  const { data: tasks, error } = await supabase
+  // Fetch user role
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+  const isDesigner = profile?.role === 'designer';
+
+  // Fetch design tasks — role-filtered
+  let query = supabase
     .from('design_tasks')
     .select('id, task_code, current_status, created_at, client_id, assigned_to, created_by')
     .order('created_at', { ascending: false });
+
+  if (isDesigner) {
+    // Designers only see their own tasks
+    query = query.eq('assigned_to', user.id);
+  }
+
+  const { data: tasks, error } = await query;
 
   if (error) {
     console.error('dossier-list tasks error:', error);
