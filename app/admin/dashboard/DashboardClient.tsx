@@ -80,6 +80,10 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
         ALL_WIDGET_KEYS.forEach(k => vis[k] = saved[k] !== undefined ? saved[k] : true);
         return vis;
     });
+    // Recent Orders — approve state
+    const [approvingId, setApprovingId] = useState<string | null>(null);
+    const [stageOverrides, setStageOverrides] = useState<Record<string, string>>({});
+    const [approveErrors, setApproveErrors] = useState<Record<string, string>>({});
 
     const toggleWidget = (key: string) => {
         setWidgetVisibility(prev => {
@@ -97,6 +101,27 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
     };
 
     const isVisible = (key: string) => widgetVisibility[key] !== false;
+
+    // One-click approve for Recent Orders table
+    const handleRecentOrderApprove = async (jobId: string, action: 'approve' | 'reject') => {
+        setApprovingId(jobId);
+        setApproveErrors(prev => { const n = { ...prev }; delete n[jobId]; return n; });
+        try {
+            const res = await fetch(`/api/jobs/${jobId}/approve`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action }),
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || 'Failed');
+            setStageOverrides(prev => ({ ...prev, [jobId]: action === 'approve' ? 'designing' : 'new' }));
+        } catch (e: any) {
+            // Show error inline in table — no alert() popup
+            setApproveErrors(prev => ({ ...prev, [jobId]: e.message || 'Error' }));
+        } finally {
+            setApprovingId(null);
+        }
+    };
 
     // Redirect non-admin users
     useEffect(() => {
@@ -383,19 +408,56 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                                     {recentJobs.length === 0 ? (
                                         <TableRow><TableCell colSpan={5} className="text-center text-sm text-muted-foreground">No recent orders</TableCell></TableRow>
                                     ) : (
-                                        recentJobs.map((job: any) => (
-                                            <TableRow key={job.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/admin/jobs/${job.id}`)}>
-                                                <TableCell className="font-medium text-xs py-2">#{job.job_number}</TableCell>
-                                                <TableCell className="text-xs py-2">{job.client?.name || '-'}</TableCell>
-                                                <TableCell className="text-xs py-2 max-w-[120px] truncate">{job.project_name || '-'}</TableCell>
-                                                <TableCell className="py-2">
-                                                    <Badge variant={job.current_stage === 'delivered' ? 'default' : job.current_stage === 'dispatched' ? 'secondary' : 'outline'}>
-                                                        {job.current_stage?.replace('_', ' ')}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell className="text-right text-xs py-2">{formatCurrency(job.total_amount || 0)}</TableCell>
-                                            </TableRow>
-                                        ))
+                                        recentJobs.map((job: any) => {
+                                            const stage = stageOverrides[job.id] || job.current_stage;
+                                            const isAwaiting = stage === 'awaiting_admin';
+                                            const isProcessing = approvingId === job.id;
+                                            return (
+                                                <TableRow key={job.id} className="hover:bg-muted/50">
+                                                    <TableCell className="font-medium text-xs py-2">
+                                                        <Link href={`/admin/jobs/${job.id}`} className="text-primary hover:underline">
+                                                            #{job.job_number}
+                                                        </Link>
+                                                    </TableCell>
+                                                    <TableCell className="text-xs py-2">{job.client?.name || '-'}</TableCell>
+                                                    <TableCell className="text-xs py-2 max-w-[100px] truncate">
+                                                        <Link href={`/admin/jobs/${job.id}`} className="hover:underline">
+                                                            {job.project_name || '-'}
+                                                        </Link>
+                                                    </TableCell>
+                                                    <TableCell className="py-2">
+                                                        {isAwaiting ? (
+                                                            <div className="flex flex-col gap-0.5">
+                                                                <div className="flex items-center gap-1">
+                                                                    <button
+                                                                        onClick={() => handleRecentOrderApprove(job.id, 'approve')}
+                                                                        disabled={isProcessing}
+                                                                        className="px-2 py-0.5 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold rounded transition-colors disabled:opacity-50 whitespace-nowrap"
+                                                                    >
+                                                                        {isProcessing ? '...' : '⚡ Approve'}
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleRecentOrderApprove(job.id, 'reject')}
+                                                                        disabled={isProcessing}
+                                                                        className="px-1.5 py-0.5 text-red-500 text-[10px] font-bold rounded hover:bg-red-50 border border-red-200 transition-colors disabled:opacity-50"
+                                                                    >
+                                                                        ✗
+                                                                    </button>
+                                                                </div>
+                                                                {approveErrors[job.id] && (
+                                                                    <span className="text-[9px] text-red-500">{approveErrors[job.id]}</span>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <Badge variant={stage === 'delivered' ? 'default' : stage === 'dispatched' ? 'secondary' : 'outline'}>
+                                                                {stage?.replace('_', ' ')}
+                                                            </Badge>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="text-right text-xs py-2">{formatCurrency(job.total_amount || 0)}</TableCell>
+                                                </TableRow>
+                                            );
+                                        })
                                     )}
                                 </TableBody>
                             </Table>

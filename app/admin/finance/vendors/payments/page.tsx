@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import {
-  Plus, Search, Building2, Calendar, IndianRupee, X, Eye, Trash2,
-  ArrowLeft, CheckCircle, CreditCard, Wallet, Building, ArrowUpRight
+  Plus, Search, Calendar, IndianRupee, X, Eye, Trash2,
+  ArrowLeft, CreditCard, Wallet, Building, ArrowUpRight
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { useJobs } from '@/lib/hooks';
+import { useJobs, useDesigners } from '@/lib/hooks';
 import { Calendar, Clock, User, AlertCircle, Search, Palette, Users, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 
@@ -45,19 +45,19 @@ const jobTypeBadge: Record<string, { label: string; bg: string; text: string }> 
 
 export default function UnifiedQueue() {
     const { profile } = useAuth();
+    const { designers } = useDesigners();  // already filtered — no placeholders
+    // Build a quick lookup map: profileId → full_name
+    const profileMap = Object.fromEntries((designers || []).map((d: any) => [d.id, d.full_name || d.name]));
+
     const { jobs, loading } = useJobs({
-        select: 'id, project_name, job_number, current_stage, priority, client_deadline, designer_id, job_type, product_category, designer_status, client:clients(id, name, company), designer:profiles(id, full_name)',
+        // Remove designer:profiles join — replaced by manual profileMap lookup
+        select: 'id, project_name, job_number, current_stage, priority, client_deadline, designer_id, job_type, product_category, designer_status, client:clients(id, name, company)',
         filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready'], op: 'in' }]
     });
     const [searchQuery, setSearchQuery] = useState('');
     const [showAll, setShowAll] = useState(false);
     const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
-    const designers = Array.from(
-        new Map((jobs || []).filter((j: any) => j.designer).map((j: any) => [j.designer.id, j.designer])).values()
-    ) as any[];
-    const myDesigner = designers.find((d: any) => d.user_id === profile?.id)
-        || designers.find((d: any) => d.name?.toLowerCase() === profile?.full_name?.toLowerCase());
     const isAdmin = profile?.role === 'admin';
 
     const allTasks = (jobs || [])
@@ -66,15 +66,14 @@ export default function UnifiedQueue() {
             id: job.id,
             title: job.project_name,
             client: job.client?.company || job.client?.name || 'Unknown',
-            designer: job.designer?.full_name || 'Unassigned',
+            designer: job.designer_id ? (profileMap[job.designer_id] || 'Unassigned') : 'Unassigned',
             designerId: job.designer_id,
             status: job.current_stage || 'new',
-            taskStatus: job.designer_status || null, // from jobs.designer_status — single source of truth
+            taskStatus: (job as any).designer_status || null,
             priority: job.priority || 'normal',
             deadline: job.client_deadline,
             jobNumber: job.job_number,
-            jobType: job.job_type || 'Design',
-            // Fix: compare designer_id directly to profile.id — most reliable match
+            jobType: (job as any).job_type || 'Design',
             isMyTask: isAdmin || job.designer_id === profile?.id,
         }));
 
@@ -198,7 +197,7 @@ export default function UnifiedQueue() {
                                         return (
                                             <Link
                                                 key={task.id}
-                                                href={isEditable ? '/admin/designers/tasks' : '#'}
+                                                href={isEditable ? `/admin/designers/tasks?view=my_tasks&task=${task.id}` : '#'}
                                                 onClick={e => !isEditable && e.preventDefault()}
                                             >
                                                 <div className={`

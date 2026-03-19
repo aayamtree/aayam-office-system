@@ -116,7 +116,7 @@ export default function DossierListPage() {
                 </td>
                 <td className="py-3 px-4">
                   <Link
-                    href={`/admin/designer-module/tasks/${t.id}`}
+                    href={`/admin/designers/new-project?job_id=${t.id}`}
                     className="flex items-center gap-1 text-xs text-primary hover:underline"
                   >
                     View <ChevronRight size={12} />

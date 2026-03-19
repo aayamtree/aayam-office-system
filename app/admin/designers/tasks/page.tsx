@@ -203,6 +203,25 @@ export default function DesignerWorkspace() {
     }
   }, [router]);
 
+  // Handle ?task=<id> → auto-select the task when navigating from Queue
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const taskId = params.get('task');
+    if (!taskId || !tasks.length) return;
+    // task.realId is the raw Supabase UUID — match against what Queue passes in the URL
+    const match = tasks.find((t: any) => t.realId === taskId);
+    if (match) {
+      setSelectedTaskId(match.id);
+      // Switch to list view so the task detail panel is visible
+      if (!activeView || activeView === 'board') {
+        setActiveView(isAdmin ? 'team_tasks' : 'my_tasks');
+      }
+      // Clean the URL so back-navigation works cleanly
+      const cleanUrl = window.location.pathname + (activeView && activeView !== 'board' ? `?view=${activeView}` : '');
+      window.history.replaceState({}, '', cleanUrl);
+    }
+  }, [tasks, activeView, isAdmin]);
+
   // NOTE: Daily Briefing is handled globally by DailyBriefingTrigger in layout.tsx — no duplicate here needed
 
   // Update Priority
@@ -213,6 +232,7 @@ export default function DesignerWorkspace() {
   };
 
   const setView = useCallback((view: string) => {
+    setActiveView(view);  // update state immediately — popstate only fires on back/forward, NOT router.push
     router.push(`/admin/designers/tasks?view=${view}`);
   }, [router]);
 
@@ -540,6 +560,27 @@ export default function DesignerWorkspace() {
     }
   };
 
+  // One-click approve for admin: approve a job that's awaiting_admin
+  const [approvingJobId, setApprovingJobId] = useState<string | null>(null);
+  const approveJob = async (realId: string, action: 'approve' | 'reject') => {
+    setApprovingJobId(realId);
+    try {
+      const res = await fetch(`/api/jobs/${realId}/approve`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed');
+      toast.success(action === 'approve' ? '✅ Job approved — started designing!' : '❌ Job rejected');
+      refetchJobs(); // refresh jobs list
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setApprovingJobId(null);
+    }
+  };
+
   return (
     <>
 
@@ -611,9 +652,29 @@ export default function DesignerWorkspace() {
 
                             {/* Body */}
                             <div className="p-3">
+                              {/* Awaiting Admin badge + one-click approve for admins */}
                               {task.current_stage === 'awaiting_admin' && (
-                                <div className="flex items-center gap-1.5 mb-1.5">
-                                  <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-300">⏳ Awaiting Admin Approval</span>
+                                <div className="mb-2">
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-300">⏳ Awaiting Approval</span>
+                                  {isAdmin && (
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); approveJob(task.realId, 'approve'); }}
+                                        disabled={approvingJobId === task.realId}
+                                        className="flex items-center gap-0.5 px-2.5 py-1 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold rounded transition-colors disabled:opacity-50 whitespace-nowrap"
+                                      >
+                                        {approvingJobId === task.realId ? <Loader2 size={9} className="animate-spin" /> : null}
+                                        ✓ Approve
+                                      </button>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); approveJob(task.realId, 'reject'); }}
+                                        disabled={approvingJobId === task.realId}
+                                        className="px-2.5 py-1 text-red-600 text-[10px] font-bold rounded bg-red-50 hover:bg-red-100 border border-red-200 transition-colors disabled:opacity-50 whitespace-nowrap"
+                                      >
+                                        ✗ Reject
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                               )}
                               <h4 className="font-bold text-gray-800 mb-1 line-clamp-2 leading-tight text-sm">{task.title}</h4>
@@ -923,6 +984,26 @@ export default function DesignerWorkspace() {
                         </span>
                       )}
                     </div>
+                    {/* One-click approve (admin only) */}
+                    {isAdmin && task.current_stage === 'awaiting_admin' && (
+                      <div className="mt-2 flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => approveJob(task.realId, 'approve')}
+                          disabled={approvingJobId === task.realId}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-md transition-colors disabled:opacity-50"
+                        >
+                          {approvingJobId === task.realId ? <Loader2 size={12} className="animate-spin" /> : null}
+                          ✓ Approve Job
+                        </button>
+                        <button
+                          onClick={() => approveJob(task.realId, 'reject')}
+                          disabled={approvingJobId === task.realId}
+                          className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold rounded-md transition-colors disabled:opacity-50"
+                        >
+                          ✗ Reject
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1078,8 +1159,9 @@ export default function DesignerWorkspace() {
 
                   <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-gray-50/30">
 
-                    {/* Cross-Designer Warning Banner */}
+                    {/* Cross-Designer Warning Banner — only show when designers list is loaded and user is truly not the assigned designer */}
                     {(() => {
+                      if (!designers || designers.length === 0) return null; // wait for designers to load
                       const myDesignerRec = designers.find((d: any) => d.user_id === profile?.id);
                       const isMyJob = myDesignerRec ? selectedTask.designerId === myDesignerRec.id : false;
                       const assignedName = selectedTask.designerName || 'Unassigned';
