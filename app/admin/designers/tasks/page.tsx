@@ -1159,11 +1159,12 @@ export default function DesignerWorkspace() {
 
                   <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-gray-50/30">
 
-                    {/* Cross-Designer Warning Banner — only show when designers list is loaded and user is truly not the assigned designer */}
+                    {/* Cross-Designer Warning Banner — only show when user is truly not the assigned designer */}
                     {(() => {
-                      if (!designers || designers.length === 0) return null; // wait for designers to load
-                      const myDesignerRec = designers.find((d: any) => d.user_id === profile?.id);
-                      const isMyJob = myDesignerRec ? selectedTask.designerId === myDesignerRec.id : false;
+                      if (!profile) return null; // wait for auth to load
+                      // job.designer_id stores the profile/auth user UUID
+                      // so we can directly compare with the current user's profile id
+                      const isMyJob = selectedTask.designerId === profile.id;
                       const assignedName = selectedTask.designerName || 'Unassigned';
 
                       if (!isAdmin && !isMyJob && selectedTask.designerId) {
