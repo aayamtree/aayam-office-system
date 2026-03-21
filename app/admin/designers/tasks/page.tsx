@@ -1077,17 +1077,31 @@ export default function DesignerWorkspace() {
                         )}
                       </div>
 
-                      {/* Hold / Unhold Button (Admin Only) */}
-                      {isAdmin && (
-                        selectedTask.is_on_hold ? (
+                    </div>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-gray-50/30">
+
+                    {/* Admin Freeze / Resume Control */}
+                    {isAdmin && (
+                      <div className={`flex items-center justify-between px-4 py-3 rounded-md border ${selectedTask.is_on_hold ? 'bg-amber-50 border-amber-300' : 'bg-white border-gray-200'}`}>
+                        <div className="flex items-center gap-2">
+                          {selectedTask.is_on_hold ? (
+                            <>
+                              <span className="text-amber-600 font-bold text-sm">⏸️ Job is Frozen</span>
+                              {selectedTask.hold_reason && <span className="text-xs text-amber-700 italic">— {selectedTask.hold_reason}</span>}
+                            </>
+                          ) : (
+                            <span className="text-xs text-gray-400 font-medium">Admin Control</span>
+                          )}
+                        </div>
+                        {selectedTask.is_on_hold ? (
                           <button
                             onClick={async () => {
                               const { confirmed } = await confirmDialog({ title: 'Resume Project', message: 'This will resume the project and move it back to its previous stage.', variant: 'success', confirmLabel: 'Resume' });
                               if (!confirmed) return;
                               await supabase.from('jobs').update({
                                 is_on_hold: false,
-                                // If it was in a print/locked stage before hold, return to designing
-                                // so the designer can open and work on it again
                                 current_stage: ['printing', 'finishing', 'quality_check', 'ready', 'delivered', 'sent_to_print', 'approval'].includes(selectedTask.pre_hold_stage || '')
                                   ? 'designing'
                                   : selectedTask.pre_hold_stage || 'designing',
@@ -1095,64 +1109,35 @@ export default function DesignerWorkspace() {
                                 pre_hold_stage: null,
                               }).eq('id', selectedTask.realId);
                               const userName = profile?.full_name || 'Admin';
-                              await supabase.from('job_notes').insert([{
-                                job_id: selectedTask.realId,
-                                user_id: profile?.id,
-                                content: `▶️ Project resumed by ${userName}. Back to ${selectedTask.pre_hold_stage || 'designing'}.`,
-                                tag: 'update',
-                                source: 'self',
-                              }]);
-                              await supabase.from('job_stage_history').insert([{
-                                job_id: selectedTask.realId,
-                                from_stage: 'on_hold',
-                                to_stage: selectedTask.pre_hold_stage || 'designing',
-                                notes: `▶️ Resumed by ${userName}`,
-                              }]);
-                              await logActivity({ action: 'update', resourceType: 'job', resourceId: selectedTask.realId, details: { description: `▶️ ${selectedTask.taskId} resumed by ${userName}. Back to ${selectedTask.pre_hold_stage || 'designing'}.`, holdAction: 'resume' } });
+                              await supabase.from('job_notes').insert([{ job_id: selectedTask.realId, user_id: profile?.id, content: `▶️ Project resumed by ${userName}. Back to ${selectedTask.pre_hold_stage || 'designing'}.`, tag: 'update', source: 'self' }]);
+                              await supabase.from('job_stage_history').insert([{ job_id: selectedTask.realId, from_stage: 'on_hold', to_stage: selectedTask.pre_hold_stage || 'designing', notes: `▶️ Resumed by ${userName}` }]);
+                              await logActivity({ action: 'update', resourceType: 'job', resourceId: selectedTask.realId, details: { description: `▶️ ${selectedTask.taskId} resumed by ${userName}.`, holdAction: 'resume' } });
                               refetchJobs();
                             }}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white rounded-md text-xs font-bold hover:bg-green-700 transition-colors"
                           >
-                            ▶️ Resume
+                            ▶️ Resume Job
                           </button>
                         ) : (
                           <button
                             onClick={async () => {
-                              const { confirmed, inputValue } = await confirmDialog({ title: 'Put on Hold', message: 'This will freeze the project. The designer won\'t be able to work on it until you resume.', variant: 'warning', confirmLabel: 'Put on Hold', showInput: true, inputPlaceholder: 'Why are you putting this on hold?', inputRequired: true });
+                              const { confirmed, inputValue } = await confirmDialog({ title: 'Freeze Job', message: 'This will freeze the job. The designer won\'t be able to work on it until you resume.', variant: 'warning', confirmLabel: 'Freeze', showInput: true, inputPlaceholder: 'Why are you freezing this job?', inputRequired: true });
                               if (!confirmed || !inputValue) return;
                               const reason = inputValue;
-                              await supabase.from('jobs').update({
-                                is_on_hold: true,
-                                hold_reason: reason,
-                                pre_hold_stage: selectedTask.current_stage || 'designing',
-                              }).eq('id', selectedTask.realId);
+                              await supabase.from('jobs').update({ is_on_hold: true, hold_reason: reason, pre_hold_stage: selectedTask.current_stage || 'designing' }).eq('id', selectedTask.realId);
                               const userName = profile?.full_name || 'Admin';
-                              await supabase.from('job_notes').insert([{
-                                job_id: selectedTask.realId,
-                                user_id: profile?.id,
-                                content: `⏸️ Project put on hold by ${userName}. Reason: "${reason}"`,
-                                tag: 'update',
-                                source: 'self',
-                              }]);
-                              await supabase.from('job_stage_history').insert([{
-                                job_id: selectedTask.realId,
-                                from_stage: selectedTask.current_stage || 'designing',
-                                to_stage: 'on_hold',
-                                notes: `⏸️ On Hold: ${reason}`,
-                              }]);
-                              await logActivity({ action: 'update', resourceType: 'job', resourceId: selectedTask.realId, details: { description: `⏸️ ${selectedTask.taskId} put on hold by ${userName}. Reason: "${reason}"`, holdAction: 'hold' } });
+                              await supabase.from('job_notes').insert([{ job_id: selectedTask.realId, user_id: profile?.id, content: `⏸️ Job frozen by ${userName}. Reason: "${reason}"`, tag: 'update', source: 'self' }]);
+                              await supabase.from('job_stage_history').insert([{ job_id: selectedTask.realId, from_stage: selectedTask.current_stage || 'designing', to_stage: 'on_hold', notes: `⏸️ Frozen: ${reason}` }]);
+                              await logActivity({ action: 'update', resourceType: 'job', resourceId: selectedTask.realId, details: { description: `⏸️ ${selectedTask.taskId} frozen by ${userName}. Reason: "${reason}"`, holdAction: 'hold' } });
                               refetchJobs();
                             }}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 text-amber-700 rounded-md text-xs font-bold hover:bg-amber-200 border border-amber-300 transition-colors"
                           >
-                            ⏸️ Freeze
+                            ⏸️ Freeze Job
                           </button>
-                        )
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-gray-50/30">
+                        )}
+                      </div>
+                    )}
 
                     {/* Cross-Designer Warning Banner — only show when user is truly not the assigned designer */}
                     {(() => {
