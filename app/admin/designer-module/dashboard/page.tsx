@@ -287,7 +287,7 @@ export default function DesignerDashboardPage() {
                     <td className="py-1.5"><Link href={`/admin/designer-module/tasks/${t.id}`} className="font-mono text-blue-600 hover:underline">{t.code}</Link></td>
                     <td className="py-1.5 text-gray-600 truncate max-w-[80px]">{t.client}</td>
                     <td className="py-1.5 text-gray-600 truncate max-w-[80px]">{t.designer}</td>
-                    <td className="py-1.5 font-semibold text-gray-800">{t.total_hours}h</td>
+                    <td className="py-1.5 font-semibold text-gray-800">{t.total_hours ?? 0}h</td>
                     <td className="py-1.5 text-center">{t.rework_count > 0 ? <span className="text-red-500">#{t.rework_count}</span> : <span className="text-gray-300">0</span>}</td>
                   </tr>
                 ))}
@@ -311,8 +311,8 @@ export default function DesignerDashboardPage() {
                   <tr key={d.id} className="border-b border-gray-50">
                     <td className="py-1.5 font-medium text-gray-800">{d.full_name}</td>
                     <td className="py-1.5 text-center">{d.tasks_done}</td>
-                    <td className="py-1.5">{d.total_hours}h</td>
-                    <td className="py-1.5">{d.avg_per_task}h</td>
+                    <td className="py-1.5">{d.total_hours ?? 0}h</td>
+                    <td className="py-1.5">{d.avg_per_task ?? 0}h</td>
                     <td className="py-1.5 text-center">{d.rework_count > 0 ? <span className="text-red-500">{d.rework_count}</span> : '0'}</td>
                   </tr>
                 ))}

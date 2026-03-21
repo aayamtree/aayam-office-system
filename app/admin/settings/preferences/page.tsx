@@ -158,7 +158,7 @@ export default function PreferencesPage() {
                 </div>
                 <button
                   onClick={() => handleToggle(item.key as keyof typeof preferences)}
-                  className={`w-12 h-6 rounded-full transition-colors ${preferences[item.key as keyof typeof preferences] ? 'bg-white0' : 'bg-gray-300'
+                  className={`w-12 h-6 rounded-full transition-colors ${preferences[item.key as keyof typeof preferences] ? 'bg-primary' : 'bg-gray-300'
                     }`}
                 >
                   <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${preferences[item.key as keyof typeof preferences] ? 'translate-x-6' : 'translate-x-0.5'
@@ -241,7 +241,7 @@ export default function PreferencesPage() {
                 </div>
                 <button
                   onClick={() => handleToggle(item.key as keyof typeof preferences)}
-                  className={`w-12 h-6 rounded-full transition-colors ${preferences[item.key as keyof typeof preferences] ? 'bg-white0' : 'bg-gray-300'
+                  className={`w-12 h-6 rounded-full transition-colors ${preferences[item.key as keyof typeof preferences] ? 'bg-primary' : 'bg-gray-300'
                     }`}
                 >
                   <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${preferences[item.key as keyof typeof preferences] ? 'translate-x-6' : 'translate-x-0.5'
