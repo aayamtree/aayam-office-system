@@ -118,7 +118,7 @@ const phases: Phase[] = [
         steps: [
             { label: 'Designer sees their queue', path: 'Design Studio → My Queue', detail: 'Only jobs assigned to them — sorted by deadline' },
             { label: 'Admin sees all designers', path: 'Design Studio → Team Queue', detail: 'Who is working on what, overdue tasks, all status pills' },
-            { label: 'Status pills — live tracking', path: 'My Queue → Task → Status pill', detail: '🟢 Live = working now | 🟡 Hold = waiting | 🔵 Review = sent for approval | ✅ End = complete | 🔁 Transfer = reassigning' },
+            { label: 'Status pills — live tracking', path: 'My Queue → Task → Status pill', detail: '🟢 Live = working now | 🟡 Pause = waiting | 🔵 Review = sent for approval | ✅ End = complete | 🔁 Transfer = reassigning' },
             { label: 'Add design task / sub-task', path: 'Design Studio → + New Project', detail: 'Break a job into design steps and assign to a designer' },
             { label: 'Upload files (Google Drive)', path: 'Job Details → Files → Upload', detail: 'Files stored in Google Drive, linked to job' },
             { label: 'Designer views timeline', path: 'Design Studio → Timeline', detail: 'Gantt-style bar chart of all tasks by date' },

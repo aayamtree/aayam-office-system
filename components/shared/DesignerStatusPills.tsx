@@ -29,7 +29,7 @@ export const DESIGNER_STATUSES = [
   },
   {
     status: 'hold',
-    label: 'Hold',
+    label: 'Pause',
     icon: Pause,
     pill: 'bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200',
     active: 'bg-orange-500 text-white border-orange-500',
@@ -141,7 +141,8 @@ export function DesignerStatusPills({
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Update failed');
       onStatusChange?.(newStatus);
-      toast.success(`Status: ${newStatus.toUpperCase()}`);
+      const label = DESIGNER_STATUSES.find(s => s.status === newStatus)?.label || newStatus.toUpperCase();
+      toast.success(`Status: ${label}`);
     } catch (e: any) {
       toast.error(e.message);
     } finally {

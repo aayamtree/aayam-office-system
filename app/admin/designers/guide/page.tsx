@@ -51,7 +51,7 @@ const phases: Phase[] = [
         color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200', headerBg: 'bg-indigo-700',
         steps: [
             { label: '🟢 Live — I am actively working on this right now', path: 'My Queue / Tasks → Live pill', detail: 'Set this when you pick up and start designing' },
-            { label: '🟡 Hold — Paused, waiting for something', path: 'My Queue / Tasks → Hold pill', detail: 'Use when waiting for client files, feedback, or clarification' },
+            { label: '🟡 Pause — Paused, waiting for something', path: 'My Queue / Tasks → Pause pill', detail: 'Use when waiting for client files, feedback, or clarification' },
             { label: '🔵 Review — Sent to client / team for approval', path: 'My Queue / Tasks → Review pill', detail: 'Design is done, now awaiting feedback or sign-off' },
             { label: '✅ End — Work complete, ready to hand off', path: 'My Queue / Tasks → End pill', detail: 'Final file uploaded, brief is fulfilled — admin takes over' },
             { label: '🔁 Transfer — Reassigning to another designer', path: 'My Queue / Tasks → Transfer pill', detail: 'If you can\'t complete it — let admin know the reason' },
@@ -83,7 +83,7 @@ const phases: Phase[] = [
             { label: 'Click New Project', path: 'Design Studio → + New Project', detail: 'Opens the full task creation form' },
             { label: 'Fill in client, job type, deadline', path: 'New Project form', detail: 'Link to an existing job if it\'s part of one' },
             { label: 'Assign to yourself or a designer', path: 'Assign To field', detail: 'Task appears in that designer\'s My Queue immediately' },
-            { label: 'Set initial status', path: 'Status field → Live / Hold', detail: 'Live if starting now, Hold if queued for later' },
+            { label: 'Set initial status', path: 'Status field → Live / Pause', detail: 'Live if starting now, Hold if queued for later' },
         ],
         tip: 'Admin creates most tasks — but you can create sub-tasks for your own workflow.',
     },
