@@ -18,8 +18,9 @@ async function getSupabase(cookieStore: Awaited<ReturnType<typeof cookies>>) {
 }
 
 /** Sync a name into clients.brand_name hashtag text field (backward compat) */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function syncBrandToClientText(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   clientId: string,
   brandName: string,
   remove = false

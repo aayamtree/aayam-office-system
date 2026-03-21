@@ -1,6 +1,7 @@
 'use client';
 
-import { useJobs, useAuth } from '@/lib/hooks';
+import { useJobs } from '@/lib/hooks';
+import { useAuth } from '@/lib/auth-context';
 import { Truck, CheckCircle } from 'lucide-react';
 
 export default function MarketingDispatchPage() {
@@ -47,9 +48,9 @@ export default function MarketingDispatchPage() {
                     {job.current_stage.replace('_', ' ')}
                   </span>
                 </td>
-                <td className="p-4 text-right font-mono">₹{job.total_amount}</td>
+                <td className="p-4 text-right font-mono">₹{(job.total_amount || 0).toLocaleString('en-IN')}</td>
                 <td className="p-4 text-right font-mono text-gray-900 font-bold">
-                  ₹{(job.total_amount * 0.02).toFixed(2)}
+                  ₹{((job.total_amount || 0) * 0.02).toFixed(2)}
                 </td>
               </tr>
             ))}
