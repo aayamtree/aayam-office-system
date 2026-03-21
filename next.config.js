@@ -12,8 +12,8 @@ const nextConfig = {
         ],
       },
       {
-        // Public folder assets (logo, icons etc.) — cache for 1 day
-        source: '/(:path((?!api).*)).(png|jpg|jpeg|gif|svg|ico|webp|woff|woff2)',
+        // Public folder assets (logo, icons, fonts) — cache for 1 day
+        source: '/:path*.(png|jpg|jpeg|gif|svg|ico|webp|woff|woff2)',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=3600' },
         ],
