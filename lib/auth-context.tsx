@@ -203,6 +203,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           fetchProfile(session.user.id, session.user.email);
           // Start heartbeat for existing session (page reload, tab reopen)
           if (!stopHeartbeat) stopHeartbeat = startHeartbeat();
+          // Also fire attendance login — ensures a record exists for today even if
+          // the designer resumed an old session without going through signIn()
+          fireAttendanceLogin();
         } else {
           setLoading(false);
         }

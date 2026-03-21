@@ -16,7 +16,9 @@ export async function GET(request: NextRequest) {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  const today = new Date().toISOString().split('T')[0];
+  // Use IST date — records are stored with IST date in login/logout/heartbeat routes
+  const nowIST = new Date(new Date().getTime() + (5.5 * 60 * 60 * 1000));
+  const today = nowIST.toISOString().split('T')[0];
 
   // Two separate queries — avoids PostgREST join direction issues
   const [designersResult, attendanceResult] = await Promise.all([
