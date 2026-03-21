@@ -118,6 +118,7 @@ const menuItems: MenuItem[] = [
       { name: 'Follow-ups', href: '/admin/marketing/follow-ups' },
       { name: 'Quotations', href: '/admin/marketing/quotations' },
       { name: 'My Orders', href: '/admin/marketing/orders' },
+      { name: 'Dispatched Orders', href: '/admin/marketing/dispatch' },
       { name: 'Commissions', href: '/admin/marketing/commissions' },
       { name: '📖 My Guide', href: '/admin/marketing/guide' },
     ]
