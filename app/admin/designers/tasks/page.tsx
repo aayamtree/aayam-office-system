@@ -290,7 +290,7 @@ export default function DesignerWorkspace() {
             realId: job.id,
             taskId: job.job_number || 'JOB',
             title: job.project_name,
-            clientName: client?.name || 'Unknown Client',
+            clientName: client?.company || client?.name || 'Unknown Client',
             priority: job.priority || 'normal',
             // Formatting Date to 'DD MMM'
             deadline: job.client_deadline ? new Date(job.client_deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '',
@@ -1145,7 +1145,7 @@ export default function DesignerWorkspace() {
                             }}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 text-amber-700 rounded-md text-xs font-bold hover:bg-amber-200 border border-amber-300 transition-colors"
                           >
-                            ⏸️ Hold
+                            ⏸️ Freeze
                           </button>
                         )
                       )}
