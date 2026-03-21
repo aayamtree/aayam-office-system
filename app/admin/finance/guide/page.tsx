@@ -85,9 +85,23 @@ const phases: Phase[] = [
         ],
     },
     {
+        id: 'accounts',
+        icon: <Receipt className="w-5 h-5" />,
+        title: '6. Bank Accounts & Ledger',
+        subtitle: 'View per-account transaction history',
+        color: 'text-violet-700', bg: 'bg-violet-50', border: 'border-violet-200', headerBg: 'bg-violet-700',
+        steps: [
+            { label: 'Open Accounts list', path: 'Finance → Accounts', detail: 'See all accounts: Cash, HDFC Current, etc. with running balance' },
+            { label: 'Open account statement', path: 'Finance → Accounts → [Account name] → Statement', detail: 'Full ledger for that account — every debit and credit entry' },
+            { label: 'Add a new bank account', path: 'Finance → Accounts → Add Account', detail: 'Cash, bank, or other — add before recording any transactions against it' },
+            { label: 'View Daily Summary', path: 'Finance → Daily Summary', detail: 'Admin-only: overview of all account balances for any selected date' },
+        ],
+        tip: 'Always add your bank accounts before recording payments or expenses.',
+    },
+    {
         id: 'banking',
         icon: <Landmark className="w-5 h-5" />,
-        title: '6. Banking & Reconciliation',
+        title: '7. Banking & Reconciliation',
         subtitle: 'Match app with actual bank statement',
         color: 'text-cyan-700', bg: 'bg-cyan-50', border: 'border-cyan-200', headerBg: 'bg-cyan-700',
         steps: [
@@ -101,7 +115,7 @@ const phases: Phase[] = [
     {
         id: 'reports',
         icon: <BarChart3 className="w-5 h-5" />,
-        title: '7. Reports',
+        title: '8. Reports',
         subtitle: 'View financial performance & summaries',
         color: 'text-slate-700', bg: 'bg-slate-50', border: 'border-slate-200', headerBg: 'bg-slate-700',
         steps: [

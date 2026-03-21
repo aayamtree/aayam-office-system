@@ -24,6 +24,7 @@ const phases: Phase[] = [
             { label: 'Open Dispatch Command Center', path: 'Dispatch → Command Center', detail: 'See all jobs at Printing and QC stages' },
             { label: 'Check jobs pending QC', path: 'Dispatch → QC & Packing tab', detail: 'These are printed and waiting for your check' },
             { label: 'Check today\'s scheduled deliveries', path: 'Dispatch → Scheduled Deliveries', detail: 'Follow up with transporter on pending deliveries' },
+            { label: 'Check your calendar', path: 'Calendar', detail: 'See dispatch deadlines for jobs — design tasks are not shown in your calendar view' },
         ],
     },
     {
