@@ -18,6 +18,7 @@ import {
 import ProjectNotesLog from '@/components/ProjectNotesLog';
 import { useConfirm } from '@/components/ConfirmModal';
 import PairDropBanner from '@/components/layout/PairDropBanner';
+import { DesignerStatusPills, DesignerStatusBadge } from '@/components/shared/DesignerStatusPills';
 
 // --- HELPERS ---
 const getDesignerStatus = (stage: string) => {
@@ -975,9 +976,7 @@ export default function DesignerWorkspace() {
                       {task.title}
                     </h3>
                     <div className="flex items-center justify-between">
-                      <span className={`text-xs px-2.5 py-1 rounded-md font-medium ${taskStatuses.find(s => s.id === task.status)?.color}`}>
-                        {taskStatuses.find(s => s.id === task.status)?.name}
-                      </span>
+                      <DesignerStatusBadge status={task.designer_status} />
                       {task.priority !== 'normal' && (
                         <span className={`text-xs px-2 py-0.5 rounded-md border ${priorities.find(p => p.id === task.priority)?.color}`}>
                           {task.priority}
@@ -1069,16 +1068,22 @@ export default function DesignerWorkspace() {
                             })()}
                           </span>
                         ) : (
-                          <>
-                            <span className="text-xs font-bold text-gray-500 pl-2 uppercase whitespace-nowrap">Status:</span>
-                            <select
-                              value={selectedTask.status}
-                              onChange={(e) => updateStatus(selectedTask.realId, e.target.value)}
-                              className="flex-1 md:flex-none bg-transparent text-gray-700 text-sm rounded px-2 py-1 cursor-pointer focus:ring-0 border-none outline-none font-semibold hover:bg-white transition-colors"
-                            >
-                              {taskStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                            </select>
-                          </>
+                          <div className="py-1 w-full">
+                            <DesignerStatusPills
+                              jobId={selectedTask.realId}
+                              currentStatus={selectedTask.designer_status}
+                              size="compact"
+                              userRole={profile?.role}
+                              currentUserId={profile?.id}
+                              assignedDesignerId={selectedTask.designerId}
+                              onStatusChange={(s) => {
+                                setTasks(prev => prev.map(t =>
+                                  t.realId === selectedTask.realId ? { ...t, designer_status: s } : t
+                                ));
+                              }}
+                              designers={designers?.map((d: any) => ({ id: d.id, full_name: d.full_name || d.name || d.email }))}
+                            />
+                          </div>
                         )}
                       </div>
 

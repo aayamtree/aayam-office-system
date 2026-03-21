@@ -111,7 +111,6 @@ export default function LeadsPage() {
         throw new Error('You appear to be logged out. Please refresh the page.');
       }
 
-      console.log('Saving Lead for User:', currentUserId);
 
       const payload = {
         name: formData.name,

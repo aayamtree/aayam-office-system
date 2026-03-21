@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { useConfirm } from '@/components/ConfirmModal';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/lib/toast';
 import {
     Printer, Package, Clock, CheckCircle, Truck, Search as SearchIcon,
     Calendar, IndianRupee, Trash2, RefreshCw, ArrowRight, Eye, X,
@@ -182,8 +182,8 @@ export default function PrintRunsPage() {
             }));
 
             setRuns(mapped);
-        } catch (err) {
-            console.error('Error fetching print runs:', err);
+        } catch (err: any) {
+            toast.error('Failed to load print runs: ' + (err.message || 'Unknown error'));
         } finally {
             setLoading(false);
         }
@@ -212,8 +212,8 @@ export default function PrintRunsPage() {
                 .eq('id', runId);
             if (error) throw error;
             await fetchRuns();
-        } catch (err) {
-            console.error('Error updating status:', err);
+        } catch (err: any) {
+            toast.error('Failed to update status: ' + (err.message || 'Unknown error'));
         } finally {
             setUpdating(null);
         }
@@ -227,7 +227,7 @@ export default function PrintRunsPage() {
         };
         if (deliveryMode === 'direct_to_client') {
             if (!directSkipReason.trim()) {
-                toast({ title: '⚠️ Missing Info', description: 'Please enter a reason for skipping physical QC', variant: 'destructive' });
+                toast.error('Please enter a reason for skipping physical QC.');
                 return;
             }
             data.delivery_address = deliveryAddress;
@@ -285,8 +285,8 @@ export default function PrintRunsPage() {
             await supabase.from('print_runs').delete().eq('id', runId);
             setViewRun(null);
             await fetchRuns();
-        } catch (err) {
-            console.error('Error deleting print run:', err);
+        } catch (err: any) {
+            toast.error('Failed to delete print run: ' + (err.message || 'Unknown error'));
         }
     };
 

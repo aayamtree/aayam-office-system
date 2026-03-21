@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 // PERF: Removed useDashboardStats (25 queries!) — sidebar only needs 2 badge counts
 import { supabase } from '@/lib/supabase';
@@ -42,6 +43,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/Badge';
+import { EndMyDayButton } from '@/components/attendance/EndMyDayButton';
 
 interface MenuItem {
   name: string;
@@ -355,7 +357,7 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
           className="flex items-center gap-2"
           onClick={handleLinkClick}
         >
-          <img src="/company-logo.png" alt="Aayam" className="w-8 h-8 rounded shrink-0" />
+          <Image src="/company-logo.png" alt="Aayam" width={32} height={32} className="rounded shrink-0" />
           {!isCollapsed && <span className="font-bold text-foreground text-xl whitespace-nowrap">Aayam</span>}
         </Link>
         {!isCollapsed && isDesktop && (
@@ -479,6 +481,13 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
           )}
         </nav>
       </ScrollArea>
+
+      {/* End My Day — Designer Only */}
+      {!isCollapsed && profile?.role === 'designer' && (
+        <div className="px-3 pb-2">
+          <EndMyDayButton />
+        </div>
+      )}
 
       {/* User Profile */}
       <div className={`border-t border-border ${isCollapsed ? 'p-2 flex justify-center' : 'p-4'}`}>

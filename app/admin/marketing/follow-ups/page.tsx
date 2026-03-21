@@ -129,7 +129,6 @@ export default function MarketingFollowUpsPage() {
   };
 
   const handleCreateQuote = (followUp: any) => {
-    console.log('Creating quote for follow-up:', followUp);
 
     if (followUp.leadId) {
       router.push(`/admin/marketing/quotations?new=true&leadId=${followUp.leadId}&followUpId=${followUp.id}`);

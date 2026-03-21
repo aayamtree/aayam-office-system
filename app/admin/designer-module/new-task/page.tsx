@@ -29,8 +29,9 @@ export default function NewTaskPage() {
   const [priority, setPriority] = useState('normal');
   const [assignedTo, setAssignedTo] = useState(profile?.id || '');
   const [isDraft, setIsDraft] = useState(false);
-  const [commonBrands, setCommonBrands] = useState<string[]>([]);
-  const [showBrandSuggest, setShowBrandSuggest] = useState(false);
+  const [clientBrands, setClientBrands] = useState<{ id: string; name: string }[]>([]);
+  const [addingBrand, setAddingBrand] = useState(false);
+  const [newBrandInput, setNewBrandInput] = useState('');
   const brandRef = useRef<HTMLDivElement>(null);
 
   // Data
@@ -92,25 +93,14 @@ export default function NewTaskPage() {
     }
   }, []);
 
-  // Load brand suggestions when client changes (uses brand_name on client record)
+  // Load brands from brands table when client changes
   useEffect(() => {
-    if (!clientId) { setCommonBrands([]); return; }
-    const client = clients.find(c => c.id === clientId);
-    if (!client) return;
-    // Parse brand_name field if it exists as hashtags e.g. "#tiger #cobra"
-    const raw = (client as any).brand_name || '';
-    const parsed = raw.split(/[,\s#]+/).map((s: string) => s.trim()).filter(Boolean);
-    setCommonBrands(parsed);
-  }, [clientId, clients]);
-
-  // Close brand dropdown on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (brandRef.current && !brandRef.current.contains(e.target as Node)) setShowBrandSuggest(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
+    if (!clientId) { setClientBrands([]); setBrandName(''); return; }
+    fetch(`/api/clients/${clientId}/brands`)
+      .then(r => r.ok ? r.json() : { data: [] })
+      .then(j => setClientBrands(j.data || []))
+      .catch(() => setClientBrands([]));
+  }, [clientId]);
 
   // Auto-save draft every 30s
   useEffect(() => {
@@ -121,6 +111,29 @@ export default function NewTaskPage() {
     }, 30000);
     return () => clearInterval(interval);
   }, [clientId, brandName, productTypeId, description, dimensions, deadline, priority, assignedTo]);
+
+  const handleCreateBrand = async () => {
+    const name = newBrandInput.trim();
+    if (!name || !clientId) return;
+    try {
+      const res = await fetch(`/api/clients/${clientId}/brands`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to add brand');
+      const newBrand = json.data;
+      if (newBrand) {
+        setClientBrands(prev => [...prev.filter(b => b.id !== newBrand.id), newBrand].sort((a, b) => a.name.localeCompare(b.name)));
+        setBrandName(newBrand.name);
+      }
+    } catch (err: any) {
+      // non-fatal — keep the free-typed text
+    }
+    setNewBrandInput('');
+    setAddingBrand(false);
+  };
 
   // Close client dropdown on outside click
   useEffect(() => {
@@ -288,27 +301,51 @@ export default function NewTaskPage() {
           {errors.client && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle size={11} />{errors.client}</p>}
         </div>
 
-        {/* Brand (optional, appears after client selected) */}
         {clientId && (
           <div ref={brandRef} className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Brand <span className="text-xs text-gray-400">(optional)</span>
             </label>
-            <input
-              value={brandName}
-              onChange={e => setBrandName(e.target.value)}
-              onFocus={() => setShowBrandSuggest(commonBrands.length > 0)}
-              placeholder="e.g. Tiger Brand, Cobra..."
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary/30"
-            />
-            {showBrandSuggest && commonBrands.length > 0 && (
-              <div className="absolute z-40 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
-                {commonBrands.map(b => (
-                  <button key={b} type="button"
-                    onClick={() => { setBrandName(b); setShowBrandSuggest(false); }}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 capitalize">{b}</button>
-                ))}
+            {addingBrand ? (
+              <div className="flex gap-2">
+                <input
+                  autoFocus
+                  value={newBrandInput}
+                  onChange={e => setNewBrandInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') { e.preventDefault(); handleCreateBrand(); }
+                    if (e.key === 'Escape') { setAddingBrand(false); setNewBrandInput(''); }
+                  }}
+                  placeholder="Type new brand name..."
+                  className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary/30"
+                />
+                <button type="button" onClick={handleCreateBrand}
+                  className="px-3 py-2 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-700">Save</button>
+                <button type="button" onClick={() => { setAddingBrand(false); setNewBrandInput(''); }}
+                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Cancel</button>
               </div>
+            ) : clientBrands.length === 0 ? (
+              <input
+                value={brandName}
+                onChange={e => setBrandName(e.target.value)}
+                placeholder="e.g. Tiger Brand, Cobra..."
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary/30"
+              />
+            ) : (
+              <select
+                value={brandName}
+                onChange={e => {
+                  if (e.target.value === '__add_new') { setAddingBrand(true); }
+                  else setBrandName(e.target.value);
+                }}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary/30"
+              >
+                <option value="">Select brand...</option>
+                {clientBrands.map(b => (
+                  <option key={b.id} value={b.name}>{b.name}</option>
+                ))}
+                <option value="__add_new">+ Add New Brand</option>
+              </select>
             )}
           </div>
         )}

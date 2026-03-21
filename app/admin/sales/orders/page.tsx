@@ -213,11 +213,8 @@ export default function OrdersPage() {
     if (confirmed) {
       const result = await deleteJob(id);
       if (result?.error) {
-        // BUG-05: Bulletproof error display — both toast and alert
         const msg = 'Cannot delete order: ' + result.error;
         toast.error(msg);
-        // Fallback: window.alert guarantees visibility even if toast doesn't render
-        window.alert('❌ ' + msg);
       } else {
         toast.success('Order deleted successfully.');
       }

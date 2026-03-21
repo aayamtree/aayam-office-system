@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/lib/toast';
 import { Users, Package, Layers } from 'lucide-react';
 
 interface PendingJob {
@@ -59,8 +60,8 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
             if (error) throw error;
             // Extra client-side safety: also filter out any on_hold that slipped through
             setJobs((data || []).filter((j: any) => !j.is_on_hold));
-        } catch (error) {
-            console.error('Error fetching pending jobs:', error);
+        } catch (error: any) {
+            toast.error('Failed to load print job queue: ' + (error.message || 'Unknown error'));
         } finally {
             setLoading(false);
         }

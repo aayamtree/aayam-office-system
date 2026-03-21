@@ -88,7 +88,7 @@ export default function ProfileSettingsPage() {
                     <div className="flex items-center gap-3 md:gap-4">
                         <div className="w-20 h-20 bg-gray-900 rounded-full flex items-center justify-center text-white font-bold text-page-title overflow-hidden">
                             {formData.avatar_url ? (
-                                <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                                <img src={formData.avatar_url} alt="Profile Avatar" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                             ) : (
                                 profile?.full_name?.charAt(0) || 'A'
                             )}

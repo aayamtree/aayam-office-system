@@ -188,6 +188,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     let mounted = true;
+    let stopHeartbeat: (() => void) | null = null;
 
     // Get initial session — NON-BLOCKING (middleware handles route protection)
     const initSession = async () => {
@@ -200,6 +201,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (session?.user) {
           fetchProfile(session.user.id, session.user.email);
+          // Start heartbeat for existing session (page reload, tab reopen)
+          if (!stopHeartbeat) stopHeartbeat = startHeartbeat();
         } else {
           setLoading(false);
         }
@@ -222,6 +225,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initSession();
 
+    // ── DAILY SESSION RESET ──────────────────────────────────────────────────
+    // If the stored session date is not today, force sign-out so the designer
+    // must log in freshly each morning (office hours 9 AM – 7:30 PM).
+    if (typeof window !== 'undefined') {
+      const savedDate = localStorage.getItem('aayam_session_date');
+      const today = new Date().toISOString().split('T')[0];
+      // Only applies to real Supabase sessions (not speed/bypass mode)
+      const isSpeedMode = !!localStorage.getItem('aayam_speed_role');
+      const isBypassMode = localStorage.getItem('aayam_bypass_mode') === 'true';
+      if (savedDate && savedDate !== today && !isSpeedMode && !isBypassMode) {
+        // New day — invalidate the old session and force re-login
+        console.info('[Attendance] New day detected — forcing re-login for fresh attendance record.');
+        localStorage.removeItem('aayam_session_date');
+        // Fire logout to record last_logout_time for previous day
+        navigator.sendBeacon('/api/attendance/logout');
+        // Clear auth state and redirect
+        supabase.auth.signOut({ scope: 'local' }).finally(() => {
+          localStorage.removeItem('aayam_fallback_profile');
+          window.location.href = '/login?reason=new_day';
+        });
+        return;
+      }
+    }
+
+    // ── BEACON LOGOUT on browser/tab close ──────────────────────────────────
+    // navigator.sendBeacon is reliable even during page unload (unlike fetch).
+    // Fires when: tab closes, browser quits, or PC shuts down via OS kill.
+    const handleBeforeUnload = () => {
+      navigator.sendBeacon('/api/attendance/logout');
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Also fire when the tab is hidden (covers some mobile + rapid close cases)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        navigator.sendBeacon('/api/attendance/logout');
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     // Listen for auth changes - but don't cause flickering
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -234,7 +277,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (session?.user) {
             // Don't await this so it doesn't block signInWithPassword from resolving
             fetchProfile(session.user.id, session.user.email);
+            // Start heartbeat on fresh sign-in
+            if (!stopHeartbeat) stopHeartbeat = startHeartbeat();
           } else {
+            // Stop heartbeat on sign-out
+            stopHeartbeat?.();
+            stopHeartbeat = null;
             setProfile(null);
           }
         }
@@ -244,6 +292,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      stopHeartbeat?.(); // stop the 5-min interval on unmount
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [isConfigured]);
 
@@ -267,7 +318,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) return { error: error.message };
 
       // Fire attendance login (non-blocking)
-      setTimeout(() => fireAttendanceLogin(), 500);
+      setTimeout(() => {
+        // Store today's date so we can detect a new day on next load
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('aayam_session_date', new Date().toISOString().split('T')[0]);
+        }
+        fireAttendanceLogin();
+      }, 500);
 
       return { error: null };
     } catch (error: any) {
