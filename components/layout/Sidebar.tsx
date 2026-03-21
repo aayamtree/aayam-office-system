@@ -143,6 +143,9 @@ const menuItems: MenuItem[] = [
       { name: 'Invoices', href: '/admin/finance/invoices' },
       { name: 'Payments', href: '/admin/finance/payments' },
       { name: 'Banking', href: '/admin/finance/banking' },
+      { name: 'Bank Accounts', href: '/admin/finance/banks', adminOnly: true },
+      { name: 'Daily Summary', href: '/admin/finance/daily', adminOnly: true },
+      { name: 'Accounts', href: '/admin/finance/accounts', adminOnly: true },
       { name: 'Purchase Bills', href: '/admin/finance/vendors/purchases' },
       { name: 'Vendors', href: '/admin/finance/vendors' },
       { name: '📖 My Guide', href: '/admin/finance/guide' },
@@ -446,7 +449,7 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
                   {/* Submenu */}
                   {hasSubmenu && (isExpanded || item.name === 'Design Studio') && (
                     <div className="ml-6 mt-1 space-y-1 border-l border-border pl-3">
-                      {item.submenu!.map((sub) => {
+                      {item.submenu!.filter(sub => !sub.adminOnly || profile?.role === 'admin').map((sub) => {
                         let badge = 0;
                         if (sub.name === 'Leads') badge = activeLeadsCount;
                         if (sub.name === 'Production Queue') badge = prodQueueCount;
