@@ -96,12 +96,6 @@ const menuItems: MenuItem[] = [
     ]
   },
   {
-    name: 'Studio Dashboard',
-    icon: LayoutDashboard,
-    href: '/admin/designer-module/dashboard',
-    allowedRoles: ['admin'],
-  },
-  {
     name: 'Attendance',
     icon: Clock,
     href: '/admin/designers/attendance',
