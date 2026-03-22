@@ -26,8 +26,6 @@ const phases: Phase[] = [
             { label: 'Check overdue follow-ups', path: 'Marketing → Follow-ups → Overdue tab', detail: 'Don\'t let these slip — call immediately' },
             { label: 'View your leads pipeline', path: 'Marketing → Leads', detail: 'See all active leads and their status' },
             { label: 'Review your orders', path: 'Marketing → My Orders', detail: 'Track orders you originated' },
-            { label: 'Check dispatched orders', path: 'Marketing → Dispatched Orders', detail: 'See which of your client orders have been dispatched or delivered' },
-            { label: 'Check your calendar', path: 'Calendar', detail: 'Your follow-up dates and lead deadlines show here — only your own, not others' },
         ],
         tip: 'Complete today\'s follow-ups FIRST before adding new leads.',
     },
@@ -103,22 +101,9 @@ const phases: Phase[] = [
         tip: 'Commissions are on the BASE amount after GST is deducted. Example: ₹1,18,000 job at 18% GST → base = ₹1,00,000 → 5% commission = ₹5,000.',
     },
     {
-        id: 'dispatched',
-        icon: <MessageSquare className="w-5 h-5" />,
-        title: '7. Dispatched Orders',
-        subtitle: 'Track deliveries for your clients',
-        color: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-200', headerBg: 'bg-orange-700',
-        steps: [
-            { label: 'Open Dispatched Orders', path: 'Marketing → Dispatched Orders', detail: 'See all jobs linked to your leads that are dispatched or delivered' },
-            { label: 'Confirm delivery with client', path: '—', detail: 'Call the client to confirm they received the order in good condition' },
-            { label: 'Note any delivery feedback', path: 'Lead / Job → Add Note', detail: 'Add any client feedback — quality issues, reorder interest, referrals' },
-        ],
-        tip: 'A delivered order is an opportunity to ask for a repeat order or referral. Always follow up.',
-    },
-    {
         id: 'eod',
         icon: <Target className="w-5 h-5" />,
-        title: '8. EOD Report (End of Day)',
+        title: '7. EOD Report (End of Day)',
         subtitle: 'Submit before leaving — every day',
         color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', headerBg: 'bg-rose-700',
         steps: [

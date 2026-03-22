@@ -112,6 +112,7 @@ export default function TransportersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    console.log("Submitting form data:", formData);
 
     try {
       const payload = {

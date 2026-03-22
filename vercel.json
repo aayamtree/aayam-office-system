@@ -22,10 +22,6 @@
         {
             "path": "/api/cron/optimize-db",
             "schedule": "0 9 * * *"
-        },
-        {
-            "path": "/api/cron/eod-logout",
-            "schedule": "0 14 * * 1-6"
         }
     ]
 }

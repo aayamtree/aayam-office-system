@@ -38,7 +38,7 @@ export default function PaymentsPageNew() {
             setError(null);
         } catch (err: any) {
             setError(err.message);
-            toast.error('Failed to load payments: ' + (err.message || 'Unknown error'));
+            console.error('Fetch error:', err);
         } finally {
             setLoading(false);
         }
@@ -127,6 +127,7 @@ export default function PaymentsPageNew() {
             toast.success('Payment recorded successfully!');
         } catch (err: any) {
             toast.error(String('Error: ' + err.message));
+            console.error('Submit error:', err);
         } finally {
             setSubmitting(false);
         }

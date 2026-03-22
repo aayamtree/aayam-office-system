@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useDailyReports, useWorkLogs } from '@/lib/hooks';
 import { WorkLog } from '@/lib/work-logger';
-import { toast } from '@/lib/toast';
+import { toast } from '@/hooks/use-toast';
 import {
     Clock, CheckCircle, AlertCircle, ChevronDown, ChevronRight, ChevronLeft,
     Calendar, Loader2, Send, FileText, History, Lock, Pencil
@@ -131,8 +131,8 @@ export default function EODReportPage() {
                     setAutoLogCount(workLogs.length);
                 }
             }
-        } catch (e: any) {
-            toast.error('Failed to load tasks: ' + (e.message || 'Unknown error'));
+        } catch (e) {
+            console.error('Error loading data:', e);
         } finally {
             setLoading(false);
         }
@@ -146,8 +146,8 @@ export default function EODReportPage() {
             const endDate = new Date(historyMonth.year, historyMonth.month + 1, 0).toISOString().split('T')[0];
             const { data: reports } = await getMyReports(profile.id, startDate, endDate);
             setPastReports(reports || []);
-        } catch (e: any) {
-            toast.error('Failed to load history: ' + (e.message || 'Unknown error'));
+        } catch (e) {
+            console.error('Error loading history:', e);
         } finally {
             setHistoryLoading(false);
         }
@@ -224,14 +224,14 @@ export default function EODReportPage() {
             });
 
             if (error) {
-                toast.error('Error submitting report: ' + String(error));
+                toast({ title: '❌ Error submitting report', description: String(error), variant: 'destructive' });
             } else {
-                toast.success('EOD Report submitted successfully!');
+                toast({ title: '✅ EOD Report submitted successfully!' });
                 await loadData();
                 await loadHistory();
             }
         } catch (e: any) {
-            toast.error('Error: ' + (e.message || 'Unknown error'));
+            toast({ title: '❌ Error', description: e.message, variant: 'destructive' });
         } finally {
             setSubmitting(false);
         }

@@ -103,11 +103,6 @@ export default function ClientsPage() {
   const [marketingStaff, setMarketingStaff] = useState<{ id: string; full_name: string; role: string }[]>([]);
   const [allProfiles, setAllProfiles] = useState<{ id: string; full_name: string; role: string }[]>([]);
 
-  // Brand chip manager state
-  const [editingClientBrands, setEditingClientBrands] = useState<{ id: string; name: string }[]>([]);
-  const [newBrandInput, setNewBrandInput] = useState('');
-  const [savingBrand, setSavingBrand] = useState(false);
-
   // Load all profiles for 'Added by' + marketing staff for assignment (always fetch)
   useEffect(() => {
     supabase
@@ -150,8 +145,6 @@ export default function ClientsPage() {
     setFormData({ name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', is_active: true, brand_name: '', source: 'direct', assigned_marketing_user_id: '' });
     setIsEditing(false);
     setSelectedClient(null);
-    setEditingClientBrands([]);
-    setNewBrandInput('');
     setShowModal(true);
   };
 
@@ -172,12 +165,6 @@ export default function ClientsPage() {
     });
     setSelectedClient(client);
     setIsEditing(true);
-    setNewBrandInput('');
-    // Load brands for this client from the brands table
-    fetch(`/api/clients/${client.id}/brands`)
-      .then(r => r.ok ? r.json() : { data: [] })
-      .then(j => setEditingClientBrands(j.data || []))
-      .catch(() => setEditingClientBrands([]));
     setShowModal(true);
   };
 
@@ -229,7 +216,7 @@ export default function ClientsPage() {
 
         // Auto-set source based on who is creating
         const isMarketingUser = profile?.role === 'marketing';
-        const newClient: any = await createClient({
+        await createClient({
           ...formData,
           client_type: 'regular',
           credit_limit: 0,
@@ -237,26 +224,11 @@ export default function ClientsPage() {
           source: isMarketingUser ? 'marketing' : (formData.source || 'direct'),
           assigned_marketing_user_id: isMarketingUser ? profile.id : (formData.assigned_marketing_user_id || null),
         } as any);
-
-        // If brands were added inline for new client, seed them
-        if (newClient?.id && editingClientBrands.length > 0) {
-          for (const b of editingClientBrands) {
-            try {
-              await fetch(`/api/clients/${newClient.id}/brands`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: b.name }),
-              });
-            } catch { /* non-fatal */ }
-          }
-        }
         logActivity({ userId: profile?.id || '', userName: profile?.full_name || 'Unknown', action: 'CREATE', module: 'CRM', entityName: formData.name, description: `Added Client: ${formData.name} — ${formData.phone}${formData.company ? ` (${formData.company})` : ''}` });
       }
       setShowModal(false);
       setIsEditing(false);
       setSelectedClient(null);
-      setEditingClientBrands([]);
-      setNewBrandInput('');
     } catch (error) {
       console.error('Error:', error);
       toast.error('Error saving');
@@ -590,103 +562,12 @@ export default function ClientsPage() {
               <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1 text-gray-700">Phone *</label><input type="tel" required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" /></div><div><label className="block text-sm font-medium mb-1 text-gray-700">Email</label><input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" /></div></div>
               <div><label className="block text-sm font-medium mb-1 text-gray-700">GSTIN</label><input type="text" value={formData.gstin} onChange={(e) => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" maxLength={15} /></div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">Brands <span className="text-gray-400 font-normal">(optional)</span></label>
-                {/* Chip display */}
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {editingClientBrands.map(b => (
-                    <span key={b.id} className="inline-flex items-center gap-1 bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-md font-medium">
-                      #{b.name}
-                      {isEditing && selectedClient && (
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            try {
-                              await fetch(`/api/clients/${selectedClient.id}/brands`, {
-                                method: 'DELETE',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ brandId: b.id, name: b.name }),
-                              });
-                              setEditingClientBrands(prev => prev.filter(x => x.id !== b.id));
-                            } catch { /* non-fatal */ }
-                          }}
-                          className="text-gray-400 hover:text-red-500 transition-colors ml-0.5"
-                          aria-label={`Remove brand ${b.name}`}
-                        >
-                          ×
-                        </button>
-                      )}
-                    </span>
-                  ))}
+                <label className="block text-sm font-medium mb-1 text-gray-700">Brands <span className="text-gray-400 font-normal">(#hashtag format)</span></label>
+                <div className="relative">
+                  <Hash className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input type="text" value={formData.brand_name} onChange={(e) => setFormData({ ...formData, brand_name: e.target.value })} className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" placeholder="#tiger #cobra #premium" />
                 </div>
-                {/* Inline add brand */}
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Hash className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      value={newBrandInput}
-                      onChange={e => setNewBrandInput(e.target.value)}
-                      onKeyDown={async e => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          const name = newBrandInput.trim();
-                          if (!name) return;
-                          if (isEditing && selectedClient) {
-                            setSavingBrand(true);
-                            try {
-                              const res = await fetch(`/api/clients/${selectedClient.id}/brands`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ name }),
-                              });
-                              const j = await res.json();
-                              if (j.data) setEditingClientBrands(prev => [...prev.filter(b => b.id !== j.data.id), j.data]);
-                            } catch { } finally { setSavingBrand(false); }
-                          } else {
-                            // New client: stage it locally
-                            const tempId = name.toLowerCase().replace(/\s+/g, '_');
-                            if (!editingClientBrands.find(b => b.id === tempId)) {
-                              setEditingClientBrands(prev => [...prev, { id: tempId, name }]);
-                            }
-                          }
-                          setNewBrandInput('');
-                        }
-                      }}
-                      className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm"
-                      placeholder="Type brand name + Enter"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    disabled={savingBrand || !newBrandInput.trim()}
-                    onClick={async () => {
-                      const name = newBrandInput.trim();
-                      if (!name) return;
-                      if (isEditing && selectedClient) {
-                        setSavingBrand(true);
-                        try {
-                          const res = await fetch(`/api/clients/${selectedClient.id}/brands`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ name }),
-                          });
-                          const j = await res.json();
-                          if (j.data) setEditingClientBrands(prev => [...prev.filter(b => b.id !== j.data.id), j.data]);
-                        } catch { } finally { setSavingBrand(false); }
-                      } else {
-                        const tempId = name.toLowerCase().replace(/\s+/g, '_');
-                        if (!editingClientBrands.find(b => b.id === tempId)) {
-                          setEditingClientBrands(prev => [...prev, { id: tempId, name }]);
-                        }
-                      }
-                      setNewBrandInput('');
-                    }}
-                    className="px-3 py-2 bg-gray-900 text-white text-sm rounded-md hover:bg-gray-700 disabled:opacity-40"
-                  >
-                    {savingBrand ? '...' : 'Add'}
-                  </button>
-                </div>
-                <p className="text-xs text-gray-400 mt-1">Type brand name and press Enter or click Add</p>
+                <p className="text-xs text-gray-400 mt-1">Add brand names separated by spaces, e.g. #tiger #cobra</p>
               </div>
               <div><label className="block text-sm font-medium mb-1 text-gray-700">Address</label><textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" rows={2} /></div>
               <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1 text-gray-700">City</label><input type="text" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" /></div><div><label className="block text-sm font-medium mb-1 text-gray-700">Status</label><select value={formData.is_active ? 'active' : 'inactive'} onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'active' })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div>

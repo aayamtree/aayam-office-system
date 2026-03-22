@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { toast } from '@/lib/toast';
 import { ArrowLeft, Download, Printer, Calendar, FileSpreadsheet, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import * as XLSX from 'xlsx';
@@ -17,7 +16,17 @@ export default function CashBookPage() {
     const [endDate, setEndDate] = useState('');
     const [transactionType, setTransactionType] = useState<'all' | 'in' | 'out'>('all');
 
-    const loadCashAccounts = useCallback(async () => {
+    useEffect(() => {
+        loadCashAccounts();
+    }, []);
+
+    useEffect(() => {
+        if (cashAccounts.length > 0) {
+            loadTransactions();
+        }
+    }, [selectedAccount, startDate, endDate, transactionType, cashAccounts]);
+
+    const loadCashAccounts = async () => {
         const { data } = await supabase
             .from('cash_accounts')
             .select('*')
@@ -25,9 +34,9 @@ export default function CashBookPage() {
             .order('name');
 
         setCashAccounts(data || []);
-    }, []);
+    };
 
-    const loadTransactions = useCallback(async () => {
+    const loadTransactions = async () => {
         setLoading(true);
         try {
             let query = supabase
@@ -46,22 +55,12 @@ export default function CashBookPage() {
 
             const { data } = await query;
             setTransactions(data || []);
-        } catch (error: unknown) {
-            toast.error('Failed to load transactions: ' + ((error as Error).message || 'Unknown error'));
+        } catch (error) {
+            console.error('Error loading transactions:', error);
         } finally {
             setLoading(false);
         }
-    }, [selectedAccount, startDate, endDate, transactionType]);
-
-    useEffect(() => {
-        loadCashAccounts();
-    }, [loadCashAccounts]);
-
-    useEffect(() => {
-        if (cashAccounts.length > 0) {
-            loadTransactions();
-        }
-    }, [cashAccounts, loadTransactions]);
+    };
 
     const totalCashIn = transactions
         .filter(t => t.transaction_type === 'in')

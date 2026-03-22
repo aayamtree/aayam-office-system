@@ -5,14 +5,13 @@ import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import {
   Plus, Search, FileText, Building2, Calendar, IndianRupee, X, Eye, Edit, Trash2,
-  Package, Filter, ArrowLeft, CheckCircle, Clock, AlertCircle, Loader2, Upload, ExternalLink
+  Package, Filter, ArrowLeft, CheckCircle, Clock, AlertCircle, Loader2
 } from 'lucide-react';
 import { usePurchaseBills, useVendors, useJobs, useProductCategories } from '@/lib/hooks';
 import { formatDate } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useConfirm } from '@/components/ConfirmModal';
-import { supabase } from '@/lib/supabase';
 
 
 
@@ -33,29 +32,7 @@ export default function VendorPurchasesPage() {
   const [editingPurchase, setEditingPurchase] = useState<any>(null);
   const [selectedPurchase, setSelectedPurchase] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const confirm = useConfirm();
-
-  const uploadReceipt = async (file: File, billNumber: string): Promise<string | null> => {
-    try {
-      setUploadingReceipt(true);
-      const ext = file.name.split('.').pop();
-      const path = `purchase-receipts/${billNumber}-${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from('attachments').upload(path, file);
-      if (uploadError) {
-        toast.error('Receipt upload failed: ' + uploadError.message);
-        return null;
-      }
-      const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(path);
-      return urlData?.publicUrl || null;
-    } catch (err: any) {
-      toast.error('Upload error: ' + err.message);
-      return null;
-    } finally {
-      setUploadingReceipt(false);
-    }
-  };
 
   const [formData, setFormData] = useState({
     vendorId: '',
@@ -100,14 +77,6 @@ export default function VendorPurchasesPage() {
 
     const { amount, gstAmount, totalAmount } = calculateAmounts();
 
-    // Upload receipt if a file was selected
-    let attachmentUrl = formData.attachmentUrl;
-    if (selectedFile) {
-      const billRef = editingPurchase?.bill_number || `BILL-${Date.now()}`;
-      const uploadedUrl = await uploadReceipt(selectedFile, billRef);
-      if (uploadedUrl) attachmentUrl = uploadedUrl;
-    }
-
     const payload = {
       vendor_id: formData.vendorId,
       job_id: formData.jobId || undefined,
@@ -122,7 +91,6 @@ export default function VendorPurchasesPage() {
       gst_rate: formData.gstRate,
       gst_amount: gstAmount,
       total_amount: totalAmount,
-      attachment_url: attachmentUrl || undefined,
 
       // Default to pending if new
       payment_status: editingPurchase ? editingPurchase.payment_status : 'pending',
@@ -135,7 +103,6 @@ export default function VendorPurchasesPage() {
       } else {
         await createPurchaseBill(payload);
       }
-      setSelectedFile(null);
       resetForm();
     } catch (err: any) {
       toast.error(String('Failed to save purchase bill: ' + err.message));
@@ -450,20 +417,16 @@ export default function VendorPurchasesPage() {
                     accept="image/*,application/pdf"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) setSelectedFile(file);
+                      if (file) {
+                        // TODO: Upload to storage and get URL
+                        // For now, store filename
+                        setFormData({ ...formData, attachmentUrl: file.name });
+                      }
                     }}
                     className="w-full px-3 py-2 border rounded-md text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-900 file:text-white hover:file:bg-primary"
                   />
-                  {selectedFile && (
-                    <p className="text-xs text-gray-700 mt-1 flex items-center gap-1">
-                      <Upload className="w-3 h-3" /> Ready to upload: {selectedFile.name}
-                    </p>
-                  )}
-                  {!selectedFile && formData.attachmentUrl && (
-                    <a href={formData.attachmentUrl} target="_blank" rel="noopener noreferrer"
-                      className="text-xs text-blue-600 underline mt-1 flex items-center gap-1">
-                      <ExternalLink className="w-3 h-3" /> View existing attachment
-                    </a>
+                  {formData.attachmentUrl && (
+                    <p className="text-xs text-gray-900 mt-1">✓ {formData.attachmentUrl}</p>
                   )}
                   <p className="text-xs text-gray-500 mt-1">Choose from gallery or take photo</p>
                 </div>
@@ -487,8 +450,8 @@ export default function VendorPurchasesPage() {
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-md font-medium">Cancel</button>
-                <button type="submit" disabled={submitting || uploadingReceipt} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-semibold shadow-sm disabled:opacity-50">
-                  {uploadingReceipt ? 'Uploading receipt...' : submitting ? 'Saving...' : (editingPurchase ? 'Update' : 'Add')} {!uploadingReceipt && !submitting && 'Purchase'}
+                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-semibold shadow-sm disabled:opacity-50">
+                  {submitting ? 'Saving...' : (editingPurchase ? 'Update' : 'Add')} Purchase
                 </button>
               </div>
             </form>

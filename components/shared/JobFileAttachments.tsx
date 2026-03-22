@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Paperclip, Upload, X, FileText, Image as ImageIcon, File as FileIcon, Loader2, ExternalLink } from 'lucide-react';
+import { Paperclip, Upload, X, FileText, Image, File as FileIcon, Loader2, ExternalLink } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { logFileUpload, logFileDownload } from '@/lib/activity-logger';
 import type { FileAttachment } from '@/types/database';
@@ -15,7 +15,7 @@ interface JobFileAttachmentsProps {
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 function getFileIcon(type: string) {
-    if (type.startsWith('image/')) return <ImageIcon className="w-4 h-4 text-blue-500" />;
+    if (type.startsWith('image/')) return <Image className="w-4 h-4 text-blue-500" />;
     if (type.includes('pdf')) return <FileText className="w-4 h-4 text-red-500" />;
     return <FileIcon className="w-4 h-4 text-gray-500" />;
 }

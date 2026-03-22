@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
   Calendar, User, FileText, IndianRupee, CheckCircle, XCircle, Clock, Loader2, Download
@@ -19,7 +18,6 @@ import { useConfirm } from '@/components/ConfirmModal';
 
 export default function QuotationsPage() {
   const { user, profile } = useAuth();
-  const router = useRouter();
   const { quotations: allQuotations, loading: quotationsLoading, createQuotation, updateQuotation, saveQuotationItems, deleteQuotation } = useQuotations();
   const { linkQuotationToFollowUp } = useFollowUps();
   const { categories: dbCategories } = useProductCategories();
@@ -327,18 +325,25 @@ export default function QuotationsPage() {
         client_id: finalClientId // Ensure the quotation is now linked to the real client
       });
 
-      // 5. Route based on order type — navigate to the created job
+      // 5. Route based on order type
       if (q.order_type === 'design_print') {
-        toast.success(`Order created! Job #${job?.job_number} — adding to design queue.`);
+        // Design + Print: Redirect to product requirements collection
+        toast.success(`Order created successfully! Job #${job?.job_number}\n\nNext: Collect product requirements for design and printing.`);
+        // TODO: Redirect to product requirements page when implemented
+        // router.push(`/admin/marketing/product-requirements/${job?.id}?quotation=${q.id}`);
       } else if (q.order_type === 'print') {
-        toast.success(`Order created! Job #${job?.job_number} — awaiting client design files.`);
+        // Print Only: Client needs to upload design files
+        toast.success(`Order created successfully! Job #${job?.job_number}\n\nNext: Client will provide design files for printing.`);
+        // TODO: Could redirect to file upload page
       } else if (q.order_type === 'design') {
-        toast.success(`Order created! Job #${job?.job_number} — added to design queue.`);
+        // Design Only: Goes straight to design queue
+        toast.success(`Order created successfully! Job #${job?.job_number}\n\nNext: Job added to design queue.`);
+        // TODO: Could redirect to design tasks
       } else {
         toast.success(`Order created successfully! Job #${job?.job_number}`);
       }
-      // Navigate to orders page to show the new job
-      setTimeout(() => router.push('/admin/sales/orders'), 1200);
+
+      // Refresh logic handled by hooks automatically
 
     } catch (err: any) {
       console.error('Error converting to order:', err);

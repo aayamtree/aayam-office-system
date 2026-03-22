@@ -11,46 +11,37 @@ export async function POST(request: NextRequest) {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // sendBeacon fires even after sign-out clears cookies.
-  // Return 200 so the browser doesn't retry — just a no-op if no session.
-  if (!user) return NextResponse.json({ ok: true, skipped: true });
-
-  // Use IST offset (UTC+5:30) — office is based in India
-  const nowUtc = new Date();
-  const nowIST = new Date(nowUtc.getTime() + (5.5 * 60 * 60 * 1000));
-  const todayIST = nowIST.toISOString().split('T')[0]; // YYYY-MM-DD in IST
-  const nowIso = nowUtc.toISOString();
+  const today = new Date().toISOString().split('T')[0];
+  const now = new Date().toISOString();
 
   // Get existing record to calculate minutes worked
   const { data: existing } = await supabase
     .from('designer_attendance')
-    .select('first_login_time, total_minutes_worked, status')
+    .select('first_login_time, total_minutes_worked')
     .eq('designer_id', user.id)
-    .eq('date', todayIST)
+    .eq('date', today)
     .single();
-
-  // If no record today or already logged out, skip — no double-recording
-  if (!existing || existing.status === 'logged_out') {
-    return NextResponse.json({ ok: true, skipped: true });
-  }
 
   let totalMinutes = existing?.total_minutes_worked || 0;
   if (existing?.first_login_time) {
     const loginTime = new Date(existing.first_login_time).getTime();
-    const nowMs = nowUtc.getTime();
-    totalMinutes = Math.max(totalMinutes, Math.round((nowMs - loginTime) / 60000));
+    const nowMs = new Date(now).getTime();
+    totalMinutes = Math.round((nowMs - loginTime) / 60000);
   }
 
-  await supabase
+  const { error } = await supabase
     .from('designer_attendance')
     .update({
-      last_logout_time: nowIso,
+      last_logout_time: now,
       status: 'logged_out',
       total_minutes_worked: totalMinutes,
     })
     .eq('designer_id', user.id)
-    .eq('date', todayIST);
+    .eq('date', today);
 
-  return NextResponse.json({ ok: true, total_minutes_worked: totalMinutes });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ success: true, total_minutes_worked: totalMinutes });
 }

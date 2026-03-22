@@ -114,8 +114,8 @@ export default function JobsPage() {
 
       // Set initial form defaults
       if (jobTypesRes.data?.[0]) setFormData(prev => ({ ...prev, job_type: jobTypesRes.data[0].name }));
-    } catch (error: any) {
-      toast.error('Failed to load job configuration. Using defaults.');
+    } catch (error) {
+      console.error('Error loading configuration:', error);
       // On error, still set fallback data so UI works
       setStages(DEFAULT_STAGES);
       setPriorities(DEFAULT_PRIORITIES);
@@ -324,7 +324,7 @@ export default function JobsPage() {
           attachment_url: formData.advance_receipt_url || undefined,
         });
         if (paymentRecordResult?.error) {
-          toast.warning?.('Advance payment recorded but finance ledger entry may be missing.');
+          console.error('[advance] Failed to record payment:', paymentRecordResult.error);
         }
         // Update job: set amount_received + payment_status
         const paymentStatus = formData.advance_amount >= totalAmount - 1 ? 'paid' : 'partial';
@@ -338,8 +338,9 @@ export default function JobsPage() {
       setShowModal(false);
       setEditingJob(null);
       resetForm();
-    } catch (error: any) {
-      toast.error('Error saving job: ' + (error.message || 'Please try again.'));
+    } catch (error) {
+      console.error('Error saving job:', error);
+      toast.error('Error saving job');
     } finally {
       setSaving(false);
     }
@@ -440,8 +441,9 @@ export default function JobsPage() {
       setShowPaymentModal(false);
       setSelectedJob(null);
       setPaymentMode('cash');
-    } catch (error: any) {
-      toast.error('Error adding payment: ' + (error.message || 'Please try again.'));
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Error adding payment');
     }
   };
 
@@ -476,8 +478,9 @@ export default function JobsPage() {
       const note = `Sent to printer: ${vendorName}${machineName ? ` (Machine: ${machineName})` : ''}${sendToPrinterData.notes ? `. Note: ${sendToPrinterData.notes}` : ''}`;
       await updateJobStage(selectedJob.id, 'printing' as JobStatus, note);
       setShowSendToPrinterModal(false);
-    } catch (error: any) {
-      toast.error('Error sending to printer: ' + (error.message || 'Please try again.'));
+    } catch (error) {
+      console.error('Error sending to printer:', error);
+      toast.error('Error sending to printer');
     } finally {
       setSendingToPrinter(false);
     }

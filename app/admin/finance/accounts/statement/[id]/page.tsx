@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Download, Printer, Calendar, FileSpreadsheet } from 'lucide-react';
@@ -19,7 +19,11 @@ export default function AccountStatementPage() {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
 
-    const loadAccountAndTransactions = useCallback(async () => {
+    useEffect(() => {
+        loadAccountAndTransactions();
+    }, [accountId, startDate, endDate]);
+
+    const loadAccountAndTransactions = async () => {
         setLoading(true);
         try {
             // Try loading as bank account first
@@ -52,11 +56,7 @@ export default function AccountStatementPage() {
         } finally {
             setLoading(false);
         }
-    }, [accountId, startDate, endDate]);
-
-    useEffect(() => {
-        loadAccountAndTransactions();
-    }, [loadAccountAndTransactions]);
+    };
 
     const loadBankTransactions = async () => {
         let query = supabase

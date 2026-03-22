@@ -123,7 +123,6 @@ export default function AdminEODDashboard() {
         } finally {
             setLoading(false);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedUserId, startDate, endDate, searchQuery]);
 
     useEffect(() => {

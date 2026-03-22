@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { Package, CheckCircle, Truck, Clock, AlertTriangle, ClipboardCheck, Loader2, X, Camera, MapPin, Building2, Search, FileText, ShieldCheck } from 'lucide-react';
@@ -49,7 +49,7 @@ export default function DispatchPage() {
   const loading = jobsLoading || dispatchesLoading;
 
   // Fetch transporters on mount
-  useEffect(() => {
+  useState(() => {
     const fetchTransporters = async () => {
       const { data } = await supabase
         .from('vendors')
@@ -59,7 +59,7 @@ export default function DispatchPage() {
       setTransporters(data || []);
     };
     fetchTransporters();
-  }, []);
+  });
 
   // ─── Derived Data ─────────────────────────────────────────
   const prePrintQC = jobs.filter(j => j.current_stage === 'pre_print_qc');

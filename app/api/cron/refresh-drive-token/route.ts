@@ -2,19 +2,14 @@
 // Background job to refresh Google Drive token before it expires
 // Runs every 50 minutes via Vercel Cron
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
-    // Protect with CRON_SECRET so only Vercel cron (or authorized callers) can trigger
-    const authHeader = request.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET;
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+export async function GET() {
     try {
+        console.log('🔄 Cron: Starting scheduled token refresh...');
+
         // Call the refresh endpoint
         const refreshResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/drive/refresh`, {
             method: 'POST'
@@ -38,11 +33,11 @@ export async function GET(request: NextRequest) {
             expires_at: data.expires_at
         });
 
-    } catch (error: unknown) {
+    } catch (error: any) {
         console.error('❌ Cron: Error:', error);
         return NextResponse.json({
             success: false,
-            error: (error as Error).message
+            error: error.message
         }, { status: 500 });
     }
 }

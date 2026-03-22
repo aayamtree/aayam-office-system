@@ -48,6 +48,7 @@ export default function LeadsPage() {
             await refetch();
             toast.success('Moved to Follow-ups successfully');
         } catch (e: any) {
+            console.error(e);
             toast.error(String('Operation failed: ' + e.message));
         }
     };
@@ -65,6 +66,7 @@ export default function LeadsPage() {
             await refetch();
             toast.info(`Converted ${lead.name} to Client! You can now manage them in CRM > Clients.`);
         } catch (e: any) {
+            console.error(e);
             toast.error(String('Conversion failed: ' + e.message));
         }
     };
@@ -177,6 +179,7 @@ export default function LeadsPage() {
                 throw new Error('You appear to be logged out. Please refresh the page.');
             }
 
+            console.log('Saving Lead for User:', currentUserId);
 
             const rawPayload: Record<string, any> = {
                 name: formData.name,

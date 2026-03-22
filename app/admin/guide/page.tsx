@@ -65,7 +65,6 @@ const phases: Phase[] = [
             { label: 'Create quotation', path: 'Marketing → Quotations → New Quotation', detail: 'Share price estimate with the client' },
             { label: 'Convert to Client (if won)', path: 'Marketing → Leads → Convert to Client', detail: 'Automatically creates a Client record in CRM' },
             { label: 'Create Job for the client', path: 'Jobs → New Job → Select Client', detail: 'Job is now in the production pipeline' },
-            { label: 'View Dispatched Orders', path: 'Marketing → Dispatched Orders', detail: 'Marketing staff can track which of their client orders have been dispatched or delivered' },
         ],
         tip: 'Commission is auto-triggered when the job from this lead is fully paid.',
     },
@@ -116,15 +115,14 @@ const phases: Phase[] = [
         border: 'border-pink-200',
         headerBg: 'bg-pink-700',
         steps: [
-            { label: 'Designer sees their queue', path: 'Design Studio → My Queue', detail: 'Only jobs assigned to them — sorted by deadline' },
-            { label: 'Admin sees all designers', path: 'Design Studio → Team Queue', detail: 'Who is working on what, overdue tasks, all status pills' },
-            { label: 'Status pills — live tracking', path: 'My Queue → Task → Status pill', detail: '🟢 Live = working now | 🟡 Pause = waiting | 🔵 Review = sent for approval | ✅ End = complete | 🔁 Transfer = reassigning' },
-            { label: 'Add design task / sub-task', path: 'Design Studio → + New Project', detail: 'Break a job into design steps and assign to a designer' },
+            { label: 'Designer sees their queue', path: 'Design Studio → My Queue', detail: 'Only jobs assigned to them' },
+            { label: 'Admin sees all designers', path: 'Design Studio → Team Queue', detail: 'Who is working on what, overdue tasks' },
+            { label: 'Add design task / sub-task', path: 'Design Studio → Tasks → Add Task', detail: 'Break a job into design steps' },
+            { label: 'Mark task complete', path: 'Design Studio → My Queue → [Task] → Complete', detail: 'Moves job to Approval stage' },
             { label: 'Upload files (Google Drive)', path: 'Job Details → Files → Upload', detail: 'Files stored in Google Drive, linked to job' },
-            { label: 'Designer views timeline', path: 'Design Studio → Timeline', detail: 'Gantt-style bar chart of all tasks by date' },
-            { label: 'View full task history (Dossier)', path: 'Design Studio → Dossier', detail: 'Admin-only: every task ever created, with status and time logs' },
+            { label: 'Admin views timeline', path: 'Design Studio → Timeline', detail: 'Gantt-style view of all design tasks' },
         ],
-        tip: 'Admin watches status pills to know the live state of every design job. Remind designers to update pills every time something changes.',
+        tip: 'Designers only see their own tasks. Admin sees all.',
     },
     {
         id: 'print',
@@ -174,10 +172,9 @@ const phases: Phase[] = [
             { label: 'Create invoice / bill', path: 'Finance → Invoices → New Invoice', detail: 'GST invoice with job details' },
             { label: 'Record vendor purchase/bill', path: 'Finance → Vendors → [Vendor] → Purchases', detail: 'Paper, printing materials, services bought' },
             { label: 'Record cash / bank expense', path: 'Finance → Daily → Add Entry', detail: 'Daily petty cash and expenses' },
-            { label: 'View account ledger / statement', path: 'Finance → Accounts → [Account] → Statement', detail: 'Full debit/credit history per account' },
-            { label: 'Daily Summary (admin only)', path: 'Finance → Daily Summary', detail: 'All account balances for any selected date at a glance' },
+            { label: 'View accounts / ledger', path: 'Finance → Accounts → [Account]', detail: 'Full transaction history per account' },
             { label: 'Bank reconciliation', path: 'Finance → Banking', detail: 'Match bank statement with app records' },
-            { label: 'View financial reports', path: 'Finance → Reports', detail: 'P&L, cashbook, client outstanding, vendor reports' },
+            { label: 'View financial reports', path: 'Finance → Reports', detail: 'P&L, cashbook, vendor reports' },
         ],
         tip: 'Adding a payment from client auto-triggers commission eligible if job is fully paid.',
     },
@@ -227,7 +224,7 @@ const phases: Phase[] = [
             { label: 'Overview Dashboard', path: 'Dashboard → Overview', detail: 'Jobs in progress, revenue this month, pending payments' },
             { label: 'Activity Log', path: 'Activity', detail: 'Every action by every user — who did what and when' },
             { label: 'Broadcast message to all staff', path: 'Broadcast → New Message', detail: 'Announcements visible to all users on dashboard' },
-            { label: 'Calendar view (role-filtered)', path: 'Calendar', detail: 'Admin sees all: job deadlines, follow-ups, dispatch dates. Each staff member only sees their own.' },
+            { label: 'Calendar view', path: 'Calendar', detail: 'Deadlines, follow-up dates, dispatch schedules' },
             { label: 'System Health check', path: 'System Health', detail: 'DB status, config checks, error logs' },
         ],
     },
@@ -294,11 +291,11 @@ export default function AdminGuidePage() {
                     },
                     {
                         role: 'Marketing', icon: <TrendingUp className="w-4 h-4 text-blue-700" />, bg: 'bg-blue-50', text: 'text-blue-900',
-                        can: ['Adds leads & follow-ups', 'Creates quotations', 'Converts leads to clients', 'Sees own commissions', 'Tracks dispatched orders']
+                        can: ['Adds leads & follow-ups', 'Creates quotations', 'Converts leads to clients', 'Sees own commissions', 'Marketing dashboard']
                     },
                     {
                         role: 'Designer', icon: <Palette className="w-4 h-4 text-pink-700" />, bg: 'bg-pink-50', text: 'text-pink-900',
-                        can: ['Sees assigned jobs in My Queue', 'Updates status pills (Live/Hold/Review/End)', 'Submits EOD report', 'Uploads files', 'My Notes & Calendar']
+                        can: ['Sees assigned jobs in queue', 'Marks tasks done', 'Submits EOD report', 'Uploads files', 'My Notes']
                     },
                 ].map((r) => (
                     <div key={r.role} className={`rounded-md border p-3 ${r.bg} ${r.role === 'Admin' ? 'border-gray-700' : r.role === 'Marketing' ? 'border-blue-200' : 'border-pink-200'}`}>

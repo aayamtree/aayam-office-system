@@ -81,8 +81,8 @@ export default function DispatchHistoryPage() {
           .eq('status', 'dispatched')
           .order('updated_at', { ascending: false });
         setPrintRuns(data || []);
-      } catch (err: any) {
-        toast.error('Failed to load print run history: ' + (err.message || 'Unknown error'));
+      } catch (err) {
+        console.error('Error fetching dispatched print runs:', err);
       } finally {
         setPrintRunsLoading(false);
       }
@@ -393,8 +393,7 @@ export default function DispatchHistoryPage() {
               {selectedDispatch.proof_of_delivery_url && (
                 <div>
                   <p className="text-sm font-medium text-gray-700 mb-2">Proof of Delivery</p>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={selectedDispatch.proof_of_delivery_url} alt="Proof of Delivery" className="w-full rounded-md" />
+                  <img src={selectedDispatch.proof_of_delivery_url} alt="POD" className="w-full rounded-md" />
                 </div>
               )}
 

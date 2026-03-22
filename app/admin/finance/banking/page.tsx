@@ -14,11 +14,9 @@ import {
 import { BankTransaction } from '@/types/database';
 import { CategoryModal } from '@/components/banking/CategoryModal';
 import { useExpenseCategories, useIncomeCategories } from '@/lib/categorization-hooks';
-import { useConfirm } from '@/components/ConfirmModal';
 
 export default function BankingPage() {
     const [selectedAccountId, setSelectedAccountId] = useState('');
-    const confirm = useConfirm();
     const {
         bankAccounts, loading: loadingAccounts, error: errorAccounts,
         createBankAccount, updateBankAccount, deleteBankAccount, setDefaultAccount
@@ -60,8 +58,7 @@ export default function BankingPage() {
         setShowAccountForm(false);
     };
     const handleDelete = async (id: string) => {
-        const { confirmed } = await confirm({ title: 'Delete Account', message: 'Delete this bank account? All linked transactions will also be removed.', variant: 'danger', confirmLabel: 'Delete' });
-        if (!confirmed) return;
+        if (!confirm('Delete this bank account? All linked transactions will also be removed.')) return;
         const { error } = await deleteBankAccount(id);
         if (error) toast.error(error); else toast.success('Account deleted.');
     };

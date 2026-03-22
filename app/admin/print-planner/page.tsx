@@ -59,7 +59,6 @@ export default function PrintPlannerPage() {
     const [refreshKey, setRefreshKey] = useState(0);
     const [pullingMultiple, setPullingMultiple] = useState(DEFAULT_PULLING);
     const [sheetSize, setSheetSize] = useState('23" × 36"');
-    const [customSheetSize, setCustomSheetSize] = useState('');
 
 
     // Step 1: Add job to selection
@@ -340,10 +339,10 @@ export default function PrintPlannerPage() {
                                 value={COMMON_SHEET_SIZES.includes(sheetSize) ? sheetSize : 'Custom'}
                                 onChange={(e) => {
                                     if (e.target.value === 'Custom') {
-                                        setSheetSize('Custom');
+                                        const custom = prompt('Enter custom sheet size (e.g. 24" × 36")');
+                                        if (custom) setSheetSize(custom);
                                     } else {
                                         setSheetSize(e.target.value);
-                                        setCustomSheetSize('');
                                     }
                                 }}
                                 className="px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400 outline-none bg-white font-medium"
@@ -352,20 +351,7 @@ export default function PrintPlannerPage() {
                                     <option key={s} value={s}>{s}</option>
                                 ))}
                             </select>
-                            {sheetSize === 'Custom' && (
-                                <input
-                                    type="text"
-                                    autoFocus
-                                    value={customSheetSize}
-                                    onChange={e => {
-                                        setCustomSheetSize(e.target.value);
-                                        if (e.target.value.trim()) setSheetSize(e.target.value.trim());
-                                    }}
-                                    placeholder='e.g. 24" × 36"'
-                                    className="w-32 px-2 py-1.5 text-sm border border-gray-400 rounded-md focus:ring-2 focus:ring-gray-400 outline-none font-medium"
-                                />
-                            )}
-                            {sheetSize !== 'Custom' && !COMMON_SHEET_SIZES.includes(sheetSize) && (
+                            {!COMMON_SHEET_SIZES.includes(sheetSize) && (
                                 <span className="text-xs font-bold text-gray-700 bg-white px-2 py-1 rounded border">{sheetSize}</span>
                             )}
                         </div>
