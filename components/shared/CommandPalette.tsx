@@ -75,12 +75,13 @@ export default function CommandPalette() {
         const q = `%${searchQuery}%`;
 
         try {
-            const [jobsRes, clientsRes, leadsRes, invoicesRes, quotationsRes] = await Promise.all([
+            const [directJobsRes, clientsRes, leadsRes, invoicesRes, quotationsRes] = await Promise.all([
+                // Jobs by job number or project name
                 supabase
                     .from('jobs')
-                    .select('id, job_number, project_name, current_stage')
+                    .select('id, job_number, project_name, current_stage, client_id')
                     .or(`job_number.ilike.${q},project_name.ilike.${q}`)
-                    .limit(5),
+                    .limit(6),
                 supabase
                     .from('clients')
                     .select('id, name, company, phone')
@@ -103,26 +104,62 @@ export default function CommandPalette() {
                     .limit(5),
             ]);
 
+            // Build client name map from direct client results
+            const clientMap: Record<string, string> = {};
+            (clientsRes.data || []).forEach((c: any) => {
+                clientMap[c.id] = c.company || c.name || '';
+            });
+
+            // Also find jobs linked to matching clients (so "HDFC" finds HDFC jobs)
+            let clientJobsData: any[] = [];
+            if (clientsRes.data && clientsRes.data.length > 0) {
+                const clientIds = clientsRes.data.map((c: any) => c.id);
+                const { data: cJobs } = await supabase
+                    .from('jobs')
+                    .select('id, job_number, project_name, current_stage, client_id')
+                    .in('client_id', clientIds)
+                    .not('current_stage', 'in', '("delivered","cancelled")')
+                    .order('created_at', { ascending: false })
+                    .limit(8);
+                clientJobsData = cJobs || [];
+            }
+
+            // Merge: direct job matches + client-linked jobs, deduplicate by id
+            const seenJobIds = new Set<string>();
+            const allJobRows: any[] = [];
+            [...(directJobsRes.data || []), ...clientJobsData].forEach(j => {
+                if (!seenJobIds.has(j.id)) { seenJobIds.add(j.id); allJobRows.push(j); }
+            });
+
+            const STAGE_LABELS: Record<string, string> = {
+                new: 'New', awaiting_admin: 'Awaiting Admin', designing: 'Designing',
+                file_check: 'File Check', pre_print_qc: 'Pre-Print QC', approval: 'Approval',
+                printing: 'Printing', finishing: 'Finishing', quality_check: 'QC',
+                delivered: 'Delivered', completed: 'Completed',
+            };
+
             const allResults: SearchResult[] = [];
 
-            // Jobs
-            if (jobsRes.data) {
-                jobsRes.data.forEach(j => allResults.push({
+            // Jobs — show client name in subtitle + stage
+            allJobRows.slice(0, 8).forEach((j: any) => {
+                const clientName = j.client_id ? (clientMap[j.client_id] || '') : '';
+                const stageLabel = STAGE_LABELS[j.current_stage] || j.current_stage || 'new';
+                allResults.push({
                     id: j.id,
                     type: 'job',
                     title: `${j.job_number} — ${j.project_name || 'Untitled'}`,
-                    subtitle: j.current_stage?.replace('_', ' ') || 'new',
-                    href: `/admin/jobs?highlight=${j.id}`,
-                }));
-            }
+                    subtitle: clientName ? `${clientName} · ${stageLabel}` : stageLabel,
+                    href: `/admin/jobs?open=${j.id}`,
+                });
+            });
 
             // Clients
             if (clientsRes.data) {
-                clientsRes.data.forEach(c => allResults.push({
+                clientsRes.data.forEach((c: any) => allResults.push({
                     id: c.id,
                     type: 'client',
                     title: c.company || c.name,
-                    subtitle: c.phone || '',
+                    subtitle: [c.phone, c.name !== (c.company || c.name) ? c.name : ''].filter(Boolean).join(' · '),
                     href: `/admin/crm/clients?highlight=${c.id}`,
                 }));
             }

@@ -357,6 +357,21 @@ export default function JobsPage() {
     });
   };
 
+  // Auto-open job from ?open= param (e.g. from Cmd+K search)
+  const openParamId = searchParams.get('open');
+  useEffect(() => {
+    if (!openParamId || !jobs || jobs.length === 0) return;
+    const target = jobs.find((j: Job) => j.id === openParamId);
+    if (target) {
+      handleEdit(target);
+      // Clean the URL param without triggering a reload
+      const url = new URL(window.location.href);
+      url.searchParams.delete('open');
+      window.history.replaceState({}, '', url.toString());
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openParamId, jobs]);
+
   const handleEdit = (job: Job) => {
     setFormData({
       project_name: job.project_name,
