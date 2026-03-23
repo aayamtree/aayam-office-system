@@ -81,7 +81,6 @@ export default function OverduePage() {
       const designerIds: string[] = [];
       const seenC = new Set<string>();
       const seenD = new Set<string>();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       for (const j of jobData as any[]) {
         if (j.client_id && !seenC.has(j.client_id))  { seenC.add(j.client_id);  clientIds.push(j.client_id); }
         if (j.designer_id && !seenD.has(j.designer_id)) { seenD.add(j.designer_id); designerIds.push(j.designer_id); }
@@ -105,7 +104,6 @@ export default function OverduePage() {
         designerMap[p.id] = p.full_name || '—';
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const enriched: OverdueJob[] = (jobData as any[]).map((j: any) => {
         const deadline = new Date(j.client_deadline);
         const now = new Date();
