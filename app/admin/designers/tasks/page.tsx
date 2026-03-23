@@ -18,6 +18,8 @@ import {
 import ProjectNotesLog from '@/components/ProjectNotesLog';
 import { useConfirm } from '@/components/ConfirmModal';
 import PairDropBanner from '@/components/layout/PairDropBanner';
+import AttendanceClock from '@/components/attendance/AttendanceClock';
+import { DesignerStatusPills, DesignerStatusBadge } from '@/components/shared/DesignerStatusPills';
 
 // --- HELPERS ---
 const getDesignerStatus = (stage: string) => {
@@ -289,7 +291,7 @@ export default function DesignerWorkspace() {
             realId: job.id,
             taskId: job.job_number || 'JOB',
             title: job.project_name,
-            clientName: client?.name || 'Unknown Client',
+            clientName: client?.company || client?.name || 'Unknown Client',
             priority: job.priority || 'normal',
             // Formatting Date to 'DD MMM'
             deadline: job.client_deadline ? new Date(job.client_deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '',
@@ -686,18 +688,8 @@ export default function DesignerWorkspace() {
                                   {task.designerName || 'Unassigned'}
                                 </span>
                                 <div className="flex items-center gap-1.5">
-                                  {/* Designer Status Chip */}
-                                  {task.designer_status && (
-                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase
-                                      ${task.designer_status === 'live' ? 'bg-emerald-100 text-emerald-700' : ''}
-                                      ${task.designer_status === 'hold' ? 'bg-amber-100 text-amber-700' : ''}
-                                      ${task.designer_status === 'review' ? 'bg-sky-100 text-sky-700' : ''}
-                                      ${task.designer_status === 'end' ? 'bg-stone-100 text-stone-600' : ''}
-                                      ${task.designer_status === 'transfer' ? 'bg-violet-100 text-violet-700' : ''}
-                                    `}>
-                                      {task.designer_status}
-                                    </span>
-                                  )}
+                                  {/* Designer Status Badge */}
+                                  <DesignerStatusBadge status={task.designer_status} />
                                   {(task.files?.length > 0 || task.driveLink) && (
                                     <span className="flex items-center gap-0.5 text-gray-500" title={`${task.files?.length || 1} file(s)`}><Paperclip size={10} /><span className="text-xs font-bold">{task.files?.length || 1}</span></span>
                                   )}
@@ -809,6 +801,9 @@ export default function DesignerWorkspace() {
 
                 {/* PairDrop quick-link — shows only when URL is configured */}
                 <PairDropBanner />
+
+                {/* Attendance Clock — shown only for designers (not admins) */}
+                {!isAdmin && <AttendanceClock />}
 
                 {/* View Tabs - Color Blocks */}
                 <div className="grid grid-cols-4 gap-1 mt-4 px-1">
@@ -975,9 +970,7 @@ export default function DesignerWorkspace() {
                       {task.title}
                     </h3>
                     <div className="flex items-center justify-between">
-                      <span className={`text-xs px-2.5 py-1 rounded-md font-medium ${taskStatuses.find(s => s.id === task.status)?.color}`}>
-                        {taskStatuses.find(s => s.id === task.status)?.name}
-                      </span>
+                      <DesignerStatusBadge status={task.designer_status} />
                       {task.priority !== 'normal' && (
                         <span className={`text-xs px-2 py-0.5 rounded-md border ${priorities.find(p => p.id === task.priority)?.color}`}>
                           {task.priority}
@@ -1016,7 +1009,7 @@ export default function DesignerWorkspace() {
               {selectedTask ? (
                 <>
                   {/* Header */}
-                  <div className="px-6 py-5 border-b flex flex-col md:flex-row md:justify-between md:items-start bg-white sticky top-0 z-20 gap-2 md:gap-4">
+                  <div className="px-6 py-3 border-b flex flex-col md:flex-row md:justify-between md:items-center bg-white sticky top-0 z-20 gap-2 md:gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2">
                         <span className="text-section text-gray-900 leading-tight">{selectedTask.title}</span>
@@ -1026,7 +1019,7 @@ export default function DesignerWorkspace() {
                           <User size={14} /> <span className="truncate max-w-[150px]">{selectedTask.clientName}</span>
                         </div>
                         <span className="hidden md:inline text-gray-300">|</span>
-                        <div className="flex items-center gap-1.5 min-w-fit">
+                        <div className="flex items-center gap-1.5 whitespace-nowrap">
                           <Clock size={14} /> Due: {selectedTask.deadline || 'N/A'}
                         </div>
                         {/* Order ID Link if exists */}
@@ -1037,9 +1030,8 @@ export default function DesignerWorkspace() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 w-full md:w-auto">
                       {/* Priority Update */}
-                      <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-md border w-full md:w-auto">
+                      <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-md border shrink-0">
                         <span className="text-xs font-bold text-gray-500 pl-2 uppercase whitespace-nowrap">Priority:</span>
                         <select
                           value={selectedTask.priority}
@@ -1049,50 +1041,67 @@ export default function DesignerWorkspace() {
                           {priorities.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                         </select>
                       </div>
+                  </div>
 
-                      <div className={`flex-1 md:flex-none flex items-center gap-2 p-1 rounded-md border w-full md:w-auto ${selectedTask.is_on_hold
-                        ? 'bg-amber-500 border-amber-500'
-                        : ['printing', 'finishing', 'quality_check', 'ready', 'delivered'].includes(selectedTask.current_stage || '')
-                          ? 'bg-gray-900 border-gray-900'
-                          : 'bg-gray-50'
-                        }`}>
+                  <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/30">
+
+                    {/* Task Status Pills — moved here so header stays slim */}
+                    <div className={`rounded-md border ${selectedTask.is_on_hold
+                      ? 'bg-amber-500 border-amber-500'
+                      : ['printing', 'finishing', 'quality_check', 'ready', 'delivered'].includes(selectedTask.current_stage || '')
+                        ? 'bg-gray-900 border-gray-900'
+                        : 'bg-white border-gray-200'
+                      }`}>
+                      {selectedTask.is_on_hold ? (
+                        <span className="flex items-center gap-2 text-white text-sm font-bold px-4 py-2.5">
+                          ⏸️ ON HOLD
+                        </span>
+                      ) : ['printing', 'finishing', 'quality_check', 'ready', 'delivered'].includes(selectedTask.current_stage || '') ? (
+                        <span className="flex items-center gap-2 text-white text-sm font-bold px-4 py-2.5">
+                          <Lock size={13} /> {(() => {
+                            const jt = (selectedTask.jobType || '').toLowerCase();
+                            const isDesignOnlyLocked = jt.includes('design') && !jt.includes('print');
+                            return isDesignOnlyLocked ? 'Locked — Design Delivered' : 'Locked — Sent to Print';
+                          })()}
+                        </span>
+                      ) : (
+                        <DesignerStatusPills
+                          jobId={selectedTask.realId}
+                          currentStatus={selectedTask.designer_status}
+                          size="bar"
+                          userRole={profile?.role}
+                          currentUserId={profile?.id}
+                          assignedDesignerId={selectedTask.designerId}
+                          onStatusChange={(s) => {
+                            setTasks(prev => prev.map(t =>
+                              t.realId === selectedTask.realId ? { ...t, designer_status: s } : t
+                            ));
+                          }}
+                          designers={designers?.map((d: any) => ({ id: d.id, full_name: d.full_name || d.name || d.email }))}
+                        />
+                      )}
+                    </div>
+
+                    {/* Admin Freeze / Resume Control */}
+                    {isAdmin && (
+                      <div className={`flex items-center justify-between px-4 py-3 rounded-md border ${selectedTask.is_on_hold ? 'bg-amber-50 border-amber-300' : 'bg-white border-gray-200'}`}>
+                        <div className="flex items-center gap-2">
+                          {selectedTask.is_on_hold ? (
+                            <>
+                              <span className="text-amber-600 font-bold text-sm">⏸️ Job is Frozen</span>
+                              {selectedTask.hold_reason && <span className="text-xs text-amber-700 italic">— {selectedTask.hold_reason}</span>}
+                            </>
+                          ) : (
+                            <span className="text-xs text-gray-400 font-medium">Admin Control</span>
+                          )}
+                        </div>
                         {selectedTask.is_on_hold ? (
-                          <span className="flex items-center gap-2 text-white text-xs font-bold px-3 py-1">
-                            ⏸️ ON HOLD
-                          </span>
-                        ) : ['printing', 'finishing', 'quality_check', 'ready', 'delivered'].includes(selectedTask.current_stage || '') ? (
-                          <span className="flex items-center gap-2 text-white text-xs font-bold px-3 py-1">
-                            <Lock size={12} /> {(() => {
-                              const jt = (selectedTask.jobType || '').toLowerCase();
-                              const isDesignOnlyLocked = jt.includes('design') && !jt.includes('print');
-                              return isDesignOnlyLocked ? 'Locked — Design Delivered' : 'Locked — Sent to Print';
-                            })()}
-                          </span>
-                        ) : (
-                          <>
-                            <span className="text-xs font-bold text-gray-500 pl-2 uppercase whitespace-nowrap">Status:</span>
-                            <select
-                              value={selectedTask.status}
-                              onChange={(e) => updateStatus(selectedTask.realId, e.target.value)}
-                              className="flex-1 md:flex-none bg-transparent text-gray-700 text-sm rounded px-2 py-1 cursor-pointer focus:ring-0 border-none outline-none font-semibold hover:bg-white transition-colors"
-                            >
-                              {taskStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                            </select>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Hold / Unhold Button (Admin Only) */}
-                      {isAdmin && (
-                        selectedTask.is_on_hold ? (
                           <button
                             onClick={async () => {
                               const { confirmed } = await confirmDialog({ title: 'Resume Project', message: 'This will resume the project and move it back to its previous stage.', variant: 'success', confirmLabel: 'Resume' });
                               if (!confirmed) return;
                               await supabase.from('jobs').update({
                                 is_on_hold: false,
-                                // If it was in a print/locked stage before hold, return to designing
-                                // so the designer can open and work on it again
                                 current_stage: ['printing', 'finishing', 'quality_check', 'ready', 'delivered', 'sent_to_print', 'approval'].includes(selectedTask.pre_hold_stage || '')
                                   ? 'designing'
                                   : selectedTask.pre_hold_stage || 'designing',
@@ -1100,64 +1109,35 @@ export default function DesignerWorkspace() {
                                 pre_hold_stage: null,
                               }).eq('id', selectedTask.realId);
                               const userName = profile?.full_name || 'Admin';
-                              await supabase.from('job_notes').insert([{
-                                job_id: selectedTask.realId,
-                                user_id: profile?.id,
-                                content: `▶️ Project resumed by ${userName}. Back to ${selectedTask.pre_hold_stage || 'designing'}.`,
-                                tag: 'update',
-                                source: 'self',
-                              }]);
-                              await supabase.from('job_stage_history').insert([{
-                                job_id: selectedTask.realId,
-                                from_stage: 'on_hold',
-                                to_stage: selectedTask.pre_hold_stage || 'designing',
-                                notes: `▶️ Resumed by ${userName}`,
-                              }]);
-                              await logActivity({ action: 'update', resourceType: 'job', resourceId: selectedTask.realId, details: { description: `▶️ ${selectedTask.taskId} resumed by ${userName}. Back to ${selectedTask.pre_hold_stage || 'designing'}.`, holdAction: 'resume' } });
+                              await supabase.from('job_notes').insert([{ job_id: selectedTask.realId, user_id: profile?.id, content: `▶️ Project resumed by ${userName}. Back to ${selectedTask.pre_hold_stage || 'designing'}.`, tag: 'update', source: 'self' }]);
+                              await supabase.from('job_stage_history').insert([{ job_id: selectedTask.realId, from_stage: 'on_hold', to_stage: selectedTask.pre_hold_stage || 'designing', notes: `▶️ Resumed by ${userName}` }]);
+                              await logActivity({ action: 'update', resourceType: 'job', resourceId: selectedTask.realId, details: { description: `▶️ ${selectedTask.taskId} resumed by ${userName}.`, holdAction: 'resume' } });
                               refetchJobs();
                             }}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white rounded-md text-xs font-bold hover:bg-green-700 transition-colors"
                           >
-                            ▶️ Resume
+                            ▶️ Resume Job
                           </button>
                         ) : (
                           <button
                             onClick={async () => {
-                              const { confirmed, inputValue } = await confirmDialog({ title: 'Put on Hold', message: 'This will freeze the project. The designer won\'t be able to work on it until you resume.', variant: 'warning', confirmLabel: 'Put on Hold', showInput: true, inputPlaceholder: 'Why are you putting this on hold?', inputRequired: true });
+                              const { confirmed, inputValue } = await confirmDialog({ title: 'Freeze Job', message: 'This will freeze the job. The designer won\'t be able to work on it until you resume.', variant: 'warning', confirmLabel: 'Freeze', showInput: true, inputPlaceholder: 'Why are you freezing this job?', inputRequired: true });
                               if (!confirmed || !inputValue) return;
                               const reason = inputValue;
-                              await supabase.from('jobs').update({
-                                is_on_hold: true,
-                                hold_reason: reason,
-                                pre_hold_stage: selectedTask.current_stage || 'designing',
-                              }).eq('id', selectedTask.realId);
+                              await supabase.from('jobs').update({ is_on_hold: true, hold_reason: reason, pre_hold_stage: selectedTask.current_stage || 'designing' }).eq('id', selectedTask.realId);
                               const userName = profile?.full_name || 'Admin';
-                              await supabase.from('job_notes').insert([{
-                                job_id: selectedTask.realId,
-                                user_id: profile?.id,
-                                content: `⏸️ Project put on hold by ${userName}. Reason: "${reason}"`,
-                                tag: 'update',
-                                source: 'self',
-                              }]);
-                              await supabase.from('job_stage_history').insert([{
-                                job_id: selectedTask.realId,
-                                from_stage: selectedTask.current_stage || 'designing',
-                                to_stage: 'on_hold',
-                                notes: `⏸️ On Hold: ${reason}`,
-                              }]);
-                              await logActivity({ action: 'update', resourceType: 'job', resourceId: selectedTask.realId, details: { description: `⏸️ ${selectedTask.taskId} put on hold by ${userName}. Reason: "${reason}"`, holdAction: 'hold' } });
+                              await supabase.from('job_notes').insert([{ job_id: selectedTask.realId, user_id: profile?.id, content: `⏸️ Job frozen by ${userName}. Reason: "${reason}"`, tag: 'update', source: 'self' }]);
+                              await supabase.from('job_stage_history').insert([{ job_id: selectedTask.realId, from_stage: selectedTask.current_stage || 'designing', to_stage: 'on_hold', notes: `⏸️ Frozen: ${reason}` }]);
+                              await logActivity({ action: 'update', resourceType: 'job', resourceId: selectedTask.realId, details: { description: `⏸️ ${selectedTask.taskId} frozen by ${userName}. Reason: "${reason}"`, holdAction: 'hold' } });
                               refetchJobs();
                             }}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 text-amber-700 rounded-md text-xs font-bold hover:bg-amber-200 border border-amber-300 transition-colors"
                           >
-                            ⏸️ Hold
+                            ⏸️ Freeze Job
                           </button>
-                        )
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-gray-50/30">
+                        )}
+                      </div>
+                    )}
 
                     {/* Cross-Designer Warning Banner — only show when user is truly not the assigned designer */}
                     {(() => {
