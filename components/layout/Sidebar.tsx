@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 // PERF: Removed useDashboardStats (25 queries!) — sidebar only needs 2 badge counts
 import { supabase } from '@/lib/supabase';
@@ -42,6 +43,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/Badge';
+import { EndMyDayButton } from '@/components/attendance/EndMyDayButton';
 
 interface MenuItem {
   name: string;
@@ -67,6 +69,7 @@ const menuItems: MenuItem[] = [
       { name: 'Overview', href: '/admin/jobs' },
       { name: 'Job Dossier', href: '/admin/jobs/dossier' },
       { name: 'Production Queue', href: '/admin/jobs/queue' },
+      { name: '🔴 Overdue', href: '/admin/jobs/overdue' },
     ]
   },
   {
@@ -94,12 +97,6 @@ const menuItems: MenuItem[] = [
     ]
   },
   {
-    name: 'Studio Dashboard',
-    icon: LayoutDashboard,
-    href: '/admin/designer-module/dashboard',
-    allowedRoles: ['admin'],
-  },
-  {
     name: 'Attendance',
     icon: Clock,
     href: '/admin/designers/attendance',
@@ -116,6 +113,7 @@ const menuItems: MenuItem[] = [
       { name: 'Follow-ups', href: '/admin/marketing/follow-ups' },
       { name: 'Quotations', href: '/admin/marketing/quotations' },
       { name: 'My Orders', href: '/admin/marketing/orders' },
+      { name: 'Dispatched Orders', href: '/admin/marketing/dispatch' },
       { name: 'Commissions', href: '/admin/marketing/commissions' },
       { name: '📖 My Guide', href: '/admin/marketing/guide' },
     ]
@@ -141,6 +139,9 @@ const menuItems: MenuItem[] = [
       { name: 'Invoices', href: '/admin/finance/invoices' },
       { name: 'Payments', href: '/admin/finance/payments' },
       { name: 'Banking', href: '/admin/finance/banking' },
+      { name: 'Bank Accounts', href: '/admin/finance/banks', adminOnly: true },
+      { name: 'Daily Summary', href: '/admin/finance/daily', adminOnly: true },
+      { name: 'Accounts', href: '/admin/finance/accounts', adminOnly: true },
       { name: 'Purchase Bills', href: '/admin/finance/vendors/purchases' },
       { name: 'Vendors', href: '/admin/finance/vendors' },
       { name: '📖 My Guide', href: '/admin/finance/guide' },
@@ -255,10 +256,12 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
   const [hovered, setHovered] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // PERF: Only 2 lightweight count queries instead of 25 from useDashboardStats
+  // PERF: Only 3 lightweight count queries instead of 25 from useDashboardStats
   const [activeLeadsCount, setActiveLeadsCount] = useState(0);
   const [prodQueueCount, setProdQueueCount] = useState(0);
+  const [overdueCount, setOverdueCount] = useState(0);
   useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
     // Leads badge count
     supabase.from('leads')
       .select('id', { count: 'exact', head: true })
@@ -269,6 +272,12 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
       .select('id', { count: 'exact', head: true })
       .in('current_stage', ['printing', 'finishing'])
       .then(({ count }) => setProdQueueCount(count || 0));
+    // Overdue jobs count
+    supabase.from('jobs')
+      .select('id', { count: 'exact', head: true })
+      .lt('client_deadline', today)
+      .not('current_stage', 'in', '(delivered,cancelled,completed)')
+      .then(({ count }) => setOverdueCount(count || 0));
   }, []);
 
   const toggleExpanded = (name: string) => {
@@ -355,7 +364,7 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
           className="flex items-center gap-2"
           onClick={handleLinkClick}
         >
-          <img src="/company-logo.png" alt="Aayam" className="w-8 h-8 rounded shrink-0" />
+          <Image src="/company-logo.png" alt="Aayam" width={32} height={32} className="rounded shrink-0" />
           {!isCollapsed && <span className="font-bold text-foreground text-xl whitespace-nowrap">Aayam</span>}
         </Link>
         {!isCollapsed && isDesktop && (
@@ -444,10 +453,11 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
                   {/* Submenu */}
                   {hasSubmenu && (isExpanded || item.name === 'Design Studio') && (
                     <div className="ml-6 mt-1 space-y-1 border-l border-border pl-3">
-                      {item.submenu!.map((sub) => {
+                      {item.submenu!.filter(sub => !sub.adminOnly || profile?.role === 'admin').map((sub) => {
                         let badge = 0;
                         if (sub.name === 'Leads') badge = activeLeadsCount;
                         if (sub.name === 'Production Queue') badge = prodQueueCount;
+                        if (sub.name === '🔴 Overdue') badge = overdueCount;
 
                         const showBadge = badge > 0;
 
@@ -479,6 +489,13 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
           )}
         </nav>
       </ScrollArea>
+
+      {/* End My Day — Designer Only */}
+      {!isCollapsed && profile?.role === 'designer' && (
+        <div className="px-3 pb-2">
+          <EndMyDayButton />
+        </div>
+      )}
 
       {/* User Profile */}
       <div className={`border-t border-border ${isCollapsed ? 'p-2 flex justify-center' : 'p-4'}`}>
