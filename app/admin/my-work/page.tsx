@@ -82,7 +82,7 @@ function DesignerWork({ userId }: { userId: string }) {
         fetch('/api/jobs/my-subtasks').then(r => r.json()),
       ]);
 
-      setJobs(jobsRes.data || []);
+      setJobs((jobsRes.data || []) as any[]);
       setSubtasks(subtasksRes.data || []);
       setLoading(false);
     })();
