@@ -263,28 +263,41 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
   const [hovered, setHovered] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // PERF: Only 3 lightweight count queries instead of 25 from useDashboardStats
+  // PERF: Badge counts cached in sessionStorage for 5 minutes — no re-fetch on every navigation
   const [activeLeadsCount, setActiveLeadsCount] = useState(0);
   const [prodQueueCount, setProdQueueCount] = useState(0);
   const [overdueCount, setOverdueCount] = useState(0);
   useEffect(() => {
+    const CACHE_KEY = 'sidebar_badge_counts';
+    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+    try {
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { ts, leads, prod, overdue } = JSON.parse(cached);
+        if (Date.now() - ts < CACHE_TTL) {
+          setActiveLeadsCount(leads);
+          setProdQueueCount(prod);
+          setOverdueCount(overdue);
+          return; // skip all 3 queries
+        }
+      }
+    } catch { /* sessionStorage unavailable */ }
+
     const today = new Date().toISOString().split('T')[0];
-    // Leads badge count
-    supabase.from('leads')
-      .select('id', { count: 'exact', head: true })
-      .not('status', 'in', '(converted,lost)')
-      .then(({ count }) => setActiveLeadsCount(count || 0));
-    // Production Queue badge count (printing + finishing)
-    supabase.from('jobs')
-      .select('id', { count: 'exact', head: true })
-      .in('current_stage', ['printing', 'finishing'])
-      .then(({ count }) => setProdQueueCount(count || 0));
-    // Overdue jobs count
-    supabase.from('jobs')
-      .select('id', { count: 'exact', head: true })
-      .lt('client_deadline', today)
-      .not('current_stage', 'in', '(delivered,cancelled,completed)')
-      .then(({ count }) => setOverdueCount(count || 0));
+    Promise.all([
+      supabase.from('leads').select('id', { count: 'exact', head: true }).not('status', 'in', '(converted,lost)'),
+      supabase.from('jobs').select('id', { count: 'exact', head: true }).in('current_stage', ['printing', 'finishing']),
+      supabase.from('jobs').select('id', { count: 'exact', head: true }).lt('client_deadline', today).not('current_stage', 'in', '(delivered,cancelled,completed)'),
+    ]).then(([leadsRes, prodRes, overdueRes]) => {
+      const leads = leadsRes.count || 0;
+      const prod  = prodRes.count || 0;
+      const overdue = overdueRes.count || 0;
+      setActiveLeadsCount(leads);
+      setProdQueueCount(prod);
+      setOverdueCount(overdue);
+      try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), leads, prod, overdue })); } catch { /* ignore */ }
+    });
   }, []);
 
   const toggleExpanded = (name: string) => {

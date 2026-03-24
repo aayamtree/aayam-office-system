@@ -278,14 +278,27 @@ export default function DesignerWorkspace() {
 
   // === DATA SYNC ===
   // === DATA SYNC ===
+  // PERF: Build O(1) lookup maps so the .map() below doesn't do O(n*m) array scans
+  const clientMap = useMemo(() => {
+    const m = new Map<string, any>();
+    (clients || []).forEach(c => m.set(c.id, c));
+    return m;
+  }, [clients]);
+
+  const designerMap = useMemo(() => {
+    const m = new Map<string, any>();
+    (designers || []).forEach(d => m.set(d.id, d));
+    return m;
+  }, [designers]);
+
   useEffect(() => {
     if (jobs) {
       const mappedTasks = (jobs || [])
         .filter(job => ['new', 'awaiting_admin', 'file_check', 'designing', 'approval', 'pre_print_qc', 'printing', 'finishing', 'completed', 'delivered'].includes(job.current_stage || ''))
         .map(job => {
-          // Resolve Relationships (Manual Join)
-          const client = (clients || []).find(c => c.id === job.client_id);
-          const designer = (designers || []).find(d => d.id === job.designer_id);
+          // PERF: O(1) map lookup instead of O(n) array scan
+          const client = clientMap.get(job.client_id);
+          const designer = designerMap.get(job.designer_id);
 
           return {
             id: parseInt(job.id.replace(/-/g, '').substring(0, 8), 16) || job.id.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0),
@@ -328,7 +341,7 @@ export default function DesignerWorkspace() {
 
       setTasks(mappedTasks);
     }
-  }, [JSON.stringify(jobs?.map(j => j.id)), JSON.stringify(clients?.map(c => c.id)), JSON.stringify(designers?.map(d => d.id))]);
+  }, [JSON.stringify(jobs?.map(j => j.id)), clientMap, designerMap]);
 
   // --- LOGIC (memoized to prevent recomputation on every render) ---
   // Pre-compute myDesignerRecord once instead of inside filteredTasks per-task
