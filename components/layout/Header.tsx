@@ -218,7 +218,7 @@ export default function Header({ onMenuClick, sidebarExpanded }: HeaderProps) {
   const breadcrumbs = generateBreadcrumbs();
 
   return (
-    <header className={`fixed top-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-md border-b border-border z-20 transition-[left] duration-200 ease-in-out ${sidebarExpanded ? 'lg:left-64' : 'lg:left-16'}`}>
+    <header className={`fixed top-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-md border-b border-border z-30 transition-[left] duration-200 ease-in-out ${sidebarExpanded ? 'lg:left-64' : 'lg:left-16'}`}>
       <div className="h-full px-4 lg:px-6 flex items-center justify-between">
         {/* Left - Menu Button & Breadcrumbs */}
         <div className="flex items-center gap-2 flex-1 overflow-hidden mr-4 min-h-[36px]">

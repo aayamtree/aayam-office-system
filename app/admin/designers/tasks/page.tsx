@@ -1026,7 +1026,7 @@ export default function DesignerWorkspace() {
               {selectedTask ? (
                 <>
                   {/* Header */}
-                  <div className="px-6 py-3 border-b flex flex-col md:flex-row md:justify-between md:items-center bg-white sticky top-0 z-20 gap-2 md:gap-3">
+                  <div className="px-6 py-3 border-b flex flex-col md:flex-row md:justify-between md:items-center bg-white sticky top-0 z-10 gap-2 md:gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2">
                         <span className="text-section text-gray-900 leading-tight">{selectedTask.title}</span>
