@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import {
   CheckCircle2, Clock, AlertTriangle, Briefcase, ArrowRight,
-  Loader2, Star, Users, Layers, BarChart3, Calendar,
+  Loader2, Star, Users, Layers, Calendar,
 } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -19,8 +19,8 @@ interface MyJob {
   client_deadline: string | null;
   priority: string;
   current_stage: string;
-  designer_status: string | null;
-  client?: { name: string; company?: string } | null;
+  designer_status?: string | null;
+  client?: { name: string; company?: string } | { name: any; company?: any } | any | null;
 }
 
 interface MySubtask {
@@ -186,8 +186,8 @@ function AdminWork() {
           .order('client_deadline', { ascending: true })
           .limit(15),
       ]);
-      setOverdue(overdueRes.data || []);
-      setInProgress(inProgRes.data || []);
+      setOverdue((overdueRes.data || []) as any[]);
+      setInProgress((inProgRes.data || []) as any[]);
       setLoading(false);
     })();
   }, []);
@@ -238,7 +238,7 @@ function MarketingWork({ userId }: { userId: string }) {
         .not('status', 'in', '("converted","lost","closed")')
         .order('follow_up_date', { ascending: true, nullsFirst: false })
         .limit(30);
-      setLeads(data || []);
+      setLeads((data || []) as any[]);
       setLoading(false);
     })();
   }, [userId]);
@@ -301,7 +301,7 @@ function DispatchWork() {
         .in('current_stage', ['ready_to_dispatch', 'dispatched', 'qc'])
         .order('client_deadline', { ascending: true, nullsFirst: false })
         .limit(30);
-      setJobs(data || []);
+      setJobs((data || []) as any[]);
       setLoading(false);
     })();
   }, []);
