@@ -478,7 +478,7 @@ export default function MyWorkPage() {
       {/* Header */}
       <div className="mb-6">
         <p className="text-sm text-gray-400">{greeting},</p>
-        <h1 className="text-2xl font-bold text-gray-900">{name}'s Work</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{name}&apos;s Work</h1>
         <p className="text-sm text-gray-500 mt-1">
           {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
