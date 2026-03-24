@@ -297,8 +297,8 @@ export default function DesignerWorkspace() {
         .filter(job => ['new', 'awaiting_admin', 'file_check', 'designing', 'approval', 'pre_print_qc', 'printing', 'finishing', 'completed', 'delivered'].includes(job.current_stage || ''))
         .map(job => {
           // PERF: O(1) map lookup instead of O(n) array scan
-          const client = clientMap.get(job.client_id);
-          const designer = designerMap.get(job.designer_id);
+          const client = clientMap.get(job.client_id ?? '');
+          const designer = designerMap.get(job.designer_id ?? '');
 
           return {
             id: parseInt(job.id.replace(/-/g, '').substring(0, 8), 16) || job.id.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0),
