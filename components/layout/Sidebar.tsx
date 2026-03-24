@@ -28,6 +28,7 @@ import {
   PanelLeftClose,
   PanelLeft,
   Share2,
+  Star,
 } from 'lucide-react';
 
 // Shadcn Components
@@ -43,7 +44,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/Badge';
-import { EndMyDayButton } from '@/components/attendance/EndMyDayButton';
+import AttendanceStatusPill from '@/components/attendance/AttendanceStatusPill';
 
 interface MenuItem {
   name: string;
@@ -54,6 +55,12 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
+  {
+    name: 'My Work',
+    icon: Star,
+    href: '/admin/my-work',
+    // Visible to everyone
+  },
   {
     name: 'Overview',
     icon: LayoutDashboard,
@@ -490,10 +497,10 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
         </nav>
       </ScrollArea>
 
-      {/* End My Day — Designer Only */}
+      {/* Attendance status pill — Designer Only (silent, no buttons) */}
       {!isCollapsed && profile?.role === 'designer' && (
-        <div className="px-3 pb-2">
-          <EndMyDayButton />
+        <div className="px-3 pb-1">
+          <AttendanceStatusPill />
         </div>
       )}
 

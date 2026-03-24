@@ -30,6 +30,9 @@ import JobStageQuickAdd from '@/components/shared/JobStageQuickAdd';
 import JobTimeline from '@/components/shared/JobTimeline';
 import JobFileAttachments from '@/components/shared/JobFileAttachments';
 import JobProfitabilityCard from '@/components/shared/JobProfitabilityCard';
+import ProjectNotesLog from '@/components/ProjectNotesLog';
+import JobSubtasks from '@/components/jobs/JobSubtasks';
+import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -51,6 +54,8 @@ export default function JobsPage() {
 
   const loading = jobsLoading; // Main loading state
   const confirm = useConfirm();
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === 'admin';
 
   // Safety: Prevent infinite loading
   const [forceShow, setForceShow] = useState(false);
@@ -114,8 +119,8 @@ export default function JobsPage() {
 
       // Set initial form defaults
       if (jobTypesRes.data?.[0]) setFormData(prev => ({ ...prev, job_type: jobTypesRes.data[0].name }));
-    } catch (error) {
-      console.error('Error loading configuration:', error);
+    } catch (error: any) {
+      toast.error('Failed to load job configuration. Using defaults.');
       // On error, still set fallback data so UI works
       setStages(DEFAULT_STAGES);
       setPriorities(DEFAULT_PRIORITIES);
@@ -227,7 +232,7 @@ export default function JobsPage() {
   const pendingPayments = jobs.reduce((sum, j) => sum + ((j.total_amount || 0) - (j.amount_received || 0)), 0);
 
   const filteredJobs = jobs.filter(job => {
-    const clientName = job.client?.name || '';
+    const clientName = job.client?.company || job.client?.name || '';
     const matchesSearch = (job.project_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (job.job_number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       clientName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -324,7 +329,7 @@ export default function JobsPage() {
           attachment_url: formData.advance_receipt_url || undefined,
         });
         if (paymentRecordResult?.error) {
-          console.error('[advance] Failed to record payment:', paymentRecordResult.error);
+          toast.warning?.('Advance payment recorded but finance ledger entry may be missing.');
         }
         // Update job: set amount_received + payment_status
         const paymentStatus = formData.advance_amount >= totalAmount - 1 ? 'paid' : 'partial';
@@ -338,9 +343,8 @@ export default function JobsPage() {
       setShowModal(false);
       setEditingJob(null);
       resetForm();
-    } catch (error) {
-      console.error('Error saving job:', error);
-      toast.error('Error saving job');
+    } catch (error: any) {
+      toast.error('Error saving job: ' + (error.message || 'Please try again.'));
     } finally {
       setSaving(false);
     }
@@ -353,6 +357,21 @@ export default function JobsPage() {
       advance_required: true, advance_amount: 0, advance_payment_mode: 'cash', advance_receipt_url: ''
     });
   };
+
+  // Auto-open job from ?open= param (e.g. from Cmd+K search)
+  const openParamId = searchParams.get('open');
+  useEffect(() => {
+    if (!openParamId || !jobs || jobs.length === 0) return;
+    const target = jobs.find((j: Job) => j.id === openParamId);
+    if (target) {
+      handleEdit(target);
+      // Clean the URL param without triggering a reload
+      const url = new URL(window.location.href);
+      url.searchParams.delete('open');
+      window.history.replaceState({}, '', url.toString());
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openParamId, jobs]);
 
   const handleEdit = (job: Job) => {
     setFormData({
@@ -441,9 +460,8 @@ export default function JobsPage() {
       setShowPaymentModal(false);
       setSelectedJob(null);
       setPaymentMode('cash');
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error adding payment');
+    } catch (error: any) {
+      toast.error('Error adding payment: ' + (error.message || 'Please try again.'));
     }
   };
 
@@ -478,9 +496,8 @@ export default function JobsPage() {
       const note = `Sent to printer: ${vendorName}${machineName ? ` (Machine: ${machineName})` : ''}${sendToPrinterData.notes ? `. Note: ${sendToPrinterData.notes}` : ''}`;
       await updateJobStage(selectedJob.id, 'printing' as JobStatus, note);
       setShowSendToPrinterModal(false);
-    } catch (error) {
-      console.error('Error sending to printer:', error);
-      toast.error('Error sending to printer');
+    } catch (error: any) {
+      toast.error('Error sending to printer: ' + (error.message || 'Please try again.'));
     } finally {
       setSendingToPrinter(false);
     }
@@ -593,7 +610,7 @@ export default function JobsPage() {
           )}
           <div className="flex items-center gap-1.5 mb-2">
             <Building2 className="w-3.5 h-3.5 text-gray-400" />
-            <p className="text-xs text-gray-500 truncate">{job.client?.name || 'No client'}</p>
+            <p className="text-xs text-gray-500 truncate">{job.client?.company || job.client?.name || 'No client'}</p>
           </div>
           <div className="flex items-center justify-between text-xs border-t border-gray-100 pt-2">
             <Badge variant="outline" className={getPaymentBadge(job.payment_status)}>
@@ -856,7 +873,7 @@ export default function JobsPage() {
                           <p className="text-sm font-semibold text-gray-900 leading-snug truncate">{job.project_name}</p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <Building2 className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                            <p className="text-xs text-gray-500 truncate">{job.client?.name || 'No client'}</p>
+                            <p className="text-xs text-gray-500 truncate">{job.client?.company || job.client?.name || 'No client'}</p>
                           </div>
                         </div>
                         {stageMeta && (
@@ -934,7 +951,7 @@ export default function JobsPage() {
                           </div>
                           <p className="text-sm font-medium">{job.project_name}</p>
                         </td>
-                        <td className="px-4 py-3 text-sm">{job.client?.name || '-'}</td>
+                        <td className="px-4 py-3 text-sm">{job.client?.company || job.client?.name || '-'}</td>
                         <td className="px-4 py-3">
                           <span className={`text-xs px-2 py-1 rounded-md text-white ${stages.find(s => s.id === job.current_stage)?.color}`}>
                             {stages.find(s => s.id === job.current_stage)?.name}
@@ -1370,6 +1387,29 @@ export default function JobsPage() {
               </div>
             )}
 
+            {/* Subtasks - only when editing */}
+            {editingJob && (
+              <div className="mt-6 pt-4 border-t">
+                <JobSubtasks
+                  jobId={editingJob.id}
+                  designers={designers.map(d => ({ id: d.id, name: d.name }))}
+                />
+              </div>
+            )}
+
+            {/* Project Notes / Comments - only when editing */}
+            {editingJob && (
+              <div className="mt-6 pt-4 border-t">
+                <ProjectNotesLog
+                  jobId={editingJob.id}
+                  canWrite={true}
+                  isAdmin={isAdmin}
+                  currentStage={editingJob.current_stage || 'new'}
+                  onStageChange={() => { /* jobs page refetches via SWR */ }}
+                />
+              </div>
+            )}
+
             {/* Timeline - only show when editing */}
             {editingJob && (
               <div className="mt-6 pt-4 border-t">
@@ -1488,7 +1528,7 @@ export default function JobsPage() {
 
               {/* Job Info */}
               <div className="bg-gray-50 rounded-md p-3 text-sm text-gray-600">
-                <div className="flex justify-between"><span>Client:</span><span className="font-medium text-gray-900">{selectedJob.client?.name || 'N/A'}</span></div>
+                <div className="flex justify-between"><span>Client:</span><span className="font-medium text-gray-900">{selectedJob.client?.company || selectedJob.client?.name || 'N/A'}</span></div>
                 <div className="flex justify-between mt-1"><span>Quantity:</span><span className="font-medium text-gray-900">{selectedJob.quantity}</span></div>
                 <div className="flex justify-between mt-1"><span>Current Stage:</span><span className="font-medium text-gray-900">{stages.find(s => s.id === selectedJob.current_stage)?.name || selectedJob.current_stage}</span></div>
               </div>

@@ -19,6 +19,7 @@ import ProjectNotesLog from '@/components/ProjectNotesLog';
 import { useConfirm } from '@/components/ConfirmModal';
 import PairDropBanner from '@/components/layout/PairDropBanner';
 import AttendanceClock from '@/components/attendance/AttendanceClock';
+import MyAssignedSubtasks from '@/components/jobs/MyAssignedSubtasks';
 import { DesignerStatusPills, DesignerStatusBadge } from '@/components/shared/DesignerStatusPills';
 
 // --- HELPERS ---
@@ -855,6 +856,9 @@ export default function DesignerWorkspace() {
               </div>
 
               <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                {/* Subtasks assigned to me — shown in my_tasks view for designers */}
+                {!isAdmin && activeTab === 'my_tasks' && <MyAssignedSubtasks />}
+
                 {(!forceShow && jobsLoading) ? (
                   <div className="flex justify-center py-10"><Loader2 className="animate-spin text-primary" /></div>
                 ) : jobsError ? (
