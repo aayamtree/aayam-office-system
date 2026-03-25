@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useJobs, useDesigners } from '@/lib/hooks';
 import { Calendar, Clock, User, AlertCircle, Search, Palette, Users, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
+import { DesignerStatusBadge } from '@/components/shared/DesignerStatusPills';
 
 // ─── Stage color config matching app theme ────────────────────────────────────
 const stageConfig: Record<string, { borderColor: string; tintBg: string; badgeBg: string; badgeText: string; label: string }> = {
@@ -218,18 +219,8 @@ export default function UnifiedQueue() {
                                                             <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold uppercase ${cfg.badgeBg} ${cfg.badgeText}`}>
                                                                 {cfg.label}
                                                             </span>
-                                                            {/* Designer task status chip (Live / Hold / Review / End) */}
-                                                            {task.taskStatus && (
-                                                                <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase
-                                                                    ${task.taskStatus === 'live' ? 'bg-emerald-100 text-emerald-700' : ''}
-                                                                    ${task.taskStatus === 'hold' ? 'bg-amber-100 text-amber-700' : ''}
-                                                                    ${task.taskStatus === 'review' ? 'bg-sky-100 text-sky-700' : ''}
-                                                                    ${task.taskStatus === 'end' ? 'bg-stone-100 text-stone-600' : ''}
-                                                                    ${task.taskStatus === 'transfer' ? 'bg-violet-100 text-violet-700' : ''}
-                                                                `}>
-                                                                    {task.taskStatus}
-                                                                </span>
-                                                            )}
+                                                            {/* Designer task status badge (Live / Hold / Review / End) */}
+                                                            <DesignerStatusBadge status={task.taskStatus} />
                                                         </div>
                                                     </div>
 

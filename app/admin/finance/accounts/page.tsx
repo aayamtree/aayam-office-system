@@ -168,7 +168,7 @@ export default function AccountsPage() {
                                         </p>
                                         <div className="flex gap-2 mt-2">
                                             <a
-                                                href={`/admin/finance/cash/statement/${account.id}`}
+                                                href={`/admin/finance/accounts/statement/${account.id}`}
                                                 className="text-sm text-gray-900 hover:text-gray-900 font-medium"
                                             >
                                                 Statement →

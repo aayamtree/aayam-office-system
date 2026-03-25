@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Lock, User, AlertCircle, Info } from 'lucide-react';
+import Image from 'next/image';
+import { Eye, EyeOff, Lock, User, AlertCircle, Clock } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { logLogin } from '@/lib/activity-logger';
 
@@ -17,6 +18,15 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLocalhost, setIsLocalhost] = useState(false);
+  const [isNewDay, setIsNewDay] = useState(false);
+
+  // Detect new-day redirect (forced re-login for attendance)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('reason') === 'new_day') {
+      setIsNewDay(true);
+    }
+  }, []);
 
   // Detect localhost after mount to avoid hydration mismatch
   useEffect(() => {
@@ -56,7 +66,6 @@ export default function LoginPage() {
       if (e.ctrlKey && e.shiftKey && e.key === 'L') {
         if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
           e.preventDefault();
-          console.log('🚀 BYPASS LOGIN - Keyboard Shortcut (Ctrl+Shift+L)');
           bypassLogin();
         }
       }
@@ -118,7 +127,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <img src="/company-logo.png" alt="Aayam" className="w-20 h-20 mx-auto mb-4" />
+          <Image src="/company-logo.png" alt="Aayam" width={80} height={80} className="mx-auto mb-4" />
           <h1 className="text-page-title text-gray-900">Aayam Office</h1>
           <p className="text-body text-gray-600 mt-1">Sign in to your account</p>
         </div>
@@ -126,7 +135,16 @@ export default function LoginPage() {
         {/* Login Form */}
         <div className="bg-white rounded-lg shadow-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
+            {isNewDay && (
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3 mb-2">
+              <Clock className="text-blue-600 flex-shrink-0 mt-0.5" size={18} />
+              <div>
+                <p className="text-sm font-semibold text-blue-800">Good morning! 🌅</p>
+                <p className="text-xs text-blue-600 mt-0.5">Please sign in to record your attendance for today. Office hours: 9:00 AM – 7:30 PM</p>
+              </div>
+            </div>
+          )}
+          {error && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
                 <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
                 <p className="text-sm text-red-600">{error}</p>
@@ -178,11 +196,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" />
-                <span className="text-body text-gray-600">Remember me</span>
-              </label>
+            <div className="flex justify-end">
               <button type="button" className="text-body text-primary hover:opacity-80 font-medium">
                 Forgot password?
               </button>
@@ -216,10 +230,7 @@ export default function LoginPage() {
         {isLocalhost && (
           <div className="text-center mt-4">
             <button
-              onClick={() => {
-                console.log('🚀 BYPASS LOGIN - Localhost Testing Mode');
-                bypassLogin();
-              }}
+              onClick={() => bypassLogin()}
               className="px-4 py-2 bg-oms-orange text-white rounded-md text-sm font-semibold hover:bg-oms-orange/90 transition-colors"
             >
               ⚡ Quick Login (Localhost Only)

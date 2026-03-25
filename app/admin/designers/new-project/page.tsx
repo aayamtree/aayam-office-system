@@ -26,10 +26,11 @@ import { Separator } from '@/components/ui/separator';
 // Icons
 import {
     ArrowLeft, Briefcase, CalendarIcon, CheckCircle, Cloud, FileText,
-    Image, File as FileIcon, Info, Loader2,
+    Image as ImageIcon, File as FileIcon, Info, Loader2,
     Upload, X, Play, Pause, RotateCcw, CheckSquare, ArrowRightLeft
 } from 'lucide-react';
 import Link from 'next/link';
+import { DesignerStatusPills } from '@/components/shared/DesignerStatusPills';
 
 
 export default function NewProjectPage() {
@@ -159,8 +160,8 @@ export default function NewProjectPage() {
             .catch(() => setClientBrands([]));
     }, [formData.clientId]);
 
-    const handleCreateBrand = async () => {
-        const name = newBrandInput.trim();
+    const handleCreateBrand = async (nameOverride?: string) => {
+        const name = (nameOverride ?? newBrandInput).trim();
         if (!name || !formData.clientId) return;
         try {
             const res = await fetch(`/api/clients/${formData.clientId}/brands`, {
@@ -169,12 +170,19 @@ export default function NewProjectPage() {
                 body: JSON.stringify({ name }),
             });
             const json = await res.json();
+            if (!res.ok) throw new Error(json.error || 'Failed to add brand');
             const newBrand = json.data;
             if (newBrand) {
-                setClientBrands(prev => [...prev.filter(b => b.id !== newBrand.id), newBrand]);
+                setClientBrands(prev => {
+                    const filtered = prev.filter(b => b.id !== newBrand.id);
+                    return [...filtered, newBrand].sort((a, b) => a.name.localeCompare(b.name));
+                });
                 setFormData(prev => ({ ...prev, brandId: newBrand.id, brandName: newBrand.name }));
+                toast.success(`Brand "${newBrand.name}" added!`);
             }
-        } catch { }
+        } catch (err: any) {
+            toast.error(err.message || 'Could not add brand');
+        }
         setNewBrandInput('');
         setAddingBrand(false);
     };
@@ -230,7 +238,7 @@ export default function NewProjectPage() {
     }, [addFiles]);
 
     const getUploadFileIcon = (file: File) => {
-        if (file.type.startsWith('image/')) return <Image size={16} className="text-muted-foreground" />;
+        if (file.type.startsWith('image/')) return <ImageIcon size={16} className="text-muted-foreground" />;
         if (file.type === 'application/pdf') return <FileText size={16} className="text-muted-foreground" />;
         return <FileIcon size={16} className="text-muted-foreground" />;
     };
@@ -432,102 +440,31 @@ export default function NewProjectPage() {
                 </div>
             </div>
 
-            {/* Status Action Bar — always visible */}
-            <div className="bg-card border rounded-xl px-5 py-4 space-y-3">
-                <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-sm font-semibold text-foreground mr-1">
-                        {taskId ? 'Change Status:' : 'Task Status:'}
-                    </span>
-
-                    {/* Regular status buttons */}
-                    {STATUS_ACTIONS.map(({ status, label, icon: Icon, color }) => (
-                        <button
-                            key={status}
-                            type="button"
-                            disabled={statusUpdating}
-                            onClick={() => taskId ? handleStatusChange(status) : setCurrentStatus(status)}
-                            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all
-                                ${color}
-                                ${currentStatus === status ? 'ring-2 ring-offset-1 ring-current opacity-100 scale-105' : 'opacity-70 hover:opacity-100'}
-                                disabled:cursor-not-allowed`}
-                        >
-                            <Icon size={14} />
-                            {label}
-                            {currentStatus === status && <span className="ml-1 text-[10px] font-bold">✓</span>}
-                        </button>
-                    ))}
-
-                    {/* Transfer button — separate, opens designer picker */}
-                    <button
-                        type="button"
-                        disabled={statusUpdating}
-                        onClick={() => setShowTransferPanel(prev => !prev)}
-                        className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all
-                            bg-violet-100 text-violet-700 border-violet-300 hover:bg-violet-200
-                            ${showTransferPanel ? 'ring-2 ring-violet-300 scale-105' : 'opacity-70 hover:opacity-100'}
-                            disabled:cursor-not-allowed`}
-                    >
-                        <ArrowRightLeft size={14} />
-                        Transfer
-                        {showTransferPanel ? ' ▲' : ' ▾'}
-                    </button>
-
-                    {statusUpdating && <Loader2 size={16} className="animate-spin text-muted-foreground" />}
+            {/* Status Action Bar — shown when editing an existing job */}
+            {jobId ? (
+              <div className="bg-card border rounded-xl px-5 py-4">
+                <DesignerStatusPills
+                  jobId={jobId}
+                  currentStatus={currentStatus}
+                  onStatusChange={setCurrentStatus}
+                  designers={(designers || []).map((d: any) => ({ id: d.id, full_name: d.name || d.full_name || d.email }))}
+                  size="bar"
+                />
+              </div>
+            ) : (
+              <div className="bg-card border rounded-xl px-5 py-4">
+                {/* New project — no jobId yet, just show a preview of the status pills */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-semibold text-foreground mr-1">Task Status:</span>
+                  <DesignerStatusPills
+                    jobId="__preview__"
+                    currentStatus={currentStatus || 'live'}
+                    disabled={true}
+                    size="bar"
+                  />
                 </div>
-
-                {/* Inline designer picker — shown when Transfer is clicked */}
-                {showTransferPanel && (
-                    <div className="border-t pt-3 mt-1">
-                        <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Transfer to:</p>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-                            {(designers || []).filter((d: any) => {
-                                const n = d.name || d.full_name || '';
-                                return n && !/^Designer\s*\d+$/i.test(n.trim());
-                            }).map((d: any) => {
-                                const name = d.name || d.full_name || d.email || 'Designer';
-                                const initials = name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
-                                const isSelected = transferToId === d.id;
-                                return (
-                                    <button
-                                        key={d.id}
-                                        type="button"
-                                        onClick={() => setTransferToId(d.id)}
-                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm text-left transition-all
-                                            ${isSelected
-                                                ? 'bg-violet-100 border-violet-400 text-violet-800 font-semibold ring-1 ring-violet-300'
-                                                : 'bg-muted/30 border-border hover:bg-muted/60 text-foreground'}`}
-                                    >
-                                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0
-                                            ${isSelected ? 'bg-violet-500 text-white' : 'bg-primary/10 text-primary'}`}>
-                                            {initials}
-                                        </span>
-                                        <span className="truncate">{name}</span>
-                                        {isSelected && <span className="ml-auto text-violet-600">✓</span>}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                type="button"
-                                disabled={!transferToId || statusUpdating}
-                                onClick={handleTransfer}
-                                className="px-4 py-1.5 bg-violet-600 text-white text-sm font-semibold rounded-lg hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
-                            >
-                                {statusUpdating ? <Loader2 size={14} className="animate-spin" /> : <ArrowRightLeft size={14} />}
-                                Confirm Transfer
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => { setShowTransferPanel(false); setTransferToId(''); }}
-                                className="px-4 py-1.5 text-sm font-medium border rounded-lg hover:bg-muted"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </div>
+              </div>
+            )}
 
             {/* Form */}
             <div>
@@ -654,7 +591,7 @@ export default function NewProjectPage() {
                                         placeholder="Type new brand name..."
                                         className="flex-1 px-3 py-2 border rounded-md text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary/30"
                                     />
-                                    <button type="button" onClick={handleCreateBrand}
+                                    <button type="button" onClick={() => handleCreateBrand()}
                                         className="px-3 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-md hover:bg-primary/90">
                                         Save
                                     </button>
@@ -670,11 +607,12 @@ export default function NewProjectPage() {
                                         type="text"
                                         value={formData.brandName}
                                         onChange={e => setFormData(prev => ({ ...prev, brandName: e.target.value, brandId: '' }))}
+                                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleCreateBrand(formData.brandName); } }}
                                         placeholder="+ Type brand name"
                                         className="flex-1 px-3 py-2 border rounded-md text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary/30"
                                     />
                                     {formData.brandName && (
-                                        <button type="button" onClick={() => { setNewBrandInput(formData.brandName); handleCreateBrand(); }}
+                                        <button type="button" onClick={() => handleCreateBrand(formData.brandName)}
                                             className="px-3 py-2 text-xs border rounded-md hover:bg-muted text-muted-foreground">
                                             Save brand
                                         </button>

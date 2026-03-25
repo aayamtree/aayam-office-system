@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Search, ArrowLeft, CheckCircle, XCircle, AlertTriangle,
-  ClipboardCheck, Loader2, FileCheck, Printer, Image, Clock, User
+  ClipboardCheck, Loader2, FileCheck, Printer, Image as ImageIcon, Clock, User
 } from 'lucide-react';
 import { useJobs } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
@@ -488,7 +488,7 @@ export default function QCCheckPage() {
                 onClick={() => setActiveTab('design')}
                 className={`flex-1 py-2.5 text-xs font-medium border-b-2 flex items-center justify-center gap-1 ${activeTab === 'design' ? 'text-blue-600 border-blue-600' : 'text-gray-500 border-transparent'}`}
               >
-                <Image className="w-3 h-3" /> Design
+                <ImageIcon className="w-3 h-3" /> Design
               </button>
               <button
                 onClick={() => setActiveTab('checklist')}
@@ -516,7 +516,7 @@ export default function QCCheckPage() {
                   {/* Design file preview */}
                   <div>
                     <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                      <Image className="w-4 h-4 text-blue-500" />
+                      <ImageIcon className="w-4 h-4 text-blue-500" />
                       Approved Design Files
                     </h3>
                     <p className="text-xs text-gray-500 mb-3">Compare these files with the printed material received</p>

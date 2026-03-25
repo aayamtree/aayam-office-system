@@ -113,7 +113,7 @@ export default function CompanyPage() {
           <div className="flex flex-col items-center">
             <label className="w-32 h-32 rounded-md border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 overflow-hidden">
               {logo ? (
-                <img src={logo} alt="Logo" className="w-full h-full object-contain" />
+                <img src={logo} alt="Company Logo" className="w-full h-full object-contain" />
               ) : (
                 <div className="text-center text-gray-400">
                   <Upload className="w-8 h-8 mx-auto mb-2" />

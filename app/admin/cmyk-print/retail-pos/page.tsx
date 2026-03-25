@@ -189,8 +189,7 @@ export default function RetailPOSPage() {
       }
       return result.data?.sale_number;
     } catch (e) {
-      console.error(e);
-      toast.error('An unexpected error occurred.');
+      toast.error('An unexpected error occurred during sale processing.');
       return null;
     }
   };
@@ -271,8 +270,8 @@ export default function RetailPOSPage() {
 
       await downloadReceipt(receiptData);
       clearCart();
-    } catch (error) {
-      console.error('Error downloading receipt:', error);
+    } catch (error: any) {
+      toast.error('Error downloading receipt: ' + (error.message || 'Please try again.'));
     } finally {
       setIsProcessing(false);
     }

@@ -69,8 +69,6 @@ export async function GET(request: NextRequest) {
   }
 
   // ── Fetch dossier entry counts linked to jobs ────────────────────────────────
-  // dossier_entries.job_id references jobs.id (direct link preferred)
-  // Fallback: count any entries where task_id = job.id
   const jobIds = jobList.map((j: any) => j.id);
   const countMap: Record<string, number> = {};
   if (jobIds.length > 0) {
@@ -85,7 +83,6 @@ export async function GET(request: NextRequest) {
 
   const enriched = jobList.map((j: any) => ({
     id: j.id,
-    // Use job_number as the task code for display
     task_code: j.job_number || j.id.substring(0, 8).toUpperCase(),
     current_status: j.designer_status || j.current_stage || 'created',
     brand_name: j.brand_name || null,
@@ -93,7 +90,6 @@ export async function GET(request: NextRequest) {
     client_name: j.client_id ? (clientMap[j.client_id] || '—') : '—',
     designer_name: j.designer_id ? (profileMap[j.designer_id] || '—') : '—',
     dossier_count: countMap[j.id] || 0,
-    // Extra fields for richer display
     project_name: j.project_name,
     current_stage: j.current_stage,
     designer_status: j.designer_status,

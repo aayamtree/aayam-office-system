@@ -53,7 +53,25 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
 
             toast.success('Client added successfully!');
             if (newClient?.data) {
-                onSuccess?.(newClient.data.id);
+                const clientId = newClient.data.id;
+                // Seed brands into the brands table for full system sync
+                const brandText = formData.brand_name.trim();
+                if (brandText && clientId) {
+                    const brandNames = brandText
+                        .split(/[\s,]+/)
+                        .map((s: string) => s.replace(/^#/, '').trim())
+                        .filter(Boolean);
+                    for (const name of brandNames) {
+                        try {
+                            await fetch(`/api/clients/${clientId}/brands`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ name }),
+                            });
+                        } catch { /* non-fatal */ }
+                    }
+                }
+                onSuccess?.(clientId);
             }
             onClose();
 
@@ -70,7 +88,6 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                 brand_name: ''
             });
         } catch (error: any) {
-            console.error('Error adding client:', error);
             toast.error(String('❌ Failed to add client: ' + error.message));
         } finally {
             setSaving(false);

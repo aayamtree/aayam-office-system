@@ -27,8 +27,18 @@ async function safeQuery<T>(queryBuilder: any, label?: string): Promise<T[]> {
 
 /**
  * Fetch all time-bound business data for calendar display.
- * Admin sees everything system-wide; other roles see only their assigned items.
+ * Admin sees everything system-wide; other roles see only their relevant items.
  * Each query is independent — a missing table won't break other data.
+ *
+ * ROLE-BASED VISIBILITY RULES:
+ *  admin     → everything system-wide
+ *  finance   → all job deadlines + invoices (billing context)
+ *  designer  → only their own assigned jobs + print runs
+ *  dispatch  → dispatches + print-related job deadlines (Print / Design+Print only, NOT design-only)
+ *              + print runs (they need to know when jobs leave print)
+ *  marketing → follow-ups (own), leads (own) — no job deadlines, no dispatch
+ *  cmyk      → print-related job deadlines + print runs (like dispatch, print-side only)
+ *  (others)  → only their own events
  */
 export async function fetchCalendarBusinessData(
     startDate: string,
@@ -36,46 +46,53 @@ export async function fetchCalendarBusinessData(
     userRole: string,
     userId: string
 ): Promise<CalendarItem[]> {
-    /**
-     * ROLE-BASED VISIBILITY RULES:
-     *  Admin      → everything system-wide
-     *  Marketing  → follow-ups (assigned), leads (assigned), quotation deadlines (created by / assigned)
-     *  Designer   → their own job deadlines, design task deadlines
-     *  Dispatch   → dispatches, job deadlines
-     *  (others)   → only their own events
-     */
-    const isAdmin = userRole === 'admin';
+    const isAdmin    = userRole === 'admin';
     const isDesigner = userRole === 'designer';
     const isMarketing = userRole === 'marketing';
     const isDispatch = userRole === 'dispatch';
+    const isFinance  = userRole === 'finance';
+    const isCmyk     = userRole === 'cmyk';
     const items: CalendarItem[] = [];
 
-    // 1. Job deadlines
-    //    Admin → all | Designer → their own | Dispatch → all | Marketing → NONE
-    let jobsQuery = !isMarketing
+    // ── 1. Job deadlines ────────────────────────────────────────────────────
+    // Admin / Finance → ALL jobs
+    // Designer        → only their assigned jobs (any type)
+    // Dispatch / CMYK → Print and Design+Print jobs ONLY (not design-only)
+    // Marketing       → NONE
+    const wantsJobs = isAdmin || isFinance || isDesigner || isDispatch || isCmyk;
+    let jobsQuery = wantsJobs
         ? supabase.from('jobs')
-            .select('id, job_number, project_name, client_deadline, current_stage, designer_id')
+            .select('id, job_number, project_name, client_deadline, current_stage, designer_id, job_type')
             .gte('client_deadline', startDate)
             .lte('client_deadline', endDate)
             .neq('current_stage', 'cancelled')
         : null;
-    if (jobsQuery && isDesigner) {
-        jobsQuery = jobsQuery.eq('designer_id', userId);
+
+    if (jobsQuery) {
+        if (isDesigner) {
+            // Designer sees only their own jobs
+            jobsQuery = jobsQuery.eq('designer_id', userId);
+        } else if (isDispatch || isCmyk) {
+            // Dispatch / CMYK: exclude pure design jobs (job_type === 'Design')
+            // Supabase: neq only works for one value — use filter with 'not.eq' or 'in'
+            // We show: 'Print', 'Design + Print', and any other non-Design type
+            jobsQuery = jobsQuery.neq('job_type', 'Design');
+        }
+        // Admin and Finance: no extra filter — see all
     }
 
-    // 2. Follow-ups → Admin + Marketing only (not designers, not dispatch)
+    // ── 2. Follow-ups → Admin + Marketing only ──────────────────────────────
     let followUpsQuery = (isAdmin || isMarketing)
         ? supabase.from('follow_ups')
             .select('id, notes, follow_up_date, lead_id, done_by, assigned_to')
             .gte('follow_up_date', startDate)
             .lte('follow_up_date', endDate)
         : null;
-    // Marketing: only their own follow-ups
     if (followUpsQuery && isMarketing) {
         followUpsQuery = followUpsQuery.eq('assigned_to', userId);
     }
 
-    // 3. Dispatches → Admin + Dispatch role only (NOT marketing, NOT designers)
+    // ── 3. Dispatches → Admin + Dispatch only ───────────────────────────────
     const dispatchQuery = (isAdmin || isDispatch)
         ? supabase.from('dispatches')
             .select('id, dispatch_number, dispatch_date, status, job_id')
@@ -83,8 +100,8 @@ export async function fetchCalendarBusinessData(
             .lte('dispatch_date', endDate)
         : null;
 
-    // 4. Invoices → Admin ONLY (financial data)
-    const invoiceQuery = isAdmin
+    // ── 4. Invoices → Admin + Finance (financial data) ──────────────────────
+    const invoiceQuery = (isAdmin || isFinance)
         ? supabase.from('invoices')
             .select('id, invoice_number, due_date, payment_status, total_amount')
             .gte('due_date', startDate)
@@ -92,8 +109,9 @@ export async function fetchCalendarBusinessData(
             .neq('payment_status', 'paid')
         : null;
 
-    // 5. Print Runs → Admin + Designers only (NOT marketing, NOT dispatch)
-    const printRunQuery = (isAdmin || isDesigner)
+    // ── 5. Print Runs → Admin + Designer + Dispatch + CMYK ──────────────────
+    // Dispatch and CMYK need to know when print jobs finish / are ready
+    const printRunQuery = (isAdmin || isDesigner || isDispatch || isCmyk)
         ? supabase.from('print_runs')
             .select('id, print_run_number, deadline, status')
             .gte('deadline', startDate)
@@ -101,7 +119,7 @@ export async function fetchCalendarBusinessData(
             .neq('status', 'delivered')
         : null;
 
-    // 6. Leads → Admin + Marketing only, marketing sees only their assigned leads
+    // ── 6. Leads → Admin + Marketing only ───────────────────────────────────
     let leadsQuery = (isAdmin || isMarketing)
         ? supabase.from('leads')
             .select('id, lead_number, name, company, deadline, status, assigned_to')
