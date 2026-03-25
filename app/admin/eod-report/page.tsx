@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useDailyReports, useWorkLogs } from '@/lib/hooks';
 import { WorkLog } from '@/lib/work-logger';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/lib/toast';
 import {
     Clock, CheckCircle, AlertCircle, ChevronDown, ChevronRight, ChevronLeft,
     Calendar, Loader2, Send, FileText, History, Lock, Pencil
@@ -131,8 +131,8 @@ export default function EODReportPage() {
                     setAutoLogCount(workLogs.length);
                 }
             }
-        } catch (e) {
-            console.error('Error loading data:', e);
+        } catch (e: any) {
+            toast.error('Failed to load tasks: ' + (e.message || 'Unknown error'));
         } finally {
             setLoading(false);
         }
@@ -146,8 +146,8 @@ export default function EODReportPage() {
             const endDate = new Date(historyMonth.year, historyMonth.month + 1, 0).toISOString().split('T')[0];
             const { data: reports } = await getMyReports(profile.id, startDate, endDate);
             setPastReports(reports || []);
-        } catch (e) {
-            console.error('Error loading history:', e);
+        } catch (e: any) {
+            toast.error('Failed to load history: ' + (e.message || 'Unknown error'));
         } finally {
             setHistoryLoading(false);
         }
@@ -224,14 +224,14 @@ export default function EODReportPage() {
             });
 
             if (error) {
-                toast({ title: '❌ Error submitting report', description: String(error), variant: 'destructive' });
+                toast.error('Error submitting report: ' + String(error));
             } else {
-                toast({ title: '✅ EOD Report submitted successfully!' });
+                toast.success('EOD Report submitted successfully!');
                 await loadData();
                 await loadHistory();
             }
         } catch (e: any) {
-            toast({ title: '❌ Error', description: e.message, variant: 'destructive' });
+            toast.error('Error: ' + (e.message || 'Unknown error'));
         } finally {
             setSubmitting(false);
         }
@@ -348,7 +348,7 @@ export default function EODReportPage() {
                                                     {taskUpdates[task.id]?.expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                                                     <div>
                                                         <p className="font-medium text-gray-900 text-sm">#{task.job_number} - {task.project_name}</p>
-                                                        <p className="text-xs text-gray-600">{task.client?.name || task.client?.company}</p>
+                                                        <p className="text-xs text-gray-600">{task.client?.company || task.client?.name}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-xs">
