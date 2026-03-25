@@ -68,23 +68,23 @@ function DesignerWork({ userId }: { userId: string }) {
 
   useEffect(() => {
     (async () => {
-      const today = new Date().toISOString().split('T')[0];
-
-      // Jobs assigned to this designer (via profiles join)
-      // We match by designer_id which references profiles.id
-      const [jobsRes, subtasksRes] = await Promise.all([
-        supabase
-          .from('jobs')
-          .select('id, job_number, project_name, client_deadline, priority, current_stage, designer_status, client:clients!client_id(name,company)')
-          .eq('designer_id', userId)
-          .not('current_stage', 'in', '("delivered","cancelled")')
-          .order('client_deadline', { ascending: true, nullsFirst: false }),
-        fetch('/api/jobs/my-subtasks').then(r => r.json()),
-      ]);
-
-      setJobs((jobsRes.data || []) as any[]);
-      setSubtasks(subtasksRes.data || []);
-      setLoading(false);
+      try {
+        const [jobsRes, subtasksRes] = await Promise.all([
+          supabase
+            .from('jobs')
+            .select('id, job_number, project_name, client_deadline, priority, current_stage, designer_status, client:clients!client_id(name,company)')
+            .eq('designer_id', userId)
+            .not('current_stage', 'in', '("delivered","cancelled")')
+            .order('client_deadline', { ascending: true, nullsFirst: false }),
+          fetch('/api/jobs/my-subtasks').then(r => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] })),
+        ]);
+        setJobs((jobsRes.data || []) as any[]);
+        setSubtasks(subtasksRes.data || []);
+      } catch {
+        // silent — show empty state rather than infinite spinner
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [userId]);
 
@@ -169,26 +169,31 @@ function AdminWork() {
 
   useEffect(() => {
     (async () => {
-      const today = new Date().toISOString().split('T')[0];
-      const [overdueRes, inProgRes] = await Promise.all([
-        supabase
-          .from('jobs')
-          .select('id, job_number, project_name, client_deadline, priority, current_stage, client:clients!client_id(name,company)')
-          .lt('client_deadline', today)
-          .not('current_stage', 'in', '("delivered","cancelled","completed")')
-          .order('client_deadline', { ascending: true })
-          .limit(15),
-        supabase
-          .from('jobs')
-          .select('id, job_number, project_name, client_deadline, priority, current_stage, client:clients!client_id(name,company)')
-          .in('current_stage', ['designing', 'revision', 'proof', 'printing', 'pre_press'])
-          .gte('client_deadline', today)
-          .order('client_deadline', { ascending: true })
-          .limit(15),
-      ]);
-      setOverdue((overdueRes.data || []) as any[]);
-      setInProgress((inProgRes.data || []) as any[]);
-      setLoading(false);
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const [overdueRes, inProgRes] = await Promise.all([
+          supabase
+            .from('jobs')
+            .select('id, job_number, project_name, client_deadline, priority, current_stage, client:clients!client_id(name,company)')
+            .lt('client_deadline', today)
+            .not('current_stage', 'in', '("delivered","cancelled","completed")')
+            .order('client_deadline', { ascending: true })
+            .limit(15),
+          supabase
+            .from('jobs')
+            .select('id, job_number, project_name, client_deadline, priority, current_stage, client:clients!client_id(name,company)')
+            .in('current_stage', ['designing', 'revision', 'proof', 'printing', 'pre_press'])
+            .gte('client_deadline', today)
+            .order('client_deadline', { ascending: true })
+            .limit(15),
+        ]);
+        setOverdue((overdueRes.data || []) as any[]);
+        setInProgress((inProgRes.data || []) as any[]);
+      } catch {
+        // silent — show empty state
+      } finally {
+        setLoading(false);
+      }
     })();
   }, []);
 
@@ -230,16 +235,20 @@ function MarketingWork({ userId }: { userId: string }) {
 
   useEffect(() => {
     (async () => {
-      const today = new Date().toISOString().split('T')[0];
-      const { data } = await supabase
-        .from('leads')
-        .select('id, company_name, contact_name, follow_up_date, status')
-        .eq('assigned_to', userId)
-        .not('status', 'in', '("converted","lost","closed")')
-        .order('follow_up_date', { ascending: true, nullsFirst: false })
-        .limit(30);
-      setLeads((data || []) as any[]);
-      setLoading(false);
+      try {
+        const { data } = await supabase
+          .from('leads')
+          .select('id, company_name, contact_name, follow_up_date, status')
+          .eq('assigned_to', userId)
+          .not('status', 'in', '("converted","lost","closed")')
+          .order('follow_up_date', { ascending: true, nullsFirst: false })
+          .limit(30);
+        setLeads((data || []) as any[]);
+      } catch {
+        // silent — show empty state
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [userId]);
 
@@ -295,14 +304,19 @@ function DispatchWork() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from('jobs')
-        .select('id, job_number, project_name, client_deadline, priority, current_stage, client:clients!client_id(name,company)')
-        .in('current_stage', ['ready_to_dispatch', 'dispatched', 'qc'])
-        .order('client_deadline', { ascending: true, nullsFirst: false })
-        .limit(30);
-      setJobs((data || []) as any[]);
-      setLoading(false);
+      try {
+        const { data } = await supabase
+          .from('jobs')
+          .select('id, job_number, project_name, client_deadline, priority, current_stage, client:clients!client_id(name,company)')
+          .in('current_stage', ['ready_to_dispatch', 'dispatched', 'qc'])
+          .order('client_deadline', { ascending: true, nullsFirst: false })
+          .limit(30);
+        setJobs((data || []) as any[]);
+      } catch {
+        // silent — show empty state
+      } finally {
+        setLoading(false);
+      }
     })();
   }, []);
 
