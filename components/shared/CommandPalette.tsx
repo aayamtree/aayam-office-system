@@ -158,7 +158,7 @@ export default function CommandPalette() {
             const noteSnippetMap: Record<string, string> = {}; // job_id → snippet
             if (notesRes.data && notesRes.data.length > 0) {
                 // Deduplicate: one job may have multiple matching notes — keep best snippet
-                const noteJobIds = [...new Set(notesRes.data.map((n: any) => n.job_id))];
+                const noteJobIds = Array.from(new Set(notesRes.data.map((n: any) => n.job_id)));
                 notesRes.data.forEach((n: any) => {
                     if (!noteSnippetMap[n.job_id]) {
                         noteSnippetMap[n.job_id] = snippet(n.content, searchQuery);
