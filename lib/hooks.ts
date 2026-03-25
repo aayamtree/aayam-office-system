@@ -28,6 +28,7 @@ export function useSupabaseQuery<T>(
   tableName: string,
   options?: UseSupabaseQueryOptions
 ) {
+  const { user, loading: authLoading } = useAuth();
   const stableFilter = JSON.stringify(options?.filter ?? null);
   const stableOrderBy = JSON.stringify(options?.orderBy ?? null);
   const stableSelect = options?.select ?? '*';
@@ -36,9 +37,11 @@ export function useSupabaseQuery<T>(
   const stablePageSize = options?.pageSize ?? null;
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Key uses stable primitives — never object references
-  const key = isSupabaseConfigured()
-    ? [tableName, stableFilter, stableOrderBy, stableSelect, stableLimit, stablePage, stablePageSize]
+  // Key includes user.id so SWR re-fetches when auth changes.
+  // Key is null when auth is still loading OR no user — prevents premature
+  // unauthenticated fetches that get cached as empty for 30s (dedupingInterval).
+  const key = isSupabaseConfigured() && !authLoading && user
+    ? [tableName, stableFilter, stableOrderBy, stableSelect, stableLimit, stablePage, stablePageSize, user.id]
     : null;
 
   // Simple fetcher — closes over stable string locals, NOT over the `options` object.
@@ -145,9 +148,12 @@ export function useSupabaseQuery<T>(
 
   return {
     data: data || [],
-    // Clamp loading to false after 3s — prevents pages getting permanently stuck when
-    // SWR's isLoading hangs (known SWR v2 edge case with fallbackData + RLS empty results).
-    loading: isLoading && !loadingTimedOut,
+    // loading is true while:
+    //   1. Auth session is still initialising (authLoading), OR
+    //   2. SWR is fetching and hasn't timed out yet (3s safety cap)
+    // This prevents pages flashing empty while the session cookie is being read,
+    // and prevents permanent spinners from the SWR v2 isLoading edge case.
+    loading: authLoading || (isLoading && !loadingTimedOut),
     error: error ? (error.message || 'An error occurred') : null,
     refetch: mutate
   };
