@@ -3,10 +3,21 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 /**
- * End My Day — called when designer clicks "End My Day" button.
- * Records the exact tap-out time and locks the attendance record.
- * No further heartbeats will add minutes once status = 'logged_out'.
+ * Helper: calculate actual work minutes between login and logout,
+ * clipped to the 8 AM – 9 PM IST window for a given IST date.
+ *   8 AM IST = 02:30 UTC
+ *   9 PM IST = 15:30 UTC
  */
+function calcWorkMinutes(firstLoginIso: string, logoutIso: string, todayIST: string): number {
+  const loginMs  = new Date(firstLoginIso).getTime();
+  const logoutMs = new Date(logoutIso).getTime();
+  const workStartMs = new Date(`${todayIST}T02:30:00Z`).getTime(); // 8 AM IST
+  const workEndMs   = new Date(`${todayIST}T15:30:00Z`).getTime(); // 9 PM IST
+  const effectiveStart = Math.max(loginMs, workStartMs);
+  const effectiveEnd   = Math.min(logoutMs, workEndMs);
+  return Math.max(0, Math.round((effectiveEnd - effectiveStart) / 60000));
+}
+
 export async function POST(request: NextRequest) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
@@ -18,11 +29,10 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // IST date
-  const nowUtc = new Date();
-  const nowIST = new Date(nowUtc.getTime() + (5.5 * 60 * 60 * 1000));
+  const nowUtc   = new Date();
+  const nowIST   = new Date(nowUtc.getTime() + (5.5 * 60 * 60 * 1000));
   const todayIST = nowIST.toISOString().split('T')[0];
-  const nowIso = nowUtc.toISOString();
+  const nowIso   = nowUtc.toISOString();
 
   const { data: existing } = await supabase
     .from('designer_attendance')
@@ -39,9 +49,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, already_logged_out: true, total_minutes_worked: existing.total_minutes_worked });
   }
 
-  // Use heartbeat-counted minutes (already accumulated) — do NOT recalculate from elapsed time
-  // This ensures hours reflect actual active browser time, not raw login→tap-out gap
-  const finalMinutes = existing.total_minutes_worked || 0;
+  // Time-based: login → logout clipped to 8 AM – 9 PM IST
+  const finalMinutes = existing.first_login_time
+    ? calcWorkMinutes(existing.first_login_time, nowIso, todayIST)
+    : 0;
 
   const { error } = await supabase
     .from('designer_attendance')
@@ -49,17 +60,11 @@ export async function POST(request: NextRequest) {
       last_logout_time: nowIso,
       status: 'logged_out',
       total_minutes_worked: finalMinutes,
-      // Mark that this was a deliberate tap-out (not EOD cron or beacon)
       tap_out_method: 'manual',
     })
     .eq('id', existing.id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({
-    ok: true,
-    logout_time: nowIso,
-    total_minutes_worked: finalMinutes,
-    hours: Math.round(finalMinutes / 6) / 10,
-  });
+  return NextResponse.json({ ok: true, logout_time: nowIso, total_minutes_worked: finalMinutes, hours: Math.round(finalMinutes / 6) / 10 });
 }

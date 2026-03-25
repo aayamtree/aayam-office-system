@@ -223,7 +223,7 @@ export default function DesignerProfileDrawer({ designer, onClose, getMyReports 
                                                         #{job.job_number} — {job.project_name}
                                                     </p>
                                                     <p className="text-[11px] text-gray-500 mt-0.5">
-                                                        {job.client?.name || job.client?.company || 'No client'}
+                                                        {job.client?.company || job.client?.name || 'No client'}
                                                     </p>
                                                 </div>
                                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${stageColor}`}>

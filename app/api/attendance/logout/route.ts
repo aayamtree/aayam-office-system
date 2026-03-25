@@ -35,11 +35,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, skipped: true });
   }
 
-  let totalMinutes = existing?.total_minutes_worked || 0;
+  // Time-based: login → logout clipped to 8 AM – 9 PM IST
+  //   8 AM IST = 02:30 UTC,  9 PM IST = 15:30 UTC
+  let totalMinutes = 0;
   if (existing?.first_login_time) {
-    const loginTime = new Date(existing.first_login_time).getTime();
-    const nowMs = nowUtc.getTime();
-    totalMinutes = Math.max(totalMinutes, Math.round((nowMs - loginTime) / 60000));
+    const loginMs     = new Date(existing.first_login_time).getTime();
+    const logoutMs    = nowUtc.getTime();
+    const workStartMs = new Date(`${todayIST}T02:30:00Z`).getTime();
+    const workEndMs   = new Date(`${todayIST}T15:30:00Z`).getTime();
+    totalMinutes = Math.max(0, Math.round((Math.min(logoutMs, workEndMs) - Math.max(loginMs, workStartMs)) / 60000));
   }
 
   await supabase
