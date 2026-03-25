@@ -15,7 +15,6 @@ interface SearchResult {
     type: 'job' | 'client' | 'lead' | 'invoice' | 'quotation';
     title: string;
     subtitle: string;
-    noteSnippet?: string;   // shown when match came from a note
     href: string;
 }
 
@@ -75,164 +74,55 @@ export default function CommandPalette() {
         setLoading(true);
         const q = `%${searchQuery}%`;
 
-        const STAGE_LABELS: Record<string, string> = {
-            new: 'New', awaiting_admin: 'Awaiting Admin', designing: 'Designing',
-            file_check: 'File Check', pre_print_qc: 'Pre-Print QC', approval: 'Approval',
-            printing: 'Printing', finishing: 'Finishing', quality_check: 'QC',
-            delivered: 'Delivered', completed: 'Completed',
-        };
-
-        // Helper: extract a short snippet around the matching word
-        const snippet = (text: string, word: string, maxLen = 70): string => {
-            const idx = text.toLowerCase().indexOf(word.toLowerCase());
-            if (idx === -1) return text.slice(0, maxLen);
-            const start = Math.max(0, idx - 20);
-            const end = Math.min(text.length, idx + word.length + 30);
-            return (start > 0 ? '…' : '') + text.slice(start, end) + (end < text.length ? '…' : '');
-        };
-
         try {
-            // Run all searches in parallel — including notes content search
-            const [directJobsRes, clientsRes, notesRes, leadsRes, invoicesRes, quotationsRes] = await Promise.all([
-                // Jobs: job number, project name, OR brand name
+            const [jobsRes, clientsRes, leadsRes, invoicesRes, quotationsRes] = await Promise.all([
                 supabase
                     .from('jobs')
-                    .select('id, job_number, project_name, current_stage, client_id, brand_name')
-                    .or(`job_number.ilike.${q},project_name.ilike.${q},brand_name.ilike.${q}`)
-                    .limit(6),
-                // Clients: name, company, phone
+                    .select('id, job_number, project_name, current_stage')
+                    .or(`job_number.ilike.${q},project_name.ilike.${q}`)
+                    .limit(5),
                 supabase
                     .from('clients')
                     .select('id, name, company, phone')
                     .or(`name.ilike.${q},company.ilike.${q},phone.ilike.${q}`)
                     .limit(5),
-                // Notes: search the actual content of every note/feedback ever written
-                supabase
-                    .from('job_notes')
-                    .select('job_id, content')
-                    .ilike('content', q)
-                    .order('created_at', { ascending: false })
-                    .limit(8),
-                // Leads
                 supabase
                     .from('leads')
                     .select('id, lead_number, name, company, status')
                     .or(`lead_number.ilike.${q},name.ilike.${q},company.ilike.${q}`)
                     .limit(5),
-                // Invoices
                 supabase
                     .from('invoices')
                     .select('id, invoice_number, total_amount, status')
-                    .ilike('invoice_number', q)
+                    .or(`invoice_number.ilike.${q}`)
                     .limit(5),
-                // Quotations
                 supabase
                     .from('quotations')
                     .select('id, quote_number, total_amount, status')
-                    .ilike('quote_number', q)
+                    .or(`quote_number.ilike.${q}`)
                     .limit(5),
             ]);
 
-            // Build client name map from direct client results
-            const clientMap: Record<string, string> = {};
-            (clientsRes.data || []).forEach((c: any) => {
-                clientMap[c.id] = c.company || c.name || '';
-            });
-
-            // Jobs linked to matching clients (so "HDFC" finds HDFC jobs)
-            let clientJobsData: any[] = [];
-            if (clientsRes.data && clientsRes.data.length > 0) {
-                const clientIds = clientsRes.data.map((c: any) => c.id);
-                const { data: cJobs } = await supabase
-                    .from('jobs')
-                    .select('id, job_number, project_name, current_stage, client_id, brand_name')
-                    .in('client_id', clientIds)
-                    .not('current_stage', 'in', '("delivered","cancelled")')
-                    .order('created_at', { ascending: false })
-                    .limit(8);
-                clientJobsData = cJobs || [];
-            }
-
-            // Jobs found via notes content — fetch their job records
-            let noteJobsData: any[] = [];
-            const noteSnippetMap: Record<string, string> = {}; // job_id → snippet
-            if (notesRes.data && notesRes.data.length > 0) {
-                // Deduplicate: one job may have multiple matching notes — keep best snippet
-                const noteJobIds = [...new Set(notesRes.data.map((n: any) => n.job_id))];
-                notesRes.data.forEach((n: any) => {
-                    if (!noteSnippetMap[n.job_id]) {
-                        noteSnippetMap[n.job_id] = snippet(n.content, searchQuery);
-                    }
-                });
-                const { data: nJobs } = await supabase
-                    .from('jobs')
-                    .select('id, job_number, project_name, current_stage, client_id, brand_name')
-                    .in('id', noteJobIds);
-                noteJobsData = nJobs || [];
-                // Ensure clientMap has names for these jobs too
-                const extraClientIds = noteJobsData
-                    .map((j: any) => j.client_id)
-                    .filter((id: any) => id && !clientMap[id]);
-                if (extraClientIds.length > 0) {
-                    const { data: extraClients } = await supabase
-                        .from('clients')
-                        .select('id, name, company')
-                        .in('id', extraClientIds);
-                    (extraClients || []).forEach((c: any) => {
-                        clientMap[c.id] = c.company || c.name || '';
-                    });
-                }
-            }
-
-            // Merge all job sources, deduplicate by id
-            // Priority: direct match > client-linked > note-matched
-            const seenJobIds = new Set<string>();
-            const directJobRows: any[] = [];
-            const noteOnlyRows: any[] = [];
-
-            [...(directJobsRes.data || []), ...clientJobsData].forEach(j => {
-                if (!seenJobIds.has(j.id)) { seenJobIds.add(j.id); directJobRows.push(j); }
-            });
-            noteJobsData.forEach(j => {
-                if (!seenJobIds.has(j.id)) { seenJobIds.add(j.id); noteOnlyRows.push(j); }
-            });
-
             const allResults: SearchResult[] = [];
 
-            // Direct job matches (job number / project name / brand name / client name)
-            directJobRows.slice(0, 8).forEach((j: any) => {
-                const clientName = j.client_id ? (clientMap[j.client_id] || '') : '';
-                const stageLabel = STAGE_LABELS[j.current_stage] || j.current_stage || 'new';
-                allResults.push({
+            // Jobs
+            if (jobsRes.data) {
+                jobsRes.data.forEach(j => allResults.push({
                     id: j.id,
                     type: 'job',
                     title: `${j.job_number} — ${j.project_name || 'Untitled'}`,
-                    subtitle: clientName ? `${clientName} · ${stageLabel}` : stageLabel,
-                    href: `/admin/jobs?open=${j.id}`,
-                });
-            });
-
-            // Jobs found only via note content — shown separately with snippet
-            noteOnlyRows.slice(0, 5).forEach((j: any) => {
-                const clientName = j.client_id ? (clientMap[j.client_id] || '') : '';
-                const stageLabel = STAGE_LABELS[j.current_stage] || j.current_stage || 'new';
-                allResults.push({
-                    id: j.id + '_note',   // different key so it doesn't collide
-                    type: 'job',
-                    title: `${j.job_number} — ${j.project_name || 'Untitled'}`,
-                    subtitle: clientName ? `${clientName} · ${stageLabel}` : stageLabel,
-                    noteSnippet: noteSnippetMap[j.id] || '',
-                    href: `/admin/jobs?open=${j.id}`,
-                });
-            });
+                    subtitle: j.current_stage?.replace('_', ' ') || 'new',
+                    href: `/admin/jobs?highlight=${j.id}`,
+                }));
+            }
 
             // Clients
             if (clientsRes.data) {
-                clientsRes.data.forEach((c: any) => allResults.push({
+                clientsRes.data.forEach(c => allResults.push({
                     id: c.id,
                     type: 'client',
                     title: c.company || c.name,
-                    subtitle: [c.phone, c.name !== (c.company || c.name) ? c.name : ''].filter(Boolean).join(' · '),
+                    subtitle: c.phone || '',
                     href: `/admin/crm/clients?highlight=${c.id}`,
                 }));
             }
@@ -326,7 +216,7 @@ export default function CommandPalette() {
                         value={query}
                         onChange={(e) => handleQueryChange(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Search anything — job, client, note, brand, chemical name..."
+                        placeholder="Search jobs, clients, leads, invoices..."
                         className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-12 text-sm"
                     />
                     {loading && (
@@ -343,17 +233,8 @@ export default function CommandPalette() {
                     )}
 
                     {query.length < 2 && !loading && (
-                        <div className="py-6 px-4 space-y-1">
-                            <p className="text-center text-sm text-muted-foreground mb-3">Search across everything in your workspace</p>
-                            {[
-                                '🔢  Job number  —  JOB-042',
-                                '🏷️  Brand / product name  —  Imidacloprid, Shakti',
-                                '🏢  Client name  —  HDFC, Sharma Agro',
-                                '📝  Note / feedback content  —  any word ever typed',
-                                '📋  Lead, Invoice, Quotation number',
-                            ].map(hint => (
-                                <p key={hint} className="text-xs text-muted-foreground/70 text-center">{hint}</p>
-                            ))}
+                        <div className="py-8 text-center text-sm text-muted-foreground">
+                            Type at least 2 characters to search
                         </div>
                     )}
 
@@ -383,11 +264,6 @@ export default function CommandPalette() {
                                                 <p className="text-sm font-medium truncate">{item.title}</p>
                                                 {item.subtitle && (
                                                     <p className="text-xs text-muted-foreground truncate">{item.subtitle}</p>
-                                                )}
-                                                {item.noteSnippet && (
-                                                    <p className="text-[11px] text-blue-600 bg-blue-50 rounded px-1.5 py-0.5 mt-0.5 truncate">
-                                                        📝 {item.noteSnippet}
-                                                    </p>
                                                 )}
                                             </div>
                                             {isSelected && (

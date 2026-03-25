@@ -18,8 +18,6 @@ import {
 import ProjectNotesLog from '@/components/ProjectNotesLog';
 import { useConfirm } from '@/components/ConfirmModal';
 import PairDropBanner from '@/components/layout/PairDropBanner';
-import AttendanceClock from '@/components/attendance/AttendanceClock';
-import MyAssignedSubtasks from '@/components/jobs/MyAssignedSubtasks';
 import { DesignerStatusPills, DesignerStatusBadge } from '@/components/shared/DesignerStatusPills';
 
 // --- HELPERS ---
@@ -278,27 +276,14 @@ export default function DesignerWorkspace() {
 
   // === DATA SYNC ===
   // === DATA SYNC ===
-  // PERF: Build O(1) lookup maps so the .map() below doesn't do O(n*m) array scans
-  const clientMap = useMemo(() => {
-    const m = new Map<string, any>();
-    (clients || []).forEach(c => m.set(c.id, c));
-    return m;
-  }, [clients]);
-
-  const designerMap = useMemo(() => {
-    const m = new Map<string, any>();
-    (designers || []).forEach(d => m.set(d.id, d));
-    return m;
-  }, [designers]);
-
   useEffect(() => {
     if (jobs) {
       const mappedTasks = (jobs || [])
         .filter(job => ['new', 'awaiting_admin', 'file_check', 'designing', 'approval', 'pre_print_qc', 'printing', 'finishing', 'completed', 'delivered'].includes(job.current_stage || ''))
         .map(job => {
-          // PERF: O(1) map lookup instead of O(n) array scan
-          const client = clientMap.get(job.client_id ?? '');
-          const designer = designerMap.get(job.designer_id ?? '');
+          // Resolve Relationships (Manual Join)
+          const client = (clients || []).find(c => c.id === job.client_id);
+          const designer = (designers || []).find(d => d.id === job.designer_id);
 
           return {
             id: parseInt(job.id.replace(/-/g, '').substring(0, 8), 16) || job.id.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0),
@@ -341,7 +326,7 @@ export default function DesignerWorkspace() {
 
       setTasks(mappedTasks);
     }
-  }, [JSON.stringify(jobs?.map(j => j.id)), clientMap, designerMap]);
+  }, [JSON.stringify(jobs?.map(j => j.id)), JSON.stringify(clients?.map(c => c.id)), JSON.stringify(designers?.map(d => d.id))]);
 
   // --- LOGIC (memoized to prevent recomputation on every render) ---
   // Pre-compute myDesignerRecord once instead of inside filteredTasks per-task
@@ -816,9 +801,6 @@ export default function DesignerWorkspace() {
                 {/* PairDrop quick-link — shows only when URL is configured */}
                 <PairDropBanner />
 
-                {/* Attendance Clock — shown only for designers (not admins) */}
-                {!isAdmin && <AttendanceClock />}
-
                 {/* View Tabs - Color Blocks */}
                 <div className="grid grid-cols-4 gap-1 mt-4 px-1">
                   <button onClick={() => setView(isAdmin ? 'team_tasks' : 'my_tasks')} className={`py-2 rounded-md text-xs font-bold border transition-all ${(activeTab === 'my_tasks' || activeTab === 'team_tasks') ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200'}`}>{isAdmin ? 'Team' : 'List'}</button>
@@ -869,9 +851,6 @@ export default function DesignerWorkspace() {
               </div>
 
               <div className="flex-1 overflow-y-auto p-3 space-y-3">
-                {/* Subtasks assigned to me — shown in my_tasks view for designers */}
-                {!isAdmin && activeTab === 'my_tasks' && <MyAssignedSubtasks />}
-
                 {(!forceShow && jobsLoading) ? (
                   <div className="flex justify-center py-10"><Loader2 className="animate-spin text-primary" /></div>
                 ) : jobsError ? (
@@ -1026,7 +1005,7 @@ export default function DesignerWorkspace() {
               {selectedTask ? (
                 <>
                   {/* Header */}
-                  <div className="px-6 py-3 border-b flex flex-col md:flex-row md:justify-between md:items-center bg-white sticky top-0 z-10 gap-2 md:gap-3">
+                  <div className="px-6 py-3 border-b flex flex-col md:flex-row md:justify-between md:items-center bg-white sticky top-0 z-20 gap-2 md:gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2">
                         <span className="text-section text-gray-900 leading-tight">{selectedTask.title}</span>

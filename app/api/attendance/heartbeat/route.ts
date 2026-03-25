@@ -34,10 +34,20 @@ export async function POST(request: NextRequest) {
     .eq('date', todayIST)
     .single();
 
-  // No record for today = designer hasn't clicked "Start My Day" yet.
-  // Do NOT auto-create — they must clock in manually via the button.
+  // If no record for today — auto-create one (handles session-resume without fresh login)
   if (!existing) {
-    return NextResponse.json({ ok: true, skipped: true, reason: 'not_clocked_in' });
+    const { error: insertError } = await supabase
+      .from('designer_attendance')
+      .insert({
+        designer_id: user.id,
+        date: todayIST,
+        first_login_time: nowIso,
+        last_heartbeat_time: nowIso,
+        status: 'active',
+        total_minutes_worked: 5, // first heartbeat = 5 minutes
+      });
+    if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
+    return NextResponse.json({ ok: true, total_minutes_worked: 5, auto_created: true });
   }
 
   // Only count heartbeat if currently active (not already tapped out)

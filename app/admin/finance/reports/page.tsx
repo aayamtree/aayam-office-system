@@ -108,7 +108,7 @@ export default function PaymentReportsPage() {
                     id: j.id,
                     jobNumber: j.job_number,
                     projectName: j.project_name,
-                    clientName: j.client?.company || j.client?.name || 'Unknown',
+                    clientName: j.client?.name || 'Unknown',
                     totalAmount: j.total_amount,
                     received: j.amount_received || 0,
                     expenses: jobExpenses,

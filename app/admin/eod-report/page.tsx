@@ -348,7 +348,7 @@ export default function EODReportPage() {
                                                     {taskUpdates[task.id]?.expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                                                     <div>
                                                         <p className="font-medium text-gray-900 text-sm">#{task.job_number} - {task.project_name}</p>
-                                                        <p className="text-xs text-gray-600">{task.client?.company || task.client?.name}</p>
+                                                        <p className="text-xs text-gray-600">{task.client?.name || task.client?.company}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-xs">

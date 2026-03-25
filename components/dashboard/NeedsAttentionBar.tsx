@@ -121,7 +121,7 @@ export default function NeedsAttentionBar({
                     items.push({
                         id: j.id,
                         title: `${j.job_number} — ${j.project_name || 'Untitled'}`,
-                        subtitle: j.client?.company || j.client?.name || 'Unknown client',
+                        subtitle: j.client?.name || 'Unknown client',
                         badge: daysWaiting > 0 ? `${daysWaiting}d waiting` : 'New',
                         badgeColor: daysWaiting > 2 ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700',
                         href: `/admin/jobs?highlight=${j.id}`,

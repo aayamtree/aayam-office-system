@@ -93,6 +93,16 @@ export function useSupabaseQuery<T>(
     onErrorRetry: () => { },
   });
 
+  // Safety: SWR v2 isLoading can get stuck permanently in some edge cases
+  // (e.g. when fallbackData is set but no cache entry exists, or after RLS returns
+  // empty results). After 3s we force loading=false so pages are never stuck.
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  useEffect(() => {
+    if (!isLoading) { setLoadingTimedOut(false); return; }
+    const t = setTimeout(() => setLoadingTimedOut(true), 3000);
+    return () => clearTimeout(t);
+  }, [isLoading]);
+
 
   // =============================================
   // REALTIME SUBSCRIPTION — Auto-refetch on changes
@@ -135,7 +145,9 @@ export function useSupabaseQuery<T>(
 
   return {
     data: data || [],
-    loading: isLoading,
+    // Clamp loading to false after 3s — prevents pages getting permanently stuck when
+    // SWR's isLoading hangs (known SWR v2 edge case with fallbackData + RLS empty results).
+    loading: isLoading && !loadingTimedOut,
     error: error ? (error.message || 'An error occurred') : null,
     refetch: mutate
   };

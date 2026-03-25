@@ -28,7 +28,6 @@ import {
   PanelLeftClose,
   PanelLeft,
   Share2,
-  Star,
 } from 'lucide-react';
 
 // Shadcn Components
@@ -44,6 +43,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/Badge';
+import { EndMyDayButton } from '@/components/attendance/EndMyDayButton';
 
 interface MenuItem {
   name: string;
@@ -54,12 +54,6 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  {
-    name: 'My Work',
-    icon: Star,
-    href: '/admin/my-work',
-    // Visible to everyone
-  },
   {
     name: 'Overview',
     icon: LayoutDashboard,
@@ -75,7 +69,6 @@ const menuItems: MenuItem[] = [
       { name: 'Overview', href: '/admin/jobs' },
       { name: 'Job Dossier', href: '/admin/jobs/dossier' },
       { name: 'Production Queue', href: '/admin/jobs/queue' },
-      { name: '🔴 Overdue', href: '/admin/jobs/overdue' },
     ]
   },
   {
@@ -112,7 +105,7 @@ const menuItems: MenuItem[] = [
     name: 'Marketing',
     icon: Megaphone,
     href: '/admin/marketing',
-    allowedRoles: ['admin', 'marketing'],
+    allowedRoles: ['admin', 'finance', 'marketing'],
     submenu: [
       { name: 'Dashboard', href: '/admin/marketing/dashboard' },
       { name: 'Leads', href: '/admin/marketing/leads' },
@@ -262,41 +255,20 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
   const [hovered, setHovered] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // PERF: Badge counts cached in sessionStorage for 5 minutes — no re-fetch on every navigation
+  // PERF: Only 2 lightweight count queries instead of 25 from useDashboardStats
   const [activeLeadsCount, setActiveLeadsCount] = useState(0);
   const [prodQueueCount, setProdQueueCount] = useState(0);
-  const [overdueCount, setOverdueCount] = useState(0);
   useEffect(() => {
-    const CACHE_KEY = 'sidebar_badge_counts';
-    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
-    try {
-      const cached = sessionStorage.getItem(CACHE_KEY);
-      if (cached) {
-        const { ts, leads, prod, overdue } = JSON.parse(cached);
-        if (Date.now() - ts < CACHE_TTL) {
-          setActiveLeadsCount(leads);
-          setProdQueueCount(prod);
-          setOverdueCount(overdue);
-          return; // skip all 3 queries
-        }
-      }
-    } catch { /* sessionStorage unavailable */ }
-
-    const today = new Date().toISOString().split('T')[0];
-    Promise.all([
-      supabase.from('leads').select('id', { count: 'exact', head: true }).not('status', 'in', '(converted,lost)'),
-      supabase.from('jobs').select('id', { count: 'exact', head: true }).in('current_stage', ['printing', 'finishing']),
-      supabase.from('jobs').select('id', { count: 'exact', head: true }).lt('client_deadline', today).not('current_stage', 'in', '(delivered,cancelled,completed)'),
-    ]).then(([leadsRes, prodRes, overdueRes]) => {
-      const leads = leadsRes.count || 0;
-      const prod  = prodRes.count || 0;
-      const overdue = overdueRes.count || 0;
-      setActiveLeadsCount(leads);
-      setProdQueueCount(prod);
-      setOverdueCount(overdue);
-      try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), leads, prod, overdue })); } catch { /* ignore */ }
-    });
+    // Leads badge count
+    supabase.from('leads')
+      .select('id', { count: 'exact', head: true })
+      .not('status', 'in', '(converted,lost)')
+      .then(({ count }) => setActiveLeadsCount(count || 0));
+    // Production Queue badge count (printing + finishing)
+    supabase.from('jobs')
+      .select('id', { count: 'exact', head: true })
+      .in('current_stage', ['printing', 'finishing'])
+      .then(({ count }) => setProdQueueCount(count || 0));
   }, []);
 
   const toggleExpanded = (name: string) => {
@@ -476,7 +448,6 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
                         let badge = 0;
                         if (sub.name === 'Leads') badge = activeLeadsCount;
                         if (sub.name === 'Production Queue') badge = prodQueueCount;
-                        if (sub.name === '🔴 Overdue') badge = overdueCount;
 
                         const showBadge = badge > 0;
 
@@ -508,6 +479,13 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
           )}
         </nav>
       </ScrollArea>
+
+      {/* End My Day — Designer Only */}
+      {!isCollapsed && profile?.role === 'designer' && (
+        <div className="px-3 pb-2">
+          <EndMyDayButton />
+        </div>
+      )}
 
       {/* User Profile */}
       <div className={`border-t border-border ${isCollapsed ? 'p-2 flex justify-center' : 'p-4'}`}>

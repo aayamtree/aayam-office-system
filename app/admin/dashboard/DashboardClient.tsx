@@ -419,7 +419,7 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                                                             #{job.job_number}
                                                         </Link>
                                                     </TableCell>
-                                                    <TableCell className="text-xs py-2">{job.client?.company || job.client?.name || '-'}</TableCell>
+                                                    <TableCell className="text-xs py-2">{job.client?.name || '-'}</TableCell>
                                                     <TableCell className="text-xs py-2 max-w-[100px] truncate">
                                                         <Link href={`/admin/jobs/${job.id}`} className="hover:underline">
                                                             {job.project_name || '-'}
