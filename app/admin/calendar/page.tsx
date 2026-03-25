@@ -50,7 +50,10 @@ export default function CalendarPage() {
             .catch(err => console.error('Calendar data fetch error:', err));
     }, [startDate, endDate, profile?.id, profile?.role]);
 
-    const loading = eventsLoading;
+    // Don't gate on eventsLoading — SWR fallbackData is [] so events is always a valid array.
+    // Blocking on isLoading can hang indefinitely if the SWR key gets stuck (e.g. table RLS
+    // or first-fetch dedup). Calendar renders immediately with whatever data is available.
+    const loading = false;
     const isAdmin = profile?.role === 'admin';
 
     const allItems = useMemo(() => {
@@ -112,14 +115,30 @@ export default function CalendarPage() {
 
     const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    const isMarketing = profile?.role === 'marketing';
+    const role = profile?.role || '';
+    const isMarketing = role === 'marketing';
+    const isDispatch  = role === 'dispatch';
+    const isFinance   = role === 'finance';
+    const isCmyk      = role === 'cmyk';
+    const isDesigner  = role === 'designer';
+
+    // Show legend items only for what this role actually sees
     const legendItems = [
-        ...(isAdmin || !isMarketing ? [{ color: 'bg-amber-400', label: 'Deadline' }] : []),
-        { color: 'bg-blue-400', label: 'Follow-up' },
-        ...(!isMarketing ? [{ color: 'bg-green-400', label: 'Dispatch' }] : []),
+        // Deadline: admin, finance, designer, dispatch, cmyk see job deadlines
+        ...((isAdmin || isFinance || isDesigner || isDispatch || isCmyk)
+            ? [{ color: 'bg-amber-400', label: 'Deadline' }] : []),
+        // Follow-up: admin + marketing only
+        ...(isAdmin || isMarketing ? [{ color: 'bg-blue-400', label: 'Follow-up' }] : []),
+        // Dispatch: admin + dispatch role only
+        ...(isAdmin || isDispatch ? [{ color: 'bg-green-400', label: 'Dispatch' }] : []),
+        // Event: everyone
         { color: 'bg-violet-400', label: 'Event' },
-        ...(isAdmin ? [{ color: 'bg-rose-400', label: 'Invoice' }] : []),
-        ...(!isMarketing ? [{ color: 'bg-orange-400', label: 'Print Run' }] : []),
+        // Invoice: admin + finance only
+        ...(isAdmin || isFinance ? [{ color: 'bg-rose-400', label: 'Invoice' }] : []),
+        // Print Run: admin, designer, dispatch, cmyk
+        ...(isAdmin || isDesigner || isDispatch || isCmyk
+            ? [{ color: 'bg-orange-400', label: 'Print Run' }] : []),
+        // Lead: admin + marketing only
         ...(isAdmin || isMarketing ? [{ color: 'bg-purple-400', label: 'Lead' }] : []),
     ];
 
