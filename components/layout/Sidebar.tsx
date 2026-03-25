@@ -44,7 +44,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/Badge';
-import AttendanceStatusPill from '@/components/attendance/AttendanceStatusPill';
 
 interface MenuItem {
   name: string;
@@ -509,13 +508,6 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
           )}
         </nav>
       </ScrollArea>
-
-      {/* Attendance status pill — Designer Only (silent, no buttons) */}
-      {!isCollapsed && profile?.role === 'designer' && (
-        <div className="px-3 pb-1">
-          <AttendanceStatusPill />
-        </div>
-      )}
 
       {/* User Profile */}
       <div className={`border-t border-border ${isCollapsed ? 'p-2 flex justify-center' : 'p-4'}`}>
