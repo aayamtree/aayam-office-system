@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -32,7 +32,9 @@ import {
 } from 'lucide-react';
 
 // Shadcn Components
-import { ScrollArea } from '@/components/ui/scroll-area';
+// NOTE: ScrollArea (Radix UI) intentionally removed — its ResizeObserver enters an
+// infinite loop over time when sidebar content re-renders (pathname/badge changes),
+// causing the sidebar to freeze after ~5 minutes. Plain overflow-y-auto div is used instead.
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/Button';
 import {
@@ -351,11 +353,12 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
   const isCollapsed = isDesktop && !locked && !hovered && !dropdownOpen;
   const sidebarWidth = isCollapsed ? 'w-16' : 'w-64';
 
-  const filteredMenu = menuItems.filter(item => {
+  // Memoize filtered menu — only recompute when role changes, not on every render
+  const filteredMenu = useMemo(() => menuItems.filter(item => {
     const userRole = profile?.role || 'admin';
     if (!item.allowedRoles || item.allowedRoles.length === 0) return true;
     return item.allowedRoles.includes(userRole);
-  });
+  }), [profile?.role]);
 
   // Mobile translate: slide off-screen when closed, slide in when open
   const mobileTranslate = !isDesktop ? (isOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full') : '';
@@ -397,8 +400,8 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
         )}
       </div>
 
-      {/* Navigation */}
-      <ScrollArea className={`flex-1 ${isCollapsed ? 'px-1.5' : 'px-3'} py-4`}>
+      {/* Navigation — plain overflow div (ScrollArea removed: caused ResizeObserver freeze) */}
+      <div className={`flex-1 overflow-y-auto ${isCollapsed ? 'px-1.5' : 'px-3'} py-4`}>
         <nav className="space-y-1">
           {profile && !profile.role ? (
             !isCollapsed && (
@@ -507,7 +510,7 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
             })
           )}
         </nav>
-      </ScrollArea>
+      </div>
 
       {/* User Profile */}
       <div className={`border-t border-border ${isCollapsed ? 'p-2 flex justify-center' : 'p-4'}`}>
