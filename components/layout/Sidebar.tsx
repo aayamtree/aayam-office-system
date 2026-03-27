@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -263,6 +263,10 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
   const [expandedItems, setExpandedItems] = useState<string[]>(['Design Studio', 'Marketing', 'Sales & Finance', 'CRM', 'Dispatch']);
   const [hovered, setHovered] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  // Debounce ref: prevents hover oscillation loop.
+  // Root cause: onMouseLeave → main margin shrinks → layout shift → onMouseEnter fires again
+  // → infinite loop that freezes sidebar after ~5 minutes of use.
+  const leaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // PERF: Badge counts cached in sessionStorage for 5 minutes — no re-fetch on every navigation
   const [activeLeadsCount, setActiveLeadsCount] = useState(0);
@@ -342,7 +346,11 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
     const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024);
     checkDesktop();
     window.addEventListener('resize', checkDesktop);
-    return () => window.removeEventListener('resize', checkDesktop);
+    return () => {
+      window.removeEventListener('resize', checkDesktop);
+      // Clean up any pending hover timer on unmount
+      if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
+    };
   }, []);
 
   // Desktop: collapsed = icon strip (64px), expanded on hover/lock = full 256px
@@ -367,15 +375,27 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
     <aside
       className={`fixed left-0 top-0 h-screen ${sidebarWidth} bg-background border-r border-border flex flex-col z-40 transition-all duration-300 ease-in-out ${isDesktop && hovered ? 'shadow-xl' : ''} ${mobileTranslate}`}
       onMouseEnter={() => {
+        // Cancel any pending leave — prevents rapid enter/leave oscillation loop
+        if (leaveTimerRef.current) {
+          clearTimeout(leaveTimerRef.current);
+          leaveTimerRef.current = null;
+        }
         if (isDesktop && !locked) {
           setHovered(true);
           onHoverChange?.(true);
         }
       }}
       onMouseLeave={() => {
-        if (isDesktop && !dropdownOpen && !locked) {
-          setHovered(false);
-          onHoverChange?.(false);
+        // Debounce: delay collapse by 200ms so layout-shift-induced leave events
+        // (where the margin change briefly moves the cursor "outside") don't trigger
+        // a collapse → expand → collapse loop that freezes the browser thread.
+        if (isDesktop && !locked) {
+          leaveTimerRef.current = setTimeout(() => {
+            if (!dropdownOpen) {
+              setHovered(false);
+              onHoverChange?.(false);
+            }
+          }, 200);
         }
       }}
     >
@@ -524,9 +544,13 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
         ) : (
           <DropdownMenu open={dropdownOpen} onOpenChange={(open) => {
             setDropdownOpen(open);
-            if (!open) {
-              setHovered(false);
-              onHoverChange?.(false);
+            // When dropdown closes, use the same debounce so layout doesn't
+            // immediately snap if mouse is still hovering over the sidebar
+            if (!open && isDesktop && !locked) {
+              leaveTimerRef.current = setTimeout(() => {
+                setHovered(false);
+                onHoverChange?.(false);
+              }, 200);
             }
           }}>
             <DropdownMenuTrigger asChild>
