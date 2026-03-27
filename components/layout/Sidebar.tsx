@@ -386,25 +386,41 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
       className={`fixed left-0 top-0 h-screen ${sidebarWidth} bg-background border-r border-border flex flex-col z-40 transition-all duration-300 ease-in-out ${mobileTranslate}`}
     >
       {/* Logo + collapse toggle */}
-      <div className={`border-b border-border ${isCollapsed ? 'p-3 flex justify-center' : 'p-4 flex items-center justify-between'}`}>
-        <Link
-          href={profile?.role === 'designer' ? '/admin/designers/tasks' : '/admin/dashboard'}
-          className="flex items-center gap-2"
-          onClick={handleLinkClick}
-        >
-          <Image src="/company-logo.png" alt="Aayam" width={32} height={32} className="rounded shrink-0" />
-          {!isCollapsed && <span className="font-bold text-foreground text-xl whitespace-nowrap">Aayam</span>}
-        </Link>
-        {isDesktop && (
-          <button
-            onClick={toggleCollapsed}
-            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      {isCollapsed ? (
+        // Collapsed: only show the expand chevron — no logo, no overflow
+        <div className="border-b border-border p-3 flex justify-center">
+          {isDesktop && (
+            <button
+              onClick={toggleCollapsed}
+              className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              title="Expand sidebar"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      ) : (
+        // Expanded: logo + name on left, collapse chevron on right
+        <div className="border-b border-border p-4 flex items-center justify-between">
+          <Link
+            href={profile?.role === 'designer' ? '/admin/designers/tasks' : '/admin/dashboard'}
+            className="flex items-center gap-2"
+            onClick={handleLinkClick}
           >
-            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          </button>
-        )}
-      </div>
+            <Image src="/company-logo.png" alt="Aayam" width={32} height={32} className="rounded shrink-0" />
+            <span className="font-bold text-foreground text-xl whitespace-nowrap">Aayam</span>
+          </Link>
+          {isDesktop && (
+            <button
+              onClick={toggleCollapsed}
+              className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              title="Collapse sidebar"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Navigation — plain overflow div (ScrollArea removed: caused ResizeObserver freeze) */}
       <div className={`flex-1 overflow-y-auto ${isCollapsed ? 'px-1.5' : 'px-3'} py-4`}>
