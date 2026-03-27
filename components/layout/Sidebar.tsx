@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, type MouseEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -368,7 +368,7 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
   // Fix: try router.push first; if the URL hasn't changed after 300ms, fall back
   // to window.location.href (hard nav). This is fast on all normal pages (URL
   // changes in <50ms), and self-corrects on the tasks page.
-  const navigate = (e: React.MouseEvent, href: string) => {
+  const navigate = (e: MouseEvent, href: string) => {
     e.preventDefault();
     const before = window.location.pathname + window.location.search;
     router.push(href);
