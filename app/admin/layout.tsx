@@ -23,14 +23,10 @@ export default function AdminLayout({
   const router = useRouter();
   const { profile, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarHovered, setSidebarHovered] = useState(false);
-  const [sidebarLocked, setSidebarLocked] = useState(false);
-
-  // Load sidebar lock state from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem('sidebar-locked');
-    if (saved === 'true') setSidebarLocked(true);
-  }, []);
+  // sidebarCollapsed is driven by Sidebar's internal click-toggle (persisted to localStorage).
+  // Hover-expand was permanently removed — it caused a CSS layout-shift oscillation loop
+  // that froze the browser after ~5 minutes of use.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Role-based redirect (non-blocking — just redirects after profile loads)
   useEffect(() => {
@@ -71,13 +67,11 @@ export default function AdminLayout({
           <Sidebar
             isOpen={sidebarOpen}
             onClose={closeSidebar}
-            onHoverChange={setSidebarHovered}
-            locked={sidebarLocked}
-            onLockedChange={(v) => { setSidebarLocked(v); localStorage.setItem('sidebar-locked', String(v)); }}
+            onCollapsedChange={setSidebarCollapsed}
           />
 
           {/* Header */}
-          <Header onMenuClick={() => setSidebarOpen(true)} sidebarExpanded={sidebarHovered || sidebarLocked} />
+          <Header onMenuClick={() => setSidebarOpen(true)} sidebarExpanded={!sidebarCollapsed} />
 
           {/* Global Command Palette (Cmd+K) */}
           <CommandPalette />
@@ -86,7 +80,7 @@ export default function AdminLayout({
           {profile && <DailyBriefingTrigger />}
 
           {/* Main Content — RouteGuard enforces RBAC per role before rendering */}
-          <main className={`pt-20 lg:pt-24 px-4 md:px-6 lg:px-8 py-6 min-h-screen transition-[margin] duration-200 ease-in-out ${(sidebarHovered || sidebarLocked) ? 'lg:ml-64' : 'lg:ml-16'}`}>
+          <main className={`pt-20 lg:pt-24 px-4 md:px-6 lg:px-8 py-6 min-h-screen transition-[margin] duration-300 ease-in-out ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
             <GlobalErrorBoundary>
               <RouteGuard>
                 {children}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -25,8 +25,8 @@ import {
   Clock,
   LogOut,
   User,
-  PanelLeftClose,
-  PanelLeft,
+  ChevronLeft,
+  ChevronRight,
   Share2,
   Star,
 } from 'lucide-react';
@@ -252,21 +252,39 @@ const menuItems: MenuItem[] = [
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  onHoverChange?: (hovered: boolean) => void;
-  locked?: boolean;
-  onLockedChange?: (locked: boolean) => void;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
-export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false, onLockedChange }: SidebarProps) {
+const COLLAPSE_KEY = 'sidebar-collapsed';
+
+export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarProps) {
   const pathname = usePathname();
   const { profile, signOut } = useAuth();
   const [expandedItems, setExpandedItems] = useState<string[]>(['Design Studio', 'Marketing', 'Sales & Finance', 'CRM', 'Dispatch']);
-  const [hovered, setHovered] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  // Debounce ref: prevents hover oscillation loop.
-  // Root cause: onMouseLeave → main margin shrinks → layout shift → onMouseEnter fires again
-  // → infinite loop that freezes sidebar after ~5 minutes of use.
-  const leaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sidebar collapsed state — click-only, persisted to localStorage.
+  // NO hover logic. Hover-expand was removed permanently because any CSS layout
+  // shift near the sidebar edge (margin: ml-16 ↔ ml-64) caused an oscillation
+  // loop that saturated the browser main thread and froze the UI after ~5 minutes.
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(COLLAPSE_KEY);
+      const isCollapsed = saved === 'true';
+      setCollapsed(isCollapsed);
+      onCollapsedChange?.(isCollapsed);
+    } catch { /* localStorage unavailable */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const toggleCollapsed = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    try { localStorage.setItem(COLLAPSE_KEY, String(next)); } catch { /* ignore */ }
+    onCollapsedChange?.(next);
+  };
 
   // PERF: Badge counts cached in sessionStorage for 5 minutes — no re-fetch on every navigation
   const [activeLeadsCount, setActiveLeadsCount] = useState(0);
@@ -324,7 +342,6 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
     if (href.includes('?')) {
       const [path, query] = href.split('?');
       if (pathname !== path) return false;
-      // Read current query from window.location.search (stable, no re-render on URL change)
       const currentParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
       const subParams = new URLSearchParams(query);
       for (const [key, val] of Array.from(subParams.entries())) {
@@ -346,19 +363,12 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
     const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024);
     checkDesktop();
     window.addEventListener('resize', checkDesktop);
-    return () => {
-      window.removeEventListener('resize', checkDesktop);
-      // Clean up any pending hover timer on unmount
-      if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
-    };
+    return () => window.removeEventListener('resize', checkDesktop);
   }, []);
 
-  // Desktop: collapsed = icon strip (64px), expanded on hover/lock = full 256px
-  // Mobile: always rendered; translate-x controls visibility (smooth slide animation)
-
-  // Desktop: collapsed = icon strip (64px), expanded on hover = full sidebar (256px) as overlay
-  // When LOCKED, sidebar stays expanded regardless of hover
-  const isCollapsed = isDesktop && !locked && !hovered && !dropdownOpen;
+  // On desktop: collapsed = icon strip (w-16), expanded = full (w-64)
+  // On mobile: always full width, translate-x controls visibility
+  const isCollapsed = isDesktop && collapsed;
   const sidebarWidth = isCollapsed ? 'w-16' : 'w-64';
 
   // Memoize filtered menu — only recompute when role changes, not on every render
@@ -373,33 +383,9 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-screen ${sidebarWidth} bg-background border-r border-border flex flex-col z-40 transition-all duration-300 ease-in-out ${isDesktop && hovered ? 'shadow-xl' : ''} ${mobileTranslate}`}
-      onMouseEnter={() => {
-        // Cancel any pending leave — prevents rapid enter/leave oscillation loop
-        if (leaveTimerRef.current) {
-          clearTimeout(leaveTimerRef.current);
-          leaveTimerRef.current = null;
-        }
-        if (isDesktop && !locked) {
-          setHovered(true);
-          onHoverChange?.(true);
-        }
-      }}
-      onMouseLeave={() => {
-        // Debounce: delay collapse by 200ms so layout-shift-induced leave events
-        // (where the margin change briefly moves the cursor "outside") don't trigger
-        // a collapse → expand → collapse loop that freezes the browser thread.
-        if (isDesktop && !locked) {
-          leaveTimerRef.current = setTimeout(() => {
-            if (!dropdownOpen) {
-              setHovered(false);
-              onHoverChange?.(false);
-            }
-          }, 200);
-        }
-      }}
+      className={`fixed left-0 top-0 h-screen ${sidebarWidth} bg-background border-r border-border flex flex-col z-40 transition-all duration-300 ease-in-out ${mobileTranslate}`}
     >
-      {/* Logo + Lock toggle */}
+      {/* Logo + collapse toggle */}
       <div className={`border-b border-border ${isCollapsed ? 'p-3 flex justify-center' : 'p-4 flex items-center justify-between'}`}>
         <Link
           href={profile?.role === 'designer' ? '/admin/designers/tasks' : '/admin/dashboard'}
@@ -409,13 +395,13 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
           <Image src="/company-logo.png" alt="Aayam" width={32} height={32} className="rounded shrink-0" />
           {!isCollapsed && <span className="font-bold text-foreground text-xl whitespace-nowrap">Aayam</span>}
         </Link>
-        {!isCollapsed && isDesktop && (
+        {isDesktop && (
           <button
-            onClick={() => onLockedChange?.(!locked)}
-            className={`p-1.5 rounded-md transition-colors ${locked ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
-            title={locked ? 'Unlock sidebar (auto-collapse)' : 'Lock sidebar open'}
+            onClick={toggleCollapsed}
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            {locked ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
+            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         )}
       </div>
@@ -542,17 +528,7 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
             </Avatar>
           </Link>
         ) : (
-          <DropdownMenu open={dropdownOpen} onOpenChange={(open) => {
-            setDropdownOpen(open);
-            // When dropdown closes, use the same debounce so layout doesn't
-            // immediately snap if mouse is still hovering over the sidebar
-            if (!open && isDesktop && !locked) {
-              leaveTimerRef.current = setTimeout(() => {
-                setHovered(false);
-                onHoverChange?.(false);
-              }, 200);
-            }
-          }}>
+          <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="w-full justify-start px-2 h-auto py-2">
                 <Avatar className="h-8 w-8 mr-2">
