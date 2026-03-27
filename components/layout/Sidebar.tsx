@@ -263,6 +263,14 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
   const [expandedItems, setExpandedItems] = useState<string[]>(['Design Studio', 'Marketing', 'Sales & Finance', 'CRM', 'Dispatch']);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  // Close mobile sidebar on navigation — watching pathname is reliable and
+  // avoids calling setState inside link onClick handlers, which can interfere
+  // with Next.js startTransition-based routing on heavy pages (e.g. tasks page).
+  useEffect(() => {
+    onClose();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
   // Sidebar collapsed state — click-only, persisted to localStorage.
   // NO hover logic. Hover-expand was removed permanently because any CSS layout
   // shift near the sidebar edge (margin: ml-16 ↔ ml-64) caused an oscillation
@@ -352,9 +360,9 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
     return pathname === href;
   };
 
-  const handleLinkClick = () => {
-    onClose();
-  };
+  // No-op: mobile close is now handled by pathname watcher above.
+  // Keeping this function only for the logo link (which needs no special behavior).
+  const handleLinkClick = () => {};
 
   // Determine if we're on desktop (lg breakpoint = 1024px)
   const [isDesktop, setIsDesktop] = useState(false);
