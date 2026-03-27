@@ -50,10 +50,7 @@ export default function CalendarPage() {
             .catch(err => console.error('Calendar data fetch error:', err));
     }, [startDate, endDate, profile?.id, profile?.role]);
 
-    // Don't gate on eventsLoading — SWR fallbackData is [] so events is always a valid array.
-    // Blocking on isLoading can hang indefinitely if the SWR key gets stuck (e.g. table RLS
-    // or first-fetch dedup). Calendar renders immediately with whatever data is available.
-    const loading = false;
+    const loading = eventsLoading;
     const isAdmin = profile?.role === 'admin';
 
     const allItems = useMemo(() => {

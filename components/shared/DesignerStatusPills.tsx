@@ -14,7 +14,7 @@
  *   transfer — reassign to another designer
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Play, Pause, CheckSquare, RotateCcw, ArrowRightLeft, Loader2 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 
@@ -117,11 +117,6 @@ export function DesignerStatusPills({
   const [updating, setUpdating] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
   const [transferToId, setTransferToId] = useState('');
-  // Optimistic local status — gives instant visual feedback without waiting for parent re-render
-  const [localStatus, setLocalStatus] = useState(currentStatus);
-
-  // Keep localStatus in sync if the parent updates the prop (e.g. on page re-fetch)
-  useEffect(() => { setLocalStatus(currentStatus); }, [currentStatus]);
 
   // ── Role-based access: non admin/designer → read-only badge ──────────────
   const isAdmin = userRole === 'admin';
@@ -133,10 +128,9 @@ export function DesignerStatusPills({
   }
 
   const handleChange = async (newStatus: string) => {
-    if (disabled || updating || newStatus === localStatus) return;
+    if (disabled || updating || newStatus === currentStatus) return;
     if (newStatus === 'transfer') { setShowTransfer(true); return; }
 
-    setLocalStatus(newStatus); // Optimistic update — immediate visual feedback
     setUpdating(true);
     try {
       const res = await fetch(`/api/jobs/${jobId}/designer-status`, {
@@ -150,7 +144,6 @@ export function DesignerStatusPills({
       const label = DESIGNER_STATUSES.find(s => s.status === newStatus)?.label || newStatus.toUpperCase();
       toast.success(`Status: ${label}`);
     } catch (e: any) {
-      setLocalStatus(currentStatus); // Revert on failure
       toast.error(e.message);
     } finally {
       setUpdating(false);
@@ -191,7 +184,7 @@ export function DesignerStatusPills({
         )}
         {DESIGNER_STATUSES.map(cfg => {
           const Icon = cfg.icon;
-          const isActive = localStatus === cfg.status;
+          const isActive = currentStatus === cfg.status;
           return (
             <button
               key={cfg.status}
@@ -204,7 +197,7 @@ export function DesignerStatusPills({
                 disabled:opacity-50 disabled:cursor-not-allowed
               `}
             >
-              {updating && localStatus === cfg.status
+              {updating && isActive
                 ? <Loader2 size={isCompact ? 9 : 11} className="animate-spin" />
                 : <Icon size={isCompact ? 9 : 11} />
               }

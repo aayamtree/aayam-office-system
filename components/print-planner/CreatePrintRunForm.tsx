@@ -71,13 +71,10 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
     const paperGstAmount = paperAmount * (paperGst / 100);
     const paperTotalWithGst = paperAmount + paperGstAmount;
 
-    // Paper vendors: prefer vendors with "Paper" category.
-    // If none exist yet, fall back to ALL vendors so user isn't blocked.
-    const strictPaperVendors = allVendors.filter(v =>
+    // Filter vendors: paper vendors only for paper dropdown
+    const paperVendors = allVendors.filter(v =>
         v.category?.toLowerCase().includes('paper')
     );
-    const paperVendors = strictPaperVendors.length > 0 ? strictPaperVendors : allVendors;
-    const paperVendorsFallback = strictPaperVendors.length === 0;
 
     // Update editable pulling when prop changes (e.g. going back to step 2 and returning)
     useEffect(() => {
@@ -399,50 +396,28 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
 
                     {sendingPaper && (
                         <div className="p-4 space-y-4">
-                            {/* Paper Vendor */}
+                            {/* Paper Vendor — filtered to paper vendors only */}
                             <div>
-                                <label className="block text-xs font-bold text-gray-600 mb-1.5">
-                                    Paper Vendor * <span className="text-gray-400 font-normal">(who is sending paper to the printer)</span>
-                                </label>
+                                <label className="block text-xs font-bold text-gray-600 mb-1.5">Paper Vendor *</label>
                                 {paperVendors.length > 0 ? (
-                                    <>
-                                        <select
-                                            required={sendingPaper}
-                                            value={paperVendorId}
-                                            onChange={(e) => setPaperVendorId(e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 outline-none text-sm"
-                                        >
-                                            <option value="">Select vendor sending paper...</option>
-                                            {paperVendors.map(v => (
-                                                <option key={v.id} value={v.id}>
-                                                    {v.name}{v.category ? ` (${v.category})` : ''}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        {paperVendorsFallback && (
-                                            <p className="text-xs text-amber-600 mt-1">
-                                                💡 Tip: Add a vendor with category &quot;Paper&quot; in <strong>Finance → Vendors</strong> to filter this list to paper suppliers only.
-                                            </p>
-                                        )}
-                                    </>
+                                    <select
+                                        required={sendingPaper}
+                                        value={paperVendorId}
+                                        onChange={(e) => setPaperVendorId(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 outline-none text-sm"
+                                    >
+                                        <option value="">Select paper vendor...</option>
+                                        {paperVendors.map(v => (
+                                            <option key={v.id} value={v.id}>{v.name}</option>
+                                        ))}
+                                    </select>
                                 ) : (
                                     <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-md">
                                         <p className="text-xs text-amber-700">
-                                            No vendors found. Add a vendor in <strong>Finance → Vendors</strong> first.
+                                            No paper vendors found. Add a vendor with category &quot;Paper&quot; in <strong>Finance → Vendors</strong>.
                                         </p>
                                     </div>
                                 )}
-                            </div>
-
-                            {/* Sheet size + delivery note */}
-                            <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                                <Truck size={16} className="text-blue-600 flex-shrink-0" />
-                                <div className="text-xs text-blue-800">
-                                    <span className="font-bold">Paper delivery:</span> Vendor will send{' '}
-                                    <span className="font-bold">{paperQty || '—'} sheets</span> of{' '}
-                                    <span className="font-bold">{sheetSize}</span> directly to the print vendor.
-                                    This will be recorded in vendor&apos;s purchase history.
-                                </div>
                             </div>
 
                             {/* Qty, Rate, Amount */}

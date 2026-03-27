@@ -336,7 +336,7 @@ export default function AdminEODDashboard() {
                                                             <div className="min-w-0 flex-1">
                                                                 <p className="font-semibold text-gray-900 truncate">
                                                                     {tu.job?.project_name || `Job #${tu.job?.job_number || '?'}`}
-                                                                    {(tu.job?.client?.company || tu.job?.client?.name) && <span className="font-normal text-gray-400 ml-1.5">· {tu.job.client?.company || tu.job.client?.name}</span>}
+                                                                    {tu.job?.client?.name && <span className="font-normal text-gray-400 ml-1.5">· {tu.job.client.name}</span>}
                                                                 </p>
                                                                 <p className="text-gray-500 mt-0.5">{tu.status_update}</p>
                                                                 <div className="flex items-center gap-3 text-[10px] text-gray-400 mt-1">

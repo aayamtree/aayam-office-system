@@ -131,7 +131,7 @@ export function MobileBottomNav() {
     return (
         <>
             {/* Bottom Nav Bar - Mobile Only */}
-            <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#FAF9F5] border-t border-gray-200 lg:hidden safe-area-bottom [transform:translateZ(0)] [-webkit-transform:translateZ(0)] [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [will-change:transform]">
+            <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#FAF9F5] border-t border-gray-200 lg:hidden safe-area-bottom [transform:translateZ(0)] [-webkit-transform:translateZ(0)] [backface-visibility:hidden] [-webkit-backface-visibility:hidden]">
                 <div className="flex items-stretch justify-around h-16 px-2">
                     {/* Dynamic Tabs (4 slots) */}
                     {activeTabItems.map(item => {
@@ -314,17 +314,11 @@ export function MobileBottomNav() {
             <style jsx global>{`
                 @media (max-width: 1023px) {
                     main {
-                        padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
+                        padding-bottom: 80px !important;
                     }
                 }
-                /* Lock nav to bottom — immune to iOS address bar resize */
                 .safe-area-bottom {
                     padding-bottom: env(safe-area-inset-bottom, 0px);
-                }
-                /* Prevent content bounce pulling the fixed nav */
-                @media (max-width: 1023px) {
-                    html { height: -webkit-fill-available; }
-                    body { min-height: -webkit-fill-available; }
                 }
                 @keyframes slide-up {
                     from { transform: translateY(100%); }

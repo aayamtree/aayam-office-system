@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 // PERF: Removed useDashboardStats (25 queries!) — sidebar only needs 2 badge counts
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -259,6 +259,7 @@ const COLLAPSE_KEY = 'sidebar-collapsed';
 
 export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { profile, signOut } = useAuth();
   const [expandedItems, setExpandedItems] = useState<string[]>(['Design Studio', 'Marketing', 'Sales & Finance', 'CRM', 'Dispatch']);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -360,8 +361,25 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
     return pathname === href;
   };
 
-  // No-op: mobile close is now handled by pathname watcher above.
-  // Keeping this function only for the logo link (which needs no special behavior).
+  // Reliable sidebar navigation:
+  // Next.js <Link> / router.push uses startTransition internally. On heavy pages
+  // like the tasks board (200+ jobs), startTransition can be silently abandoned
+  // by React's concurrent scheduler, leaving the URL unchanged with no error.
+  // Fix: try router.push first; if the URL hasn't changed after 300ms, fall back
+  // to window.location.href (hard nav). This is fast on all normal pages (URL
+  // changes in <50ms), and self-corrects on the tasks page.
+  const navigate = (e: React.MouseEvent, href: string) => {
+    e.preventDefault();
+    const before = window.location.pathname + window.location.search;
+    router.push(href);
+    setTimeout(() => {
+      if (window.location.pathname + window.location.search === before) {
+        window.location.href = href;
+      }
+    }, 300);
+  };
+
+  // Kept for the logo link only (needs no navigation override)
   const handleLinkClick = () => {};
 
   // Determine if we're on desktop (lg breakpoint = 1024px)
@@ -453,7 +471,7 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
                   <Link
                     key={item.name}
                     href={item.href}
-                    onClick={handleLinkClick}
+                    onClick={(e) => navigate(e, item.href)}
                     title={item.name}
                     className={`flex items-center justify-center w-full h-10 rounded-md transition-colors
                       ${active
@@ -490,7 +508,7 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
                   ) : (
                     <Link
                       href={item.href}
-                      onClick={handleLinkClick}
+                      onClick={(e) => navigate(e, item.href)}
                       className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-sm font-medium
                         ${active
                           ? 'bg-primary text-primary-foreground'
@@ -517,7 +535,7 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
                           <Link
                             key={sub.href}
                             href={sub.href}
-                            onClick={handleLinkClick}
+                            onClick={(e) => navigate(e, sub.href)}
                             className={`flex items-center justify-between px-3 py-1.5 rounded-md text-sm transition-colors
                               ${isSubActive(sub.href)
                                 ? 'bg-primary text-primary-foreground font-medium'
@@ -569,14 +587,14 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/admin/settings/profile" onClick={handleLinkClick}>
+                <Link href="/admin/settings/profile" onClick={(e) => navigate(e, '/admin/settings/profile')}>
                   <User className="mr-2 h-4 w-4" strokeWidth={1} />
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
               {profile?.role === 'admin' && (
                 <DropdownMenuItem asChild>
-                  <Link href="/admin/settings" onClick={handleLinkClick}>
+                  <Link href="/admin/settings" onClick={(e) => navigate(e, '/admin/settings')}>
                     <Settings className="mr-2 h-4 w-4" strokeWidth={1} />
                     <span>Settings</span>
                   </Link>

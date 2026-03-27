@@ -128,7 +128,7 @@ export default function DossierListPage() {
         </table>
         {!loading && (
           <div className="bg-muted/30 border-t px-4 py-2 text-xs text-muted-foreground">
-            {filtered.length} of {tasks.length} jobs
+            {filtered.length} of {tasks.length} tasks · <Link href="/admin/designer-module/dossier-search" className="text-primary hover:underline">Advanced Dossier Search →</Link>
           </div>
         )}
       </div>

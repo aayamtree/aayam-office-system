@@ -549,7 +549,7 @@ export default function QuotationsPage() {
 
                       {/* Client Name/Type */}
                       <h3 className="text-gray-900 font-bold text-lg mb-4">
-                        {q.client?.company || q.client?.name || (q.lead ? 'LEAD' : 'No Contact')}
+                        {q.client?.name || (q.lead ? 'LEAD' : 'No Contact')}
                       </h3>
 
                       {/* Items Preview */}

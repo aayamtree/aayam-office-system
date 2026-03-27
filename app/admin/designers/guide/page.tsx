@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import {
     Palette, Clock, ListChecks, Upload, CheckCircle2, ChevronDown,
-    ChevronRight, ArrowRight, AlertCircle, FileImage, Target,
-    PenTool, BarChart2, UserCheck, Layers
+    ChevronRight, ArrowRight, AlertCircle, FileImage, MessageSquare,
+    BarChart2, PenTool, Target
 } from 'lucide-react';
 
 interface Step { label: string; path?: string; detail?: string; }
@@ -16,156 +16,137 @@ interface Phase {
 
 const phases: Phase[] = [
     {
-        id: 'attendance',
-        icon: <UserCheck className="w-5 h-5" />,
-        title: '1. Attendance — Subah Login, Shaam Logout',
-        subtitle: 'Har din karna zaroori hai — bhoolna nahi!',
-        color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', headerBg: 'bg-emerald-700',
-        steps: [
-            { label: 'Office aate hi app open karo aur Login karo', path: 'Sidebar → Attendance → Login', detail: 'Isse tumhara attendance record hota hai. Bina login ke kaam start mat karo.' },
-            { label: 'Poore din heartbeat auto-track hoti hai', path: '—', detail: 'App automatically track karta hai ki tum active ho. Kuch karna nahi.' },
-            { label: 'Shaam ko kaam khatam hone par Logout karo', path: 'Sidebar → Attendance → Logout', detail: 'Logout karte waqt ek chhota EOD summary bhi dena hoga.' },
-            { label: 'Agar bhool gaye toh admin se bolo', path: 'Admin → Attendance → Override', detail: 'Admin manually attendance fix kar sakta hai.' },
-        ],
-        tip: 'Attendance bahut important hai — admin daily dekhta hai kaun aaya, kaun nahi. Logout karna mat bhoolna warna time record galat ho jaayega.',
-    },
-    {
         id: 'daily',
         icon: <Clock className="w-5 h-5" />,
-        title: '2. Din Ka Shuruaat — Subah Ka Routine',
-        subtitle: 'Login ke baad yahi 4 cheezein check karo',
+        title: '1. Start of Day',
+        subtitle: 'Open your queue and plan your work',
         color: 'text-pink-700', bg: 'bg-pink-50', border: 'border-pink-200', headerBg: 'bg-pink-700',
         steps: [
-            { label: 'Apna personal queue kholo', path: 'Design Studio → My Queue', detail: 'Sirf tumhare jobs dikhenge — deadline ke hisaab se sort hue' },
-            { label: 'My Work page check karo', path: 'My Work', detail: 'Tumhare saare assigned tasks aur subtasks ek jagah — quick overview ke liye' },
-            { label: 'Calendar dekho', path: 'Calendar', detail: 'Aaj ki deadlines yahan dikhti hain — sirf tumhare tasks, doosron ke nahi' },
-            { label: 'My Notes check karo', path: 'Design Studio → My Notes', detail: 'Admin ne koi instruction ya new job detail chhodi hogi toh yahan milegi' },
+            { label: 'Open your personal queue', path: 'Design Studio → My Queue', detail: 'See all jobs assigned specifically to you, sorted by deadline' },
+            { label: 'Check your calendar', path: 'Calendar', detail: 'Your task deadlines appear here — so you can see what\'s due today at a glance' },
+            { label: 'Check for overdue tasks', path: 'My Queue → filter by deadline', detail: 'Red deadline badge = past due. Prioritise these first.' },
+            { label: 'Check today\'s briefings / notes', path: 'Design Studio → My Notes', detail: 'Admin may have left instructions or new job details' },
         ],
-        tip: 'Pehle My Queue aur overdue tasks dekho. Jo kaam late ho gaya hai use pehle khatam karo, phir naya kaam uthao.',
+        tip: 'Always check My Queue first. Never start a new task before completing existing overdue ones.',
     },
     {
         id: 'pickup',
         icon: <PenTool className="w-5 h-5" />,
-        title: '3. Job Uthana — Brief Padhna Zaroori Hai',
-        subtitle: 'Job milte hi yeh steps follow karo',
+        title: '2. Picking Up a Job',
+        subtitle: 'Job assigned → you take ownership',
         color: 'text-violet-700', bg: 'bg-violet-50', border: 'border-violet-200', headerBg: 'bg-violet-700',
         steps: [
-            { label: 'Job card kholo aur poora padhho', path: 'My Queue → [Job card] → Click to open', detail: 'Client ka naam, requirement, deadline, reference files — sab yahan hai' },
-            { label: 'Brief dhyan se padhho', path: 'Job Details → Notes / Brief section', detail: 'Size, bleed, colours, quantity, special instructions — koi bhi cheez miss mat karo' },
-            { label: 'Reference files download karo', path: 'Job Details → Files section → Download', detail: 'Old artwork, logo, brand guide Google Drive se milega' },
-            { label: 'Task status Live kar do', path: 'My Queue → Task → 🟢 Live pill', detail: 'Isse admin ko pata chalta hai tum kaam shuru kar diye ho' },
+            { label: 'Open the job card', path: 'My Queue → [Job card] → Click to open', detail: 'See client name, requirements, deadline, reference files' },
+            { label: 'Read the brief carefully', path: 'Job Details → Notes / Brief section', detail: 'Specs: size, bleed, colours, quantity, special instructions' },
+            { label: 'Download reference files', path: 'Job Details → Files section → Download', detail: 'Old artwork, logo, brand guide from Google Drive' },
+            { label: 'Set your task status to Live', path: 'My Queue → Task → 🟢 Live pill', detail: 'Tap the Live pill to show you\'ve started working' },
         ],
-        tip: 'Brief padhne ke baad kaam shuru karo. Print hone ke baad galti fix karna bahut mehenga padta hai — ₹₹₹ waste hota hai!',
+        tip: 'Read the full brief before starting. Fixing mistakes after printing costs ₹₹₹.',
     },
     {
         id: 'status',
         icon: <ListChecks className="w-5 h-5" />,
-        title: '4. Status Pills — Apni State Batao Hamesha',
-        subtitle: 'Admin yahi dekhta hai — har change pe update karo',
+        title: '3. Task Status Pills — Your Signal System',
+        subtitle: 'Tell the team exactly where you are at all times',
         color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200', headerBg: 'bg-indigo-700',
         steps: [
-            { label: '🟢 Live — Main abhi is job par kaam kar raha/rahi hoon', path: 'My Queue / Tasks → Live pill', detail: 'Jab bhi kaam shuru karo yeh lagao' },
-            { label: '🟡 Pause — Rok ke rakha hai, kisi cheez ka wait hai', path: 'My Queue / Tasks → Pause pill', detail: 'Client files chahiye, feedback chahiye, ya clarification chahiye toh Pause' },
-            { label: '🔵 Review — Client / admin ko bhej diya, approval ka wait hai', path: 'My Queue / Tasks → Review pill', detail: 'Design ready hai, ab feedback aayega' },
-            { label: '✅ End — Kaam poora ho gaya, admin le lo', path: 'My Queue / Tasks → End pill', detail: 'Final file upload ho gayi, brief fulfill ho gaya' },
-            { label: '🔁 Transfer — Kisi aur designer ko dena hai', path: 'My Queue / Tasks → Transfer pill', detail: 'Agar tum complete nahi kar sakte — reason bhi batao admin ko' },
+            { label: '🟢 Live — I am actively working on this right now', path: 'My Queue / Tasks → Live pill', detail: 'Set this when you pick up and start designing' },
+            { label: '🟡 Pause — Paused, waiting for something', path: 'My Queue / Tasks → Pause pill', detail: 'Use when waiting for client files, feedback, or clarification' },
+            { label: '🔵 Review — Sent to client / team for approval', path: 'My Queue / Tasks → Review pill', detail: 'Design is done, now awaiting feedback or sign-off' },
+            { label: '✅ End — Work complete, ready to hand off', path: 'My Queue / Tasks → End pill', detail: 'Final file uploaded, brief is fulfilled — admin takes over' },
+            { label: '🔁 Transfer — Reassigning to another designer', path: 'My Queue / Tasks → Transfer pill', detail: 'If you can\'t complete it — let admin know the reason' },
         ],
-        tip: 'Har baar kuch change ho toh status update karo. Admin in pills ko dekhke decide karta hai ki kaunsa job production ke liye ready hai.',
-    },
-    {
-        id: 'subtasks',
-        icon: <Layers className="w-5 h-5" />,
-        title: '5. Subtasks — Bade Job Ko Chhote Pieces Mein Todo',
-        subtitle: 'Ek job ke andar multiple tasks manage karo',
-        color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200', headerBg: 'bg-blue-700',
-        steps: [
-            { label: 'Job ke andar Subtasks section dekho', path: 'Job Details → Subtasks tab', detail: 'Admin ne subtasks banaaye honge — ya tum khud bana sakte ho apne kaam ke liye' },
-            { label: 'Apna assigned subtask kholo', path: 'My Work → Subtasks section', detail: 'Sirf tumhare assigned subtasks dikhenge' },
-            { label: 'Subtask ka status update karo', path: 'Subtask → Status dropdown', detail: 'Pending → In Progress → Done — admin ko pata rahega' },
-            { label: 'Subtask complete karo', path: 'Subtask → Mark Done', detail: 'Sab subtasks done hone par main job bhi automatically advance hoti hai' },
-        ],
-        tip: 'Agar koi subtask unclear hai toh admin se baat karo. Subtask ka status update karna mat bhoolna — admin isiliye dekhta hai ki kaun kya kar raha hai.',
+        tip: 'Update your status every time something changes. Admin watches these pills to know the live state of every job.',
     },
     {
         id: 'work',
         icon: <FileImage className="w-5 h-5" />,
-        title: '6. Design Karna aur File Upload Karna',
-        subtitle: 'Kaam karo, save karo, upload karo — baar baar',
+        title: '4. Working on Design',
+        subtitle: 'Do the creative work, then upload',
+        color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200', headerBg: 'bg-blue-700',
+        steps: [
+            { label: 'Work on design in your software', path: '—', detail: 'Illustrator, Photoshop, CorelDRAW — your tools' },
+            { label: 'Upload work-in-progress file', path: 'Job Details → Files → Upload', detail: 'Upload to Google Drive every time you save major progress' },
+            { label: 'Add a note about what you did', path: 'Job Details → Notes → Add Note', detail: 'Example: "Draft 1 uploaded. Awaiting client colour feedback."' },
+            { label: 'Set status to Review when ready for feedback', path: 'Task → 🔵 Review pill', detail: 'Admin knows to send to client now' },
+            { label: 'Upload final artwork and set status to End', path: 'Files → Upload final → Task → ✅ End pill', detail: 'Print-ready PDF or AI file with bleeds & crops' },
+        ],
+        tip: 'Upload files regularly — don\'t wait until the job is done. If you lose local work, Drive has backup.',
+    },
+    {
+        id: 'newjob',
+        icon: <Upload className="w-5 h-5" />,
+        title: '5. Adding a New Design Task',
+        subtitle: 'Admin or you can create tasks via New Project',
         color: 'text-teal-700', bg: 'bg-teal-50', border: 'border-teal-200', headerBg: 'bg-teal-700',
         steps: [
-            { label: 'Apne software mein design karo', path: '—', detail: 'Illustrator, Photoshop, CorelDRAW — jo tumhara tool hai' },
-            { label: 'Har major save ke baad Drive pe upload karo', path: 'Job Details → Files → Upload', detail: 'Draft 1, Draft 2 — sab versions rakhho. Local work delete ho sakta hai.' },
-            { label: 'Note add karo kya kiya', path: 'Job Details → Notes → Add Note', detail: 'Example: "Draft 1 upload kiya. Client ka colour feedback wait hai."' },
-            { label: 'Review ready hone par status change karo', path: 'Task → 🔵 Review pill', detail: 'Admin ko signal milega ki client ko bhejne ka time aa gaya' },
-            { label: 'Final artwork upload karke End karo', path: 'Files → Upload final → Task → ✅ End pill', detail: 'Print-ready PDF ya AI file with bleeds aur crops — sab theek check karo' },
+            { label: 'Click New Project', path: 'Design Studio → + New Project', detail: 'Opens the full task creation form' },
+            { label: 'Fill in client, job type, deadline', path: 'New Project form', detail: 'Link to an existing job if it\'s part of one' },
+            { label: 'Assign to yourself or a designer', path: 'Assign To field', detail: 'Task appears in that designer\'s My Queue immediately' },
+            { label: 'Set initial status', path: 'Status field → Live / Pause', detail: 'Live if starting now, Hold if queued for later' },
         ],
-        tip: 'File regularly upload karo — job khatam hone ka wait mat karo. Drive backup hai agar local kaam kho jaaye.',
+        tip: 'Admin creates most tasks — but you can create sub-tasks for your own workflow.',
     },
     {
         id: 'timeline',
         icon: <BarChart2 className="w-5 h-5" />,
-        title: '7. Apna Kaam Track Karna',
-        subtitle: 'Timeline, notes, calendar — sab ek jagah',
+        title: '6. Tracking Your Work',
+        subtitle: 'Timeline, dossier, notes',
         color: 'text-cyan-700', bg: 'bg-cyan-50', border: 'border-cyan-200', headerBg: 'bg-cyan-700',
         steps: [
-            { label: 'Apni timeline dekho', path: 'Design Studio → Timeline', detail: 'Gantt chart style mein tumhare saare tasks by date — visual overview' },
-            { label: 'My Notes mein apne notes likho', path: 'Design Studio → My Notes', detail: 'Private notes — sirf tumhein dikhenge. Client preferences, colour codes, reminders.' },
-            { label: 'Calendar check karo', path: 'Calendar', detail: 'Tumhare assigned tasks ki deadlines calendar pe dikhti hain — sirf tumhari, doosron ki nahi' },
-            { label: 'Dossier (admin only)', path: 'Design Studio → Dossier', detail: 'Admin dekhta hai — har task ki poori history with status aur time logs' },
+            { label: 'View your timeline', path: 'Design Studio → Timeline', detail: 'Gantt-style bar chart of all your tasks by date' },
+            { label: 'View full job history (Dossier)', path: 'Design Studio → Dossier (admin only)', detail: 'Admin view: every task ever created with status and time logs' },
+            { label: 'Add personal sticky notes', path: 'Design Studio → My Notes', detail: 'Private notes visible only to you — use for reminders, colour codes, client preferences' },
+            { label: 'Check your calendar', path: 'Calendar', detail: 'Deadlines for your assigned tasks show on the calendar — only YOUR tasks, not others' },
         ],
     },
     {
         id: 'eod',
         icon: <Target className="w-5 h-5" />,
-        title: '8. EOD Report — Logout Se Pehle Bharna Zaroori',
-        subtitle: 'Attendance logout ke saath EOD bhi karo — roz',
+        title: '7. EOD Report',
+        subtitle: 'Submit before you log out — every day',
         color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', headerBg: 'bg-rose-700',
         steps: [
-            { label: 'EOD Report kholo', path: 'EOD Report → Submit Report', detail: 'Din mein sirf ek baar submit hota hai' },
-            { label: 'Aaj kya kiya — list karo', path: 'What did you do today?', detail: 'Job name / task name / draft number — jo bhi complete kiya' },
-            { label: 'Kya WIP mein hai — batao', path: 'Current WIP section', detail: 'Kya abhi tak nahi hua aur kab tak hoga?' },
-            { label: 'Koi blocker hai toh note karo', path: 'Blockers section', detail: 'Brief missing? Client feedback nahi mila? Yahan likho.' },
-            { label: 'Submit karo', path: 'Submit EOD button', detail: 'Admin roz tumhara output dekhta hai aur rate karta hai' },
+            { label: 'Click End My Day button', path: 'Sidebar bottom → End My Day button', detail: 'This opens the EOD report for today' },
+            { label: 'List designs completed today', path: 'What did you do today?', detail: 'Job name / task name / draft number completed' },
+            { label: 'List designs still in progress', path: 'Current WIP', detail: 'What\'s not done yet and when will it be ready?' },
+            { label: 'Mention blockers', path: 'Blockers section', detail: 'Missing brief? Waiting for client feedback? Note it here.' },
+            { label: 'Submit', path: 'Submit EOD button', detail: 'Admin reviews your output daily and rates it' },
         ],
-        tip: 'Admin dono cheezein dekhta hai — status pills (Live/End) aur EOD quality. Submit karne se pehle apne sabhi task status update karo.',
+        tip: 'Admin looks at both your task status (Live/End) AND your EOD quality. Update status pills before submitting.',
     },
 ];
 
 const flowItems = [
-    { label: 'Login ✓', color: 'bg-emerald-600' },
-    { label: 'Job Mila', color: 'bg-pink-500' },
-    { label: 'Brief Padha', color: 'bg-violet-500' },
-    { label: '🟢 Live', color: 'bg-green-600' },
-    { label: 'Design Kiya', color: 'bg-blue-600' },
-    { label: 'Upload Kiya', color: 'bg-cyan-600' },
-    { label: '✅ End', color: 'bg-gray-800' },
-    { label: 'EOD + Logout', color: 'bg-rose-600' },
+    { label: 'Job Assigned', color: 'bg-pink-500' },
+    { label: 'Read Brief', color: 'bg-violet-500' },
+    { label: 'Add Task', color: 'bg-blue-500' },
+    { label: 'Design', color: 'bg-blue-600' },
+    { label: 'Upload', color: 'bg-cyan-600' },
+    { label: 'Mark Complete', color: 'bg-green-600' },
+    { label: 'Approval', color: 'bg-amber-500' },
+    { label: 'Printing ✓', color: 'bg-gray-800' },
 ];
 
 export default function DesignerGuidePage() {
-    const [openPhase, setOpenPhase] = useState<string | null>('attendance');
+    const [openPhase, setOpenPhase] = useState<string | null>('daily');
 
     return (
         <div className="space-y-5 max-w-3xl pb-16">
-            {/* Header */}
             <div className="bg-pink-700 rounded-md p-5 text-white">
                 <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 bg-yellow-300 rounded-md flex items-center justify-center">
                         <Palette className="w-5 h-5 text-pink-900" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold">Designer Guide — Aayam Office App</h1>
-                        <p className="text-pink-200 text-sm">Login → Brief padho → Design karo → Upload karo → EOD karo</p>
+                        <h1 className="text-xl font-bold">Design Studio — How to Use This App</h1>
+                        <p className="text-pink-200 text-sm">Your daily workflow: brief → design → upload → complete</p>
                     </div>
                 </div>
-                <p className="text-sm text-pink-100 mt-2 leading-relaxed">
-                    Yeh guide tumhare liye hai — Sunil, Dilip, Janvi, Vivek. Roz subah attendance se shuru karo, raat ko EOD se khatam karo. Beech mein status pills update karna mat bhoolna.
-                </p>
             </div>
 
-            {/* Flow */}
             <div className="bg-white rounded-md border border-gray-200 p-4">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Tumhara Roz Ka Flow</p>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Your Work Flow</p>
                 <div className="flex flex-wrap items-center gap-1">
                     {flowItems.map((item, i) => (
                         <div key={i} className="flex items-center gap-1">
@@ -176,13 +157,12 @@ export default function DesignerGuidePage() {
                 </div>
             </div>
 
-            {/* Quick Rules */}
             <div className="grid grid-cols-2 gap-2">
                 {[
-                    { icon: '🟢', text: 'Kaam shuru karo toh Live — khatam karo toh End. Beech mein status mat bhoolna.' },
-                    { icon: '📂', text: 'Har major draft Drive pe upload karo — local pe save karna kaafi nahi.' },
-                    { icon: '🔴', text: 'Red deadline = urgent. Pehle yahi karo, baad mein nayi job uthao.' },
-                    { icon: '📝', text: 'Status change karne ke saath ek chhota note bhi add karo — admin ko context milta hai.' },
+                    { icon: '📂', text: 'Upload every major save to Drive — don\'t wait.' },
+                    { icon: '📝', text: 'Add a note every time you change status.' },
+                    { icon: '⏰', text: 'Red deadline = urgent. Do this first.' },
+                    { icon: '🎨', text: 'Always mark Complete after uploading final file.' },
                 ].map((r, i) => (
                     <div key={i} className="flex items-start gap-2 p-3 bg-pink-50 border border-pink-100 rounded-md text-xs text-pink-900">
                         <span className="text-base">{r.icon}</span><span>{r.text}</span>
@@ -190,7 +170,6 @@ export default function DesignerGuidePage() {
                 ))}
             </div>
 
-            {/* Accordion */}
             <div className="space-y-2">
                 {phases.map((phase) => {
                     const isOpen = openPhase === phase.id;
@@ -230,18 +209,6 @@ export default function DesignerGuidePage() {
                         </div>
                     );
                 })}
-            </div>
-
-            {/* Bottom reminder */}
-            <div className="bg-gray-900 rounded-md p-4 text-white text-xs">
-                <p className="font-bold text-yellow-300 mb-2">⚡ Yaad Rakho — Roz Ka Checklist</p>
-                <div className="space-y-1 text-gray-300">
-                    <p>✅ Attendance Login (subah)</p>
-                    <p>✅ My Queue + My Work check karo</p>
-                    <p>✅ Status pills update karo jab bhi kuch change ho</p>
-                    <p>✅ Files Drive pe upload karo</p>
-                    <p>✅ EOD submit karo + Attendance Logout (shaam)</p>
-                </div>
             </div>
         </div>
     );

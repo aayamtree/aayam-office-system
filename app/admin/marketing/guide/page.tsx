@@ -4,7 +4,7 @@ import { useState } from 'react';
 import {
     TrendingUp, Phone, FileText, UserCheck, IndianRupee, Star,
     ChevronDown, ChevronRight, ArrowRight, AlertCircle, CheckCircle2,
-    Calendar, Target, Clock, Users, Send
+    Zap, Calendar, MessageSquare, Target, Clock, Users
 } from 'lucide-react';
 
 interface Step { label: string; path?: string; detail?: string; }
@@ -16,146 +16,134 @@ interface Phase {
 
 const phases: Phase[] = [
     {
-        id: 'attendance',
-        icon: <UserCheck className="w-5 h-5" />,
-        title: '1. Attendance — Office Aate Hi Login Karo',
-        subtitle: 'Subah pehle kaam — attendance mark karo',
-        color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', headerBg: 'bg-emerald-700',
-        steps: [
-            { label: 'Office aate hi app open karo aur Login karo', path: 'Sidebar → Attendance → Login', detail: 'Tumhara time record hona start hota hai. Bina login ke kaam ka time count nahi hoga.' },
-            { label: 'Din bhar app normally use karo', path: '—', detail: 'Heartbeat automatic track hoti hai — kuch alag nahi karna' },
-            { label: 'Shaam ko Logout karo', path: 'Sidebar → Attendance → Logout', detail: 'Logout ke time ek chhota summary bharna hoga — EOD ke saath hi kar do' },
-        ],
-        tip: 'Attendance sirf attendance nahi hai — admin isse dekhta hai ki tum kab se kab tak active the. Logout karna mat bhoolna!',
-    },
-    {
         id: 'daily',
         icon: <Clock className="w-5 h-5" />,
-        title: '2. Subah Ka Routine — Yeh Pehle Karo',
-        subtitle: 'Din ki shuruaat in 5 cheezein se karo',
+        title: '1. Start of Day',
+        subtitle: 'Check what needs your attention today',
         color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200', headerBg: 'bg-blue-700',
         steps: [
-            { label: 'Aaj ke follow-ups check karo', path: 'Marketing → Follow-ups → Today tab', detail: 'Yeh clients aaj call ka wait kar rahe hain — pehle inhe karo' },
-            { label: 'Overdue follow-ups check karo', path: 'Marketing → Follow-ups → Overdue tab', detail: 'Yeh late ho gaye hain — foran call karo, aur late mat karo' },
-            { label: 'Apna leads pipeline dekho', path: 'Marketing → Leads', detail: 'Sab active leads aur unka current status' },
-            { label: 'Apne orders dekho', path: 'Marketing → My Orders', detail: 'Tumhare client ke orders ka status — printing mein hai, dispatch hua, deliver hua?' },
-            { label: 'Calendar check karo', path: 'Calendar', detail: 'Aaj ke follow-up dates aur lead deadlines — sirf tumhare, doosron ke nahi' },
+            { label: 'Check today\'s follow-ups', path: 'Marketing → Follow-ups → Today tab', detail: 'These clients expect a call today' },
+            { label: 'Check overdue follow-ups', path: 'Marketing → Follow-ups → Overdue tab', detail: 'Don\'t let these slip — call immediately' },
+            { label: 'View your leads pipeline', path: 'Marketing → Leads', detail: 'See all active leads and their status' },
+            { label: 'Review your orders', path: 'Marketing → My Orders', detail: 'Track orders you originated' },
+            { label: 'Check dispatched orders', path: 'Marketing → Dispatched Orders', detail: 'See which of your client orders have been dispatched or delivered' },
+            { label: 'Check your calendar', path: 'Calendar', detail: 'Your follow-up dates and lead deadlines show here — only your own, not others' },
         ],
-        tip: 'Pehle aaj ke follow-ups karo. New leads baad mein add karo. Follow-up miss karna = lead lose karna.',
+        tip: 'Complete today\'s follow-ups FIRST before adding new leads.',
     },
     {
         id: 'leads',
         icon: <Users className="w-5 h-5" />,
-        title: '3. Naya Lead Add Karna',
-        subtitle: 'Koi bhi interest dikhaye — foran app mein daalo',
+        title: '2. Adding a New Lead',
+        subtitle: 'Someone shows interest — add them immediately',
         color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200', headerBg: 'bg-indigo-700',
         steps: [
-            { label: 'New Lead click karo', path: 'Marketing → Leads → + New Lead', detail: 'Naam, phone, service type, requirement — sab bharo' },
-            { label: 'Requirement detail mein likho', path: 'Lead Form → Requirement field', detail: 'Product type, quantity, deadline — jitna specific utna better' },
-            { label: 'Lead save karo', path: 'Save Lead button', detail: 'Tumhare pipeline mein aa jaayega' },
-            { label: 'Follow-up date set karo', path: 'Lead card → Set Follow-up Date', detail: 'Kab call karoge — ek specific date choose karo' },
-            { label: 'Har call ke baad note add karo', path: 'Lead → Add Note', detail: 'Kya baat hui, kya objection tha, next step kya hai' },
+            { label: 'Click New Lead', path: 'Marketing → Leads → + New Lead', detail: 'Fill name, phone, service type, requirement' },
+            { label: 'Add their requirement details', path: 'Lead Form → Requirement field', detail: 'Be specific — product type, quantity, deadline' },
+            { label: 'Save the lead', path: 'Save Lead button', detail: 'Lead is created in your pipeline' },
+            { label: 'Schedule a follow-up', path: 'Lead card → Set Follow-up Date', detail: 'Pick a date when you\'ll call back' },
+            { label: 'Add notes after each call', path: 'Lead → Add Note', detail: 'Record what was discussed, objections, next step' },
         ],
-        tip: 'Admin leads assign karta hai tumhare paas. Agar koi lead unassigned hai toh admin ko remind karo — warna commission nahi milega.',
+        tip: 'Admin assigns leads to marketing persons. If a lead has no assignment, remind admin.',
     },
     {
         id: 'followup',
         icon: <Phone className="w-5 h-5" />,
-        title: '4. Follow-Up Karna — Consistency Hi Conversion Hai',
-        subtitle: 'Baar baar follow up karo — leads convert hoti hain',
+        title: '3. Following Up',
+        subtitle: 'Consistent follow-ups = conversions',
         color: 'text-violet-700', bg: 'bg-violet-50', border: 'border-violet-200', headerBg: 'bg-violet-700',
         steps: [
-            { label: 'Follow-up list kholo', path: 'Marketing → Follow-ups', detail: 'Aaj ke aur overdue sab dikhenge' },
-            { label: 'Client ko call karo', path: '—', detail: 'App ke bahar actual call karo' },
-            { label: 'Call ka outcome + note likhho', path: 'Follow-up → Add Note', detail: 'Kya hua? Interested hai? Time chahiye? Lost ho gaya?' },
-            { label: 'Lead status update karo', path: 'Lead → Edit Status', detail: 'Follow-up / Quoted / Negotiating / Converted / Lost — sahi status lagao' },
-            { label: 'Agla follow-up date set karo', path: 'Lead → Set Next Follow-up Date', detail: 'Jab tak convert ya lost na ho — loop chalate raho' },
+            { label: 'Open follow-up', path: 'Marketing → Follow-ups', detail: 'See all due and overdue follow-ups' },
+            { label: 'Call the client', path: '—', detail: 'Make the actual call outside the app' },
+            { label: 'Record outcome + notes', path: 'Follow-up → Add Note', detail: 'What happened? Interested? Need more time? Lost?' },
+            { label: 'Update lead status', path: 'Lead → Edit Status', detail: 'Set: Follow-up / Quoted / Negotiating / Converted / Lost' },
+            { label: 'Reschedule next follow-up', path: 'Lead → Set Next Follow-up Date', detail: 'Keep the loop going until converted or lost' },
         ],
-        tip: 'Normal hai ki 3–5 follow-ups ke baad lead convert ho. Pehle call pe "nahi" sunke mat rukko.',
+        tip: '3–5 follow-ups before marking a lead as Lost is normal.',
     },
     {
         id: 'quotation',
         icon: <FileText className="w-5 h-5" />,
-        title: '5. Quotation Banana',
-        subtitle: 'Client ko formal price bhejo',
+        title: '4. Creating a Quotation',
+        subtitle: 'Send a formal price to the client',
         color: 'text-cyan-700', bg: 'bg-cyan-50', border: 'border-cyan-200', headerBg: 'bg-cyan-700',
         steps: [
-            { label: 'Naya quotation banao', path: 'Marketing → Quotations → New Quotation', detail: 'Lead se link karo' },
-            { label: 'Job details aur pricing bharo', path: 'Quotation form → Items, GST, total', detail: 'Product, quantity, rate — clearly breakdown karo' },
-            { label: 'Save karke client ko bhejo', path: 'Save → Share / Print', detail: 'WhatsApp ya email se bhejo' },
-            { label: '1–2 din mein follow-up karo quotation pe', path: 'Marketing → Follow-ups', detail: 'Client ne quotation dekha? Koi sawaal hai? Budget fit hai?' },
+            { label: 'Create new quotation', path: 'Marketing → Quotations → New Quotation', detail: 'Link it to the lead' },
+            { label: 'Add job details & pricing', path: 'Quotation form → Items, GST, total', detail: 'Break down product, qty, rate' },
+            { label: 'Save & share with client', path: 'Save → Share / Print', detail: 'Send via WhatsApp or email' },
+            { label: 'Follow up on quotation', path: 'Marketing → Follow-ups → Quotation tab', detail: 'Check back in 1–2 days' },
         ],
     },
     {
         id: 'convert',
         icon: <UserCheck className="w-5 h-5" />,
-        title: '6. Lead Convert Karna — Client Tayyar Ho Gaya!',
-        subtitle: 'Client ne haan kaha — ab yeh karo',
+        title: '5. Converting a Lead',
+        subtitle: 'Client says YES — convert to order',
         color: 'text-green-700', bg: 'bg-green-50', border: 'border-green-200', headerBg: 'bg-green-700',
         steps: [
-            { label: 'Lead kholo', path: 'Marketing → Leads → [Lead name]', detail: '' },
-            { label: 'Convert to Client click karo', path: 'Lead → Convert to Client button', detail: 'Automatically CRM mein client record ban jaata hai' },
-            { label: 'Admin ko sab specifications batao', path: '—', detail: 'Size, quantity, material, deadline — koi bhi cheez chhupo mat' },
-            { label: 'Admin job create karta hai', path: 'Jobs → New Job → Select this client', detail: 'Tum job nahi banaate — admin banata hai briefing ke baad' },
+            { label: 'Open the lead', path: 'Marketing → Leads → [Lead name]', detail: '' },
+            { label: 'Click Convert to Client', path: 'Lead → Convert to Client button', detail: 'Creates client record in CRM automatically' },
+            { label: 'Admin creates the job', path: 'Jobs → New Job → Select this client', detail: 'You don\'t create jobs — admin does after briefing' },
+            { label: 'Brief admin on requirements', path: '—', detail: 'Share all specs: size, qty, material, deadline' },
         ],
-        tip: 'Tumhara commission us moment se track hona start ho jaata hai jab is client ke liye job create hoti hai.',
+        tip: 'Your commission starts being tracked from the moment a job is created for this client.',
     },
     {
         id: 'commission',
         icon: <IndianRupee className="w-5 h-5" />,
-        title: '7. Tumhara Commission',
-        subtitle: 'Automatic track hota hai — kuch karna nahi',
+        title: '6. Your Commission',
+        subtitle: 'Automatic — no manual entry needed',
         color: 'text-yellow-700', bg: 'bg-yellow-50', border: 'border-yellow-200', headerBg: 'bg-yellow-700',
         steps: [
-            { label: 'Jab job fully paid ho jaaye tab commission "Eligible" ho jaata hai', path: 'Marketing → Commissions', detail: 'Automatic — tumhe kuch nahi karna. Status "Eligible" dikhega.' },
-            { label: 'Admin % set karke approve karta hai', path: 'Admin ka kaam — tumhara nahi', detail: 'Tumhare profile rate pe ya custom per job' },
-            { label: 'Admin physically paisa deta hai aur "Paid" mark karta hai', path: 'Admin ka kaam', detail: 'App mein "Paid" status update ho jaata hai' },
-            { label: 'Apni earnings dekho', path: 'Marketing → Dashboard → Commission widget', detail: 'Eligible / Approved / Paid — clearly dikhega' },
+            { label: 'Commission is auto-created when job is fully paid', path: 'Marketing → Commissions', detail: 'Status shows "Eligible" — waiting admin approval' },
+            { label: 'Admin approves & sets the %', path: 'Admin action — not yours', detail: 'Based on your profile rate or custom per job' },
+            { label: 'Admin pays you physically + marks paid', path: 'Admin action', detail: 'Status updates to "Paid" in the app' },
+            { label: 'View your earnings', path: 'Marketing → Dashboard → Commission widget', detail: 'Pending / Approved / Paid amounts clearly shown' },
         ],
-        tip: 'Commission base amount pe hota hai (GST remove karke). Example: ₹1,18,000 job at 18% GST → base = ₹1,00,000 → 5% commission = ₹5,000. Poora paisa milne ke baad hi milega.',
+        tip: 'Commissions are on the BASE amount after GST is deducted. Example: ₹1,18,000 job at 18% GST → base = ₹1,00,000 → 5% commission = ₹5,000.',
     },
     {
         id: 'dispatched',
-        icon: <Send className="w-5 h-5" />,
-        title: '8. Dispatched Orders — Apne Client Ka Track Rakho',
-        subtitle: 'Tumhare client ka order deliver hua ya nahi?',
+        icon: <MessageSquare className="w-5 h-5" />,
+        title: '7. Dispatched Orders',
+        subtitle: 'Track deliveries for your clients',
         color: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-200', headerBg: 'bg-orange-700',
         steps: [
-            { label: 'Dispatched Orders kholo', path: 'Marketing → Dispatched Orders', detail: 'Tumhare leads se linked jo orders dispatch ya deliver ho gaye hain' },
-            { label: 'Client ko call karke confirm karo', path: '—', detail: 'Order mila? Condition theek hai? Khush hai?' },
-            { label: 'Koi feedback ho toh note karo', path: 'Lead / Job → Add Note', detail: 'Quality issue, reorder interest, referral — sab yahan likho' },
+            { label: 'Open Dispatched Orders', path: 'Marketing → Dispatched Orders', detail: 'See all jobs linked to your leads that are dispatched or delivered' },
+            { label: 'Confirm delivery with client', path: '—', detail: 'Call the client to confirm they received the order in good condition' },
+            { label: 'Note any delivery feedback', path: 'Lead / Job → Add Note', detail: 'Add any client feedback — quality issues, reorder interest, referrals' },
         ],
-        tip: 'Delivery ke baad follow-up karna = repeat order ya referral ka chance. Is opportunity ko waste mat karo!',
+        tip: 'A delivered order is an opportunity to ask for a repeat order or referral. Always follow up.',
     },
     {
         id: 'eod',
         icon: <Target className="w-5 h-5" />,
-        title: '9. EOD Report — Roz Bharna Zaroori',
-        subtitle: 'Attendance logout ke saath EOD bhi submit karo',
+        title: '8. EOD Report (End of Day)',
+        subtitle: 'Submit before leaving — every day',
         color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', headerBg: 'bg-rose-700',
         steps: [
-            { label: 'EOD Report kholo', path: 'EOD Report → Submit Report', detail: 'Ek din mein sirf ek baar submit hota hai' },
-            { label: 'Aaj kya kiya — list karo', path: 'What did you do today?', detail: 'Calls ki, leads add kiye, quotations bheje, meetings hui' },
-            { label: 'Koi blocker ho toh batao', path: 'Blockers section', detail: 'Kya cheez hai jo lead convert karne se rok rahi hai' },
-            { label: 'Kal ka plan likho', path: "Tomorrow's plan section", detail: 'Kaun se leads pe follow-up karoge?' },
-            { label: 'Submit karo', path: 'Submit EOD button', detail: 'Admin ko notification milti hai' },
+            { label: 'Open EOD Report', path: 'EOD Report → Submit Report', detail: 'Available only once per day' },
+            { label: 'List today\'s tasks completed', path: 'What did you do today?', detail: 'Calls made, leads added, quotations sent, meetings done' },
+            { label: 'Mention blockers if any', path: 'Blockers section', detail: 'Anything stopping you from converting leads' },
+            { label: 'Add tomorrow\'s plan', path: 'Tomorrow\'s plan section', detail: 'Which leads will you follow up on?' },
+            { label: 'Submit', path: 'Submit EOD button', detail: 'Admin gets notified' },
         ],
-        tip: 'EOD roz bharna compulsory hai. Admin review karta hai aur rate karta hai. Kaam ki quality isse bhi judge hoti hai.',
+        tip: 'EOD report must be submitted daily. Admin reviews and rates your report.',
     },
 ];
 
 const flowItems = [
-    { label: 'Login ✓', color: 'bg-emerald-600' },
-    { label: 'Follow-up', color: 'bg-blue-500' },
+    { label: 'New Lead', color: 'bg-blue-500' },
+    { label: 'Follow-up', color: 'bg-indigo-500' },
     { label: 'Quotation', color: 'bg-violet-500' },
     { label: 'Negotiating', color: 'bg-purple-500' },
     { label: 'Converted ✓', color: 'bg-green-600' },
-    { label: 'Job Bana', color: 'bg-gray-800' },
+    { label: 'Job Created', color: 'bg-gray-800' },
     { label: '💰 Commission', color: 'bg-yellow-600' },
 ];
 
 export default function MarketingGuidePage() {
-    const [openPhase, setOpenPhase] = useState<string | null>('attendance');
+    const [openPhase, setOpenPhase] = useState<string | null>('daily');
 
     return (
         <div className="space-y-5 max-w-3xl pb-16">
@@ -166,18 +154,15 @@ export default function MarketingGuidePage() {
                         <TrendingUp className="w-5 h-5 text-blue-900" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold">Marketing Guide — Aayam Office App</h1>
-                        <p className="text-blue-200 text-sm">Login → Leads → Follow-up → Convert → Commission</p>
+                        <h1 className="text-xl font-bold">Marketing — How to Use This App</h1>
+                        <p className="text-blue-200 text-sm">Your complete daily guide: leads → conversions → commissions</p>
                     </div>
                 </div>
-                <p className="text-sm text-blue-100 mt-2 leading-relaxed">
-                    Tumhara ek kaam hai — leads ko clients mein convert karo. App tumhara poora pipeline track karta hai — follow-ups se commission tak. Roz login se shuru karo.
-                </p>
             </div>
 
             {/* Flow */}
             <div className="bg-white rounded-md border border-gray-200 p-4">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Tumhara Pipeline Flow</p>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Your Pipeline Flow</p>
                 <div className="flex flex-wrap items-center gap-1">
                     {flowItems.map((item, i) => (
                         <div key={i} className="flex items-center gap-1">
@@ -191,10 +176,10 @@ export default function MarketingGuidePage() {
             {/* Quick Rules */}
             <div className="grid grid-cols-2 gap-2">
                 {[
-                    { icon: '📞', text: 'Pehle call karo, phir app update karo. Notes delay mat karo.' },
-                    { icon: '💬', text: 'Har call ke baad note daalo — admin padhta hai yeh sab.' },
-                    { icon: '📅', text: 'Har lead pe next follow-up date set karo — kabhi empty mat chhodho.' },
-                    { icon: '💰', text: 'Commission tabhi milega jab client POORA paisa de — partial nahi chalega.' },
+                    { icon: '📞', text: 'Call first, then update app. Don\'t delay adding notes.' },
+                    { icon: '💬', text: 'Add notes after EVERY call — admin reads these.' },
+                    { icon: '📅', text: 'Always set a next follow-up date — never leave a lead hanging.' },
+                    { icon: '💰', text: 'Commission only happens after the client FULLY pays.' },
                 ].map((r, i) => (
                     <div key={i} className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-md text-xs text-blue-900">
                         <span className="text-base">{r.icon}</span>
@@ -203,7 +188,7 @@ export default function MarketingGuidePage() {
                 ))}
             </div>
 
-            {/* Accordion */}
+            {/* Steps Accordion */}
             <div className="space-y-2">
                 {phases.map((phase) => {
                     const isOpen = openPhase === phase.id;
@@ -245,18 +230,6 @@ export default function MarketingGuidePage() {
                         </div>
                     );
                 })}
-            </div>
-
-            {/* Checklist */}
-            <div className="bg-gray-900 rounded-md p-4 text-white text-xs">
-                <p className="font-bold text-yellow-300 mb-2">⚡ Roz Ka Checklist — Yaad Rakho</p>
-                <div className="space-y-1 text-gray-300">
-                    <p>✅ Attendance Login (subah office aate hi)</p>
-                    <p>✅ Aaj ke follow-ups complete karo</p>
-                    <p>✅ Har call ke baad note add karo</p>
-                    <p>✅ Lead status hamesha updated rakho</p>
-                    <p>✅ EOD submit karo + Attendance Logout (jaane se pehle)</p>
-                </div>
             </div>
         </div>
     );

@@ -203,7 +203,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           fetchProfile(session.user.id, session.user.email);
           // Start heartbeat for existing session (page reload, tab reopen)
           if (!stopHeartbeat) stopHeartbeat = startHeartbeat();
-          // Auto clock-in — retries up to 4x so it never silently fails
+          // Also fire attendance login — ensures a record exists for today even if
+          // the designer resumed an old session without going through signIn()
           fireAttendanceLogin();
         } else {
           setLoading(false);
@@ -319,8 +320,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) return { error: error.message };
 
-      // Store today's date + auto clock-in with retry
+      // Fire attendance login (non-blocking)
       setTimeout(() => {
+        // Store today's date so we can detect a new day on next load
         if (typeof window !== 'undefined') {
           localStorage.setItem('aayam_session_date', new Date().toISOString().split('T')[0]);
         }
@@ -363,16 +365,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Attendance: fire login API with retry — auto clock-in when app opens
+  // Attendance: fire login API and start heartbeat for designers
   const fireAttendanceLogin = async () => {
-    for (let attempt = 0; attempt < 4; attempt++) {
-      try {
-        const res = await fetch('/api/attendance/login', { method: 'POST' });
-        if (res.ok) return; // success
-      } catch { /* network error — retry */ }
-      // Exponential back-off: 1s, 2s, 4s
-      await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
-    }
+    try { await fetch('/api/attendance/login', { method: 'POST' }); } catch (e) { /* non-blocking */ }
   };
 
   const fireAttendanceLogout = async () => {
