@@ -125,44 +125,28 @@ function DesignerWork({ userId }: { userId: string }) {
       {/* Overdue */}
       {overdue.length > 0 && (
         <Section title="Overdue" icon={<AlertTriangle size={15} className="text-red-500" />} urgent>
-<<<<<<< HEAD
           {overdue.map(j => <JobRow key={j.id} job={j} href="/admin/designers/tasks?view=board" />)}
-=======
-          {overdue.map(j => <JobRow key={j.id} job={j} />)}
->>>>>>> origin/main
         </Section>
       )}
 
       {/* Due today */}
       {dueToday.length > 0 && (
         <Section title="Due Today" icon={<Star size={15} className="text-amber-500" />}>
-<<<<<<< HEAD
           {dueToday.map(j => <JobRow key={j.id} job={j} href="/admin/designers/tasks?view=board" />)}
-=======
-          {dueToday.map(j => <JobRow key={j.id} job={j} />)}
->>>>>>> origin/main
         </Section>
       )}
 
       {/* This week */}
       {thisWeek.length > 0 && (
         <Section title="This Week" icon={<Calendar size={15} className="text-blue-500" />}>
-<<<<<<< HEAD
           {thisWeek.map(j => <JobRow key={j.id} job={j} href="/admin/designers/tasks?view=board" />)}
-=======
-          {thisWeek.map(j => <JobRow key={j.id} job={j} />)}
->>>>>>> origin/main
         </Section>
       )}
 
       {/* Later */}
       {later.length > 0 && (
         <Section title="Later" icon={<Clock size={15} className="text-gray-400" />} muted>
-<<<<<<< HEAD
           {later.map(j => <JobRow key={j.id} job={j} href="/admin/designers/tasks?view=board" />)}
-=======
-          {later.map(j => <JobRow key={j.id} job={j} />)}
->>>>>>> origin/main
         </Section>
       )}
 
@@ -403,20 +387,12 @@ function Section({ title, icon, children, urgent, muted }: {
   );
 }
 
-<<<<<<< HEAD
 function JobRow({ job, href }: { job: MyJob; href?: string }) {
-=======
-function JobRow({ job }: { job: MyJob }) {
->>>>>>> origin/main
   const { label, urgent, overdue } = dayLabel(job.client_deadline);
   const clientName = (job.client as any)?.company || (job.client as any)?.name || '';
   return (
     <Link
-<<<<<<< HEAD
       href={href ?? `/admin/jobs?highlight=${job.id}`}
-=======
-      href={`/admin/jobs?highlight=${job.id}`}
->>>>>>> origin/main
       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all hover:shadow-sm ${
         overdue ? 'bg-red-50 border-red-200 hover:border-red-300' : 'bg-white border-gray-200 hover:border-gray-300'
       }`}
