@@ -326,7 +326,7 @@ export default function DesignerWorkspace() {
 
       setTasks(mappedTasks);
     }
-  }, [JSON.stringify(jobs?.map(j => j.id)), JSON.stringify(clients?.map(c => c.id)), JSON.stringify(designers?.map(d => d.id))]);
+  }, [JSON.stringify(jobs?.map(j => ({ id: j.id, files: j.files, print_files: (j as any).print_files }))), JSON.stringify(clients?.map(c => c.id)), JSON.stringify(designers?.map(d => d.id))]);
 
   // --- LOGIC (memoized to prevent recomputation on every render) ---
   // Pre-compute myDesignerRecord once instead of inside filteredTasks per-task
@@ -463,6 +463,8 @@ export default function DesignerWorkspace() {
           });
         }
 
+        // Optimistically update tasks state so file appears immediately
+        setTasks(prev => prev.map(t => t.realId === selectedTask.realId ? { ...t, files: updatedFiles } : t));
         refetchJobs();
         toast.success('File uploaded successfully!');
       }
