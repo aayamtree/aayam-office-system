@@ -976,11 +976,19 @@ export default function DesignerWorkspace() {
                     </h3>
                     <div className="flex items-center justify-between">
                       <DesignerStatusBadge status={task.designer_status} />
-                      {task.priority !== 'normal' && (
-                        <span className={`text-xs px-2 py-0.5 rounded-md border ${priorities.find(p => p.id === task.priority)?.color}`}>
-                          {task.priority}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5">
+                        {(task.files?.length > 0 || task.driveLink) && (
+                          <span className="flex items-center gap-0.5 text-gray-400" title={`${task.files?.length || 1} file(s) attached`}>
+                            <Paperclip size={11} />
+                            <span className="text-xs font-bold">{task.files?.length || 1}</span>
+                          </span>
+                        )}
+                        {task.priority !== 'normal' && (
+                          <span className={`text-xs px-2 py-0.5 rounded-md border ${priorities.find(p => p.id === task.priority)?.color}`}>
+                            {task.priority}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     {/* One-click approve (admin only) */}
                     {isAdmin && task.current_stage === 'awaiting_admin' && (
