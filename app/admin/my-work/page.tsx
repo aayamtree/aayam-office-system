@@ -125,28 +125,28 @@ function DesignerWork({ userId }: { userId: string }) {
       {/* Overdue */}
       {overdue.length > 0 && (
         <Section title="Overdue" icon={<AlertTriangle size={15} className="text-red-500" />} urgent>
-          {overdue.map(j => <JobRow key={j.id} job={j} href="/admin/designers/tasks?view=board" />)}
+          {overdue.map(j => <JobRow key={j.id} job={j} href={`/admin/designers/tasks?task=${j.id}`} />)}
         </Section>
       )}
 
       {/* Due today */}
       {dueToday.length > 0 && (
         <Section title="Due Today" icon={<Star size={15} className="text-amber-500" />}>
-          {dueToday.map(j => <JobRow key={j.id} job={j} href="/admin/designers/tasks?view=board" />)}
+          {dueToday.map(j => <JobRow key={j.id} job={j} href={`/admin/designers/tasks?task=${j.id}`} />)}
         </Section>
       )}
 
       {/* This week */}
       {thisWeek.length > 0 && (
         <Section title="This Week" icon={<Calendar size={15} className="text-blue-500" />}>
-          {thisWeek.map(j => <JobRow key={j.id} job={j} href="/admin/designers/tasks?view=board" />)}
+          {thisWeek.map(j => <JobRow key={j.id} job={j} href={`/admin/designers/tasks?task=${j.id}`} />)}
         </Section>
       )}
 
       {/* Later */}
       {later.length > 0 && (
         <Section title="Later" icon={<Clock size={15} className="text-gray-400" />} muted>
-          {later.map(j => <JobRow key={j.id} job={j} href="/admin/designers/tasks?view=board" />)}
+          {later.map(j => <JobRow key={j.id} job={j} href={`/admin/designers/tasks?task=${j.id}`} />)}
         </Section>
       )}
 
