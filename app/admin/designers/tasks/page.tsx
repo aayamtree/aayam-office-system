@@ -439,7 +439,14 @@ export default function DesignerWorkspace() {
       const updatedFiles = [...(selectedTask.files || []), newFile];
 
       if (updateJob) {
-        await updateJob(selectedTask.realId, { files: updatedFiles } as any);
+        const { error: updateError } = await updateJob(selectedTask.realId, { files: updatedFiles } as any);
+
+        if (updateError) {
+          // Storage upload succeeded but DB save failed — surface the real error
+          toast.error(`File saved to storage but could not update job record: ${updateError}`);
+          return;
+        }
+
         // Log upload to activity feed
         logFileUpload({ fileName: file.name, fileSize: file.size, fileType: file.type, fileUrl: publicUrl, uploadedTo: `Job ${selectedTask.taskId}`, resourceId: selectedTask.realId });
 
