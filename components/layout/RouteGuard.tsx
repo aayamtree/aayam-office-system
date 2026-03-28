@@ -10,27 +10,28 @@ import { useAuth } from '@/lib/auth-context';
 // Any role NOT listed will be redirected to /admin/dashboard.
 // ─────────────────────────────────────────────────────────────────────────────
 const ROUTE_PERMISSIONS: { prefix: string; allowed: string[] }[] = [
-    // Finance — admin only
-    { prefix: '/admin/finance', allowed: ['admin'] },
+    // Finance — admin + finance role (finance users need access to invoices, payments, etc.)
+    { prefix: '/admin/finance', allowed: ['admin', 'finance'] },
     // Settings Profile — all authenticated roles can view/edit their own profile
     { prefix: '/admin/settings/profile', allowed: ['admin', 'marketing', 'designer', 'dispatch', 'cmyk', 'finance', 'production', 'sales', 'manager'] },
     // Settings (other) — admin only
     { prefix: '/admin/settings', allowed: ['admin'] },
     // Marketing — admin + marketing only (SECURITY: non-marketing roles must not see leads/pipeline)
     { prefix: '/admin/marketing', allowed: ['admin', 'marketing'] },
-    // Sales Orders & Quotations — admin + marketing
-    { prefix: '/admin/sales', allowed: ['admin', 'marketing'] },
-    // CRM — admin + marketing
-    { prefix: '/admin/crm', allowed: ['admin', 'marketing'] },
-    // Jobs / Dossier — admin + production roles
-    { prefix: '/admin/jobs', allowed: ['admin', 'designer', 'production'] },
+    // Sales Orders & Quotations — admin + marketing + finance (finance needs order/quotation access for invoicing)
+    { prefix: '/admin/sales', allowed: ['admin', 'marketing', 'finance'] },
+    // CRM — admin + marketing + finance (matches sidebar allowedRoles)
+    { prefix: '/admin/crm', allowed: ['admin', 'marketing', 'finance'] },
+    // Jobs / Dossier — admin + production roles + finance (finance needs job view for invoicing)
+    // NOTE: 'designer' intentionally excluded — designers must use /admin/designers/tasks instead
+    { prefix: '/admin/jobs', allowed: ['admin', 'production', 'finance'] },
     // Dispatch — admin + dispatch roles
     { prefix: '/admin/dispatch', allowed: ['admin', 'dispatch', 'production'] },
     // Designer Board & Studio — admin + designers only
     { prefix: '/admin/designers', allowed: ['admin', 'designer'] },
     { prefix: '/admin/design-studio', allowed: ['admin', 'designer'] },
-    // Print Planner — admin only (financial planning)
-    { prefix: '/admin/print-planner', allowed: ['admin'] },
+    // Print Planner — admin, finance, cmyk (matches sidebar allowedRoles)
+    { prefix: '/admin/print-planner', allowed: ['admin', 'finance', 'cmyk'] },
     // CMYK Print — admin + cmyk
     { prefix: '/admin/cmyk-print', allowed: ['admin', 'cmyk', 'finance'] },
     // Reports — admin only
