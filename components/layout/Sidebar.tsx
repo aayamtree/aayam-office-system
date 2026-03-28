@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, type MouseEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 // PERF: Removed useDashboardStats (25 queries!) — sidebar only needs 2 badge counts
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -25,13 +25,16 @@ import {
   Clock,
   LogOut,
   User,
-  PanelLeftClose,
-  PanelLeft,
+  ChevronLeft,
+  ChevronRight,
   Share2,
+  Star,
 } from 'lucide-react';
 
 // Shadcn Components
-import { ScrollArea } from '@/components/ui/scroll-area';
+// NOTE: ScrollArea (Radix UI) intentionally removed — its ResizeObserver enters an
+// infinite loop over time when sidebar content re-renders (pathname/badge changes),
+// causing the sidebar to freeze after ~5 minutes. Plain overflow-y-auto div is used instead.
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/Button';
 import {
@@ -43,7 +46,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/Badge';
-import { EndMyDayButton } from '@/components/attendance/EndMyDayButton';
 
 interface MenuItem {
   name: string;
@@ -54,6 +56,12 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
+  {
+    name: 'My Work',
+    icon: Star,
+    href: '/admin/my-work',
+    // Visible to everyone
+  },
   {
     name: 'Overview',
     icon: LayoutDashboard,
@@ -69,6 +77,7 @@ const menuItems: MenuItem[] = [
       { name: 'Overview', href: '/admin/jobs' },
       { name: 'Job Dossier', href: '/admin/jobs/dossier' },
       { name: 'Production Queue', href: '/admin/jobs/queue' },
+      { name: '🔴 Overdue', href: '/admin/jobs/overdue' },
     ]
   },
   {
@@ -105,7 +114,7 @@ const menuItems: MenuItem[] = [
     name: 'Marketing',
     icon: Megaphone,
     href: '/admin/marketing',
-    allowedRoles: ['admin', 'finance', 'marketing'],
+    allowedRoles: ['admin', 'marketing'],
     submenu: [
       { name: 'Dashboard', href: '/admin/marketing/dashboard' },
       { name: 'Leads', href: '/admin/marketing/leads' },
@@ -243,32 +252,84 @@ const menuItems: MenuItem[] = [
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  onHoverChange?: (hovered: boolean) => void;
-  locked?: boolean;
-  onLockedChange?: (locked: boolean) => void;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
-export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false, onLockedChange }: SidebarProps) {
+const COLLAPSE_KEY = 'sidebar-collapsed';
+
+export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { profile, signOut } = useAuth();
   const [expandedItems, setExpandedItems] = useState<string[]>(['Design Studio', 'Marketing', 'Sales & Finance', 'CRM', 'Dispatch']);
-  const [hovered, setHovered] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // PERF: Only 2 lightweight count queries instead of 25 from useDashboardStats
+  // Close mobile sidebar on navigation — watching pathname is reliable and
+  // avoids calling setState inside link onClick handlers, which can interfere
+  // with Next.js startTransition-based routing on heavy pages (e.g. tasks page).
+  useEffect(() => {
+    onClose();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  // Sidebar collapsed state — click-only, persisted to localStorage.
+  // NO hover logic. Hover-expand was removed permanently because any CSS layout
+  // shift near the sidebar edge (margin: ml-16 ↔ ml-64) caused an oscillation
+  // loop that saturated the browser main thread and froze the UI after ~5 minutes.
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(COLLAPSE_KEY);
+      const isCollapsed = saved === 'true';
+      setCollapsed(isCollapsed);
+      onCollapsedChange?.(isCollapsed);
+    } catch { /* localStorage unavailable */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const toggleCollapsed = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    try { localStorage.setItem(COLLAPSE_KEY, String(next)); } catch { /* ignore */ }
+    onCollapsedChange?.(next);
+  };
+
+  // PERF: Badge counts cached in sessionStorage for 5 minutes — no re-fetch on every navigation
   const [activeLeadsCount, setActiveLeadsCount] = useState(0);
   const [prodQueueCount, setProdQueueCount] = useState(0);
+  const [overdueCount, setOverdueCount] = useState(0);
   useEffect(() => {
-    // Leads badge count
-    supabase.from('leads')
-      .select('id', { count: 'exact', head: true })
-      .not('status', 'in', '(converted,lost)')
-      .then(({ count }) => setActiveLeadsCount(count || 0));
-    // Production Queue badge count (printing + finishing)
-    supabase.from('jobs')
-      .select('id', { count: 'exact', head: true })
-      .in('current_stage', ['printing', 'finishing'])
-      .then(({ count }) => setProdQueueCount(count || 0));
+    const CACHE_KEY = 'sidebar_badge_counts';
+    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+    try {
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { ts, leads, prod, overdue } = JSON.parse(cached);
+        if (Date.now() - ts < CACHE_TTL) {
+          setActiveLeadsCount(leads);
+          setProdQueueCount(prod);
+          setOverdueCount(overdue);
+          return; // skip all 3 queries
+        }
+      }
+    } catch { /* sessionStorage unavailable */ }
+
+    const today = new Date().toISOString().split('T')[0];
+    Promise.all([
+      supabase.from('leads').select('id', { count: 'exact', head: true }).not('status', 'in', '(converted,lost)'),
+      supabase.from('jobs').select('id', { count: 'exact', head: true }).in('current_stage', ['printing', 'finishing']),
+      supabase.from('jobs').select('id', { count: 'exact', head: true }).lt('client_deadline', today).not('current_stage', 'in', '(delivered,cancelled,completed)'),
+    ]).then(([leadsRes, prodRes, overdueRes]) => {
+      const leads = leadsRes.count || 0;
+      const prod  = prodRes.count || 0;
+      const overdue = overdueRes.count || 0;
+      setActiveLeadsCount(leads);
+      setProdQueueCount(prod);
+      setOverdueCount(overdue);
+      try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), leads, prod, overdue })); } catch { /* ignore */ }
+    });
   }, []);
 
   const toggleExpanded = (name: string) => {
@@ -290,7 +351,6 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
     if (href.includes('?')) {
       const [path, query] = href.split('?');
       if (pathname !== path) return false;
-      // Read current query from window.location.search (stable, no re-render on URL change)
       const currentParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
       const subParams = new URLSearchParams(query);
       for (const [key, val] of Array.from(subParams.entries())) {
@@ -301,9 +361,26 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
     return pathname === href;
   };
 
-  const handleLinkClick = () => {
-    onClose();
+  // Reliable sidebar navigation:
+  // Next.js <Link> / router.push uses startTransition internally. On heavy pages
+  // like the tasks board (200+ jobs), startTransition can be silently abandoned
+  // by React's concurrent scheduler, leaving the URL unchanged with no error.
+  // Fix: try router.push first; if the URL hasn't changed after 300ms, fall back
+  // to window.location.href (hard nav). This is fast on all normal pages (URL
+  // changes in <50ms), and self-corrects on the tasks page.
+  const navigate = (e: MouseEvent, href: string) => {
+    e.preventDefault();
+    const before = window.location.pathname + window.location.search;
+    router.push(href);
+    setTimeout(() => {
+      if (window.location.pathname + window.location.search === before) {
+        window.location.href = href;
+      }
+    }, 300);
   };
+
+  // Kept for the logo link only (needs no navigation override)
+  const handleLinkClick = () => {};
 
   // Determine if we're on desktop (lg breakpoint = 1024px)
   const [isDesktop, setIsDesktop] = useState(false);
@@ -315,62 +392,64 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
     return () => window.removeEventListener('resize', checkDesktop);
   }, []);
 
-  // Desktop: collapsed = icon strip (64px), expanded on hover/lock = full 256px
-  // Mobile: always rendered; translate-x controls visibility (smooth slide animation)
-
-  // Desktop: collapsed = icon strip (64px), expanded on hover = full sidebar (256px) as overlay
-  // When LOCKED, sidebar stays expanded regardless of hover
-  const isCollapsed = isDesktop && !locked && !hovered && !dropdownOpen;
+  // On desktop: collapsed = icon strip (w-16), expanded = full (w-64)
+  // On mobile: always full width, translate-x controls visibility
+  const isCollapsed = isDesktop && collapsed;
   const sidebarWidth = isCollapsed ? 'w-16' : 'w-64';
 
-  const filteredMenu = menuItems.filter(item => {
+  // Memoize filtered menu — only recompute when role changes, not on every render
+  const filteredMenu = useMemo(() => menuItems.filter(item => {
     const userRole = profile?.role || 'admin';
     if (!item.allowedRoles || item.allowedRoles.length === 0) return true;
     return item.allowedRoles.includes(userRole);
-  });
+  }), [profile?.role]);
 
   // Mobile translate: slide off-screen when closed, slide in when open
   const mobileTranslate = !isDesktop ? (isOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full') : '';
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-screen ${sidebarWidth} bg-background border-r border-border flex flex-col z-40 transition-all duration-300 ease-in-out ${isDesktop && hovered ? 'shadow-xl' : ''} ${mobileTranslate}`}
-      onMouseEnter={() => {
-        if (isDesktop && !locked) {
-          setHovered(true);
-          onHoverChange?.(true);
-        }
-      }}
-      onMouseLeave={() => {
-        if (isDesktop && !dropdownOpen && !locked) {
-          setHovered(false);
-          onHoverChange?.(false);
-        }
-      }}
+      className={`fixed left-0 top-0 h-screen ${sidebarWidth} bg-background border-r border-border flex flex-col z-40 transition-all duration-300 ease-in-out ${mobileTranslate}`}
     >
-      {/* Logo + Lock toggle */}
-      <div className={`border-b border-border ${isCollapsed ? 'p-3 flex justify-center' : 'p-4 flex items-center justify-between'}`}>
-        <Link
-          href={profile?.role === 'designer' ? '/admin/designers/tasks' : '/admin/dashboard'}
-          className="flex items-center gap-2"
-          onClick={handleLinkClick}
-        >
-          <Image src="/company-logo.png" alt="Aayam" width={32} height={32} className="rounded shrink-0" />
-          {!isCollapsed && <span className="font-bold text-foreground text-xl whitespace-nowrap">Aayam</span>}
-        </Link>
-        {!isCollapsed && isDesktop && (
-          <button
-            onClick={() => onLockedChange?.(!locked)}
-            className={`p-1.5 rounded-md transition-colors ${locked ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
-            title={locked ? 'Unlock sidebar (auto-collapse)' : 'Lock sidebar open'}
+      {/* Logo + collapse toggle */}
+      {isCollapsed ? (
+        // Collapsed: only show the expand chevron — no logo, no overflow
+        <div className="border-b border-border p-3 flex justify-center">
+          {isDesktop && (
+            <button
+              onClick={toggleCollapsed}
+              className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              title="Expand sidebar"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      ) : (
+        // Expanded: logo + name on left, collapse chevron on right
+        <div className="border-b border-border p-4 flex items-center justify-between">
+          <Link
+            href={profile?.role === 'designer' ? '/admin/designers/tasks' : '/admin/dashboard'}
+            className="flex items-center gap-2"
+            onClick={handleLinkClick}
           >
-            {locked ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
-          </button>
-        )}
-      </div>
+            <Image src="/company-logo.png" alt="Aayam" width={32} height={32} className="rounded shrink-0" />
+            <span className="font-bold text-foreground text-xl whitespace-nowrap">Aayam</span>
+          </Link>
+          {isDesktop && (
+            <button
+              onClick={toggleCollapsed}
+              className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              title="Collapse sidebar"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      )}
 
-      {/* Navigation */}
-      <ScrollArea className={`flex-1 ${isCollapsed ? 'px-1.5' : 'px-3'} py-4`}>
+      {/* Navigation — plain overflow div (ScrollArea removed: caused ResizeObserver freeze) */}
+      <div className={`flex-1 overflow-y-auto ${isCollapsed ? 'px-1.5' : 'px-3'} py-4`}>
         <nav className="space-y-1">
           {profile && !profile.role ? (
             !isCollapsed && (
@@ -392,7 +471,7 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
                   <Link
                     key={item.name}
                     href={item.href}
-                    onClick={handleLinkClick}
+                    onClick={(e) => navigate(e, item.href)}
                     title={item.name}
                     className={`flex items-center justify-center w-full h-10 rounded-md transition-colors
                       ${active
@@ -429,7 +508,7 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
                   ) : (
                     <Link
                       href={item.href}
-                      onClick={handleLinkClick}
+                      onClick={(e) => navigate(e, item.href)}
                       className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-sm font-medium
                         ${active
                           ? 'bg-primary text-primary-foreground'
@@ -448,6 +527,7 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
                         let badge = 0;
                         if (sub.name === 'Leads') badge = activeLeadsCount;
                         if (sub.name === 'Production Queue') badge = prodQueueCount;
+                        if (sub.name === '🔴 Overdue') badge = overdueCount;
 
                         const showBadge = badge > 0;
 
@@ -455,7 +535,7 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
                           <Link
                             key={sub.href}
                             href={sub.href}
-                            onClick={handleLinkClick}
+                            onClick={(e) => navigate(e, sub.href)}
                             className={`flex items-center justify-between px-3 py-1.5 rounded-md text-sm transition-colors
                               ${isSubActive(sub.href)
                                 ? 'bg-primary text-primary-foreground font-medium'
@@ -478,14 +558,7 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
             })
           )}
         </nav>
-      </ScrollArea>
-
-      {/* End My Day — Designer Only */}
-      {!isCollapsed && profile?.role === 'designer' && (
-        <div className="px-3 pb-2">
-          <EndMyDayButton />
-        </div>
-      )}
+      </div>
 
       {/* User Profile */}
       <div className={`border-t border-border ${isCollapsed ? 'p-2 flex justify-center' : 'p-4'}`}>
@@ -497,13 +570,7 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
             </Avatar>
           </Link>
         ) : (
-          <DropdownMenu open={dropdownOpen} onOpenChange={(open) => {
-            setDropdownOpen(open);
-            if (!open) {
-              setHovered(false);
-              onHoverChange?.(false);
-            }
-          }}>
+          <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="w-full justify-start px-2 h-auto py-2">
                 <Avatar className="h-8 w-8 mr-2">
@@ -520,14 +587,14 @@ export default function Sidebar({ isOpen, onClose, onHoverChange, locked = false
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/admin/settings/profile" onClick={handleLinkClick}>
+                <Link href="/admin/settings/profile" onClick={(e) => navigate(e, '/admin/settings/profile')}>
                   <User className="mr-2 h-4 w-4" strokeWidth={1} />
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
               {profile?.role === 'admin' && (
                 <DropdownMenuItem asChild>
-                  <Link href="/admin/settings" onClick={handleLinkClick}>
+                  <Link href="/admin/settings" onClick={(e) => navigate(e, '/admin/settings')}>
                     <Settings className="mr-2 h-4 w-4" strokeWidth={1} />
                     <span>Settings</span>
                   </Link>

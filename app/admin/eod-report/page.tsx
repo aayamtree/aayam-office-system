@@ -328,7 +328,10 @@ export default function EODReportPage() {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Tasks Section */}
                         <div className="bg-white rounded-md border border-gray-200 p-4">
-                            <h2 className="text-section text-gray-900 mb-3">Today&apos;s Tasks ({todayTasks.length})</h2>
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className="text-[10px] font-bold tracking-widest uppercase text-amber-600 bg-amber-50 border border-amber-100 rounded px-2 py-0.5">Step 1</span>
+                                <h2 className="text-section text-gray-900">Task Updates ({todayTasks.length})</h2>
+                            </div>
 
                             {todayTasks.length === 0 ? (
                                 <div className="text-center py-6 text-gray-500 text-sm">
@@ -348,7 +351,7 @@ export default function EODReportPage() {
                                                     {taskUpdates[task.id]?.expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                                                     <div>
                                                         <p className="font-medium text-gray-900 text-sm">#{task.job_number} - {task.project_name}</p>
-                                                        <p className="text-xs text-gray-600">{task.client?.name || task.client?.company}</p>
+                                                        <p className="text-xs text-gray-600">{task.client?.company || task.client?.name}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-xs">
@@ -365,49 +368,22 @@ export default function EODReportPage() {
                                             {/* Task Update Form */}
                                             {taskUpdates[task.id]?.expanded && (
                                                 <div className="p-3 space-y-3 bg-white">
-                                                    {/* Status Selection */}
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Task Status</label>
-                                                        <select
-                                                            value={taskUpdates[task.id]?.task_status || 'START WORK'}
-                                                            onChange={(e) => handleStatusChange(task.id, e.target.value as any)}
-                                                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm font-medium"
-                                                        >
-                                                            <option value="NOT START">❌ Not Started</option>
-                                                            <option value="START WORK">🔄 Start Work / Pending</option>
-                                                            <option value="COMPLETE">✅ Complete</option>
-                                                        </select>
-                                                    </div>
-
-                                                    {/* Status Update */}
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                                                            Status Update <span className="text-red-500">*</span>
-                                                        </label>
-                                                        <textarea
-                                                            rows={2}
-                                                            value={taskUpdates[task.id]?.status_update || ''}
-                                                            onChange={(e) => handleTaskUpdate(task.id, 'status_update', e.target.value)}
-                                                            placeholder="What did you work on today?"
-                                                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm"
-                                                        />
-                                                    </div>
-
-                                                    {/* Completion & Time */}
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                        <div>
-                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Completion %</label>
-                                                            <input
-                                                                type="number"
-                                                                min="0"
-                                                                max="100"
-                                                                value={taskUpdates[task.id]?.completion_percentage || 0}
-                                                                onChange={(e) => handleTaskUpdate(task.id, 'completion_percentage', parseInt(e.target.value))}
-                                                                className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
-                                                            />
+                                                    {/* Row: Status + Time in one line */}
+                                                    <div className="grid grid-cols-3 gap-3">
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                                                            <select
+                                                                value={taskUpdates[task.id]?.task_status || 'START WORK'}
+                                                                onChange={(e) => handleStatusChange(task.id, e.target.value as any)}
+                                                                className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm font-medium"
+                                                            >
+                                                                <option value="NOT START">❌ Not Started</option>
+                                                                <option value="START WORK">🔄 In Progress</option>
+                                                                <option value="COMPLETE">✅ Completed</option>
+                                                            </select>
                                                         </div>
                                                         <div>
-                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Time Spent (hrs)</label>
+                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Time (hrs)</label>
                                                             <input
                                                                 type="number"
                                                                 step="0.5"
@@ -419,64 +395,96 @@ export default function EODReportPage() {
                                                         </div>
                                                     </div>
 
-                                                    {/* Dynamic Checklist */}
-                                                    {taskUpdates[task.id]?.checklist_items && taskUpdates[task.id].checklist_items.length > 0 && (
-                                                        <div>
-                                                            <ProductChecklistCard
-                                                                productCategory={task.product_category || task.job_type || 'Other'}
-                                                                taskStatus={taskUpdates[task.id].task_status}
-                                                                checklistItems={taskUpdates[task.id].checklist_items}
-                                                                onUpdate={(items) => handleTaskUpdate(task.id, 'checklist_items', items)}
-                                                                category="design"
-                                                            />
-                                                        </div>
-                                                    )}
-
-                                                    {/* Quick Checks */}
-                                                    <div className="space-y-1">
-                                                        <label className="block text-xs font-medium text-gray-700">Quick Checks</label>
-                                                        <div className="flex flex-wrap gap-3">
-                                                            <label className="flex items-center gap-1.5 cursor-pointer">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={taskUpdates[task.id]?.client_approval_received || false}
-                                                                    onChange={(e) => handleTaskUpdate(task.id, 'client_approval_received', e.target.checked)}
-                                                                    className="w-3.5 h-3.5 text-primary rounded"
-                                                                />
-                                                                <span className="text-xs text-gray-700">Client Approval</span>
-                                                            </label>
-                                                            <label className="flex items-center gap-1.5 cursor-pointer">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={taskUpdates[task.id]?.print_file_ready || false}
-                                                                    onChange={(e) => handleTaskUpdate(task.id, 'print_file_ready', e.target.checked)}
-                                                                    className="w-3.5 h-3.5 text-primary rounded"
-                                                                />
-                                                                <span className="text-xs text-gray-700">Print File Ready</span>
-                                                            </label>
-                                                            <label className="flex items-center gap-1.5 cursor-pointer">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={taskUpdates[task.id]?.print_checklist_done || false}
-                                                                    onChange={(e) => handleTaskUpdate(task.id, 'print_checklist_done', e.target.checked)}
-                                                                    className="w-3.5 h-3.5 text-primary rounded"
-                                                                />
-                                                                <span className="text-xs text-gray-700">Pre-print Checklist</span>
-                                                            </label>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Client Comments */}
+                                                    {/* Status Update */}
                                                     <div>
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Client Comments</label>
-                                                        <input
-                                                            type="text"
-                                                            value={taskUpdates[task.id]?.client_comments || ''}
-                                                            onChange={(e) => handleTaskUpdate(task.id, 'client_comments', e.target.value)}
-                                                            placeholder="Any feedback from client?"
-                                                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                            What did you work on? <span className="text-red-500">*</span>
+                                                        </label>
+                                                        <textarea
+                                                            rows={2}
+                                                            value={taskUpdates[task.id]?.status_update || ''}
+                                                            onChange={(e) => handleTaskUpdate(task.id, 'status_update', e.target.value)}
+                                                            placeholder="Quick update on this task..."
+                                                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm"
                                                         />
                                                     </div>
+
+                                                    {/* Only show completion % + checklist + quick checks when COMPLETE */}
+                                                    {taskUpdates[task.id]?.task_status === 'COMPLETE' && (
+                                                        <div className="space-y-3 border-t border-gray-100 pt-3">
+                                                            {/* Completion % */}
+                                                            <div>
+                                                                <label className="block text-xs font-medium text-gray-700 mb-1">Completion %</label>
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    max="100"
+                                                                    value={taskUpdates[task.id]?.completion_percentage || 100}
+                                                                    onChange={(e) => handleTaskUpdate(task.id, 'completion_percentage', parseInt(e.target.value))}
+                                                                    className="w-full max-w-[120px] px-3 py-2 border border-gray-200 rounded-md text-sm"
+                                                                />
+                                                            </div>
+
+                                                            {/* Dynamic Checklist */}
+                                                            {taskUpdates[task.id]?.checklist_items && taskUpdates[task.id].checklist_items.length > 0 && (
+                                                                <div>
+                                                                    <ProductChecklistCard
+                                                                        productCategory={task.product_category || task.job_type || 'Other'}
+                                                                        taskStatus={taskUpdates[task.id].task_status}
+                                                                        checklistItems={taskUpdates[task.id].checklist_items}
+                                                                        onUpdate={(items) => handleTaskUpdate(task.id, 'checklist_items', items)}
+                                                                        category="design"
+                                                                    />
+                                                                </div>
+                                                            )}
+
+                                                            {/* Quick Checks — only on COMPLETE */}
+                                                            <div className="space-y-1">
+                                                                <label className="block text-xs font-medium text-gray-700">Quick Checks</label>
+                                                                <div className="flex flex-wrap gap-3">
+                                                                    <label className="flex items-center gap-1.5 cursor-pointer">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={taskUpdates[task.id]?.client_approval_received || false}
+                                                                            onChange={(e) => handleTaskUpdate(task.id, 'client_approval_received', e.target.checked)}
+                                                                            className="w-3.5 h-3.5 text-primary rounded"
+                                                                        />
+                                                                        <span className="text-xs text-gray-700">Client Approval</span>
+                                                                    </label>
+                                                                    <label className="flex items-center gap-1.5 cursor-pointer">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={taskUpdates[task.id]?.print_file_ready || false}
+                                                                            onChange={(e) => handleTaskUpdate(task.id, 'print_file_ready', e.target.checked)}
+                                                                            className="w-3.5 h-3.5 text-primary rounded"
+                                                                        />
+                                                                        <span className="text-xs text-gray-700">Print File Ready</span>
+                                                                    </label>
+                                                                    <label className="flex items-center gap-1.5 cursor-pointer">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={taskUpdates[task.id]?.print_checklist_done || false}
+                                                                            onChange={(e) => handleTaskUpdate(task.id, 'print_checklist_done', e.target.checked)}
+                                                                            className="w-3.5 h-3.5 text-primary rounded"
+                                                                        />
+                                                                        <span className="text-xs text-gray-700">Pre-print Checklist</span>
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Client Comments — only on COMPLETE */}
+                                                            <div>
+                                                                <label className="block text-xs font-medium text-gray-700 mb-1">Client Comments <span className="text-gray-400 font-normal">(optional)</span></label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={taskUpdates[task.id]?.client_comments || ''}
+                                                                    onChange={(e) => handleTaskUpdate(task.id, 'client_comments', e.target.value)}
+                                                                    placeholder="Any feedback from client?"
+                                                                    className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -487,7 +495,10 @@ export default function EODReportPage() {
 
                         {/* Overall Summary */}
                         <div className="bg-white rounded-md border border-gray-200 p-4 space-y-3">
-                            <h2 className="text-section text-gray-900">Overall Summary</h2>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold tracking-widest uppercase text-amber-600 bg-amber-50 border border-amber-100 rounded px-2 py-0.5">Step 2</span>
+                                <h2 className="text-section text-gray-900">Day Summary</h2>
+                            </div>
 
                             <div>
                                 <div className="flex items-center justify-between mb-1">
