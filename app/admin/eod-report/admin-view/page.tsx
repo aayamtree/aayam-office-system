@@ -103,6 +103,14 @@ function ReportRatingPanel({ report, onRate }: {
     const [comment, setComment] = useState(report.admin_comment || '');
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(!!report.admin_rating);
+
+    // Sync state when report prop updates (e.g. after parent refresh)
+    useEffect(() => {
+        setRating(report.admin_rating || 0);
+        setComment(report.admin_comment || '');
+        setSaved(!!report.admin_rating);
+    }, [report.admin_rating, report.admin_comment]);
+
     const hasChanges = rating !== (report.admin_rating || 0) || comment !== (report.admin_comment || '');
 
     const handleSave = async () => {
@@ -184,10 +192,11 @@ function GridCell({ report, isWeekendDay, isFutureDay, onClick }: {
 }
 
 // ─── Day View (new clean table) ───────────────────────────────────────────────
-function DayView({ reports, allProfiles, onRate }: {
+function DayView({ reports, allProfiles, onRate, onViewHistory }: {
     reports: any[];
     allProfiles: any[];
     onRate: (id: string, rating: number, comment: string) => Promise<void>;
+    onViewHistory: (userId: string, userName: string) => void;
 }) {
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const today = toDateStr(new Date());
@@ -315,12 +324,14 @@ function DayView({ reports, allProfiles, onRate }: {
                                             {report?.task_updates?.length > 0 ? (
                                                 <div className="flex flex-wrap gap-1">
                                                     {report.task_updates.slice(0, 3).map((tu: any, i: number) => (
-                                                        <span key={i} className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
-                                                            {tu.job?.job_number ? `#${tu.job.job_number}` : tu.job?.project_name?.slice(0, 12) || '—'}
+                                                        <span key={i} className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded leading-tight">
+                                                            {tu.job?.project_name
+                                                                ? tu.job.project_name.slice(0, 18)
+                                                                : tu.job?.job_number ? `#${tu.job.job_number}` : '—'}
                                                         </span>
                                                     ))}
                                                     {report.task_updates.length > 3 && (
-                                                        <span className="text-[10px] text-gray-400">+{report.task_updates.length - 3}</span>
+                                                        <span className="text-[10px] text-gray-400">+{report.task_updates.length - 3} more</span>
                                                     )}
                                                 </div>
                                             ) : (
@@ -361,14 +372,16 @@ function DayView({ reports, allProfiles, onRate }: {
                                                 {/* Task updates grid */}
                                                 {report.task_updates?.length > 0 && (
                                                     <div className="mb-3">
-                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Task Updates</p>
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+                                                            Task Updates ({report.task_updates.length})
+                                                        </p>
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                                             {report.task_updates.map((tu: any) => (
                                                                 <div key={tu.id} className="flex items-start gap-2 text-xs bg-white rounded-md border border-gray-200 p-2.5">
                                                                     <span className="flex-shrink-0 mt-0.5">{tu.task_status === 'COMPLETE' ? '✅' : tu.task_status === 'NOT START' ? '❌' : '🔄'}</span>
                                                                     <div className="min-w-0 flex-1">
-                                                                        <p className="font-semibold text-gray-900 truncate">
-                                                                            {tu.job?.project_name || `Job #${tu.job?.job_number || '?'}`}
+                                                                        <p className="font-semibold text-gray-900">
+                                                                            {tu.job?.project_name || `#${tu.job?.job_number || '?'}`}
                                                                             {(tu.job?.client?.company || tu.job?.client?.name) && (
                                                                                 <span className="font-normal text-gray-400 ml-1.5">· {tu.job.client?.company || tu.job.client?.name}</span>
                                                                             )}
@@ -377,8 +390,24 @@ function DayView({ reports, allProfiles, onRate }: {
                                                                         <div className="flex items-center gap-3 text-[10px] text-gray-400 mt-1">
                                                                             <span>{tu.completion_percentage || 0}% done</span>
                                                                             <span>{tu.time_spent || 0}h</span>
-                                                                            {tu.client_approval_received && <span className="text-green-600 font-semibold">✓ Client OK</span>}
                                                                         </div>
+                                                                        {/* Quick Checks — visible to admin */}
+                                                                        {(tu.client_approval_received || tu.print_file_ready || tu.print_checklist_done) && (
+                                                                            <div className="flex flex-wrap gap-1 mt-1.5">
+                                                                                {tu.client_approval_received && (
+                                                                                    <span className="text-[10px] bg-green-50 text-green-700 border border-green-200 px-1.5 py-0.5 rounded font-medium">✓ Client OK</span>
+                                                                                )}
+                                                                                {tu.print_file_ready && (
+                                                                                    <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded font-medium">✓ Print Ready</span>
+                                                                                )}
+                                                                                {tu.print_checklist_done && (
+                                                                                    <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded font-medium">✓ Checklist Done</span>
+                                                                                )}
+                                                                            </div>
+                                                                        )}
+                                                                        {tu.client_comments && (
+                                                                            <p className="text-[10px] text-gray-500 italic mt-1">"{tu.client_comments}"</p>
+                                                                        )}
                                                                     </div>
                                                                 </div>
                                                             ))}
@@ -408,7 +437,15 @@ function DayView({ reports, allProfiles, onRate }: {
                                                     )}
                                                 </div>
 
-                                                <ReportRatingPanel report={report} onRate={onRate} />
+                                                <div className="flex items-center justify-between">
+                                                    <ReportRatingPanel report={report} onRate={onRate} />
+                                                    <button
+                                                        onClick={() => onViewHistory(profile.id, profile.full_name)}
+                                                        className="text-[11px] text-blue-500 hover:text-blue-700 font-medium flex items-center gap-1 ml-4 flex-shrink-0"
+                                                    >
+                                                        View past history <ChevronRight size={11} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     )}
@@ -793,14 +830,27 @@ export default function AdminEODDashboard() {
     const handleRate = async (reportId: string, rating: number, comment: string) => {
         const { error } = await rateReport(reportId, rating, comment);
         if (!error) {
+            // Update local state immediately for instant UI feedback
             setReports(prev => prev.map(r => r.id === reportId ? { ...r, admin_rating: rating, admin_comment: comment } : r));
             if (quickReport?.id === reportId) setQuickReport((prev: any) => ({ ...prev, admin_rating: rating, admin_comment: comment }));
+            // Refresh in background to ensure task_updates and all fields are current
+            loadData();
         }
     };
 
     const openDesignerDrawer = (report: any) => {
         if (!report.user) return;
         setSelectedDesigner({ id: report.user_id, full_name: report.user.full_name || 'Unknown', role: report.user.role || 'designer', email: report.user.email });
+    };
+
+    const handleViewHistory = (userId: string, userName: string) => {
+        const now = new Date();
+        const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+        const todayStr = now.toISOString().split('T')[0];
+        setSelectedUserId(userId);
+        setStartDate(firstOfMonth);
+        setEndDate(todayStr);
+        setViewMode('list');
     };
 
     const toggleReportExpand = (id: string) => setExpandedReport(prev => prev === id ? null : id);
@@ -945,6 +995,7 @@ export default function AdminEODDashboard() {
                         reports={reports}
                         allProfiles={allProfiles}
                         onRate={handleRate}
+                        onViewHistory={handleViewHistory}
                     />
                 ) : viewMode === 'week' ? (
                     <WeekView
