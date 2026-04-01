@@ -191,6 +191,79 @@ function GridCell({ report, isWeekendDay, isFutureDay, onClick }: {
     );
 }
 
+// ─── Task Detail Card (shared by DayView + QuickDrawer) ──────────────────────
+function TaskDetailCard({ tu }: { tu: any }) {
+    const checklist: Array<{ item: string; checked: boolean; comment?: string }> = tu.checklist || [];
+    const hasChecklist = checklist.length > 0;
+    const checkedCount = checklist.filter((c: any) => c.checked).length;
+
+    return (
+        <div className="flex items-start gap-2 text-xs bg-white rounded-md border border-gray-200 p-2.5">
+            <span className="flex-shrink-0 mt-0.5">
+                {tu.task_status === 'COMPLETE' ? '✅' : tu.task_status === 'NOT START' ? '❌' : '🔄'}
+            </span>
+            <div className="min-w-0 flex-1">
+                {/* Title + client */}
+                <p className="font-semibold text-gray-900">
+                    {tu.job?.project_name || `#${tu.job?.job_number || '?'}`}
+                    {tu.job?.job_type && (
+                        <span className="ml-1.5 text-[10px] font-normal bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{tu.job.job_type}</span>
+                    )}
+                </p>
+                {(tu.job?.client?.company || tu.job?.client?.name) && (
+                    <p className="text-[10px] text-gray-400 mt-0.5">{tu.job.client?.company || tu.job.client?.name}</p>
+                )}
+
+                {/* Status update */}
+                {tu.status_update && <p className="text-gray-600 mt-1">{tu.status_update}</p>}
+
+                {/* Stats row */}
+                <div className="flex items-center gap-3 text-[10px] text-gray-400 mt-1">
+                    <span>{tu.completion_percentage || 0}% done</span>
+                    <span>{tu.time_spent || 0}h</span>
+                    {tu.job?.current_stage && <span className="capitalize">Stage: {tu.job.current_stage.replace(/_/g, ' ')}</span>}
+                </div>
+
+                {/* Quick checks */}
+                {(tu.client_approval_received || tu.print_file_ready || tu.print_checklist_done) && (
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                        {tu.client_approval_received && <span className="text-[10px] bg-green-50 text-green-700 border border-green-200 px-1.5 py-0.5 rounded font-medium">✓ Client OK</span>}
+                        {tu.print_file_ready && <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded font-medium">✓ Print Ready</span>}
+                        {tu.print_checklist_done && <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded font-medium">✓ Checklist Done</span>}
+                    </div>
+                )}
+
+                {/* Product checklist items */}
+                {hasChecklist && (
+                    <div className="mt-2 border-t border-gray-100 pt-2">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">
+                            Product Checklist — {checkedCount}/{checklist.length} done
+                        </p>
+                        <div className="space-y-0.5">
+                            {checklist.map((item: any, i: number) => (
+                                <div key={i} className="flex items-start gap-1.5">
+                                    <span className={`mt-0.5 flex-shrink-0 ${item.checked ? 'text-green-500' : 'text-gray-300'}`}>
+                                        {item.checked ? '✓' : '○'}
+                                    </span>
+                                    <span className={`text-[11px] ${item.checked ? 'text-gray-700' : 'text-gray-400'}`}>
+                                        {item.item}
+                                        {item.comment && <span className="text-gray-400 italic ml-1">— {item.comment}</span>}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Client comments */}
+                {tu.client_comments && (
+                    <p className="text-[10px] text-gray-500 italic mt-1.5 border-t border-gray-100 pt-1">&quot;{tu.client_comments}&quot;</p>
+                )}
+            </div>
+        </div>
+    );
+}
+
 // ─── Day View (new clean table) ───────────────────────────────────────────────
 function DayView({ reports, allProfiles, onRate, onViewHistory }: {
     reports: any[];
@@ -377,39 +450,7 @@ function DayView({ reports, allProfiles, onRate, onViewHistory }: {
                                                         </p>
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                                             {report.task_updates.map((tu: any) => (
-                                                                <div key={tu.id} className="flex items-start gap-2 text-xs bg-white rounded-md border border-gray-200 p-2.5">
-                                                                    <span className="flex-shrink-0 mt-0.5">{tu.task_status === 'COMPLETE' ? '✅' : tu.task_status === 'NOT START' ? '❌' : '🔄'}</span>
-                                                                    <div className="min-w-0 flex-1">
-                                                                        <p className="font-semibold text-gray-900">
-                                                                            {tu.job?.project_name || `#${tu.job?.job_number || '?'}`}
-                                                                            {(tu.job?.client?.company || tu.job?.client?.name) && (
-                                                                                <span className="font-normal text-gray-400 ml-1.5">· {tu.job.client?.company || tu.job.client?.name}</span>
-                                                                            )}
-                                                                        </p>
-                                                                        {tu.status_update && <p className="text-gray-500 mt-0.5">{tu.status_update}</p>}
-                                                                        <div className="flex items-center gap-3 text-[10px] text-gray-400 mt-1">
-                                                                            <span>{tu.completion_percentage || 0}% done</span>
-                                                                            <span>{tu.time_spent || 0}h</span>
-                                                                        </div>
-                                                                        {/* Quick Checks — visible to admin */}
-                                                                        {(tu.client_approval_received || tu.print_file_ready || tu.print_checklist_done) && (
-                                                                            <div className="flex flex-wrap gap-1 mt-1.5">
-                                                                                {tu.client_approval_received && (
-                                                                                    <span className="text-[10px] bg-green-50 text-green-700 border border-green-200 px-1.5 py-0.5 rounded font-medium">✓ Client OK</span>
-                                                                                )}
-                                                                                {tu.print_file_ready && (
-                                                                                    <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded font-medium">✓ Print Ready</span>
-                                                                                )}
-                                                                                {tu.print_checklist_done && (
-                                                                                    <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded font-medium">✓ Checklist Done</span>
-                                                                                )}
-                                                                            </div>
-                                                                        )}
-                                                                        {tu.client_comments && (
-                                                                            <p className="text-[10px] text-gray-500 italic mt-1">&quot;{tu.client_comments}&quot;</p>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
+                                                                <TaskDetailCard key={tu.id} tu={tu} />
                                                             ))}
                                                         </div>
                                                     </div>
@@ -738,32 +779,7 @@ function ReportQuickDrawer({ report: initialReport, onClose, onRate, fetchFull }
                         </p>
                         <div className="space-y-1.5">
                             {report.task_updates.map((tu: any) => (
-                                <div key={tu.id} className="flex items-start gap-2 text-xs bg-gray-50 rounded-md border border-gray-200 p-2.5">
-                                    <span className="flex-shrink-0 mt-0.5">{tu.task_status === 'COMPLETE' ? '✅' : tu.task_status === 'NOT START' ? '❌' : '🔄'}</span>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="font-semibold text-gray-900">
-                                            {tu.job?.project_name || `#${tu.job?.job_number || '?'}`}
-                                            {(tu.job?.client?.company || tu.job?.client?.name) && (
-                                                <span className="font-normal text-gray-400 ml-1.5">· {tu.job.client?.company || tu.job.client?.name}</span>
-                                            )}
-                                        </p>
-                                        {tu.status_update && <p className="text-gray-500 mt-0.5">{tu.status_update}</p>}
-                                        <div className="flex items-center gap-3 text-[10px] text-gray-400 mt-1">
-                                            <span>{tu.completion_percentage || 0}% done</span>
-                                            <span>{tu.time_spent || 0}h</span>
-                                        </div>
-                                        {(tu.client_approval_received || tu.print_file_ready || tu.print_checklist_done) && (
-                                            <div className="flex flex-wrap gap-1 mt-1.5">
-                                                {tu.client_approval_received && <span className="text-[10px] bg-green-50 text-green-700 border border-green-200 px-1.5 py-0.5 rounded font-medium">✓ Client OK</span>}
-                                                {tu.print_file_ready && <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded font-medium">✓ Print Ready</span>}
-                                                {tu.print_checklist_done && <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded font-medium">✓ Checklist Done</span>}
-                                            </div>
-                                        )}
-                                        {tu.client_comments && (
-                                            <p className="text-[10px] text-gray-500 italic mt-1">&quot;{tu.client_comments}&quot;</p>
-                                        )}
-                                    </div>
-                                </div>
+                                <TaskDetailCard key={tu.id} tu={tu} />
                             ))}
                         </div>
                     </div>
