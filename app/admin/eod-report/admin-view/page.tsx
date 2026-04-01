@@ -406,7 +406,7 @@ function DayView({ reports, allProfiles, onRate, onViewHistory }: {
                                                                             </div>
                                                                         )}
                                                                         {tu.client_comments && (
-                                                                            <p className="text-[10px] text-gray-500 italic mt-1">"{tu.client_comments}"</p>
+                                                                            <p className="text-[10px] text-gray-500 italic mt-1">&quot;{tu.client_comments}&quot;</p>
                                                                         )}
                                                                     </div>
                                                                 </div>
