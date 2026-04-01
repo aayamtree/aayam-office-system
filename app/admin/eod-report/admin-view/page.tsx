@@ -675,18 +675,36 @@ function MonthView({ year, month, reports, allProfiles, onCellClick }: {
 }
 
 // ─── Report Quick Drawer ──────────────────────────────────────────────────────
-function ReportQuickDrawer({ report, onClose, onRate }: {
+function ReportQuickDrawer({ report: initialReport, onClose, onRate, fetchFull }: {
     report: any | null;
     onClose: () => void;
     onRate: (id: string, rating: number, comment: string) => Promise<void>;
+    fetchFull: (userId: string, date: string) => Promise<any>;
 }) {
+    const [report, setReport] = useState<any | null>(initialReport);
+    const [fetching, setFetching] = useState(false);
+
+    // Every time a new report is opened, re-fetch full data with task_updates
+    useEffect(() => {
+        if (!initialReport?.id) { setReport(null); return; }
+        setReport(initialReport);
+        setFetching(true);
+        fetchFull(initialReport.user_id, initialReport.report_date)
+            .then((full: any) => { if (full) setReport(full); })
+            .finally(() => setFetching(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialReport?.id]);
+
     if (!report) return null;
     const name = report.user?.full_name || 'Unknown';
+
     return (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
             <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
             <div className="relative bg-white rounded-t-2xl sm:rounded-xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-5"
                 onClick={e => e.stopPropagation()}>
+
+                {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full text-white text-sm font-bold flex items-center justify-center"
@@ -706,33 +724,54 @@ function ReportQuickDrawer({ report, onClose, onRate }: {
                     </button>
                 </div>
 
-                {report.task_updates?.length > 0 && (
+                {fetching && (
+                    <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
+                        <Loader2 size={12} className="animate-spin" /> Loading full report...
+                    </div>
+                )}
+
+                {/* Task Updates */}
+                {report.task_updates?.length > 0 ? (
                     <div className="mb-4">
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Task Updates ({report.task_updates.length})</p>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+                            Task Updates ({report.task_updates.length})
+                        </p>
                         <div className="space-y-1.5">
                             {report.task_updates.map((tu: any) => (
-                                <div key={tu.id} className="flex items-start gap-2 text-xs bg-gray-50 rounded-md border border-gray-200 p-2">
+                                <div key={tu.id} className="flex items-start gap-2 text-xs bg-gray-50 rounded-md border border-gray-200 p-2.5">
                                     <span className="flex-shrink-0 mt-0.5">{tu.task_status === 'COMPLETE' ? '✅' : tu.task_status === 'NOT START' ? '❌' : '🔄'}</span>
                                     <div className="min-w-0 flex-1">
-                                        <p className="font-semibold text-gray-900 truncate">
-                                            {tu.job?.project_name || `Job #${tu.job?.job_number || '?'}`}
+                                        <p className="font-semibold text-gray-900">
+                                            {tu.job?.project_name || `#${tu.job?.job_number || '?'}`}
                                             {(tu.job?.client?.company || tu.job?.client?.name) && (
                                                 <span className="font-normal text-gray-400 ml-1.5">· {tu.job.client?.company || tu.job.client?.name}</span>
                                             )}
                                         </p>
-                                        <p className="text-gray-500 mt-0.5">{tu.status_update}</p>
+                                        {tu.status_update && <p className="text-gray-500 mt-0.5">{tu.status_update}</p>}
                                         <div className="flex items-center gap-3 text-[10px] text-gray-400 mt-1">
                                             <span>{tu.completion_percentage || 0}% done</span>
                                             <span>{tu.time_spent || 0}h</span>
-                                            {tu.client_approval_received && <span className="text-green-600 font-semibold">✓ Client OK</span>}
                                         </div>
+                                        {(tu.client_approval_received || tu.print_file_ready || tu.print_checklist_done) && (
+                                            <div className="flex flex-wrap gap-1 mt-1.5">
+                                                {tu.client_approval_received && <span className="text-[10px] bg-green-50 text-green-700 border border-green-200 px-1.5 py-0.5 rounded font-medium">✓ Client OK</span>}
+                                                {tu.print_file_ready && <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded font-medium">✓ Print Ready</span>}
+                                                {tu.print_checklist_done && <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded font-medium">✓ Checklist Done</span>}
+                                            </div>
+                                        )}
+                                        {tu.client_comments && (
+                                            <p className="text-[10px] text-gray-500 italic mt-1">&quot;{tu.client_comments}&quot;</p>
+                                        )}
                                     </div>
                                 </div>
                             ))}
                         </div>
                     </div>
+                ) : !fetching && (
+                    <p className="text-xs text-gray-400 mb-4 italic">No task updates submitted for this report.</p>
                 )}
 
+                {/* Notes / Blockers / Tomorrow */}
                 <div className="grid grid-cols-1 gap-2 mb-4">
                     {report.overall_notes && (
                         <div>
@@ -748,7 +787,7 @@ function ReportQuickDrawer({ report, onClose, onRate }: {
                     )}
                     {report.tomorrow_plan && (
                         <div>
-                            <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-1">Tomorrow</p>
+                            <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-1">Next Day Plan</p>
                             <p className="text-xs text-gray-700 bg-blue-50 border border-blue-100 p-2 rounded-md">{report.tomorrow_plan}</p>
                         </div>
                     )}
@@ -841,6 +880,12 @@ export default function AdminEODDashboard() {
     const openDesignerDrawer = (report: any) => {
         if (!report.user) return;
         setSelectedDesigner({ id: report.user_id, full_name: report.user.full_name || 'Unknown', role: report.user.role || 'designer', email: report.user.email });
+    };
+
+    // Fetch a single full report (used by quick drawer to ensure task_updates are loaded)
+    const fetchFullReport = async (userId: string, date: string) => {
+        const { data } = await getAllReports({ userId, startDate: date, endDate: date });
+        return data?.[0] || null;
     };
 
     const handleViewHistory = (userId: string, userName: string) => {
@@ -1126,6 +1171,7 @@ export default function AdminEODDashboard() {
                 report={quickReport}
                 onClose={() => setQuickReport(null)}
                 onRate={handleRate}
+                fetchFull={fetchFullReport}
             />
 
             <DesignerProfileDrawer
