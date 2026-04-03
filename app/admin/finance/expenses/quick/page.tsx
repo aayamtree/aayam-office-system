@@ -130,6 +130,7 @@ export default function QuickExpensePage() {
                 p_payment_mode: formData.payment_mode,
                 p_payment_date: formData.payment_date,
                 p_bank_account_id: formData.payment_mode === 'cash' ? null : formData.account_id,
+                p_cash_account_id: formData.payment_mode === 'cash' ? formData.account_id : null,
                 p_reference: formData.reference_number || `${formData.category} - ${formData.description}`,
                 p_notes: `Category: ${formData.category}\n${formData.description}`
             });
@@ -300,7 +301,7 @@ export default function QuickExpensePage() {
                                         <option value="">Select account</option>
                                         {accounts.map((acc) => (
                                             <option key={acc.id} value={acc.id}>
-                                                {acc.name} (₹{(acc.current_balance || 0).toLocaleString()})
+                                                {acc.name} (â¹{(acc.current_balance || 0).toLocaleString()})
                                             </option>
                                         ))}
                                     </select>
@@ -400,7 +401,7 @@ export default function QuickExpensePage() {
                                                 {expense.vendors?.name || 'Expense'}
                                             </p>
                                             <p className="font-bold text-sm text-red-600 flex-shrink-0">
-                                                ₹{expense.amount?.toLocaleString()}
+                                                â¹{expense.amount?.toLocaleString()}
                                             </p>
                                         </div>
                                         <p className="text-xs text-gray-500">{expense.payment_mode}</p>
