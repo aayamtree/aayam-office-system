@@ -292,19 +292,33 @@ export default function QuickExpensePage() {
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         {formData.payment_mode === 'cash' ? 'Cash Account' : 'Bank Account'} <span className="text-red-500">*</span>
                                     </label>
-                                    <select
-                                        value={formData.account_id}
-                                        onChange={(e) => setFormData({ ...formData, account_id: e.target.value })}
-                                        className="w-full px-3 py-2.5 border rounded-md focus:ring-2 focus:ring-gray-400 text-sm"
-                                        required
-                                    >
-                                        <option value="">Select account</option>
-                                        {accounts.map((acc) => (
-                                            <option key={acc.id} value={acc.id}>
-                                                {acc.name} (â¹{(acc.current_balance || 0).toLocaleString()})
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="relative">
+                                        <select
+                                            value={formData.account_id}
+                                            onChange={(e) => setFormData({ ...formData, account_id: e.target.value })}
+                                            className="w-full px-3 py-2.5 border rounded-md focus:ring-2 focus:ring-gray-400 text-sm opacity-0 absolute inset-0 z-10 cursor-pointer"
+                                            required
+                                        >
+                                            <option value="">Select account</option>
+                                            {accounts.map((acc) => (
+                                                <option key={acc.id} value={acc.id}>
+                                                    {acc.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="w-full px-3 py-2.5 border rounded-md bg-white text-sm flex items-center justify-between pointer-events-none">
+                                            <span>
+                                                {formData.account_id
+                                                    ? (() => {
+                                                        const acc = accounts.find(a => a.id === formData.account_id);
+                                                        return acc ? <>{acc.name} <span className="text-gray-500">(₹{(acc.current_balance || 0).toLocaleString('en-IN')})</span></> : 'Select account';
+                                                    })()
+                                                    : <span className="text-gray-400">Select account</span>
+                                                }
+                                            </span>
+                                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -401,7 +415,7 @@ export default function QuickExpensePage() {
                                                 {expense.vendors?.name || 'Expense'}
                                             </p>
                                             <p className="font-bold text-sm text-red-600 flex-shrink-0">
-                                                â¹{expense.amount?.toLocaleString()}
+                                                ₹{expense.amount?.toLocaleString()}
                                             </p>
                                         </div>
                                         <p className="text-xs text-gray-500">{expense.payment_mode}</p>
