@@ -41,7 +41,7 @@ export default function EODReportPage() {
     const [tomorrowPlan, setTomorrowPlan] = useState('');
     const [workHours, setWorkHours] = useState<number>(8);
 
-    // Auto work logs — pre-populate EOD notes
+    // Auto work logs â pre-populate EOD notes
     const { todaySummary: workLogSummary, logs: workLogs } = useWorkLogs(profile?.id);
 
     // Task updates state
@@ -64,7 +64,7 @@ export default function EODReportPage() {
     const isEODTime = currentHour >= 18 && currentHour < 19;
     const isPastEODTime = currentHour >= 19;
 
-    // Admins should never fill EOD — redirect them to the admin view
+    // Admins should never fill EOD â redirect them to the admin view
     useEffect(() => {
         if (profile?.role === 'admin') {
             router.replace('/admin/eod-report/admin-view');
@@ -126,7 +126,7 @@ export default function EODReportPage() {
                     setTomorrowPlan(existingReport.tomorrow_plan || '');
                     setWorkHours(existingReport.work_hours || 8);
                 } else if (workLogSummary) {
-                    // No existing report — pre-populate from auto-logged work activities
+                    // No existing report â pre-populate from auto-logged work activities
                     setOverallNotes(workLogSummary);
                     setAutoLogCount(workLogs.length);
                 }
@@ -197,11 +197,11 @@ export default function EODReportPage() {
         setSubmitting(true);
         try {
             const updates = Object.keys(taskUpdates)
-                .filter(taskId => taskUpdates[taskId].status_update.trim() !== '')
+                // Save ALL tasks — status + time_spent matter even if no text written
                 .map(taskId => ({
                     job_id: taskId,
                     task_status: taskUpdates[taskId].task_status,
-                    // product_category is local-only (used for checklist fetch) — NOT a DB column
+                    // product_category is local-only (used for checklist fetch) â NOT a DB column
                     status_update: taskUpdates[taskId].status_update,
                     completion_percentage: taskUpdates[taskId].completion_percentage,
                     time_spent: taskUpdates[taskId].time_spent,
@@ -273,7 +273,7 @@ export default function EODReportPage() {
                 <div>
                     <h1 className="text-xl lg:text-page-title text-gray-900">End of Day Report</h1>
                     <p className="text-sm text-gray-500 mt-1">
-                        {todayReport ? '✅ Submitted Today' : '⏰ Pending Submission'} | {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                        {todayReport ? 'â Submitted Today' : 'â° Pending Submission'} | {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
                 </div>
                 {profile?.role === 'admin' && (
@@ -281,7 +281,7 @@ export default function EODReportPage() {
                         href="/admin/eod-report/admin-view"
                         className="px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-semibold hover:bg-gray-800 transition-colors shadow-sm"
                     >
-                        Admin Dashboard →
+                        Admin Dashboard â
                     </Link>
                 )}
             </div>
@@ -323,7 +323,7 @@ export default function EODReportPage() {
             {/* Main 2-Column Layout: Form (left) + History (right) */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
 
-                {/* LEFT: EOD Form — 3 columns */}
+                {/* LEFT: EOD Form â 3 columns */}
                 <div className="lg:col-span-3">
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Tasks Section */}
@@ -377,9 +377,9 @@ export default function EODReportPage() {
                                                                 onChange={(e) => handleStatusChange(task.id, e.target.value as any)}
                                                                 className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm font-medium"
                                                             >
-                                                                <option value="NOT START">❌ Not Started</option>
-                                                                <option value="START WORK">🔄 In Progress</option>
-                                                                <option value="COMPLETE">✅ Completed</option>
+                                                                <option value="NOT START">â Not Started</option>
+                                                                <option value="START WORK">ð In Progress</option>
+                                                                <option value="COMPLETE">â Completed</option>
                                                             </select>
                                                         </div>
                                                         <div>
@@ -438,7 +438,7 @@ export default function EODReportPage() {
                                                                 </div>
                                                             )}
 
-                                                            {/* Quick Checks — only on COMPLETE */}
+                                                            {/* Quick Checks â only on COMPLETE */}
                                                             <div className="space-y-1">
                                                                 <label className="block text-xs font-medium text-gray-700">Quick Checks</label>
                                                                 <div className="flex flex-wrap gap-3">
@@ -472,7 +472,7 @@ export default function EODReportPage() {
                                                                 </div>
                                                             </div>
 
-                                                            {/* Client Comments — only on COMPLETE */}
+                                                            {/* Client Comments â only on COMPLETE */}
                                                             <div>
                                                                 <label className="block text-xs font-medium text-gray-700 mb-1">Client Comments <span className="text-gray-400 font-normal">(optional)</span></label>
                                                                 <input
@@ -505,7 +505,7 @@ export default function EODReportPage() {
                                     <label className="block text-xs font-medium text-gray-700">Overall Notes</label>
                                     {autoLogCount > 0 && !todayReport && (
                                         <span className="text-[10px] px-2 py-0.5 bg-amber-100 text-amber-700 rounded-md border border-amber-200 font-semibold">
-                                            ⚡ Auto-filled from {autoLogCount} activity log{autoLogCount !== 1 ? 's' : ''} today
+                                            â¡ Auto-filled from {autoLogCount} activity log{autoLogCount !== 1 ? 's' : ''} today
                                         </span>
                                     )}
                                 </div>
@@ -582,7 +582,7 @@ export default function EODReportPage() {
                     </form>
                 </div>
 
-                {/* RIGHT: History Panel — 2 columns */}
+                {/* RIGHT: History Panel â 2 columns */}
                 <div className="lg:col-span-2">
                     <div className="bg-white rounded-md border border-gray-200 sticky top-4">
                         {/* Month Navigator */}
@@ -647,7 +647,7 @@ export default function EODReportPage() {
                                                             {new Date(report.report_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                                                         </p>
                                                         <p className="text-xs text-gray-500">
-                                                            {report.task_updates?.length || 0} tasks • {report.work_hours || 0}h
+                                                            {report.task_updates?.length || 0} tasks â¢ {report.work_hours || 0}h
                                                         </p>
                                                     </div>
                                                 </div>
@@ -700,7 +700,7 @@ export default function EODReportPage() {
                                                                     <span className={`mt-0.5 flex-shrink-0 ${tu.task_status === 'COMPLETE' ? 'text-green-500' :
                                                                         tu.task_status === 'NOT START' ? 'text-red-500' : 'text-amber-500'
                                                                         }`}>
-                                                                        {tu.task_status === 'COMPLETE' ? '✅' : tu.task_status === 'NOT START' ? '❌' : '🔄'}
+                                                                        {tu.task_status === 'COMPLETE' ? 'â' : tu.task_status === 'NOT START' ? 'â' : 'ð'}
                                                                     </span>
                                                                     <div className="min-w-0">
                                                                         <p className="font-medium text-gray-900 truncate">
