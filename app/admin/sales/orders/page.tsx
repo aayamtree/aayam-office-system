@@ -346,6 +346,26 @@ export default function OrdersPage() {
     }
   };
 
+  // Source tag: shows which team/person brought in this job
+  const getSourceTag = (job: Job) => {
+    const role = (job as any).sales_person?.role;
+    const name = (job as any).sales_person?.full_name;
+    const clientSource = job.client?.source;
+    if (clientSource === 'marketing' || role === 'marketing') {
+      return { label: '🎯 Marketing', shortName: name, className: 'bg-violet-100 text-violet-700 border border-violet-200' };
+    }
+    if (role === 'admin') {
+      return { label: '🏢 Admin', shortName: name, className: 'bg-blue-50 text-blue-700 border border-blue-200' };
+    }
+    if (role === 'designer') {
+      return { label: '🎨 Design', shortName: name, className: 'bg-pink-50 text-pink-700 border border-pink-200' };
+    }
+    if (role === 'dispatch') {
+      return { label: '🚚 Dispatch', shortName: name, className: 'bg-cyan-50 text-cyan-700 border border-cyan-200' };
+    }
+    return { label: '📋 Direct', shortName: name, className: 'bg-gray-100 text-gray-500 border border-gray-200' };
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -489,9 +509,19 @@ export default function OrdersPage() {
                     {/* White Card Body */}
                     <div className="p-4">
                       {/* Client/Subtitle */}
-                      <p className="text-gray-500 text-sm mb-1">
-                        {job.client?.company || job.client?.name || 'Unknown'}
-                      </p>
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <p className="text-gray-500 text-sm">
+                          {job.client?.company || job.client?.name || 'Unknown'}
+                        </p>
+                        {(() => {
+                          const tag = getSourceTag(job);
+                          return (
+                            <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-md ${tag.className}`}>
+                              {tag.label}
+                            </span>
+                          );
+                        })()}
+                      </div>
 
                       {/* Category + Project Name */}
                       {getCategoryName(job) && (
@@ -588,6 +618,19 @@ export default function OrdersPage() {
                             <User className="w-3 h-3" /> {job.client?.name}
                           </div>
                         )}
+                        {(() => {
+                          const tag = getSourceTag(job);
+                          return (
+                            <div className="mt-1.5 flex items-center gap-1.5">
+                              <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-md ${tag.className}`}>
+                                {tag.label}
+                              </span>
+                              {tag.shortName && (
+                                <span className="text-xs text-gray-400">{tag.shortName}</span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="px-6 py-4 align-top">
                         <div className="font-bold text-gray-900">{formatCurrency(job.total_amount)}</div>
