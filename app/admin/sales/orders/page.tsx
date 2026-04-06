@@ -33,9 +33,11 @@ export default function OrdersPage() {
 
   const jobs = useMemo(() => {
     if (isMarketingView) {
+      // Marketing page: filter by client source regardless of viewer's role
       return allJobs.filter(job => job.client?.source === 'marketing');
     }
     if (profile?.role === 'marketing') {
+      // Sales page viewed by a marketing user: their own orders only
       return allJobs.filter(job =>
         job.sales_person_id === profile.id ||
         job.created_by === profile.id ||
@@ -580,10 +582,12 @@ export default function OrdersPage() {
                         <div className="text-xs text-gray-500 mt-1">{job.quantity} items</div>
                       </td>
                       <td className="px-6 py-4 align-top">
-                        <div className="font-medium text-gray-900">{job.client?.company || '-'}</div>
-                        <div className="text-sm text-gray-500 flex items-center gap-1">
-                          <User className="w-3 h-3" /> {job.client?.name || 'Unknown'}
-                        </div>
+                        <div className="font-medium text-gray-900">{job.client?.company || job.client?.name || '-'}</div>
+                        {job.client?.company && (
+                          <div className="text-sm text-gray-500 flex items-center gap-1">
+                            <User className="w-3 h-3" /> {job.client?.name}
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 align-top">
                         <div className="font-bold text-gray-900">{formatCurrency(job.total_amount)}</div>
@@ -702,7 +706,7 @@ export default function OrdersPage() {
                           onClick={() => { setFormData({ ...formData, productCategory: '' }); setShowCategoryDropdown(false); setCategorySearch(''); }}
                           className="w-full text-left px-4 py-2 text-sm text-gray-400 hover:bg-gray-50 transition-colors"
                         >
-                          â None â
+                          — None —
                         </button>
                         {filteredCategories.map((cat: any) => (
                           <button
@@ -754,7 +758,7 @@ export default function OrdersPage() {
                       <button
                         key={t}
                         type="button"
-                        onClick={() => setFormData({ ...formData, jobType: t })}
+                        onClick={() => setFormData({ ...formData, jobType: t, currentStage: (t === 'Print Only' ? 'printing' : 'new') as any })}
                         className={`flex-1 py-2.5 text-sm font-semibold rounded-md border-2 transition-all ${formData.jobType === t
                           ? t === 'Design Only' ? 'bg-violet-600 border-violet-600 text-white'
                             : t === 'Print Only' ? 'bg-blue-600 border-blue-600 text-white'
@@ -762,7 +766,7 @@ export default function OrdersPage() {
                           : 'border-gray-200 text-gray-500 hover:border-gray-400'
                           }`}
                       >
-                        {t === 'Design Only' ? 'ð¨' : t === 'Print Only' ? 'ð¨ï¸' : 'ð¨+ð¨ï¸'} {t}
+                        {t === 'Design Only' ? '🎨' : t === 'Print Only' ? '🖨️' : '🎨+🖨️'} {t}
                       </button>
                     ))}
                   </div>
@@ -802,7 +806,7 @@ export default function OrdersPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Rate / Pc (â¹)</label>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Rate / Pc (₹)</label>
                     <input
                       type="number"
                       min="0"
@@ -849,23 +853,50 @@ export default function OrdersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Stage</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Stage
+                    {formData.jobType === 'Print Only' && (
+                      <span className="ml-2 text-xs font-normal text-blue-600">🖨️ Auto-set to Printing</span>
+                    )}
+                  </label>
                   <select
                     value={formData.currentStage}
                     onChange={(e) => setFormData({ ...formData, currentStage: e.target.value as any })}
                     className="w-full px-4 py-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 bg-white"
                   >
-                    <option value="new">New</option>
-                    <option value="designing">Designing</option>
-                    <option value="printing">Printing</option>
-                    <option value="finishing">Finishing</option>
-                    <option value="ready">Ready</option>
-                    <option value="dispatched">Dispatched</option>
-                    <option value="delivered">Delivered</option>
+                    {formData.jobType === 'Print Only' ? (
+                      <>
+                        <option value="printing">Printing</option>
+                        <option value="file_check">File Check</option>
+                        <option value="pre_print_qc">Pre Print QC</option>
+                        <option value="quality_check">QC &amp; Dispatch</option>
+                        <option value="ready">Ready</option>
+                        <option value="dispatched">Dispatched</option>
+                        <option value="delivered">Delivered</option>
+                      </>
+                    ) : formData.jobType === 'Design Only' ? (
+                      <>
+                        <option value="new">New</option>
+                        <option value="designing">Designing</option>
+                        <option value="approval">Client Approval</option>
+                        <option value="delivered">Delivered</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="new">New</option>
+                        <option value="designing">Designing</option>
+                        <option value="approval">Client Approval</option>
+                        <option value="printing">Printing</option>
+                        <option value="quality_check">QC &amp; Dispatch</option>
+                        <option value="ready">Ready</option>
+                        <option value="dispatched">Dispatched</option>
+                        <option value="delivered">Delivered</option>
+                      </>
+                    )}
                   </select>
                 </div>
 
-                {/* IMP-4: Assigned To â shows for admin role */}
+                {/* IMP-4: Assigned To — shows for admin role */}
                 {(profile?.role === 'admin' || profile?.role === 'marketing') && teamMembers.length > 0 && (
                   <div className="col-span-1 sm:col-span-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
@@ -876,7 +907,7 @@ export default function OrdersPage() {
                       onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
                       className="w-full px-4 py-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 bg-white"
                     >
-                      <option value="">â Self (current user) â</option>
+                      <option value="">— Self (current user) —</option>
                       {teamMembers.map(m => (
                         <option key={m.id} value={m.id}>{m.full_name}</option>
                       ))}
@@ -931,7 +962,7 @@ export default function OrdersPage() {
 
                       {/* Amount */}
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Advance Amount (â¹)</label>
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Advance Amount (₹)</label>
                         <input
                           type="number"
                           min="0"
@@ -1037,11 +1068,11 @@ export default function OrdersPage() {
             <div className="p-4 space-y-6">
               <div className="flex items-center gap-2 md:gap-4 p-4 bg-gray-50 rounded-md border border-gray-100">
                 <div className="w-12 h-12 rounded-md bg-gray-900 flex items-center justify-center text-white text-section">
-                  {selectedJob.client?.company?.charAt(0) || 'C'}
+                  {(selectedJob.client?.company || selectedJob.client?.name)?.charAt(0)?.toUpperCase() || 'C'}
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900">{selectedJob.client?.company}</h3>
-                  <p className="text-sm text-gray-600">{selectedJob.client?.name}</p>
+                  <h3 className="font-bold text-gray-900">{selectedJob.client?.company || selectedJob.client?.name}</h3>
+                  {selectedJob.client?.company && <p className="text-sm text-gray-600">{selectedJob.client?.name}</p>}
                 </div>
               </div>
 
@@ -1058,7 +1089,7 @@ export default function OrdersPage() {
                     : (selectedJob as any).job_type === 'Print Only' ? 'bg-blue-100 text-blue-700'
                       : 'bg-gray-900 text-white'
                     }`}>
-                    {(selectedJob as any).job_type === 'Design Only' ? 'ð¨' : (selectedJob as any).job_type === 'Print Only' ? 'ð¨ï¸' : 'ð¨+ð¨ï¸'} {(selectedJob as any).job_type}
+                    {(selectedJob as any).job_type === 'Design Only' ? '🎨' : (selectedJob as any).job_type === 'Print Only' ? '🖨️' : '🎨+🖨️'} {(selectedJob as any).job_type}
                   </span>
                 )}
                 {selectedJob.amount_received > 0 && (
