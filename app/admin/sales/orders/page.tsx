@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
   Calendar, User, Package, IndianRupee, Truck, CheckCircle,
@@ -24,10 +24,17 @@ export default function OrdersPage() {
   const { jobs: allJobs, loading: jobsLoading, createJob, updateJob, deleteJob } = useJobs();
   const { categories, createCategory } = useProductCategories();
   const router = useRouter();
+  const pathname = usePathname();
   const confirm = useConfirm();
 
-  // Filter jobs for Marketing role
+  // Marketing > Orders: show only orders where client came through marketing (source = 'marketing')
+  // Sales > Orders: admins see all; marketing staff see only their own
+  const isMarketingView = pathname?.includes('/marketing/');
+
   const jobs = useMemo(() => {
+    if (isMarketingView) {
+      return allJobs.filter(job => job.client?.source === 'marketing');
+    }
     if (profile?.role === 'marketing') {
       return allJobs.filter(job =>
         job.sales_person_id === profile.id ||
@@ -36,16 +43,19 @@ export default function OrdersPage() {
       );
     }
     return allJobs;
-  }, [allJobs, profile]);
+  }, [allJobs, profile, isMarketingView]);
 
   const { clients: allClients } = useClients();
 
   const clients = useMemo(() => {
+    if (isMarketingView) {
+      return allClients.filter(c => c.source === 'marketing');
+    }
     if (profile?.role === 'marketing') {
       return allClients.filter(c => c.created_by === profile.id);
     }
     return allClients;
-  }, [allClients, profile]);
+  }, [allClients, profile, isMarketingView]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -386,8 +396,13 @@ export default function OrdersPage() {
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </Link>
           <div>
-            <h1 className="text-page-title text-gray-900 tracking-tight">Orders</h1>
-            <p className="text-sm text-gray-500 mt-1">{filteredJobs.length} orders found</p>
+            <h1 className="text-page-title text-gray-900 tracking-tight">
+              {isMarketingView ? 'Marketing Orders' : 'Orders'}
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {filteredJobs.length} orders found
+              {isMarketingView && ' · Showing only clients acquired through marketing'}
+            </p>
           </div>
         </div>
         <div className="hidden lg:block">
@@ -687,7 +702,7 @@ export default function OrdersPage() {
                           onClick={() => { setFormData({ ...formData, productCategory: '' }); setShowCategoryDropdown(false); setCategorySearch(''); }}
                           className="w-full text-left px-4 py-2 text-sm text-gray-400 hover:bg-gray-50 transition-colors"
                         >
-                          — None —
+                          â None â
                         </button>
                         {filteredCategories.map((cat: any) => (
                           <button
@@ -747,7 +762,7 @@ export default function OrdersPage() {
                           : 'border-gray-200 text-gray-500 hover:border-gray-400'
                           }`}
                       >
-                        {t === 'Design Only' ? '🎨' : t === 'Print Only' ? '🖨️' : '🎨+🖨️'} {t}
+                        {t === 'Design Only' ? 'ð¨' : t === 'Print Only' ? 'ð¨ï¸' : 'ð¨+ð¨ï¸'} {t}
                       </button>
                     ))}
                   </div>
@@ -787,7 +802,7 @@ export default function OrdersPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Rate / Pc (₹)</label>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Rate / Pc (â¹)</label>
                     <input
                       type="number"
                       min="0"
@@ -850,7 +865,7 @@ export default function OrdersPage() {
                   </select>
                 </div>
 
-                {/* IMP-4: Assigned To — shows for admin role */}
+                {/* IMP-4: Assigned To â shows for admin role */}
                 {(profile?.role === 'admin' || profile?.role === 'marketing') && teamMembers.length > 0 && (
                   <div className="col-span-1 sm:col-span-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
@@ -861,7 +876,7 @@ export default function OrdersPage() {
                       onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
                       className="w-full px-4 py-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 bg-white"
                     >
-                      <option value="">— Self (current user) —</option>
+                      <option value="">â Self (current user) â</option>
                       {teamMembers.map(m => (
                         <option key={m.id} value={m.id}>{m.full_name}</option>
                       ))}
@@ -916,7 +931,7 @@ export default function OrdersPage() {
 
                       {/* Amount */}
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Advance Amount (₹)</label>
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Advance Amount (â¹)</label>
                         <input
                           type="number"
                           min="0"
@@ -1043,7 +1058,7 @@ export default function OrdersPage() {
                     : (selectedJob as any).job_type === 'Print Only' ? 'bg-blue-100 text-blue-700'
                       : 'bg-gray-900 text-white'
                     }`}>
-                    {(selectedJob as any).job_type === 'Design Only' ? '🎨' : (selectedJob as any).job_type === 'Print Only' ? '🖨️' : '🎨+🖨️'} {(selectedJob as any).job_type}
+                    {(selectedJob as any).job_type === 'Design Only' ? 'ð¨' : (selectedJob as any).job_type === 'Print Only' ? 'ð¨ï¸' : 'ð¨+ð¨ï¸'} {(selectedJob as any).job_type}
                   </span>
                 )}
                 {selectedJob.amount_received > 0 && (
