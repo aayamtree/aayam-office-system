@@ -36,12 +36,12 @@ export function useSupabaseQuery<T>(
   const stablePageSize = options?.pageSize ?? null;
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Key uses stable primitives — never object references
+  // Key uses stable primitives â never object references
   const key = isSupabaseConfigured()
     ? [tableName, stableFilter, stableOrderBy, stableSelect, stableLimit, stablePage, stablePageSize]
     : null;
 
-  // Simple fetcher — closes over stable string locals, NOT over the `options` object.
+  // Simple fetcher â closes over stable string locals, NOT over the `options` object.
   // `options` itself is a new reference every render, but the locals above are
   // recalculated from it and primitives/strings don't change reference.
   const fetcher = async () => {
@@ -88,20 +88,20 @@ export function useSupabaseQuery<T>(
     dedupingInterval: 30000,
     keepPreviousData: true,
     fallbackData: [] as T[],
-    // Never auto-retry on error — our fetcher already returns [] on error.
+    // Never auto-retry on error â our fetcher already returns [] on error.
     // Without this, SWR retries with exponential backoff that floods the network.
     onErrorRetry: () => { },
   });
 
 
   // =============================================
-  // REALTIME SUBSCRIPTION — Auto-refetch on changes
+  // REALTIME SUBSCRIPTION â Auto-refetch on changes
   // ONLY for tables where OTHER users' changes need instant visibility.
-  // All other tables use SWR's mutate() after writes — no realtime needed.
-  // Reduced from 10 → 2 to save ~8 WebSocket connections per component on free tier.
+  // All other tables use SWR's mutate() after writes â no realtime needed.
+  // Reduced from 10 â 2 to save ~8 WebSocket connections per component on free tier.
   // =============================================
   const REALTIME_TABLES = new Set([
-    // PERF: Removed 'jobs' — saves 1 WebSocket connection. Jobs sync via SWR mutate() on writes.
+    // PERF: Removed 'jobs' â saves 1 WebSocket connection. Jobs sync via SWR mutate() on writes.
     'design_tasks',  // Designers need to see new task assignments instantly
   ]);
 
@@ -292,7 +292,7 @@ export function useDesigners() {
     orderBy: { column: 'full_name', ascending: true }
   });
 
-  // Map full_name → name for backward compat
+  // Map full_name â name for backward compat
   // Filter: must have a real name AND not be a placeholder like "Designer 5", "Designer 6" etc.
   const designers = (data || [])
     .filter((p: any) => {
@@ -361,7 +361,7 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
   const { data, loading, error, refetch } = useSupabaseQuery<Job>('jobs', {
     select: options?.select || defaultSelect,
     orderBy: { column: 'created_at', ascending: false },
-    // PERF: No default limit — callers use pagination via page/pageSize or explicit limit
+    // PERF: No default limit â callers use pagination via page/pageSize or explicit limit
     ...options
   });
 
@@ -399,7 +399,7 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
           userId: profile.id,
           sourceType: 'job',
           sourceId: data.id,
-          title: `📋 Deadline: ${data.project_name}`,
+          title: `ð Deadline: ${data.project_name}`,
           date: data.client_deadline,
           description: `Job ${jobNumber} deadline`,
           visibility: 'team',
@@ -428,7 +428,7 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
           userId: profile.id,
           sourceType: 'job',
           sourceId: id,
-          title: `📋 Deadline: ${data.project_name}`,
+          title: `ð Deadline: ${data.project_name}`,
           date: updates.client_deadline,
           description: `Job ${data.job_number} deadline`,
           visibility: 'team',
@@ -504,7 +504,7 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
         .eq('id', id);
 
       if (count && count > 0) {
-        // Row still exists — delete was blocked (FK constraint or RLS)
+        // Row still exists â delete was blocked (FK constraint or RLS)
         return { error: 'This order has linked invoice or dispatch records. Delete those first, then try again.' };
       }
       refetch();
@@ -714,7 +714,7 @@ export function useLeads() {
         outstanding_balance: 0,
         assigned_to: lead.assigned_to || userId,
         created_by: userId,
-        // ✅ Mark as marketing-sourced with full traceability
+        // â Mark as marketing-sourced with full traceability
         source: 'marketing',
         assigned_marketing_user_id: lead.assigned_to || userId,
         source_lead_id: leadId,
@@ -966,7 +966,7 @@ export function useDesignTasks() {
       .single();
 
     if (!error) {
-      // Auto-progress: design completed → job moves to approval
+      // Auto-progress: design completed â job moves to approval
       if (updates.status === 'completed' && data?.job_id) {
         await autoProgressJob(data.job_id, 'design_completed');
       }
@@ -1077,7 +1077,7 @@ export function useDispatches() {
       .single();
 
     if (!error && data) {
-      // Auto-progress: dispatch created → job moves to dispatched
+      // Auto-progress: dispatch created â job moves to dispatched
       if (dispatch.job_id) {
         await autoProgressJob(dispatch.job_id, 'dispatch_created');
       }
@@ -1155,7 +1155,7 @@ const EMPTY_STATS = {
 
 type DashboardStats = typeof EMPTY_STATS;
 
-// Standalone fetcher — shared by all callers via SWR deduplication
+// Standalone fetcher â shared by all callers via SWR deduplication
 // PERF: Uses parallel lightweight queries instead of single heavy RPC
 async function fetchDashboardStats(): Promise<DashboardStats> {
   if (!isSupabaseConfigured()) return EMPTY_STATS;
@@ -1164,13 +1164,13 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
   const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
   const startOfYear = new Date(new Date().getFullYear(), 0, 1).toISOString();
 
-  // Safe query wrapper — if any single query fails, return fallback
+  // Safe query wrapper â if any single query fails, return fallback
   const safe = async <T>(fn: () => PromiseLike<T>, fallback: T): Promise<T> => {
     try { return await fn(); } catch { return fallback; }
   };
 
   try {
-    // ── GROUP 1: Core KPIs (all run in parallel) ──
+    // ââ GROUP 1: Core KPIs (all run in parallel) ââ
     const [
       clientsRes,
       activeJobsRes,
@@ -1193,7 +1193,7 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
     const pendingPayments = (pendingRes.data || []).reduce((sum: number, j: any) =>
       sum + ((j.total_amount || 0) - (j.amount_received || 0)), 0);
 
-    // ── GROUP 2: Pipeline + Focus + Alerts (parallel) ──
+    // ââ GROUP 2: Pipeline + Focus + Alerts (parallel) ââ
     const [
       pipelineRes,
       pipelineOverdueRes,
@@ -1240,7 +1240,7 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
       pipelineOverdue[s] = (pipelineOverdue[s] || 0) + 1;
     });
 
-    // ── GROUP 3: Sales Performance (non-blocking, can be slow) ──
+    // ââ GROUP 3: Sales Performance (non-blocking, can be slow) ââ
     let salesPerformance: { month: string; value: number; active?: boolean }[] = [];
     try {
       const now = new Date();
@@ -1319,8 +1319,8 @@ export function useDashboardStats() {
     fetchDashboardStats,
     {
       revalidateOnFocus: false,
-      dedupingInterval: 30000,     // 30s dedup — all callers share ONE fetch
-      // PERF: No refreshInterval — data refreshes on navigation. Saves API calls.
+      dedupingInterval: 30000,     // 30s dedup â all callers share ONE fetch
+      // PERF: No refreshInterval â data refreshes on navigation. Saves API calls.
       keepPreviousData: true,
       fallbackData: EMPTY_STATS,
     }
@@ -1335,7 +1335,7 @@ export function useDashboardStats() {
 export function useQuotations() {
   const { user, profile } = useAuth();
 
-  // Fetch all quotations — role-based filtering is done in the page
+  // Fetch all quotations â role-based filtering is done in the page
   // (marketing: created_by = me OR lead.assigned_to = me)
   const { data, loading, error, refetch } = useSupabaseQuery<Quotation>('quotations', {
     select: '*, client:clients(*), lead:leads(*), items:quotation_items(*)',
@@ -1359,7 +1359,7 @@ export function useQuotations() {
         'Created Quotation',
         'Sales',
         data.id,
-        `Created quotation ${data.quote_number} for ₹${quotation.total_amount?.toLocaleString() || 0}`,
+        `Created quotation ${data.quote_number} for â¹${quotation.total_amount?.toLocaleString() || 0}`,
         undefined, user?.id
       );
       refetch();
@@ -1703,7 +1703,7 @@ export function useNotes() {
 export function useDashboardNotes() {
   const { profile } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
-  const [loading, setLoading] = useState(false); // start false — renders instantly, populates silently
+  const [loading, setLoading] = useState(false); // start false â renders instantly, populates silently
 
   const fetchNotes = useCallback(async () => {
     if (!profile?.id) { setLoading(false); return; }
@@ -1746,7 +1746,7 @@ export function useDashboardNotes() {
   const createNote = async (note: { title?: string; content: string; color?: string; is_pinned?: boolean; tagged_users?: string[] }) => {
     if (!profile?.id) return { error: 'User not loaded yet. Please wait and try again.' };
 
-    // Build insert object — only include columns that exist
+    // Build insert object â only include columns that exist
     const insertData: Record<string, any> = {
       content: note.content,
       user_id: profile.id,
@@ -2159,7 +2159,7 @@ export function usePaymentsReceived() {
       return { data: rpcResult, error: null };
     }
 
-    // RPC failed (e.g. function does not exist) — fall back to direct insert
+    // RPC failed (e.g. function does not exist) â fall back to direct insert
     console.warn('[payments_received] RPC failed, using direct insert:', rpcError.message);
     const { data: directResult, error: directError } = await supabase
       .from('payments_received')
@@ -2279,7 +2279,7 @@ export function useActivityLogs(limit = 100) {
 
       if (err) { setError(err.message); }
       else {
-        // Map profiles.full_name → user_name for activity page compatibility
+        // Map profiles.full_name â user_name for activity page compatibility
         setLogs((data || []).map((l: any) => ({
           ...l,
           user_name: l.profiles?.full_name || null,
@@ -2313,7 +2313,7 @@ export function useJobChecklists() {
 // PERSONAL CALENDAR HOOK
 // =============================================
 export function useCalendarEvents(startDate?: string, endDate?: string) {
-  // Build query conditions — DB column is `start_time` (TIMESTAMP)
+  // Build query conditions â DB column is `start_time` (TIMESTAMP)
   const conditions: any[] = [];
 
   if (startDate) {
@@ -2382,7 +2382,7 @@ export function useCalendarEvents(startDate?: string, endDate?: string) {
         tagged_user_id: userId
       }));
 
-      // Fire-and-forget — don't fail event creation if mentions table is missing
+      // Fire-and-forget â don't fail event creation if mentions table is missing
       supabase.from('calendar_event_mentions').insert(mentions).then(({ error }) => {
         if (error) console.warn('Could not create event mentions:', error.message);
       });
@@ -2482,12 +2482,17 @@ export function useDailyReports(userId?: string, dateFilter?: { start?: string; 
   const fetchMyTodayTasks = async (currentUserId: string) => {
     if (!isSupabaseConfigured()) return { data: [], error: null };
 
-    // Get all jobs assigned to user that are NOT completed/delivered/cancelled
+    // Only show jobs updated in the last 14 days — avoids flooding EOD form with stale tasks
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 14);
+    const cutoffStr = cutoff.toISOString().split('T')[0];
+
     const { data: jobs, error } = await supabase
       .from('jobs')
       .select('*, client:clients(*)')
       .eq('designer_id', currentUserId)
       .not('current_stage', 'in', '(completed,delivered,cancelled)')
+      .gte('updated_at', cutoffStr)
       .order('client_deadline', { ascending: true });
 
     return { data: jobs || [], error: error?.message };
@@ -2814,12 +2819,12 @@ export function useActivityFeed(limit: number = 20) {
   return { activities, loading };
 }
 
-// NOTE: useUserNotes removed — user_notes table was dropped.
-// Dashboard sticky notes use useDashboardNotes() → notes table instead.
+// NOTE: useUserNotes removed â user_notes table was dropped.
+// Dashboard sticky notes use useDashboardNotes() â notes table instead.
 
 // =============================================
 // COMMISSION HOOK
-// Reads commission data directly from jobs table — no separate table.
+// Reads commission data directly from jobs table â no separate table.
 // commission_status: 'none' | 'eligible' | 'approved' | 'paid'
 // =============================================
 export function useCommissions(filterUserId?: string) {
@@ -2875,7 +2880,7 @@ export function useCommissions(filterUserId?: string) {
 
   useEffect(() => { fetchCommissions(); }, [fetchCommissions]);
 
-  // Admin: approve — set final % and recalculate amount
+  // Admin: approve â set final % and recalculate amount
   const approveCommission = async (jobId: string, commissionPercentage: number, gstPercentage: number = 18) => {
     if (!isSupabaseConfigured()) return { error: 'DB not configured' };
     const { data: job } = await supabase.from('jobs').select('total_amount').eq('id', jobId).single();
