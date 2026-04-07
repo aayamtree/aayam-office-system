@@ -3,12 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { useDailyReports, useWorkLogs } from '@/lib/hooks';
-import { WorkLog } from '@/lib/work-logger';
+import { useDailyReports, useWorkLogs, useJobs } from '@/lib/hooks';
 import { toast } from '@/lib/toast';
 import {
     Clock, CheckCircle, AlertCircle, ChevronDown, ChevronRight, ChevronLeft,
-    Calendar, Loader2, Send, FileText, History, Lock, Pencil
+    Calendar, Loader2, Send, FileText, History, Lock, Pencil, AlertTriangle
 } from 'lucide-react';
 import Link from 'next/link';
 import ProductChecklistCard from '@/components/eod/ProductChecklistCard';
@@ -16,14 +15,23 @@ import ProductChecklistCard from '@/components/eod/ProductChecklistCard';
 export default function EODReportPage() {
     const { profile } = useAuth();
     const router = useRouter();
-    const { fetchMyTodayTasks, submitEODReport, getMyReports, fetchProductChecklist } = useDailyReports();
+    const {
+        fetchMyTodayTasks, submitEODReport, getMyReports, fetchProductChecklist,
+        loadTodayTaskResponses, loadLastTaskResponsesForUser, submitPastEODEdit
+    } = useDailyReports();
+    const { updateJobStage } = useJobs();
 
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [todayTasks, setTodayTasks] = useState<any[]>([]);
     const [pastReports, setPastReports] = useState<any[]>([]);
+    const [pastDayReports, setPastDayReports] = useState<any[]>([]);
     const [todayReport, setTodayReport] = useState<any>(null);
     const [expandedReport, setExpandedReport] = useState<string | null>(null);
+    const [expandedPastDay, setExpandedPastDay] = useState<string | null>(null);
+    const [editingPastCard, setEditingPastCard] = useState<string | null>(null);
+    const [pastCardEdits, setPastCardEdits] = useState<Record<string, any>>({});
+    const [savingPastCard, setSavingPastCard] = useState<string | null>(null);
     const [autoLogCount, setAutoLogCount] = useState(0);
 
     // History month navigation
@@ -41,7 +49,7 @@ export default function EODReportPage() {
     const [tomorrowPlan, setTomorrowPlan] = useState('');
     const [workHours, setWorkHours] = useState<number>(8);
 
-    // Auto work logs â pre-populate EOD notes
+    // Auto work logs – pre-populate EOD notes
     const { todaySummary: workLogSummary, logs: workLogs } = useWorkLogs(profile?.id);
 
     // Task updates state
@@ -57,6 +65,8 @@ export default function EODReportPage() {
         print_checklist_done: boolean;
         client_comments: string;
         expanded: boolean;
+        editMode: boolean;   // false = read-only card; true = show edit form
+        _saved_id?: string;
     }>>({});
 
     // Check if it's EOD time (6-7 PM)
@@ -64,7 +74,7 @@ export default function EODReportPage() {
     const isEODTime = currentHour >= 18 && currentHour < 19;
     const isPastEODTime = currentHour >= 19;
 
-    // Admins should never fill EOD â redirect them to the admin view
+    // Admins should never fill EOD – redirect to admin view
     useEffect(() => {
         if (profile?.role === 'admin') {
             router.replace('/admin/eod-report/admin-view');
@@ -95,7 +105,7 @@ export default function EODReportPage() {
             if (!tasksError && tasks) {
                 setTodayTasks(tasks);
 
-                // Initialize task updates
+                // Build default task update state (blank, editMode on for new tasks)
                 const initialUpdates: any = {};
                 tasks.forEach((task: any) => {
                     initialUpdates[task.id] = {
@@ -109,27 +119,73 @@ export default function EODReportPage() {
                         print_file_ready: false,
                         print_checklist_done: false,
                         client_comments: '',
-                        expanded: true
+                        expanded: true,
+                        editMode: true   // default open for new tasks
                     };
                 });
-                setTaskUpdates(initialUpdates);
-            }
 
-            // Check if today's report exists
-            const { data: reports } = await getMyReports(profile.id);
-            if (reports) {
-                const existingReport = reports.find((r: any) => r.report_date === today);
-                if (existingReport) {
-                    setTodayReport(existingReport);
-                    setOverallNotes(existingReport.overall_notes || '');
-                    setBlockers(existingReport.blockers || '');
-                    setTomorrowPlan(existingReport.tomorrow_plan || '');
-                    setWorkHours(existingReport.work_hours || 8);
-                } else if (workLogSummary) {
-                    // No existing report â pre-populate from auto-logged work activities
-                    setOverallNotes(workLogSummary);
-                    setAutoLogCount(workLogs.length);
+                // Helper: apply a saved response row onto initialUpdates with editMode=false
+                const applySaved = (taskId: string, saved: any) => {
+                    const hasMeaningfulData = saved.status_update || saved.time_spent > 0;
+                    initialUpdates[taskId] = {
+                        task_status: saved.task_status || 'START WORK',
+                        status_update: saved.status_update || '',
+                        completion_percentage: saved.completion_percentage || 0,
+                        time_spent: saved.time_spent || 0,
+                        product_category: initialUpdates[taskId]?.product_category || '',
+                        checklist_items: saved.checklist || [],
+                        client_approval_received: saved.client_approval_received || false,
+                        print_file_ready: saved.print_file_ready || false,
+                        print_checklist_done: saved.print_checklist_done || false,
+                        client_comments: saved.client_comments || '',
+                        expanded: true,
+                        editMode: !hasMeaningfulData,  // show read-only card if data exists
+                        _saved_id: saved.id
+                    };
+                };
+
+                // Check if today's report already exists
+                const { data: reports } = await getMyReports(profile.id);
+                if (reports) {
+                    const existingReport = reports.find((r: any) => r.report_date === today);
+                    if (existingReport) {
+                        setTodayReport(existingReport);
+                        setOverallNotes(existingReport.overall_notes || '');
+                        setBlockers(existingReport.blockers || '');
+                        setTomorrowPlan(existingReport.tomorrow_plan || '');
+                        setWorkHours(existingReport.work_hours || 8);
+
+                        // Pre-populate task form with today's saved responses
+                        const savedResponses = await loadTodayTaskResponses(existingReport.id);
+                        tasks.forEach((task: any) => {
+                            const saved = savedResponses[task.id];
+                            if (saved) applySaved(task.id, saved);
+                        });
+
+                        // Load past day reports (up to 7 previous days)
+                        const pastOnly = reports.filter((r: any) => r.report_date !== today);
+                        setPastDayReports(pastOnly.slice(0, 7));
+                    } else {
+                        // No report for today yet — carry forward LAST saved state for each task
+                        // so designers don't have to re-type the same details every morning.
+                        const jobIds = tasks.map((t: any) => t.id);
+                        const lastResponses = await loadLastTaskResponsesForUser(profile.id, jobIds);
+                        tasks.forEach((task: any) => {
+                            const last = lastResponses[task.id];
+                            if (last) applySaved(task.id, last);
+                        });
+
+                        // Pre-populate overall notes from work logs
+                        if (workLogSummary) {
+                            setOverallNotes(workLogSummary);
+                            setAutoLogCount(workLogs.length);
+                        }
+                        const pastOnly = reports.filter((r: any) => r.report_date !== today);
+                        setPastDayReports(pastOnly.slice(0, 7));
+                    }
                 }
+
+                setTaskUpdates(initialUpdates);
             }
         } catch (e: any) {
             toast.error('Failed to load tasks: ' + (e.message || 'Unknown error'));
@@ -190,6 +246,13 @@ export default function EODReportPage() {
         }));
     };
 
+    const setTaskEditMode = (taskId: string, editMode: boolean) => {
+        setTaskUpdates(prev => ({
+            ...prev,
+            [taskId]: { ...prev[taskId], editMode }
+        }));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!profile?.id) return;
@@ -197,11 +260,9 @@ export default function EODReportPage() {
         setSubmitting(true);
         try {
             const updates = Object.keys(taskUpdates)
-                // Save ALL tasks — status + time_spent matter even if no text written
                 .map(taskId => ({
                     job_id: taskId,
                     task_status: taskUpdates[taskId].task_status,
-                    // product_category is local-only (used for checklist fetch) â NOT a DB column
                     status_update: taskUpdates[taskId].status_update,
                     completion_percentage: taskUpdates[taskId].completion_percentage,
                     time_spent: taskUpdates[taskId].time_spent,
@@ -211,7 +272,6 @@ export default function EODReportPage() {
                     print_checklist_done: taskUpdates[taskId].print_checklist_done,
                     client_comments: taskUpdates[taskId].client_comments
                 }));
-
 
             const { error } = await submitEODReport({
                 user_id: profile.id,
@@ -226,7 +286,27 @@ export default function EODReportPage() {
             if (error) {
                 toast.error('Error submitting report: ' + String(error));
             } else {
-                toast.success('EOD Report submitted successfully!');
+                // Auto-advance stage: jobs marked COMPLETE while in 'designing' move to 'approval'
+                // so they drop off the designer's daily task list automatically.
+                const completedTasks = todayTasks.filter(
+                    (task: any) =>
+                        taskUpdates[task.id]?.task_status === 'COMPLETE' &&
+                        task.current_stage === 'designing'
+                );
+                if (completedTasks.length > 0) {
+                    await Promise.all(
+                        completedTasks.map((task: any) =>
+                            updateJobStage(task.id, 'approval', 'Design completed via EOD report')
+                        )
+                    );
+                    if (completedTasks.length === 1) {
+                        toast.success(`✅ "${completedTasks[0].project_name}" moved to Approval stage`);
+                    } else {
+                        toast.success(`✅ ${completedTasks.length} jobs moved to Approval stage`);
+                    }
+                } else {
+                    toast.success('EOD Report submitted successfully!');
+                }
                 await loadData();
                 await loadHistory();
             }
@@ -234,6 +314,65 @@ export default function EODReportPage() {
             toast.error('Error: ' + (e.message || 'Unknown error'));
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    // Open edit mode for a past EOD task card
+    const handlePastCardEdit = (taskUpdate: any) => {
+        setEditingPastCard(taskUpdate.id);
+        setPastCardEdits(prev => ({
+            ...prev,
+            [taskUpdate.id]: {
+                task_status: taskUpdate.task_status || 'START WORK',
+                status_update: taskUpdate.status_update || '',
+                time_spent: taskUpdate.time_spent || 0,
+                client_comments: taskUpdate.client_comments || ''
+            }
+        }));
+    };
+
+    // Save an edited past EOD card with full audit logging
+    const handlePastCardSave = async (report: any, taskUpdate: any) => {
+        if (!profile?.id) return;
+        const edits = pastCardEdits[taskUpdate.id];
+        if (!edits) return;
+
+        const changes: Array<{ field: string; old_value: string | null; new_value: string | null }> = [];
+        const fields = ['task_status', 'status_update', 'time_spent', 'client_comments'] as const;
+        for (const field of fields) {
+            const oldVal = String(taskUpdate[field] ?? '');
+            const newVal = String(edits[field] ?? '');
+            if (oldVal !== newVal) {
+                changes.push({ field, old_value: oldVal || null, new_value: newVal || null });
+            }
+        }
+
+        if (changes.length === 0) {
+            setEditingPastCard(null);
+            return;
+        }
+
+        setSavingPastCard(taskUpdate.id);
+        try {
+            const { error } = await submitPastEODEdit({
+                report_id: report.id,
+                task_update_id: taskUpdate.id,
+                job_id: taskUpdate.job_id,
+                original_date: report.report_date,
+                user_id: profile.id,
+                user_name: profile.full_name || 'Unknown',
+                changes,
+                updatedFields: edits
+            });
+            if (error) {
+                toast.error('Failed to save edit: ' + error);
+            } else {
+                toast.success('Past EOD updated. Admin has been notified.');
+                setEditingPastCard(null);
+                await loadData();
+            }
+        } finally {
+            setSavingPastCard(null);
         }
     };
 
@@ -273,7 +412,7 @@ export default function EODReportPage() {
                 <div>
                     <h1 className="text-xl lg:text-page-title text-gray-900">End of Day Report</h1>
                     <p className="text-sm text-gray-500 mt-1">
-                        {todayReport ? 'â Submitted Today' : 'â° Pending Submission'} | {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                        {todayReport ? '✓ Submitted Today' : '⏰ Pending Submission'} | {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
                 </div>
                 {profile?.role === 'admin' && (
@@ -281,7 +420,7 @@ export default function EODReportPage() {
                         href="/admin/eod-report/admin-view"
                         className="px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-semibold hover:bg-gray-800 transition-colors shadow-sm"
                     >
-                        Admin Dashboard â
+                        Admin Dashboard →
                     </Link>
                 )}
             </div>
@@ -320,17 +459,31 @@ export default function EODReportPage() {
                 </div>
             )}
 
-            {/* Main 2-Column Layout: Form (left) + History (right) */}
+            {/* Main 2-Column Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
 
-                {/* LEFT: EOD Form â 3 columns */}
+                {/* LEFT: EOD Form */}
                 <div className="lg:col-span-3">
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Tasks Section */}
                         <div className="bg-white rounded-md border border-gray-200 p-4">
-                            <div className="flex items-center gap-2 mb-3">
-                                <span className="text-[10px] font-bold tracking-widest uppercase text-amber-600 bg-amber-50 border border-amber-100 rounded px-2 py-0.5">Step 1</span>
-                                <h2 className="text-section text-gray-900">Task Updates ({todayTasks.length})</h2>
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-bold tracking-widest uppercase text-amber-600 bg-amber-50 border border-amber-100 rounded px-2 py-0.5">Step 1</span>
+                                    <h2 className="text-section text-gray-900">Task Updates ({todayTasks.length})</h2>
+                                </div>
+                                {todayTasks.length > 0 && (() => {
+                                    const needsEdit = Object.values(taskUpdates).filter((t: any) => t.editMode).length;
+                                    return needsEdit > 0 ? (
+                                        <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-0.5 font-medium">
+                                            {needsEdit} need update
+                                        </span>
+                                    ) : (
+                                        <span className="text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-0.5 font-medium">
+                                            ✓ All filled
+                                        </span>
+                                    );
+                                })()}
                             </div>
 
                             {todayTasks.length === 0 ? (
@@ -341,8 +494,10 @@ export default function EODReportPage() {
                             ) : (
                                 <div className="space-y-3">
                                     {todayTasks.map(task => (
-                                        <div key={task.id} className="border border-gray-200 rounded-md overflow-hidden">
-                                            {/* Task Header */}
+                                        <div key={task.id} className={`border rounded-md overflow-hidden ${
+                                            taskUpdates[task.id]?.editMode ? 'border-amber-300 shadow-sm' : 'border-gray-200'
+                                        }`}>
+                                            {/* Task Header — always visible */}
                                             <div
                                                 className="flex items-center justify-between p-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
                                                 onClick={() => toggleTaskExpanded(task.id)}
@@ -355,9 +510,22 @@ export default function EODReportPage() {
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-xs">
-                                                    <span className="text-gray-500">Stage: <span className="font-medium text-gray-900">{task.current_stage}</span></span>
+                                                    {/* Status badge */}
+                                                    {!taskUpdates[task.id]?.editMode && (
+                                                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                                            taskUpdates[task.id]?.task_status === 'COMPLETE'
+                                                                ? 'bg-green-100 text-green-700'
+                                                                : taskUpdates[task.id]?.task_status === 'NOT START'
+                                                                    ? 'bg-gray-100 text-gray-500'
+                                                                    : 'bg-blue-100 text-blue-700'
+                                                        }`}>
+                                                            {taskUpdates[task.id]?.task_status === 'COMPLETE' ? '✅ Done' :
+                                                             taskUpdates[task.id]?.task_status === 'NOT START' ? '⬜ Not Started' : '🔄 In Progress'}
+                                                        </span>
+                                                    )}
+                                                    <span className="text-gray-500 hidden sm:inline">Stage: <span className="font-medium text-gray-900">{task.current_stage}</span></span>
                                                     {task.client_deadline && (
-                                                        <span className="flex items-center gap-1 text-gray-500">
+                                                        <span className="flex items-center gap-1 text-gray-500 hidden sm:flex">
                                                             <Calendar className="w-3 h-3" />
                                                             {new Date(task.client_deadline).toLocaleDateString()}
                                                         </span>
@@ -365,127 +533,167 @@ export default function EODReportPage() {
                                                 </div>
                                             </div>
 
-                                            {/* Task Update Form */}
                                             {taskUpdates[task.id]?.expanded && (
-                                                <div className="p-3 space-y-3 bg-white">
-                                                    {/* Row: Status + Time in one line */}
-                                                    <div className="grid grid-cols-3 gap-3">
-                                                        <div className="col-span-2">
-                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
-                                                            <select
-                                                                value={taskUpdates[task.id]?.task_status || 'START WORK'}
-                                                                onChange={(e) => handleStatusChange(task.id, e.target.value as any)}
-                                                                className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm font-medium"
-                                                            >
-                                                                <option value="NOT START">â Not Started</option>
-                                                                <option value="START WORK">ð In Progress</option>
-                                                                <option value="COMPLETE">â Completed</option>
-                                                            </select>
+                                                !taskUpdates[task.id]?.editMode ? (
+                                                    /* ── READ-ONLY SUMMARY CARD ── */
+                                                    <div className="px-3 py-2.5 bg-white flex items-start justify-between gap-3">
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-3 text-xs text-gray-500 mb-1">
+                                                                <span className="font-medium text-gray-700">
+                                                                    {taskUpdates[task.id]?.time_spent > 0 ? `${taskUpdates[task.id].time_spent}h` : '—'}
+                                                                </span>
+                                                                {taskUpdates[task.id]?.client_approval_received && <span className="text-green-600">✓ Client approved</span>}
+                                                                {taskUpdates[task.id]?.print_file_ready && <span className="text-blue-600">✓ Print ready</span>}
+                                                            </div>
+                                                            {taskUpdates[task.id]?.status_update ? (
+                                                                <p className="text-sm text-gray-700 truncate">{taskUpdates[task.id].status_update}</p>
+                                                            ) : (
+                                                                <p className="text-xs text-gray-400 italic">No notes — carried from last session</p>
+                                                            )}
                                                         </div>
-                                                        <div>
-                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Time (hrs)</label>
-                                                            <input
-                                                                type="number"
-                                                                step="0.5"
-                                                                min="0"
-                                                                value={taskUpdates[task.id]?.time_spent || 0}
-                                                                onChange={(e) => handleTaskUpdate(task.id, 'time_spent', parseFloat(e.target.value))}
-                                                                className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
-                                                            />
-                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setTaskEditMode(task.id, true)}
+                                                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-amber-50 hover:text-amber-700 border border-gray-200 hover:border-amber-200 rounded-md transition-colors flex-shrink-0"
+                                                        >
+                                                            <Pencil className="w-3 h-3" /> Edit
+                                                        </button>
                                                     </div>
+                                                ) : (
+                                                    /* ── EDIT FORM ── */
+                                                    <div className="p-3 space-y-3 bg-white">
+                                                        {/* Cancel edit button (only for tasks that have existing data) */}
+                                                        {taskUpdates[task.id]?._saved_id && (
+                                                            <div className="flex justify-end">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setTaskEditMode(task.id, false)}
+                                                                    className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                                                                >
+                                                                    ✕ Cancel edit
+                                                                </button>
+                                                            </div>
+                                                        )}
 
-                                                    {/* Status Update */}
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                                                            What did you work on? <span className="text-red-500">*</span>
-                                                        </label>
-                                                        <textarea
-                                                            rows={2}
-                                                            value={taskUpdates[task.id]?.status_update || ''}
-                                                            onChange={(e) => handleTaskUpdate(task.id, 'status_update', e.target.value)}
-                                                            placeholder="Quick update on this task..."
-                                                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm"
-                                                        />
-                                                    </div>
-
-                                                    {/* Only show completion % + checklist + quick checks when COMPLETE */}
-                                                    {taskUpdates[task.id]?.task_status === 'COMPLETE' && (
-                                                        <div className="space-y-3 border-t border-gray-100 pt-3">
-                                                            {/* Completion % */}
+                                                        {/* Row: Status + Time */}
+                                                        <div className="grid grid-cols-3 gap-3">
+                                                            <div className="col-span-2">
+                                                                <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                                                                <select
+                                                                    value={taskUpdates[task.id]?.task_status || 'START WORK'}
+                                                                    onChange={(e) => handleStatusChange(task.id, e.target.value as any)}
+                                                                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm font-medium"
+                                                                >
+                                                                    <option value="NOT START">⬜ Not Started</option>
+                                                                    <option value="START WORK">🔄 In Progress</option>
+                                                                    <option value="COMPLETE">✅ Completed</option>
+                                                                </select>
+                                                            </div>
                                                             <div>
-                                                                <label className="block text-xs font-medium text-gray-700 mb-1">Completion %</label>
+                                                                <label className="block text-xs font-medium text-gray-700 mb-1">Time (hrs)</label>
                                                                 <input
                                                                     type="number"
+                                                                    step="0.5"
                                                                     min="0"
-                                                                    max="100"
-                                                                    value={taskUpdates[task.id]?.completion_percentage || 100}
-                                                                    onChange={(e) => handleTaskUpdate(task.id, 'completion_percentage', parseInt(e.target.value))}
-                                                                    className="w-full max-w-[120px] px-3 py-2 border border-gray-200 rounded-md text-sm"
-                                                                />
-                                                            </div>
-
-                                                            {/* Dynamic Checklist */}
-                                                            {taskUpdates[task.id]?.checklist_items && taskUpdates[task.id].checklist_items.length > 0 && (
-                                                                <div>
-                                                                    <ProductChecklistCard
-                                                                        productCategory={task.product_category || task.job_type || 'Other'}
-                                                                        taskStatus={taskUpdates[task.id].task_status}
-                                                                        checklistItems={taskUpdates[task.id].checklist_items}
-                                                                        onUpdate={(items) => handleTaskUpdate(task.id, 'checklist_items', items)}
-                                                                        category="design"
-                                                                    />
-                                                                </div>
-                                                            )}
-
-                                                            {/* Quick Checks â only on COMPLETE */}
-                                                            <div className="space-y-1">
-                                                                <label className="block text-xs font-medium text-gray-700">Quick Checks</label>
-                                                                <div className="flex flex-wrap gap-3">
-                                                                    <label className="flex items-center gap-1.5 cursor-pointer">
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={taskUpdates[task.id]?.client_approval_received || false}
-                                                                            onChange={(e) => handleTaskUpdate(task.id, 'client_approval_received', e.target.checked)}
-                                                                            className="w-3.5 h-3.5 text-primary rounded"
-                                                                        />
-                                                                        <span className="text-xs text-gray-700">Client Approval</span>
-                                                                    </label>
-                                                                    <label className="flex items-center gap-1.5 cursor-pointer">
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={taskUpdates[task.id]?.print_file_ready || false}
-                                                                            onChange={(e) => handleTaskUpdate(task.id, 'print_file_ready', e.target.checked)}
-                                                                            className="w-3.5 h-3.5 text-primary rounded"
-                                                                        />
-                                                                        <span className="text-xs text-gray-700">Print File Ready</span>
-                                                                    </label>
-                                                                    <label className="flex items-center gap-1.5 cursor-pointer">
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={taskUpdates[task.id]?.print_checklist_done || false}
-                                                                            onChange={(e) => handleTaskUpdate(task.id, 'print_checklist_done', e.target.checked)}
-                                                                            className="w-3.5 h-3.5 text-primary rounded"
-                                                                        />
-                                                                        <span className="text-xs text-gray-700">Pre-print Checklist</span>
-                                                                    </label>
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Client Comments â only on COMPLETE */}
-                                                            <div>
-                                                                <label className="block text-xs font-medium text-gray-700 mb-1">Client Comments <span className="text-gray-400 font-normal">(optional)</span></label>
-                                                                <input
-                                                                    type="text"
-                                                                    value={taskUpdates[task.id]?.client_comments || ''}
-                                                                    onChange={(e) => handleTaskUpdate(task.id, 'client_comments', e.target.value)}
-                                                                    placeholder="Any feedback from client?"
+                                                                    value={taskUpdates[task.id]?.time_spent || 0}
+                                                                    onChange={(e) => handleTaskUpdate(task.id, 'time_spent', parseFloat(e.target.value))}
                                                                     className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
                                                                 />
                                                             </div>
                                                         </div>
-                                                    )}
-                                                </div>
+
+                                                        {/* Status Update */}
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                                What did you work on? <span className="text-red-500">*</span>
+                                                            </label>
+                                                            <textarea
+                                                                rows={2}
+                                                                value={taskUpdates[task.id]?.status_update || ''}
+                                                                onChange={(e) => handleTaskUpdate(task.id, 'status_update', e.target.value)}
+                                                                placeholder="Quick update on this task..."
+                                                                className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm"
+                                                            />
+                                                        </div>
+
+                                                        {/* Only show completion % + checklist + quick checks when COMPLETE */}
+                                                        {taskUpdates[task.id]?.task_status === 'COMPLETE' && (
+                                                            <div className="space-y-3 border-t border-gray-100 pt-3">
+                                                                {/* Completion % */}
+                                                                <div>
+                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Completion %</label>
+                                                                    <input
+                                                                        type="number"
+                                                                        min="0"
+                                                                        max="100"
+                                                                        value={taskUpdates[task.id]?.completion_percentage || 100}
+                                                                        onChange={(e) => handleTaskUpdate(task.id, 'completion_percentage', parseInt(e.target.value))}
+                                                                        className="w-full max-w-[120px] px-3 py-2 border border-gray-200 rounded-md text-sm"
+                                                                    />
+                                                                </div>
+
+                                                                {/* Dynamic Checklist */}
+                                                                {taskUpdates[task.id]?.checklist_items && taskUpdates[task.id].checklist_items.length > 0 && (
+                                                                    <div>
+                                                                        <ProductChecklistCard
+                                                                            productCategory={task.product_category || task.job_type || 'Other'}
+                                                                            taskStatus={taskUpdates[task.id].task_status}
+                                                                            checklistItems={taskUpdates[task.id].checklist_items}
+                                                                            onUpdate={(items) => handleTaskUpdate(task.id, 'checklist_items', items)}
+                                                                            category="design"
+                                                                        />
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Quick Checks */}
+                                                                <div className="space-y-1">
+                                                                    <label className="block text-xs font-medium text-gray-700">Quick Checks</label>
+                                                                    <div className="flex flex-wrap gap-3">
+                                                                        <label className="flex items-center gap-1.5 cursor-pointer">
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                checked={taskUpdates[task.id]?.client_approval_received || false}
+                                                                                onChange={(e) => handleTaskUpdate(task.id, 'client_approval_received', e.target.checked)}
+                                                                                className="w-3.5 h-3.5 text-primary rounded"
+                                                                            />
+                                                                            <span className="text-xs text-gray-700">Client Approval</span>
+                                                                        </label>
+                                                                        <label className="flex items-center gap-1.5 cursor-pointer">
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                checked={taskUpdates[task.id]?.print_file_ready || false}
+                                                                                onChange={(e) => handleTaskUpdate(task.id, 'print_file_ready', e.target.checked)}
+                                                                                className="w-3.5 h-3.5 text-primary rounded"
+                                                                            />
+                                                                            <span className="text-xs text-gray-700">Print File Ready</span>
+                                                                        </label>
+                                                                        <label className="flex items-center gap-1.5 cursor-pointer">
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                checked={taskUpdates[task.id]?.print_checklist_done || false}
+                                                                                onChange={(e) => handleTaskUpdate(task.id, 'print_checklist_done', e.target.checked)}
+                                                                                className="w-3.5 h-3.5 text-primary rounded"
+                                                                            />
+                                                                            <span className="text-xs text-gray-700">Pre-print Checklist</span>
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Client Comments */}
+                                                                <div>
+                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Client Comments <span className="text-gray-400 font-normal">(optional)</span></label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={taskUpdates[task.id]?.client_comments || ''}
+                                                                        onChange={(e) => handleTaskUpdate(task.id, 'client_comments', e.target.value)}
+                                                                        placeholder="Any feedback from client?"
+                                                                        className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )
                                             )}
                                         </div>
                                     ))}
@@ -505,7 +713,7 @@ export default function EODReportPage() {
                                     <label className="block text-xs font-medium text-gray-700">Overall Notes</label>
                                     {autoLogCount > 0 && !todayReport && (
                                         <span className="text-[10px] px-2 py-0.5 bg-amber-100 text-amber-700 rounded-md border border-amber-200 font-semibold">
-                                            â¡ Auto-filled from {autoLogCount} activity log{autoLogCount !== 1 ? 's' : ''} today
+                                            ⚡ Auto-filled from {autoLogCount} activity log{autoLogCount !== 1 ? 's' : ''} today
                                         </span>
                                     )}
                                 </div>
@@ -517,7 +725,6 @@ export default function EODReportPage() {
                                     className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm font-mono text-xs"
                                 />
                             </div>
-
 
                             <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">Blockers / Issues</label>
@@ -582,15 +789,12 @@ export default function EODReportPage() {
                     </form>
                 </div>
 
-                {/* RIGHT: History Panel â 2 columns */}
+                {/* RIGHT: History Panel */}
                 <div className="lg:col-span-2">
                     <div className="bg-white rounded-md border border-gray-200 sticky top-4">
                         {/* Month Navigator */}
                         <div className="flex items-center justify-between p-3 border-b border-gray-200">
-                            <button
-                                onClick={() => navigateMonth(-1)}
-                                className="p-1.5 hover:bg-gray-100 rounded-md transition-colors"
-                            >
+                            <button onClick={() => navigateMonth(-1)} className="p-1.5 hover:bg-gray-100 rounded-md transition-colors">
                                 <ChevronLeft className="w-4 h-4" />
                             </button>
                             <div className="flex items-center gap-2">
@@ -606,19 +810,48 @@ export default function EODReportPage() {
                             </button>
                         </div>
 
-                        {/* History Stats */}
-                        <div className="grid grid-cols-2 gap-2 p-3 border-b border-gray-100">
-                            <div className="bg-gray-50 rounded-md p-2 text-center">
-                                <p className="text-lg font-bold text-gray-900">{pastReports.length}</p>
-                                <p className="text-xs text-gray-500 uppercase font-medium">Reports</p>
-                            </div>
-                            <div className="bg-gray-50 rounded-md p-2 text-center">
-                                <p className="text-lg font-bold text-gray-900">
-                                    {pastReports.reduce((sum, r) => sum + (r.work_hours || 0), 0).toFixed(1)}
-                                </p>
-                                <p className="text-xs text-gray-500 uppercase font-medium">Total Hours</p>
-                            </div>
-                        </div>
+                        {/* Performance Stats */}
+                        {(() => {
+                            const totalHours = pastReports.reduce((sum, r) => sum + (r.work_hours || 0), 0);
+                            const avgHours = pastReports.length > 0 ? (totalHours / pastReports.length) : 0;
+                            // Count working days in the month (Mon-Fri)
+                            const now = new Date();
+                            const daysInMonth = new Date(historyMonth.year, historyMonth.month + 1, 0).getDate();
+                            const workingDays = Array.from({ length: daysInMonth }, (_, i) => {
+                                const d = new Date(historyMonth.year, historyMonth.month, i + 1);
+                                return d.getDay() !== 0 && d.getDay() !== 6 &&
+                                    (historyMonth.year < now.getFullYear() || historyMonth.month < now.getMonth() ||
+                                        i + 1 <= now.getDate());
+                            }).filter(Boolean).length;
+                            const attendance = workingDays > 0 ? Math.round((pastReports.length / workingDays) * 100) : 0;
+                            return (
+                                <div className="p-3 border-b border-gray-100">
+                                    <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">My Performance</p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className="bg-gray-50 rounded-md p-2 text-center">
+                                            <p className="text-lg font-bold text-gray-900">{pastReports.length}</p>
+                                            <p className="text-xs text-gray-500 uppercase font-medium">Reports</p>
+                                        </div>
+                                        <div className="bg-gray-50 rounded-md p-2 text-center">
+                                            <p className="text-lg font-bold text-gray-900">{totalHours.toFixed(1)}</p>
+                                            <p className="text-xs text-gray-500 uppercase font-medium">Total Hrs</p>
+                                        </div>
+                                        <div className="bg-gray-50 rounded-md p-2 text-center">
+                                            <p className="text-lg font-bold text-gray-900">{avgHours.toFixed(1)}</p>
+                                            <p className="text-xs text-gray-500 uppercase font-medium">Avg Hrs/Day</p>
+                                        </div>
+                                        <div className={`rounded-md p-2 text-center ${attendance >= 90 ? 'bg-green-50' : attendance >= 70 ? 'bg-amber-50' : 'bg-red-50'}`}>
+                                            <p className={`text-lg font-bold ${attendance >= 90 ? 'text-green-700' : attendance >= 70 ? 'text-amber-700' : 'text-red-700'}`}>
+                                                {attendance}%
+                                            </p>
+                                            <p className={`text-xs uppercase font-medium ${attendance >= 90 ? 'text-green-500' : attendance >= 70 ? 'text-amber-500' : 'text-red-500'}`}>
+                                                Attendance
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
 
                         {/* Reports List */}
                         <div className="max-h-[calc(100vh-280px)] overflow-y-auto">
@@ -640,14 +873,13 @@ export default function EODReportPage() {
                                                 className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors text-left"
                                             >
                                                 <div className="flex items-center gap-2">
-                                                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${report.report_date === today ? 'bg-green-500' : 'bg-gray-300'
-                                                        }`} />
+                                                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${report.report_date === today ? 'bg-green-500' : 'bg-gray-300'}`} />
                                                     <div>
                                                         <p className="text-sm font-medium text-gray-900">
                                                             {new Date(report.report_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                                                         </p>
                                                         <p className="text-xs text-gray-500">
-                                                            {report.task_updates?.length || 0} tasks â¢ {report.work_hours || 0}h
+                                                            {report.task_updates?.length || 0} tasks • {report.work_hours || 0}h
                                                         </p>
                                                     </div>
                                                 </div>
@@ -697,10 +929,8 @@ export default function EODReportPage() {
                                                             <p className="text-xs uppercase font-medium text-gray-400">Tasks</p>
                                                             {report.task_updates.map((tu: any, idx: number) => (
                                                                 <div key={idx} className="flex items-start gap-2 text-xs bg-white border border-gray-100 rounded-md p-2">
-                                                                    <span className={`mt-0.5 flex-shrink-0 ${tu.task_status === 'COMPLETE' ? 'text-green-500' :
-                                                                        tu.task_status === 'NOT START' ? 'text-red-500' : 'text-amber-500'
-                                                                        }`}>
-                                                                        {tu.task_status === 'COMPLETE' ? 'â' : tu.task_status === 'NOT START' ? 'â' : 'ð'}
+                                                                    <span className={`mt-0.5 flex-shrink-0 ${tu.task_status === 'COMPLETE' ? 'text-green-500' : tu.task_status === 'NOT START' ? 'text-red-500' : 'text-amber-500'}`}>
+                                                                        {tu.task_status === 'COMPLETE' ? '✓' : tu.task_status === 'NOT START' ? '✗' : '↻'}
                                                                     </span>
                                                                     <div className="min-w-0">
                                                                         <p className="font-medium text-gray-900 truncate">
@@ -708,14 +938,6 @@ export default function EODReportPage() {
                                                                             {tu.job?.project_name && ` - ${tu.job.project_name}`}
                                                                         </p>
                                                                         {tu.status_update && <p className="text-gray-600 mt-0.5">{tu.status_update}</p>}
-                                                                        {tu.completion_percentage > 0 && (
-                                                                            <div className="flex items-center gap-2 mt-1">
-                                                                                <div className="flex-1 h-1 bg-gray-200 rounded-full">
-                                                                                    <div className="h-1 bg-gray-900 rounded-full" style={{ width: `${tu.completion_percentage}%` }} />
-                                                                                </div>
-                                                                                <span className="text-xs text-gray-500">{tu.completion_percentage}%</span>
-                                                                            </div>
-                                                                        )}
                                                                     </div>
                                                                 </div>
                                                             ))}
@@ -731,6 +953,173 @@ export default function EODReportPage() {
                     </div>
                 </div>
             </div>
+
+            {/* ── Previous EOD Reports (locked, editable with audit log) ── */}
+            {pastDayReports.length > 0 && (
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-gray-400" />
+                        <h2 className="text-section text-gray-700">Previous EOD Reports</h2>
+                        <span className="text-xs text-gray-400">({pastDayReports.length} entries — read-only, edit with audit log)</span>
+                    </div>
+
+                    {pastDayReports.map(report => {
+                        const dateLabel = new Date(report.report_date + 'T00:00:00').toLocaleDateString('en-US', {
+                            weekday: 'long', day: 'numeric', month: 'short'
+                        });
+                        const isExpanded = expandedPastDay === report.id;
+
+                        return (
+                            <div key={report.id} className="bg-white border border-gray-200 rounded-md overflow-hidden">
+                                {/* Report header */}
+                                <button
+                                    onClick={() => setExpandedPastDay(isExpanded ? null : report.id)}
+                                    className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors text-left"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <Lock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-900">{dateLabel}</p>
+                                            <p className="text-xs text-gray-500">
+                                                {report.task_updates?.length || 0} tasks • {report.work_hours || 0}h worked
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded font-medium">🔒 Locked</span>
+                                        {isExpanded ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
+                                    </div>
+                                </button>
+
+                                {/* Expanded content */}
+                                {isExpanded && (
+                                    <div className="px-4 pb-4 space-y-2 bg-gray-50/50">
+                                        {/* Summary notes */}
+                                        {(report.overall_notes || report.blockers) && (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-2">
+                                                {report.overall_notes && (
+                                                    <div className="bg-white border border-gray-200 rounded-md p-2">
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Overall Notes</p>
+                                                        <p className="text-xs text-gray-700">{report.overall_notes}</p>
+                                                    </div>
+                                                )}
+                                                {report.blockers && (
+                                                    <div className="bg-red-50 border border-red-200 rounded-md p-2">
+                                                        <p className="text-[10px] font-bold text-red-400 uppercase mb-1">⚠ Blockers</p>
+                                                        <p className="text-xs text-red-700">{report.blockers}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Task cards */}
+                                        {(report.task_updates || []).map((tu: any) => {
+                                            const isEditing = editingPastCard === tu.id;
+                                            const edits = pastCardEdits[tu.id] || {};
+                                            const isSaving = savingPastCard === tu.id;
+
+                                            return (
+                                                <div key={tu.id} className={`border rounded-md overflow-hidden ${isEditing ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-white'}`}>
+                                                    {/* Card header */}
+                                                    <div className="flex items-center justify-between p-2.5 border-b border-gray-100">
+                                                        <div>
+                                                            <p className="text-sm font-medium text-gray-900">
+                                                                {tu.job?.job_number ? `#${tu.job.job_number}` : 'Task'}
+                                                                {tu.job?.project_name && ` – ${tu.job.project_name}`}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500">{tu.job?.client?.company || tu.job?.client?.name}</p>
+                                                        </div>
+                                                        {!isEditing && (
+                                                            <button
+                                                                onClick={() => handlePastCardEdit(tu)}
+                                                                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-md transition-colors font-medium"
+                                                            >
+                                                                <Pencil className="w-3 h-3" /> Edit
+                                                            </button>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Card body */}
+                                                    <div className="p-2.5">
+                                                        {isEditing ? (
+                                                            <div className="space-y-2">
+                                                                <div className="flex items-center gap-1 text-[10px] text-amber-700 bg-amber-100 px-2 py-1 rounded">
+                                                                    <AlertTriangle className="w-3 h-3" />
+                                                                    Editing a past EOD. Changes will be logged and admin will be notified.
+                                                                </div>
+                                                                <div className="grid grid-cols-2 gap-2">
+                                                                    <div>
+                                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                                                                        <select
+                                                                            value={edits.task_status || 'START WORK'}
+                                                                            onChange={e => setPastCardEdits(prev => ({ ...prev, [tu.id]: { ...prev[tu.id], task_status: e.target.value } }))}
+                                                                            className="w-full px-2 py-1.5 border border-gray-200 rounded-md text-xs"
+                                                                        >
+                                                                            <option value="NOT START">Not Started</option>
+                                                                            <option value="START WORK">In Progress</option>
+                                                                            <option value="COMPLETE">Completed</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div>
+                                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Time (hrs)</label>
+                                                                        <input
+                                                                            type="number" step="0.5" min="0"
+                                                                            value={edits.time_spent || 0}
+                                                                            onChange={e => setPastCardEdits(prev => ({ ...prev, [tu.id]: { ...prev[tu.id], time_spent: parseFloat(e.target.value) } }))}
+                                                                            className="w-full px-2 py-1.5 border border-gray-200 rounded-md text-xs"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Update / Remarks</label>
+                                                                    <textarea
+                                                                        rows={2}
+                                                                        value={edits.status_update || ''}
+                                                                        onChange={e => setPastCardEdits(prev => ({ ...prev, [tu.id]: { ...prev[tu.id], status_update: e.target.value } }))}
+                                                                        className="w-full px-2 py-1.5 border border-gray-200 rounded-md text-xs"
+                                                                    />
+                                                                </div>
+                                                                <div className="flex gap-2">
+                                                                    <button
+                                                                        onClick={() => handlePastCardSave(report, tu)}
+                                                                        disabled={isSaving}
+                                                                        className="flex items-center gap-1 px-3 py-1.5 bg-gray-900 text-white rounded-md text-xs font-semibold hover:bg-gray-800 disabled:opacity-50"
+                                                                    >
+                                                                        {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                                                                        {isSaving ? 'Saving...' : 'Save & Log'}
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => setEditingPastCard(null)}
+                                                                        className="px-3 py-1.5 border border-gray-200 text-gray-600 rounded-md text-xs hover:bg-gray-50"
+                                                                    >
+                                                                        Cancel
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="space-y-1 text-xs text-gray-700">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className={`font-semibold ${tu.task_status === 'COMPLETE' ? 'text-green-700' : tu.task_status === 'NOT START' ? 'text-red-600' : 'text-amber-700'}`}>
+                                                                        {tu.task_status === 'COMPLETE' ? '✅ Completed' : tu.task_status === 'NOT START' ? '❌ Not Started' : '🔄 In Progress'}
+                                                                    </span>
+                                                                    {tu.time_spent > 0 && <span className="text-gray-400">{tu.time_spent}h</span>}
+                                                                </div>
+                                                                {tu.status_update && (
+                                                                    <p className="text-gray-600 bg-gray-50 rounded px-2 py-1">{tu.status_update}</p>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
         </div>
     );
 }

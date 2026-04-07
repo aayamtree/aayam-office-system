@@ -2493,11 +2493,46 @@ export function useDailyReports(userId?: string, dateFilter?: { start?: string; 
       .from('jobs')
       .select('*, client:clients(*)')
       .eq('designer_id', currentUserId)
-      .not('current_stage', 'in', '(completed,delivered,cancelled)')
+      // Exclude stages beyond design — once a job leaves the design phase it drops off the designer's EOD list
+      .not('current_stage', 'in', '(completed,delivered,cancelled,approval,pre_print_qc,printing,finishing,quality_check,ready,dispatched)')
       .gte('updated_at', cutoffStr)
       .order('client_deadline', { ascending: true });
 
     return { data: jobs || [], error: error?.message };
+  };
+
+  // Load the MOST RECENT saved task-update for each job_id across ALL past reports for this user.
+  // Used to carry-forward previous-day state so designers don't re-type the same details every morning.
+  const loadLastTaskResponsesForUser = async (userId: string, jobIds: string[]): Promise<Record<string, any>> => {
+    if (!isSupabaseConfigured() || jobIds.length === 0) return {};
+
+    // Step 1: Get all report IDs for this user (avoids unreliable embedded-filter syntax)
+    const { data: reports, error: reportsError } = await supabase
+      .from('daily_work_reports')
+      .select('id')
+      .eq('user_id', userId);
+
+    if (reportsError || !reports || reports.length === 0) return {};
+    const reportIds = reports.map((r: any) => r.id);
+
+    // Step 2: Get the most recent task update per job_id across all those reports
+    const { data, error } = await supabase
+      .from('report_task_updates')
+      .select('*')
+      .in('report_id', reportIds)
+      .in('job_id', jobIds)
+      .order('created_at', { ascending: false });
+
+    if (error || !data) return {};
+
+    // Keep only the most recent entry per job_id
+    const map: Record<string, any> = {};
+    for (const row of data) {
+      if (row.job_id && !map[row.job_id]) {
+        map[row.job_id] = row;
+      }
+    }
+    return map;
   };
 
   // Submit EOD Report
@@ -2510,6 +2545,7 @@ export function useDailyReports(userId?: string, dateFilter?: { start?: string; 
     work_hours?: number;
     task_updates: Array<{
       job_id: string;
+      task_status?: string;
       status_update: string;
       completion_percentage?: number;
       time_spent?: number;
@@ -2541,25 +2577,31 @@ export function useDailyReports(userId?: string, dateFilter?: { start?: string; 
 
       if (reportError) throw reportError;
 
-      // 2. Delete existing task updates for this report
-      await supabase
-        .from('report_task_updates')
-        .delete()
-        .eq('report_id', report.id);
-
-      // 3. Insert new task updates
+      // 2. Upsert task updates by (report_id, job_id)
+      // This preserves existing rows instead of delete+re-insert,
+      // so historical data within a day is kept intact.
       if (reportData.task_updates.length > 0) {
         const { error: updatesError } = await supabase
           .from('report_task_updates')
-          .insert(reportData.task_updates.map(update => ({
-            report_id: report.id,
-            ...update
-          })));
+          .upsert(
+            reportData.task_updates.map(update => ({
+              report_id: report.id,
+              ...update
+            })),
+            { onConflict: 'report_id,job_id' }
+          );
 
-        if (updatesError) throw updatesError;
+        if (updatesError) {
+          // Fallback: if unique constraint doesn't exist yet, use delete+insert
+          await supabase.from('report_task_updates').delete().eq('report_id', report.id);
+          const { error: insertError } = await supabase
+            .from('report_task_updates')
+            .insert(reportData.task_updates.map(update => ({ report_id: report.id, ...update })));
+          if (insertError) throw insertError;
+        }
       }
 
-      // 4. Log activity (fire-and-forget)
+      // 3. Log activity (fire-and-forget)
       logActivity(
         'Submitted EOD Report',
         'System',
@@ -2573,6 +2615,81 @@ export function useDailyReports(userId?: string, dateFilter?: { start?: string; 
     } catch (e: any) {
       return { error: e.message || 'Failed to submit report' };
     }
+  };
+
+  // Load previously saved task responses for a report
+  // Used to pre-populate the EOD form when the page loads
+  const loadTodayTaskResponses = async (reportId: string): Promise<Record<string, any>> => {
+    if (!isSupabaseConfigured()) return {};
+    const { data, error } = await supabase
+      .from('report_task_updates')
+      .select('*')
+      .eq('report_id', reportId);
+    if (error || !data) return {};
+    // Return a map keyed by job_id for quick lookup
+    const map: Record<string, any> = {};
+    for (const row of data) {
+      if (row.job_id) map[row.job_id] = row;
+    }
+    return map;
+  };
+
+  // Submit an edit to a PAST EOD entry, logging the change for admin review
+  const submitPastEODEdit = async (editData: {
+    report_id: string;
+    task_update_id: string;
+    job_id: string;
+    original_date: string;
+    user_id: string;
+    user_name: string;
+    changes: Array<{ field: string; old_value: string | null; new_value: string | null }>;
+    updatedFields: Record<string, any>;
+  }) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    try {
+      // 1. Update the task update row
+      const { error: updateError } = await supabase
+        .from('report_task_updates')
+        .update(editData.updatedFields)
+        .eq('id', editData.task_update_id);
+
+      if (updateError) throw updateError;
+
+      // 2. Insert edit log entries (one per changed field)
+      if (editData.changes.length > 0) {
+        const logRows = editData.changes.map(change => ({
+          user_id: editData.user_id,
+          report_id: editData.report_id,
+          task_update_id: editData.task_update_id,
+          original_date: editData.original_date,
+          field_changed: change.field,
+          old_value: change.old_value,
+          new_value: change.new_value,
+          user_name: editData.user_name,
+          edited_at: new Date().toISOString()
+        }));
+        await supabase.from('eod_edit_log').insert(logRows);
+      }
+
+      refetch();
+      return { error: null };
+    } catch (e: any) {
+      return { error: e.message || 'Failed to save edit' };
+    }
+  };
+
+  // Admin: Fetch the edit audit log
+  const getEODEditLog = async (filters?: { userId?: string; since?: string }) => {
+    if (!isSupabaseConfigured()) return { data: [], error: null };
+    let query = supabase
+      .from('eod_edit_log')
+      .select('*, profile:profiles!user_id(id, full_name, role)')
+      .order('edited_at', { ascending: false })
+      .limit(200);
+    if (filters?.userId) query = query.eq('user_id', filters.userId);
+    if (filters?.since) query = query.gte('edited_at', filters.since);
+    const { data, error } = await query;
+    return { data: data || [], error: error?.message };
   };
 
   // Get user's reports within date range
@@ -2754,7 +2871,11 @@ export function useDailyReports(userId?: string, dateFilter?: { start?: string; 
     searchReports,
     getTodaySubmissionStatus,
     fetchProductChecklist,
-    rateReport
+    rateReport,
+    loadTodayTaskResponses,
+    loadLastTaskResponsesForUser,
+    submitPastEODEdit,
+    getEODEditLog
   };
 }
 
