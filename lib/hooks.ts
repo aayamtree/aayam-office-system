@@ -357,7 +357,9 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
   const { user, profile } = useAuth();
   // Lightweight default: only fetch client/vendor names for list views
   // Pages needing full relations can pass select: '*, client:clients(*), ...' in options
-  const defaultSelect = '*, client:clients(id, name, company, source), vendor:vendors(id, name), sales_person:profiles!sales_person_id(id, full_name, role)';
+  // NOTE: sales_person join removed from default — requires FK fk_jobs_sales_person_id in DB.
+  // Run ADD_JOBS_SALESPERSON_FK.sql to restore it. Pages needing salesperson data pass their own select.
+  const defaultSelect = '*, client:clients(id, name, company, source), vendor:vendors(id, name)';
   const { data, loading, error, refetch } = useSupabaseQuery<Job>('jobs', {
     select: options?.select || defaultSelect,
     orderBy: { column: 'created_at', ascending: false },
