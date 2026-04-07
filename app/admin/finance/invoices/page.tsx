@@ -582,9 +582,9 @@ export default function InvoicesPage() {
 
                     {/* Card Body */}
                     <div className="px-4 py-3">
-                      {/* Client — BUG-11: show dash instead of Unknown */}
-                      <p className="text-[10px] text-muted-foreground">{inv.client?.company || '—'}</p>
-                      <h3 className="text-foreground font-bold text-sm mb-2">{inv.client?.name || '—'}</h3>
+                      {/* Client — show company as primary, contact person as sub-text */}
+                      <h3 className="text-foreground font-bold text-sm mb-0.5">{inv.client?.company || inv.client?.name || '—'}</h3>
+                      {inv.client?.company && <p className="text-[10px] text-muted-foreground mb-2">{inv.client?.name}</p>}
 
                       {/* Price & Status — BUG-03: use effective status */}
                       <div className="flex items-center justify-between mb-2">
@@ -658,8 +658,8 @@ export default function InvoicesPage() {
                         <p className="text-xs text-gray-400 mt-1">{formatDate(inv.invoice_date)}</p>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="font-medium text-gray-900">{inv.client?.company || '—'}</p>
-                        <p className="text-sm text-gray-500">{inv.client?.name || '—'}</p>
+                        <p className="font-medium text-gray-900">{inv.client?.company || inv.client?.name || '—'}</p>
+                        {inv.client?.company && <p className="text-sm text-gray-500">{inv.client?.name}</p>}
                       </td>
                       <td className="px-6 py-4">
                         <p className="font-semibold text-gray-900">{formatCurrency(inv.total_amount)}</p>
@@ -927,8 +927,8 @@ export default function InvoicesPage() {
                     <User className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900">{selectedInvoice.client?.company}</h3>
-                    <p className="text-sm text-gray-600">{selectedInvoice.client?.name}</p>
+                    <h3 className="font-bold text-gray-900">{selectedInvoice.client?.company || selectedInvoice.client?.name}</h3>
+                    {selectedInvoice.client?.company && <p className="text-sm text-gray-600">{selectedInvoice.client?.name}</p>}
                   </div>
                 </div>
 

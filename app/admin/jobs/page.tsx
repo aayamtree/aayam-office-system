@@ -227,7 +227,7 @@ export default function JobsPage() {
   const pendingPayments = jobs.reduce((sum, j) => sum + ((j.total_amount || 0) - (j.amount_received || 0)), 0);
 
   const filteredJobs = jobs.filter(job => {
-    const clientName = job.client?.name || '';
+    const clientName = (job.client as any)?.company || job.client?.name || '';
     const matchesSearch = (job.project_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (job.job_number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       clientName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -590,7 +590,7 @@ export default function JobsPage() {
           )}
           <div className="flex items-center gap-1.5 mb-2">
             <Building2 className="w-3.5 h-3.5 text-gray-400" />
-            <p className="text-xs text-gray-500 truncate">{job.client?.name || 'No client'}</p>
+            <p className="text-xs text-gray-500 truncate">{(job.client as any)?.company || job.client?.name || 'No client'}</p>
           </div>
           <div className="flex items-center justify-between text-xs border-t border-gray-100 pt-2">
             <Badge variant="outline" className={getPaymentBadge(job.payment_status)}>
@@ -853,7 +853,7 @@ export default function JobsPage() {
                           <p className="text-sm font-semibold text-gray-900 leading-snug truncate">{job.project_name}</p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <Building2 className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                            <p className="text-xs text-gray-500 truncate">{job.client?.name || 'No client'}</p>
+                            <p className="text-xs text-gray-500 truncate">{(job.client as any)?.company || job.client?.name || 'No client'}</p>
                           </div>
                         </div>
                         {stageMeta && (
@@ -931,7 +931,7 @@ export default function JobsPage() {
                           </div>
                           <p className="text-sm font-medium">{job.project_name}</p>
                         </td>
-                        <td className="px-4 py-3 text-sm">{job.client?.name || '-'}</td>
+                        <td className="px-4 py-3 text-sm">{(job.client as any)?.company || job.client?.name || '-'}</td>
                         <td className="px-4 py-3">
                           <span className={`text-xs px-2 py-1 rounded-md text-white ${stages.find(s => s.id === job.current_stage)?.color}`}>
                             {stages.find(s => s.id === job.current_stage)?.name}
@@ -1485,7 +1485,7 @@ export default function JobsPage() {
 
               {/* Job Info */}
               <div className="bg-gray-50 rounded-md p-3 text-sm text-gray-600">
-                <div className="flex justify-between"><span>Client:</span><span className="font-medium text-gray-900">{selectedJob.client?.name || 'N/A'}</span></div>
+                <div className="flex justify-between"><span>Client:</span><span className="font-medium text-gray-900">{(selectedJob.client as any)?.company || selectedJob.client?.name || 'N/A'}</span></div>
                 <div className="flex justify-between mt-1"><span>Quantity:</span><span className="font-medium text-gray-900">{selectedJob.quantity}</span></div>
                 <div className="flex justify-between mt-1"><span>Current Stage:</span><span className="font-medium text-gray-900">{stages.find(s => s.id === selectedJob.current_stage)?.name || selectedJob.current_stage}</span></div>
               </div>

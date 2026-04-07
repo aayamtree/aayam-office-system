@@ -54,7 +54,7 @@ export default function PrintRunDetailPage() {
             job_number,
             project_name,
             quantity,
-            client:clients(name)
+            client:clients(name,company)
           )
         `)
                 .eq('print_run_id', printRunId)
@@ -275,7 +275,7 @@ export default function PrintRunDetailPage() {
                                                 </Link>
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-900 font-medium">
-                                                {prj.client_name || (prj.job as any)?.client?.name || 'N/A'}
+                                                {prj.client_name || (prj.job as any)?.client?.company || (prj.job as any)?.client?.name || 'N/A'}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-900">
                                                 {prj.item_name || (prj.job as any)?.project_name || 'N/A'}
@@ -361,7 +361,7 @@ function AddJobsModal({
           project_name,
           quantity,
           file_version,
-          client:clients(name)
+          client:clients(name,company)
         `)
                 .eq('print_ready', true)
                 .eq('client_approval', true)
@@ -434,7 +434,7 @@ function AddJobsModal({
                     return {
                         print_run_id: printRunId,
                         job_id: j.id,
-                        client_name: j.client?.name,
+                        client_name: j.client?.company || j.client?.name,
                         item_name: j.project_name,
                         file_version: j.file_version || 'v1',
                         quantity_needed: quantities.quantity,
@@ -524,7 +524,7 @@ function AddJobsModal({
                                                     </div>
 
                                                     <div className="text-sm text-gray-600 mb-3">
-                                                        Client: {job.client?.name} • Version: {job.file_version || 'v1'}
+                                                        Client: {job.client?.company || job.client?.name} • Version: {job.file_version || 'v1'}
                                                     </div>
 
                                                     {isSelected && (

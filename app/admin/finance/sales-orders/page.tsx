@@ -169,8 +169,8 @@ export default function SalesOrdersPage() {
                                 <tr key={so.id} className="hover:bg-gray-50/50 transition-colors group">
                                     <td className="p-4 font-mono text-sm font-medium text-gray-900">{so.so_number}</td>
                                     <td className="p-4">
-                                        <p className="font-medium text-gray-900">{so.client?.company || 'Unknown'}</p>
-                                        <p className="text-xs text-gray-500">{so.client?.name}</p>
+                                        <p className="font-medium text-gray-900">{so.client?.company || so.client?.name || 'Unknown'}</p>
+                                        {so.client?.company && <p className="text-xs text-gray-500">{so.client?.name}</p>}
                                     </td>
                                     <td className="p-4">
                                         <p className="text-sm text-gray-900 font-medium">{so.project_name}</p>

@@ -427,7 +427,7 @@ export default function QCCheckPage() {
               </div>
 
               {/* Middle: info */}
-              <p className="text-sm text-gray-600 truncate">{job.client?.company} • {job.client?.name}</p>
+              <p className="text-sm text-gray-600 truncate">{job.client?.company || job.client?.name}{job.client?.company && job.client?.name ? ` • ${job.client.name}` : ''}</p>
               <p className="text-sm text-gray-900 font-medium mt-0.5 truncate">{job.project_name}</p>
               <div className="flex items-center justify-between mt-1">
                 <p className="text-xs text-gray-500">Qty: {job.quantity}</p>

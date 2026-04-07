@@ -82,7 +82,7 @@ export default function PaymentReportsPage() {
             const clientId = p.client_id || 'unknown';
             const client = (clients || []).find(c => c.id === clientId);
             const existing = map.get(clientId) || {
-                name: client?.name || 'Unknown',
+                name: client?.company || client?.name || 'Unknown',
                 company: client?.company || '',
                 total: 0,
                 count: 0,
@@ -108,7 +108,7 @@ export default function PaymentReportsPage() {
                     id: j.id,
                     jobNumber: j.job_number,
                     projectName: j.project_name,
-                    clientName: j.client?.name || 'Unknown',
+                    clientName: (j.client as any)?.company || j.client?.name || 'Unknown',
                     totalAmount: j.total_amount,
                     received: j.amount_received || 0,
                     expenses: jobExpenses,
@@ -126,8 +126,8 @@ export default function PaymentReportsPage() {
             .filter(c => (c.outstanding_balance || 0) > 0)
             .map(c => ({
                 id: c.id,
-                name: c.name,
-                company: c.company,
+                name: c.company || c.name,
+                company: c.company ? c.name : '',
                 outstanding: c.outstanding_balance || 0,
                 jobCount: (jobs || []).filter(j => j.client_id === c.id).length,
             }))

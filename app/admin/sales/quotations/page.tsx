@@ -555,15 +555,17 @@ export default function QuotationsPage() {
 
                     {/* White Card Body */}
                     <div className="p-4">
-                      {/* Client/Subtitle */}
-                      <p className="text-gray-500 text-sm mb-1">
-                        {q.client?.company || q.lead?.company || q.lead?.name || 'Unknown Client'}
-                      </p>
-
-                      {/* Client Name/Type */}
-                      <h3 className="text-gray-900 font-bold text-lg mb-4">
-                        {q.client?.name || (q.lead ? 'LEAD' : 'No Contact')}
+                      {/* Company/Client Name */}
+                      <h3 className="text-gray-900 font-bold text-lg mb-1">
+                        {q.client?.company || q.lead?.company || q.lead?.name || q.client?.name || 'Unknown Client'}
                       </h3>
+
+                      {/* Contact Person */}
+                      {(q.client?.company || q.lead?.company) && (
+                        <p className="text-gray-500 text-sm mb-4">
+                          {q.client?.name || (q.lead ? 'LEAD' : 'No Contact')}
+                        </p>
+                      )}
 
                       {/* Items Preview */}
                       <div className="bg-gray-50 p-3 rounded-md border border-gray-200 mb-4">
@@ -662,8 +664,8 @@ export default function QuotationsPage() {
                         <p className="text-xs text-gray-400 mt-1">{formatDate(q.created_at)}</p>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="font-medium text-gray-900">{q.client?.company || q.lead?.company || q.lead?.name || 'Unknown'}</p>
-                        <p className="text-sm text-gray-500">{q.client?.name || (q.lead ? 'LEAD' : '')}</p>
+                        <p className="font-medium text-gray-900">{q.client?.company || q.lead?.company || q.lead?.name || q.client?.name || 'Unknown'}</p>
+                        {(q.client?.company || q.lead?.company) && <p className="text-sm text-gray-500">{q.client?.name || (q.lead ? 'LEAD' : '')}</p>}
                       </td>
                       <td className="px-6 py-4 text-gray-600 max-w-xs truncate">{q.items?.map(i => i.description).join(', ')}</td>
                       <td className="px-6 py-4 font-semibold text-gray-900">{formatCurrency(q.total_amount)}</td>

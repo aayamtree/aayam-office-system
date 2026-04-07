@@ -146,7 +146,45 @@ BEGIN
 
   RETURN row_to_json(v_new_payment);
 END;
-$$;e, p_bank_account_id, p_cash_account_id,
+$$;
+
+
+-- ============================================================
+-- STEP 3: Upgrade record_payment_received
+--         Now updates cash/bank balance + writes transaction log
+-- ============================================================
+CREATE OR REPLACE FUNCTION record_payment_received(
+  p_client_id       UUID,
+  p_amount          NUMERIC,
+  p_payment_mode    TEXT,
+  p_payment_date    DATE,
+  p_bank_account_id UUID    DEFAULT NULL,
+  p_cash_account_id UUID    DEFAULT NULL,
+  p_reference       TEXT    DEFAULT NULL,
+  p_notes           TEXT    DEFAULT NULL,
+  p_invoice_id      UUID    DEFAULT NULL,
+  p_attachment_url  TEXT    DEFAULT NULL
+)
+RETURNS JSON
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_payment_number TEXT;
+  v_new_payment    payments_received;
+  v_new_balance    NUMERIC;
+BEGIN
+  -- Get next payment number
+  SELECT get_next_number('payment_received') INTO v_payment_number;
+
+  -- Insert payment record
+  INSERT INTO payments_received (
+    payment_number, client_id, invoice_id, amount,
+    payment_mode, payment_date, bank_account_id, cash_account_id,
+    reference_number, notes, attachment_url, received_by
+  ) VALUES (
+    v_payment_number, p_client_id, p_invoice_id, p_amount,
+    p_payment_mode, p_payment_date, p_bank_account_id, p_cash_account_id,
     p_reference, p_notes, p_attachment_url, auth.uid()
   )
   RETURNING * INTO v_new_payment;

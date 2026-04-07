@@ -340,7 +340,7 @@ export default function ClientsPage() {
                 <div className={`px-3 py-2 flex items-center justify-between gap-2 ${client.is_active ? 'bg-gray-900' : 'bg-gray-500'}`}>
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="w-5 h-5 rounded-md bg-white/10 text-white text-[9px] font-bold flex items-center justify-center flex-shrink-0">
-                      {client.name?.charAt(0)}
+                      {(client.company || client.name)?.charAt(0)?.toUpperCase()}
                     </span>
                     <span className="text-xs font-bold text-white truncate">{client.company || client.name}</span>
                   </div>
@@ -434,11 +434,11 @@ export default function ClientsPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-white font-bold">
-                          {client.name?.charAt(0)}
+                          {(client.company || client.name)?.charAt(0)?.toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-bold text-gray-900">{client.name}</p>
-                          <p className="text-sm text-gray-500">{client.company}</p>
+                          <p className="font-bold text-gray-900">{client.company || client.name}</p>
+                          {client.company && <p className="text-sm text-gray-500">{client.name}</p>}
                         </div>
                       </div>
                     </td>

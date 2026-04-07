@@ -159,8 +159,8 @@ export default function PaymentsPageNew() {
                                     </td>
                                     <td className="p-4">
                                         <div>
-                                            <div className="font-medium">{payment.type === 'received' ? payment.client_name : payment.vendor_name}</div>
-                                            <div className="text-sm text-gray-500">{payment.type === 'received' ? payment.client_company : payment.vendor_company}</div>
+                                            <div className="font-medium">{payment.type === 'received' ? (payment.client_company || payment.client_name) : (payment.vendor_company || payment.vendor_name)}</div>
+                                            {payment.type === 'received' ? (payment.client_company && <div className="text-sm text-gray-500">{payment.client_name}</div>) : (payment.vendor_company && <div className="text-sm text-gray-500">{payment.vendor_name}</div>)}
                                         </div>
                                     </td>
                                     <td className="p-4 font-bold">₹{payment.amount?.toLocaleString('en-IN')}</td>

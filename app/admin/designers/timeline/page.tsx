@@ -16,7 +16,7 @@ export default function Timeline() {
         .map(job => ({
             id: job.id,
             title: job.project_name,
-            client: clients.find(c => c.id === job.client_id)?.name || 'Unknown',
+            client: (clients.find(c => c.id === job.client_id) as any)?.company || clients.find(c => c.id === job.client_id)?.name || 'Unknown',
             designer: designers.find(d => d.id === job.designer_id)?.name || 'Unassigned',
             deadline: new Date(job.client_deadline!),
             status: job.current_stage,
