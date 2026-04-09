@@ -288,10 +288,15 @@ export default function AccountStatementPage() {
                         <div>
                             <span className="text-gray-600">Opening Balance:</span>
                             <span className="ml-2 font-bold">₹{(account.opening_balance || 0).toLocaleString()}</span>
+                            {account.opening_balance_date && (
+                                <span className="ml-1 text-xs text-gray-400">
+                                    (as on {new Date(account.opening_balance_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })})
+                                </span>
+                            )}
                         </div>
                         <div>
                             <span className="text-gray-600">Current Balance:</span>
-                            <span className="ml-2 font-bold">₹{(account.current_balance || 0).toLocaleString()}</span>
+                            <span className={`ml-2 font-bold ${(account.current_balance || 0) < 0 ? 'text-red-600' : ''}`}>₹{(account.current_balance || 0).toLocaleString()}</span>
                         </div>
                     </div>
                 </div>
@@ -317,30 +322,56 @@ export default function AccountStatementPage() {
                                     </td>
                                 </tr>
                             ) : (
-                                transactions.map((txn) => {
-                                    const isDebit = accountType === 'bank'
-                                        ? txn.transaction_type === 'outflow'
-                                        : txn.transaction_type === 'out';
+                                (() => {
+                                    // Sort ascending for running balance calculation
+                                    const sorted = [...transactions].sort((a, b) => {
+                                        const dateCompare = new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime();
+                                        if (dateCompare !== 0) return dateCompare;
+                                        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+                                    });
+                                    
+                                    // Compute running balances
+                                    let runningBalance = account.opening_balance || 0;
+                                    const balanceMap = new Map<string, number>();
+                                    sorted.forEach((txn) => {
+                                        const isDebit = accountType === 'bank'
+                                            ? txn.transaction_type === 'outflow'
+                                            : txn.transaction_type === 'out';
+                                        if (isDebit) {
+                                            runningBalance -= (txn.amount || 0);
+                                        } else {
+                                            runningBalance += (txn.amount || 0);
+                                        }
+                                        balanceMap.set(txn.id, runningBalance);
+                                    });
 
-                                    return (
-                                        <tr key={txn.id} className="hover:bg-gray-50">
-                                            <td className="p-3 text-sm">
-                                                {new Date(txn.transaction_date).toLocaleDateString('en-IN')}
-                                            </td>
-                                            <td className="p-3 text-sm">{txn.description || '-'}</td>
-                                            <td className="p-3 text-sm text-gray-500">{txn.reference_number || '-'}</td>
-                                            <td className="p-3 text-sm text-right text-red-600 font-medium">
-                                                {isDebit ? `₹${txn.amount?.toLocaleString()}` : '-'}
-                                            </td>
-                                            <td className="p-3 text-sm text-right text-gray-900 font-medium">
-                                                {!isDebit ? `₹${txn.amount?.toLocaleString()}` : '-'}
-                                            </td>
-                                            <td className="p-3 text-sm text-right font-bold">
-                                                ₹{(txn.balance_after || 0).toLocaleString()}
-                                            </td>
-                                        </tr>
-                                    );
-                                })
+                                    // Display in descending order (newest first)
+                                    return transactions.map((txn) => {
+                                        const isDebit = accountType === 'bank'
+                                            ? txn.transaction_type === 'outflow'
+                                            : txn.transaction_type === 'out';
+                                        const balance = txn.balance_after != null ? txn.balance_after : (balanceMap.get(txn.id) || 0);
+
+                                        return (
+                                            <tr key={txn.id} className="hover:bg-gray-50">
+                                                <td className="p-3 text-sm">
+                                                    {new Date(txn.transaction_date).toLocaleDateString('en-IN')}
+                                                </td>
+                                                <td className="p-3 text-sm">{txn.description || '-'}</td>
+                                                <td className="p-3 text-sm text-gray-500">{txn.reference_number || '-'}</td>
+                                                <td className="p-3 text-sm text-right text-red-600 font-medium">
+                                                    {isDebit ? `₹${txn.amount?.toLocaleString()}` : '-'}
+                                                </td>
+                                                <td className="p-3 text-sm text-right text-green-700 font-medium">
+                                                    {!isDebit ? `₹${txn.amount?.toLocaleString()}` : '-'}
+                                                </td>
+                                                <td className={`p-3 text-sm text-right font-bold ${balance < 0 ? 'text-red-600' : ''}`}>
+                                                    ₹{balance.toLocaleString()}
+                                                </td>
+                                            </tr>
+                                        );
+                                    });
+                                })()
                             )}
                         </tbody>
                         {transactions.length > 0 && (

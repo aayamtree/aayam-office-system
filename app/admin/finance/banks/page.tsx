@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { toast } from '@/lib/toast';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import {
   Plus, Search, ArrowLeft, Building, Edit, Trash2, Eye, X, IndianRupee,
@@ -39,7 +40,8 @@ export default function BankAccountsPage() {
     ifsc_code: '',
     branch: '',
     account_type: 'Current',
-    opening_balance: 0
+    opening_balance: 0,
+    opening_balance_date: new Date().toISOString().split('T')[0]
   });
 
   const filteredBanks = banks ? banks.filter(b =>
@@ -62,9 +64,13 @@ export default function BankAccountsPage() {
           ifsc_code: formData.ifsc_code,
           branch: formData.branch,
           account_type: formData.account_type as any,
-          // opening balance typically shouldn't be changed after creation, but allowing it for fix
-          opening_balance: formData.opening_balance
-        });
+          opening_balance: formData.opening_balance,
+          opening_balance_date: formData.opening_balance_date
+        } as any);
+        // Recalculate all transaction balances if opening_balance changed
+        if (editingBank.opening_balance !== formData.opening_balance) {
+          await supabase.rpc('recalculate_account_balances', { p_account_id: editingBank.id });
+        }
       } else {
         await createBankAccount({
           name: formData.name,
@@ -73,9 +79,10 @@ export default function BankAccountsPage() {
           branch: formData.branch,
           account_type: formData.account_type as any,
           opening_balance: formData.opening_balance,
+          opening_balance_date: formData.opening_balance_date,
           is_default: banks?.length === 0, // First account is default
           is_active: true
-        });
+        } as any);
       }
       resetForm();
     } catch (error: any) {
@@ -87,7 +94,7 @@ export default function BankAccountsPage() {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', account_number: '', ifsc_code: '', branch: '', account_type: 'Current', opening_balance: 0 });
+    setFormData({ name: '', account_number: '', ifsc_code: '', branch: '', account_type: 'Current', opening_balance: 0, opening_balance_date: new Date().toISOString().split('T')[0] });
     setEditingBank(null);
     setShowModal(false);
   };
@@ -99,7 +106,8 @@ export default function BankAccountsPage() {
       ifsc_code: bank.ifsc_code || '',
       branch: bank.branch || '',
       account_type: bank.account_type,
-      opening_balance: bank.opening_balance
+      opening_balance: bank.opening_balance,
+      opening_balance_date: (bank as any).opening_balance_date || '2025-04-01'
     });
     setEditingBank(bank);
     setShowModal(true);
@@ -215,16 +223,21 @@ export default function BankAccountsPage() {
 
             <div className="grid grid-cols-3 gap-3 text-center py-3 bg-gray-50 rounded-md mb-3">
               <div>
-                <p className="text-xs text-gray-500">Opening</p>
+                <p className="text-xs text-gray-500">Opening Balance</p>
                 <p className="font-semibold text-gray-700">{formatCurrency(bank.opening_balance)}</p>
+                {(bank as any).opening_balance_date && (
+                  <p className="text-[10px] text-gray-400 mt-0.5">
+                    as on {new Date((bank as any).opening_balance_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </p>
+                )}
               </div>
               <div>
-                <p className="text-xs text-gray-500">Current</p>
-                <p className="font-bold text-primary">{formatCurrency(bank.current_balance)}</p>
+                <p className="text-xs text-gray-500">Current Balance</p>
+                <p className={`font-bold ${bank.current_balance >= 0 ? 'text-primary' : 'text-red-600'}`}>{formatCurrency(bank.current_balance)}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500">Change</p>
-                <p className={`font-semibold ${bank.current_balance >= bank.opening_balance ? 'text-gray-900' : 'text-red-600'}`}>
+                <p className="text-xs text-gray-500">Net Change</p>
+                <p className={`font-semibold ${bank.current_balance >= bank.opening_balance ? 'text-green-600' : 'text-red-600'}`}>
                   {bank.current_balance >= bank.opening_balance ? '+' : ''}{formatCurrency(bank.current_balance - bank.opening_balance)}
                 </p>
               </div>
@@ -299,14 +312,20 @@ export default function BankAccountsPage() {
                   </select>
                 </div>
               </div>
-              {!editingBank && (
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Opening Balance (₹)</label>
                   <input type="number" value={formData.opening_balance || ''}
                     onChange={(e) => setFormData({ ...formData, opening_balance: parseFloat(e.target.value) || 0 })}
                     className="w-full px-3 py-2.5 border rounded-md" placeholder="0" />
                 </div>
-              )}
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">Balance as on Date</label>
+                  <input type="date" value={formData.opening_balance_date}
+                    onChange={(e) => setFormData({ ...formData, opening_balance_date: e.target.value })}
+                    className="w-full px-3 py-2.5 border rounded-md" />
+                </div>
+              </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={resetForm} className="flex-1 px-4 py-2.5 border rounded-md font-medium">Cancel</button>
                 <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-900 disabled:opacity-50">
@@ -351,6 +370,11 @@ export default function BankAccountsPage() {
                 <div>
                   <p className="text-xs text-gray-500">Opening Balance</p>
                   <p className="font-medium">{formatCurrency(selectedBank.opening_balance)}</p>
+                  {(selectedBank as any).opening_balance_date && (
+                    <p className="text-[10px] text-gray-400">
+                      as on {new Date((selectedBank as any).opening_balance_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Status</p>
