@@ -34,8 +34,8 @@ export function NotificationPopup() {
                     schema: 'public',
                     table: 'broadcast_notifications',
                 },
-                (payload) => {
-                    const newNotification = payload.new as Notification;
+                async (payload) => {
+                    const newNotification = payload.new as any;
                     // Show if targeted at this user specifically, their role, or all
                     if (
                         newNotification.target_audience === 'all' ||
@@ -43,6 +43,29 @@ export function NotificationPopup() {
                         newNotification.target_audience === `user_${profile.id}`
                     ) {
                         setNotifications((prev) => [newNotification, ...prev]);
+                    }
+
+                    // Trigger push notification — only if THIS user created the notification
+                    // This prevents duplicate pushes when multiple users have the app open
+                    if (newNotification.created_by === profile.id) {
+                        try {
+                            const { data: { session } } = await supabase.auth.getSession();
+                            if (session?.access_token) {
+                                fetch('/api/push/send', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        Authorization: `Bearer ${session.access_token}`,
+                                    },
+                                    body: JSON.stringify({
+                                        title: newNotification.priority === 'urgent' ? '🚨 Urgent — Aayam' : '📢 Aayam Office',
+                                        message: newNotification.message,
+                                        targetAudience: newNotification.target_audience,
+                                        url: '/admin/dashboard',
+                                    }),
+                                }).catch(() => { /* silent — push is best-effort */ });
+                            }
+                        } catch { /* ignore push errors */ }
                     }
                 }
             )

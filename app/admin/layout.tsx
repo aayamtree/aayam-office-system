@@ -14,6 +14,7 @@ import { GlobalErrorBoundary } from '@/components/ErrorBoundary';
 import ToastContainer from '@/components/ToastContainer';
 import EODNudge from '@/components/eod/EODNudge';
 import RouteGuard from '@/components/layout/RouteGuard';
+import { NotificationPopup } from '@/components/NotificationPopup';
 
 export default function AdminLayout({
   children,
@@ -96,6 +97,9 @@ export default function AdminLayout({
 
           {/* EOD Nudge — appears at 5:30pm for non-admin staff who haven't submitted yet */}
           {profile && profile.role !== 'admin' && <EODNudge />}
+
+          {/* In-app notification popups (broadcast system) + push notification trigger */}
+          <NotificationPopup />
         </div>
       </ConfirmProvider>
     </SessionProvider>

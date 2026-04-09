@@ -15,7 +15,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: 'Aayam Office System',
   description: 'Complete Business Management System',
-  // manifest removed — SW was causing caching issues and extra requests
+  manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
