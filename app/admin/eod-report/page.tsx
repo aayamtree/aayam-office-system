@@ -32,6 +32,7 @@ export default function EODReportPage() {
     const [editingPastCard, setEditingPastCard] = useState<string | null>(null);
     const [pastCardEdits, setPastCardEdits] = useState<Record<string, any>>({});
     const [savingPastCard, setSavingPastCard] = useState<string | null>(null);
+    const [savingTask, setSavingTask] = useState<string | null>(null);
     const [autoLogCount, setAutoLogCount] = useState(0);
 
     // History month navigation
@@ -124,9 +125,9 @@ export default function EODReportPage() {
                     };
                 });
 
-                // Helper: apply a saved response row onto initialUpdates with editMode=false
+                // Helper: apply a saved response row onto initialUpdates
+                // Always keep editMode=true so Save button is always visible
                 const applySaved = (taskId: string, saved: any) => {
-                    const hasMeaningfulData = saved.status_update || saved.time_spent > 0;
                     initialUpdates[taskId] = {
                         task_status: saved.task_status || 'START WORK',
                         status_update: saved.status_update || '',
@@ -139,7 +140,7 @@ export default function EODReportPage() {
                         print_checklist_done: saved.print_checklist_done || false,
                         client_comments: saved.client_comments || '',
                         expanded: true,
-                        editMode: !hasMeaningfulData,  // show read-only card if data exists
+                        editMode: true,  // always editable — Save button always visible
                         _saved_id: saved.id
                     };
                 };
@@ -331,6 +332,48 @@ export default function EODReportPage() {
         }));
     };
 
+    // Save a single today-task edit (upserts into the report)
+    const handleSaveTaskEdit = async (taskId: string) => {
+        if (!profile?.id) return;
+        const taskData = taskUpdates[taskId];
+        if (!taskData) return;
+
+        setSavingTask(taskId);
+        try {
+            const { error } = await submitEODReport({
+                user_id: profile.id,
+                report_date: reportDate,
+                overall_notes: overallNotes,
+                blockers: blockers,
+                tomorrow_plan: tomorrowPlan,
+                work_hours: workHours,
+                task_updates: [{
+                    job_id: taskId,
+                    task_status: taskData.task_status,
+                    status_update: taskData.status_update,
+                    completion_percentage: taskData.completion_percentage,
+                    time_spent: taskData.time_spent,
+                    checklist: taskData.checklist_items,
+                    client_approval_received: taskData.client_approval_received,
+                    print_file_ready: taskData.print_file_ready,
+                    print_checklist_done: taskData.print_checklist_done,
+                    client_comments: taskData.client_comments
+                }]
+            });
+            if (error) {
+                toast.error('Failed to save: ' + error);
+            } else {
+                toast.success('Task update saved!');
+                // Keep editMode=true — don't switch to read-only
+                await loadData();
+            }
+        } catch (e: any) {
+            toast.error('Error: ' + (e.message || 'Unknown error'));
+        } finally {
+            setSavingTask(null);
+        }
+    };
+
     // Save an edited past EOD card with full audit logging
     const handlePastCardSave = async (report: any, taskUpdate: any) => {
         if (!profile?.id) return;
@@ -494,15 +537,12 @@ export default function EODReportPage() {
                             ) : (
                                 <div className="space-y-3">
                                     {todayTasks.map(task => (
-                                        <div key={task.id} className={`border rounded-md overflow-hidden ${
-                                            taskUpdates[task.id]?.editMode ? 'border-amber-300 shadow-sm' : 'border-gray-200'
-                                        }`}>
+                                        <div key={task.id} className="border border-amber-200 rounded-md overflow-hidden transition-all shadow-sm">
                                             {/* Task Header — always visible */}
                                             <div
-                                                className="flex items-center justify-between p-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
-                                                onClick={() => toggleTaskExpanded(task.id)}
+                                                className="flex items-center justify-between p-3 cursor-pointer transition-colors bg-amber-50 hover:bg-amber-100"
                                             >
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2" onClick={() => toggleTaskExpanded(task.id)}>
                                                     {taskUpdates[task.id]?.expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                                                     <div>
                                                         <p className="font-medium text-gray-900 text-sm">#{task.job_number} - {task.project_name}</p>
@@ -510,19 +550,6 @@ export default function EODReportPage() {
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-xs">
-                                                    {/* Status badge */}
-                                                    {!taskUpdates[task.id]?.editMode && (
-                                                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                                                            taskUpdates[task.id]?.task_status === 'COMPLETE'
-                                                                ? 'bg-green-100 text-green-700'
-                                                                : taskUpdates[task.id]?.task_status === 'NOT START'
-                                                                    ? 'bg-gray-100 text-gray-500'
-                                                                    : 'bg-blue-100 text-blue-700'
-                                                        }`}>
-                                                            {taskUpdates[task.id]?.task_status === 'COMPLETE' ? '✅ Done' :
-                                                             taskUpdates[task.id]?.task_status === 'NOT START' ? '⬜ Not Started' : '🔄 In Progress'}
-                                                        </span>
-                                                    )}
                                                     <span className="text-gray-500 hidden sm:inline">Stage: <span className="font-medium text-gray-900">{task.current_stage}</span></span>
                                                     {task.client_deadline && (
                                                         <span className="flex items-center gap-1 text-gray-500 hidden sm:flex">
@@ -530,51 +557,24 @@ export default function EODReportPage() {
                                                             {new Date(task.client_deadline).toLocaleDateString()}
                                                         </span>
                                                     )}
+                                                    {/* Always show Save button in header */}
+                                                    {taskUpdates[task.id]?.expanded && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); handleSaveTaskEdit(task.id); }}
+                                                            disabled={savingTask === task.id}
+                                                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors disabled:opacity-50 shadow-sm ml-1"
+                                                        >
+                                                            {savingTask === task.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
+                                                            {savingTask === task.id ? 'Saving...' : '💾 Save'}
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
 
                                             {taskUpdates[task.id]?.expanded && (
-                                                !taskUpdates[task.id]?.editMode ? (
-                                                    /* ── READ-ONLY SUMMARY CARD ── */
-                                                    <div className="px-3 py-2.5 bg-white flex items-start justify-between gap-3">
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-3 text-xs text-gray-500 mb-1">
-                                                                <span className="font-medium text-gray-700">
-                                                                    {taskUpdates[task.id]?.time_spent > 0 ? `${taskUpdates[task.id].time_spent}h` : '—'}
-                                                                </span>
-                                                                {taskUpdates[task.id]?.client_approval_received && <span className="text-green-600">✓ Client approved</span>}
-                                                                {taskUpdates[task.id]?.print_file_ready && <span className="text-blue-600">✓ Print ready</span>}
-                                                            </div>
-                                                            {taskUpdates[task.id]?.status_update ? (
-                                                                <p className="text-sm text-gray-700 truncate">{taskUpdates[task.id].status_update}</p>
-                                                            ) : (
-                                                                <p className="text-xs text-gray-400 italic">No notes — carried from last session</p>
-                                                            )}
-                                                        </div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setTaskEditMode(task.id, true)}
-                                                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-amber-50 hover:text-amber-700 border border-gray-200 hover:border-amber-200 rounded-md transition-colors flex-shrink-0"
-                                                        >
-                                                            <Pencil className="w-3 h-3" /> Edit
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    /* ── EDIT FORM ── */
+                                                    /* ── EDIT FORM — always visible ── */
                                                     <div className="p-3 space-y-3 bg-white">
-                                                        {/* Cancel edit button (only for tasks that have existing data) */}
-                                                        {taskUpdates[task.id]?._saved_id && (
-                                                            <div className="flex justify-end">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setTaskEditMode(task.id, false)}
-                                                                    className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
-                                                                >
-                                                                    ✕ Cancel edit
-                                                                </button>
-                                                            </div>
-                                                        )}
-
                                                         {/* Row: Status + Time */}
                                                         <div className="grid grid-cols-3 gap-3">
                                                             <div className="col-span-2">
@@ -692,8 +692,20 @@ export default function EODReportPage() {
                                                                 </div>
                                                             </div>
                                                         )}
+
+                                                        {/* Save button at bottom */}
+                                                        <div className="flex gap-2 pt-3 border-t border-gray-200">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleSaveTaskEdit(task.id)}
+                                                                disabled={savingTask === task.id}
+                                                                className="flex items-center gap-1.5 px-5 py-2.5 bg-green-600 text-white rounded-md text-sm font-bold hover:bg-green-700 disabled:opacity-50 shadow-sm transition-colors"
+                                                            >
+                                                                {savingTask === task.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                                                                {savingTask === task.id ? 'Saving...' : '💾 Save Changes'}
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                )
                                             )}
                                         </div>
                                     ))}
