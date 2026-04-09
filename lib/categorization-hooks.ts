@@ -69,14 +69,31 @@ export function useExpenseCategories() {
 
     const createCategory = async (name: string, description?: string, parentId?: string) => {
         try {
+            const trimmedName = name.trim();
+            // Check if category already exists (case-insensitive)
+            const { data: existing } = await supabase
+                .from('expense_categories')
+                .select('*')
+                .ilike('name', trimmedName)
+                .maybeSingle();
+
+            if (existing) {
+                // If it exists but was deactivated, reactivate it
+                if (!existing.is_active) {
+                    await supabase.from('expense_categories').update({ is_active: true }).eq('id', existing.id);
+                    await fetchCategories();
+                }
+                return { data: existing, error: null };
+            }
+
             const { data, error: createError } = await supabase
                 .from('expense_categories')
-                .insert([{ name, description, parent_id: parentId }])
+                .insert([{ name: trimmedName, description, parent_id: parentId }])
                 .select()
                 .single();
 
             if (createError) throw createError;
-            await fetchCategories(); // Refresh list
+            await fetchCategories();
             return { data, error: null };
         } catch (err: any) {
             return { data: null, error: err.message };
@@ -136,14 +153,30 @@ export function useIncomeCategories() {
 
     const createCategory = async (name: string, description?: string, parentId?: string) => {
         try {
+            const trimmedName = name.trim();
+            // Check if category already exists (case-insensitive)
+            const { data: existing } = await supabase
+                .from('income_categories')
+                .select('*')
+                .ilike('name', trimmedName)
+                .maybeSingle();
+
+            if (existing) {
+                if (!existing.is_active) {
+                    await supabase.from('income_categories').update({ is_active: true }).eq('id', existing.id);
+                    await fetchCategories();
+                }
+                return { data: existing, error: null };
+            }
+
             const { data, error: createError } = await supabase
                 .from('income_categories')
-                .insert([{ name, description, parent_id: parentId }])
+                .insert([{ name: trimmedName, description, parent_id: parentId }])
                 .select()
                 .single();
 
             if (createError) throw createError;
-            await fetchCategories(); // Refresh list
+            await fetchCategories();
             return { data, error: null };
         } catch (err: any) {
             return { data: null, error: err.message };

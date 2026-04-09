@@ -14,6 +14,7 @@ import {
 import { BankTransaction } from '@/types/database';
 import { CategoryModal } from '@/components/banking/CategoryModal';
 import { useExpenseCategories, useIncomeCategories } from '@/lib/categorization-hooks';
+import { useTransactionCategorization } from '@/lib/categorization-hooks';
 import { useConfirm } from '@/components/ConfirmModal';
 
 export default function BankingPage() {
@@ -230,6 +231,24 @@ export default function BankingPage() {
     const handleCategorySuccess = () => {
         setSuccessMessage('✅ Transaction categorized successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
+    };
+
+    // Uncategorize hook
+    const { uncategorizeTransaction } = useTransactionCategorization();
+    const handleUncategorize = async (txn: any) => {
+        const { confirmed } = await confirm({
+            title: 'Remove Categorization',
+            message: 'This will reset the transaction to uncategorized. You can re-categorize it later.',
+            variant: 'danger',
+            confirmLabel: 'Remove'
+        });
+        if (!confirmed) return;
+        const { error } = await uncategorizeTransaction(txn.id);
+        if (error) {
+            toast.error(`Error: ${error}`);
+        } else {
+            toast.success('Categorization removed');
+        }
     };
 
     // Get category name
@@ -472,14 +491,29 @@ export default function BankingPage() {
                                     </td>
                                     <td className="px-4 py-3 text-center">
                                         <div className="flex items-center justify-center gap-1">
-                                            {/* Categorize Button */}
-                                            {!txn.is_verified && txn.status !== 'ignored' && (
+                                            {/* Categorize / Edit Button */}
+                                            {txn.status !== 'ignored' && (
                                                 <button
                                                     onClick={() => handleCategorize(txn)}
-                                                    className="p-1.5 hover:bg-gray-900 text-gray-600 hover:text-primary rounded-md transition-colors"
-                                                    title="Categorize Transaction"
+                                                    className={`p-1.5 rounded-md transition-colors ${
+                                                        txn.is_verified
+                                                            ? 'hover:bg-blue-50 text-blue-500 hover:text-blue-700'
+                                                            : 'hover:bg-gray-900 text-gray-600 hover:text-primary'
+                                                    }`}
+                                                    title={txn.is_verified ? 'Edit Categorization' : 'Categorize Transaction'}
                                                 >
                                                     <Edit3 className="w-4 h-4" />
+                                                </button>
+                                            )}
+
+                                            {/* Uncategorize button - only for verified */}
+                                            {txn.is_verified && (
+                                                <button
+                                                    onClick={() => handleUncategorize(txn)}
+                                                    className="p-1.5 hover:bg-orange-50 text-gray-400 hover:text-orange-500 rounded-md transition-colors"
+                                                    title="Remove categorization"
+                                                >
+                                                    <X className="w-4 h-4" />
                                                 </button>
                                             )}
 

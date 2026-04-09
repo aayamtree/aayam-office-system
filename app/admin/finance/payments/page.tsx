@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
-import { Plus, X, Loader2, ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { Plus, X, Loader2, ArrowDownRight, ArrowUpRight, Building2, Tag } from 'lucide-react';
 import { logActivity } from '@/lib/logger';
 
 export default function PaymentsPageNew() {
@@ -19,20 +19,73 @@ export default function PaymentsPageNew() {
     const [bankAccounts, setBankAccounts] = useState<any[]>([]);
     const [cashAccounts, setCashAccounts] = useState<any[]>([]);
 
-    // Fetch payments
+    // Filter state
+    const [sourceFilter, setSourceFilter] = useState<'all' | 'manual' | 'banking'>('all');
+
+    // Fetch payments (manual + categorized bank transactions)
     const fetchPayments = async () => {
         try {
             setLoading(true);
+
+            // 1. Fetch manual payments (existing RPC)
             const { data: received, error: recError } = await supabase.rpc('get_all_payments_received');
             const { data: paid, error: paidError } = await supabase.rpc('get_all_vendor_payments');
 
             if (recError) throw recError;
             if (paidError) throw paidError;
 
-            const allPayments = [
-                ...(received || []).map((p: any) => ({ ...p, type: 'received' })),
-                ...(paid || []).map((p: any) => ({ ...p, type: 'paid' }))
-            ].sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime());
+            // 2. Fetch categorized bank transactions (verified = true)
+            const { data: bankTxns, error: bankError } = await supabase
+                .from('bank_transactions')
+                .select(`
+                    id, transaction_date, transaction_type, amount, description,
+                    reference_number, categorization_type, expense_category_id,
+                    income_category_id, expense_type, payment_method,
+                    categorization_notes, is_verified, verified_at,
+                    expense_category:expense_categories(id, name),
+                    income_category:income_categories(id, name),
+                    bank_account:bank_accounts(id, name, bank_name)
+                `)
+                .eq('is_verified', true)
+                .order('transaction_date', { ascending: false });
+
+            if (bankError) throw bankError;
+
+            // Build unified payment list
+            const manualPayments = [
+                ...(received || []).map((p: any) => ({ ...p, type: 'received', source: 'manual' })),
+                ...(paid || []).map((p: any) => ({ ...p, type: 'paid', source: 'manual' }))
+            ];
+
+            // Convert bank transactions to payment format
+            const bankPayments = (bankTxns || []).map((txn: any) => ({
+                id: txn.id,
+                amount: txn.amount,
+                payment_date: txn.transaction_date,
+                payment_mode: txn.payment_method || 'bank_transfer',
+                reference_number: txn.reference_number,
+                notes: txn.categorization_notes,
+                type: txn.transaction_type === 'inflow' ? 'received' : 'paid',
+                source: 'banking',
+                // Description / party info from bank description
+                description: txn.description,
+                // Category info
+                category_name: txn.categorization_type === 'expense'
+                    ? txn.expense_category?.name
+                    : txn.income_category?.name,
+                categorization_type: txn.categorization_type,
+                expense_type: txn.expense_type,
+                bank_account_name: txn.bank_account?.name || txn.bank_account?.bank_name,
+                verified_at: txn.verified_at,
+                // For display - use description as party name for bank transactions
+                client_name: txn.transaction_type === 'inflow' ? (txn.description?.substring(0, 50) || 'Bank Inflow') : null,
+                client_company: null,
+                vendor_name: txn.transaction_type === 'outflow' ? (txn.description?.substring(0, 50) || 'Bank Outflow') : null,
+                vendor_company: null,
+            }));
+
+            const allPayments = [...manualPayments, ...bankPayments]
+                .sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime());
 
             setPayments(allPayments);
             setError(null);
@@ -60,6 +113,16 @@ export default function PaymentsPageNew() {
         fetchPayments();
         fetchParties();
     }, []);
+
+    // Filtered payments
+    const filteredPayments = sourceFilter === 'all'
+        ? payments
+        : payments.filter(p => p.source === sourceFilter);
+
+    // Stats
+    const totalReceived = payments.filter(p => p.type === 'received').reduce((sum, p) => sum + (p.amount || 0), 0);
+    const totalPaid = payments.filter(p => p.type === 'paid').reduce((sum, p) => sum + (p.amount || 0), 0);
+    const bankTxnCount = payments.filter(p => p.source === 'banking').length;
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -145,8 +208,8 @@ export default function PaymentsPageNew() {
             {/* Header - Stack on mobile */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 md:mb-1.5">
                 <div>
-                    <h1 className="text-xl md:text-page-title">Payments (New)</h1>
-                    <p className="text-sm text-gray-500">{payments.length} transactions</p>
+                    <h1 className="text-xl md:text-page-title">Payments</h1>
+                    <p className="text-sm text-gray-500">{payments.length} transactions total</p>
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
@@ -163,42 +226,121 @@ export default function PaymentsPageNew() {
                 </div>
             )}
 
+            {/* Summary Stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-white p-4 rounded-md border border-gray-100">
+                    <p className="text-xs text-gray-500">Total Received</p>
+                    <p className="text-xl font-bold text-gray-900">₹{totalReceived.toLocaleString('en-IN')}</p>
+                </div>
+                <div className="bg-white p-4 rounded-md border border-gray-100">
+                    <p className="text-xs text-gray-500">Total Paid</p>
+                    <p className="text-xl font-bold text-red-600">₹{totalPaid.toLocaleString('en-IN')}</p>
+                </div>
+                <div className="bg-white p-4 rounded-md border border-gray-100">
+                    <p className="text-xs text-gray-500">From Bank Categorization</p>
+                    <p className="text-xl font-bold text-blue-600">{bankTxnCount}</p>
+                </div>
+            </div>
+
+            {/* Source Filter */}
+            <div className="flex gap-2 overflow-x-auto pb-1">
+                <button
+                    onClick={() => setSourceFilter('all')}
+                    className={`px-4 py-2 rounded-md font-medium text-sm whitespace-nowrap transition-colors ${
+                        sourceFilter === 'all' ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
+                    }`}
+                >
+                    All ({payments.length})
+                </button>
+                <button
+                    onClick={() => setSourceFilter('manual')}
+                    className={`px-4 py-2 rounded-md font-medium text-sm whitespace-nowrap transition-colors ${
+                        sourceFilter === 'manual' ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
+                    }`}
+                >
+                    Manual ({payments.filter(p => p.source === 'manual').length})
+                </button>
+                <button
+                    onClick={() => setSourceFilter('banking')}
+                    className={`px-4 py-2 rounded-md font-medium text-sm whitespace-nowrap transition-colors ${
+                        sourceFilter === 'banking' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300'
+                    }`}
+                >
+                    From Banking ({bankTxnCount})
+                </button>
+            </div>
+
             {/* Table - Horizontal scroll on mobile */}
             <div className="bg-white rounded-md shadow overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full min-w-[640px]">
+                    <table className="w-full min-w-[700px]">
                         <thead className="bg-gray-50 border-b">
                             <tr>
                                 <th className="text-left p-3 md:p-4 text-xs md:text-sm font-semibold text-gray-700">Type</th>
-                                <th className="text-left p-3 md:p-4 text-xs md:text-sm font-semibold text-gray-700">Party</th>
+                                <th className="text-left p-3 md:p-4 text-xs md:text-sm font-semibold text-gray-700">Party / Description</th>
                                 <th className="text-left p-3 md:p-4 text-xs md:text-sm font-semibold text-gray-700">Amount</th>
+                                <th className="text-left p-3 md:p-4 text-xs md:text-sm font-semibold text-gray-700">Category</th>
                                 <th className="text-left p-3 md:p-4 text-xs md:text-sm font-semibold text-gray-700">Mode</th>
                                 <th className="text-left p-3 md:p-4 text-xs md:text-sm font-semibold text-gray-700">Date</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y">
-                            {payments.length === 0 ? (
+                            {filteredPayments.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="text-center p-8 text-gray-500">
+                                    <td colSpan={6} className="text-center p-8 text-gray-500">
                                         No payments found
                                     </td>
                                 </tr>
                             ) : (
-                                payments.map((payment) => (
-                                    <tr key={payment.id} className="hover:bg-gray-50">
+                                filteredPayments.map((payment) => (
+                                    <tr key={`${payment.source}-${payment.id}`} className="hover:bg-gray-50">
                                         <td className="p-3 md:p-4">
-                                            <span className={`flex items-center gap-1.5 md:gap-2 text-xs md:text-sm ${payment.type === 'received' ? 'text-gray-900' : 'text-red-600'}`}>
-                                                {payment.type === 'received' ? <ArrowDownRight size={14} /> : <ArrowUpRight size={14} />}
-                                                {payment.type === 'received' ? 'Received' : 'Paid'}
-                                            </span>
-                                        </td>
-                                        <td className="p-3 md:p-4">
-                                            <div>
-                                                <div className="font-medium text-xs md:text-sm">{payment.type === 'received' ? (payment.client_company || payment.client_name) : (payment.vendor_company || payment.vendor_name)}</div>
-                                                {payment.type === 'received' ? (payment.client_company && <div className="text-xs text-gray-500 truncate max-w-[150px]">{payment.client_name}</div>) : (payment.vendor_company && <div className="text-xs text-gray-500 truncate max-w-[150px]">{payment.vendor_name}</div>)}
+                                            <div className="flex flex-col gap-1">
+                                                <span className={`flex items-center gap-1.5 text-xs md:text-sm font-medium ${payment.type === 'received' ? 'text-gray-900' : 'text-red-600'}`}>
+                                                    {payment.type === 'received' ? <ArrowDownRight size={14} /> : <ArrowUpRight size={14} />}
+                                                    {payment.type === 'received' ? 'Received' : 'Paid'}
+                                                </span>
+                                                {payment.source === 'banking' && (
+                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded text-[10px] font-medium w-fit">
+                                                        <Building2 size={10} /> Banking
+                                                    </span>
+                                                )}
                                             </div>
                                         </td>
+                                        <td className="p-3 md:p-4">
+                                            {payment.source === 'banking' ? (
+                                                <div>
+                                                    <div className="font-medium text-xs md:text-sm text-gray-900 line-clamp-1" title={payment.description}>
+                                                        {payment.description}
+                                                    </div>
+                                                    {payment.bank_account_name && (
+                                                        <div className="text-xs text-gray-400 truncate">{payment.bank_account_name}</div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div>
+                                                    <div className="font-medium text-xs md:text-sm">
+                                                        {payment.type === 'received'
+                                                            ? (payment.client_company || payment.client_name)
+                                                            : (payment.vendor_company || payment.vendor_name)}
+                                                    </div>
+                                                    {payment.type === 'received'
+                                                        ? (payment.client_company && <div className="text-xs text-gray-500 truncate max-w-[150px]">{payment.client_name}</div>)
+                                                        : (payment.vendor_company && <div className="text-xs text-gray-500 truncate max-w-[150px]">{payment.vendor_name}</div>)
+                                                    }
+                                                </div>
+                                            )}
+                                        </td>
                                         <td className="p-3 md:p-4 font-bold text-xs md:text-sm">₹{payment.amount?.toLocaleString('en-IN')}</td>
+                                        <td className="p-3 md:p-4">
+                                            {payment.category_name ? (
+                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-medium">
+                                                    <Tag size={10} /> {payment.category_name}
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs text-gray-400">—</span>
+                                            )}
+                                        </td>
                                         <td className="p-3 md:p-4 capitalize text-xs md:text-sm">{payment.payment_mode?.replace('_', ' ')}</td>
                                         <td className="p-3 md:p-4 text-xs md:text-sm">{new Date(payment.payment_date).toLocaleDateString('en-IN')}</td>
                                     </tr>
@@ -333,6 +475,8 @@ export default function PaymentsPageNew() {
                                     placeholder="Optional"
                                 />
                             </div>
+
+                            <input type="hidden" name="notes" value="" />
 
                             <div className="flex gap-2">
                                 <button

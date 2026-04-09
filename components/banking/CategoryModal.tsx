@@ -12,6 +12,14 @@ interface Transaction {
     amount: number;
     type?: 'credit' | 'debit';
     transaction_type?: 'inflow' | 'outflow'; // Bank transaction field
+    // Existing categorization data (for edit mode)
+    is_verified?: boolean;
+    categorization_type?: 'expense' | 'income' | null;
+    expense_category_id?: string | null;
+    income_category_id?: string | null;
+    expense_type?: 'goods' | 'services' | null;
+    payment_method?: string | null;
+    categorization_notes?: string | null;
     [key: string]: any; // Allow additional properties from bank transactions
 }
 
@@ -27,8 +35,15 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
     const { categories: incomeCategories, createCategory: createIncomeCategory, getParentCategories: getIncomeParents, getSubcategories: getIncomeSubcategories } = useIncomeCategories();
     const { categorizeTransaction, saving } = useTransactionCategorization();
 
+    const isEditMode = !!transaction.is_verified;
+
     // Form state - Auto-detect transaction type based on transaction data
     const detectTransactionType = (): 'expense' | 'income' => {
+        // If already categorized, use the existing type
+        if (transaction.categorization_type) {
+            return transaction.categorization_type;
+        }
+
         // Method 1: Check transaction_type field (outflow/inflow)
         if ('transaction_type' in transaction) {
             return (transaction as any).transaction_type === 'outflow' ? 'expense' : 'income';
@@ -46,20 +61,62 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
         return 'expense';
     };
 
+    // Detect existing category for edit mode
+    const detectExistingCategory = (): string => {
+        if (transaction.categorization_type === 'expense' && transaction.expense_category_id) {
+            // Check if this is a subcategory — if so, return the parent
+            const cat = expenseCategories.find(c => c.id === transaction.expense_category_id);
+            if (cat?.parent_id) return cat.parent_id;
+            return transaction.expense_category_id;
+        }
+        if (transaction.categorization_type === 'income' && transaction.income_category_id) {
+            const cat = incomeCategories.find(c => c.id === transaction.income_category_id);
+            if (cat?.parent_id) return cat.parent_id;
+            return transaction.income_category_id;
+        }
+        return '';
+    };
+
+    const detectExistingSubcategory = (): string => {
+        if (transaction.categorization_type === 'expense' && transaction.expense_category_id) {
+            const cat = expenseCategories.find(c => c.id === transaction.expense_category_id);
+            if (cat?.parent_id) return transaction.expense_category_id;
+        }
+        if (transaction.categorization_type === 'income' && transaction.income_category_id) {
+            const cat = incomeCategories.find(c => c.id === transaction.income_category_id);
+            if (cat?.parent_id) return transaction.income_category_id;
+        }
+        return '';
+    };
+
     const [transactionType, setTransactionType] = useState<'expense' | 'income'>(detectTransactionType());
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedSubcategory, setSelectedSubcategory] = useState('');
-    const [expenseType, setExpenseType] = useState<'goods' | 'services'>('services');
-    const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
+    const [expenseType, setExpenseType] = useState<'goods' | 'services'>(
+        (transaction.expense_type as 'goods' | 'services') || 'services'
+    );
+    const [paymentMethod, setPaymentMethod] = useState(
+        transaction.payment_method || 'bank_transfer'
+    );
     const [transactionDate, setTransactionDate] = useState(
         new Date(transaction.transaction_date).toISOString().split('T')[0]
     );
-    const [notes, setNotes] = useState('');
+    const [notes, setNotes] = useState(transaction.categorization_notes || '');
 
     // New category state
     const [showNewCategoryForm, setShowNewCategoryForm] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [creatingCategory, setCreatingCategory] = useState(false);
+
+    // Pre-fill category selections once categories are loaded (edit mode)
+    useEffect(() => {
+        if (isEditMode && (expenseCategories.length > 0 || incomeCategories.length > 0)) {
+            const cat = detectExistingCategory();
+            const subcat = detectExistingSubcategory();
+            if (cat) setSelectedCategory(cat);
+            if (subcat) setSelectedSubcategory(subcat);
+        }
+    }, [expenseCategories, incomeCategories]);
 
     // Get relevant categories based on transaction type
     const parentCategories = transactionType === 'expense'
@@ -72,9 +129,14 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
             : getIncomeSubcategories(selectedCategory))
         : [];
 
-    // Reset subcategory when parent changes
+    // Reset subcategory when parent changes (but not on initial load for edit mode)
+    const [initialLoadDone, setInitialLoadDone] = useState(false);
     useEffect(() => {
-        setSelectedSubcategory('');
+        if (initialLoadDone) {
+            setSelectedSubcategory('');
+        } else {
+            setInitialLoadDone(true);
+        }
     }, [selectedCategory]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -131,6 +193,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                 setSelectedCategory(data.id);
                 setNewCategoryName('');
                 setShowNewCategoryForm(false);
+                toast.success(`Category "${data.name}" ready to use`);
             }
         } finally {
             setCreatingCategory(false);
@@ -143,8 +206,12 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
                     <div>
-                        <h2 className="text-page-title text-gray-900">Categorize Transaction</h2>
-                        <p className="text-sm text-gray-500 mt-1">Verify and assign category</p>
+                        <h2 className="text-page-title text-gray-900">
+                            {isEditMode ? 'Edit Categorization' : 'Categorize Transaction'}
+                        </h2>
+                        <p className="text-sm text-gray-500 mt-1">
+                            {isEditMode ? 'Update category and details' : 'Verify and assign category'}
+                        </p>
                     </div>
                     <button
                         onClick={onClose}
@@ -249,6 +316,12 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                                         onChange={(e) => setNewCategoryName(e.target.value)}
                                         placeholder="New category name..."
                                         className="flex-1 px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring/20"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleCreateNewCategory();
+                                            }
+                                        }}
                                     />
                                     <button
                                         type="button"
@@ -385,7 +458,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                             className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
                         >
                             {saving && <Loader2 size={18} className="animate-spin" />}
-                            {saving ? 'Saving...' : 'Save & Verify'}
+                            {saving ? 'Saving...' : isEditMode ? 'Update & Verify' : 'Save & Verify'}
                         </button>
                     </div>
                 </form>
