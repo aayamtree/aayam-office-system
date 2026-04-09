@@ -340,7 +340,7 @@ export default function EODReportPage() {
 
         setSavingTask(taskId);
         try {
-            const { error } = await submitEODReport({
+            const { error, data: savedReport } = await submitEODReport({
                 user_id: profile.id,
                 report_date: reportDate,
                 overall_notes: overallNotes,
@@ -369,7 +369,11 @@ export default function EODReportPage() {
                     ...prev,
                     [taskId]: { ...prev[taskId], expanded: false }
                 }));
-                await loadData();
+                // Update todayReport so the "Submitted" banner shows correctly
+                // Do NOT call loadData() — it resets all cards to expanded:true
+                if (savedReport) {
+                    setTodayReport(savedReport);
+                }
             }
         } catch (e: any) {
             toast.error('Error: ' + (e.message || 'Unknown error'));
