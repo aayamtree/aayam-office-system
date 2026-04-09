@@ -453,6 +453,7 @@ export interface BankAccount extends BaseEntity {
   account_type: 'current' | 'savings' | 'od' | 'cc' | 'cash';
 
   opening_balance: number;
+  opening_balance_date?: string;
   current_balance: number;
 
   is_default: boolean;

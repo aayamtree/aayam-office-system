@@ -364,7 +364,11 @@ export default function EODReportPage() {
                 toast.error('Failed to save: ' + error);
             } else {
                 toast.success('Task update saved!');
-                // Keep editMode=true — don't switch to read-only
+                // Collapse the card after successful save
+                setTaskUpdates(prev => ({
+                    ...prev,
+                    [taskId]: { ...prev[taskId], expanded: false }
+                }));
                 await loadData();
             }
         } catch (e: any) {
@@ -556,18 +560,6 @@ export default function EODReportPage() {
                                                             <Calendar className="w-3 h-3" />
                                                             {new Date(task.client_deadline).toLocaleDateString()}
                                                         </span>
-                                                    )}
-                                                    {/* Always show Save button in header */}
-                                                    {taskUpdates[task.id]?.expanded && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => { e.stopPropagation(); handleSaveTaskEdit(task.id); }}
-                                                            disabled={savingTask === task.id}
-                                                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors disabled:opacity-50 shadow-sm ml-1"
-                                                        >
-                                                            {savingTask === task.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
-                                                            {savingTask === task.id ? 'Saving...' : '💾 Save'}
-                                                        </button>
                                                     )}
                                                 </div>
                                             </div>

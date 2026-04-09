@@ -30,8 +30,8 @@ export default function BankingPage() {
     const [editingAccount, setEditingAccount] = useState<any>(null); // null = add new
     const [showAccountForm, setShowAccountForm] = useState(false);
     type AccType = 'current' | 'savings' | 'od' | 'cc' | 'cash';
-    const [accountForm, setAccountForm] = useState<{ name: string; bank_name: string; account_number: string; ifsc_code: string; account_type: AccType; opening_balance: number }>({
-        name: '', bank_name: '', account_number: '', ifsc_code: '', account_type: 'current', opening_balance: 0
+    const [accountForm, setAccountForm] = useState<{ name: string; bank_name: string; account_number: string; ifsc_code: string; account_type: AccType; opening_balance: number; opening_balance_date: string }>({
+        name: '', bank_name: '', account_number: '', ifsc_code: '', account_type: 'current', opening_balance: 0, opening_balance_date: new Date().toISOString().split('T')[0]
     });
     const [savingAccount, setSavingAccount] = useState(false);
 
@@ -39,12 +39,12 @@ export default function BankingPage() {
 
     const openAddForm = () => {
         setEditingAccount(null);
-        setAccountForm({ name: '', bank_name: '', account_number: '', ifsc_code: '', account_type: 'current', opening_balance: 0 });
+        setAccountForm({ name: '', bank_name: '', account_number: '', ifsc_code: '', account_type: 'current', opening_balance: 0, opening_balance_date: new Date().toISOString().split('T')[0] });
         setShowAccountForm(true);
     };
     const openEditForm = (acc: any) => {
         setEditingAccount(acc);
-        setAccountForm({ name: acc.name || '', bank_name: acc.bank_name || '', account_number: acc.account_number || '', ifsc_code: acc.ifsc_code || '', account_type: (acc.account_type || 'current') as AccType, opening_balance: acc.opening_balance || 0 });
+        setAccountForm({ name: acc.name || '', bank_name: acc.bank_name || '', account_number: acc.account_number || '', ifsc_code: acc.ifsc_code || '', account_type: (acc.account_type || 'current') as AccType, opening_balance: acc.opening_balance || 0, opening_balance_date: acc.opening_balance_date || '2025-04-01' });
         setShowAccountForm(true);
     };
     const handleSaveAccount = async (e: React.FormEvent) => {
@@ -654,7 +654,7 @@ export default function BankingPage() {
                                             ? <p className="text-xs text-amber-700">Physical Ledger · No bank data</p>
                                             : <p className="text-xs text-gray-500">{acc.bank_name && `${acc.bank_name} · `}{acc.account_number}</p>
                                         }
-                                        <p className="text-xs text-gray-400">Balance: ₹{(acc.current_balance || 0).toLocaleString()}</p>
+                                        <p className="text-xs text-gray-400">Balance: ₹{(acc.current_balance || 0).toLocaleString()}{acc.opening_balance_date ? ` · OB: ${new Date(acc.opening_balance_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}` : ''}</p>
                                     </div>
                                     <div className="flex items-center gap-1 shrink-0">
                                         {!acc.is_default && (
@@ -749,12 +749,26 @@ export default function BankingPage() {
                                         )}
 
                                         {/* Opening Balance — shown only when adding new */}
+                                        {/* Opening Balance — shown only when adding new */}
                                         {!editingAccount && (
+                                            <>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                                                        {isCash(accountForm.account_type) ? 'Cash in Hand (₹)' : 'Opening Balance (₹)'}
+                                                    </label>
+                                                    <input type="number" value={accountForm.opening_balance} onChange={e => setAccountForm(p => ({ ...p, opening_balance: parseFloat(e.target.value) || 0 }))} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#B8860B]" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-600 mb-1">Opening Balance Date</label>
+                                                    <input type="date" value={accountForm.opening_balance_date} onChange={e => setAccountForm(p => ({ ...p, opening_balance_date: e.target.value }))} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#B8860B]" />
+                                                </div>
+                                            </>
+                                        )}
+                                        {/* Opening Balance Date — editable when editing */}
+                                        {editingAccount && (
                                             <div className="col-span-2">
-                                                <label className="block text-xs font-medium text-gray-600 mb-1">
-                                                    {isCash(accountForm.account_type) ? 'Current Cash in Hand (₹)' : 'Opening Balance (₹)'}
-                                                </label>
-                                                <input type="number" value={accountForm.opening_balance} onChange={e => setAccountForm(p => ({ ...p, opening_balance: parseFloat(e.target.value) || 0 }))} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#B8860B]" />
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">Opening Balance Date</label>
+                                                <input type="date" value={accountForm.opening_balance_date} onChange={e => setAccountForm(p => ({ ...p, opening_balance_date: e.target.value }))} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#B8860B]" />
                                             </div>
                                         )}
                                     </div>

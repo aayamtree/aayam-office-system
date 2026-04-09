@@ -150,6 +150,8 @@ const menuItems: MenuItem[] = [
       { name: 'Bank Accounts', href: '/admin/finance/banks', adminOnly: true },
       { name: 'Daily Summary', href: '/admin/finance/daily', adminOnly: true },
       { name: 'Accounts', href: '/admin/finance/accounts', adminOnly: true },
+      { name: 'Chart of Accounts', href: '/admin/finance/chart-of-accounts', adminOnly: true },
+      { name: 'Journal', href: '/admin/finance/journal', adminOnly: true },
       { name: 'Purchase Bills', href: '/admin/finance/vendors/purchases' },
       { name: 'Vendors', href: '/admin/finance/vendors' },
       { name: '📖 My Guide', href: '/admin/finance/guide' },
