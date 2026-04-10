@@ -973,7 +973,7 @@ export default function JobsPage() {
       {/* Add/Edit Job Modal */}
       {
         <Dialog open={showModal} onOpenChange={setShowModal}>
-          <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
             <DialogHeader>
               <DialogTitle>{editingJob ? 'Edit Job' : 'New Job'}</DialogTitle>
             </DialogHeader>
