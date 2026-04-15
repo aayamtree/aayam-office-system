@@ -2,17 +2,27 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from '@/lib/toast';
-import { X, Plus, Loader2 } from 'lucide-react';
-import { useExpenseCategories, useIncomeCategories, useTransactionCategorization, TransactionCategorization } from '@/lib/categorization-hooks';
+import { X, Plus, Loader2, User, Building2, ChevronDown, AlertCircle, CheckCircle2 } from 'lucide-react';
+import {
+    useExpenseCategories,
+    useIncomeCategories,
+    useTransactionCategorization,
+    TransactionCategorization,
+    InvoiceAllocation,
+    BillAllocation,
+} from '@/lib/categorization-hooks';
+import { supabase } from '@/lib/supabase';
+
+// ── Category names that trigger entity-linking panels ──
+const CLIENT_CATEGORY_NAMES = ['Customer Payment', 'Customer Advance', 'Client Payment', 'Advance Payment'];
+const VENDOR_CATEGORY_NAMES = ['Vendor Payment', 'Vendor Advance'];
 
 interface Transaction {
     id: string;
     transaction_date: string;
     description: string;
     amount: number;
-    type?: 'credit' | 'debit';
-    transaction_type?: 'inflow' | 'outflow'; // Bank transaction field
-    // Existing categorization data (for edit mode)
+    transaction_type?: 'inflow' | 'outflow';
     is_verified?: boolean;
     categorization_type?: 'expense' | 'income' | null;
     expense_category_id?: string | null;
@@ -20,7 +30,9 @@ interface Transaction {
     expense_type?: 'goods' | 'services' | null;
     payment_method?: string | null;
     categorization_notes?: string | null;
-    [key: string]: any; // Allow additional properties from bank transactions
+    client_id?: string | null;
+    vendor_id?: string | null;
+    [key: string]: any;
 }
 
 interface CategoryModalProps {
@@ -29,126 +41,301 @@ interface CategoryModalProps {
     onSuccess: () => void;
 }
 
+interface ClientOption { id: string; name: string; company?: string; }
+interface VendorOption { id: string; name: string; }
+
+interface PendingInvoice {
+    id: string; invoice_number: string; invoice_date: string;
+    due_date?: string; total_amount: number; amount_paid: number;
+    balance_due: number; payment_status: string;
+}
+
+interface PendingBill {
+    id: string; bill_number: string; bill_date: string;
+    due_date?: string; total_amount: number; amount_paid: number;
+    vendor_bill_number?: string; description?: string;
+}
+
 export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModalProps) {
-    // Hooks
     const { categories: expenseCategories, createCategory: createExpenseCategory, getParentCategories: getExpenseParents, getSubcategories: getExpenseSubcategories } = useExpenseCategories();
     const { categories: incomeCategories, createCategory: createIncomeCategory, getParentCategories: getIncomeParents, getSubcategories: getIncomeSubcategories } = useIncomeCategories();
     const { categorizeTransaction, saving } = useTransactionCategorization();
 
     const isEditMode = !!transaction.is_verified;
 
-    // Form state - Auto-detect transaction type based on transaction data
+    // ── Detect transaction type from existing data or transaction_type field ──
     const detectTransactionType = (): 'expense' | 'income' => {
-        // If already categorized, use the existing type
-        if (transaction.categorization_type) {
-            return transaction.categorization_type;
-        }
-
-        // Method 1: Check transaction_type field (outflow/inflow)
-        if ('transaction_type' in transaction) {
-            return (transaction as any).transaction_type === 'outflow' ? 'expense' : 'income';
-        }
-
-        // Method 2: Check type field (debit/credit) 
-        if (transaction.type === 'debit') return 'expense';
-        if (transaction.type === 'credit') return 'income';
-
-        // Method 3: Check amount sign (negative = outflow/expense, positive = inflow/income)
+        if (transaction.categorization_type) return transaction.categorization_type;
+        if (transaction.transaction_type === 'outflow') return 'expense';
+        if (transaction.transaction_type === 'inflow') return 'income';
         if (transaction.amount < 0) return 'expense';
-        if (transaction.amount > 0) return 'income';
-
-        // Default to expense if unclear
-        return 'expense';
+        return 'income';
     };
 
-    // Detect existing category for edit mode
-    const detectExistingCategory = (): string => {
-        if (transaction.categorization_type === 'expense' && transaction.expense_category_id) {
-            // Check if this is a subcategory — if so, return the parent
-            const cat = expenseCategories.find(c => c.id === transaction.expense_category_id);
-            if (cat?.parent_id) return cat.parent_id;
-            return transaction.expense_category_id;
-        }
-        if (transaction.categorization_type === 'income' && transaction.income_category_id) {
-            const cat = incomeCategories.find(c => c.id === transaction.income_category_id);
-            if (cat?.parent_id) return cat.parent_id;
-            return transaction.income_category_id;
-        }
-        return '';
-    };
-
-    const detectExistingSubcategory = (): string => {
-        if (transaction.categorization_type === 'expense' && transaction.expense_category_id) {
-            const cat = expenseCategories.find(c => c.id === transaction.expense_category_id);
-            if (cat?.parent_id) return transaction.expense_category_id;
-        }
-        if (transaction.categorization_type === 'income' && transaction.income_category_id) {
-            const cat = incomeCategories.find(c => c.id === transaction.income_category_id);
-            if (cat?.parent_id) return transaction.income_category_id;
-        }
-        return '';
-    };
-
+    // ── Form state ──
     const [transactionType, setTransactionType] = useState<'expense' | 'income'>(detectTransactionType());
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedSubcategory, setSelectedSubcategory] = useState('');
-    const [expenseType, setExpenseType] = useState<'goods' | 'services'>(
-        (transaction.expense_type as 'goods' | 'services') || 'services'
-    );
-    const [paymentMethod, setPaymentMethod] = useState(
-        transaction.payment_method || 'bank_transfer'
-    );
-    const [transactionDate, setTransactionDate] = useState(
-        new Date(transaction.transaction_date).toISOString().split('T')[0]
-    );
+    const [expenseType, setExpenseType] = useState<'goods' | 'services'>((transaction.expense_type as any) || 'services');
+    const [paymentMethod, setPaymentMethod] = useState(transaction.payment_method || 'bank_transfer');
+    const [transactionDate, setTransactionDate] = useState(new Date(transaction.transaction_date).toISOString().split('T')[0]);
     const [notes, setNotes] = useState(transaction.categorization_notes || '');
-
-    // New category state
     const [showNewCategoryForm, setShowNewCategoryForm] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [creatingCategory, setCreatingCategory] = useState(false);
 
-    // Pre-fill category selections once categories are loaded (edit mode)
+    // ── Client state (income side) ──
+    const [clients, setClients] = useState<ClientOption[]>([]);
+    const [clientSearch, setClientSearch] = useState('');
+    const [showClientDropdown, setShowClientDropdown] = useState(false);
+    const [selectedClientId, setSelectedClientId] = useState(transaction.client_id || '');
+    const [selectedClientName, setSelectedClientName] = useState('');
+    const [pendingInvoices, setPendingInvoices] = useState<PendingInvoice[]>([]);
+    const [loadingInvoices, setLoadingInvoices] = useState(false);
+    const [invoiceAllocations, setInvoiceAllocations] = useState<Record<string, string>>({});
+
+    // ── Vendor state (expense side) ──
+    const [vendors, setVendors] = useState<VendorOption[]>([]);
+    const [vendorSearch, setVendorSearch] = useState('');
+    const [showVendorDropdown, setShowVendorDropdown] = useState(false);
+    const [selectedVendorId, setSelectedVendorId] = useState(transaction.vendor_id || '');
+    const [selectedVendorName, setSelectedVendorName] = useState('');
+    const [pendingBills, setPendingBills] = useState<PendingBill[]>([]);
+    const [loadingBills, setLoadingBills] = useState(false);
+    const [billAllocations, setBillAllocations] = useState<Record<string, string>>({});
+
+    // ── Pre-fill category on edit mode ──
     useEffect(() => {
-        if (isEditMode && (expenseCategories.length > 0 || incomeCategories.length > 0)) {
-            const cat = detectExistingCategory();
-            const subcat = detectExistingSubcategory();
-            if (cat) setSelectedCategory(cat);
-            if (subcat) setSelectedSubcategory(subcat);
+        if (!isEditMode) return;
+        if (expenseCategories.length === 0 && incomeCategories.length === 0) return;
+
+        if (transaction.categorization_type === 'expense' && transaction.expense_category_id) {
+            const cat = expenseCategories.find(c => c.id === transaction.expense_category_id);
+            if (cat?.parent_id) {
+                setSelectedCategory(cat.parent_id);
+                setSelectedSubcategory(transaction.expense_category_id);
+            } else {
+                setSelectedCategory(transaction.expense_category_id);
+            }
+        }
+        if (transaction.categorization_type === 'income' && transaction.income_category_id) {
+            const cat = incomeCategories.find(c => c.id === transaction.income_category_id);
+            if (cat?.parent_id) {
+                setSelectedCategory(cat.parent_id);
+                setSelectedSubcategory(transaction.income_category_id);
+            } else {
+                setSelectedCategory(transaction.income_category_id);
+            }
         }
     }, [expenseCategories, incomeCategories]);
 
-    // Get relevant categories based on transaction type
-    const parentCategories = transactionType === 'expense'
-        ? getExpenseParents()
-        : getIncomeParents();
-
+    // ── Derived: which category name is selected ──
+    const parentCategories = transactionType === 'expense' ? getExpenseParents() : getIncomeParents();
     const subcategories = selectedCategory
-        ? (transactionType === 'expense'
-            ? getExpenseSubcategories(selectedCategory)
-            : getIncomeSubcategories(selectedCategory))
+        ? (transactionType === 'expense' ? getExpenseSubcategories(selectedCategory) : getIncomeSubcategories(selectedCategory))
         : [];
 
-    // Reset subcategory when parent changes (but not on initial load for edit mode)
+    // Find the effective category name (subcategory if selected, else parent)
+    const effectiveCategoryId = selectedSubcategory || selectedCategory;
+    const effectiveCategoryName = (() => {
+        const all = transactionType === 'expense' ? expenseCategories : incomeCategories;
+        return all.find(c => c.id === effectiveCategoryId)?.name || '';
+    })();
+    const parentCategoryName = parentCategories.find(c => c.id === selectedCategory)?.name || '';
+
+    const showClientSection = transactionType === 'income' &&
+        (CLIENT_CATEGORY_NAMES.some(n => effectiveCategoryName.includes(n)) ||
+         CLIENT_CATEGORY_NAMES.some(n => parentCategoryName.includes(n)));
+
+    const showVendorSection = transactionType === 'expense' &&
+        VENDOR_CATEGORY_NAMES.some(n => parentCategoryName.includes(n) || effectiveCategoryName.includes(n));
+
+    // Reset subcategory when parent changes
     const [initialLoadDone, setInitialLoadDone] = useState(false);
     useEffect(() => {
-        if (initialLoadDone) {
-            setSelectedSubcategory('');
-        } else {
-            setInitialLoadDone(true);
-        }
+        if (initialLoadDone) setSelectedSubcategory('');
+        else setInitialLoadDone(true);
     }, [selectedCategory]);
 
+    // ── Fetch clients when income type ──
+    useEffect(() => {
+        if (transactionType !== 'income') return;
+        supabase.from('clients').select('id, name, company').eq('is_active', true).order('company', { ascending: true })
+            .then(({ data }) => setClients(data || []));
+    }, [transactionType]);
+
+    // ── Auto-detect client from bank description ──
+    useEffect(() => {
+        if (!showClientSection || selectedClientId || clients.length === 0) return;
+        const desc = (transaction.description || '').toUpperCase();
+        const matched = clients.find(c => {
+            const co = (c.company || '').toUpperCase();
+            const nm = c.name.toUpperCase();
+            return (co.length > 3 && desc.includes(co)) || (nm.length > 3 && desc.includes(nm));
+        });
+        if (matched) {
+            setSelectedClientId(matched.id);
+            setSelectedClientName(matched.company || matched.name);
+        }
+    }, [clients, showClientSection]);
+
+    // ── Restore client name on edit ──
+    useEffect(() => {
+        if (selectedClientId && clients.length > 0 && !selectedClientName) {
+            const c = clients.find(cl => cl.id === selectedClientId);
+            if (c) setSelectedClientName(c.company || c.name);
+        }
+    }, [clients, selectedClientId]);
+
+    // ── Fetch pending invoices when client selected ──
+    useEffect(() => {
+        if (!selectedClientId) { setPendingInvoices([]); setInvoiceAllocations({}); return; }
+        setLoadingInvoices(true);
+        supabase.from('invoices')
+            .select('id, invoice_number, invoice_date, due_date, total_amount, amount_paid, balance_due, payment_status')
+            .eq('client_id', selectedClientId)
+            .in('payment_status', ['pending', 'partial', 'overdue'])
+            .gt('balance_due', 0)
+            .order('invoice_date', { ascending: true })
+            .then(({ data }) => {
+                setPendingInvoices(data || []);
+                setLoadingInvoices(false);
+                // Auto-fill from oldest invoice first
+                if (data && data.length > 0) {
+                    let remaining = Math.abs(transaction.amount);
+                    const autoAlloc: Record<string, string> = {};
+                    for (const inv of data) {
+                        if (remaining <= 0) break;
+                        const apply = Math.min(remaining, inv.balance_due);
+                        autoAlloc[inv.id] = apply.toFixed(2);
+                        remaining -= apply;
+                    }
+                    setInvoiceAllocations(autoAlloc);
+                }
+            });
+    }, [selectedClientId]);
+
+    // ── Fetch vendors when expense type ──
+    useEffect(() => {
+        if (transactionType !== 'expense') return;
+        supabase.from('vendors').select('id, name').eq('is_active', true).order('name', { ascending: true })
+            .then(({ data }) => setVendors(data || []));
+    }, [transactionType]);
+
+    // ── Auto-detect vendor from bank description ──
+    useEffect(() => {
+        if (!showVendorSection || selectedVendorId || vendors.length === 0) return;
+        const desc = (transaction.description || '').toUpperCase();
+        const matched = vendors.find(v => v.name.length > 3 && desc.includes(v.name.toUpperCase()));
+        if (matched) {
+            setSelectedVendorId(matched.id);
+            setSelectedVendorName(matched.name);
+        }
+    }, [vendors, showVendorSection]);
+
+    // ── Restore vendor name on edit ──
+    useEffect(() => {
+        if (selectedVendorId && vendors.length > 0 && !selectedVendorName) {
+            const v = vendors.find(vn => vn.id === selectedVendorId);
+            if (v) setSelectedVendorName(v.name);
+        }
+    }, [vendors, selectedVendorId]);
+
+    // ── Fetch pending bills when vendor selected ──
+    useEffect(() => {
+        if (!selectedVendorId) { setPendingBills([]); setBillAllocations({}); return; }
+        setLoadingBills(true);
+        supabase.from('purchase_bills')
+            .select('id, bill_number, bill_date, due_date, total_amount, amount_paid, vendor_bill_number, description')
+            .eq('vendor_id', selectedVendorId)
+            .in('payment_status', ['pending', 'partial'])
+            .order('bill_date', { ascending: true })
+            .then(({ data }) => {
+                setPendingBills(data || []);
+                setLoadingBills(false);
+                // Auto-fill from oldest bill first
+                if (data && data.length > 0) {
+                    let remaining = Math.abs(transaction.amount);
+                    const autoAlloc: Record<string, string> = {};
+                    for (const bill of data) {
+                        if (remaining <= 0) break;
+                        const pending = Number(bill.total_amount) - Number(bill.amount_paid);
+                        const apply = Math.min(remaining, pending);
+                        autoAlloc[bill.id] = apply.toFixed(2);
+                        remaining -= apply;
+                    }
+                    setBillAllocations(autoAlloc);
+                }
+            });
+    }, [selectedVendorId]);
+
+    // ── Allocation totals ──
+    const txnAmount = Math.abs(transaction.amount);
+
+    const totalInvoiceAllocated = Object.values(invoiceAllocations).reduce((s, v) => s + (parseFloat(v) || 0), 0);
+    const invoiceUnallocated = Math.max(0, txnAmount - totalInvoiceAllocated);
+    const invoiceOverAllocated = totalInvoiceAllocated > txnAmount + 0.01;
+
+    const totalBillAllocated = Object.values(billAllocations).reduce((s, v) => s + (parseFloat(v) || 0), 0);
+    const billUnallocated = Math.max(0, txnAmount - totalBillAllocated);
+    const billOverAllocated = totalBillAllocated > txnAmount + 0.01;
+
+    // ── Handlers ──
+    const handleSelectClient = (client: ClientOption) => {
+        setSelectedClientId(client.id);
+        setSelectedClientName(client.company || client.name);
+        setClientSearch('');
+        setShowClientDropdown(false);
+    };
+    const handleClearClient = () => {
+        setSelectedClientId(''); setSelectedClientName(''); setClientSearch('');
+        setPendingInvoices([]); setInvoiceAllocations({});
+    };
+
+    const handleSelectVendor = (vendor: VendorOption) => {
+        setSelectedVendorId(vendor.id);
+        setSelectedVendorName(vendor.name);
+        setVendorSearch('');
+        setShowVendorDropdown(false);
+    };
+    const handleClearVendor = () => {
+        setSelectedVendorId(''); setSelectedVendorName(''); setVendorSearch('');
+        setPendingBills([]); setBillAllocations({});
+    };
+
+    const filteredClients = clientSearch.trim()
+        ? clients.filter(c => {
+            const q = clientSearch.toLowerCase();
+            return c.name.toLowerCase().includes(q) || (c.company || '').toLowerCase().includes(q);
+        })
+        : clients.slice(0, 40);
+
+    const filteredVendors = vendorSearch.trim()
+        ? vendors.filter(v => v.name.toLowerCase().includes(vendorSearch.toLowerCase()))
+        : vendors.slice(0, 40);
+
+    // ── Submit ──
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validation
-        if (!selectedCategory) {
-            toast.error('Please select a category');
+        if (!selectedCategory) { toast.error('Please select a category'); return; }
+        if (showClientSection && invoiceOverAllocated) {
+            toast.error(`Allocated ₹${totalInvoiceAllocated.toLocaleString('en-IN')} exceeds transaction ₹${txnAmount.toLocaleString('en-IN')}`);
+            return;
+        }
+        if (showVendorSection && billOverAllocated) {
+            toast.error(`Allocated ₹${totalBillAllocated.toLocaleString('en-IN')} exceeds transaction ₹${txnAmount.toLocaleString('en-IN')}`);
             return;
         }
 
-        // Prepare categorization data
+        const invoiceAllocList: InvoiceAllocation[] = Object.entries(invoiceAllocations)
+            .map(([invoice_id, amt]) => ({ invoice_id, amount: parseFloat(amt) || 0 }))
+            .filter(a => a.amount > 0);
+
+        const billAllocList: BillAllocation[] = Object.entries(billAllocations)
+            .map(([bill_id, amt]) => ({ bill_id, amount: parseFloat(amt) || 0 }))
+            .filter(a => a.amount > 0);
+
         const categorizationData: TransactionCategorization = {
             categorization_type: transactionType,
             payment_method: paymentMethod,
@@ -156,244 +343,372 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
             transaction_date: transactionDate,
         };
 
-        // Add category based on type
         if (transactionType === 'expense') {
             categorizationData.expense_category_id = selectedSubcategory || selectedCategory;
             categorizationData.expense_type = expenseType;
+            if (showVendorSection && selectedVendorId) {
+                categorizationData.vendor_id = selectedVendorId;
+                categorizationData.bill_allocations = billAllocList.length > 0 ? billAllocList : undefined;
+            }
         } else {
             categorizationData.income_category_id = selectedSubcategory || selectedCategory;
+            if (showClientSection && selectedClientId) {
+                categorizationData.client_id = selectedClientId;
+                categorizationData.invoice_allocations = invoiceAllocList.length > 0 ? invoiceAllocList : undefined;
+            }
         }
 
-        // Save categorization
         const { error } = await categorizeTransaction(transaction.id, categorizationData);
-
         if (error) {
             toast.error(`Error: ${error}`);
         } else {
+            toast.success(isEditMode ? 'Updated successfully' : 'Transaction categorized!');
             onSuccess();
             onClose();
         }
     };
 
     const handleCreateNewCategory = async () => {
-        if (!newCategoryName.trim()) {
-            toast.error('Please enter a category name');
-            return;
-        }
-
+        if (!newCategoryName.trim()) { toast.error('Please enter a category name'); return; }
         setCreatingCategory(true);
-
         try {
             const createFn = transactionType === 'expense' ? createExpenseCategory : createIncomeCategory;
             const { data, error } = await createFn(newCategoryName.trim());
-
-            if (error) {
-                toast.error(`Error creating category: ${error}`);
-            } else if (data) {
+            if (error) { toast.error(`Error: ${error}`); }
+            else if (data) {
                 setSelectedCategory(data.id);
                 setNewCategoryName('');
                 setShowNewCategoryForm(false);
-                toast.success(`Category "${data.name}" ready to use`);
+                toast.success(`Category "${data.name}" created`);
             }
-        } finally {
-            setCreatingCategory(false);
-        }
+        } finally { setCreatingCategory(false); }
     };
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
+
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
                     <div>
                         <h2 className="text-page-title text-gray-900">
                             {isEditMode ? 'Edit Categorization' : 'Categorize Transaction'}
                         </h2>
-                        <p className="text-sm text-gray-500 mt-1">
-                            {isEditMode ? 'Update category and details' : 'Verify and assign category'}
-                        </p>
+                        <p className="text-sm text-gray-500 mt-1">Verify and assign category</p>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-gray-100 rounded-md transition-colors"
-                    >
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-md transition-colors">
                         <X size={20} />
                     </button>
                 </div>
 
-                {/* Transaction Details */}
+                {/* Transaction Summary */}
                 <div className="px-6 py-4 bg-gray-50 border-b border-gray-100">
-                    <div className="grid grid-cols-2 gap-2 md:gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                         <div>
                             <p className="text-xs text-gray-500 uppercase tracking-wide">Date</p>
-                            <p className="font-semibold text-gray-900">
-                                {new Date(transaction.transaction_date).toLocaleDateString()}
-                            </p>
+                            <p className="font-semibold text-gray-900">{new Date(transaction.transaction_date).toLocaleDateString('en-IN')}</p>
                         </div>
                         <div>
                             <p className="text-xs text-gray-500 uppercase tracking-wide">Amount</p>
-                            <p className={`text-section ${(transaction as any).transaction_type === 'inflow' ? 'text-green-600' : 'text-red-600'}`}>
-                                {(transaction as any).transaction_type === 'inflow' ? '+' : '-'}₹{transaction.amount.toLocaleString('en-IN')}
+                            <p className={`text-section font-bold ${transaction.transaction_type === 'inflow' ? 'text-green-600' : 'text-red-600'}`}>
+                                {transaction.transaction_type === 'inflow' ? '+' : '-'}₹{Math.abs(transaction.amount).toLocaleString('en-IN')}
                             </p>
                         </div>
                     </div>
                     <div className="mt-3">
                         <p className="text-xs text-gray-500 uppercase tracking-wide">Description</p>
-                        <p className="text-sm text-gray-900 mt-1 line-clamp-2" title={transaction.description}>
-                            {transaction.description}
-                        </p>
+                        <p className="text-sm text-gray-700 mt-1 line-clamp-2">{transaction.description}</p>
                     </div>
                 </div>
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                    {/* Transaction Type */}
+
+                    {/* Type Toggle */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Type <span className="text-red-500">*</span>
-                        </label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Type <span className="text-red-500">*</span></label>
                         <div className="flex gap-3">
-                            <button
-                                type="button"
-                                onClick={() => setTransactionType('expense')}
-                                className={`flex-1 px-4 py-3 rounded-md border-2 font-medium transition-all ${transactionType === 'expense'
-                                    ? 'border-red-500 bg-red-50 text-red-700'
-                                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                                    }`}
-                            >
-                                🔴 Expense
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setTransactionType('income')}
-                                className={`flex-1 px-4 py-3 rounded-md border-2 font-medium transition-all ${transactionType === 'income'
-                                    ? 'border-green-500 bg-green-50 text-green-700'
-                                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                                    }`}
-                            >
-                                🟢 Income
-                            </button>
+                            {(['expense', 'income'] as const).map(t => (
+                                <button key={t} type="button" onClick={() => { setTransactionType(t); setSelectedCategory(''); setSelectedSubcategory(''); }}
+                                    className={`flex-1 px-4 py-3 rounded-md border-2 font-medium transition-all ${transactionType === t
+                                        ? t === 'expense' ? 'border-red-500 bg-red-50 text-red-700' : 'border-green-500 bg-green-50 text-green-700'
+                                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}>
+                                    {t === 'expense' ? '🔴 Expense' : '🟢 Income'}
+                                </button>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Category Selection */}
+                    {/* Category */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Category <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                            required
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ring/20 bg-white"
-                        >
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Category <span className="text-red-500">*</span></label>
+                        <select required value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ring/20 bg-white">
                             <option value="">Select category...</option>
-                            {parentCategories.map((cat) => (
-                                <option key={cat.id} value={cat.id}>
-                                    {cat.name}
-                                </option>
-                            ))}
+                            {parentCategories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                         </select>
 
-                        {/* New Category Button */}
                         {!showNewCategoryForm && (
-                            <button
-                                type="button"
-                                onClick={() => setShowNewCategoryForm(true)}
-                                className="mt-2 text-sm text-primary hover:text-primary font-medium flex items-center gap-1"
-                            >
+                            <button type="button" onClick={() => setShowNewCategoryForm(true)}
+                                className="mt-2 text-sm text-primary font-medium flex items-center gap-1 hover:underline">
                                 <Plus size={14} /> Add New Category
                             </button>
                         )}
-
-                        {/* New Category Form */}
                         {showNewCategoryForm && (
-                            <div className="mt-3 p-3 bg-muted rounded-md border border-border">
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={newCategoryName}
-                                        onChange={(e) => setNewCategoryName(e.target.value)}
-                                        placeholder="New category name..."
-                                        className="flex-1 px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring/20"
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                e.preventDefault();
-                                                handleCreateNewCategory();
-                                            }
-                                        }}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={handleCreateNewCategory}
-                                        disabled={creatingCategory}
-                                        className="px-3 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 disabled:bg-gray-400"
-                                    >
-                                        {creatingCategory ? <Loader2 size={16} className="animate-spin" /> : 'Add'}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setShowNewCategoryForm(false);
-                                            setNewCategoryName('');
-                                        }}
-                                        className="px-3 py-2 border border-gray-200 rounded-md text-sm"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
+                            <div className="mt-3 p-3 bg-muted rounded-md border border-border flex gap-2">
+                                <input type="text" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)}
+                                    placeholder="New category name..." autoFocus
+                                    className="flex-1 px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring/20"
+                                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleCreateNewCategory(); } }} />
+                                <button type="button" onClick={handleCreateNewCategory} disabled={creatingCategory}
+                                    className="px-3 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 disabled:opacity-50">
+                                    {creatingCategory ? <Loader2 size={16} className="animate-spin" /> : 'Add'}
+                                </button>
+                                <button type="button" onClick={() => { setShowNewCategoryForm(false); setNewCategoryName(''); }}
+                                    className="px-3 py-2 border border-gray-200 rounded-md text-sm">Cancel</button>
                             </div>
                         )}
                     </div>
 
-                    {/* Subcategory (if available) */}
+                    {/* Subcategory */}
                     {subcategories.length > 0 && (
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Subcategory / Account
-                            </label>
-                            <select
-                                value={selectedSubcategory}
-                                onChange={(e) => setSelectedSubcategory(e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ring/20 bg-white"
-                            >
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Subcategory / Account</label>
+                            <select value={selectedSubcategory} onChange={e => setSelectedSubcategory(e.target.value)}
+                                className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ring/20 bg-white">
                                 <option value="">None (use main category)</option>
-                                {subcategories.map((cat) => (
-                                    <option key={cat.id} value={cat.id}>
-                                        {cat.name}
-                                    </option>
-                                ))}
+                                {subcategories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                             </select>
                         </div>
                     )}
 
-                    {/* Expense Type (only for expenses) */}
-                    {transactionType === 'expense' && (
+                    {/* ══════════════════════════════════════════
+                        CLIENT SECTION — shows for Customer Payment / Customer Advance
+                    ══════════════════════════════════════════ */}
+                    {showClientSection && (
+                        <div className="border border-green-200 rounded-lg bg-green-50/40 p-4 space-y-4">
+                            <div className="flex items-center gap-2">
+                                <User size={16} className="text-green-600" />
+                                <span className="text-sm font-semibold text-gray-700">Select Client</span>
+                                <span className="text-xs text-gray-400">(optional)</span>
+                            </div>
+
+                            {/* Client Picker */}
+                            <div className="relative">
+                                {selectedClientId ? (
+                                    <div className="flex items-center gap-2 px-3 py-2.5 border border-green-300 rounded-md bg-white">
+                                        <CheckCircle2 size={16} className="text-green-500 shrink-0" />
+                                        <span className="flex-1 text-sm font-medium text-gray-800">{selectedClientName}</span>
+                                        <button type="button" onClick={handleClearClient} className="text-gray-400 hover:text-gray-600"><X size={14} /></button>
+                                    </div>
+                                ) : (
+                                    <div className="relative">
+                                        <input type="text" value={clientSearch}
+                                            onChange={e => { setClientSearch(e.target.value); setShowClientDropdown(true); }}
+                                            onFocus={() => setShowClientDropdown(true)}
+                                            placeholder="Search client by name or company..."
+                                            className="w-full px-3 py-2.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 bg-white pr-8" />
+                                        <ChevronDown size={14} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+                                        {showClientDropdown && filteredClients.length > 0 && (
+                                            <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-52 overflow-y-auto">
+                                                {filteredClients.map(c => (
+                                                    <button key={c.id} type="button" onClick={() => handleSelectClient(c)}
+                                                        className="w-full text-left px-3 py-2.5 text-sm hover:bg-gray-50 border-b border-gray-50 last:border-0">
+                                                        <span className="font-medium">{c.company || c.name}</span>
+                                                        {c.company && <span className="text-gray-400 text-xs ml-1">({c.name})</span>}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Pending Invoices */}
+                            {selectedClientId && (
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Pending Invoices</p>
+                                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${invoiceOverAllocated ? 'bg-red-100 text-red-600' : totalInvoiceAllocated > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                            ₹{totalInvoiceAllocated.toLocaleString('en-IN')} / ₹{txnAmount.toLocaleString('en-IN')}
+                                        </span>
+                                    </div>
+
+                                    {loadingInvoices ? (
+                                        <div className="flex items-center gap-2 py-3 text-sm text-gray-500">
+                                            <Loader2 size={14} className="animate-spin" /> Loading invoices...
+                                        </div>
+                                    ) : pendingInvoices.length === 0 ? (
+                                        <p className="text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-md">
+                                            No pending invoices — amount will be recorded as advance.
+                                        </p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {pendingInvoices.map(inv => (
+                                                <div key={inv.id} className="bg-white rounded-md border border-gray-200 px-3 py-2.5">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="text-xs font-semibold text-blue-600">{inv.invoice_number}</p>
+                                                            <p className="text-xs text-gray-500">
+                                                                Due ₹{inv.balance_due.toLocaleString('en-IN')}
+                                                                {inv.due_date && ` · ${new Date(inv.due_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}`}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 shrink-0">
+                                                            <button type="button"
+                                                                onClick={() => setInvoiceAllocations(p => ({ ...p, [inv.id]: inv.balance_due.toFixed(2) }))}
+                                                                className="text-xs text-green-600 hover:underline whitespace-nowrap">Pay in Full</button>
+                                                            <input type="number" min="0" max={inv.balance_due} step="0.01"
+                                                                value={invoiceAllocations[inv.id] ?? ''}
+                                                                onChange={e => setInvoiceAllocations(p => ({ ...p, [inv.id]: e.target.value }))}
+                                                                placeholder="0"
+                                                                className="w-24 px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-green-400 text-right" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            {invoiceUnallocated > 0.01 && (
+                                                <div className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-md">
+                                                    <AlertCircle size={13} />
+                                                    ₹{invoiceUnallocated.toLocaleString('en-IN')} unallocated — will be recorded as advance
+                                                </div>
+                                            )}
+                                            {invoiceOverAllocated && (
+                                                <div className="flex items-center gap-1.5 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-md">
+                                                    <AlertCircle size={13} />
+                                                    Over by ₹{(totalInvoiceAllocated - txnAmount).toLocaleString('en-IN')} — please reduce allocation
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ══════════════════════════════════════════
+                        VENDOR SECTION — shows for Vendor Payment / Vendor Advance
+                    ══════════════════════════════════════════ */}
+                    {showVendorSection && (
+                        <div className="border border-orange-200 rounded-lg bg-orange-50/40 p-4 space-y-4">
+                            <div className="flex items-center gap-2">
+                                <Building2 size={16} className="text-orange-600" />
+                                <span className="text-sm font-semibold text-gray-700">Select Vendor</span>
+                                <span className="text-xs text-gray-400">(optional)</span>
+                            </div>
+
+                            {/* Vendor Picker */}
+                            <div className="relative">
+                                {selectedVendorId ? (
+                                    <div className="flex items-center gap-2 px-3 py-2.5 border border-orange-300 rounded-md bg-white">
+                                        <CheckCircle2 size={16} className="text-orange-500 shrink-0" />
+                                        <span className="flex-1 text-sm font-medium text-gray-800">{selectedVendorName}</span>
+                                        <button type="button" onClick={handleClearVendor} className="text-gray-400 hover:text-gray-600"><X size={14} /></button>
+                                    </div>
+                                ) : (
+                                    <div className="relative">
+                                        <input type="text" value={vendorSearch}
+                                            onChange={e => { setVendorSearch(e.target.value); setShowVendorDropdown(true); }}
+                                            onFocus={() => setShowVendorDropdown(true)}
+                                            placeholder="Search vendor..."
+                                            className="w-full px-3 py-2.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 bg-white pr-8" />
+                                        <ChevronDown size={14} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+                                        {showVendorDropdown && filteredVendors.length > 0 && (
+                                            <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-52 overflow-y-auto">
+                                                {filteredVendors.map(v => (
+                                                    <button key={v.id} type="button" onClick={() => handleSelectVendor(v)}
+                                                        className="w-full text-left px-3 py-2.5 text-sm hover:bg-gray-50 border-b border-gray-50 last:border-0 font-medium">
+                                                        {v.name}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Pending Bills */}
+                            {selectedVendorId && (
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Pending Bills</p>
+                                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${billOverAllocated ? 'bg-red-100 text-red-600' : totalBillAllocated > 0 ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-500'}`}>
+                                            ₹{totalBillAllocated.toLocaleString('en-IN')} / ₹{txnAmount.toLocaleString('en-IN')}
+                                        </span>
+                                    </div>
+
+                                    {loadingBills ? (
+                                        <div className="flex items-center gap-2 py-3 text-sm text-gray-500">
+                                            <Loader2 size={14} className="animate-spin" /> Loading bills...
+                                        </div>
+                                    ) : pendingBills.length === 0 ? (
+                                        <p className="text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-md">
+                                            No pending bills — amount will be recorded as advance to vendor.
+                                        </p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {pendingBills.map(bill => {
+                                                const pendingAmt = Number(bill.total_amount) - Number(bill.amount_paid);
+                                                return (
+                                                    <div key={bill.id} className="bg-white rounded-md border border-gray-200 px-3 py-2.5">
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="text-xs font-semibold text-orange-600">
+                                                                    {bill.bill_number}
+                                                                    {bill.vendor_bill_number && <span className="text-gray-400 ml-1">· {bill.vendor_bill_number}</span>}
+                                                                </p>
+                                                                <p className="text-xs text-gray-500">
+                                                                    Due ₹{pendingAmt.toLocaleString('en-IN')}
+                                                                    {bill.due_date && ` · ${new Date(bill.due_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}`}
+                                                                </p>
+                                                                {bill.description && <p className="text-xs text-gray-400 truncate">{bill.description}</p>}
+                                                            </div>
+                                                            <div className="flex items-center gap-2 shrink-0">
+                                                                <button type="button"
+                                                                    onClick={() => setBillAllocations(p => ({ ...p, [bill.id]: pendingAmt.toFixed(2) }))}
+                                                                    className="text-xs text-orange-600 hover:underline whitespace-nowrap">Pay in Full</button>
+                                                                <input type="number" min="0" max={pendingAmt} step="0.01"
+                                                                    value={billAllocations[bill.id] ?? ''}
+                                                                    onChange={e => setBillAllocations(p => ({ ...p, [bill.id]: e.target.value }))}
+                                                                    placeholder="0"
+                                                                    className="w-24 px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-orange-400 text-right" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+
+                                            {billUnallocated > 0.01 && (
+                                                <div className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-md">
+                                                    <AlertCircle size={13} />
+                                                    ₹{billUnallocated.toLocaleString('en-IN')} unallocated — will be recorded as advance to vendor
+                                                </div>
+                                            )}
+                                            {billOverAllocated && (
+                                                <div className="flex items-center gap-1.5 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-md">
+                                                    <AlertCircle size={13} />
+                                                    Over by ₹{(totalBillAllocated - txnAmount).toLocaleString('en-IN')} — please reduce allocation
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Expense Type (expense only, non-vendor) */}
+                    {transactionType === 'expense' && !showVendorSection && (
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Expense Type <span className="text-red-500">*</span>
-                            </label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Expense Type <span className="text-red-500">*</span></label>
                             <div className="flex gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setExpenseType('goods')}
-                                    className={`flex-1 px-4 py-2.5 rounded-md border-2 font-medium transition-all ${expenseType === 'goods'
-                                        ? 'border-primary bg-primary/10 text-primary'
-                                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                                        }`}
-                                >
-                                    📦 Goods
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setExpenseType('services')}
-                                    className={`flex-1 px-4 py-2.5 rounded-md border-2 font-medium transition-all ${expenseType === 'services'
-                                        ? 'border-primary bg-primary/10 text-primary'
-                                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                                        }`}
-                                >
-                                    🛠️ Services
-                                </button>
+                                {(['goods', 'services'] as const).map(t => (
+                                    <button key={t} type="button" onClick={() => setExpenseType(t)}
+                                        className={`flex-1 px-4 py-2.5 rounded-md border-2 font-medium transition-all ${expenseType === t ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}>
+                                        {t === 'goods' ? '📦 Goods' : '🛠️ Services'}
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     )}
@@ -401,62 +716,41 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                     {/* Payment Method */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            {transactionType === 'expense' ? 'Paid' : 'Received'} Via
+                            {transactionType === 'expense' ? 'Paid Via' : 'Received Via'}
                         </label>
-                        <select
-                            value={paymentMethod}
-                            onChange={(e) => setPaymentMethod(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ring/20 bg-white"
-                        >
-                            <option value="bank_transfer">Bank Transfer</option>
-                            <option value="cash">Cash</option>
+                        <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ring/20 bg-white">
+                            <option value="bank_transfer">Bank Transfer / NEFT / RTGS</option>
                             <option value="upi">UPI</option>
+                            <option value="cash">Cash</option>
                             <option value="cheque">Cheque</option>
-                            <option value="card">Debit/Credit Card</option>
+                            <option value="card">Debit / Credit Card</option>
                         </select>
                     </div>
 
                     {/* Transaction Date */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Transaction Date
-                        </label>
-                        <input
-                            type="date"
-                            value={transactionDate}
-                            onChange={(e) => setTransactionDate(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ring/20"
-                        />
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Transaction Date</label>
+                        <input type="date" value={transactionDate} onChange={e => setTransactionDate(e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ring/20" />
                     </div>
 
                     {/* Notes */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Notes (Optional)
-                        </label>
-                        <textarea
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            rows={3}
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Notes (Optional)</label>
+                        <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
                             placeholder="Add any additional details..."
-                            className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ring/20 resize-none"
-                        />
+                            className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ring/20 resize-none" />
                     </div>
 
                     {/* Actions */}
                     <div className="flex gap-3 pt-4 border-t border-gray-100">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2 border border-gray-200 rounded-md font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
+                        <button type="button" onClick={onClose}
+                            className="flex-1 px-4 py-2 border border-gray-200 rounded-md font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                             Cancel
                         </button>
-                        <button
-                            type="submit"
-                            disabled={saving}
-                            className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
-                        >
+                        <button type="submit" disabled={saving || invoiceOverAllocated || billOverAllocated}
+                            className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                             {saving && <Loader2 size={18} className="animate-spin" />}
                             {saving ? 'Saving...' : isEditMode ? 'Update & Verify' : 'Save & Verify'}
                         </button>

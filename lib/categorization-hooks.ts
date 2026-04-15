@@ -29,6 +29,16 @@ export interface IncomeCategory {
     updated_at: string;
 }
 
+export interface InvoiceAllocation {
+    invoice_id: string;
+    amount: number;
+}
+
+export interface BillAllocation {
+    bill_id: string;
+    amount: number;
+}
+
 export interface TransactionCategorization {
     categorization_type: 'expense' | 'income';
     expense_category_id?: string;
@@ -37,6 +47,12 @@ export interface TransactionCategorization {
     payment_method?: string;
     categorization_notes?: string;
     transaction_date?: string;
+    // Client payment linking (income — Customer Payment / Customer Advance)
+    client_id?: string;
+    invoice_allocations?: InvoiceAllocation[];
+    // Vendor payment linking (expense — Vendor Payment / Vendor Advance)
+    vendor_id?: string;
+    bill_allocations?: BillAllocation[];
 }
 
 // =====================================================
@@ -70,7 +86,6 @@ export function useExpenseCategories() {
     const createCategory = async (name: string, description?: string, parentId?: string) => {
         try {
             const trimmedName = name.trim();
-            // Check if category already exists (case-insensitive)
             const { data: existing } = await supabase
                 .from('expense_categories')
                 .select('*')
@@ -78,7 +93,6 @@ export function useExpenseCategories() {
                 .maybeSingle();
 
             if (existing) {
-                // If it exists but was deactivated, reactivate it
                 if (!existing.is_active) {
                     await supabase.from('expense_categories').update({ is_active: true }).eq('id', existing.id);
                     await fetchCategories();
@@ -100,27 +114,12 @@ export function useExpenseCategories() {
         }
     };
 
-    const getParentCategories = () => {
-        return categories.filter(cat => !cat.parent_id);
-    };
+    const getParentCategories = () => categories.filter(cat => !cat.parent_id);
+    const getSubcategories = (parentId: string) => categories.filter(cat => cat.parent_id === parentId);
 
-    const getSubcategories = (parentId: string) => {
-        return categories.filter(cat => cat.parent_id === parentId);
-    };
+    useEffect(() => { fetchCategories(); }, []);
 
-    useEffect(() => {
-        fetchCategories();
-    }, []);
-
-    return {
-        categories,
-        loading,
-        error,
-        refetch: fetchCategories,
-        createCategory,
-        getParentCategories,
-        getSubcategories
-    };
+    return { categories, loading, error, refetch: fetchCategories, createCategory, getParentCategories, getSubcategories };
 }
 
 // =====================================================
@@ -154,7 +153,6 @@ export function useIncomeCategories() {
     const createCategory = async (name: string, description?: string, parentId?: string) => {
         try {
             const trimmedName = name.trim();
-            // Check if category already exists (case-insensitive)
             const { data: existing } = await supabase
                 .from('income_categories')
                 .select('*')
@@ -183,64 +181,37 @@ export function useIncomeCategories() {
         }
     };
 
-    const getParentCategories = () => {
-        return categories.filter(cat => !cat.parent_id);
-    };
+    const getParentCategories = () => categories.filter(cat => !cat.parent_id);
+    const getSubcategories = (parentId: string) => categories.filter(cat => cat.parent_id === parentId);
 
-    const getSubcategories = (parentId: string) => {
-        return categories.filter(cat => cat.parent_id === parentId);
-    };
+    useEffect(() => { fetchCategories(); }, []);
 
-    useEffect(() => {
-        fetchCategories();
-    }, []);
-
-    return {
-        categories,
-        loading,
-        error,
-        refetch: fetchCategories,
-        createCategory,
-        getParentCategories,
-        getSubcategories
-    };
+    return { categories, loading, error, refetch: fetchCategories, createCategory, getParentCategories, getSubcategories };
 }
 
 // =====================================================
-// TRANSACTION CATEGORIZATION HOOK (with Double-Entry)
+// DOUBLE-ENTRY JOURNAL ENTRY HELPER
 // =====================================================
-
-/**
- * Helper: Create a double-entry journal entry when a bank transaction is verified.
- * - Expense (outflow): Debit Expense Account, Credit Bank Account
- * - Income (inflow):   Debit Bank Account, Credit Income Account
- */
 async function createJournalEntryForTransaction(
     transactionId: string,
     bankAccountId: string,
     categorization: TransactionCategorization,
     amount: number,
-    transactionType: string, // 'inflow' | 'outflow'
+    transactionType: string,
     transactionDate: string,
     description: string,
     userId: string
 ): Promise<{ error: string | null }> {
     try {
-        // 1. Find the COA account for the bank
         const { data: bankCoa } = await supabase
             .from('chart_of_accounts')
             .select('id, name')
             .eq('linked_bank_account_id', bankAccountId)
             .single();
 
-        if (!bankCoa) {
-            console.warn('No COA entry found for bank account', bankAccountId);
-            return { error: null }; // Don't block categorization if COA not set up
-        }
+        if (!bankCoa) return { error: null };
 
-        // 2. Find the COA account for the category
         let categoryCoa: { id: string; name: string } | null = null;
-
         if (categorization.categorization_type === 'expense' && categorization.expense_category_id) {
             const { data } = await supabase
                 .from('chart_of_accounts')
@@ -257,16 +228,11 @@ async function createJournalEntryForTransaction(
             categoryCoa = data;
         }
 
-        if (!categoryCoa) {
-            console.warn('No COA entry found for category');
-            return { error: null }; // Don't block categorization
-        }
+        if (!categoryCoa) return { error: null };
 
-        // 3. Generate journal entry number
         const { data: entryNumData } = await supabase.rpc('generate_journal_entry_number');
         const entryNumber = entryNumData || `JE-${Date.now()}`;
 
-        // 4. Create the journal entry
         const { data: journalEntry, error: jeError } = await supabase
             .from('journal_entries')
             .insert([{
@@ -283,77 +249,32 @@ async function createJournalEntryForTransaction(
 
         if (jeError) throw jeError;
 
-        // 5. Create journal entry lines (double-entry)
         let lines: any[] = [];
-
         if (categorization.categorization_type === 'expense') {
-            // Expense (outflow): Debit Expense, Credit Bank
             lines = [
-                {
-                    journal_entry_id: journalEntry.id,
-                    account_id: categoryCoa.id,
-                    debit_amount: amount,
-                    credit_amount: 0,
-                    description: `${categoryCoa.name} — ${description}`,
-                },
-                {
-                    journal_entry_id: journalEntry.id,
-                    account_id: bankCoa.id,
-                    debit_amount: 0,
-                    credit_amount: amount,
-                    description: `Payment from ${bankCoa.name}`,
-                }
+                { journal_entry_id: journalEntry.id, account_id: categoryCoa.id, debit_amount: amount, credit_amount: 0, description: `${categoryCoa.name} — ${description}` },
+                { journal_entry_id: journalEntry.id, account_id: bankCoa.id, debit_amount: 0, credit_amount: amount, description: `Payment from ${bankCoa.name}` }
             ];
         } else {
-            // Income (inflow): Debit Bank, Credit Income
             lines = [
-                {
-                    journal_entry_id: journalEntry.id,
-                    account_id: bankCoa.id,
-                    debit_amount: amount,
-                    credit_amount: 0,
-                    description: `Received into ${bankCoa.name}`,
-                },
-                {
-                    journal_entry_id: journalEntry.id,
-                    account_id: categoryCoa.id,
-                    debit_amount: 0,
-                    credit_amount: amount,
-                    description: `${categoryCoa.name} — ${description}`,
-                }
+                { journal_entry_id: journalEntry.id, account_id: bankCoa.id, debit_amount: amount, credit_amount: 0, description: `Received into ${bankCoa.name}` },
+                { journal_entry_id: journalEntry.id, account_id: categoryCoa.id, debit_amount: 0, credit_amount: amount, description: `${categoryCoa.name} — ${description}` }
             ];
         }
 
-        const { error: linesError } = await supabase
-            .from('journal_entry_lines')
-            .insert(lines);
-
+        const { error: linesError } = await supabase.from('journal_entry_lines').insert(lines);
         if (linesError) throw linesError;
 
-        // 6. Update bank_accounts.current_balance
-        // Outflow (expense) = decrease, Inflow (income) = increase
         const balanceChange = transactionType === 'outflow' ? -amount : amount;
-        await supabase.rpc('update_bank_balance_delta', {
-            p_bank_account_id: bankAccountId,
-            p_delta: balanceChange
-        }).then(res => {
-            // If RPC doesn't exist, fall back to direct update
-            if (res.error) {
-                return supabase
-                    .from('bank_accounts')
-                    .select('current_balance')
-                    .eq('id', bankAccountId)
-                    .single()
-                    .then(({ data: ba }) => {
-                        if (ba) {
-                            return supabase
-                                .from('bank_accounts')
-                                .update({ current_balance: (ba.current_balance || 0) + balanceChange })
-                                .eq('id', bankAccountId);
-                        }
-                    });
-            }
-        });
+        await supabase.rpc('update_bank_balance_delta', { p_bank_account_id: bankAccountId, p_delta: balanceChange })
+            .then(res => {
+                if (res.error) {
+                    return supabase.from('bank_accounts').select('current_balance').eq('id', bankAccountId).single()
+                        .then(({ data: ba }) => {
+                            if (ba) return supabase.from('bank_accounts').update({ current_balance: (ba.current_balance || 0) + balanceChange }).eq('id', bankAccountId);
+                        });
+                }
+            });
 
         return { error: null };
     } catch (err: any) {
@@ -362,14 +283,8 @@ async function createJournalEntryForTransaction(
     }
 }
 
-/**
- * Helper: Delete journal entry and reverse balance when uncategorizing
- */
-async function deleteJournalEntryForTransaction(
-    transactionId: string
-): Promise<{ error: string | null }> {
+async function deleteJournalEntryForTransaction(transactionId: string): Promise<{ error: string | null }> {
     try {
-        // Find the journal entry linked to this transaction
         const { data: journalEntry } = await supabase
             .from('journal_entries')
             .select('id')
@@ -377,24 +292,131 @@ async function deleteJournalEntryForTransaction(
             .eq('source_id', transactionId)
             .maybeSingle();
 
-        if (!journalEntry) return { error: null }; // No journal entry to delete
+        if (!journalEntry) return { error: null };
 
-        // The COA balance trigger will auto-reverse when lines are deleted
-        // Delete the journal entry (cascade deletes lines)
-        const { error } = await supabase
-            .from('journal_entries')
-            .delete()
-            .eq('id', journalEntry.id);
-
+        const { error } = await supabase.from('journal_entries').delete().eq('id', journalEntry.id);
         if (error) throw error;
-
         return { error: null };
     } catch (err: any) {
-        console.error('Error deleting journal entry:', err);
         return { error: err.message };
     }
 }
 
+// =====================================================
+// CLIENT PAYMENT ALLOCATION
+// Applies bank transaction amount to client invoices
+// Uses reference_number = 'BT:<txn_id>' to link back
+// =====================================================
+async function applyClientPaymentAllocations(
+    bankTransactionId: string,
+    clientId: string,
+    allocations: InvoiceAllocation[],
+    paymentMethod: string,
+    paymentDate: string,
+    bankAccountId: string,
+    userId: string,
+    notes?: string
+): Promise<void> {
+    // Remove any previous payment records for this bank transaction (re-categorization)
+    await supabase.from('payments_received').delete().eq('reference_number', `BT:${bankTransactionId}`);
+
+    for (const alloc of allocations) {
+        if (alloc.amount <= 0) continue;
+
+        const { data: invoice } = await supabase
+            .from('invoices')
+            .select('id, amount_paid, balance_due, total_amount, payment_status')
+            .eq('id', alloc.invoice_id)
+            .single();
+
+        if (!invoice) continue;
+
+        const payNum = `PMT-BT-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+        await supabase.from('payments_received').insert([{
+            payment_number: payNum,
+            client_id: clientId,
+            invoice_id: alloc.invoice_id,
+            amount: alloc.amount,
+            payment_mode: paymentMethod,
+            payment_date: paymentDate,
+            bank_account_id: bankAccountId,
+            reference_number: `BT:${bankTransactionId}`,
+            notes: notes || null,
+            received_by: userId,
+        }]);
+
+        const newAmountPaid = Number(invoice.amount_paid || 0) + alloc.amount;
+        const newBalanceDue = Math.max(0, Number(invoice.total_amount) - newAmountPaid);
+        const newStatus: 'pending' | 'partial' | 'paid' =
+            newBalanceDue <= 0 ? 'paid' : newAmountPaid <= 0 ? 'pending' : 'partial';
+
+        await supabase.from('invoices').update({
+            amount_paid: newAmountPaid,
+            balance_due: newBalanceDue,
+            payment_status: newStatus,
+        }).eq('id', alloc.invoice_id);
+    }
+}
+
+// =====================================================
+// VENDOR PAYMENT ALLOCATION
+// Applies bank transaction amount to vendor purchase bills
+// Uses reference_number = 'BT:<txn_id>' to link back
+// =====================================================
+async function applyVendorPaymentAllocations(
+    bankTransactionId: string,
+    vendorId: string,
+    allocations: BillAllocation[],
+    paymentMethod: string,
+    paymentDate: string,
+    bankAccountId: string,
+    userId: string,
+    notes?: string
+): Promise<void> {
+    // Remove any previous vendor payment records for this bank transaction
+    await supabase.from('vendor_payments').delete().eq('reference_number', `BT:${bankTransactionId}`);
+
+    for (const alloc of allocations) {
+        if (alloc.amount <= 0) continue;
+
+        const { data: bill } = await supabase
+            .from('purchase_bills')
+            .select('id, amount_paid, total_amount, payment_status')
+            .eq('id', alloc.bill_id)
+            .single();
+
+        if (!bill) continue;
+
+        const payNum = `VP-BT-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+        await supabase.from('vendor_payments').insert([{
+            payment_number: payNum,
+            vendor_id: vendorId,
+            purchase_bill_id: alloc.bill_id,
+            amount: alloc.amount,
+            payment_mode: paymentMethod,
+            payment_date: paymentDate,
+            bank_account_id: bankAccountId,
+            reference_number: `BT:${bankTransactionId}`,
+            notes: notes || null,
+            paid_by: userId,
+        }]);
+
+        const newAmountPaid = Number(bill.amount_paid || 0) + alloc.amount;
+        const newStatus: 'pending' | 'partial' | 'paid' =
+            newAmountPaid >= Number(bill.total_amount) ? 'paid' : newAmountPaid <= 0 ? 'pending' : 'partial';
+
+        await supabase.from('purchase_bills').update({
+            amount_paid: newAmountPaid,
+            payment_status: newStatus,
+        }).eq('id', alloc.bill_id);
+    }
+}
+
+// =====================================================
+// MAIN HOOK: CATEGORIZE / UNCATEGORIZE
+// =====================================================
 export function useTransactionCategorization() {
     const [saving, setSaving] = useState(false);
 
@@ -405,11 +427,9 @@ export function useTransactionCategorization() {
         try {
             setSaving(true);
 
-            // Get current user
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error('User not authenticated');
 
-            // Get the transaction details (needed for journal entry)
             const { data: txn } = await supabase
                 .from('bank_transactions')
                 .select('bank_account_id, amount, transaction_type, transaction_date, description')
@@ -418,10 +438,9 @@ export function useTransactionCategorization() {
 
             if (!txn) throw new Error('Transaction not found');
 
-            // First, delete any existing journal entry for this transaction (handles re-categorization)
+            // Delete any existing journal entry (handles re-categorization)
             await deleteJournalEntryForTransaction(transactionId);
 
-            // Update transaction with categorization
             const updateData: any = {
                 categorization_type: categorization.categorization_type,
                 payment_method: categorization.payment_method,
@@ -431,20 +450,22 @@ export function useTransactionCategorization() {
                 verified_at: new Date().toISOString(),
             };
 
-            // Add transaction date if provided
             if (categorization.transaction_date) {
                 updateData.transaction_date = categorization.transaction_date;
             }
 
-            // Add category based on type
             if (categorization.categorization_type === 'expense') {
                 updateData.expense_category_id = categorization.expense_category_id;
                 updateData.expense_type = categorization.expense_type;
                 updateData.income_category_id = null;
+                updateData.client_id = null;
+                updateData.vendor_id = categorization.vendor_id || null;
             } else {
                 updateData.income_category_id = categorization.income_category_id;
                 updateData.expense_category_id = null;
                 updateData.expense_type = null;
+                updateData.client_id = categorization.client_id || null;
+                updateData.vendor_id = null;
             }
 
             const { error: updateError } = await supabase
@@ -454,9 +475,47 @@ export function useTransactionCategorization() {
 
             if (updateError) throw updateError;
 
-            // ── Double-Entry: Create journal entry ──
+            // ── CLIENT PAYMENT: apply invoice allocations ──
+            if (
+                categorization.categorization_type === 'income' &&
+                categorization.client_id &&
+                categorization.invoice_allocations &&
+                categorization.invoice_allocations.length > 0
+            ) {
+                await applyClientPaymentAllocations(
+                    transactionId,
+                    categorization.client_id,
+                    categorization.invoice_allocations,
+                    categorization.payment_method || 'bank_transfer',
+                    categorization.transaction_date || txn.transaction_date,
+                    txn.bank_account_id,
+                    user.id,
+                    categorization.categorization_notes
+                );
+            }
+
+            // ── VENDOR PAYMENT: apply bill allocations ──
+            if (
+                categorization.categorization_type === 'expense' &&
+                categorization.vendor_id &&
+                categorization.bill_allocations &&
+                categorization.bill_allocations.length > 0
+            ) {
+                await applyVendorPaymentAllocations(
+                    transactionId,
+                    categorization.vendor_id,
+                    categorization.bill_allocations,
+                    categorization.payment_method || 'bank_transfer',
+                    categorization.transaction_date || txn.transaction_date,
+                    txn.bank_account_id,
+                    user.id,
+                    categorization.categorization_notes
+                );
+            }
+
+            // ── Double-Entry Journal ──
             const txnDate = categorization.transaction_date || txn.transaction_date;
-            const journalResult = await createJournalEntryForTransaction(
+            await createJournalEntryForTransaction(
                 transactionId,
                 txn.bank_account_id,
                 categorization,
@@ -466,10 +525,6 @@ export function useTransactionCategorization() {
                 txn.description || 'Bank transaction',
                 user.id
             );
-
-            if (journalResult.error) {
-                console.warn('Journal entry creation failed (non-blocking):', journalResult.error);
-            }
 
             return { error: null };
         } catch (err: any) {
@@ -484,31 +539,72 @@ export function useTransactionCategorization() {
         try {
             setSaving(true);
 
-            // ── Double-Entry: Delete journal entry first ──
-            // Get transaction to know the bank account for balance reversal
+            // ── Reverse client payment allocations ──
+            const { data: linkedPayments } = await supabase
+                .from('payments_received')
+                .select('id, invoice_id, amount')
+                .eq('reference_number', `BT:${transactionId}`);
+
+            if (linkedPayments && linkedPayments.length > 0) {
+                for (const pmt of linkedPayments) {
+                    if (!pmt.invoice_id) continue;
+                    const { data: inv } = await supabase
+                        .from('invoices')
+                        .select('amount_paid, total_amount')
+                        .eq('id', pmt.invoice_id)
+                        .single();
+                    if (inv) {
+                        const newAmountPaid = Math.max(0, Number(inv.amount_paid) - pmt.amount);
+                        const newBalanceDue = Math.max(0, Number(inv.total_amount) - newAmountPaid);
+                        await supabase.from('invoices').update({
+                            amount_paid: newAmountPaid,
+                            balance_due: newBalanceDue,
+                            payment_status: newAmountPaid <= 0 ? 'pending' : 'partial',
+                        }).eq('id', pmt.invoice_id);
+                    }
+                }
+                await supabase.from('payments_received').delete().eq('reference_number', `BT:${transactionId}`);
+            }
+
+            // ── Reverse vendor payment allocations ──
+            const { data: linkedVendorPayments } = await supabase
+                .from('vendor_payments')
+                .select('id, purchase_bill_id, amount')
+                .eq('reference_number', `BT:${transactionId}`);
+
+            if (linkedVendorPayments && linkedVendorPayments.length > 0) {
+                for (const pmt of linkedVendorPayments) {
+                    if (!pmt.purchase_bill_id) continue;
+                    const { data: bill } = await supabase
+                        .from('purchase_bills')
+                        .select('amount_paid, total_amount')
+                        .eq('id', pmt.purchase_bill_id)
+                        .single();
+                    if (bill) {
+                        const newAmountPaid = Math.max(0, Number(bill.amount_paid) - pmt.amount);
+                        await supabase.from('purchase_bills').update({
+                            amount_paid: newAmountPaid,
+                            payment_status: newAmountPaid <= 0 ? 'pending' : 'partial',
+                        }).eq('id', pmt.purchase_bill_id);
+                    }
+                }
+                await supabase.from('vendor_payments').delete().eq('reference_number', `BT:${transactionId}`);
+            }
+
+            // ── Delete journal entry ──
             const { data: txn } = await supabase
                 .from('bank_transactions')
                 .select('bank_account_id, amount, transaction_type')
                 .eq('id', transactionId)
                 .single();
 
-            // Delete journal entry (COA balance auto-reverses via trigger)
             await deleteJournalEntryForTransaction(transactionId);
 
-            // Reverse bank_accounts.current_balance
             if (txn) {
                 const reverseChange = txn.transaction_type === 'outflow' ? txn.amount : -txn.amount;
-                const { data: ba } = await supabase
-                    .from('bank_accounts')
-                    .select('current_balance')
-                    .eq('id', txn.bank_account_id)
-                    .single();
-
+                const { data: ba } = await supabase.from('bank_accounts').select('current_balance').eq('id', txn.bank_account_id).single();
                 if (ba) {
-                    await supabase
-                        .from('bank_accounts')
-                        .update({ current_balance: (ba.current_balance || 0) + reverseChange })
-                        .eq('id', txn.bank_account_id);
+                    await supabase.from('bank_accounts').update({ current_balance: (ba.current_balance || 0) + reverseChange }).eq('id', txn.bank_account_id);
                 }
             }
 
@@ -521,6 +617,8 @@ export function useTransactionCategorization() {
                     expense_type: null,
                     payment_method: null,
                     categorization_notes: null,
+                    client_id: null,
+                    vendor_id: null,
                     is_verified: false,
                     verified_by: null,
                     verified_at: null,
@@ -538,9 +636,5 @@ export function useTransactionCategorization() {
         }
     };
 
-    return {
-        categorizeTransaction,
-        uncategorizeTransaction,
-        saving
-    };
+    return { categorizeTransaction, uncategorizeTransaction, saving };
 }
