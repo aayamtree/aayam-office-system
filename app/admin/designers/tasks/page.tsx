@@ -572,7 +572,12 @@ export default function DesignerWorkspace() {
 
   // One-click approve for admin: approve a job that's awaiting_admin
   const [approvingJobId, setApprovingJobId] = useState<string | null>(null);
+  // Track locally-approved jobs so the button hides instantly even before the
+  // refetch lands. Prevents double-click from hitting the API twice.
+  const [locallyProcessedIds, setLocallyProcessedIds] = useState<Set<string>>(new Set());
   const approveJob = async (realId: string, action: 'approve' | 'reject') => {
+    // Guard: don't re-send if already processed in this session
+    if (locallyProcessedIds.has(realId) || approvingJobId === realId) return;
     setApprovingJobId(realId);
     try {
       const res = await fetch(`/api/jobs/${realId}/approve`, {
@@ -582,8 +587,18 @@ export default function DesignerWorkspace() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed');
-      toast.success(action === 'approve' ? '✅ Job approved — started designing!' : '❌ Job rejected');
-      refetchJobs(); // refresh jobs list
+      // Mark processed so the approve/reject buttons hide immediately
+      setLocallyProcessedIds(prev => {
+        const next = new Set(prev);
+        next.add(realId);
+        return next;
+      });
+      if (json.alreadyProcessed) {
+        toast.success('Job was already processed — refreshing list');
+      } else {
+        toast.success(action === 'approve' ? '✅ Job approved — started designing!' : '❌ Job rejected');
+      }
+      await refetchJobs(); // refresh jobs list (awaited so loading state clears only after data lands)
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -663,7 +678,7 @@ export default function DesignerWorkspace() {
                             {/* Body */}
                             <div className="p-3">
                               {/* Awaiting Admin badge + one-click approve for admins */}
-                              {task.current_stage === 'awaiting_admin' && (
+                              {task.current_stage === 'awaiting_admin' && !locallyProcessedIds.has(task.realId) && (
                                 <div className="mb-2">
                                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-300">⏳ Awaiting Approval</span>
                                   {isAdmin && (
@@ -991,7 +1006,7 @@ export default function DesignerWorkspace() {
                       </div>
                     </div>
                     {/* One-click approve (admin only) */}
-                    {isAdmin && task.current_stage === 'awaiting_admin' && (
+                    {isAdmin && task.current_stage === 'awaiting_admin' && !locallyProcessedIds.has(task.realId) && (
                       <div className="mt-2 flex items-center gap-2" onClick={e => e.stopPropagation()}>
                         <button
                           onClick={() => approveJob(task.realId, 'approve')}

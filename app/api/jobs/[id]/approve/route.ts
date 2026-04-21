@@ -33,16 +33,43 @@ export async function PATCH(
   const newStage = action === 'approve' ? 'designing' : 'new';
 
   // Step 1: Update current_stage only (safe — column always exists)
+  // Use maybeSingle() to avoid the "Cannot coerce to single JSON object" error
+  // when the job has already been processed (filter returns 0 rows on re-click).
   const { data: job, error } = await supabase
     .from('jobs')
     .update({ current_stage: newStage })
     .eq('id', id)
     .eq('current_stage', 'awaiting_admin') // safety: only approve pending jobs
-    .select('id, project_name, job_number, designer_id')
-    .single();
+    .select('id, project_name, job_number, designer_id, current_stage')
+    .maybeSingle();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!job) return NextResponse.json({ error: 'Job not found or already processed' }, { status: 404 });
+
+  // If nothing matched, the job was already processed. Return idempotent success
+  // so a double-click doesn't look like a failure to the user.
+  if (!job) {
+    const { data: existing } = await supabase
+      .from('jobs')
+      .select('id, project_name, job_number, current_stage')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      alreadyProcessed: true,
+      action,
+      job: {
+        id: existing.id,
+        project_name: existing.project_name,
+        job_number: existing.job_number,
+        current_stage: existing.current_stage,
+      },
+    });
+  }
 
   // Step 2: Try to add audit fields — silently ignore if columns don't exist yet
   try {
