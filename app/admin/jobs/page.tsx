@@ -209,7 +209,8 @@ export default function JobsPage() {
       address: '',
       city: '',
       state: 'Gujarat',
-      payment_terms: 0 // Default 0 days
+      payment_terms: 0, // Default 0 days
+      outstanding_balance: 0
     });
 
     if (result.data) {

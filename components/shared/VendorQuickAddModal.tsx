@@ -63,7 +63,8 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
             const newVendor = await createVendor({
                 ...formData,
                 payment_terms: 30, // Convert from string to number
-                is_active: true
+                is_active: true,
+                outstanding_balance: 0
             });
 
             if (newVendor?.error) {
