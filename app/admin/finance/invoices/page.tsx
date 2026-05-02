@@ -787,6 +787,15 @@ export default function InvoicesPage() {
                     <label className="block text-sm font-semibold text-gray-700">Items</label>
                     <button type="button" onClick={addItem} className="text-sm font-medium text-primary hover:text-primary">+ Add Item</button>
                   </div>
+                  {/* Column headers */}
+                  <div className="hidden sm:grid grid-cols-12 gap-2 px-1 mb-1">
+                    <div className="col-span-4 text-xs text-gray-400 font-medium">Item Name</div>
+                    <div className="col-span-2 text-xs text-gray-400 font-medium">HSN/SAC</div>
+                    <div className="col-span-2 text-xs text-gray-400 font-medium">Qty</div>
+                    <div className="col-span-2 text-xs text-gray-400 font-medium">Rate (₹)</div>
+                    <div className="col-span-2 text-xs text-gray-400 font-medium">Amount</div>
+                  </div>
+
                   <div className="space-y-3">
                     {formData.items.map((item, index) => (
                       <div key={index} className="bg-gray-50 p-3 rounded-md border border-gray-100 space-y-2">
