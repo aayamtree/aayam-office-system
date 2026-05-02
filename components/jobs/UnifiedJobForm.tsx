@@ -42,7 +42,7 @@ export default function UnifiedJobForm({
     const { clients, refetch: refetchClients } = useClients();
     const { vendors, refetch: refetchVendors } = useVendors();
     const { designers } = useDesigners();
-    const { categories: productCategories } = useProductCategories();
+    const { categories: productCategories, createCategory } = useProductCategories();
     const { createJob, updateJob } = useJobs();
 
     const isAdmin = showAdminFields ?? (profile?.role === 'admin' || profile?.role === 'finance');
@@ -52,6 +52,22 @@ export default function UnifiedJobForm({
     const [showClientModal, setShowClientModal] = useState(false);
     const [showVendorModal, setShowVendorModal] = useState(false);
     const [showAdvance, setShowAdvance] = useState(false);
+    const [showAddCategory, setShowAddCategory] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState('');
+    const [savingCategory, setSavingCategory] = useState(false);
+
+    const handleAddCategory = async () => {
+        const name = newCategoryName.trim();
+        if (!name) return;
+        setSavingCategory(true);
+        const result = await createCategory(name);
+        if (result?.data) {
+            set('product_category', name);
+            setNewCategoryName('');
+            setShowAddCategory(false);
+        }
+        setSavingCategory(false);
+    };
 
     const [teamMembers, setTeamMembers] = useState<{ id: string; full_name: string }[]>([]);
     useEffect(() => {
@@ -298,7 +314,45 @@ export default function UnifiedJobForm({
 
                             {/* Product Category */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Product Category</label>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="block text-sm font-medium text-gray-700">Product Category</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setShowAddCategory(!showAddCategory); setNewCategoryName(''); }}
+                                        className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                                    >
+                                        <Plus size={13} />
+                                        Add New Category
+                                    </button>
+                                </div>
+                                {showAddCategory && (
+                                    <div className="flex gap-2 mb-2">
+                                        <input
+                                            autoFocus
+                                            type="text"
+                                            value={newCategoryName}
+                                            onChange={e => setNewCategoryName(e.target.value)}
+                                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddCategory(); } if (e.key === 'Escape') setShowAddCategory(false); }}
+                                            placeholder="e.g. Logo Design"
+                                            className="flex-1 px-3 py-2 border border-blue-300 rounded-md text-sm focus:ring-2 focus:ring-blue-400 outline-none"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleAddCategory}
+                                            disabled={savingCategory || !newCategoryName.trim()}
+                                            className="px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                                        >
+                                            {savingCategory ? '...' : 'Add'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAddCategory(false)}
+                                            className="px-3 py-2 border border-gray-200 rounded-md text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                )}
                                 <select
                                     className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
                                     value={formData.product_category}
