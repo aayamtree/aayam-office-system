@@ -105,8 +105,8 @@ ${status}
 
 Thank you for your business! 🙏
 
-*AAYAM CREATIVE*
-📞 +91 98765 43210`;
+*aayam communication*
+📞 9537511100`;
 };
 
 interface JobShareData {
@@ -147,8 +147,8 @@ ${statusEmoji[data.status] || '📍'} *Status:* ${data.status.toUpperCase().repl
 📅 *Deadline:* ${data.deadline}
 ━━━━━━━━━━━━━━━
 
-*AAYAM CREATIVE*
-📞 +91 98765 43210`;
+*aayam communication*
+📞 9537511100`;
 };
 
 interface DispatchShareData {
@@ -195,8 +195,8 @@ ${trackingInfo}
 📍 *Address:* ${data.deliveryAddress}
 ━━━━━━━━━━━━━━━
 
-*AAYAM CREATIVE*
-📞 +91 98765 43210`;
+*aayam communication*
+📞 9537511100`;
 };
 
 interface PaymentReminderData {
@@ -227,8 +227,8 @@ Please make the payment at your earliest convenience.
 
 Thank you! 🙏
 
-*AAYAM CREATIVE*
-📞 +91 98765 43210`;
+*aayam communication*
+📞 9537511100`;
 };
 
 interface QuoteShareData {
@@ -257,6 +257,6 @@ ${data.items}
 
 Looking forward to your confirmation! 🙏
 
-*AAYAM CREATIVE*
-📞 +91 98765 43210`;
+*aayam communication*
+📞 9537511100`;
 };

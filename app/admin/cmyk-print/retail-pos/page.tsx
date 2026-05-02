@@ -8,7 +8,8 @@ import {
   Printer, CreditCard, Banknote, Smartphone, X, Search, User,
   Settings, Edit, Check, FolderPlus, Loader2, Download
 } from 'lucide-react';
-import { ReceiptData, defaultReceiptCompany, printReceipt, downloadReceipt } from '@/components/receipt/ReceiptPDF';
+import { ReceiptData, printReceipt, downloadReceipt } from '@/components/receipt/ReceiptPDF';
+import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import { usePOSSales, usePOSProducts } from '@/lib/hooks';
 import { POSCategory, POSProduct } from '@/types/database';
 import { Input } from '@/components/ui/input';
@@ -38,6 +39,7 @@ const categoryColors = [
 ];
 
 export default function RetailPOSPage() {
+  const { settings: companySettings } = useCompanySettings();
   const { createPOSSale } = usePOSSales();
   const {
     categories, products, loading: productsLoading,
@@ -204,7 +206,9 @@ export default function RetailPOSPage() {
     try {
       const now = new Date();
       const receiptData: ReceiptData = {
-        ...defaultReceiptCompany,
+        companyName: companySettings.companyName,
+        companyAddress: companySettings.companyAddress + ", " + companySettings.companyCity + " " + companySettings.companyPincode,
+        companyPhone: companySettings.companyPhone,
         receiptNumber: saleNumber,
         date: now.toLocaleDateString('en-IN'),
         time: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
@@ -246,7 +250,9 @@ export default function RetailPOSPage() {
     try {
       const now = new Date();
       const receiptData: ReceiptData = {
-        ...defaultReceiptCompany,
+        companyName: companySettings.companyName,
+        companyAddress: companySettings.companyAddress + ", " + companySettings.companyCity + " " + companySettings.companyPincode,
+        companyPhone: companySettings.companyPhone,
         receiptNumber: saleNumber,
         date: now.toLocaleDateString('en-IN'),
         time: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),

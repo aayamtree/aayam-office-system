@@ -316,7 +316,7 @@ export const QuotationPDF = ({ data }: { data: QuotationData }) => (
             <View style={styles.termsSection}>
                 <Text style={styles.termsTitle}>Terms & Conditions</Text>
                 <Text style={styles.termsText}>
-                    {data.terms || '1. This quotation is valid for 15 days.\n2. 50% advance payment required to confirm order.\n3. Delivery timeline starts after design approval.'}
+                    {data.terms || "30% Payment in Advance & 70% Before Dispatch.\nDelivery Time 15-18 Days F.O.R. Rajkot, Gujarat.\nThis Quote is valid till one month from today's date.\nTax will be at the actual."}
                 </Text>
                 {data.notes && (
                     <>
@@ -355,11 +355,11 @@ export const downloadQuotationPDF = async (data: QuotationData) => {
 
 // Default Company Data
 export const defaultCompanyData = {
-    companyName: 'AAYAM CREATIVE',
-    companyAddress: '123 Business Hub, MG Road',
+    companyName: 'aayam communication',
+    companyAddress: 'ProPrintPack, Qtr. 92, Udhyog Nagar Colony',
     companyCity: 'Rajkot',
     companyState: 'Gujarat',
-    companyPincode: '360001',
-    companyPhone: '+91 98765 43210',
+    companyPincode: '360002',
+    companyPhone: '9537511100',
     companyEmail: 'info@aayam.com',
 };

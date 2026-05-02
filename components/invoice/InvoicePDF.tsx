@@ -519,16 +519,16 @@ export const printInvoicePDF = async (data: InvoiceData) => {
 
 // Default company data
 export const defaultCompanyData = {
-  companyName: 'AAYAM CREATIVE',
-  companyAddress: '123 Business Hub, MG Road',
+  companyName: 'aayam communication',
+  companyAddress: 'ProPrintPack, Qtr. 92, Udhyog Nagar Colony',
   companyCity: 'Rajkot',
   companyState: 'Gujarat',
-  companyPincode: '360001',
-  companyPhone: '+91 98765 43210',
-  companyEmail: 'billing@aayam.com',
-  companyGstin: '24XXXXX1234X1Z5',
+  companyPincode: '360002',
+  companyPhone: '9537511100',
+  companyEmail: 'info@aayam.com',
+  companyGstin: '24AAJFA6574G1ZE',
   bankName: 'HDFC Bank',
-  bankAccount: '50100012345678',
-  bankIfsc: 'HDFC0001234',
-  bankBranch: 'Rajkot Main Branch',
+  bankAccount: '01012560013911',
+  bankIfsc: 'HDFC0000101',
+  bankBranch: 'Rajkot',
 };

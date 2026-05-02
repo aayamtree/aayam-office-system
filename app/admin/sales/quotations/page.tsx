@@ -11,7 +11,8 @@ import {
 import { useAuth } from '@/lib/auth-context';
 import { useQuotations, useClients, useJobs, useLeads, useFollowUps, useProductCategories } from '@/lib/hooks';
 import { Quotation, Client, QuotationItem, JobStatus } from '@/types/database';
-import { downloadQuotationPDF, defaultCompanyData } from '@/components/quotation/QuotationPDF';
+import { downloadQuotationPDF } from '@/components/quotation/QuotationPDF';
+import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import { formatDate } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -27,6 +28,7 @@ export default function QuotationsPage() {
   const { linkQuotationToFollowUp } = useFollowUps();
   const { categories: dbCategories } = useProductCategories();
   const confirm = useConfirm();
+  const { settings: companySettings } = useCompanySettings();
 
   // Detect if we're in the marketing section
   const isMarketingView = pathname?.includes('/marketing/');
@@ -412,7 +414,7 @@ export default function QuotationsPage() {
 
   const handleDownloadPDF = async (q: Quotation) => {
     const pdfData = {
-      ...defaultCompanyData,
+      ...companySettings,
       quoteNumber: q.quote_number,
       date: formatDate(q.created_at),
       validUntil: q.valid_until ? formatDate(q.valid_until) : '-',

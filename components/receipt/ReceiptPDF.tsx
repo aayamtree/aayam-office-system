@@ -277,7 +277,7 @@ export const printReceipt = async (data: ReceiptData) => {
 
 // Default company data for receipts
 export const defaultReceiptCompany = {
-  companyName: 'AAYAM CREATIVE',
-  companyAddress: '123 Business Hub, MG Road, Rajkot',
-  companyPhone: '+91 98765 43210',
+  companyName: 'aayam communication',
+  companyAddress: 'ProPrintPack, Qtr. 92, Udhyog Nagar Colony, Rajkot 360002',
+  companyPhone: '9537511100',
 };

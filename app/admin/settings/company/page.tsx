@@ -19,6 +19,11 @@ const DEFAULT_COMPANY = {
   state: '',
   pincode: '',
   website: '',
+  bankName: '',
+  bankAccount: '',
+  bankIfsc: '',
+  bankBranch: '',
+  quotationTerms: '',
 };
 
 export default function CompanyPage() {
@@ -195,14 +200,44 @@ export default function CompanyPage() {
           </div>
         </div>
 
-        {/* Bank Accounts — managed from Banking page */}
+        {/* Bank Details for PDFs */}
         <div className="lg:col-span-3 bg-white rounded-md p-3 md:p-4 border border-gray-100">
-          <h2 className="text-section text-gray-900 mb-2">Bank Accounts</h2>
-          <p className="text-sm text-gray-500 mb-3">Bank accounts are managed from the Banking page — you can add multiple accounts, set a default, and import statements there.</p>
-          <Link href="/admin/finance/banking" className="inline-flex items-center gap-1.5 text-sm font-medium text-[#B8860B] hover:underline">
-            <Building2 className="w-4 h-4" />
-            Go to Banking → Manage Accounts
-          </Link>
+          <h2 className="text-section text-gray-900 mb-1">Bank Details</h2>
+          <p className="text-sm text-gray-500 mb-4">These appear on Invoices and Quotations.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
+              <input type="text" value={formData.bankName} onChange={(e) => setFormData({ ...formData, bankName: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md" placeholder="HDFC Bank" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
+              <input type="text" value={formData.bankAccount} onChange={(e) => setFormData({ ...formData, bankAccount: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md" placeholder="01012560013911" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">IFSC Code</label>
+              <input type="text" value={formData.bankIfsc} onChange={(e) => setFormData({ ...formData, bankIfsc: e.target.value.toUpperCase() })} className="w-full px-3 py-2 border border-gray-200 rounded-md" placeholder="HDFC0000101" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
+              <input type="text" value={formData.bankBranch} onChange={(e) => setFormData({ ...formData, bankBranch: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md" placeholder="Rajkot" />
+            </div>
+          </div>
+        </div>
+
+        {/* Quotation Terms & Conditions */}
+        <div className="lg:col-span-3 bg-white rounded-md p-3 md:p-4 border border-gray-100">
+          <h2 className="text-section text-gray-900 mb-1">Quotation Terms & Conditions</h2>
+          <p className="text-sm text-gray-500 mb-4">Default T&C printed on every Quotation PDF. One point per line.</p>
+          <textarea
+            value={formData.quotationTerms}
+            onChange={(e) => setFormData({ ...formData, quotationTerms: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
+            rows={5}
+            placeholder={`30% Payment in Advance & 70% Before Dispatch.
+Delivery Time 15-18 Days F.O.R. Rajkot, Gujarat.
+This Quote is valid till one month from today's date.
+Tax will be at the actual.`}
+          />
         </div>
       </div>
     </div>

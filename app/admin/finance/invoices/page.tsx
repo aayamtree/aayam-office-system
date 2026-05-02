@@ -7,7 +7,8 @@ import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
   Calendar, User, Download, MessageCircle, Printer, Loader2, CheckCircle
 } from 'lucide-react';
-import { InvoiceData, defaultCompanyData, downloadInvoicePDF, printInvoicePDF } from '@/components/invoice/InvoicePDF';
+import { InvoiceData, downloadInvoicePDF, printInvoicePDF } from '@/components/invoice/InvoicePDF';
+import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import { shareOnWhatsApp, getInvoiceMessage, getPaymentReminderMessage } from '@/lib/whatsapp';
 import { useInvoices, useClients, useJobs } from '@/lib/hooks';
 import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
@@ -17,6 +18,7 @@ import { logActivity } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
 export default function InvoicesPage() {
+  const { settings: companySettings } = useCompanySettings();
   const { invoices, loading: invoicesLoading, createInvoice, updateInvoice, saveInvoiceItems, refetch: refetchInvoices } = useInvoices();
   const { clients, refetch: refetchClients } = useClients();
   const [showClientModal, setShowClientModal] = useState(false);
@@ -73,7 +75,7 @@ export default function InvoicesPage() {
     const effectiveGstRate = invoice.items && invoice.items.length > 0 ? invoice.items[0].gst_rate : 18;
 
     return {
-      ...defaultCompanyData,
+      ...companySettings,
       invoiceNumber: invoice.invoice_number,
       invoiceDate: formatDate(invoice.invoice_date),
       dueDate: invoice.due_date ? formatDate(invoice.due_date) : '',
@@ -103,10 +105,10 @@ export default function InvoicesPage() {
       discount: invoice.discount_amount,
       grandTotal: invoice.total_amount,
       isPaid: invoice.payment_status === 'paid',
-      bankName: defaultCompanyData.bankName,
-      bankAccount: defaultCompanyData.bankAccount,
-      bankIfsc: defaultCompanyData.bankIfsc,
-      bankBranch: defaultCompanyData.bankBranch,
+      bankName: companySettings.bankName,
+      bankAccount: companySettings.bankAccount,
+      bankIfsc: companySettings.bankIfsc,
+      bankBranch: companySettings.bankBranch,
       notes: invoice.notes
     };
   };
