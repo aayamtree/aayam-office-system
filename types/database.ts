@@ -176,7 +176,7 @@ export interface Job extends BaseEntity {
   designer_id?: string;
   sales_order_id?: string;
 
-  job_type?: 'print_only' | 'design_only' | 'design_print';
+  job_type?: 'Print Only' | 'Design Only' | 'Design + Print';
   product_category?: string; // Single source of truth for category
   description?: string;
   quantity: number;
@@ -358,10 +358,11 @@ export interface InvoiceItem {
   id: string;
   invoice_id: string;
   description: string;
+  item_notes?: string;   // sub-description (second line under item name)
+  hsn_code?: string;
   quantity: number;
   rate: number;
   amount: number;
-  hsn_code?: string;
   gst_rate: number;
 }
 

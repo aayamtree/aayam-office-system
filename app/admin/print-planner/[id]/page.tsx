@@ -365,7 +365,7 @@ function AddJobsModal({
         `)
                 .eq('print_ready', true)
                 .eq('client_approval', true)
-                .in('job_type', ['print_only', 'design_print']);
+                .not('job_type', 'ilike', 'design only'); // exclude design-only jobs
 
             if (error) throw error;
 

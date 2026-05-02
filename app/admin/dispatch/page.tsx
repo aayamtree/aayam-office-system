@@ -248,7 +248,7 @@ export default function DispatchPage() {
                 </div>
                 <p className="text-[10px] text-muted-foreground">Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</p>
                 <div className="flex gap-1.5">
-                  {job.job_type === 'design_only' ? (
+                  {['design_only', 'Design Only'].includes(job.job_type || '') ? (
                     <button onClick={() => updateJobStage(job.id, 'delivered')}
                       className="flex items-center gap-1 px-2.5 py-1.5 bg-green-600 text-white rounded text-xs font-medium hover:bg-green-700 transition-colors">
                       <CheckCircle className="w-3 h-3" /> File OK → Deliver

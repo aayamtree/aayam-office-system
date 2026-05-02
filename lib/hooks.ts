@@ -646,10 +646,11 @@ export function useInvoices() {
         .insert(items.map(item => ({
           invoice_id: invoiceId,
           description: item.description,
+          item_notes: item.item_notes || null,
+          hsn_code: item.hsn_code || null,
           quantity: item.quantity,
           rate: item.rate,
           amount: item.amount,
-          hsn_code: item.hsn_code,
           gst_rate: item.gst_rate
         })));
 

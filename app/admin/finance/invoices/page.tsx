@@ -10,6 +10,7 @@ import {
 import { InvoiceData, defaultCompanyData, downloadInvoicePDF, printInvoicePDF } from '@/components/invoice/InvoicePDF';
 import { shareOnWhatsApp, getInvoiceMessage, getPaymentReminderMessage } from '@/lib/whatsapp';
 import { useInvoices, useClients, useJobs } from '@/lib/hooks';
+import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
 import { Invoice, Client, InvoiceItem } from '@/types/database';
 import { formatDate } from '@/lib/utils';
 import { logActivity } from '@/lib/logger';
@@ -17,7 +18,8 @@ import { supabase } from '@/lib/supabase';
 
 export default function InvoicesPage() {
   const { invoices, loading: invoicesLoading, createInvoice, updateInvoice, saveInvoiceItems, refetch: refetchInvoices } = useInvoices();
-  const { clients } = useClients();
+  const { clients, refetch: refetchClients } = useClients();
+  const [showClientModal, setShowClientModal] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -34,9 +36,10 @@ export default function InvoicesPage() {
     invoiceNumber: '',
     invoiceDate: '',
     dueDate: '',
-    items: [{ description: '', quantity: 1, rate: 0, amount: 0, gst_rate: 18 }] as InvoiceItem[],
+    items: [{ description: '', item_notes: '', hsn_code: '', quantity: 1, rate: 0, amount: 0, gst_rate: 18 }] as InvoiceItem[],
     subtotal: 0,
-    gstRate: 18, // Global rate for simplicity in UI, though items have individual rates
+    gstRate: 18,
+    supplyType: 'inter_state' as 'inter_state' | 'intra_state', // inter = IGST, intra = CGST+SGST
     totalTax: 0,
     totalAmount: 0,
     paidAmount: 0,
@@ -211,7 +214,7 @@ export default function InvoicesPage() {
   const addItem = () => {
     setFormData(prev => ({
       ...prev,
-      items: [...prev.items, { description: '', quantity: 1, rate: 0, amount: 0, gst_rate: prev.gstRate } as InvoiceItem]
+      items: [...prev.items, { description: '', item_notes: '', hsn_code: '', quantity: 1, rate: 0, amount: 0, gst_rate: prev.gstRate } as InvoiceItem]
     }));
   };
 
@@ -237,9 +240,10 @@ export default function InvoicesPage() {
       invoiceNumber: '', // Will be auto-generated
       invoiceDate: new Date().toISOString().split('T')[0],
       dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      items: [{ description: '', quantity: 1, rate: 0, amount: 0, gst_rate: 18 } as InvoiceItem],
+      items: [{ description: '', item_notes: '', hsn_code: '', quantity: 1, rate: 0, amount: 0, gst_rate: 18 } as InvoiceItem],
       subtotal: 0,
       gstRate: 18,
+      supplyType: 'inter_state' as const,
       totalTax: 0,
       totalAmount: 0,
       paidAmount: 0,
@@ -264,6 +268,7 @@ export default function InvoicesPage() {
       items: items.length > 0 ? items : [{ description: '', quantity: 1, rate: 0, amount: 0, gst_rate: 18 } as InvoiceItem],
       subtotal: inv.subtotal,
       gstRate: gstRate,
+      supplyType: 'inter_state' as const,
       totalTax: inv.total_tax,
       totalAmount: inv.total_amount,
       paidAmount: inv.amount_paid,
@@ -281,14 +286,15 @@ export default function InvoicesPage() {
     setSubmitting(true);
 
     try {
+      const isInterState = formData.supplyType === 'inter_state';
       const { items, ...invoiceFields } = {
         client_id: formData.clientId,
         invoice_date: formData.invoiceDate,
         due_date: formData.dueDate,
         subtotal: formData.subtotal,
-        cgst_amount: formData.totalTax / 2, // Simplified tax split
-        sgst_amount: formData.totalTax / 2,
-        igst_amount: 0,
+        cgst_amount: isInterState ? 0 : formData.totalTax / 2,
+        sgst_amount: isInterState ? 0 : formData.totalTax / 2,
+        igst_amount: isInterState ? formData.totalTax : 0,
         total_tax: formData.totalTax,
         discount_amount: 0,
         total_amount: formData.totalAmount,
@@ -429,6 +435,7 @@ export default function InvoicesPage() {
       totalTax: tax,
       totalAmount: subtotal + tax,
       paidAmount: 0,
+      supplyType: 'inter_state' as const,
       status: 'pending',
       notes: `Generated from Job #${job.job_number}`,
       jobId: job.id,
@@ -721,17 +728,27 @@ export default function InvoicesPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Client *</label>
-                    <select
-                      required
-                      value={formData.clientId}
-                      onChange={(e) => setFormData({ ...formData, clientId: e.target.value, jobId: '' })}
-                      className="w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white text-sm md:text-base"
-                    >
-                      <option value="">Select Client</option>
-                      {clients.map(c => (
-                        <option key={c.id} value={c.id}>{c.company} ({c.name})</option>
-                      ))}
-                    </select>
+                    <div className="flex gap-2">
+                      <select
+                        required
+                        value={formData.clientId}
+                        onChange={(e) => setFormData({ ...formData, clientId: e.target.value, jobId: '' })}
+                        className="flex-1 px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white text-sm md:text-base"
+                      >
+                        <option value="">Select Client</option>
+                        {clients.map(c => (
+                          <option key={c.id} value={c.id}>{c.company} ({c.name})</option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        title="Add New Client"
+                        onClick={() => setShowClientModal(true)}
+                        className="px-3 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-700 transition-colors flex items-center"
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
                   </div>
 
                   <div>
@@ -770,61 +787,102 @@ export default function InvoicesPage() {
                     <label className="block text-sm font-semibold text-gray-700">Items</label>
                     <button type="button" onClick={addItem} className="text-sm font-medium text-primary hover:text-primary">+ Add Item</button>
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {formData.items.map((item, index) => (
-                      <div key={index} className="grid grid-cols-12 gap-3 items-start bg-gray-50 p-3 rounded-md border border-gray-100">
-                        <div className="col-span-12 sm:col-span-5">
-                          <input
-                            type="text"
-                            placeholder="Description"
-                            value={item.description}
-                            onChange={(e) => updateItem(index, 'description', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
-                          />
+                      <div key={index} className="bg-gray-50 p-3 rounded-md border border-gray-100 space-y-2">
+                        {/* Row 1: Description + HSN + Qty + Rate + Amount */}
+                        <div className="grid grid-cols-12 gap-2 items-center">
+                          <div className="col-span-12 sm:col-span-4">
+                            <input
+                              type="text"
+                              placeholder="Item name *"
+                              value={item.description}
+                              onChange={(e) => updateItem(index, 'description', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm font-medium"
+                            />
+                          </div>
+                          <div className="col-span-5 sm:col-span-2">
+                            <input
+                              type="text"
+                              placeholder="HSN/SAC"
+                              value={item.hsn_code || ''}
+                              onChange={(e) => updateItem(index, 'hsn_code', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
+                            />
+                          </div>
+                          <div className="col-span-3 sm:col-span-2">
+                            <input
+                              type="number"
+                              placeholder="Qty"
+                              min="1"
+                              value={item.quantity}
+                              onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
+                            />
+                          </div>
+                          <div className="col-span-4 sm:col-span-2">
+                            <input
+                              type="number"
+                              placeholder="Rate"
+                              min="0"
+                              step="0.01"
+                              value={item.rate}
+                              onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
+                            />
+                          </div>
+                          <div className="col-span-12 sm:col-span-2 flex items-center justify-between">
+                            <span className="font-semibold text-gray-800 text-sm">{formatCurrency(item.amount)}</span>
+                            {formData.items.length > 1 && (
+                              <button type="button" onClick={() => removeItem(index)} className="text-red-400 hover:text-red-600 p-1 ml-1">
+                                <X className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <div className="col-span-3 sm:col-span-2">
-                          <input
-                            type="number"
-                            placeholder="Qty"
-                            min="1"
-                            value={item.quantity}
-                            onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
-                          />
-                        </div>
-                        <div className="col-span-3 sm:col-span-2">
-                          <input
-                            type="number"
-                            placeholder="Rate"
-                            min="0"
-                            step="0.01"
-                            value={item.rate}
-                            onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
-                          />
-                        </div>
-                        <div className="col-span-5 sm:col-span-2 flex items-center justify-between">
-                          <span className="font-medium text-gray-700 text-sm">{formatCurrency(item.amount)}</span>
-                          {formData.items.length > 1 && (
-                            <button type="button" onClick={() => removeItem(index)} className="text-red-500 hover:text-red-700 p-1">
-                              <X className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
+                        {/* Row 2: Sub-description (optional) */}
+                        <input
+                          type="text"
+                          placeholder="Sub-description (e.g. 4 Design x 3200 pcs, colour, size...)"
+                          value={item.item_notes || ''}
+                          onChange={(e) => updateItem(index, 'item_notes', e.target.value)}
+                          className="w-full px-3 py-1.5 border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white"
+                        />
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Financials */}
-                <div className="bg-gray-50 p-4 rounded-md border border-gray-100">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4 mb-4">
+                <div className="bg-gray-50 p-4 rounded-md border border-gray-100 space-y-4">
+                  {/* Supply Type Toggle */}
+                  <div className="flex items-center gap-3">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Supply Type</label>
+                    <div className="flex rounded-md border border-gray-200 overflow-hidden text-sm">
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, supplyType: 'inter_state' }))}
+                        className={`px-3 py-1.5 font-medium transition-colors ${formData.supplyType === 'inter_state' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                      >
+                        Inter-State (IGST)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, supplyType: 'intra_state' }))}
+                        className={`px-3 py-1.5 font-medium transition-colors ${formData.supplyType === 'intra_state' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                      >
+                        Intra-State (CGST+SGST)
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Subtotal</label>
                       <div className="font-bold text-gray-900 text-lg">{formatCurrency(formData.subtotal)}</div>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">GST (%)</label>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">GST Rate</label>
                       <select
                         value={formData.gstRate}
                         onChange={(e) => {
@@ -841,10 +899,17 @@ export default function InvoicesPage() {
                         <option value="28">28%</option>
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Tax Amount</label>
-                      <div className="font-bold text-gray-700">{formatCurrency(formData.totalTax)}</div>
-                    </div>
+                    {formData.supplyType === 'inter_state' ? (
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">IGST ({formData.gstRate}%)</label>
+                        <div className="font-bold text-gray-700">{formatCurrency(formData.totalTax)}</div>
+                      </div>
+                    ) : (
+                      <div className="col-span-1">
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">CGST ({formData.gstRate / 2}%) + SGST ({formData.gstRate / 2}%)</label>
+                        <div className="font-bold text-gray-700">{formatCurrency(formData.totalTax / 2)} + {formatCurrency(formData.totalTax / 2)}</div>
+                      </div>
+                    )}
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Grand Total</label>
                       <div className="font-bold text-primary text-lg">{formatCurrency(formData.totalAmount)}</div>
@@ -1032,6 +1097,16 @@ export default function InvoicesPage() {
           </div>
         )
       }
+      {/* Client Quick Add Modal */}
+      <ClientQuickAddModal
+        isOpen={showClientModal}
+        onClose={() => setShowClientModal(false)}
+        onSuccess={(clientId) => {
+          refetchClients();
+          setFormData(prev => ({ ...prev, clientId }));
+          setShowClientModal(false);
+        }}
+      />
     </div >
   );
 }

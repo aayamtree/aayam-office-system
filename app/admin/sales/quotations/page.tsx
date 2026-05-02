@@ -16,6 +16,7 @@ import { formatDate } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useConfirm } from '@/components/ConfirmModal';
+import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
 
 export default function QuotationsPage() {
   const { user, profile } = useAuth();
@@ -48,7 +49,7 @@ export default function QuotationsPage() {
     }
     return allQuotations;
   }, [allQuotations, profile, isMarketingView]);
-  const { clients: allClients } = useClients();
+  const { clients: allClients, refetch: refetchClients } = useClients();
   const { leads: allLeads, convertToClient } = useLeads();
 
   const clients = useMemo(() => {
@@ -70,6 +71,7 @@ export default function QuotationsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showClientModal, setShowClientModal] = useState(false);
   const [selectedQuotation, setSelectedQuotation] = useState<Quotation | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -301,7 +303,7 @@ export default function QuotationsPage() {
         sales_person_id: ownerId,
         created_by: ownerId,
         // No vendor or designer initially
-        job_type: (q.order_type === 'print' ? 'print_only' : q.order_type === 'design' ? 'design_only' : 'design_print') as 'print_only' | 'design_only' | 'design_print',
+        job_type: (q.order_type === 'print' ? 'Print Only' : q.order_type === 'design' ? 'Design Only' : 'Design + Print') as 'Print Only' | 'Design Only' | 'Design + Print',
         product_category: q.product_category,
         quantity: q.items?.[0]?.quantity || 1,
 
@@ -739,35 +741,45 @@ export default function QuotationsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Client / Lead *</label>
-                  <select
-                    required
-                    value={formData.clientId ? `client_${formData.clientId}` : formData.leadId ? `lead_${formData.leadId}` : ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (!val) {
-                        setFormData({ ...formData, clientId: '', leadId: '' });
-                        return;
-                      }
-                      if (val.startsWith('client_')) {
-                        setFormData({ ...formData, clientId: val.replace('client_', ''), leadId: '' });
-                      } else if (val.startsWith('lead_')) {
-                        setFormData({ ...formData, leadId: val.replace('lead_', ''), clientId: '' });
-                      }
-                    }}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white"
-                  >
-                    <option value="">Select Client or Lead</option>
-                    <optgroup label="Leads (Potential)">
-                      {leads?.map(l => (
-                        <option key={`lead_${l.id}`} value={`lead_${l.id}`}>LEAD: {l.name} {l.company ? `(${l.company})` : ''}</option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="Clients (Existing)">
-                      {clients?.map(c => (
-                        <option key={`client_${c.id}`} value={`client_${c.id}`}>{c.company} ({c.name})</option>
-                      ))}
-                    </optgroup>
-                  </select>
+                  <div className="flex gap-2">
+                    <select
+                      required
+                      value={formData.clientId ? `client_${formData.clientId}` : formData.leadId ? `lead_${formData.leadId}` : ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (!val) {
+                          setFormData({ ...formData, clientId: '', leadId: '' });
+                          return;
+                        }
+                        if (val.startsWith('client_')) {
+                          setFormData({ ...formData, clientId: val.replace('client_', ''), leadId: '' });
+                        } else if (val.startsWith('lead_')) {
+                          setFormData({ ...formData, leadId: val.replace('lead_', ''), clientId: '' });
+                        }
+                      }}
+                      className="flex-1 px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white"
+                    >
+                      <option value="">Select Client or Lead</option>
+                      <optgroup label="Leads (Potential)">
+                        {leads?.map(l => (
+                          <option key={`lead_${l.id}`} value={`lead_${l.id}`}>LEAD: {l.name} {l.company ? `(${l.company})` : ''}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Clients (Existing)">
+                        {clients?.map(c => (
+                          <option key={`client_${c.id}`} value={`client_${c.id}`}>{c.company} ({c.name})</option>
+                        ))}
+                      </optgroup>
+                    </select>
+                    <button
+                      type="button"
+                      title="Add New Client"
+                      onClick={() => setShowClientModal(true)}
+                      className="px-3 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-700 transition-colors flex items-center"
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Valid Until</label>
@@ -961,6 +973,17 @@ export default function QuotationsPage() {
           </div>
         </div>
       )}
+
+      {/* Client Quick Add Modal */}
+      <ClientQuickAddModal
+        isOpen={showClientModal}
+        onClose={() => setShowClientModal(false)}
+        onSuccess={(clientId) => {
+          refetchClients();
+          setFormData(prev => ({ ...prev, clientId, leadId: '' }));
+          setShowClientModal(false);
+        }}
+      />
     </div>
   );
 }

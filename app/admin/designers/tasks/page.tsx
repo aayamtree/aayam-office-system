@@ -280,6 +280,7 @@ export default function DesignerWorkspace() {
     if (jobs) {
       const mappedTasks = (jobs || [])
         .filter(job => ['new', 'awaiting_admin', 'file_check', 'designing', 'approval', 'pre_print_qc', 'printing', 'finishing', 'completed', 'delivered'].includes(job.current_stage || ''))
+        .filter(job => !['Print Only', 'print_only'].includes(job.job_type || '')) // Print Only jobs don't need design work
         .map(job => {
           // Resolve Relationships (Manual Join)
           const client = (clients || []).find(c => c.id === job.client_id);

@@ -259,8 +259,8 @@ export default function JobsPage() {
 
     try {
       const jobType = formData.job_type;
-      const isDesign = jobType === 'Design Only' || jobType === 'design_only' || jobType === 'design_print';
-      const isPrint = jobType === 'Print Only' || jobType === 'print_only' || jobType === 'Design + Print' || jobType === 'design_print';
+      const isDesign = jobType === 'Design Only' || jobType === 'Design + Print';
+      const isPrint = jobType === 'Print Only' || jobType === 'Design + Print';
 
       const printSubtotal = isPrint ? formData.quantity * formData.quote_per_piece : 0;
       const designSubtotal = isDesign ? formData.design_charge : 0;
@@ -273,7 +273,7 @@ export default function JobsPage() {
         client_id: formData.client_id || undefined,
         vendor_id: formData.vendor_id || undefined,
         designer_id: formData.designer_id || undefined,
-        job_type: formData.job_type as 'print_only' | 'design_only' | 'design_print' | undefined,
+        job_type: formData.job_type as 'Print Only' | 'Design Only' | 'Design + Print' | undefined,
         product_category: formData.product_category,
         quantity: formData.quantity,
         quote_per_piece: formData.quote_per_piece,

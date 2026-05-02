@@ -8,6 +8,7 @@ import {
   AlertCircle, Users, Briefcase, ChevronDown, ExternalLink, BarChart3, Loader2
 } from 'lucide-react';
 import { useDesignProjects, useClients, useDesigners } from '@/lib/hooks';
+import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useConfirm } from '@/components/ConfirmModal';
@@ -24,7 +25,8 @@ const projectStatuses = [
 export default function DesignerProjectsPage() {
   // Real Data Hooks
   const { projects: rawProjects, loading, createProject, updateProject, deleteProject } = useDesignProjects();
-  const { clients } = useClients();
+  const { clients, refetch: refetchClients } = useClients();
+  const [showClientModal, setShowClientModal] = useState(false);
   const { designers } = useDesigners();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -382,11 +384,21 @@ export default function DesignerProjectsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Client *</label>
-                <select required value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                  className="w-full px-3 py-2.5 border rounded-md bg-white">
-                  <option value="">Select Client</option>
-                  {(clients || []).map(c => <option key={c.id} value={c.id}>{c.company} ({c.name})</option>)}
-                </select>
+                <div className="flex gap-2">
+                  <select required value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+                    className="flex-1 px-3 py-2.5 border rounded-md bg-white">
+                    <option value="">Select Client</option>
+                    {(clients || []).map(c => <option key={c.id} value={c.id}>{c.company} ({c.name})</option>)}
+                  </select>
+                  <button
+                    type="button"
+                    title="Add New Client"
+                    onClick={() => setShowClientModal(true)}
+                    className="px-3 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-700 transition-colors flex items-center"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Team Members</label>
@@ -482,6 +494,16 @@ export default function DesignerProjectsPage() {
           </div>
         </div>
       )}
+      {/* Client Quick Add Modal */}
+      <ClientQuickAddModal
+        isOpen={showClientModal}
+        onClose={() => setShowClientModal(false)}
+        onSuccess={(clientId) => {
+          refetchClients();
+          setFormData(prev => ({ ...prev, clientId }));
+          setShowClientModal(false);
+        }}
+      />
     </div>
   );
 }
