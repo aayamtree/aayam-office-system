@@ -101,29 +101,10 @@ export default function QuickExpensePage() {
                 throw new Error('Please select an account');
             }
 
-            // Determine vendor - create a generic one if none selected
-            let vendorId = formData.vendor_id;
-            if (!vendorId) {
-                // Create a generic "Petty Expense" vendor if it doesn't exist
-                const { data: existingVendor } = await supabase
-                    .from('vendors')
-                    .select('id')
-                    .eq('name', 'Petty Expenses')
-                    .single();
+            // vendor_id is optional — petty/internal expenses have no vendor
+            const vendorId = formData.vendor_id || null;
 
-                if (existingVendor) {
-                    vendorId = existingVendor.id;
-                } else {
-                    const { data: newVendor } = await supabase
-                        .from('vendors')
-                        .insert({ name: 'Petty Expenses', company: 'Internal' })
-                        .select()
-                        .single();
-                    vendorId = newVendor?.id;
-                }
-            }
-
-            // Call the existing RPC function
+            // Call the RPC function (vendor_id can be null for petty expenses)
             const { data, error: rpcError } = await supabase.rpc('record_vendor_payment', {
                 p_vendor_id: vendorId,
                 p_amount: parseFloat(formData.amount),

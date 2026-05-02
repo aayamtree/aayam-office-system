@@ -222,12 +222,16 @@ export function useVendors() {
     orderBy: { column: 'created_at', ascending: false }
   });
 
-  const createVendor = async (vendor: Omit<Vendor, 'id' | 'created_at' | 'updated_at' | 'outstanding_balance'>) => {
+  const createVendor = async (vendor: Omit<Vendor, 'id' | 'created_at' | 'updated_at'> & { outstanding_balance?: number }) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
+    // If caller provided an outstanding_balance (e.g. seeded from opening_balance),
+    // honor it. Otherwise initialize at 0.
+    const incoming = vendor as any;
+    const seed = typeof incoming.outstanding_balance === 'number' ? incoming.outstanding_balance : 0;
     const payload = {
       ...vendor,
-      outstanding_balance: 0  // Initialize at 0
+      outstanding_balance: seed
     } as any;
 
     const { data, error } = await supabase
@@ -533,7 +537,7 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
 // =============================================
 export function useProductCategories() {
   const { data, loading, error, refetch } = useSupabaseQuery<any>('product_categories', {
-    filter: [{ column: 'is_active', value: true }],
+    filter: [{ column: 'is_active', value: true }, { column: 'type', value: 'product' }],
     orderBy: { column: 'name', ascending: true }
   });
 
@@ -542,7 +546,7 @@ export function useProductCategories() {
 
     const { data: newCat, error } = await supabase
       .from('product_categories')
-      .insert([{ name: name.trim(), is_active: true }])
+      .insert([{ name: name.trim(), is_active: true, type: 'product' }])
       .select()
       .single();
 
@@ -556,6 +560,37 @@ export function useProductCategories() {
     error,
     refetch,
     createCategory
+  };
+}
+
+// =============================================
+// PURCHASE SERVICE CATEGORIES HOOK
+// =============================================
+export function usePurchaseServiceCategories() {
+  const { data, loading, error, refetch } = useSupabaseQuery<any>('product_categories', {
+    filter: [{ column: 'is_active', value: true }, { column: 'type', value: 'service' }],
+    orderBy: { column: 'name', ascending: true }
+  });
+
+  const createServiceCategory = async (name: string) => {
+    if (!isSupabaseConfigured()) return { data: null, error: 'Database not configured' };
+
+    const { data: newCat, error } = await supabase
+      .from('product_categories')
+      .insert([{ name: name.trim(), is_active: true, type: 'service' }])
+      .select()
+      .single();
+
+    if (!error) refetch();
+    return { data: newCat, error: error?.message };
+  };
+
+  return {
+    serviceCategories: data,
+    loading,
+    error,
+    refetch,
+    createServiceCategory
   };
 }
 

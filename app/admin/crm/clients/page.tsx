@@ -227,15 +227,15 @@ export default function ClientsPage() {
           }
         }
 
-        // Auto-set source based on who is creating
-        const isMarketingUser = profile?.role === 'marketing';
+        // Source is set explicitly by admin via the form, or defaults to 'direct'.
+        // Marketing-sourced clients should ONLY come through lead→client conversion.
         const newClient: any = await createClient({
           ...formData,
           client_type: 'regular',
           credit_limit: 0,
           created_by: profile?.id,
-          source: isMarketingUser ? 'marketing' : (formData.source || 'direct'),
-          assigned_marketing_user_id: isMarketingUser ? profile.id : (formData.assigned_marketing_user_id || null),
+          source: formData.source || 'direct',
+          assigned_marketing_user_id: formData.assigned_marketing_user_id || null,
         } as any);
 
         // If brands were added inline for new client, seed them
@@ -377,8 +377,17 @@ export default function ClientsPage() {
                     )}
                   </div>
                   {profile?.role === 'admin' && (
-                    <span className={`inline-block text-[9px] px-1.5 py-0.5 rounded-md font-semibold ${(client as any).source === 'marketing' ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-500'}`}>
-                      {(client as any).source === 'marketing' ? '📣 Marketing Lead' : 'Direct'}
+                    <span className={`inline-block text-[9px] px-1.5 py-0.5 rounded-md font-semibold ${
+                      (client as any).source === 'marketing' ? 'bg-violet-100 text-violet-700' :
+                      (client as any).source === 'referral' ? 'bg-emerald-100 text-emerald-700' :
+                      (client as any).source === 'walk_in' ? 'bg-amber-100 text-amber-700' :
+                      (client as any).source === 'online' ? 'bg-sky-100 text-sky-700' :
+                      'bg-gray-100 text-gray-500'
+                    }`}>
+                      {(client as any).source === 'marketing' ? '📣 Marketing' :
+                       (client as any).source === 'referral' ? '🤝 Referral' :
+                       (client as any).source === 'walk_in' ? '🚶 Walk-in' :
+                       (client as any).source === 'online' ? '🌐 Online' : '📋 Direct'}
                     </span>
                   )}
                 </div>
@@ -445,36 +454,30 @@ export default function ClientsPage() {
                     {profile?.role === 'admin' && (
                       <td className="px-4 py-4">
                         <div className="space-y-0.5">
-                          {/* Source badge — auto-correct if stored as 'direct' but created by marketing user */}
+                          {/* Source badge — uses the actual stored source, no auto-correction */}
                           {(() => {
-                            const createdByProfile = allProfiles.find(p => p.id === (client as any).created_by);
-                            const isCreatedByMarketing = createdByProfile?.role === 'marketing';
-                            // If stored as 'direct' but created by a marketing user, show Marketing
-                            const effectiveSource = ((client as any).source === 'direct' && isCreatedByMarketing)
-                              ? 'marketing'
-                              : ((client as any).source || 'direct');
-                            const badgeClass = effectiveSource === 'marketing' ? 'bg-gray-900 text-white' :
-                              effectiveSource === 'referral' ? 'bg-blue-100 text-blue-800' :
-                                effectiveSource === 'walk_in' ? 'bg-green-100 text-green-800' :
-                                  'bg-gray-100 text-gray-600';
-                            const badgeLabel = effectiveSource === 'marketing' ? 'Marketing' :
-                              effectiveSource === 'referral' ? 'Referral' :
-                                effectiveSource === 'walk_in' ? 'Walk-in' : 'Direct';
+                            const storedSource = (client as any).source || 'direct';
+                            const badgeClass = storedSource === 'marketing' ? 'bg-gray-900 text-white' :
+                              storedSource === 'referral' ? 'bg-emerald-100 text-emerald-800' :
+                                storedSource === 'walk_in' ? 'bg-amber-100 text-amber-800' :
+                                  storedSource === 'online' ? 'bg-sky-100 text-sky-800' :
+                                    'bg-gray-100 text-gray-600';
+                            const badgeLabel = storedSource === 'marketing' ? 'Marketing' :
+                              storedSource === 'referral' ? 'Referral' :
+                                storedSource === 'walk_in' ? 'Walk-in' :
+                                  storedSource === 'online' ? 'Online' : 'Direct';
                             return (
                               <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide ${badgeClass}`}>
                                 {badgeLabel}
                               </span>
                             );
                           })()}
-                          {/* Marketing person — show if marketing source or if created by marketing user */}
+                          {/* Marketing person — show only if source is actually marketing */}
                           {(() => {
-                            const createdByProfile = allProfiles.find(p => p.id === (client as any).created_by);
-                            const isCreatedByMarketing = createdByProfile?.role === 'marketing';
-                            const effectiveSource = ((client as any).source === 'direct' && isCreatedByMarketing) ? 'marketing' : (client as any).source;
-                            if (effectiveSource === 'marketing') {
+                            if ((client as any).source === 'marketing') {
                               const marketingPerson = (client as any).assigned_marketing_user_id
                                 ? allProfiles.find(s => s.id === (client as any).assigned_marketing_user_id)?.full_name
-                                : isCreatedByMarketing ? createdByProfile?.full_name : null;
+                                : null;
                               return marketingPerson ? (
                                 <p className="text-[11px] text-gray-800 font-semibold">👤 {marketingPerson}</p>
                               ) : null;

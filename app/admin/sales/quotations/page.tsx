@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
   Calendar, User, FileText, IndianRupee, CheckCircle, XCircle, Clock, Loader2, Download
@@ -20,15 +20,24 @@ import { useConfirm } from '@/components/ConfirmModal';
 export default function QuotationsPage() {
   const { user, profile } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const { quotations: allQuotations, loading: quotationsLoading, createQuotation, updateQuotation, saveQuotationItems, deleteQuotation } = useQuotations();
   const { updateClient } = useClients();
   const { linkQuotationToFollowUp } = useFollowUps();
   const { categories: dbCategories } = useProductCategories();
   const confirm = useConfirm();
 
-  // Marketing: see quotes they created OR quotes for leads assigned to them
-  // Admin: see all quotes
+  // Detect if we're in the marketing section
+  const isMarketingView = pathname?.includes('/marketing/');
+
+  // Marketing view (any role): show only quotations linked to leads (marketing-originated)
+  // Marketing role on sales page: see quotes they created OR quotes for leads assigned to them
+  // Admin on sales page: see all quotes
   const quotations = useMemo(() => {
+    if (isMarketingView) {
+      // Marketing section: only show quotations that have a lead_id (marketing-sourced)
+      return allQuotations.filter(q => q.lead_id != null);
+    }
     if (profile?.role === 'marketing' && profile?.id) {
       return allQuotations.filter(q => {
         const q_ = q as any;
@@ -38,7 +47,7 @@ export default function QuotationsPage() {
       });
     }
     return allQuotations;
-  }, [allQuotations, profile]);
+  }, [allQuotations, profile, isMarketingView]);
   const { clients: allClients } = useClients();
   const { leads: allLeads, convertToClient } = useLeads();
 
@@ -320,18 +329,6 @@ export default function QuotationsPage() {
       const { data: job, error: jobError } = await createJob(jobPayload);
 
       if (jobError) throw new Error(jobError);
-
-      // 3b. Ensure client is tagged as marketing-sourced so order appears in Marketing Orders.
-      // This is critical when the quotation was created against an existing client (not a Lead),
-      // because the convertToClient() path (which sets source:'marketing') was skipped above.
-      const existingClient = q.client;
-      const clientSource = (existingClient as any)?.source;
-      if (profile?.role === 'marketing' && clientSource !== 'marketing') {
-        await updateClient(finalClientId, {
-          source: 'marketing',
-          assigned_to: user?.id || profile?.id,
-        });
-      }
 
       // 4. Update Quotation Status
       await updateQuotation(q.id, {

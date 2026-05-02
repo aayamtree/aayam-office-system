@@ -133,6 +133,8 @@ export interface Vendor extends BaseEntity {
   category?: string;
   payment_terms: number;
   outstanding_balance: number;
+  opening_balance?: number;
+  opening_balance_date?: string;
   is_active: boolean;
 }
 
@@ -388,6 +390,18 @@ export interface PaymentReceived extends BaseEntity {
   bank_account?: BankAccount;
 }
 
+// Purchase Bill line item (stored in items JSONB column)
+export interface PurchaseBillItem {
+  description: string;
+  quantity: number;
+  unit: string;
+  rate: number;
+  gst_rate: number;
+  subtotal: number;
+  gst_amount: number;
+  total: number;
+}
+
 // Purchase Bill
 export interface PurchaseBill extends BaseEntity {
   bill_number: string;
@@ -399,7 +413,11 @@ export interface PurchaseBill extends BaseEntity {
   product_type?: string;
   description?: string;
   quantity: number;
+  unit?: string;
   rate: number;
+
+  // Multi-line items stored as JSONB
+  items?: PurchaseBillItem[];
 
   subtotal: number;
   gst_rate: number;
@@ -411,6 +429,13 @@ export interface PurchaseBill extends BaseEntity {
 
   bill_date: string;
   due_date?: string;
+  payment_terms?: string;
+  attachment_url?: string;
+
+  discount_percent?: number;
+  discount_amount?: number;
+  adjustment?: number;
+  reverse_charge?: boolean;
 
   created_by?: string;
 

@@ -47,7 +47,7 @@ export default function ClientQuickAdd({ onClientCreated, onClose }: ClientQuick
                 .from('clients')
                 .insert([{
                     ...formData,
-                    source: 'marketing',
+                    source: 'direct',
                     outstanding_balance: 0 // Initialize balance
                 }])
                 .select()

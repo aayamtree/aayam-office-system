@@ -2,24 +2,33 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { useClients, useVendors, useDesigners, useProductCategories } from '@/lib/hooks';
+import { useClients, useVendors, useDesigners, useProductCategories, useJobs } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
 import { Job } from '@/types/database';
-import { Briefcase, X, Loader2, CheckCircle, Calendar, Folder, Plus } from 'lucide-react';
-import { extractFileIdFromLink, verifyDriveFile, formatBytes, getFileIcon, DriveFileInfo } from '@/lib/google-drive';
-import { useSession } from 'next-auth/react';
-import { createProjectCalendarEvent, createCalendarEvent } from '@/lib/google-calendar';
+import {
+    Briefcase, X, Loader2, CheckCircle, Calendar, Folder, Plus,
+    IndianRupee, User, Tag, Layers, ChevronDown, ChevronUp
+} from 'lucide-react';
+import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
+import VendorQuickAddModal from '@/components/shared/VendorQuickAddModal';
 
-const jobTypes = ['Design Only', 'Print Only', 'Design + Print'];
-const priorities = ['low', 'normal', 'high', 'urgent'];
+const JOB_TYPES = ['Design Only', 'Print Only', 'Design + Print'];
+const PRIORITIES = ['low', 'normal', 'high', 'urgent'];
+const GST_RATES = [0, 5, 12, 18, 28];
+const PAYMENT_MODES = [
+    { value: 'cash', label: 'Cash' },
+    { value: 'upi', label: 'UPI / GPay' },
+    { value: 'bank_transfer', label: 'Bank Transfer' },
+    { value: 'cheque', label: 'Cheque' },
+];
 
 interface UnifiedJobFormProps {
     mode?: 'modal' | 'page';
     editingJob?: Job | null;
     onSuccess?: () => void;
     onCancel?: () => void;
-    showAdminFields?: boolean; // Override role detection
+    showAdminFields?: boolean;
 }
 
 export default function UnifiedJobForm({
@@ -27,556 +36,636 @@ export default function UnifiedJobForm({
     editingJob = null,
     onSuccess,
     onCancel,
-    showAdminFields
+    showAdminFields,
 }: UnifiedJobFormProps) {
     const { profile } = useAuth();
-    const { data: session } = useSession();
-    const { clients } = useClients();
-    const { vendors } = useVendors();
+    const { clients, refetch: refetchClients } = useClients();
+    const { vendors, refetch: refetchVendors } = useVendors();
     const { designers } = useDesigners();
     const { categories: productCategories } = useProductCategories();
+    const { createJob, updateJob } = useJobs();
+
+    const isAdmin = showAdminFields ?? (profile?.role === 'admin' || profile?.role === 'finance');
+    const isDesignOnly = (jt: string) => jt.toLowerCase() === 'design only';
 
     const [saving, setSaving] = useState(false);
-    const [showAddClient, setShowAddClient] = useState(false);
-    const [showAddVendor, setShowAddVendor] = useState(false);
+    const [showClientModal, setShowClientModal] = useState(false);
+    const [showVendorModal, setShowVendorModal] = useState(false);
+    const [showAdvance, setShowAdvance] = useState(false);
 
-    // Determine if admin fields should be shown
-    const isAdmin = showAdminFields ?? (profile?.role === 'admin' || profile?.role === 'finance');
+    const [teamMembers, setTeamMembers] = useState<{ id: string; full_name: string }[]>([]);
+    useEffect(() => {
+        supabase.from('profiles').select('id, full_name').eq('is_active', true)
+            .then(({ data }) => { if (data) setTeamMembers(data); });
+    }, []);
 
-    // Form state
     const [formData, setFormData] = useState({
         project_name: '',
         client_id: '',
-        designer_id: '',
         job_type: 'Design + Print',
-        product_category: 'Other',
+        product_category: '',
         priority: 'normal',
         client_deadline: '',
         description: '',
+        notes: '',
         drive_link: '',
-        // Admin-only fields
+        // Admin: pricing
         quantity: 1,
         quote_per_piece: 0,
+        design_charge: 0,
         gst_rate: 18,
+        discount_amount: 0,
+        // Admin: assignment
         vendor_id: '',
-        current_stage: 'new'
+        designer_id: '',
+        sales_person_id: '',
+        current_stage: 'new',
     });
 
-    // Drive verification
-    const [driveStatus, setDriveStatus] = useState<'idle' | 'verifying' | 'verified' | 'error'>('idle');
-    const [driveFileInfo, setDriveFileInfo] = useState<DriveFileInfo | null>(null);
-    const [driveError, setDriveError] = useState('');
-
-    // File uploads
-    const [files, setFiles] = useState<File[]>([]);
+    const [advance, setAdvance] = useState({
+        amount: 0,
+        payment_mode: 'cash' as 'cash' | 'upi' | 'bank_transfer' | 'cheque',
+        reference_number: '',
+        received_by: '',
+    });
 
     // Load editing job
     useEffect(() => {
-        if (editingJob) {
-            setFormData({
-                project_name: editingJob.project_name,
-                client_id: editingJob.client_id || '',
-                designer_id: editingJob.designer_id || '',
-                job_type: editingJob.job_type || 'Design + Print',
-                product_category: editingJob.product_category || 'Other',
-                priority: editingJob.priority || 'normal',
-                client_deadline: editingJob.client_deadline || '',
-                description: editingJob.description || '',
-                drive_link: (editingJob as any).drive_link || '',
-                quantity: editingJob.quantity || 1,
-                quote_per_piece: editingJob.quote_per_piece || 0,
-                gst_rate: editingJob.gst_rate || 18,
-                vendor_id: editingJob.vendor_id || '',
-                current_stage: editingJob.current_stage || 'new'
-            });
+        if (!editingJob) return;
+        setFormData({
+            project_name: editingJob.project_name || '',
+            client_id: editingJob.client_id || '',
+            job_type: editingJob.job_type || 'Design + Print',
+            product_category: editingJob.product_category || '',
+            priority: editingJob.priority || 'normal',
+            client_deadline: editingJob.client_deadline || '',
+            description: editingJob.description || '',
+            notes: (editingJob as any).notes || '',
+            drive_link: (editingJob as any).drive_link || '',
+            quantity: editingJob.quantity || 1,
+            quote_per_piece: editingJob.quote_per_piece || 0,
+            design_charge: (editingJob as any).design_charge || 0,
+            gst_rate: editingJob.gst_rate || 18,
+            discount_amount: editingJob.discount_amount || 0,
+            vendor_id: editingJob.vendor_id || '',
+            designer_id: editingJob.designer_id || '',
+            sales_person_id: (editingJob as any).sales_person_id || '',
+            current_stage: editingJob.current_stage || 'new',
+        });
+        if ((editingJob as any).advance_amount > 0) {
+            setShowAdvance(true);
+            setAdvance(prev => ({ ...prev, amount: (editingJob as any).advance_amount || 0 }));
         }
     }, [editingJob]);
 
-    // Drive link verification
-    const handleDriveLinkChange = async (link: string) => {
-        setFormData({ ...formData, drive_link: link });
+    // ── Pricing calculations ────────────────────────────────────────────────
+    const isPrint = !isDesignOnly(formData.job_type);
+    const isDesign = formData.job_type.toLowerCase() !== 'print only';
 
-        if (!link.trim()) {
-            setDriveStatus('idle');
-            setDriveFileInfo(null);
-            setDriveError('');
-            return;
-        }
-
-        const fileId = extractFileIdFromLink(link);
-        if (!fileId) {
-            setDriveStatus('error');
-            setDriveError('Invalid Google Drive link format');
-            return;
-        }
-
-        setDriveStatus('verifying');
-        const result = await verifyDriveFile(fileId);
-
-        if (result.success && result.file) {
-            setDriveStatus('verified');
-            setDriveFileInfo(result.file);
-            setDriveError('');
-        } else {
-            setDriveStatus('error');
-            setDriveError(result.error || 'Could not verify file');
-        }
-    };
-
-    // Calculate totals
-    const subtotal = formData.quantity * formData.quote_per_piece;
-    const gstAmount = (subtotal * formData.gst_rate) / 100;
+    const printSubtotal = isPrint ? formData.quantity * formData.quote_per_piece : 0;
+    const designSubtotal = isDesign ? (formData.design_charge || 0) : 0;
+    const rawSubtotal = printSubtotal + designSubtotal - (formData.discount_amount || 0);
+    const subtotal = Math.max(0, rawSubtotal);
+    const gstAmount = subtotal * (formData.gst_rate / 100);
     const total = subtotal + gstAmount;
 
-    // Submit handler
+    // ── Submit ──────────────────────────────────────────────────────────────
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!formData.project_name || !formData.client_id) {
+            toast.error('Project name and client are required');
+            return;
+        }
         setSaving(true);
-
         try {
-            const { data: { user } } = await supabase.auth.getUser();
+            const advanceAmount = showAdvance ? (advance.amount || 0) : 0;
+            const paymentStatus = advanceAmount > 0
+                ? (advanceAmount >= total ? 'paid' : 'partial')
+                : 'pending';
 
-            const jobData = {
+            const jobPayload: any = {
                 project_name: formData.project_name,
                 client_id: formData.client_id,
-                designer_id: formData.designer_id || user?.id,
                 job_type: formData.job_type,
-                product_category: formData.product_category,
+                product_category: formData.product_category || null,
                 priority: formData.priority,
                 client_deadline: formData.client_deadline || null,
                 description: formData.description || null,
+                notes: formData.notes || null,
                 drive_link: formData.drive_link || null,
-                current_stage: formData.current_stage as any,
-                status: 'active' as const,
-                // Admin fields
-                quantity: isAdmin ? formData.quantity : 1,
-                quote_per_piece: isAdmin ? formData.quote_per_piece : 0,
-                gst_rate: isAdmin ? formData.gst_rate : 0,
-                subtotal: isAdmin ? subtotal : 0,
-                gst_amount: isAdmin ? gstAmount : 0,
-                total_amount: isAdmin ? total : 0,
-                vendor_id: isAdmin ? formData.vendor_id || null : null,
-                payment_status: 'pending' as const,
-                amount_received: 0,
-                order_date: new Date().toISOString().split('T')[0],
-                created_by: user?.id
+                status: 'active',
             };
 
-            let newJob;
+            if (isAdmin) {
+                jobPayload.quantity = formData.quantity;
+                jobPayload.quote_per_piece = formData.quote_per_piece;
+                jobPayload.design_charge = formData.design_charge || 0;
+                jobPayload.subtotal = subtotal;
+                jobPayload.gst_rate = formData.gst_rate;
+                jobPayload.gst_amount = gstAmount;
+                jobPayload.discount_amount = formData.discount_amount || 0;
+                jobPayload.total_amount = total;
+                jobPayload.vendor_id = formData.vendor_id || null;
+                jobPayload.designer_id = formData.designer_id || null;
+                jobPayload.sales_person_id = formData.sales_person_id || profile?.id || null;
+                jobPayload.current_stage = formData.current_stage;
+                jobPayload.payment_status = paymentStatus;
+                jobPayload.amount_received = advanceAmount;
+                jobPayload.advance_amount = advanceAmount;
+                jobPayload.advance_collected = advanceAmount > 0;
+                jobPayload.advance_payment_mode = advanceAmount > 0 ? advance.payment_mode : null;
+            }
+
+            let savedJob: any = null;
             if (editingJob) {
-                const { data, error } = await supabase
-                    .from('jobs')
-                    .update(jobData)
-                    .eq('id', editingJob.id)
-                    .select()
-                    .single();
-                if (error) throw error;
-                newJob = data;
+                const result = await updateJob(editingJob.id, jobPayload);
+                if (result?.error) throw new Error(result.error);
+                savedJob = result?.data;
             } else {
-                const { data, error } = await supabase
-                    .from('jobs')
-                    .insert([jobData])
-                    .select()
-                    .single();
-                if (error) throw error;
-                newJob = data;
+                const result = await createJob(jobPayload);
+                if (result?.error) throw new Error(result.error);
+                savedJob = result?.data;
             }
 
-            // Calendar integration
-            if (session?.accessToken && formData.client_deadline) {
-                const calendarEvent = createProjectCalendarEvent(
-                    formData.project_name,
-                    formData.client_deadline,
-                    formData.description,
-                    formData.drive_link
-                );
-
-                const eventResult = await createCalendarEvent(
-                    session.accessToken,
-                    calendarEvent
-                );
-
-                if (eventResult.success && eventResult.eventId) {
-                    await supabase
-                        .from('jobs')
-                        .update({
-                            calendar_event_id: eventResult.eventId,
-                            calendar_event_link: eventResult.eventLink
-                        })
-                        .eq('id', newJob.id);
-                }
+            // Record advance payment
+            if (!editingJob && advanceAmount > 0 && savedJob?.id) {
+                await supabase.from('payments_received').insert([{
+                    job_id: savedJob.id,
+                    client_id: formData.client_id || null,
+                    amount: advanceAmount,
+                    payment_mode: advance.payment_mode,
+                    payment_date: new Date().toISOString(),
+                    reference_number: advance.reference_number || null,
+                    received_by: advance.received_by || profile?.id || null,
+                    notes: 'Advance payment at order creation',
+                }]);
             }
 
+            toast.success(editingJob ? 'Job updated!' : 'Job created!');
             onSuccess?.();
-        } catch (error: any) {
-            toast.error('Failed to save job: ' + (error.message || 'Unknown error'));
+        } catch (err: any) {
+            toast.error('Failed to save: ' + (err.message || 'Unknown error'));
         } finally {
             setSaving(false);
         }
     };
 
-    const containerClass = mode === 'modal'
-        ? 'bg-white rounded-lg p-4 md:p-6 max-h-[85vh] overflow-y-auto'
-        : 'space-y-6';
+    const set = (key: string, val: any) => setFormData(prev => ({ ...prev, [key]: val }));
 
     return (
-        <div className={containerClass}>
-            {/* Header */}
-            {mode === 'modal' && (
-                <div className="flex items-center justify-between mb-3 md:mb-6 pb-4 border-b">
-                    <div className="flex items-center gap-3">
-                        <Briefcase className="text-primary" size={24} />
-                        <h2 className="text-page-title text-gray-900">
-                            {editingJob ? 'Edit Job' : 'New Job'}
-                        </h2>
-                    </div>
-                    <button onClick={onCancel} className="p-2 hover:bg-gray-100 rounded-md">
-                        <X size={20} />
-                    </button>
-                </div>
-            )}
+        <>
+            <div className={mode === 'modal' ? 'bg-white rounded-lg max-h-[90vh] overflow-y-auto' : 'space-y-4'}>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-                {/* SECTION 1: Project Basics - ALL ROLES */}
-                <div className="space-y-2 md:space-y-4 bg-muted/50 rounded-lg p-4 md:p-6 border border-border">
-                    <h3 className="text-section text-gray-900 flex items-center gap-2">
-                        <span className="bg-primary text-primary-foreground w-8 h-8 rounded-lg flex items-center justify-center text-sm">1</span>
-                        Project Basics
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
-                        <div className="col-span-2">
-                            <label className="block text-sm font-medium mb-1">Project Name *</label>
-                            <input
-                                required
-                                type="text"
-                                className="w-full px-3 py-2 border rounded-md"
-                                placeholder="e.g. Wedding Invitation - Sharma Family"
-                                value={formData.project_name}
-                                onChange={e => setFormData({ ...formData, project_name: e.target.value })}
-                            />
+                {/* Header */}
+                {mode === 'modal' && (
+                    <div className="sticky top-0 z-10 bg-white flex items-center justify-between p-5 border-b">
+                        <div className="flex items-center gap-3">
+                            <Briefcase className="text-gray-700" size={22} />
+                            <h2 className="text-lg font-bold text-gray-900">
+                                {editingJob ? 'Edit Job' : 'New Job'}
+                            </h2>
                         </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Client *</label>
-                            <div className="flex gap-2">
-                                <select
-                                    required
-                                    className="flex-1 px-3 py-2 border rounded-md"
-                                    value={formData.client_id}
-                                    onChange={e => setFormData({ ...formData, client_id: e.target.value })}
-                                >
-                                    <option value="">Select Client</option>
-                                    {clients?.map(c => (
-                                        <option key={c.id} value={c.id}>{c.company || c.name}</option>
-                                    ))}
-                                </select>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowAddClient(true)}
-                                    className="px-3 py-2 bg-muted text-foreground rounded-md hover:bg-muted/80"
-                                >
-                                    <Plus size={20} />
-                                </button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Designer</label>
-                            <select
-                                className="w-full px-3 py-2 border rounded-md"
-                                value={formData.designer_id}
-                                onChange={e => setFormData({ ...formData, designer_id: e.target.value })}
-                            >
-                                <option value="">Assign to Me</option>
-                                {designers?.map(d => (
-                                    <option key={d.id} value={d.id}>{d.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                {/* SECTION 2: Project Parameters - ALL ROLES */}
-                <div className="space-y-2 md:space-y-4 bg-muted/50 rounded-lg p-4 md:p-6 border border-border">
-                    <h3 className="text-section text-gray-900 flex items-center gap-2">
-                        <span className="bg-primary text-primary-foreground w-8 h-8 rounded-lg flex items-center justify-center text-sm">2</span>
-                        Project Parameters
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Job Type</label>
-                            <select
-                                className="w-full px-3 py-2 border rounded-md"
-                                value={formData.job_type}
-                                onChange={e => setFormData({ ...formData, job_type: e.target.value })}
-                            >
-                                {jobTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Product Category</label>
-                            <select
-                                className="w-full px-3 py-2 border rounded-md"
-                                value={formData.product_category}
-                                onChange={e => setFormData({ ...formData, product_category: e.target.value })}
-                            >
-                                {productCategories.map((c: any) => <option key={c.id || c.name} value={c.name}>{c.name}</option>)}
-                            </select>
-                            <p className="text-xs text-gray-500 mt-1">Used for production checklists</p>
-                        </div>
-
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Priority</label>
-                            <select
-                                className="w-full px-3 py-2 border rounded-md"
-                                value={formData.priority}
-                                onChange={e => setFormData({ ...formData, priority: e.target.value })}
-                            >
-                                {priorities.map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
-                            </select>
-                        </div>
-
-                        <div className="col-span-2">
-                            <label className="block text-sm font-medium mb-1">Deadline</label>
-                            <input
-                                type="date"
-                                className="w-full px-3 py-2 border rounded-md"
-                                value={formData.client_deadline}
-                                onChange={e => setFormData({ ...formData, client_deadline: e.target.value })}
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* SECTION 3: Financial Details - ADMIN ONLY */}
-                {isAdmin && (
-                    <div className="space-y-2 md:space-y-4 bg-muted/50 rounded-lg p-4 md:p-6 border border-border">
-                        <h3 className="text-section text-gray-900 flex items-center gap-2">
-                            <span className="bg-primary text-primary-foreground w-8 h-8 rounded-lg flex items-center justify-center text-sm">3</span>
-                            Financial Details
-                            <span className="ml-auto text-xs bg-green-100 text-green-700 px-3 py-1 rounded-md">Admin Only</span>
-                        </h3>
-
-                        <div className="grid grid-cols-3 gap-2 md:gap-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Quantity</label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    className="w-full px-3 py-2 border rounded-md"
-                                    value={formData.quantity}
-                                    onChange={e => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Rate/Piece (₹)</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    className="w-full px-3 py-2 border rounded-md"
-                                    value={formData.quote_per_piece}
-                                    onChange={e => setFormData({ ...formData, quote_per_piece: parseFloat(e.target.value) || 0 })}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-1">GST %</label>
-                                <select
-                                    className="w-full px-3 py-2 border rounded-md"
-                                    value={formData.gst_rate}
-                                    onChange={e => setFormData({ ...formData, gst_rate: parseInt(e.target.value) })}
-                                >
-                                    <option value="0">0%</option>
-                                    <option value="5">5%</option>
-                                    <option value="12">12%</option>
-                                    <option value="18">18%</option>
-                                    <option value="28">28%</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-4 gap-2 md:gap-4 bg-white p-4 rounded-lg">
-                            <div>
-                                <p className="text-xs text-gray-500">Subtotal</p>
-                                <p className="font-bold text-gray-900">₹{subtotal.toFixed(2)}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500">GST ({formData.gst_rate}%)</p>
-                                <p className="font-bold text-gray-900">₹{gstAmount.toFixed(2)}</p>
-                            </div>
-                            <div className="col-span-2">
-                                <p className="text-xs text-gray-500">Total</p>
-                                <p className="font-bold text-primary text-xl">₹{total.toFixed(2)}</p>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Vendor</label>
-                            <div className="flex gap-2">
-                                <select
-                                    className="flex-1 px-3 py-2 border rounded-md"
-                                    value={formData.vendor_id}
-                                    onChange={e => setFormData({ ...formData, vendor_id: e.target.value })}
-                                >
-                                    <option value="">Select Vendor</option>
-                                    {vendors?.map(v => (
-                                        <option key={v.id} value={v.id}>{v.company || v.name}</option>
-                                    ))}
-                                </select>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowAddVendor(true)}
-                                    className="px-3 py-2 bg-muted text-foreground rounded-md hover:bg-muted/80"
-                                >
-                                    <Plus size={20} />
-                                </button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Current Stage</label>
-                            <select
-                                className="w-full px-3 py-2 border rounded-md"
-                                value={formData.current_stage}
-                                onChange={e => setFormData({ ...formData, current_stage: e.target.value })}
-                            >
-                                <option value="new">New</option>
-                                <option value="designing">Designing</option>
-                                <option value="approval">Approval</option>
-                                <option value="printing">Printing</option>
-                                <option value="ready">Ready</option>
-                            </select>
-                        </div>
+                        <button onClick={onCancel} className="p-2 hover:bg-gray-100 rounded-md transition-colors">
+                            <X size={18} />
+                        </button>
                     </div>
                 )}
 
-                {/* SECTION 4: Assets & Description - ALL ROLES */}
-                <div className="space-y-2 md:space-y-4 bg-muted/50 rounded-lg p-4 md:p-6 border border-border">
-                    <h3 className="text-section text-gray-900 flex items-center gap-2">
-                        <span className="bg-primary text-primary-foreground w-8 h-8 rounded-lg flex items-center justify-center text-sm">{isAdmin ? '4' : '3'}</span>
-                        Assets & Brief
-                    </h3>
+                <form onSubmit={handleSubmit} className="p-5 space-y-5">
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1 flex items-center gap-2">
-                            <Folder size={16} />
-                            Google Drive Link
-                        </label>
-                        <input
-                            type="url"
-                            className="w-full px-3 py-2 border rounded-md"
-                            placeholder="https://drive.google.com/..."
-                            value={formData.drive_link}
-                            onChange={e => handleDriveLinkChange(e.target.value)}
-                        />
+                    {/* ── SECTION 1: Basics ── */}
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-4">
+                        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                            <Tag size={14} /> Project Basics
+                        </h3>
 
-                        {driveStatus === 'verifying' && (
-                            <div className="flex items-center gap-2 text-blue-600 text-sm mt-2">
-                                <Loader2 size={16} className="animate-spin" />
-                                <span>Verifying file...</span>
-                            </div>
-                        )}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Project Name <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                required
+                                type="text"
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                placeholder="e.g. Safal Pouch Design 1kg"
+                                value={formData.project_name}
+                                onChange={e => set('project_name', e.target.value)}
+                            />
+                        </div>
 
-                        {driveStatus === 'verified' && driveFileInfo && (
-                            <div className="bg-white p-3 rounded-lg border border-green-200 mt-2">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xl">{getFileIcon(driveFileInfo.mimeType)}</span>
-                                    <div>
-                                        <p className="font-medium text-sm">{driveFileInfo.name}</p>
-                                        <p className="text-xs text-gray-500">{formatBytes(driveFileInfo.size)}</p>
-                                    </div>
-                                    <CheckCircle size={18} className="text-green-600 ml-auto" />
+                        <div className="grid grid-cols-2 gap-3">
+                            {/* Client */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Client <span className="text-red-500">*</span>
+                                </label>
+                                <div className="flex gap-2">
+                                    <select
+                                        required
+                                        className="flex-1 px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                        value={formData.client_id}
+                                        onChange={e => set('client_id', e.target.value)}
+                                    >
+                                        <option value="">Select Client</option>
+                                        {(clients || []).map((c: any) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.company || c.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        type="button"
+                                        title="Add New Client"
+                                        onClick={() => setShowClientModal(true)}
+                                        className="px-3 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-700 transition-colors"
+                                    >
+                                        <Plus size={16} />
+                                    </button>
                                 </div>
                             </div>
-                        )}
 
-                        {driveStatus === 'error' && driveError && (
-                            <p className="text-sm text-red-600 mt-1">❌ {driveError}</p>
-                        )}
+                            {/* Job Type */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Job Type</label>
+                                <select
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                    value={formData.job_type}
+                                    onChange={e => set('job_type', e.target.value)}
+                                >
+                                    {JOB_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                </select>
+                            </div>
+
+                            {/* Product Category */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Product Category</label>
+                                <select
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                    value={formData.product_category}
+                                    onChange={e => set('product_category', e.target.value)}
+                                >
+                                    <option value="">Select Category</option>
+                                    {(productCategories || []).map((c: any) => (
+                                        <option key={c.id || c.name} value={c.name}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Priority */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                                <select
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                    value={formData.priority}
+                                    onChange={e => set('priority', e.target.value)}
+                                >
+                                    {PRIORITIES.map(p => (
+                                        <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Deadline */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                    <Calendar size={13} /> Deadline
+                                </label>
+                                <input
+                                    type="date"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                    value={formData.client_deadline}
+                                    onChange={e => set('client_deadline', e.target.value)}
+                                />
+                            </div>
+
+                            {/* Designer */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                    <User size={13} /> Designer
+                                </label>
+                                <select
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                    value={formData.designer_id}
+                                    onChange={e => set('designer_id', e.target.value)}
+                                >
+                                    <option value="">Unassigned</option>
+                                    {(designers || []).map((d: any) => (
+                                        <option key={d.id} value={d.id}>{d.name || d.full_name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Drive Link */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                <Folder size={13} /> Google Drive Link
+                            </label>
+                            <input
+                                type="url"
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                placeholder="https://drive.google.com/..."
+                                value={formData.drive_link}
+                                onChange={e => set('drive_link', e.target.value)}
+                            />
+                        </div>
+
+                        {/* Description */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Description / Requirements</label>
+                            <textarea
+                                rows={3}
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none resize-none"
+                                placeholder="Size, material, special instructions..."
+                                value={formData.description}
+                                onChange={e => set('description', e.target.value)}
+                            />
+                        </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Description / Work Items</label>
-                        <textarea
-                            rows={4}
-                            className="w-full px-3 py-2 border rounded-md"
-                            placeholder="Describe specific requirements, items to print, size, quantity, special instructions..."
-                            value={formData.description}
-                            onChange={e => setFormData({ ...formData, description: e.target.value })}
-                        />
-                    </div>
+                    {/* ── SECTION 2: Pricing (Admin only) ── */}
+                    {isAdmin && (
+                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-4">
+                            <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                                <IndianRupee size={14} /> Pricing
+                                <span className="ml-auto text-xs font-normal bg-gray-200 text-gray-600 px-2 py-0.5 rounded">Admin Only</span>
+                            </h3>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1">File Upload (Multiple)</label>
-                        <input
-                            type="file"
-                            multiple
-                            className="w-full text-sm"
-                            onChange={e => {
-                                if (e.target.files) {
-                                    setFiles(Array.from(e.target.files));
-                                }
-                            }}
-                        />
-                        {files.length > 0 && (
-                            <p className="text-xs text-gray-500 mt-1">{files.length} file(s) selected</p>
-                        )}
-                    </div>
-                </div>
+                            <div className="grid grid-cols-3 gap-3">
+                                {isPrint && (
+                                    <>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
+                                            <input
+                                                type="number" min="1"
+                                                className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                                value={formData.quantity}
+                                                onChange={e => set('quantity', parseInt(e.target.value) || 1)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Rate / Piece (₹)</label>
+                                            <input
+                                                type="number" min="0" step="0.01"
+                                                className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                                value={formData.quote_per_piece}
+                                                onChange={e => set('quote_per_piece', parseFloat(e.target.value) || 0)}
+                                            />
+                                        </div>
+                                    </>
+                                )}
+                                {isDesign && (
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">Design Charge (₹)</label>
+                                        <input
+                                            type="number" min="0" step="0.01"
+                                            className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                            value={formData.design_charge}
+                                            onChange={e => set('design_charge', parseFloat(e.target.value) || 0)}
+                                        />
+                                    </div>
+                                )}
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">GST %</label>
+                                    <select
+                                        className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                        value={formData.gst_rate}
+                                        onChange={e => set('gst_rate', parseInt(e.target.value))}
+                                    >
+                                        {GST_RATES.map(r => <option key={r} value={r}>{r}%</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Discount (₹)</label>
+                                    <input
+                                        type="number" min="0" step="0.01"
+                                        className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                        value={formData.discount_amount}
+                                        onChange={e => set('discount_amount', parseFloat(e.target.value) || 0)}
+                                    />
+                                </div>
+                            </div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-3 justify-end pt-4 border-t">
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={saving}
-                        className="px-8 py-2 bg-primary text-primary-foreground rounded-md font-medium disabled:opacity-50 flex items-center gap-2"
-                    >
-                        {saving ? (
-                            <>
-                                <Loader2 size={18} className="animate-spin" />
-                                Saving...
-                            </>
-                        ) : (
-                            <>
-                                <CheckCircle size={18} />
-                                {editingJob ? 'Update Job' : 'Create Job'}
-                            </>
-                        )}
-                    </button>
-                </div>
-            </form>
+                            {/* Totals bar */}
+                            <div className="grid grid-cols-3 gap-3 bg-white rounded-md p-3 border border-gray-200 text-sm">
+                                <div>
+                                    <p className="text-xs text-gray-500">Subtotal</p>
+                                    <p className="font-semibold text-gray-800">₹{subtotal.toFixed(2)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500">GST ({formData.gst_rate}%)</p>
+                                    <p className="font-semibold text-gray-800">₹{gstAmount.toFixed(2)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500">Total</p>
+                                    <p className="font-bold text-gray-900 text-base">₹{total.toFixed(2)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
-            {/* Quick Add Modals - Placeholder for now */}
-            {showAddClient && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg">
-                        <p>Client Quick Add Modal - To be implemented</p>
-                        <button onClick={() => setShowAddClient(false)} className="mt-4 px-4 py-2 bg-gray-200 rounded-md">Close</button>
-                    </div>
-                </div>
-            )}
+                    {/* ── SECTION 3: Assignment (Admin only) ── */}
+                    {isAdmin && (
+                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-4">
+                            <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                                <Layers size={14} /> Assignment & Stage
+                                <span className="ml-auto text-xs font-normal bg-gray-200 text-gray-600 px-2 py-0.5 rounded">Admin Only</span>
+                            </h3>
 
-            {showAddVendor && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg">
-                        <p>Vendor Quick Add Modal - To be implemented</p>
-                        <button onClick={() => setShowAddVendor(false)} className="mt-4 px-4 py-2 bg-gray-200 rounded-md">Close</button>
+                            <div className="grid grid-cols-2 gap-3">
+                                {/* Vendor */}
+                                {!isDesignOnly(formData.job_type) && (
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">Vendor / Printer</label>
+                                        <div className="flex gap-2">
+                                            <select
+                                                className="flex-1 px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                                value={formData.vendor_id}
+                                                onChange={e => set('vendor_id', e.target.value)}
+                                            >
+                                                <option value="">No Vendor</option>
+                                                {(vendors || []).map((v: any) => (
+                                                    <option key={v.id} value={v.id}>{v.company || v.name}</option>
+                                                ))}
+                                            </select>
+                                            <button
+                                                type="button"
+                                                title="Add New Vendor"
+                                                onClick={() => setShowVendorModal(true)}
+                                                className="px-3 py-2.5 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                                            >
+                                                <Plus size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Sales Person */}
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Sales Person</label>
+                                    <select
+                                        className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                        value={formData.sales_person_id}
+                                        onChange={e => set('sales_person_id', e.target.value)}
+                                    >
+                                        <option value="">Self ({profile?.full_name || 'Me'})</option>
+                                        {teamMembers.map(m => (
+                                            <option key={m.id} value={m.id}>{m.full_name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Current Stage */}
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Current Stage</label>
+                                    <select
+                                        className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                        value={formData.current_stage}
+                                        onChange={e => set('current_stage', e.target.value)}
+                                    >
+                                        <option value="new">New</option>
+                                        <option value="file_check">File Check</option>
+                                        <option value="designing">Designing</option>
+                                        <option value="approval">Client Approval</option>
+                                        <option value="pre_print_qc">Pre Print QC</option>
+                                        <option value="printing">Printing</option>
+                                        <option value="quality_check">QC & Dispatch</option>
+                                        <option value="ready">Ready</option>
+                                        <option value="dispatched">Dispatched</option>
+                                    </select>
+                                </div>
+
+                                {/* Notes */}
+                                <div className="col-span-2">
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Internal Notes</label>
+                                    <textarea
+                                        rows={2}
+                                        className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none resize-none"
+                                        placeholder="Internal notes visible to admin only..."
+                                        value={formData.notes}
+                                        onChange={e => set('notes', e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── SECTION 4: Advance Payment (Admin only, new jobs only) ── */}
+                    {isAdmin && !editingJob && (
+                        <div className="border border-gray-200 rounded-lg overflow-hidden">
+                            <button
+                                type="button"
+                                onClick={() => setShowAdvance(!showAdvance)}
+                                className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-sm font-medium text-gray-700"
+                            >
+                                <span className="flex items-center gap-2">
+                                    <IndianRupee size={14} />
+                                    Advance Payment
+                                    {showAdvance && advance.amount > 0 && (
+                                        <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded font-bold">
+                                            ₹{advance.amount.toLocaleString()}
+                                        </span>
+                                    )}
+                                </span>
+                                {showAdvance ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </button>
+
+                            {showAdvance && (
+                                <div className="p-4 bg-white space-y-3">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Advance Amount (₹)</label>
+                                            <input
+                                                type="number" min="0" step="0.01"
+                                                className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                                value={advance.amount}
+                                                onChange={e => setAdvance(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Payment Mode</label>
+                                            <select
+                                                className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                                value={advance.payment_mode}
+                                                onChange={e => setAdvance(prev => ({ ...prev, payment_mode: e.target.value as any }))}
+                                            >
+                                                {PAYMENT_MODES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Reference / UTR #</label>
+                                            <input
+                                                type="text"
+                                                className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                                placeholder="Optional"
+                                                value={advance.reference_number}
+                                                onChange={e => setAdvance(prev => ({ ...prev, reference_number: e.target.value }))}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Received By</label>
+                                            <select
+                                                className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                                value={advance.received_by}
+                                                onChange={e => setAdvance(prev => ({ ...prev, received_by: e.target.value }))}
+                                            >
+                                                <option value="">Self</option>
+                                                {teamMembers.map(m => (
+                                                    <option key={m.id} value={m.id}>{m.full_name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ── Footer Buttons ── */}
+                    <div className="flex gap-3 justify-end pt-2 border-t border-gray-100">
+                        <button
+                            type="button"
+                            onClick={onCancel}
+                            className="px-5 py-2.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={saving}
+                            className="px-8 py-2.5 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                        >
+                            {saving ? (
+                                <><Loader2 size={16} className="animate-spin" /> Saving...</>
+                            ) : (
+                                <><CheckCircle size={16} /> {editingJob ? 'Update Job' : 'Create Job'}</>
+                            )}
+                        </button>
                     </div>
-                </div>
-            )}
-        </div>
+                </form>
+            </div>
+
+            {/* Client Quick Add */}
+            <ClientQuickAddModal
+                isOpen={showClientModal}
+                onClose={() => setShowClientModal(false)}
+                onSuccess={(clientId) => {
+                    refetchClients();
+                    set('client_id', clientId);
+                    setShowClientModal(false);
+                }}
+            />
+
+            {/* Vendor Quick Add */}
+            <VendorQuickAddModal
+                isOpen={showVendorModal}
+                onClose={() => setShowVendorModal(false)}
+                onSuccess={(vendorId) => {
+                    refetchVendors();
+                    set('vendor_id', vendorId);
+                    setShowVendorModal(false);
+                }}
+            />
+        </>
     );
 }

@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/lib/supabase';
 import { useConfirm } from '@/components/ConfirmModal';
+import UnifiedJobForm from '@/components/jobs/UnifiedJobForm';
 
 export default function OrdersPage() {
   const { user, profile } = useAuth();
@@ -346,24 +347,22 @@ export default function OrdersPage() {
     }
   };
 
-  // Source tag: shows which team/person brought in this job
+  // Source tag: shows which channel brought in this client
   const getSourceTag = (job: Job) => {
-    const role = (job as any).sales_person?.role;
-    const name = (job as any).sales_person?.full_name;
     const clientSource = job.client?.source;
-    if (clientSource === 'marketing' || role === 'marketing') {
-      return { label: '🎯 Marketing', shortName: name, className: 'bg-violet-100 text-violet-700 border border-violet-200' };
+    if (clientSource === 'marketing') {
+      return { label: '🎯 Marketing', shortName: (job as any).sales_person?.full_name, className: 'bg-violet-100 text-violet-700 border border-violet-200' };
     }
-    if (role === 'admin') {
-      return { label: '🏢 Admin', shortName: name, className: 'bg-blue-50 text-blue-700 border border-blue-200' };
+    if (clientSource === 'referral') {
+      return { label: '🤝 Referral', shortName: undefined, className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' };
     }
-    if (role === 'designer') {
-      return { label: '🎨 Design', shortName: name, className: 'bg-pink-50 text-pink-700 border border-pink-200' };
+    if (clientSource === 'walk_in') {
+      return { label: '🚶 Walk-in', shortName: undefined, className: 'bg-amber-50 text-amber-700 border border-amber-200' };
     }
-    if (role === 'dispatch') {
-      return { label: '🚚 Dispatch', shortName: name, className: 'bg-cyan-50 text-cyan-700 border border-cyan-200' };
+    if (clientSource === 'online') {
+      return { label: '🌐 Online', shortName: undefined, className: 'bg-sky-50 text-sky-700 border border-sky-200' };
     }
-    return { label: '📋 Direct', shortName: name, className: 'bg-gray-100 text-gray-500 border border-gray-200' };
+    return { label: '📋 Direct', shortName: (job as any).sales_person?.full_name, className: 'bg-gray-100 text-gray-500 border border-gray-200' };
   };
 
   const formatCurrency = (amount: number) => {
@@ -677,417 +676,16 @@ export default function OrdersPage() {
         )}
       </div>
 
+
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-md w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-5 border-b border-gray-100 sticky top-0 bg-white z-10">
-              <h2 className="text-section text-gray-900">
-                {isEditing ? 'Edit Order' : 'New Order'}
-              </h2>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-md transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-4 space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div className="col-span-1 sm:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Project / Order Name *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Wedding Invitation Cards, Corporate Brochure"
-                    value={formData.projectName}
-                    onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Client *</label>
-                  <select
-                    required
-                    value={formData.clientId}
-                    onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white"
-                  >
-                    <option value="">Select Client</option>
-                    {clients.map(c => (
-                      <option key={c.id} value={c.id}>{c.company} ({c.name})</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Product Category - Searchable Combobox */}
-                <div ref={categoryRef} className="relative">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Product Category</label>
-                  <div
-                    className="w-full px-4 py-3 border border-gray-200 rounded-md cursor-pointer bg-white flex items-center justify-between hover:border-gray-300 transition-colors"
-                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                  >
-                    <span className={selectedCategoryName ? 'text-gray-900 font-medium' : 'text-gray-400'}>
-                      {selectedCategoryName || 'Select category (Box, Label, Pouch...)'}
-                    </span>
-                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
-                  </div>
-                  {showCategoryDropdown && (
-                    <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-sm max-h-60 overflow-hidden">
-                      <div className="p-2 border-b border-gray-100">
-                        <input
-                          type="text"
-                          placeholder="Search or type new..."
-                          value={categorySearch}
-                          onChange={(e) => setCategorySearch(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
-                          autoFocus
-                        />
-                      </div>
-                      <div className="max-h-44 overflow-y-auto">
-                        {/* Clear selection */}
-                        <button
-                          type="button"
-                          onClick={() => { setFormData({ ...formData, productCategory: '' }); setShowCategoryDropdown(false); setCategorySearch(''); }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-400 hover:bg-gray-50 transition-colors"
-                        >
-                          — None —
-                        </button>
-                        {filteredCategories.map((cat: any) => (
-                          <button
-                            key={cat.id}
-                            type="button"
-                            onClick={() => {
-                              setFormData({ ...formData, productCategory: cat.name });
-                              setShowCategoryDropdown(false);
-                              setCategorySearch('');
-                            }}
-                            className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between ${formData.productCategory === cat.name ? 'bg-gray-100 font-semibold text-gray-900' : 'text-gray-700'
-                              }`}
-                          >
-                            {cat.name}
-                            {formData.productCategory === cat.name && <CheckCircle className="w-4 h-4 text-green-500" />}
-                          </button>
-                        ))}
-                        {/* Add new category option */}
-                        {categorySearch.trim() && !categories?.find((c: any) => (c.name || '').toLowerCase() === categorySearch.trim().toLowerCase()) && (
-                          <button
-                            type="button"
-                            disabled={creatingCategory}
-                            onClick={async () => {
-                              setCreatingCategory(true);
-                              const { data: newCat } = await createCategory(categorySearch.trim());
-                              if (newCat) {
-                                setFormData({ ...formData, productCategory: newCat.name });
-                              }
-                              setCreatingCategory(false);
-                              setShowCategoryDropdown(false);
-                              setCategorySearch('');
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-primary font-semibold hover:bg-primary/5 transition-colors flex items-center gap-2 border-t border-gray-100"
-                          >
-                            <Plus className="w-4 h-4" />
-                            {creatingCategory ? 'Adding...' : `Add "${categorySearch.trim()}"`}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Job Type */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Job Type *</label>
-                  <div className="flex gap-2">
-                    {['Design Only', 'Print Only', 'Design + Print'].map(t => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, jobType: t, currentStage: (t === 'Print Only' ? 'printing' : 'new') as any })}
-                        className={`flex-1 py-2.5 text-sm font-semibold rounded-md border-2 transition-all ${formData.jobType === t
-                          ? t === 'Design Only' ? 'bg-violet-600 border-violet-600 text-white'
-                            : t === 'Print Only' ? 'bg-blue-600 border-blue-600 text-white'
-                              : 'bg-gray-900 border-gray-900 text-white'
-                          : 'border-gray-200 text-gray-500 hover:border-gray-400'
-                          }`}
-                      >
-                        {t === 'Design Only' ? '🎨' : t === 'Print Only' ? '🖨️' : '🎨+🖨️'} {t}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Delivery Deadline</label>
-                  <input
-                    type="date"
-                    value={formData.clientDeadline}
-                    onChange={(e) => setFormData({ ...formData, clientDeadline: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
-                  />
-                </div>
-
-                <div className="col-span-1 sm:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description / Specifications</label>
-                  <textarea
-                    rows={3}
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Paper type, size, finishing details, etc."
-                    className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 resize-none"
-                  />
-                </div>
-
-                <div className="col-span-1 sm:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4 bg-gray-50 p-4 rounded-md border border-gray-100">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Quantity</label>
-                    <input
-                      type="number"
-                      min="1"
-                      required
-                      value={formData.quantity}
-                      onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Rate / Pc (₹)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="any"
-                      required
-                      value={formData.ratePerPiece}
-                      onChange={(e) => handleRateChange(parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">GST (%)</label>
-                    <select
-                      value={formData.gstRate}
-                      onChange={(e) => handleGstRateChange(parseInt(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 bg-white"
-                    >
-                      <option value="0">0%</option>
-                      <option value="5">5%</option>
-                      <option value="12">12%</option>
-                      <option value="18">18%</option>
-                      <option value="28">28%</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Total (Inc. GST)</label>
-                    <div className="px-3 py-2 bg-white border border-gray-200 rounded-md font-bold text-gray-900">
-                      {formatCurrency(formData.totalAmount)}
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Priority</label>
-                  <select
-                    value={formData.priority}
-                    onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 bg-white"
-                  >
-                    <option value="normal">Normal</option>
-                    <option value="urgent">Urgent</option>
-                    <option value="high">High</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Stage
-                    {formData.jobType === 'Print Only' && (
-                      <span className="ml-2 text-xs font-normal text-blue-600">🖨️ Auto-set to Printing</span>
-                    )}
-                  </label>
-                  <select
-                    value={formData.currentStage}
-                    onChange={(e) => setFormData({ ...formData, currentStage: e.target.value as any })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 bg-white"
-                  >
-                    {formData.jobType === 'Print Only' ? (
-                      <>
-                        <option value="printing">Printing</option>
-                        <option value="file_check">File Check</option>
-                        <option value="pre_print_qc">Pre Print QC</option>
-                        <option value="quality_check">QC &amp; Dispatch</option>
-                        <option value="ready">Ready</option>
-                        <option value="dispatched">Dispatched</option>
-                        <option value="delivered">Delivered</option>
-                      </>
-                    ) : formData.jobType === 'Design Only' ? (
-                      <>
-                        <option value="new">New</option>
-                        <option value="designing">Designing</option>
-                        <option value="approval">Client Approval</option>
-                        <option value="delivered">Delivered</option>
-                      </>
-                    ) : (
-                      <>
-                        <option value="new">New</option>
-                        <option value="designing">Designing</option>
-                        <option value="approval">Client Approval</option>
-                        <option value="printing">Printing</option>
-                        <option value="quality_check">QC &amp; Dispatch</option>
-                        <option value="ready">Ready</option>
-                        <option value="dispatched">Dispatched</option>
-                        <option value="delivered">Delivered</option>
-                      </>
-                    )}
-                  </select>
-                </div>
-
-                {/* IMP-4: Assigned To — shows for admin role */}
-                {(profile?.role === 'admin' || profile?.role === 'marketing') && teamMembers.length > 0 && (
-                  <div className="col-span-1 sm:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
-                      <User className="w-4 h-4 text-gray-400" /> Assigned To (Sales Person)
-                    </label>
-                    <select
-                      value={formData.assignedTo}
-                      onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 bg-white"
-                    >
-                      <option value="">— Self (current user) —</option>
-                      {teamMembers.map(m => (
-                        <option key={m.id} value={m.id}>{m.full_name}</option>
-                      ))}
-                    </select>
-                    <p className="text-xs text-gray-400 mt-1">This tracks accountability for order follow-up</p>
-                  </div>
-                )}
-
-                {/* Advance Payment Section */}
-                <div className="col-span-1 sm:col-span-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowAdvance(!showAdvance)}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-md border-2 border-dashed transition-all text-sm font-semibold ${showAdvance
-                      ? 'border-green-300 bg-green-50 text-green-700'
-                      : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
-                      }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <IndianRupee className="w-4 h-4" />
-                      {showAdvance ? 'Advance Payment' : 'Record Advance Payment'}
-                    </span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${showAdvance ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {showAdvance && (
-                    <div className="mt-3 p-4 bg-green-50/50 rounded-md border border-green-100 space-y-4">
-                      {/* Payment Mode */}
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Payment Mode</label>
-                        <div className="flex gap-2">
-                          {[
-                            { value: 'cash', label: 'Cash', icon: Banknote },
-                            { value: 'upi', label: 'UPI', icon: Smartphone },
-                            { value: 'bank_transfer', label: 'Bank Transfer', icon: CreditCard }
-                          ].map(mode => (
-                            <button
-                              key={mode.value}
-                              type="button"
-                              onClick={() => setAdvanceData({ ...advanceData, paymentMode: mode.value as any })}
-                              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-md border-2 text-sm font-semibold transition-all ${advanceData.paymentMode === mode.value
-                                ? 'border-green-500 bg-green-500 text-white'
-                                : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                                }`}
-                            >
-                              <mode.icon className="w-4 h-4" />
-                              {mode.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Amount */}
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Advance Amount (₹)</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="any"
-                          value={advanceData.amount || ''}
-                          onChange={(e) => setAdvanceData({ ...advanceData, amount: parseFloat(e.target.value) || 0 })}
-                          placeholder="Enter amount"
-                          className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-green-400"
-                        />
-                      </div>
-
-                      {/* Conditional fields based on payment mode */}
-                      {advanceData.paymentMode === 'cash' ? (
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Received By</label>
-                          <select
-                            value={advanceData.receivedBy}
-                            onChange={(e) => setAdvanceData({ ...advanceData, receivedBy: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-green-400 bg-white"
-                          >
-                            <option value="">Select team member</option>
-                            {teamMembers.map(m => (
-                              <option key={m.id} value={m.id}>{m.full_name}</option>
-                            ))}
-                          </select>
-                        </div>
-                      ) : (
-                        <>
-                          <div>
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                              {advanceData.paymentMode === 'upi' ? 'UTR / Reference Number' : 'Transaction Reference'}
-                            </label>
-                            <input
-                              type="text"
-                              value={advanceData.referenceNumber}
-                              onChange={(e) => setAdvanceData({ ...advanceData, referenceNumber: e.target.value })}
-                              placeholder={advanceData.paymentMode === 'upi' ? 'e.g. 408123456789' : 'e.g. NEFT-REF-123'}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-green-400"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Upload Proof (Screenshot / PDF)</label>
-                            <label className="flex items-center gap-3 px-4 py-3 border-2 border-dashed border-gray-200 rounded-md cursor-pointer hover:border-gray-300 transition-colors bg-white">
-                              <Upload className="w-5 h-5 text-gray-400" />
-                              <span className="text-sm text-gray-500">
-                                {advanceData.proofFile ? advanceData.proofFile.name : 'Choose file...'}
-                              </span>
-                              <input
-                                type="file"
-                                accept="image/*,.pdf"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) setAdvanceData({ ...advanceData, proofFile: file });
-                                }}
-                              />
-                            </label>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex gap-2 md:gap-4 pt-4 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2.5 bg-white border-2 border-gray-200 text-gray-700 font-semibold rounded-md hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 px-4 py-2.5 bg-gray-900 text-white font-semibold rounded-md hover:bg-gray-800 transition-colors shadow-sm disabled:opacity-50"
-                >
-                  {submitting ? 'Saving...' : (isEditing ? 'Update Order' : 'Create Order')}
-                </button>
-              </div>
-            </form>
+          <div className="bg-white rounded-md w-full max-w-2xl shadow-xl">
+            <UnifiedJobForm
+              mode="modal"
+              editingJob={isEditing ? selectedJob : null}
+              onSuccess={() => { setShowModal(false); }}
+              onCancel={() => setShowModal(false)}
+            />
           </div>
         </div>
       )}

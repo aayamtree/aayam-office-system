@@ -47,6 +47,7 @@ export default function VendorsPage() {
 
   const [formData, setFormData] = useState({
     name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', category: defaultCategory, is_active: true, payment_terms: '',
+    opening_balance: '', opening_balance_date: '',
   });
 
   const filteredVendors = vendors.filter(vendor => {
@@ -57,7 +58,7 @@ export default function VendorsPage() {
   });
 
   const handleAddNew = () => {
-    setFormData({ name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', category: defaultCategory, is_active: true, payment_terms: '' });
+    setFormData({ name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', category: defaultCategory, is_active: true, payment_terms: '', opening_balance: '', opening_balance_date: '' });
     setIsEditing(false);
     setSelectedVendor(null);
     setShowModal(true);
@@ -75,7 +76,9 @@ export default function VendorsPage() {
       state: vendor.state || 'Gujarat',
       category: vendor.category || 'Paper',
       is_active: vendor.is_active,
-      payment_terms: String(vendor.payment_terms ?? '')
+      payment_terms: String(vendor.payment_terms ?? ''),
+      opening_balance: vendor.opening_balance != null ? String(vendor.opening_balance) : '',
+      opening_balance_date: vendor.opening_balance_date || '',
     });
     setSelectedVendor(vendor);
     setIsEditing(true);
@@ -95,6 +98,77 @@ export default function VendorsPage() {
     }
   };
 
+  // Upserts the "Opening Balance" purchase_bill for a vendor so it participates
+  // in the normal payables workflow (matches Zoho Books behavior).
+  // Marker: purchase_bills.product_type = 'Opening Balance'.
+  const upsertOpeningBalanceBill = async (vendorId: string, amount: number, asOfDate: string | null) => {
+    // Find an existing opening balance bill for this vendor
+    const { data: existing } = await supabase
+      .from('purchase_bills')
+      .select('id, amount_paid, total_amount')
+      .eq('vendor_id', vendorId)
+      .eq('product_type', 'Opening Balance')
+      .limit(1)
+      .maybeSingle();
+
+    const billDate = asOfDate || new Date().toISOString().slice(0, 10);
+
+    if (amount <= 0) {
+      // Opening balance was cleared
+      if (existing) {
+        if ((existing.amount_paid || 0) > 0) {
+          toast.error('Opening balance bill has payments applied — cannot remove. Keep amount > 0 or reverse payments first.');
+          return { error: 'bill_has_payments' };
+        }
+        await supabase.from('purchase_bills').delete().eq('id', existing.id);
+      }
+      return { error: null };
+    }
+
+    if (existing) {
+      // Update existing OB bill — don't touch amount_paid
+      const newStatus = (existing.amount_paid || 0) >= amount ? 'paid' : ((existing.amount_paid || 0) > 0 ? 'partial' : 'pending');
+      const { error } = await supabase
+        .from('purchase_bills')
+        .update({
+          total_amount: amount,
+          subtotal: amount,
+          gst_rate: 0,
+          gst_amount: 0,
+          bill_date: billDate,
+          due_date: billDate,
+          description: `Opening Balance as of ${billDate}`,
+          payment_status: newStatus,
+        })
+        .eq('id', existing.id);
+      return { error: error?.message || null };
+    }
+
+    // Create a new OB bill
+    const { data: numberData } = await supabase.rpc('get_next_number', { counter_id: 'purchase_bill' });
+    const { error } = await supabase
+      .from('purchase_bills')
+      .insert([{
+        bill_number: numberData || `OB-${Date.now()}`,
+        vendor_id: vendorId,
+        product_type: 'Opening Balance',
+        description: `Opening Balance as of ${billDate}`,
+        quantity: 1,
+        rate: amount,
+        subtotal: amount,
+        gst_rate: 0,
+        gst_amount: 0,
+        total_amount: amount,
+        amount_paid: 0,
+        payment_status: 'pending',
+        bill_date: billDate,
+        due_date: billDate,
+        payment_terms: 'Due on Receipt',
+        items: [{ description: 'Opening Balance', quantity: 1, rate: amount, unit: 'Lumpsum', gst_rate: 0 }],
+      }]);
+    return { error: error?.message || null };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -103,16 +177,50 @@ export default function VendorsPage() {
       const payment_terms = ptRaw === '' || ptRaw === null || ptRaw === undefined
         ? null
         : Number(ptRaw) || null;
-      const payload = { ...formData, payment_terms };
+
+      // Parse opening balance (optional). Empty string => 0 amount; empty date => null.
+      const obRaw = formData.opening_balance;
+      const opening_balance = obRaw === '' || obRaw === null || obRaw === undefined
+        ? 0
+        : Number(obRaw) || 0;
+      const opening_balance_date = formData.opening_balance_date || null;
+
+      const basePayload: any = {
+        ...formData,
+        payment_terms,
+        opening_balance,
+        opening_balance_date,
+      };
+
+      let vendorId: string | null = null;
+
       if (isEditing && selectedVendor) {
-        const { error } = await updateVendor(selectedVendor.id, payload as any);
+        const { error } = await updateVendor(selectedVendor.id, basePayload);
         if (error) throw new Error(error);
+        vendorId = selectedVendor.id;
         logActivity({ userId: session?.user?.id || '', userName: profile?.full_name || 'Unknown', action: 'UPDATE', module: 'Finance', entityId: selectedVendor.id, entityName: formData.name, description: `Updated Vendor: ${formData.name} (${formData.category || 'Vendor'})` });
       } else {
-        const { error } = await createVendor(payload as any);
+        // Seed outstanding_balance so record_vendor_payment correctly decrements it
+        // when the opening-balance bill is paid down.
+        const createPayload = {
+          ...basePayload,
+          outstanding_balance: opening_balance,
+        };
+        const { data: created, error } = await createVendor(createPayload);
         if (error) throw new Error(error);
-        logActivity({ userId: session?.user?.id || '', userName: profile?.full_name || 'Unknown', action: 'CREATE', module: 'Finance', entityName: formData.name, description: `Added Vendor: ${formData.name} (${formData.category || 'Vendor'}) — ${formData.phone}` });
+        vendorId = created?.id || null;
+        logActivity({ userId: session?.user?.id || '', userName: profile?.full_name || 'Unknown', action: 'CREATE', module: 'Finance', entityName: formData.name, description: `Added Vendor: ${formData.name} (${formData.category || 'Vendor'}) — ${formData.phone}${opening_balance > 0 ? ` — Opening Balance ₹${opening_balance}` : ''}` });
       }
+
+      // Upsert the opening-balance bill for this vendor (only when we have a vendor id)
+      if (vendorId) {
+        const obResult = await upsertOpeningBalanceBill(vendorId, opening_balance, opening_balance_date);
+        if (obResult.error && obResult.error !== 'bill_has_payments') {
+          console.error('Opening balance bill error:', obResult.error);
+          toast.error(`Vendor saved, but opening-balance bill failed: ${obResult.error}`);
+        }
+      }
+
       setShowModal(false); setIsEditing(false); setSelectedVendor(null);
     } catch (error: any) {
       console.error('Error:', error);
@@ -360,6 +468,37 @@ export default function VendorsPage() {
               <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1">Category</label><select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full px-3 py-2 border rounded-md">{categories.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}</select></div><div><label className="block text-sm font-medium mb-1">GSTIN</label><input type="text" value={formData.gstin} onChange={(e) => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })} className="w-full px-3 py-2 border rounded-md" maxLength={15} /></div></div>
               <div><label className="block text-sm font-medium mb-1">Address</label><textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full px-3 py-2 border rounded-md" rows={2} /></div>
               <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1">City</label><input type="text" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="w-full px-3 py-2 border rounded-md" /></div><div><label className="block text-sm font-medium mb-1">Status</label><select value={formData.is_active ? 'active' : 'inactive'} onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'active' })} className="w-full px-3 py-2 border rounded-md"><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div>
+
+              {/* Opening Balance (what we already owe this vendor as of a given date) */}
+              <div className="pt-2 border-t">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Opening Balance</p>
+                <div className="grid grid-cols-2 gap-2 md:gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Amount (₹)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={formData.opening_balance}
+                      onChange={(e) => setFormData({ ...formData, opening_balance: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-md"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">As of Date</label>
+                    <input
+                      type="date"
+                      value={formData.opening_balance_date}
+                      onChange={(e) => setFormData({ ...formData, opening_balance_date: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-md"
+                    />
+                  </div>
+                </div>
+                <p className="text-[11px] text-gray-500 mt-1">
+                  Amount you already owe this vendor when adding them. Leave blank or 0 if none.
+                </p>
+              </div>
               <div className="flex gap-3 pt-4"><button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 border rounded-md">Cancel</button><button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 flex items-center justify-center gap-2 shadow-sm font-semibold">{saving && <Loader2 className="w-4 h-4 md:w-4.5 md:h-4.5 animate-spin" />}{isEditing ? 'Update' : 'Add'}</button></div>
             </form>
           </div>
@@ -372,7 +511,7 @@ export default function VendorsPage() {
             <div className="flex items-center justify-between p-4 border-b"><h2 className="text-section">Vendor Details</h2><button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button></div>
             <div className="p-4 space-y-4">
               <div className="flex items-center gap-2 md:gap-4"><div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center"><span className="text-orange-600 font-bold text-2xl">{selectedVendor.name?.charAt(0)}</span></div><div><h3 className="text-section">{selectedVendor.name}</h3><p className="text-gray-500">{selectedVendor.company}</p><span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-md ${getCategoryColor(selectedVendor.category || 'Paper')}`}>{selectedVendor.category}</span></div></div>
-              <div className="space-y-3 p-4 bg-gray-50 rounded-md"><div className="flex items-center gap-3"><Phone className="w-4 h-4 text-gray-400" /><span>{selectedVendor.phone}</span></div>{selectedVendor.email && <div className="flex items-center gap-3"><Mail className="w-4 h-4 text-gray-400" /><span>{selectedVendor.email}</span></div>}{selectedVendor.address && <div className="flex items-center gap-3"><MapPin className="w-4 h-4 text-gray-400" /><span>{selectedVendor.address}, {selectedVendor.city}</span></div>}{selectedVendor.gstin && <div className="flex items-center gap-3"><Building2 className="w-4 h-4 text-gray-400" /><span>GSTIN: {selectedVendor.gstin}</span></div>}</div>
+              <div className="space-y-3 p-4 bg-gray-50 rounded-md"><div className="flex items-center gap-3"><Phone className="w-4 h-4 text-gray-400" /><span>{selectedVendor.phone}</span></div>{selectedVendor.email && <div className="flex items-center gap-3"><Mail className="w-4 h-4 text-gray-400" /><span>{selectedVendor.email}</span></div>}{selectedVendor.address && <div className="flex items-center gap-3"><MapPin className="w-4 h-4 text-gray-400" /><span>{selectedVendor.address}, {selectedVendor.city}</span></div>}{selectedVendor.gstin && <div className="flex items-center gap-3"><Building2 className="w-4 h-4 text-gray-400" /><span>GSTIN: {selectedVendor.gstin}</span></div>}{(selectedVendor.opening_balance || 0) > 0 && <div className="flex items-center gap-3 pt-2 border-t"><span className="text-sm font-semibold text-gray-700">Opening Balance:</span><span className="text-sm text-red-600 font-bold">₹{Number(selectedVendor.opening_balance || 0).toLocaleString('en-IN')}</span>{selectedVendor.opening_balance_date && <span className="text-xs text-gray-500">as of {selectedVendor.opening_balance_date}</span>}</div>}</div>
               <div className="flex gap-3">
                 <Link href={`/admin/finance/vendors/purchases?vendor=${selectedVendor.id}`} className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold">
                   <Package className="w-4 h-4 md:w-4.5 md:h-4.5" /> Record Bill
