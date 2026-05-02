@@ -256,32 +256,32 @@ export default function UnifiedJobForm({
                         <div className="grid grid-cols-2 gap-3">
                             {/* Client */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Client <span className="text-red-500">*</span>
-                                </label>
-                                <div className="flex gap-2">
-                                    <select
-                                        required
-                                        className="flex-1 px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
-                                        value={formData.client_id}
-                                        onChange={e => set('client_id', e.target.value)}
-                                    >
-                                        <option value="">Select Client</option>
-                                        {(clients || []).map((c: any) => (
-                                            <option key={c.id} value={c.id}>
-                                                {c.company || c.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Client <span className="text-red-500">*</span>
+                                    </label>
                                     <button
                                         type="button"
-                                        title="Add New Client"
                                         onClick={() => setShowClientModal(true)}
-                                        className="px-3 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-700 transition-colors"
+                                        className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
                                     >
-                                        <Plus size={16} />
+                                        <Plus size={13} />
+                                        Add New Client
                                     </button>
                                 </div>
+                                <select
+                                    required
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                    value={formData.client_id}
+                                    onChange={e => set('client_id', e.target.value)}
+                                >
+                                    <option value="">Select Client</option>
+                                    {(clients || []).map((c: any) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.company || c.name}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
                             {/* Job Type */}
