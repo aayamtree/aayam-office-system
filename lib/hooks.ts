@@ -287,12 +287,13 @@ export function useVendors() {
 
 // =============================================
 // DESIGNERS HOOK
-// Single source of truth: reads from profiles table WHERE role = 'designer'
+// Single source of truth: reads from profiles table WHERE can_design = true
+// This includes role='designer' users AND admins with can_design flag set
 // =============================================
 export function useDesigners() {
   const { data, loading, error, refetch } = useSupabaseQuery<any>('profiles', {
-    select: 'id, full_name, email, role, is_active, phone, skills, hourly_rate, monthly_salary, employment_type, joining_date, city, state, document_url',
-    filter: [{ column: 'role', value: 'designer' }],
+    select: 'id, full_name, email, role, can_design, is_active, phone, skills, hourly_rate, monthly_salary, employment_type, joining_date, city, state, document_url',
+    filter: [{ column: 'can_design', value: true }],
     orderBy: { column: 'full_name', ascending: true }
   });
 

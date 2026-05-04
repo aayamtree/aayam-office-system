@@ -2,17 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from '@/lib/toast';
-import { useSupabaseQuery } from '@/lib/hooks'; // We'll use raw query or create new hook
 import { supabase } from '@/lib/supabase';
-import { User, Shield, Briefcase, Mail, Phone, Trash2 } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 
-// Define Profile interface locally if not updated globally
 interface Profile {
   id: string;
   email: string;
   full_name: string;
-  role: 'admin' | 'marketing' | 'designer' | 'dispatch' | 'account' | 'user';
+  role: 'admin' | 'marketing' | 'designer' | 'dispatch' | 'account' | 'finance' | 'cmyk' | 'user';
   is_active: boolean;
+  can_design: boolean;
   created_at?: string;
 }
 
@@ -21,38 +20,41 @@ export default function UserManagementPage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
 
-  // Fetch profiles
   const fetchProfiles = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('profiles')
       .select('*')
-      .order('created_at', { ascending: false });
-
+      .order('full_name', { ascending: true });
     if (data) setProfiles(data as any);
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchProfiles();
-  }, []);
+  useEffect(() => { fetchProfiles(); }, []);
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     setUpdating(userId);
+    const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
+    if (error) toast.error('Error updating role: ' + error.message);
+    else await fetchProfiles();
+    setUpdating(null);
+  };
+
+  const handleCanDesignToggle = async (userId: string, current: boolean) => {
+    setUpdating(userId);
     const { error } = await supabase
       .from('profiles')
-      .update({ role: newRole })
+      .update({ can_design: !current })
       .eq('id', userId);
-
     if (error) {
-      toast.error(String('Error updating role: ' + error.message));
+      toast.error('Error updating: ' + error.message);
     } else {
-      await fetchProfiles();
+      setProfiles(prev => prev.map(p => p.id === userId ? { ...p, can_design: !current } : p));
     }
     setUpdating(null);
   };
 
-  const roles = ['admin', 'marketing', 'designer', 'dispatch', 'account', 'user'];
+  const roles = ['admin', 'marketing', 'designer', 'dispatch', 'finance', 'cmyk', 'user'];
 
   return (
     <div className="space-y-6">
@@ -72,18 +74,18 @@ export default function UserManagementPage() {
             <tr>
               <th className="p-4 font-semibold text-gray-700">User</th>
               <th className="p-4 font-semibold text-gray-700">Role</th>
+              <th className="p-4 font-semibold text-gray-700 text-center">Can Design</th>
               <th className="p-4 font-semibold text-gray-700">Status</th>
-              <th className="p-4 font-semibold text-gray-700 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {loading ? (
               <tr><td colSpan={4} className="p-8 text-center">Loading team...</td></tr>
-            ) : profiles.map((profile) => (
+            ) : profiles.filter(p => p.full_name).map((profile) => (
               <tr key={profile.id} className="hover:bg-gray-50 transition-colors">
                 <td className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-white font-bold">
+                    <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-white font-bold text-sm">
                       {profile.full_name?.charAt(0).toUpperCase() || '?'}
                     </div>
                     <div>
@@ -104,20 +106,37 @@ export default function UserManagementPage() {
                     ))}
                   </select>
                 </td>
+                <td className="p-4 text-center">
+                  <button
+                    onClick={() => handleCanDesignToggle(profile.id, profile.can_design)}
+                    disabled={updating === profile.id}
+                    title={profile.can_design ? 'Remove from designer dropdown' : 'Add to designer dropdown'}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none
+                      ${profile.can_design ? 'bg-blue-600' : 'bg-gray-200'}
+                      ${updating === profile.id ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform
+                        ${profile.can_design ? 'translate-x-6' : 'translate-x-1'}`}
+                    />
+                  </button>
+                </td>
                 <td className="p-4">
-                  <span className={`px-2 py-1 rounded-md text-xs font-bold 
+                  <span className={`px-2 py-1 rounded-md text-xs font-bold
                     ${profile.is_active ? 'bg-gray-100 text-gray-900' : 'bg-red-100 text-red-700'}`}>
                     {profile.is_active ? 'Active' : 'Suspended'}
                   </span>
-                </td>
-                <td className="p-4 text-right">
-                  {/* Delete or Suspend buttons could go here */}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      <p className="text-xs text-gray-400">
+        <strong>Can Design</strong> — when enabled, this person appears in the Designer dropdown on jobs regardless of their role.
+        Use this for admins like Eklavya or Satish who also do design work.
+      </p>
     </div>
   );
 }
