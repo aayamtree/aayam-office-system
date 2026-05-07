@@ -36,7 +36,7 @@ export default function CommandPalette() {
     const inputRef = useRef<HTMLInputElement>(null);
     const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Cmd+K / Ctrl+K shortcut
+    // Cmd+K / Ctrl+K shortcut + custom event from sidebar button
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -44,8 +44,13 @@ export default function CommandPalette() {
                 setOpen(prev => !prev);
             }
         };
+        const handleOpenEvent = () => setOpen(true);
         window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
+        window.addEventListener('aayam:open-search', handleOpenEvent);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('aayam:open-search', handleOpenEvent);
+        };
     }, []);
 
     // Focus input when opened
