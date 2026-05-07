@@ -186,12 +186,15 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
     })();
     const parentCategoryName = parentCategories.find(c => c.id === selectedCategory)?.name || '';
 
+    const effectiveLower = effectiveCategoryName.toLowerCase();
+    const parentLower = parentCategoryName.toLowerCase();
+
     const showClientSection = transactionType === 'income' &&
-        (CLIENT_CATEGORY_NAMES.some(n => effectiveCategoryName.includes(n)) ||
-         CLIENT_CATEGORY_NAMES.some(n => parentCategoryName.includes(n)));
+        (CLIENT_CATEGORY_NAMES.some(n => effectiveLower.includes(n.toLowerCase())) ||
+         CLIENT_CATEGORY_NAMES.some(n => parentLower.includes(n.toLowerCase())));
 
     const showVendorSection = transactionType === 'expense' &&
-        VENDOR_CATEGORY_NAMES.some(n => parentCategoryName.includes(n) || effectiveCategoryName.includes(n));
+        VENDOR_CATEGORY_NAMES.some(n => parentLower.includes(n.toLowerCase()) || effectiveLower.includes(n.toLowerCase()));
 
     // Reset subcategory when parent changes
     const [initialLoadDone, setInitialLoadDone] = useState(false);
