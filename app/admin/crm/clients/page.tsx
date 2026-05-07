@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   Search, Plus, Phone, Mail, MapPin, Hash,
   Edit, Trash2, Eye, X, ArrowLeft, Building2, Loader2,
-  Briefcase, IndianRupee, ExternalLink, UserCheck
+  Briefcase, IndianRupee, ExternalLink, UserCheck, FileBarChart
 } from 'lucide-react';
 import { useClients, useJobs } from '@/lib/hooks';
 import { Client } from '@/types/database';
@@ -750,10 +750,17 @@ export default function ClientsPage() {
               <ClientJobsSection clientId={selectedClient.id} />
 
               {/* Actions */}
-              <div className="flex gap-3">
-                <button onClick={() => { setShowViewModal(false); handleEdit(selectedClient); }} className="flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors text-gray-700 font-semibold">Edit</button>
-                <Link href={`/admin/jobs?client=${selectedClient.id}`} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors font-semibold shadow-sm text-center flex items-center justify-center gap-2">
-                  <Briefcase className="w-4 h-4" /> View All Jobs
+              <div className="flex gap-2 flex-wrap">
+                <button onClick={() => { setShowViewModal(false); handleEdit(selectedClient); }} className="flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors text-gray-700 font-semibold text-sm">Edit</button>
+                <Link href={`/admin/jobs?client=${selectedClient.id}`} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors font-semibold shadow-sm text-center flex items-center justify-center gap-2 text-sm">
+                  <Briefcase className="w-4 h-4" /> Jobs
+                </Link>
+                <Link
+                  href={`/admin/reports/client/${selectedClient.id}`}
+                  className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-bold shadow-sm text-center flex items-center justify-center gap-2 text-sm border-2 border-red-700"
+                  onClick={() => setShowViewModal(false)}
+                >
+                  <FileBarChart className="w-4 h-4" /> REPORT
                 </Link>
               </div>
             </div>

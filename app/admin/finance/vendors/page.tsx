@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
-import { Search, Plus, Phone, Mail, MapPin, Edit, Trash2, Eye, X, ArrowLeft, Building2, Loader2, Package, Settings } from 'lucide-react';
+import { Search, Plus, Phone, Mail, MapPin, Edit, Trash2, Eye, X, ArrowLeft, Building2, Loader2, Package, Settings, FileBarChart } from 'lucide-react';
 import { useVendors } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
@@ -512,12 +512,18 @@ export default function VendorsPage() {
             <div className="p-4 space-y-4">
               <div className="flex items-center gap-2 md:gap-4"><div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center"><span className="text-orange-600 font-bold text-2xl">{selectedVendor.name?.charAt(0)}</span></div><div><h3 className="text-section">{selectedVendor.name}</h3><p className="text-gray-500">{selectedVendor.company}</p><span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-md ${getCategoryColor(selectedVendor.category || 'Paper')}`}>{selectedVendor.category}</span></div></div>
               <div className="space-y-3 p-4 bg-gray-50 rounded-md"><div className="flex items-center gap-3"><Phone className="w-4 h-4 text-gray-400" /><span>{selectedVendor.phone}</span></div>{selectedVendor.email && <div className="flex items-center gap-3"><Mail className="w-4 h-4 text-gray-400" /><span>{selectedVendor.email}</span></div>}{selectedVendor.address && <div className="flex items-center gap-3"><MapPin className="w-4 h-4 text-gray-400" /><span>{selectedVendor.address}, {selectedVendor.city}</span></div>}{selectedVendor.gstin && <div className="flex items-center gap-3"><Building2 className="w-4 h-4 text-gray-400" /><span>GSTIN: {selectedVendor.gstin}</span></div>}{(selectedVendor.opening_balance || 0) > 0 && <div className="flex items-center gap-3 pt-2 border-t"><span className="text-sm font-semibold text-gray-700">Opening Balance:</span><span className="text-sm text-red-600 font-bold">₹{Number(selectedVendor.opening_balance || 0).toLocaleString('en-IN')}</span>{selectedVendor.opening_balance_date && <span className="text-xs text-gray-500">as of {selectedVendor.opening_balance_date}</span>}</div>}</div>
-              <div className="flex gap-3">
-                <Link href={`/admin/finance/vendors/purchases?vendor=${selectedVendor.id}`} className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold">
-                  <Package className="w-4 h-4 md:w-4.5 md:h-4.5" /> Record Bill
+              <div className="flex gap-2 flex-wrap mt-2">
+                <Link href={`/admin/finance/vendors/purchases?vendor=${selectedVendor.id}`} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold text-sm">
+                  <Package className="w-4 h-4" /> Record Bill
                 </Link>
-                <button onClick={() => { setShowViewModal(false); handleEdit(selectedVendor); }} className="flex-1 px-4 py-2.5 border rounded-md font-medium">Edit</button>
-                <button onClick={() => setShowViewModal(false)} className="flex-1 px-4 py-2.5 border rounded-md font-medium">Close</button>
+                <button onClick={() => { setShowViewModal(false); handleEdit(selectedVendor); }} className="flex-1 px-4 py-2.5 border rounded-md font-medium text-sm">Edit</button>
+                <Link
+                  href={`/admin/reports/vendor/${selectedVendor.id}`}
+                  className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-bold shadow-sm text-center flex items-center justify-center gap-2 text-sm border-2 border-red-700"
+                  onClick={() => setShowViewModal(false)}
+                >
+                  <FileBarChart className="w-4 h-4" /> REPORT
+                </Link>
               </div>
             </div>
           </div>
