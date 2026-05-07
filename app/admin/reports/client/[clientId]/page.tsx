@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft, Printer, Phone, Mail, MapPin, Building2, TrendingUp, TrendingDown, Scale, FileText, CreditCard, Banknote, X } from 'lucide-react';
+import { ArrowLeft, Printer, Phone, Mail, MapPin, Building2, Scale, FileText, CreditCard, Banknote, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 const fmt = (n: number) =>
