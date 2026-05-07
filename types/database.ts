@@ -510,11 +510,15 @@ export interface BankTransaction {
   is_verified?: boolean;
   verified_by?: string;
   verified_at?: string;
-  expense_category_id?: string;
-  income_category_id?: string;
-  expense_type?: 'goods' | 'services';
-  payment_method?: string;
-  categorization_notes?: string;
+  categorization_type?: 'expense' | 'income' | 'transfer' | null;
+  expense_category_id?: string | null;
+  income_category_id?: string | null;
+  expense_type?: 'goods' | 'services' | null;
+  payment_method?: string | null;
+  categorization_notes?: string | null;
+  payee_name?: string | null;
+  vendor_id?: string | null;
+  direct_payee_id?: string | null;
 }
 
 // Opening Balance
