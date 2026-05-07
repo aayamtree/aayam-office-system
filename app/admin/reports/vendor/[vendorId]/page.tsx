@@ -19,6 +19,8 @@ type LedgerRow = {
     date: string;
     type: 'bill' | 'payment';
     description: string;
+    subLabel: string;
+    isAdvance: boolean;
     ref: string;
     debit: number;   // bills received (amount we owe)
     credit: number;  // payments made (amount we paid)
@@ -33,6 +35,7 @@ export default function VendorStatementPage() {
     const [bills, setBills] = useState<any[]>([]);
     const [bankTxns, setBankTxns] = useState<any[]>([]);
     const [bankAccounts, setBankAccounts] = useState<Record<string, string>>({});
+    const [categoryMap, setCategoryMap] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
 
     const fyStart = new Date().getMonth() >= 3
@@ -45,16 +48,18 @@ export default function VendorStatementPage() {
         if (!vendorId) return;
         const load = async () => {
             setLoading(true);
-            const [{ data: vendorData }, { data: billData }, { data: txnData }, { data: bankData }] = await Promise.all([
+            const [{ data: vendorData }, { data: billData }, { data: txnData }, { data: bankData }, { data: catData }] = await Promise.all([
                 supabase.from('vendors').select('*').eq('id', vendorId).single(),
                 supabase.from('purchase_bills').select('id, bill_number, vendor_bill_number, description, total_amount, amount_paid, payment_status, bill_date, product_type').eq('vendor_id', vendorId).order('bill_date', { ascending: true }),
-                supabase.from('bank_transactions').select('id, transaction_date, amount, description, reference_number, bank_account_id').eq('vendor_id', vendorId).eq('is_verified', true).order('transaction_date', { ascending: true }),
+                supabase.from('bank_transactions').select('id, transaction_date, amount, description, reference_number, bank_account_id, expense_category_id').eq('vendor_id', vendorId).eq('is_verified', true).order('transaction_date', { ascending: true }),
                 supabase.from('bank_accounts').select('id, name'),
+                supabase.from('expense_categories').select('id, name'),
             ]);
             if (vendorData) setVendor(vendorData);
             if (billData) setBills(billData);
             if (txnData) setBankTxns(txnData);
             if (bankData) setBankAccounts(Object.fromEntries(bankData.map((b: any) => [b.id, b.name])));
+            if (catData) setCategoryMap(Object.fromEntries(catData.map((c: any) => [c.id, c.name])));
             setLoading(false);
         };
         load();
@@ -72,6 +77,8 @@ export default function VendorStatementPage() {
                     date: d,
                     type: 'bill',
                     description: 'Opening Balance',
+                    subLabel: 'Brought forward',
+                    isAdvance: false,
                     ref: '',
                     debit: Number(vendor.opening_balance),
                     credit: 0,
@@ -88,6 +95,8 @@ export default function VendorStatementPage() {
                 date: d,
                 type: 'bill',
                 description: bill.description || bill.product_type || 'Purchase Bill',
+                subLabel: `Purchase Bill · ${bill.vendor_bill_number || bill.bill_number || ''}`,
+                isAdvance: false,
                 ref: bill.vendor_bill_number || bill.bill_number || '',
                 debit: Number(bill.total_amount) || 0,
                 credit: 0,
@@ -98,11 +107,15 @@ export default function VendorStatementPage() {
         bankTxns.forEach(txn => {
             const d = txn.transaction_date || '';
             if (d < dateFrom || d > dateTo) return;
+            const catName = txn.expense_category_id ? (categoryMap[txn.expense_category_id] || 'Vendor Payment') : 'Vendor Payment';
+            const isAdv = catName.toLowerCase().includes('advance');
             rows.push({
                 id: `txn-${txn.id}`,
                 date: d,
                 type: 'payment',
                 description: txn.description || 'Payment to Vendor',
+                subLabel: catName,
+                isAdvance: isAdv,
                 ref: txn.reference_number || (txn.bank_account_id ? bankAccounts[txn.bank_account_id] : ''),
                 debit: 0,
                 credit: Number(txn.amount) || 0,
@@ -116,7 +129,7 @@ export default function VendorStatementPage() {
             balance += row.debit - row.credit;
             return { ...row, balance };
         });
-    }, [vendor, bills, bankTxns, dateFrom, dateTo, bankAccounts]);
+    }, [vendor, bills, bankTxns, dateFrom, dateTo, bankAccounts, categoryMap]);
 
     const totalBilled = ledger.reduce((s, r) => s + r.debit, 0);
     const totalPaid = ledger.reduce((s, r) => s + r.credit, 0);
@@ -255,14 +268,17 @@ export default function VendorStatementPage() {
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {ledger.map(row => (
-                                        <tr key={row.id} className={`hover:bg-gray-50 transition-colors ${row.type === 'payment' ? 'bg-red-50/20' : ''}`}>
+                                        <tr key={row.id} className={`hover:bg-gray-50 transition-colors ${row.isAdvance ? 'bg-amber-50/40' : row.type === 'payment' ? 'bg-red-50/20' : ''}`}>
                                             <td className="px-4 py-3 text-gray-600 whitespace-nowrap text-xs">{fmtDate(row.date)}</td>
                                             <td className="px-4 py-3">
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`inline-flex w-1.5 h-1.5 rounded-full flex-shrink-0 ${row.type === 'bill' ? 'bg-orange-400' : 'bg-red-400'}`} />
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className={`inline-flex w-1.5 h-1.5 rounded-full flex-shrink-0 ${row.type === 'bill' ? 'bg-orange-400' : row.isAdvance ? 'bg-amber-400' : 'bg-red-400'}`} />
                                                     <span className="text-gray-800 font-medium">{row.description}</span>
+                                                    {row.isAdvance && (
+                                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200">ADVANCE</span>
+                                                    )}
                                                 </div>
-                                                <p className="text-xs text-gray-400 mt-0.5 ml-3.5">{row.type === 'bill' ? 'Purchase Bill' : 'Bank Payment'}</p>
+                                                <p className="text-xs text-gray-400 mt-0.5 ml-3.5">{row.subLabel}</p>
                                             </td>
                                             <td className="px-4 py-3 text-gray-400 text-xs hidden md:table-cell font-mono">{row.ref}</td>
                                             <td className="px-4 py-3 text-right font-semibold text-gray-800">

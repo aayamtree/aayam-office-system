@@ -20,6 +20,8 @@ type LedgerRow = {
     date: string;       // ISO date string for sorting
     type: 'invoice' | 'payment';
     description: string;
+    subLabel: string;   // e.g. "Advance Payment", "Client Payment", "Invoice"
+    isAdvance: boolean;
     ref: string;
     debit: number;      // amount owed (invoice)
     credit: number;     // amount received (bank payment)
@@ -34,6 +36,7 @@ export default function ClientStatementPage() {
     const [jobs, setJobs] = useState<any[]>([]);
     const [bankTxns, setBankTxns] = useState<any[]>([]);
     const [bankAccounts, setBankAccounts] = useState<Record<string, string>>({});
+    const [categoryMap, setCategoryMap] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
 
     // Default: current financial year
@@ -47,16 +50,18 @@ export default function ClientStatementPage() {
         if (!clientId) return;
         const load = async () => {
             setLoading(true);
-            const [{ data: clientData }, { data: jobData }, { data: txnData }, { data: bankData }] = await Promise.all([
+            const [{ data: clientData }, { data: jobData }, { data: txnData }, { data: bankData }, { data: catData }] = await Promise.all([
                 supabase.from('clients').select('*').eq('id', clientId).single(),
                 supabase.from('jobs').select('id, job_number, project_name, order_date, total_amount, amount_received, current_stage').eq('client_id', clientId).order('order_date', { ascending: true }),
-                supabase.from('bank_transactions').select('id, transaction_date, amount, description, reference_number, bank_account_id, categorization_type, transaction_type').eq('client_id', clientId).eq('is_verified', true).order('transaction_date', { ascending: true }),
+                supabase.from('bank_transactions').select('id, transaction_date, amount, description, reference_number, bank_account_id, categorization_type, transaction_type, income_category_id').eq('client_id', clientId).eq('is_verified', true).order('transaction_date', { ascending: true }),
                 supabase.from('bank_accounts').select('id, name'),
+                supabase.from('income_categories').select('id, name'),
             ]);
             if (clientData) setClient(clientData);
             if (jobData) setJobs(jobData);
             if (txnData) setBankTxns(txnData);
             if (bankData) setBankAccounts(Object.fromEntries(bankData.map((b: any) => [b.id, b.name])));
+            if (catData) setCategoryMap(Object.fromEntries(catData.map((c: any) => [c.id, c.name])));
             setLoading(false);
         };
         load();
@@ -74,6 +79,8 @@ export default function ClientStatementPage() {
                 date: d,
                 type: 'invoice',
                 description: job.project_name || 'Job',
+                subLabel: `Invoice · ${job.job_number || ''}`,
+                isAdvance: false,
                 ref: job.job_number || '',
                 debit: Number(job.total_amount) || 0,
                 credit: 0,
@@ -84,11 +91,15 @@ export default function ClientStatementPage() {
         bankTxns.forEach(txn => {
             const d = txn.transaction_date || '';
             if (d < dateFrom || d > dateTo) return;
+            const catName = txn.income_category_id ? (categoryMap[txn.income_category_id] || 'Payment Received') : 'Payment Received';
+            const isAdv = catName.toLowerCase().includes('advance');
             rows.push({
                 id: `txn-${txn.id}`,
                 date: d,
                 type: 'payment',
                 description: txn.description || 'Payment Received',
+                subLabel: catName,
+                isAdvance: isAdv,
                 ref: txn.reference_number || (txn.bank_account_id ? bankAccounts[txn.bank_account_id] : ''),
                 debit: 0,
                 credit: Number(txn.amount) || 0,
@@ -104,7 +115,7 @@ export default function ClientStatementPage() {
             balance += row.debit - row.credit;
             return { ...row, balance };
         });
-    }, [jobs, bankTxns, dateFrom, dateTo, bankAccounts]);
+    }, [jobs, bankTxns, dateFrom, dateTo, bankAccounts, categoryMap]);
 
     const totalBilled = ledger.reduce((s, r) => s + r.debit, 0);
     const totalReceived = ledger.reduce((s, r) => s + r.credit, 0);
@@ -246,14 +257,17 @@ export default function ClientStatementPage() {
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {ledger.map(row => (
-                                        <tr key={row.id} className={`hover:bg-gray-50 transition-colors ${row.type === 'payment' ? 'bg-green-50/30' : ''}`}>
+                                        <tr key={row.id} className={`hover:bg-gray-50 transition-colors ${row.isAdvance ? 'bg-amber-50/40' : row.type === 'payment' ? 'bg-green-50/30' : ''}`}>
                                             <td className="px-4 py-3 text-gray-600 whitespace-nowrap text-xs">{fmtDate(row.date)}</td>
                                             <td className="px-4 py-3">
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`inline-flex w-1.5 h-1.5 rounded-full flex-shrink-0 ${row.type === 'invoice' ? 'bg-blue-400' : 'bg-green-400'}`} />
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className={`inline-flex w-1.5 h-1.5 rounded-full flex-shrink-0 ${row.type === 'invoice' ? 'bg-blue-400' : row.isAdvance ? 'bg-amber-400' : 'bg-green-400'}`} />
                                                     <span className="text-gray-800 font-medium">{row.description}</span>
+                                                    {row.isAdvance && (
+                                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200">ADVANCE</span>
+                                                    )}
                                                 </div>
-                                                <p className="text-xs text-gray-400 mt-0.5 ml-3.5">{row.type === 'invoice' ? 'Invoice' : 'Bank Payment'}</p>
+                                                <p className="text-xs text-gray-400 mt-0.5 ml-3.5">{row.subLabel}</p>
                                             </td>
                                             <td className="px-4 py-3 text-gray-400 text-xs hidden md:table-cell font-mono">{row.ref}</td>
                                             <td className="px-4 py-3 text-right font-semibold text-gray-800">
