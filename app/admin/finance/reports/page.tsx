@@ -6,7 +6,7 @@ import {
     ArrowLeft, IndianRupee, TrendingUp, Users, Briefcase,
     Calendar, Filter, Download, Loader2
 } from 'lucide-react';
-import { usePaymentsReceived, useJobs, useClients, useExpenses } from '@/lib/hooks';
+import { usePaymentsReceived, useJobs, useClients, useExpenses, useBankTransactions } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,6 +17,7 @@ export default function PaymentReportsPage() {
     const { jobs, loading: jobsLoading } = useJobs();
     const { clients } = useClients();
     const { expenses } = useExpenses();
+    const { transactions: bankTransactions } = useBankTransactions();
 
     const [dateFrom, setDateFrom] = useState(() => {
         const d = new Date();
@@ -64,15 +65,26 @@ export default function PaymentReportsPage() {
             }
         });
 
-        const totalExpenses = (expenses || [])
+        const manualExpenses = (expenses || [])
             .filter(e => {
                 const date = e.expense_date || e.created_at;
                 return date >= dateFrom && date <= dateTo + 'T23:59:59';
             })
             .reduce((s, e) => s + (e.amount || 0), 0);
 
-        return { totalCollected, cashTotal, bankTotal, upiTotal, chequeTotal, gstAmount, totalExpenses };
-    }, [filteredPayments, expenses, dateFrom, dateTo]);
+        // Bank-verified expenses (salary, rent, utilities etc.)
+        const bankExpenses = (bankTransactions || [])
+            .filter(t => t.is_verified && t.categorization_type === 'expense' && t.transaction_type === 'outflow')
+            .filter(t => {
+                const date = (t.transaction_date || '').split('T')[0];
+                return date >= dateFrom && date <= dateTo;
+            })
+            .reduce((s: number, t: any) => s + (t.amount || 0), 0);
+
+        const totalExpenses = manualExpenses + bankExpenses;
+
+        return { totalCollected, cashTotal, bankTotal, upiTotal, chequeTotal, gstAmount, totalExpenses, bankExpenses, manualExpenses };
+    }, [filteredPayments, expenses, bankTransactions, dateFrom, dateTo]);
 
     // Client-wise collections
     const clientCollections = useMemo(() => {

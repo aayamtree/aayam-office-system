@@ -85,6 +85,9 @@ export async function fetchFinanceOverview(): Promise<FinanceOverviewData> {
             expensesLastMonthRes,
             purchaseBillsRes,
             sixMonthSalesRes,
+            bankExpensesThisMonthRes,
+            bankExpensesLastMonthRes,
+            bankIncomeThisMonthRes,
         ] = await Promise.all([
             // All invoices for stats
             safe(() => supabase
@@ -129,6 +132,37 @@ export async function fetchFinanceOverview(): Promise<FinanceOverviewData> {
                 .select('total_amount, amount_paid, created_at')
                 .gte('created_at', sixMonthsAgo)
                 .then(r => r), { data: [] } as any),
+
+            // Bank-verified expenses this month (salary, rent, utilities etc.)
+            safe(() => supabase
+                .from('bank_transactions')
+                .select('amount, transaction_date')
+                .eq('is_verified', true)
+                .eq('categorization_type', 'expense')
+                .eq('transaction_type', 'outflow')
+                .gte('transaction_date', startOfMonth.split('T')[0])
+                .then(r => r), { data: [] } as any),
+
+            // Bank-verified expenses last month
+            safe(() => supabase
+                .from('bank_transactions')
+                .select('amount, transaction_date')
+                .eq('is_verified', true)
+                .eq('categorization_type', 'expense')
+                .eq('transaction_type', 'outflow')
+                .gte('transaction_date', startOfLastMonth.split('T')[0])
+                .lt('transaction_date', endOfLastMonth.split('T')[0])
+                .then(r => r), { data: [] } as any),
+
+            // Bank-verified income this month
+            safe(() => supabase
+                .from('bank_transactions')
+                .select('amount, transaction_date')
+                .eq('is_verified', true)
+                .eq('categorization_type', 'income')
+                .eq('transaction_type', 'inflow')
+                .gte('transaction_date', startOfMonth.split('T')[0])
+                .then(r => r), { data: [] } as any),
         ]);
 
         const allInvoices = allInvoicesRes.data || [];
@@ -163,9 +197,16 @@ export async function fetchFinanceOverview(): Promise<FinanceOverviewData> {
             }
         }
 
-        // Expenses
-        const expensesThisMonth = (expensesThisMonthRes.data || []).reduce((s: number, e: any) => s + (e.amount || 0), 0);
-        const expensesThisMonthCount = (expensesThisMonthRes.data || []).length;
+        // Expenses — manual + bank-verified
+        const manualExpensesThisMonth = (expensesThisMonthRes.data || []).reduce((s: number, e: any) => s + (e.amount || 0), 0);
+        const manualExpensesCount = (expensesThisMonthRes.data || []).length;
+        const bankExpensesThisMonth = (bankExpensesThisMonthRes.data || []).reduce((s: number, e: any) => s + (e.amount || 0), 0);
+        const bankExpensesCount = (bankExpensesThisMonthRes.data || []).length;
+        const expensesThisMonth = manualExpensesThisMonth + bankExpensesThisMonth;
+        const expensesThisMonthCount = manualExpensesCount + bankExpensesCount;
+
+        // Bank-verified income (for cash received tracking)
+        const bankIncomeThisMonth = (bankIncomeThisMonthRes.data || []).reduce((s: number, e: any) => s + (e.amount || 0), 0);
 
         // Purchase bills
         const pendingBills = purchaseBillsRes.data || [];
@@ -208,9 +249,12 @@ export async function fetchFinanceOverview(): Promise<FinanceOverviewData> {
             invoice_date: inv.invoice_date,
         }));
 
+        // Add bank income to received this month
+        const totalReceivedThisMonth = receivedThisMonth + bankIncomeThisMonth;
+
         return {
             revenueThisMonth,
-            receivedThisMonth,
+            receivedThisMonth: totalReceivedThisMonth,
             expensesThisMonth,
             outstandingTotal,
             revenueLastMonth,
@@ -222,7 +266,7 @@ export async function fetchFinanceOverview(): Promise<FinanceOverviewData> {
                     unpaid: invoiceCounts.pending + invoiceCounts.partial + invoiceCounts.overdue,
                     overdueCount: invoiceCounts.overdue,
                 },
-                payments: { receivedThisMonth },
+                payments: { receivedThisMonth: totalReceivedThisMonth },
                 purchases: { pendingBills: pendingBills.length, billsAmount: pendingBillsAmount },
                 expenses: { thisMonth: expensesThisMonth, count: expensesThisMonthCount },
             },

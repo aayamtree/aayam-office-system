@@ -55,6 +55,7 @@ export interface TransactionCategorization {
     bill_allocations?: BillAllocation[];
     // Direct expense (salary, rent, utilities etc. — no vendor/bill needed)
     payee_name?: string;
+    direct_payee_id?: string;
 }
 
 // =====================================================
@@ -463,6 +464,7 @@ export function useTransactionCategorization() {
                 updateData.client_id = null;
                 updateData.vendor_id = categorization.vendor_id || null;
                 updateData.payee_name = categorization.payee_name || null;
+                updateData.direct_payee_id = categorization.direct_payee_id || null;
             } else {
                 updateData.income_category_id = categorization.income_category_id;
                 updateData.expense_category_id = null;
@@ -623,6 +625,7 @@ export function useTransactionCategorization() {
                     client_id: null,
                     vendor_id: null,
                     payee_name: null,
+                    direct_payee_id: null,
                     is_verified: false,
                     verified_by: null,
                     verified_at: null,
