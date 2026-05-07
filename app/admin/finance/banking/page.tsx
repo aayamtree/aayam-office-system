@@ -278,7 +278,7 @@ export default function BankingPage() {
         } else {
             const cat = expenseCategories.find((c: any) => c.id === txn.expense_category_id);
             const label = cat?.name || 'Payment Made';
-            const entity = txn.vendor_id ? vendorMap[txn.vendor_id] : undefined;
+            const entity = txn.vendor_id ? vendorMap[txn.vendor_id] : (txn.payee_name || undefined);
             return { label, entity, isIncome: false };
         }
     };
