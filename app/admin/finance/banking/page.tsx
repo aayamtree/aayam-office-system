@@ -499,7 +499,7 @@ export default function BankingPage() {
                                                 <EyeOff className="w-3 h-3" /> Ignored
                                             </span>
                                         ) : (
-                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-md text-label">
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-600 rounded-md text-label">
                                                 <AlertTriangle className="w-3 h-3" /> Missing
                                             </span>
                                         )}
