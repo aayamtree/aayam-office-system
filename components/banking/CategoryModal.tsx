@@ -166,6 +166,13 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
     const [suggestionVendorDismissed, setSuggestionVendorDismissed] = useState(false);
     const [showCreateVendorModal, setShowCreateVendorModal] = useState(false);
 
+    // ── Close on ESC key ──
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+        document.addEventListener('keydown', handler);
+        return () => document.removeEventListener('keydown', handler);
+    }, [onClose]);
+
     // ── Pre-fill category on edit mode ──
     useEffect(() => {
         if (!isEditMode) return;
