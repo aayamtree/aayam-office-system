@@ -126,10 +126,10 @@ export default function JobsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState(searchParams.get('status') || 'all');
   const [priorityFilter, setPriorityFilter] = useState('all');
-  const [clientFilter, setClientFilter] = useState('all');
+  const [clientFilter, setClientFilter] = useState(searchParams.get('client') || 'all');
   // Auto-default to list on mobile (< lg), kanban on desktop
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>(() => {
-    if (searchParams.get('status')) return 'list';
+    if (searchParams.get('status') || searchParams.get('client')) return 'list';
     if (typeof window !== 'undefined' && window.innerWidth < 1024) return 'list';
     return 'kanban';
   });

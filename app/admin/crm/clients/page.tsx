@@ -24,7 +24,22 @@ function ClientJobsSection({ clientId }: { clientId: string }) {
   const { jobs } = useJobs();
   const clientJobs = (jobs || []).filter(j => j.client_id === clientId);
   const totalBilled = clientJobs.reduce((s, j) => s + (j.total_amount || 0), 0);
-  const totalReceived = clientJobs.reduce((s, j) => s + (j.amount_received || 0), 0);
+
+  // Fetch real payment totals (bank + cash) instead of jobs.amount_received
+  const [totalReceived, setTotalReceived] = useState(0);
+  useEffect(() => {
+    const fetchPayments = async () => {
+      const [{ data: bankData }, { data: cashData }] = await Promise.all([
+        supabase.from('bank_transactions').select('amount').eq('client_id', clientId).eq('is_verified', true),
+        supabase.from('cash_transactions').select('amount').eq('client_id', clientId).eq('transaction_type', 'in'),
+      ]);
+      const bankTotal = (bankData || []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
+      const cashTotal = (cashData || []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
+      setTotalReceived(bankTotal + cashTotal);
+    };
+    fetchPayments();
+  }, [clientId]);
+
   const outstanding = totalBilled - totalReceived;
 
   const formatCurrency = (n: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
@@ -53,7 +68,9 @@ function ClientJobsSection({ clientId }: { clientId: string }) {
         </div>
         <div className="bg-gray-50 rounded-md p-3 text-center">
           <p className="text-xs text-gray-500">Outstanding</p>
-          <p className={`text-sm font-bold ${outstanding > 0 ? 'text-red-600' : 'text-gray-900'}`}>{formatCurrency(outstanding)}</p>
+          <p className={`text-sm font-bold ${outstanding > 0 ? 'text-red-600' : outstanding < 0 ? 'text-green-700' : 'text-gray-900'}`}>
+            {formatCurrency(Math.abs(outstanding))}{outstanding < 0 ? ' CR' : ''}
+          </p>
         </div>
       </div>
 

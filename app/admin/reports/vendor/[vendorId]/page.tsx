@@ -348,8 +348,11 @@ export default function VendorStatementPage() {
                             <Scale className="w-4 h-4 text-gray-400" />
                             <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Outstanding</span>
                         </div>
-                        <p className={`text-xl font-bold ${outstanding > 0 ? 'text-red-600' : 'text-gray-900'}`}>{fmt(outstanding)}</p>
-                        <p className="text-xs text-gray-400 mt-1">{outstanding > 0 ? 'Payable to vendor' : 'Fully settled'}</p>
+                        <p className={`text-xl font-bold ${outstanding > 0 ? 'text-red-600' : outstanding < 0 ? 'text-green-700' : 'text-gray-900'}`}>
+                            {fmt(Math.abs(outstanding))}
+                            {outstanding < 0 && <span className="text-xs font-normal ml-1">ADV</span>}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">{outstanding > 0 ? 'Payable to vendor' : outstanding < 0 ? 'Advance paid' : 'Fully settled'}</p>
                     </div>
                 </div>
 
@@ -430,9 +433,10 @@ export default function VendorStatementPage() {
                                         <td colSpan={3} className="px-4 py-3 text-sm text-gray-700">Closing Balance</td>
                                         <td className="px-4 py-3 text-right text-sm text-gray-800">{fmt(totalBilled)}</td>
                                         <td className="px-4 py-3 text-right text-sm text-red-700">{fmt(totalPaid)}</td>
-                                        <td className={`px-4 py-3 text-right text-sm ${outstanding > 0 ? 'text-red-600' : 'text-gray-600'}`}>
-                                            {fmt(outstanding)}
-                                            {outstanding <= 0 && <span className="text-xs font-normal ml-1">Settled</span>}
+                                        <td className={`px-4 py-3 text-right text-sm ${outstanding > 0 ? 'text-red-600' : outstanding < 0 ? 'text-green-600' : 'text-gray-600'}`}>
+                                            {fmt(Math.abs(outstanding))}
+                                            {outstanding < 0 && <span className="text-xs font-normal ml-1">ADV</span>}
+                                            {outstanding === 0 && <span className="text-xs font-normal ml-1">Settled</span>}
                                         </td>
                                     </tr>
                                 </tfoot>
