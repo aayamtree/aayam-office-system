@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { toast } from '@/lib/toast';
 import { X, Loader2, UserPlus } from 'lucide-react';
 import { useClients } from '@/lib/hooks';
@@ -25,14 +25,6 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
         address: '',
         brand_name: ''  // e.g. #tiger #cobra
     });
-
-    // ── Close on ESC ──
-    useEffect(() => {
-        if (!isOpen) return;
-        const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-        document.addEventListener('keydown', handler);
-        return () => document.removeEventListener('keydown', handler);
-    }, [isOpen, onClose]);
 
     if (!isOpen) return null;
 

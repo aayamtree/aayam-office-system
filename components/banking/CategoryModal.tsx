@@ -2,9 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from '@/lib/toast';
-import { X, Plus, Loader2, User, Building2, ChevronDown, AlertCircle, CheckCircle2, Sparkles, UserPlus } from 'lucide-react';
-import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
-import VendorQuickAddModal from '@/components/shared/VendorQuickAddModal';
+import { X, Plus, Loader2, User, Building2, ChevronDown, AlertCircle, CheckCircle2 } from 'lucide-react';
 import {
     useExpenseCategories,
     useIncomeCategories,
@@ -14,54 +12,6 @@ import {
     BillAllocation,
 } from '@/lib/categorization-hooks';
 import { supabase } from '@/lib/supabase';
-
-// ── Extract human-readable sender name from NEFT/RTGS/IMPS descriptions ──
-function extractSenderFromDescription(desc: string): string {
-    if (!desc) return '';
-    // Pattern: NEFT CR-BANKCODE-SENDER NAME-REFCODE  or  NEFT DR-...
-    const neft = desc.match(/NEFT\s+(?:CR|DR)-[A-Z0-9]+-(.+?)(?:-[A-Z0-9]{8,}|$)/i);
-    if (neft?.[1]) return neft[1].trim();
-    // Pattern: TPT-BANKCODE-SENDER NAME (RTGS)
-    const tpt = desc.match(/TPT-[A-Z0-9]+-(.+?)(?:-[A-Z0-9]{8,}|$)/i);
-    if (tpt?.[1]) return tpt[1].trim();
-    // Pattern: IMPS-ref-SENDER-ref
-    const imps = desc.match(/IMPS-\d+-(.+?)(?:-\d+|$)/i);
-    if (imps?.[1]) return imps[1].trim();
-    // Pattern: UPI transaction — grab after last /
-    const upi = desc.match(/UPI(?:.*?)\/(.+?)(?:\/|$)/i);
-    if (upi?.[1]) return upi[1].trim();
-    return '';
-}
-
-// ── Fuzzy match extracted name against existing clients ──
-function fuzzyMatchClient(extracted: string, clients: ClientOption[]): ClientOption | null {
-    if (!extracted || extracted.length < 3) return null;
-    const q = extracted.toUpperCase();
-    // 1. Exact company/name match
-    const exact = clients.find(c =>
-        (c.company || '').toUpperCase() === q || c.name.toUpperCase() === q
-    );
-    if (exact) return exact;
-    // 2. One contains the other (handles partial names)
-    return clients.find(c => {
-        const co = (c.company || '').toUpperCase();
-        const nm = c.name.toUpperCase();
-        return (co.length > 3 && (q.includes(co) || co.includes(q))) ||
-               (nm.length > 3 && (q.includes(nm) || nm.includes(q)));
-    }) || null;
-}
-
-// ── Fuzzy match extracted name against existing vendors ──
-function fuzzyMatchVendor(extracted: string, vendors: VendorOption[]): VendorOption | null {
-    if (!extracted || extracted.length < 3) return null;
-    const q = extracted.toUpperCase();
-    const exact = vendors.find(v => v.name.toUpperCase() === q);
-    if (exact) return exact;
-    return vendors.find(v => {
-        const nm = v.name.toUpperCase();
-        return nm.length > 3 && (q.includes(nm) || nm.includes(q));
-    }) || null;
-}
 
 // ── Category names that trigger entity-linking panels ──
 const CLIENT_CATEGORY_NAMES = ['Customer Payment', 'Customer Advance', 'Client Payment', 'Advance Payment'];
@@ -144,12 +94,6 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
     const [loadingInvoices, setLoadingInvoices] = useState(false);
     const [invoiceAllocations, setInvoiceAllocations] = useState<Record<string, string>>({});
 
-    // ── Smart suggestion state (soft — user can always ignore) ──
-    const [suggestedClient, setSuggestedClient] = useState<ClientOption | null>(null);
-    const [parsedSenderName, setParsedSenderName] = useState('');   // extracted from NEFT desc
-    const [suggestionDismissed, setSuggestionDismissed] = useState(false);
-    const [showCreateClientModal, setShowCreateClientModal] = useState(false);
-
     // ── Vendor state (expense side) ──
     const [vendors, setVendors] = useState<VendorOption[]>([]);
     const [vendorSearch, setVendorSearch] = useState('');
@@ -159,19 +103,6 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
     const [pendingBills, setPendingBills] = useState<PendingBill[]>([]);
     const [loadingBills, setLoadingBills] = useState(false);
     const [billAllocations, setBillAllocations] = useState<Record<string, string>>({});
-
-    // ── Smart suggestion state (vendor side — soft, always dismissible) ──
-    const [suggestedVendor, setSuggestedVendor] = useState<VendorOption | null>(null);
-    const [parsedPayeeName, setParsedPayeeName] = useState('');
-    const [suggestionVendorDismissed, setSuggestionVendorDismissed] = useState(false);
-    const [showCreateVendorModal, setShowCreateVendorModal] = useState(false);
-
-    // ── Close on ESC key ──
-    useEffect(() => {
-        const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-        document.addEventListener('keydown', handler);
-        return () => document.removeEventListener('keydown', handler);
-    }, [onClose]);
 
     // ── Pre-fill category on edit mode ──
     useEffect(() => {
@@ -212,15 +143,12 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
     })();
     const parentCategoryName = parentCategories.find(c => c.id === selectedCategory)?.name || '';
 
-    const effectiveLower = effectiveCategoryName.toLowerCase();
-    const parentLower = parentCategoryName.toLowerCase();
-
     const showClientSection = transactionType === 'income' &&
-        (CLIENT_CATEGORY_NAMES.some(n => effectiveLower.includes(n.toLowerCase())) ||
-         CLIENT_CATEGORY_NAMES.some(n => parentLower.includes(n.toLowerCase())));
+        (CLIENT_CATEGORY_NAMES.some(n => effectiveCategoryName.includes(n)) ||
+         CLIENT_CATEGORY_NAMES.some(n => parentCategoryName.includes(n)));
 
     const showVendorSection = transactionType === 'expense' &&
-        VENDOR_CATEGORY_NAMES.some(n => parentLower.includes(n.toLowerCase()) || effectiveLower.includes(n.toLowerCase()));
+        VENDOR_CATEGORY_NAMES.some(n => parentCategoryName.includes(n) || effectiveCategoryName.includes(n));
 
     // Reset subcategory when parent changes
     const [initialLoadDone, setInitialLoadDone] = useState(false);
@@ -236,14 +164,20 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
             .then(({ data }) => setClients(data || []));
     }, [transactionType]);
 
-    // ── Smart suggestion: extract sender name + fuzzy match — never auto-selects ──
+    // ── Auto-detect client from bank description ──
     useEffect(() => {
-        if (!showClientSection || selectedClientId || clients.length === 0 || suggestionDismissed) return;
-        const extracted = extractSenderFromDescription(transaction.description || '');
-        if (extracted) setParsedSenderName(extracted);
-        const matched = fuzzyMatchClient(extracted || transaction.description || '', clients);
-        setSuggestedClient(matched);
-    }, [clients, showClientSection, suggestionDismissed]);
+        if (!showClientSection || selectedClientId || clients.length === 0) return;
+        const desc = (transaction.description || '').toUpperCase();
+        const matched = clients.find(c => {
+            const co = (c.company || '').toUpperCase();
+            const nm = c.name.toUpperCase();
+            return (co.length > 3 && desc.includes(co)) || (nm.length > 3 && desc.includes(nm));
+        });
+        if (matched) {
+            setSelectedClientId(matched.id);
+            setSelectedClientName(matched.company || matched.name);
+        }
+    }, [clients, showClientSection]);
 
     // ── Restore client name on edit ──
     useEffect(() => {
@@ -288,14 +222,16 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
             .then(({ data }) => setVendors(data || []));
     }, [transactionType]);
 
-    // ── Smart suggestion: extract payee name + fuzzy match vendors — never auto-selects ──
+    // ── Auto-detect vendor from bank description ──
     useEffect(() => {
-        if (!showVendorSection || selectedVendorId || vendors.length === 0 || suggestionVendorDismissed) return;
-        const extracted = extractSenderFromDescription(transaction.description || '');
-        if (extracted) setParsedPayeeName(extracted);
-        const matched = fuzzyMatchVendor(extracted || transaction.description || '', vendors);
-        setSuggestedVendor(matched);
-    }, [vendors, showVendorSection, suggestionVendorDismissed]);
+        if (!showVendorSection || selectedVendorId || vendors.length === 0) return;
+        const desc = (transaction.description || '').toUpperCase();
+        const matched = vendors.find(v => v.name.length > 3 && desc.includes(v.name.toUpperCase()));
+        if (matched) {
+            setSelectedVendorId(matched.id);
+            setSelectedVendorName(matched.name);
+        }
+    }, [vendors, showVendorSection]);
 
     // ── Restore vendor name on edit ──
     useEffect(() => {
@@ -354,8 +290,6 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
     const handleClearClient = () => {
         setSelectedClientId(''); setSelectedClientName(''); setClientSearch('');
         setPendingInvoices([]); setInvoiceAllocations({});
-        // Re-show suggestion if there was one
-        setSuggestionDismissed(false);
     };
 
     const handleSelectVendor = (vendor: VendorOption) => {
@@ -367,7 +301,6 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
     const handleClearVendor = () => {
         setSelectedVendorId(''); setSelectedVendorName(''); setVendorSearch('');
         setPendingBills([]); setBillAllocations({});
-        setSuggestionVendorDismissed(false);
     };
 
     const filteredClients = clientSearch.trim()
@@ -452,7 +385,6 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
     };
 
     return (
-        <>
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
 
@@ -561,56 +493,6 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                                 <span className="text-xs text-gray-400">(optional)</span>
                             </div>
 
-                            {/* ── Smart Suggestion Banner (soft — always dismissible) ── */}
-                            {!selectedClientId && !suggestionDismissed && (suggestedClient || parsedSenderName) && (
-                                <div className={`rounded-md border px-3 py-2.5 flex items-start gap-2.5 ${suggestedClient ? 'bg-blue-50 border-blue-200' : 'bg-amber-50 border-amber-200'}`}>
-                                    <Sparkles size={15} className={`mt-0.5 shrink-0 ${suggestedClient ? 'text-blue-500' : 'text-amber-500'}`} />
-                                    <div className="flex-1 min-w-0">
-                                        {suggestedClient ? (
-                                            <>
-                                                <p className="text-xs text-blue-700">
-                                                    Looks like a payment from <span className="font-semibold">{suggestedClient.company || suggestedClient.name}</span>
-                                                </p>
-                                                <div className="flex items-center gap-2 mt-1.5">
-                                                    <button type="button"
-                                                        onClick={() => { handleSelectClient(suggestedClient); setSuggestedClient(null); }}
-                                                        className="text-xs px-2.5 py-1 bg-blue-600 text-white rounded font-medium hover:bg-blue-700">
-                                                        ✓ Yes, link this client
-                                                    </button>
-                                                    <button type="button"
-                                                        onClick={() => { setSuggestionDismissed(true); setSuggestedClient(null); }}
-                                                        className="text-xs px-2.5 py-1 border border-blue-300 text-blue-600 rounded hover:bg-blue-100">
-                                                        Not this one
-                                                    </button>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <p className="text-xs text-amber-700">
-                                                    <span className="font-semibold">{parsedSenderName}</span> not found in your clients
-                                                </p>
-                                                <div className="flex items-center gap-2 mt-1.5">
-                                                    <button type="button"
-                                                        onClick={() => { setSuggestionDismissed(true); setShowCreateClientModal(true); }}
-                                                        className="text-xs px-2.5 py-1 bg-amber-600 text-white rounded font-medium hover:bg-amber-700 flex items-center gap-1">
-                                                        <UserPlus size={11} /> Create New Client
-                                                    </button>
-                                                    <button type="button"
-                                                        onClick={() => { setSuggestionDismissed(true); setSuggestedClient(null); }}
-                                                        className="text-xs px-2.5 py-1 border border-amber-300 text-amber-600 rounded hover:bg-amber-100">
-                                                        Skip / Search manually
-                                                    </button>
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
-                                    <button type="button" onClick={() => { setSuggestionDismissed(true); setSuggestedClient(null); }}
-                                        className="text-gray-400 hover:text-gray-600 shrink-0 mt-0.5">
-                                        <X size={13} />
-                                    </button>
-                                </div>
-                            )}
-
                             {/* Client Picker */}
                             <div className="relative">
                                 {selectedClientId ? (
@@ -638,12 +520,6 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                                                 ))}
                                             </div>
                                         )}
-                                        {/* Create New Client — always accessible at bottom of search */}
-                                        <button type="button"
-                                            onClick={() => setShowCreateClientModal(true)}
-                                            className="mt-2 text-xs text-gray-500 hover:text-primary flex items-center gap-1 font-medium">
-                                            <UserPlus size={12} /> Create New Client
-                                        </button>
                                     </div>
                                 )}
                             </div>
@@ -722,56 +598,6 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                                 <span className="text-xs text-gray-400">(optional)</span>
                             </div>
 
-                            {/* ── Smart Vendor Suggestion Banner (soft — always dismissible) ── */}
-                            {!selectedVendorId && !suggestionVendorDismissed && (suggestedVendor || parsedPayeeName) && (
-                                <div className={`rounded-md border px-3 py-2.5 flex items-start gap-2.5 ${suggestedVendor ? 'bg-orange-50 border-orange-200' : 'bg-amber-50 border-amber-200'}`}>
-                                    <Sparkles size={15} className={`mt-0.5 shrink-0 ${suggestedVendor ? 'text-orange-500' : 'text-amber-500'}`} />
-                                    <div className="flex-1 min-w-0">
-                                        {suggestedVendor ? (
-                                            <>
-                                                <p className="text-xs text-orange-700">
-                                                    Looks like a payment to <span className="font-semibold">{suggestedVendor.name}</span>
-                                                </p>
-                                                <div className="flex items-center gap-2 mt-1.5">
-                                                    <button type="button"
-                                                        onClick={() => { handleSelectVendor(suggestedVendor); setSuggestedVendor(null); }}
-                                                        className="text-xs px-2.5 py-1 bg-orange-600 text-white rounded font-medium hover:bg-orange-700">
-                                                        ✓ Yes, link this vendor
-                                                    </button>
-                                                    <button type="button"
-                                                        onClick={() => { setSuggestionVendorDismissed(true); setSuggestedVendor(null); }}
-                                                        className="text-xs px-2.5 py-1 border border-orange-300 text-orange-600 rounded hover:bg-orange-100">
-                                                        Not this one
-                                                    </button>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <p className="text-xs text-amber-700">
-                                                    <span className="font-semibold">{parsedPayeeName}</span> not found in your vendors
-                                                </p>
-                                                <div className="flex items-center gap-2 mt-1.5">
-                                                    <button type="button"
-                                                        onClick={() => { setSuggestionVendorDismissed(true); setShowCreateVendorModal(true); }}
-                                                        className="text-xs px-2.5 py-1 bg-amber-600 text-white rounded font-medium hover:bg-amber-700 flex items-center gap-1">
-                                                        <UserPlus size={11} /> Create New Vendor
-                                                    </button>
-                                                    <button type="button"
-                                                        onClick={() => { setSuggestionVendorDismissed(true); setSuggestedVendor(null); }}
-                                                        className="text-xs px-2.5 py-1 border border-amber-300 text-amber-600 rounded hover:bg-amber-100">
-                                                        Skip / Search manually
-                                                    </button>
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
-                                    <button type="button" onClick={() => { setSuggestionVendorDismissed(true); setSuggestedVendor(null); }}
-                                        className="text-gray-400 hover:text-gray-600 shrink-0 mt-0.5">
-                                        <X size={13} />
-                                    </button>
-                                </div>
-                            )}
-
                             {/* Vendor Picker */}
                             <div className="relative">
                                 {selectedVendorId ? (
@@ -798,12 +624,6 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                                                 ))}
                                             </div>
                                         )}
-                                        {/* Create New Vendor — always accessible at bottom of search */}
-                                        <button type="button"
-                                            onClick={() => setShowCreateVendorModal(true)}
-                                            className="mt-2 text-xs text-gray-500 hover:text-primary flex items-center gap-1 font-medium">
-                                            <UserPlus size={12} /> Create New Vendor
-                                        </button>
                                     </div>
                                 )}
                             </div>
@@ -938,38 +758,5 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                 </form>
             </div>
         </div>
-
-        {/* Create New Client — opens on top of this modal, auto-selects on success */}
-        <ClientQuickAddModal
-            isOpen={showCreateClientModal}
-            onClose={() => setShowCreateClientModal(false)}
-            onSuccess={(newClientId) => {
-                supabase.from('clients').select('id, name, company').eq('id', newClientId).single()
-                    .then(({ data }) => {
-                        if (data) {
-                            setClients(prev => [data, ...prev]);
-                            setSelectedClientId(data.id);
-                            setSelectedClientName(data.company || data.name);
-                        }
-                    });
-            }}
-        />
-
-        {/* Create New Vendor — opens on top of this modal, auto-selects on success */}
-        <VendorQuickAddModal
-            isOpen={showCreateVendorModal}
-            onClose={() => setShowCreateVendorModal(false)}
-            onSuccess={(newVendorId) => {
-                supabase.from('vendors').select('id, name').eq('id', newVendorId).single()
-                    .then(({ data }) => {
-                        if (data) {
-                            setVendors(prev => [data, ...prev]);
-                            setSelectedVendorId(data.id);
-                            setSelectedVendorName(data.name);
-                        }
-                    });
-            }}
-        />
-        </>
     );
 }

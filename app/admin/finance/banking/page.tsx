@@ -16,6 +16,7 @@ import { CategoryModal } from '@/components/banking/CategoryModal';
 import { useExpenseCategories, useIncomeCategories } from '@/lib/categorization-hooks';
 import { useTransactionCategorization } from '@/lib/categorization-hooks';
 import { useConfirm } from '@/components/ConfirmModal';
+import { supabase } from '@/lib/supabase';
 
 export default function BankingPage() {
     const [selectedAccountId, setSelectedAccountId] = useState('');
@@ -94,6 +95,18 @@ export default function BankingPage() {
     const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
     const { categories: expenseCategories } = useExpenseCategories();
     const { categories: incomeCategories } = useIncomeCategories();
+
+    // ── Vendor + Client name lookup (for badge display) ──
+    const [vendorMap, setVendorMap] = React.useState<Record<string, string>>({});
+    const [clientMap, setClientMap] = React.useState<Record<string, string>>({});
+    React.useEffect(() => {
+        supabase.from('vendors').select('id, name').then(({ data }) => {
+            if (data) setVendorMap(Object.fromEntries(data.map(v => [v.id, v.name])));
+        });
+        supabase.from('clients').select('id, name, company').then(({ data }) => {
+            if (data) setClientMap(Object.fromEntries(data.map(c => [c.id, c.company || c.name])));
+        });
+    }, []);
 
     // Filter State
     const [statusFilter, setStatusFilter] = useState<'all' | 'missing' | 'verified'>('all');
@@ -251,18 +264,23 @@ export default function BankingPage() {
         }
     };
 
-    // Get category name
-    const getCategoryName = (txn: any) => {
+    // Get category badge info — color, label, entity name
+    const getCategoryBadge = (txn: any): { label: string; entity?: string; isIncome: boolean } | null => {
         if (!txn.is_verified) return null;
 
-        if (txn.categorization_type === 'expense' && txn.expense_category_id) {
-            const cat = expenseCategories.find(c => c.id === txn.expense_category_id);
-            return cat?.name || 'Expense';
-        } else if (txn.categorization_type === 'income' && txn.income_category_id) {
-            const cat = incomeCategories.find(c => c.id === txn.income_category_id);
-            return cat?.name || 'Income';
+        const type = txn.categorization_type || (txn.transaction_type === 'inflow' ? 'income' : 'expense');
+
+        if (type === 'income') {
+            const cat = incomeCategories.find((c: any) => c.id === txn.income_category_id);
+            const label = cat?.name || 'Payment Received';
+            const entity = txn.client_id ? clientMap[txn.client_id] : undefined;
+            return { label, entity, isIncome: true };
+        } else {
+            const cat = expenseCategories.find((c: any) => c.id === txn.expense_category_id);
+            const label = cat?.name || 'Payment Made';
+            const entity = txn.vendor_id ? vendorMap[txn.vendor_id] : undefined;
+            return { label, entity, isIncome: false };
         }
-        return null;
     };
 
     // Filter transactions by status
@@ -454,14 +472,23 @@ export default function BankingPage() {
                                     <td className="px-4 py-3 text-center">
                                         {txn.is_verified ? (
                                             <div className="flex flex-col items-center gap-1">
-                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-900 rounded-md text-label">
-                                                    <CheckCircle className="w-3 h-3" /> Verified
-                                                </span>
-                                                {getCategoryName(txn) && (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-900 text-white rounded-md text-xs">
-                                                        <Tag className="w-2.5 h-2.5" /> {getCategoryName(txn)}
-                                                    </span>
-                                                )}
+                                                {(() => {
+                                                    const badge = getCategoryBadge(txn);
+                                                    if (!badge) return null;
+                                                    return (
+                                                        <>
+                                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold ${badge.isIncome ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700'}`}>
+                                                                <Tag className="w-2.5 h-2.5" />
+                                                                {badge.label}
+                                                            </span>
+                                                            {badge.entity && (
+                                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs ${badge.isIncome ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
+                                                                    {badge.entity}
+                                                                </span>
+                                                            )}
+                                                        </>
+                                                    );
+                                                })()}
                                             </div>
                                         ) : txn.status === 'matched' ? (
                                             <span className="inline-flex items-center gap-1 px-2 py-1 bg-muted text-foreground rounded-md text-label">
