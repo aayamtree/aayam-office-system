@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
-import { Package, Layers } from 'lucide-react';
+import { Package, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface PendingJob {
     id: string;
@@ -123,21 +123,46 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                 />
             </div>
 
-            {/* Job Type Filters — always single-line horizontal scroll */}
+            {/* Job Type Filters — single-line with arrow scroll buttons */}
             <div className="px-3 py-2 border-b border-gray-100">
-                <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
-                    {jobTypes.map((type: string) => (
-                        <button
-                            key={type}
-                            onClick={() => setFilter(type)}
-                            className={`px-2.5 py-1 rounded-md text-xs font-medium border whitespace-nowrap flex-shrink-0 transition-all ${filter === type
-                                ? 'bg-gray-900 text-white border-gray-900'
-                                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                                }`}
-                        >
-                            {type}
-                        </button>
-                    ))}
+                <div className="flex items-center gap-1">
+                    {/* Left arrow */}
+                    <button
+                        onClick={() => {
+                            const el = document.getElementById('pill-scroll');
+                            if (el) el.scrollBy({ left: -120, behavior: 'smooth' });
+                        }}
+                        className="shrink-0 p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-all"
+                    >
+                        <ChevronLeft size={16} />
+                    </button>
+
+                    {/* Scrollable pill row */}
+                    <div id="pill-scroll" className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
+                        {jobTypes.map((type: string) => (
+                            <button
+                                key={type}
+                                onClick={() => setFilter(type)}
+                                className={`px-2.5 py-1 rounded-md text-xs font-medium border whitespace-nowrap flex-shrink-0 transition-all ${filter === type
+                                    ? 'bg-gray-900 text-white border-gray-900'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                                    }`}
+                            >
+                                {type}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Right arrow */}
+                    <button
+                        onClick={() => {
+                            const el = document.getElementById('pill-scroll');
+                            if (el) el.scrollBy({ left: 120, behavior: 'smooth' });
+                        }}
+                        className="shrink-0 p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-all"
+                    >
+                        <ChevronRight size={16} />
+                    </button>
                 </div>
             </div>
 
