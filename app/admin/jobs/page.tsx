@@ -44,7 +44,7 @@ import UnifiedJobForm from '@/components/jobs/UnifiedJobForm';
 
 export default function JobsPage() {
   const searchParams = useSearchParams();
-  const { jobs, loading: jobsLoading, createJob, updateJob, deleteJob, updateJobStage } = useJobs();
+  const { jobs, loading: jobsLoading, createJob, updateJob, deleteJob, updateJobStage, refetch: refetchJobs } = useJobs();
   const { clients, createClient } = useClients();
   const { vendors, createVendor } = useVendors();
   const { designers } = useDesigners();
@@ -407,7 +407,7 @@ export default function JobsPage() {
     if (error) {
       toast.error(String('Failed to approve: ' + error.message));
     } else {
-      window.location.reload();
+      refetchJobs();
     }
   };
 
