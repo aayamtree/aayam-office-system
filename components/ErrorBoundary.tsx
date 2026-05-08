@@ -35,8 +35,19 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
     }
 
     componentDidCatch(error: Error, info: React.ErrorInfo) {
-        // In production you could send this to a monitoring service (e.g. Sentry)
         console.error('[GlobalErrorBoundary] Caught error:', error, info);
+
+        // Chunk loading error = new Vercel deploy went live while user had app open.
+        // Auto-reload silently — user just sees fresh page, no scary screen.
+        const isChunkError =
+            error.name === 'ChunkLoadError' ||
+            error.message?.includes('Loading chunk') ||
+            error.message?.includes('Failed to fetch dynamically imported module') ||
+            error.message?.includes('Importing a module script failed');
+
+        if (isChunkError) {
+            window.location.reload();
+        }
     }
 
     handleReset = () => {
@@ -45,6 +56,30 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
 
     render() {
         if (this.state.hasError) {
+            const isChunkError =
+                this.state.error?.name === 'ChunkLoadError' ||
+                this.state.error?.message?.includes('Loading chunk') ||
+                this.state.error?.message?.includes('Failed to fetch dynamically imported module');
+
+            // Chunk error — show "updating" screen briefly before auto-reload kicks in
+            if (isChunkError) {
+                return (
+                    <div className="min-h-[60vh] flex items-center justify-center p-8">
+                        <div className="bg-white border border-blue-100 rounded-lg shadow-sm max-w-md w-full p-8 text-center">
+                            <div className="flex items-center justify-center w-14 h-14 bg-blue-50 rounded-full mx-auto mb-4">
+                                <RefreshCw size={28} className="text-blue-500 animate-spin" />
+                            </div>
+                            <h2 className="text-lg font-bold text-gray-900 mb-2">
+                                New version available
+                            </h2>
+                            <p className="text-sm text-gray-500">
+                                Reloading to get the latest update…
+                            </p>
+                        </div>
+                    </div>
+                );
+            }
+
             return (
                 <div className="min-h-[60vh] flex items-center justify-center p-8">
                     <div className="bg-white border border-red-100 rounded-lg shadow-sm max-w-md w-full p-8 text-center">
