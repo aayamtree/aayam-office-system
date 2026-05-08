@@ -154,7 +154,8 @@ export function useClients() {
 
   const { data, loading, error, refetch } = useSupabaseQuery<Client>('clients', {
     filter,
-    orderBy: { column: 'created_at', ascending: false }
+    orderBy: { column: 'created_at', ascending: false },
+    limit: 200
   });
 
   const createClient = async (client: Omit<Client, 'id' | 'created_at' | 'updated_at' | 'outstanding_balance'>) => {
@@ -219,7 +220,8 @@ export function useClients() {
 // =============================================
 export function useVendors() {
   const { data, loading, error, refetch } = useSupabaseQuery<Vendor>('vendors', {
-    orderBy: { column: 'created_at', ascending: false }
+    orderBy: { column: 'created_at', ascending: false },
+    limit: 200
   });
 
   const createVendor = async (vendor: Omit<Vendor, 'id' | 'created_at' | 'updated_at'> & { outstanding_balance?: number }) => {
@@ -1380,7 +1382,8 @@ export function useQuotations() {
   // (marketing: created_by = me OR lead.assigned_to = me)
   const { data, loading, error, refetch } = useSupabaseQuery<Quotation>('quotations', {
     select: '*, client:clients(*), lead:leads(*), items:quotation_items(*)',
-    orderBy: { column: 'created_at', ascending: false }
+    orderBy: { column: 'created_at', ascending: false },
+    limit: 100
   });
 
   const createQuotation = async (quotation: Omit<Quotation, 'id' | 'created_at' | 'updated_at' | 'quote_number' | 'client' | 'items'>) => {
