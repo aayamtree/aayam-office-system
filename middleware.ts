@@ -23,12 +23,12 @@ export async function middleware(req: NextRequest) {
         }
     )
 
-    // Refresh the session — this keeps auth tokens alive
-    // and writes updated cookies to the response
-    const { data: { session } } = await supabase.auth.getSession()
+    // Verify auth with the server — getUser() validates the JWT server-side,
+    // unlike getSession() which trusts the cookie without verification
+    const { data: { user } } = await supabase.auth.getUser()
 
-    // Protect admin routes — redirect to login if no session
-    if (!session && req.nextUrl.pathname.startsWith('/admin')) {
+    // Protect admin routes — redirect to login if not authenticated
+    if (!user && req.nextUrl.pathname.startsWith('/admin')) {
         return NextResponse.redirect(new URL('/login', req.url))
     }
 
