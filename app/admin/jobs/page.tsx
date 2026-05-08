@@ -12,7 +12,7 @@ import {
   Layers, Printer, ArrowRight, Download, Clock, Copy, Send, Paperclip, Upload
 } from 'lucide-react';
 import {
-  useJobs, useClients, useVendors, useDesigners, usePaymentsReceived
+  useJobs, useClients, useVendors, useDesigners, usePaymentsReceived, autoSetCommissionEligible
 } from '@/lib/hooks';
 import { formatDate } from '@/lib/utils';
 import { exportToCSV, JOB_COLUMNS } from '@/lib/csv-export';
@@ -538,6 +538,10 @@ export default function JobsPage() {
         amount_received: newAmountReceived,
         payment_status: newPaymentStatus
       });
+
+      if (newPaymentStatus === 'paid') {
+        await autoSetCommissionEligible(selectedJob.id);
+      }
 
       setShowPaymentModal(false);
       setSelectedJob(null);
