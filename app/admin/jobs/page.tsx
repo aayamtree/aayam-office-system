@@ -530,16 +530,20 @@ export default function JobsPage() {
         payment_date: new Date().toISOString().split('T')[0] // today
       });
 
-      // 2. Update job aggregate
-      const newAmountReceived = (selectedJob.amount_received || 0) + paymentAmount;
-      const newPaymentStatus = newAmountReceived >= (selectedJob.total_amount || 0) - 1 ? 'paid' : 'partial'; // Tolerance of 1 rupee
-
-      await updateJob(selectedJob.id, {
-        amount_received: newAmountReceived,
-        payment_status: newPaymentStatus
+      // 2. Update job aggregate — atomic DB-side increment (prevents race condition on double-click / concurrent payments)
+      await supabase.rpc('increment_job_amount_received', {
+        job_id: selectedJob.id,
+        increment_by: paymentAmount
       });
 
-      if (newPaymentStatus === 'paid') {
+      // Re-fetch the job to get updated payment_status for commission check
+      const { data: updatedJob } = await supabase
+        .from('jobs')
+        .select('payment_status')
+        .eq('id', selectedJob.id)
+        .single();
+
+      if (updatedJob?.payment_status === 'paid') {
         await autoSetCommissionEligible(selectedJob.id);
       }
 
