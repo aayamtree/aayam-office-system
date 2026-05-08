@@ -41,6 +41,109 @@ import UnifiedJobForm from '@/components/jobs/UnifiedJobForm';
 
 // ✅ ALL DROPDOWNS NOW DATABASE-DRIVEN - NO HARDCODED VALUES!
 
+const formatCurrency = (amount: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount || 0);
+const getPaymentBadge = (status: string) => status === 'paid' ? 'bg-gray-100 text-gray-900' : status === 'partial' ? 'bg-gray-100 text-gray-700' : 'bg-destructive/10 text-destructive';
+const isOverdue = (deadline: string | undefined, stage: string) => deadline && stage !== 'delivered' && new Date(deadline) < new Date();
+
+interface JobCardProps {
+  job: Job;
+  getPriorityBadge: (priority: string) => string;
+  onViewDetail: (job: Job) => void;
+  onEdit: (job: Job) => void;
+  onRepeatOrder: (job: Job) => void;
+  onApproveDesignerProject: (job: Job) => void;
+  onOpenSendToPrinter: (job: Job) => void;
+  onStageChange: (id: string, stage: string) => void;
+  onAddPayment: (job: Job) => void;
+  onDelete: (id: string) => void;
+}
+
+function JobCard({ job, getPriorityBadge, onViewDetail, onEdit, onRepeatOrder, onApproveDesignerProject, onOpenSendToPrinter, onStageChange, onAddPayment, onDelete }: JobCardProps) {
+  const overdue = isOverdue(job.client_deadline, job.current_stage);
+  const headerBg = overdue ? 'bg-red-600' : job.priority === 'urgent' ? 'bg-gray-900' : job.priority === 'high' ? 'bg-gray-800' : 'bg-gray-700';
+  return (
+    <div
+      className="bg-white rounded-md overflow-hidden border border-gray-200 hover:shadow-sm transition-all cursor-pointer"
+      onClick={() => onViewDetail(job)}
+    >
+      {/* Dark header */}
+      <div className={`${headerBg} px-3 py-2 flex items-center justify-between`}>
+        <div className="flex items-center gap-1.5">
+          <Badge className={getPriorityBadge(job.priority || '')} style={{ fontSize: '9px', padding: '1px 5px' }}>
+            {(job.priority || 'normal').toUpperCase()}
+          </Badge>
+          {overdue && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-white/25 text-white">OVERDUE</span>}
+        </div>
+        <Badge variant="default" className="font-mono text-[10px]">{job.job_number}</Badge>
+      </div>
+
+      {/* Body */}
+      <div className="p-3">
+        {job.advance_required !== false && !job.advance_collected && job.current_stage !== 'new' && (
+          <div className="flex items-center gap-1 mb-2 px-2 py-1 bg-amber-50 border border-amber-200 rounded-md">
+            <AlertTriangle className="w-3 h-3 text-amber-600 flex-shrink-0" />
+            <span className="text-xs text-amber-700">No advance</span>
+          </div>
+        )}
+        <h4 className="font-semibold text-gray-900 mb-0.5 line-clamp-2 leading-snug text-sm">{job.project_name}</h4>
+        {(job as any).product_category && (
+          <span className="inline-block text-[10px] font-bold px-2 py-0.5 mb-1.5 rounded-md bg-gray-900 text-white tracking-wide">
+            {(job as any).product_category}
+          </span>
+        )}
+        <div className="flex items-center gap-1.5 mb-2">
+          <Building2 className="w-3.5 h-3.5 text-gray-400" />
+          <p className="text-xs text-gray-500 truncate">{(job.client as any)?.company || job.client?.name || 'No client'}</p>
+        </div>
+        <div className="flex items-center justify-between text-xs border-t border-gray-100 pt-2">
+          <Badge variant="outline" className={getPaymentBadge(job.payment_status)}>
+            {formatCurrency(job.amount_received)} / {formatCurrency(job.total_amount)}
+          </Badge>
+          <div className="flex items-center gap-1.5">
+            {job.files && job.files.length > 0 && (
+              <span className="flex items-center gap-0.5 text-gray-500" title={`${job.files.length} file(s)`}>
+                <Paperclip className="w-3 h-3" />
+                <span className="text-xs font-bold">{job.files.length}</span>
+              </span>
+            )}
+            {job.client_deadline && (
+              <span className={`flex items-center gap-1 font-medium ${overdue ? 'text-red-600' : 'text-gray-400'}`}>
+                <Calendar className="w-3.5 h-3.5" />
+                {formatDate(job.client_deadline)}
+              </span>
+            )}
+          </div>
+        </div>
+        {/* Stage Actions */}
+        <div className="flex items-center justify-end gap-1 mt-2 pt-1.5 border-t border-gray-100">
+          <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onEdit(job); }} title="Edit"><Edit className="w-3.5 h-3.5" /></Button>
+          <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onRepeatOrder(job); }} title="Repeat"><Copy className="w-3.5 h-3.5" /></Button>
+          {job.current_stage === 'awaiting_admin' && (
+            <Button size="sm" onClick={(e) => { e.stopPropagation(); onApproveDesignerProject(job); }} className="bg-green-600 hover:bg-green-700 text-white text-xs gap-1 h-6 px-2">✅ Approve</Button>
+          )}
+          {/* Smart next-stage advance button */}
+          {!['awaiting_admin', 'delivered', 'cancelled'].includes(job.current_stage) && (() => {
+            const next = getNextStage(normalizeJobType(job.job_type), job.current_stage);
+            const label = getAdvanceLabel(normalizeJobType(job.job_type), job.current_stage);
+            if (!next) return null;
+            if (next === 'printing') {
+              return (
+                <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onOpenSendToPrinter(job); }} title={label} className="text-orange-600 hover:text-orange-700"><Send className="w-3.5 h-3.5" /></Button>
+              );
+            }
+            return (
+              <Button size="sm" onClick={(e) => { e.stopPropagation(); onStageChange(job.id, next); }} className="text-[10px] h-6 px-2 bg-gray-800 text-white hover:bg-gray-700" title={label}>
+                <ArrowRight className="w-3 h-3 mr-0.5" />{label.split(' ').slice(1).join(' ')}
+              </Button>
+            );
+          })()}
+          <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onAddPayment(job); }} title="Payment"><IndianRupee className="w-3.5 h-3.5" /></Button>
+          <Button size="icon" variant="destructive" onClick={(e) => { e.stopPropagation(); onDelete(job.id); }} title="Delete"><Trash2 className="w-3.5 h-3.5" /></Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function JobsPage() {
   const searchParams = useSearchParams();
@@ -248,10 +351,7 @@ export default function JobsPage() {
     setExpandedStages(prev => prev.includes(stageId) ? prev.filter(s => s !== stageId) : [...prev, stageId]);
   };
 
-  const formatCurrency = (amount: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount || 0);
   const getPriorityBadge = (priority: string) => priorities.find(p => p.id === priority)?.color || 'bg-gray-100 text-gray-600';
-  const getPaymentBadge = (status: string) => status === 'paid' ? 'bg-gray-100 text-gray-900' : status === 'partial' ? 'bg-gray-100 text-gray-700' : 'bg-destructive/10 text-destructive';
-  const isOverdue = (deadline: string | undefined, stage: string) => deadline && stage !== 'delivered' && new Date(deadline) < new Date();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -556,95 +656,6 @@ export default function JobsPage() {
     );
   }
 
-  // JobCard — dark header bar pattern
-  const JobCard = ({ job }: { job: Job }) => {
-    const overdue = isOverdue(job.client_deadline, job.current_stage);
-    const headerBg = overdue ? 'bg-red-600' : job.priority === 'urgent' ? 'bg-gray-900' : job.priority === 'high' ? 'bg-gray-800' : 'bg-gray-700';
-    return (
-      <div
-        className="bg-white rounded-md overflow-hidden border border-gray-200 hover:shadow-sm transition-all cursor-pointer"
-        onClick={() => handleViewDetail(job)}
-      >
-        {/* Dark header */}
-        <div className={`${headerBg} px-3 py-2 flex items-center justify-between`}>
-          <div className="flex items-center gap-1.5">
-            <Badge className={getPriorityBadge(job.priority || '')} style={{ fontSize: '9px', padding: '1px 5px' }}>
-              {(job.priority || 'normal').toUpperCase()}
-            </Badge>
-            {overdue && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-white/25 text-white">OVERDUE</span>}
-          </div>
-          <Badge variant="default" className="font-mono text-[10px]">{job.job_number}</Badge>
-        </div>
-
-        {/* Body */}
-        <div className="p-3">
-          {job.advance_required !== false && !job.advance_collected && job.current_stage !== 'new' && (
-            <div className="flex items-center gap-1 mb-2 px-2 py-1 bg-amber-50 border border-amber-200 rounded-md">
-              <AlertTriangle className="w-3 h-3 text-amber-600 flex-shrink-0" />
-              <span className="text-xs text-amber-700">No advance</span>
-            </div>
-          )}
-          <h4 className="font-semibold text-gray-900 mb-0.5 line-clamp-2 leading-snug text-sm">{job.project_name}</h4>
-          {(job as any).product_category && (
-            <span className="inline-block text-[10px] font-bold px-2 py-0.5 mb-1.5 rounded-md bg-gray-900 text-white tracking-wide">
-              {(job as any).product_category}
-            </span>
-          )}
-          <div className="flex items-center gap-1.5 mb-2">
-            <Building2 className="w-3.5 h-3.5 text-gray-400" />
-            <p className="text-xs text-gray-500 truncate">{(job.client as any)?.company || job.client?.name || 'No client'}</p>
-          </div>
-          <div className="flex items-center justify-between text-xs border-t border-gray-100 pt-2">
-            <Badge variant="outline" className={getPaymentBadge(job.payment_status)}>
-              {formatCurrency(job.amount_received)} / {formatCurrency(job.total_amount)}
-            </Badge>
-            <div className="flex items-center gap-1.5">
-              {job.files && job.files.length > 0 && (
-                <span className="flex items-center gap-0.5 text-gray-500" title={`${job.files.length} file(s)`}>
-                  <Paperclip className="w-3 h-3" />
-                  <span className="text-xs font-bold">{job.files.length}</span>
-                </span>
-              )}
-              {job.client_deadline && (
-                <span className={`flex items-center gap-1 font-medium ${overdue ? 'text-red-600' : 'text-gray-400'}`}>
-                  <Calendar className="w-3.5 h-3.5" />
-                  {formatDate(job.client_deadline)}
-                </span>
-              )}
-            </div>
-          </div>
-          {/* Stage Actions */}
-          <div className="flex items-center justify-end gap-1 mt-2 pt-1.5 border-t border-gray-100">
-            <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleEdit(job); }} title="Edit"><Edit className="w-3.5 h-3.5" /></Button>
-            <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleRepeatOrder(job); }} title="Repeat"><Copy className="w-3.5 h-3.5" /></Button>
-            {job.current_stage === 'awaiting_admin' && (
-              <Button size="sm" onClick={(e) => { e.stopPropagation(); handleApproveDesignerProject(job); }} className="bg-green-600 hover:bg-green-700 text-white text-xs gap-1 h-6 px-2">✅ Approve</Button>
-            )}
-            {/* Smart next-stage advance button */}
-            {!['awaiting_admin', 'delivered', 'cancelled'].includes(job.current_stage) && (() => {
-              const next = getNextStage(normalizeJobType(job.job_type), job.current_stage);
-              const label = getAdvanceLabel(normalizeJobType(job.job_type), job.current_stage);
-              if (!next) return null;
-              // Use 'Send to Printer' flow for stages that go to printing
-              if (next === 'printing') {
-                return (
-                  <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleOpenSendToPrinter(job); }} title={label} className="text-orange-600 hover:text-orange-700"><Send className="w-3.5 h-3.5" /></Button>
-                );
-              }
-              return (
-                <Button size="sm" onClick={(e) => { e.stopPropagation(); handleStageChange(job.id, next); }} className="text-[10px] h-6 px-2 bg-gray-800 text-white hover:bg-gray-700" title={label}>
-                  <ArrowRight className="w-3 h-3 mr-0.5" />{label.split(' ').slice(1).join(' ')}
-                </Button>
-              );
-            })()}
-            <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleAddPayment(job); }} title="Payment"><IndianRupee className="w-3.5 h-3.5" /></Button>
-            <Button size="icon" variant="destructive" onClick={(e) => { e.stopPropagation(); handleDelete(job.id); }} title="Delete"><Trash2 className="w-3.5 h-3.5" /></Button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-3 md:space-y-6 lg:space-y-8 animate-fade-in px-2 pb-10">
       {/* Header */}
@@ -805,7 +816,21 @@ export default function JobsPage() {
                   {/* Cards List */}
                   <div className="p-3 space-y-3 overflow-y-auto">
                     {stageJobs.length > 0 ? (
-                      stageJobs.map((job: Job) => <JobCard key={job.id} job={job} />)
+                      stageJobs.map((job: Job) => (
+                        <JobCard
+                          key={job.id}
+                          job={job}
+                          getPriorityBadge={getPriorityBadge}
+                          onViewDetail={handleViewDetail}
+                          onEdit={handleEdit}
+                          onRepeatOrder={handleRepeatOrder}
+                          onApproveDesignerProject={handleApproveDesignerProject}
+                          onOpenSendToPrinter={handleOpenSendToPrinter}
+                          onStageChange={handleStageChange}
+                          onAddPayment={handleAddPayment}
+                          onDelete={handleDelete}
+                        />
+                      ))
                     ) : (
                       <div className="text-center py-6 text-gray-300 text-xs italic">
                         Empty
