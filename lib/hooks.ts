@@ -1293,20 +1293,22 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
         });
       }
 
-      const salesPromises = months.map(async (m) => {
-        const end = new Date(m.start.getFullYear(), m.start.getMonth() + 1, 1);
-        const { data } = await supabase
-          .from('jobs')
-          .select('total_amount')
-          .gte('created_at', m.start.toISOString())
-          .lt('created_at', end.toISOString())
-          .neq('current_stage', 'cancelled');
+      // Single query for all 6 months, grouped in JS — avoids 6 round trips
+      const sixMonthsAgo = months[0].start;
+      const { data: salesData } = await supabase
+        .from('jobs')
+        .select('total_amount, created_at')
+        .gte('created_at', sixMonthsAgo.toISOString())
+        .neq('current_stage', 'cancelled');
 
-        const value = (data || []).reduce((sum: number, j: any) => sum + (j.total_amount || 0), 0);
+      salesPerformance = months.map((m) => {
+        const end = new Date(m.start.getFullYear(), m.start.getMonth() + 1, 1).toISOString();
+        const start = m.start.toISOString();
+        const value = (salesData || [])
+          .filter((j: any) => j.created_at >= start && j.created_at < end)
+          .reduce((sum: number, j: any) => sum + (j.total_amount || 0), 0);
         return { month: m.label, value, active: m.active };
       });
-
-      salesPerformance = await Promise.all(salesPromises);
     } catch {
       salesPerformance = [];
     }
