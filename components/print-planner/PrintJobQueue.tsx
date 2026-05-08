@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
-import { Users, Package, Layers } from 'lucide-react';
+import { Package, Layers } from 'lucide-react';
 
 interface PendingJob {
     id: string;
@@ -76,15 +76,6 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
         return matchesFilter && matchesSearch;
     });
 
-    const getUrgencyColor = (urgency?: string) => {
-        switch (urgency) {
-            case 'urgent': return 'bg-gray-900 text-white border-gray-900';
-            case 'high': return 'bg-gray-700 text-white border-gray-700';
-            case 'normal': return 'bg-gray-200 text-gray-700 border-gray-300';
-            default: return 'bg-gray-100 text-gray-700 border-gray-300';
-        }
-    };
-
     const getJobTypeColor = (type: string) => {
         const colors: Record<string, string> = {
             STICKER: 'bg-gray-900 text-white',
@@ -98,12 +89,12 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
         return colors[type] || 'bg-gray-100 text-gray-700';
     };
 
-    const isJobDisabled = (job: PendingJob) => {
-        if (disabledJobIds.has(job.id)) return true;
-        // Enforce same product_category (POUCH/BOX), not job_type (print_only)
-        if (selectedJobType && job.product_category !== selectedJobType) return true;
-        return false;
-    };
+    // "Added" = already in the selected list (show green ✓, button disabled but distinct style)
+    const isAdded = (job: PendingJob) => disabledJobIds.has(job.id);
+    // "Locked" = wrong product_category for the current print run (grayed out)
+    const isLocked = (job: PendingJob) =>
+        !disabledJobIds.has(job.id) && !!selectedJobType && job.product_category !== selectedJobType;
+    const isJobDisabled = (job: PendingJob) => isAdded(job) || isLocked(job);
 
     return (
         <div className="h-full flex flex-col bg-white rounded-md border border-gray-200">
@@ -132,14 +123,14 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                 />
             </div>
 
-            {/* Job Type Filters — horizontal scroll on mobile, wrap on desktop */}
+            {/* Job Type Filters — always single-line horizontal scroll */}
             <div className="px-3 py-2 border-b border-gray-100">
-                <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-0.5 lg:flex-wrap lg:gap-2">
+                <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
                     {jobTypes.map((type: string) => (
                         <button
                             key={type}
                             onClick={() => setFilter(type)}
-                            className={`px-3 py-1.5 rounded-md text-xs font-medium border whitespace-nowrap flex-shrink-0 transition-all ${filter === type
+                            className={`px-2.5 py-1 rounded-md text-xs font-medium border whitespace-nowrap flex-shrink-0 transition-all ${filter === type
                                 ? 'bg-gray-900 text-white border-gray-900'
                                 : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
                                 }`}
@@ -150,8 +141,8 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                 </div>
             </div>
 
-            {/* Jobs List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {/* Jobs List — compact rows, fit many at once */}
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
                 {loading ? (
                     <div className="text-center py-12">
                         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -164,55 +155,56 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                     </div>
                 ) : (
                     filteredJobs.map(job => {
-                        const disabled = isJobDisabled(job);
+                        const added  = isAdded(job);
+                        const locked = isLocked(job);
                         return (
                             <div
                                 key={job.id}
-                                className={`p-4 rounded-md border transition-all ${disabled
-                                    ? 'bg-gray-50 border-gray-200 opacity-50'
-                                    : 'bg-white border-gray-200 hover:border-gray-400'
-                                    }`}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-md border transition-all ${
+                                    added   ? 'bg-green-50 border-green-200' :
+                                    locked  ? 'bg-gray-50 border-gray-100 opacity-40' :
+                                              'bg-white border-gray-200 hover:border-gray-400'
+                                }`}
                             >
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className="font-mono text-sm font-bold text-gray-900">
-                                                {job.job_number}
-                                            </span>
-                                            {job.product_category && (
-                                                <span className={`px-2 py-0.5 rounded-md text-xs font-bold ${getJobTypeColor(job.product_category.toUpperCase())}`}>
-                                                    {job.product_category}
-                                                </span>
-                                            )}
-                                            {job.job_type && (
-                                                <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-500">
-                                                    {job.job_type.replace('_', ' ')}
-                                                </span>
-                                            )}
-                                            {job.urgency && (
-                                                <span className={`px-2 py-0.5 rounded-md text-xs font-bold border ${getUrgencyColor(job.urgency)}`}>
-                                                    {job.urgency.toUpperCase()}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <p className="text-sm font-medium text-gray-900 mb-1">{job.project_name}</p>
-                                        <p className="text-xs text-gray-500">
-                                            {job.client_name}
-                                            {job.quantity && ` • ${job.quantity.toLocaleString()} qty`}
-                                        </p>
-                                    </div>
-                                    <button
-                                        onClick={() => onAddJob(job)}
-                                        disabled={disabled}
-                                        className={`px-4 py-2 rounded-md text-xs font-medium transition-all ${disabled
-                                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                            : 'bg-gray-900 text-white hover:bg-gray-800'
-                                            }`}
-                                        title={disabled && selectedJobType ? `Only ${selectedJobType} jobs can be added` : ''}
-                                    >
-                                        {disabledJobIds.has(job.id) ? 'Added' : 'Add'}
-                                    </button>
+                                {/* Job number */}
+                                <span className="font-mono text-xs font-bold text-gray-900 w-24 shrink-0">
+                                    {job.job_number}
+                                </span>
+
+                                {/* Category badge */}
+                                {job.product_category && (
+                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ${getJobTypeColor(job.product_category.toUpperCase())}`}>
+                                        {job.product_category}
+                                    </span>
+                                )}
+
+                                {/* Urgency dot */}
+                                {job.urgency && job.urgency !== 'normal' && (
+                                    <span className={`w-2 h-2 rounded-full shrink-0 ${job.urgency === 'urgent' ? 'bg-red-500' : job.urgency === 'high' ? 'bg-orange-400' : 'bg-gray-300'}`}
+                                        title={job.urgency} />
+                                )}
+
+                                {/* Name + client — takes remaining space, truncates */}
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-gray-900 truncate leading-tight">{job.project_name}</p>
+                                    <p className="text-[10px] text-gray-400 truncate leading-tight">
+                                        {job.client_name}{job.quantity ? ` · ${job.quantity.toLocaleString()} qty` : ''}
+                                    </p>
                                 </div>
+
+                                {/* Add button — 3 states: added (green ✓) / locked (gray) / available (black) */}
+                                <button
+                                    onClick={() => !added && !locked && onAddJob(job)}
+                                    disabled={locked}
+                                    className={`px-3 py-1 rounded text-xs font-medium shrink-0 transition-all ${
+                                        added  ? 'bg-green-100 text-green-700 cursor-default' :
+                                        locked ? 'bg-gray-100 text-gray-300 cursor-not-allowed' :
+                                                 'bg-gray-900 text-white hover:bg-gray-700'
+                                    }`}
+                                    title={locked && selectedJobType ? `Only ${selectedJobType} jobs can be added` : ''}
+                                >
+                                    {added ? '✓' : 'Add'}
+                                </button>
                             </div>
                         );
                     })
