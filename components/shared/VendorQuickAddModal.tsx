@@ -30,6 +30,14 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
         payment_terms: 'Net 30'
     });
 
+    // ── Close on ESC ──
+    useEffect(() => {
+        if (!isOpen) return;
+        const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+        document.addEventListener('keydown', handler);
+        return () => document.removeEventListener('keydown', handler);
+    }, [isOpen, onClose]);
+
     // Load vendor categories from database
     useEffect(() => {
         const loadCategories = async () => {

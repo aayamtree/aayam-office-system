@@ -75,6 +75,14 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
         forceUpdate();
     }, [forceUpdate]);
 
+    // ── Close on ESC ──
+    useEffect(() => {
+        if (!optionsRef.current) return;
+        const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') handleCancel(); };
+        document.addEventListener('keydown', handler);
+        return () => document.removeEventListener('keydown', handler);
+    });
+
     const handleBackdropDismiss = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
