@@ -12,49 +12,11 @@ import { useJobs } from '@/lib/hooks';
 import { Job, JobStatus } from '@/types/database';
 import { useConfirm } from '@/components/ConfirmModal';
 
-// ─── Type-driven Stage Flows ─────────────────────────────────────────────────
-// Each job type has its own pipeline — Design Only jobs never go to print,
-// Print Only jobs skip design/approval entirely.
-const FLOW_DESIGN_ONLY: JobStatus[] = ['new', 'designing', 'approval', 'delivered'];
-const FLOW_PRINT_ONLY: JobStatus[]  = ['new', 'printing', 'finishing', 'quality_check', 'ready', 'dispatched', 'delivered'];
-const FLOW_DESIGN_PRINT: JobStatus[] = ['new', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready', 'dispatched', 'delivered'];
-
-function getFlowForJob(job: Job): JobStatus[] {
-  if (job.job_type === 'Design Only') return FLOW_DESIGN_ONLY;
-  if (job.job_type === 'Print Only')  return FLOW_PRINT_ONLY;
-  return FLOW_DESIGN_PRINT; // "Design + Print" or unset
-}
-
-/** Human-readable label for the next pipeline action on a card. */
-function getNextLabel(job: Job): string {
-  const flow = getFlowForJob(job);
-  const idx = flow.indexOf(job.current_stage as JobStatus);
-  if (idx === -1 || idx >= flow.length - 1) return '';
-  const next = flow[idx + 1];
-  const labels: Record<string, string> = {
-    designing:    'Start Designing',
-    approval:     'Client Approval',
-    printing:     'Start Printing',
-    finishing:    'Finishing',
-    quality_check:'Quality Check',
-    ready:        'Mark Ready',
-    dispatched:   'Dispatch',
-    delivered:    'Mark Delivered',
-  };
-  return labels[next] || next.replace('_', ' ');
-}
-
-/** Group a job into the correct sidebar section based on its type + stage. */
-function getGroupForJob(job: Job): string {
-  const stage = job.current_stage;
-  if (job.job_type === 'Print Only') {
-    if (['new', 'printing', 'finishing', 'quality_check'].includes(stage)) return 'In Production';
-    if (['ready', 'dispatched'].includes(stage)) return 'Dispatch';
-    return 'Done';
-  }
-  // Design Only and Design+Print use the stageConfig group as-is
-  return stageConfig[stage]?.group || 'Other';
-}
+// ─── Stage Flow ───────────────────────────────────────────────────────────────
+const statusFlow: JobStatus[] = [
+  'new', 'designing', 'approval', 'printing', 'finishing',
+  'quality_check', 'ready', 'dispatched', 'delivered'
+];
 
 // ─── Stage Config ─────────────────────────────────────────────────────────────
 // Colors chosen to be muted/pastel, harmonious with the warm-cream theme.
@@ -311,7 +273,7 @@ export default function JobQueuePage() {
   const grouped: Record<string, Job[]> = {};
   groupOrder.forEach(g => { grouped[g] = []; });
   filteredJobs.forEach(job => {
-    const g = getGroupForJob(job);
+    const g = stageConfig[job.current_stage]?.group || 'Other';
     if (grouped[g]) grouped[g].push(job);
   });
 
@@ -319,10 +281,9 @@ export default function JobQueuePage() {
   const handleView = (job: Job) => { setSelectedJob(job); setShowViewModal(true); };
 
   const handleMoveToNext = async (job: Job) => {
-    const flow = getFlowForJob(job);
-    const idx = flow.indexOf(job.current_stage as JobStatus);
-    if (idx !== -1 && idx < flow.length - 1) {
-      await updateJobStage(job.id, flow[idx + 1]);
+    const idx = statusFlow.indexOf(job.current_stage);
+    if (idx !== -1 && idx < statusFlow.length - 1) {
+      await updateJobStage(job.id, statusFlow[idx + 1]);
     }
   };
 
@@ -537,26 +498,20 @@ export default function JobQueuePage() {
                               <Eye className="w-3 h-3" />
                               View
                             </button>
-                            {job.current_stage !== 'delivered' && job.current_stage !== 'cancelled' && (() => {
-                              const nextLbl = getNextLabel(job);
-                              if (!nextLbl) return null;
-                              const flow = getFlowForJob(job);
-                              const isLast = flow.indexOf(job.current_stage as JobStatus) === flow.length - 2;
-                              return (
-                                <button
-                                  onClick={() => handleMoveToNext(job)}
-                                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-semibold transition-colors ${cfg.actionBg} ${cfg.actionText} ${cfg.actionHover}`}
-                                >
-                                  {job.current_stage === 'new'
-                                    ? <Play className="w-3 h-3" />
-                                    : isLast
-                                      ? <CheckCircle className="w-3 h-3" />
-                                      : <ArrowRight className="w-3 h-3" />
-                                  }
-                                  {nextLbl}
-                                </button>
-                              );
-                            })()}
+                            {job.current_stage !== 'delivered' && job.current_stage !== 'cancelled' && (
+                              <button
+                                onClick={() => handleMoveToNext(job)}
+                                className={`flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-semibold transition-colors ${cfg.actionBg} ${cfg.actionText} ${cfg.actionHover}`}
+                              >
+                                {job.current_stage === 'new'
+                                  ? <Play className="w-3 h-3" />
+                                  : job.current_stage === 'dispatched'
+                                    ? <CheckCircle className="w-3 h-3" />
+                                    : <ArrowRight className="w-3 h-3" />
+                                }
+                                {cfg.nextLabel}
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -753,39 +708,36 @@ export default function JobQueuePage() {
                   </span>
                 </div>
 
-                {/* Pipeline steps — rendered for THIS job's type only */}
+                {/* Pipeline steps */}
                 <div>
                   <p className="text-xs font-medium text-foreground mb-2">Pipeline — click to move</p>
                   <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-hide">
-                    {(() => {
-                      const flow = getFlowForJob(selectedJob);
-                      const currentIdx = flow.indexOf(selectedJob.current_stage as JobStatus);
-                      return flow.map((s, idx) => {
-                        const isCompleted = currentIdx !== -1 && idx <= currentIdx;
-                        const isCurrent = idx === currentIdx;
-                        const sCfg = stageConfig[s];
-                        return (
-                          <button
-                            key={s}
-                            onClick={() => handleStageSelect(s)}
-                            className="flex items-center group focus:outline-none shrink-0"
-                            title={`Move to ${s.replace('_', ' ')}`}
-                          >
-                            <div className={`px-2 py-0.5 rounded text-[9px] font-semibold capitalize whitespace-nowrap transition-all group-hover:scale-105 border ${isCurrent
-                                ? `${sCfg.badgeBg} ${sCfg.badgeText} border-current ring-1 ring-offset-1 ring-current/30`
-                                : isCompleted
-                                  ? `${sCfg.badgeBg} ${sCfg.badgeText} border-current/20 opacity-60`
-                                  : 'bg-muted text-muted-foreground border-border hover:bg-accent'
-                              }`}>
-                              {s.replace('_', ' ')}
-                            </div>
-                            {idx < flow.length - 1 && (
-                              <ArrowRight className={`w-2 h-2 mx-0.5 shrink-0 ${isCompleted ? 'text-muted-foreground' : 'text-muted-foreground/30'}`} />
-                            )}
-                          </button>
-                        );
-                      });
-                    })()}
+                    {statusFlow.map((s, idx) => {
+                      const currentIdx = statusFlow.indexOf(selectedJob.current_stage);
+                      const isCompleted = currentIdx !== -1 && idx <= currentIdx;
+                      const isCurrent = idx === currentIdx;
+                      const sCfg = stageConfig[s];
+                      return (
+                        <button
+                          key={s}
+                          onClick={() => handleStageSelect(s)}
+                          className="flex items-center group focus:outline-none shrink-0"
+                          title={`Move to ${s}`}
+                        >
+                          <div className={`px-2 py-0.5 rounded text-[9px] font-semibold capitalize whitespace-nowrap transition-all group-hover:scale-105 border ${isCurrent
+                              ? `${sCfg.badgeBg} ${sCfg.badgeText} border-current ring-1 ring-offset-1 ring-current/30`
+                              : isCompleted
+                                ? `${sCfg.badgeBg} ${sCfg.badgeText} border-current/20 opacity-60`
+                                : 'bg-muted text-muted-foreground border-border hover:bg-accent'
+                            }`}>
+                            {s.replace('_', ' ')}
+                          </div>
+                          {idx < statusFlow.length - 1 && (
+                            <ArrowRight className={`w-2 h-2 mx-0.5 shrink-0 ${isCompleted ? 'text-muted-foreground' : 'text-muted-foreground/30'}`} />
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aayam Office System - Architecture Blueprint</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: white;
+            padding: 20px 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #1e3a8a;
+            margin: 0;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin: 10px 0 0;
+            font-size: 16px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            background: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab:hover {
+            transform: translateY(-2px);
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin: 0 auto;
+            max-width: 1600px;
+            overflow-x: auto;
+            display: none;
+        }
+
+        .chart-container.active {
+            display: block;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+
+        .controls {
+            background: white;
+            padding: 15px 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin: 20px auto 0;
+            max-width: 1600px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🏗️ Aayam Office System - Architecture Blueprint</h1>
+        <p class="subtitle">System Structure & Component Relationships</p>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="showChart('database')">📊 Database Schema</div>
+        <div class="tab" onclick="showChart('modules')">🧩 Module Architecture</div>
+        <div class="tab" onclick="showChart('hierarchy')">🌳 Data Hierarchy</div>
+    </div>
+
+    <!-- Database Schema -->
+    <div id="database" class="chart-container active">
+        <h2 style="text-align: center; color: #1e3a8a; margin-bottom: 30px;">Database Tables & Relationships</h2>
+        <div class="mermaid">
+            erDiagram
+            CLIENTS ||--o{ LEADS : "has"
+            CLIENTS ||--o{ QUOTATIONS : "receives"
+            CLIENTS ||--o{ ORDERS : "places"
+            CLIENTS ||--o{ INVOICES : "billed"
+            CLIENTS ||--o{ PAYMENTS : "makes"
+
+            LEADS ||--o| QUOTATIONS : "converts to"
+            LEADS ||--o{ FOLLOW_UPS : "tracked by"
+
+            QUOTATIONS ||--o| ORDERS : "becomes"
+
+            ORDERS ||--o{ JOBS : "creates"
+            ORDERS ||--o{ INVOICES : "generates"
+
+            JOBS ||--o| DESIGN_TASKS : "requires"
+            JOBS ||--o{ JOB_CHECKLISTS : "uses"
+            JOBS ||--o| DISPATCH : "delivered as"
+
+            DESIGN_TASKS ||--o{ DESIGN_FILES : "contains"
+            DESIGN_TASKS ||--o{ DESIGN_NOTES : "has"
+
+            PROFILES ||--o{ JOBS : "assigned to"
+            PROFILES ||--o{ DESIGN_TASKS : "works on"
+            PROFILES ||--o{ LEADS : "manages"
+
+            DISPATCH ||--o| CHALLAN : "generates"
+
+            INVOICES ||--o{ PAYMENTS : "settled by"
+
+            CLIENTS {
+            uuid id PK
+            string company_name
+            string contact_person
+            string phone
+            string email
+            string address
+            string gst_number
+            decimal credit_limit
+            }
+
+            LEADS {
+            uuid id PK
+            uuid client_id FK
+            string source
+            text requirement
+            string status
+            timestamp created_at
+            }
+
+            QUOTATIONS {
+            uuid id PK
+            uuid client_id FK
+            uuid lead_id FK
+            jsonb items
+            decimal total_amount
+            date valid_until
+            string status
+            }
+
+            ORDERS {
+            uuid id PK
+            uuid client_id FK
+            uuid quotation_id FK
+            jsonb items
+            decimal total_amount
+            string status
+            date order_date
+            }
+
+            JOBS {
+            uuid id PK
+            uuid order_id FK
+            string job_type
+            string job_number
+            uuid assigned_designer FK
+            date deadline
+            string status
+            jsonb checklist_progress
+            jsonb dispatch_checklist_progress
+            string qc_status
+            }
+
+            DESIGN_TASKS {
+            uuid id PK
+            uuid job_id FK
+            uuid designer_id FK
+            string status
+            jsonb files
+            text notes
+            }
+
+            JOB_CHECKLISTS {
+            uuid id PK
+            string job_type
+            string category
+            jsonb items
+            }
+
+            DISPATCH {
+            uuid id PK
+            uuid job_id FK
+            date dispatch_date
+            string delivery_method
+            string driver_name
+            string tracking_number
+            string status
+            }
+
+            INVOICES {
+            uuid id PK
+            uuid order_id FK
+            uuid client_id FK
+            string invoice_number
+            jsonb items
+            decimal total_amount
+            date due_date
+            string status
+            }
+
+            PAYMENTS {
+            uuid id PK
+            uuid invoice_id FK
+            uuid client_id FK
+            decimal amount
+            string payment_mode
+            string reference
+            date payment_date
+            }
+
+            PROFILES {
+            uuid id PK
+            string email
+            string full_name
+            string role
+            boolean is_active
+            }
+        </div>
+    </div>
+
+    <!-- Module Architecture -->
+    <div id="modules" class="chart-container">
+        <h2 style="text-align: center; color: #1e3a8a; margin-bottom: 30px;">System Modules & Components</h2>
+        <div class="mermaid">
+            graph TB
+            subgraph FRONTEND["🖥️ FRONTEND (Next.js 14)"]
+            AUTH[🔐 Authentication<br />Speed Login / Supabase Auth]
+
+            subgraph MARKETING["📢 MARKETING MODULE"]
+            LEADS[Leads Management]
+            FOLLOWUPS[Follow-ups Tracker]
+            QUOTES[Quotation Builder]
+            end
+
+            subgraph SALES["💰 SALES & FINANCE MODULE"]
+            ORDERS[Orders Management]
+            INVOICES[Invoice Generator]
+            PAYMENTS[Payment Recording]
+            BANKING[Banking & Reports]
+            end
+
+            subgraph PRODUCTION["⚙️ PRODUCTION MODULE"]
+            JOBS[Jobs Overview]
+            PLANNER[Print Planner]
+            QUEUE[Production Queue]
+            end
+
+            subgraph DESIGN["🎨 DESIGN STUDIO"]
+            BOARD[Kanban Board]
+            TASKS[Task Management]
+            FILES[File Upload]
+            NOTES[Designer Notes]
+            end
+
+            subgraph DISPATCH_MOD["🚚 DISPATCH MODULE"]
+            DISPATCH_DASH[Dispatch Dashboard]
+            QC_CHECK[QC Checklists]
+            CHALLAN[Challan Generator]
+            end
+
+            subgraph CRM["👥 CRM MODULE"]
+            CLIENTS[Client Database]
+            HISTORY[Order History]
+            end
+
+            subgraph SETTINGS["⚙️ SETTINGS MODULE"]
+            PROD_SETTINGS[Production Settings]
+            CHECKLIST_MGMT[Checklist Templates]
+            USER_MGMT[User Management]
+            end
+            end
+
+            subgraph BACKEND["💾 BACKEND (Supabase)"]
+            DATABASE[(PostgreSQL Database)]
+            STORAGE[File Storage]
+            AUTH_SERVICE[Auth Service]
+            RLS[Row Level Security]
+            end
+
+            AUTH --> AUTH_SERVICE
+
+            MARKETING --> DATABASE
+            SALES --> DATABASE
+            PRODUCTION --> DATABASE
+            DESIGN --> DATABASE
+            DISPATCH_MOD --> DATABASE
+            CRM --> DATABASE
+            SETTINGS --> DATABASE
+
+            FILES --> STORAGE
+
+            DATABASE --> RLS
+            RLS --> AUTH_SERVICE
+
+            style FRONTEND fill:#dbeafe,stroke:#2563eb,stroke-width:2px
+            style BACKEND fill:#fef3c7,stroke:#d97706,stroke-width:2px
+            style MARKETING fill:#fae8ff,stroke:#d946ef
+            style SALES fill:#dcfce7,stroke:#16a34a
+            style PRODUCTION fill:#e0e7ff,stroke:#4f46e5
+            style DESIGN fill:#fecaca,stroke:#dc2626
+            style DISPATCH_MOD fill:#ccfbf1,stroke:#0d9488
+            style CRM fill:#fed7aa,stroke:#ea580c
+            style SETTINGS fill:#e5e7eb,stroke:#6b7280
+        </div>
+    </div>
+
+    <!-- Data Hierarchy -->
+    <div id="hierarchy" class="chart-container">
+        <h2 style="text-align: center; color: #1e3a8a; margin-bottom: 30px;">Data Hierarchy & Relationships</h2>
+        <div class="mermaid">
+            graph TD
+            ROOT[🏢 AAYAM OFFICE SYSTEM]
+
+            ROOT --> CLIENTS_ROOT[👥 CLIENTS]
+            ROOT --> USERS_ROOT[👤 USERS/PROFILES]
+
+            CLIENTS_ROOT --> LEAD[📢 Lead<br />Inquiry Stage]
+            LEAD --> FOLLOWUP[📅 Follow-ups<br />Scheduled Calls]
+            LEAD --> QUOTE[📄 Quotation<br />Price Estimate]
+
+            QUOTE --> ORDER[🛒 Sales Order<br />Confirmed Business]
+
+            ORDER --> JOB1[⚙️ Job 1<br />Box - 1000 pcs]
+            ORDER --> JOB2[⚙️ Job 2<br />Label - 500 pcs]
+            ORDER --> INVOICE[💰 Invoice<br />Bill]
+
+            JOB1 --> DESIGN1[🎨 Design Task<br />Creative Work]
+            JOB2 --> DESIGN2[🎨 Design Task<br />Creative Work]
+
+            DESIGN1 --> FILES1[☁️ Design Files<br />AI, PDF, Images]
+            DESIGN1 --> NOTES1[📝 Design Notes<br />Client Feedback]
+            DESIGN1 --> CHECKLIST1[✅ Design QC<br />Pre-Print Check]
+
+            JOB1 --> PROD1[🖨️ Production<br />Printing, Finishing]
+            JOB2 --> PROD2[🖨️ Production<br />Printing, Finishing]
+
+            PROD1 --> DISPATCH_QC1[✅ Dispatch QC<br />Quality Check]
+            PROD2 --> DISPATCH_QC2[✅ Dispatch QC<br />Quality Check]
+
+            DISPATCH_QC1 --> DISPATCH1[🚚 Dispatch<br />Delivery]
+            DISPATCH_QC2 --> DISPATCH2[🚚 Dispatch<br />Delivery]
+
+            DISPATCH1 --> CHALLAN1[📋 Challan<br />Delivery Note]
+
+            INVOICE --> PAYMENT1[💵 Payment 1<br />Partial]
+            INVOICE --> PAYMENT2[💵 Payment 2<br />Final]
+
+            USERS_ROOT --> ADMIN[👔 Admin]
+            USERS_ROOT --> DESIGNER[🎨 Designer]
+            USERS_ROOT --> MARKETING[📢 Marketing]
+            USERS_ROOT --> DISPATCH_USER[🚚 Dispatch]
+
+            ADMIN -.->|Creates| ORDER
+            ADMIN -.->|Assigns| JOB1
+            DESIGNER -.->|Works on| DESIGN1
+            MARKETING -.->|Manages| LEAD
+            DISPATCH_USER -.->|Handles| DISPATCH1
+
+            style ROOT fill:#1e3a8a,stroke:#fff,stroke-width:3px,color:#fff
+            style CLIENTS_ROOT fill:#3b82f6,stroke:#fff,color:#fff
+            style USERS_ROOT fill:#3b82f6,stroke:#fff,color:#fff
+            style ORDER fill:#dcfce7,stroke:#16a34a,stroke-width:3px
+            style JOB1 fill:#fef3c7,stroke:#d97706,stroke-width:2px
+            style JOB2 fill:#fef3c7,stroke:#d97706,stroke-width:2px
+            style DESIGN1 fill:#fae8ff,stroke:#d946ef
+            style DESIGN2 fill:#fae8ff,stroke:#d946ef
+            style INVOICE fill:#ecfccb,stroke:#65a30d,stroke-width:2px
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="window.print()">🖨️ Print / Save as PDF</button>
+        <button onclick="downloadSVG()">⬇️ Download Current View</button>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+
+        function showChart(chartId) {
+            // Hide all charts
+            document.querySelectorAll('.chart-container').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+
+            // Show selected chart
+            document.getElementById(chartId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function downloadSVG() {
+            const activeChart = document.querySelector('.chart-container.active .mermaid svg');
+            const svgData = new XMLSerializer().serializeToString(activeChart);
+            const blob = new Blob([svgData], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'aayam-system-blueprint.svg';
+            link.click();
+        }
+    </script>
+</body>
+
+</html>
