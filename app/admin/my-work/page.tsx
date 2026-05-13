@@ -780,6 +780,10 @@ export default function MyWorkPage() {
   const router = useRouter();
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
+  // Hooks must be defined before any early return
+  const handleJobClick = useCallback((id: string) => setSelectedJobId(id), []);
+  const handleClose    = useCallback(() => setSelectedJobId(null), []);
+
   useEffect(() => {
     if (!authLoading && !profile) router.push('/login');
   }, [profile, authLoading, router]);
@@ -801,9 +805,6 @@ export default function MyWorkPage() {
     if (h < 17) return 'Good afternoon';
     return 'Good evening';
   })();
-
-  const handleJobClick = useCallback((id: string) => setSelectedJobId(id), []);
-  const handleClose    = useCallback(() => setSelectedJobId(null), []);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
