@@ -31,12 +31,10 @@ interface FullJob extends MyJob {
   payment_status?: string | null;
   notes?: string | null;
   order_date?: string | null;
-  approval_status?: string | null;
+  client_approval?: boolean | null;
   approval_date?: string | null;
-  approval_remark?: string | null;
   print_ready?: boolean | null;
   qc_status?: string | null;
-  actual_quantity?: number | null;
   completed_date?: string | null;
   hold_reason?: string | null;
   is_on_hold?: boolean | null;
@@ -123,8 +121,8 @@ function JobDetailModal({ jobId, onClose }: { jobId: string; onClose: () => void
           .select(`
             id, job_number, project_name, client_deadline, priority, current_stage,
             job_type, quantity, total_amount, amount_received, payment_status,
-            notes, order_date, approval_status, approval_date, approval_remark,
-            print_ready, qc_status, actual_quantity, completed_date,
+            notes, order_date, client_approval, approval_date,
+            print_ready, qc_status, completed_date,
             hold_reason, is_on_hold, file_version,
             client:clients!client_id(name, company, phone),
             designer:profiles!designer_id(full_name),
@@ -294,9 +292,9 @@ function JobDetailModal({ jobId, onClose }: { jobId: string; onClose: () => void
                 )}
                 {job.current_stage === 'approval' && (
                   <>
-                    <InfoRow label="Approval Status" value={job.approval_status?.replace('_', ' ') || 'pending'} />
+                    <InfoRow label="Approval Status" value={job.client_approval ? 'Approved ✅' : 'Pending'} />
                     {(job.designer as any)?.full_name && <InfoRow label="Designer" value={(job.designer as any).full_name} />}
-                    {job.approval_remark && <InfoRow label="Client Remark" value={`"${job.approval_remark}"`} />}
+                    {job.approval_date && <InfoRow label="Approval Date" value={new Date(job.approval_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} />}
                   </>
                 )}
                 {job.current_stage === 'printing' && (
