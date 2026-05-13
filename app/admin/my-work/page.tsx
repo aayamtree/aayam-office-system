@@ -43,7 +43,6 @@ interface FullJob extends MyJob {
   file_version?: string | null;
   designer?: { full_name?: string } | any | null;
   vendor?: { name?: string; phone?: string } | any | null;
-  sales_person?: { full_name?: string } | any | null;
 }
 
 interface MySubtask {
@@ -111,11 +110,15 @@ const PRIORITY_DOT: Record<string, string> = {
 function JobDetailModal({ jobId, onClose }: { jobId: string; onClose: () => void }) {
   const [job, setJob]       = useState<FullJob | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError]   = useState(false);
 
   useEffect(() => {
+    setJob(null);
+    setLoading(true);
+    setError(false);
     (async () => {
       try {
-        const { data } = await supabase
+        const { data, error: err } = await supabase
           .from('jobs')
           .select(`
             id, job_number, project_name, client_deadline, priority, current_stage,
@@ -125,12 +128,13 @@ function JobDetailModal({ jobId, onClose }: { jobId: string; onClose: () => void
             hold_reason, is_on_hold, file_version,
             client:clients!client_id(name, company, phone),
             designer:profiles!designer_id(full_name),
-            vendor:vendors!vendor_id(name, phone),
-            sales_person:profiles!sales_person_id(full_name)
+            vendor:vendors!vendor_id(name, phone)
           `)
           .eq('id', jobId)
           .single();
-        setJob(data as any);
+        if (err || !data) { setError(true); } else { setJob(data as any); }
+      } catch {
+        setError(true);
       } finally {
         setLoading(false);
       }
@@ -162,9 +166,15 @@ function JobDetailModal({ jobId, onClose }: { jobId: string; onClose: () => void
         className="bg-white w-full sm:max-w-lg rounded-t-2xl sm:rounded-xl max-h-[92vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
         onClick={e => e.stopPropagation()}
       >
-        {loading || !job ? (
+        {loading ? (
           <div className="flex justify-center items-center h-48">
             <Loader2 className="animate-spin text-gray-400 w-8 h-8" />
+          </div>
+        ) : error || !job ? (
+          <div className="flex flex-col items-center justify-center h-48 gap-3 text-gray-400">
+            <AlertTriangle className="w-8 h-8 text-red-300" />
+            <p className="text-sm">Could not load job details.</p>
+            <button onClick={onClose} className="text-xs underline text-gray-400">Close</button>
           </div>
         ) : (
           <>
@@ -271,7 +281,7 @@ function JobDetailModal({ jobId, onClose }: { jobId: string; onClose: () => void
                 {job.current_stage === 'new' && (
                   <>
                     {job.order_date && <InfoRow label="Order Date" value={new Date(job.order_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} />}
-                    {job.sales_person && <InfoRow label="Sales Person" value={(job.sales_person as any)?.full_name || '—'} />}
+                    {/* sales_person_id has no FK constraint – omitted */}
                     {job.notes && <InfoRow label="Notes" value={job.notes} />}
                   </>
                 )}
