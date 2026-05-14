@@ -381,7 +381,7 @@ export default function LabelCheckPage() {
                 <h3 className="text-sm font-bold text-blue-800">New Data Found — Not in Database</h3>
               </div>
               <p className="text-xs text-blue-700">
-                The scan found the following data in this label that isn't currently stored in our database.
+                The scan found the following data in this label that isn&apos;t currently stored in our database.
                 Confirm each one to add it, or ignore to skip.
               </p>
               <div className="space-y-3">
