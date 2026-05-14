@@ -310,13 +310,11 @@ function JobDetailModal({ jobId, onClose }: { jobId: string; onClose: () => void
                   <>
                     {job.qc_status && <InfoRow label="QC Status" value={job.qc_status} />}
                     {(job.vendor as any)?.name && <InfoRow label="Printed by" value={(job.vendor as any).name} />}
-                    {job.actual_quantity && <InfoRow label="Actual Qty" value={job.actual_quantity.toLocaleString()} />}
                   </>
                 )}
                 {job.current_stage === 'ready' && (
                   <>
                     <p className="text-green-700 font-medium text-xs">✅ Ready for dispatch</p>
-                    {job.actual_quantity && <InfoRow label="Final Qty" value={job.actual_quantity.toLocaleString()} />}
                   </>
                 )}
                 {job.current_stage === 'dispatched' && (
@@ -786,11 +784,11 @@ function SubtaskRow({ subtask, onDone }: { subtask: MySubtask; onDone: (id: stri
 export default function MyWorkPage() {
   const { profile, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
-  // Hooks must be defined before any early return
-  const handleJobClick = useCallback((id: string) => setSelectedJobId(id), []);
-  const handleClose    = useCallback(() => setSelectedJobId(null), []);
+  // Navigate to the designer task detail panel instead of a modal
+  const handleJobClick = useCallback((id: string) => {
+    router.push(`/admin/designers/tasks?task=${id}`);
+  }, [router]);
 
   useEffect(() => {
     if (!authLoading && !profile) router.push('/login');
@@ -834,11 +832,6 @@ export default function MyWorkPage() {
       {/* Fallback for unknown roles */}
       {!['designer', 'admin', 'marketing', 'dispatch'].includes(role || '') && (
         <AdminWork onJobClick={handleJobClick} />
-      )}
-
-      {/* Inline Job Detail Modal */}
-      {selectedJobId && (
-        <JobDetailModal jobId={selectedJobId} onClose={handleClose} />
       )}
     </div>
   );

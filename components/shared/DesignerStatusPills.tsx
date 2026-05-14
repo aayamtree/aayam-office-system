@@ -178,6 +178,42 @@ export function DesignerStatusPills({
 
   return (
     <div className="space-y-2">
+
+      {/* ── Status Banner — prominent indicator of current status ── */}
+      {!isCompact && (() => {
+        const cfg = DESIGNER_STATUSES.find(s => s.status === currentStatus);
+        const bannerStyles: Record<string, { bg: string; border: string; text: string; sub: string; dot: string; desc: string }> = {
+          live:     { bg: 'bg-green-50',  border: 'border-green-300',  text: 'text-green-800',  sub: 'text-green-600',  dot: 'bg-green-500 animate-pulse', desc: 'Actively being worked on' },
+          hold:     { bg: 'bg-orange-50', border: 'border-orange-300', text: 'text-orange-800', sub: 'text-orange-600', dot: 'bg-orange-500', desc: 'Work paused / waiting' },
+          review:   { bg: 'bg-blue-50',   border: 'border-blue-300',   text: 'text-blue-800',   sub: 'text-blue-600',   dot: 'bg-blue-500', desc: 'Sent for client or internal review' },
+          end:      { bg: 'bg-emerald-50',border: 'border-emerald-300',text: 'text-emerald-800',sub: 'text-emerald-600',dot: 'bg-emerald-500', desc: 'Work complete — ready to hand off' },
+          transfer: { bg: 'bg-purple-50', border: 'border-purple-300', text: 'text-purple-800', sub: 'text-purple-600', dot: 'bg-purple-500', desc: 'Transferred to another designer' },
+        };
+        if (cfg && bannerStyles[cfg.status]) {
+          const b = bannerStyles[cfg.status];
+          const Icon = cfg.icon;
+          return (
+            <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border-2 ${b.bg} ${b.border}`}>
+              <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${b.dot}`} />
+              <Icon size={16} className={b.text} />
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-bold uppercase tracking-wide ${b.text}`}>{cfg.label}</p>
+                <p className={`text-[11px] ${b.sub}`}>{b.desc}</p>
+              </div>
+            </div>
+          );
+        }
+        return (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50">
+            <span className="w-2.5 h-2.5 rounded-full bg-gray-300 shrink-0" />
+            <div>
+              <p className="text-sm font-bold text-gray-500">NO STATUS SET</p>
+              <p className="text-[11px] text-gray-400">Set the current task status below</p>
+            </div>
+          </div>
+        );
+      })()}
+
       <div className={`flex flex-wrap gap-2 ${isCompact ? '' : 'p-3 bg-gray-50 rounded-md border border-gray-200'}`}>
         {!isCompact && (
           <span className="text-xs font-semibold text-gray-500 self-center mr-1">Task Status:</span>

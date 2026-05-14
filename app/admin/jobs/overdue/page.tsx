@@ -476,7 +476,7 @@ export default function OverduePage() {
 
                     <div className="flex justify-end">
                       <button
-                        onClick={() => router.push(`/admin/jobs/${job.id}`)}
+                        onClick={() => router.push(`/admin/designers/tasks?task=${job.id}`)}
                         className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
                         title="Open job"
                       >
