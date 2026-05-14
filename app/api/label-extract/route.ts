@@ -139,7 +139,9 @@ Rules:
       }],
     });
 
-    const rawJson = (response.content[0] as { type: string; text: string }).text.trim();
+    let rawJson = (response.content[0] as { type: string; text: string }).text.trim();
+    // Strip markdown code fences if Claude wrapped the JSON in ```json ... ```
+    rawJson = rawJson.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '');
     const extracted = JSON.parse(rawJson);
 
     return NextResponse.json({ extracted, extract_type });
