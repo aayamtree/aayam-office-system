@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
+import { normalizeJobType, getStageName, getStageColor } from '@/lib/job-workflow';
 
 // ─── Types ───────────────────────────────────────────────────
 interface JobDetail {
@@ -66,22 +67,7 @@ interface ActivityLog {
     profiles?: { full_name?: string; role?: string };
 }
 
-// ─── Status helpers ──────────────────────────────────────────
-const stageLabel: Record<string, string> = {
-    new: 'New', awaiting_admin: 'Pending Approval', designing: 'Designing',
-    approval: 'Client Approval', printing: 'Printing', finishing: 'Finishing',
-    quality_check: 'Quality Check', ready: 'Ready', packed: 'Packed',
-    dispatched: 'Dispatched', completed: 'Completed', cancelled: 'Cancelled',
-};
-
-const stageColor: Record<string, string> = {
-    new: 'bg-blue-100 text-blue-700', awaiting_admin: 'bg-orange-100 text-orange-700',
-    designing: 'bg-violet-100 text-violet-700', approval: 'bg-amber-100 text-amber-700',
-    printing: 'bg-gray-800 text-white', finishing: 'bg-cyan-100 text-cyan-700',
-    quality_check: 'bg-indigo-100 text-indigo-700', ready: 'bg-green-100 text-green-700',
-    packed: 'bg-teal-100 text-teal-700', dispatched: 'bg-gray-100 text-gray-700',
-    completed: 'bg-emerald-100 text-emerald-700', cancelled: 'bg-red-100 text-red-700',
-};
+// Stage helpers now come from job-workflow.ts (getStageName / getStageColor)
 
 export default function JobDetailPage() {
     const params = useParams();
@@ -186,8 +172,10 @@ export default function JobDetailPage() {
         setTimeout(() => setSaved(false), 3000);
         setUploading(false);
 
-        // Notify dispatch that invoice is ready
-        if (invoiceRef) {
+        // Notify dispatch — only for print jobs (design-only has no physical dispatch)
+        const jobTypeKey = normalizeJobType(job.job_type);
+        const jobIsPrint = jobTypeKey === 'print_only' || jobTypeKey === 'design_print';
+        if (invoiceRef && jobIsPrint) {
             try {
                 await supabase.from('broadcast_notifications').insert({
                     message: `✅ Invoice ready for ${job.job_number}\nInvoice: ${invoiceRef}${ewayBillNo ? `\nE-Way Bill: ${ewayBillNo}` : ''}\nJob is ready for dispatch!`,
@@ -270,6 +258,11 @@ export default function JobDetailPage() {
     const profit = (job.total_amount || 0) - totalExpense;
     const formatCurrency = (n: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 
+    // ─── Job type helpers ─────────────────────────────────────
+    const jobTypeNorm = normalizeJobType(job.job_type);
+    const isDesignOnly = jobTypeNorm === 'design_only';
+    const isPrintJob = jobTypeNorm === 'print_only' || jobTypeNorm === 'design_print';
+
     return (
         <div className="max-w-4xl space-y-4 animate-fade-in pb-12">
             {/* Header */}
@@ -280,8 +273,8 @@ export default function JobDetailPage() {
                 <div className="flex-1">
                     <div className="flex items-center gap-3 flex-wrap">
                         <h1 className="text-xl lg:text-page-title text-gray-900 font-bold">{job.job_number}</h1>
-                        <span className={`px-2.5 py-1 text-xs rounded-md font-medium ${stageColor[job.current_stage] || 'bg-gray-100 text-gray-700'}`}>
-                            {stageLabel[job.current_stage] || job.current_stage}
+                        <span className={`px-2.5 py-1 text-xs rounded-md font-medium ${getStageColor(job.current_stage)}`}>
+                            {getStageName(job.current_stage)}
                         </span>
                         {job.priority && job.priority !== 'normal' && (
                             <span className="px-2 py-0.5 text-xs rounded-md bg-red-100 text-red-700 font-medium">{job.priority}</span>
@@ -326,8 +319,85 @@ export default function JobDetailPage() {
                 </div>
             </div>
 
-            {/* Packing Details (from QC) */}
-            {job.packing_info && (
+            {/* Invoice Section — always shown */}
+            {/* E-Way Bill only for print jobs (physical dispatch) — Design Only doesn't need it */}
+            <div className={`border rounded-md p-4 ${hasInvoice ? 'bg-white border-green-200' : 'bg-amber-50 border-amber-200'}`}>
+                <h3 className={`text-sm font-semibold flex items-center gap-2 mb-3 ${hasInvoice ? 'text-green-900' : 'text-amber-900'}`}>
+                    <FileText className="w-4 h-4" />
+                    {isDesignOnly ? 'Invoice' : 'Invoice & E-Way Bill'}
+                    {hasInvoice && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-md">✓ Added</span>}
+                    {!hasInvoice && <span className="text-xs bg-amber-200 text-amber-800 px-2 py-0.5 rounded-md">Pending</span>}
+                </h3>
+
+                <div className={`grid grid-cols-1 ${isDesignOnly ? '' : 'sm:grid-cols-2'} gap-3 mb-3`}>
+                    <div>
+                        <label className="text-xs text-gray-600 mb-1 block">Invoice Reference No.</label>
+                        <input
+                            type="text"
+                            value={invoiceRef}
+                            onChange={e => setInvoiceRef(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                            placeholder="e.g. INV-2026-001"
+                        />
+                    </div>
+                    {/* E-Way Bill — print jobs only */}
+                    {isPrintJob && (
+                        <div>
+                            <label className="text-xs text-gray-600 mb-1 block">E-Way Bill Number</label>
+                            <input
+                                type="text"
+                                value={ewayBillNo}
+                                onChange={e => setEwayBillNo(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                                placeholder="e.g. EWB123456789"
+                            />
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex items-center gap-3 mb-3 flex-wrap">
+                    <label className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer text-sm transition-colors">
+                        <Upload className="w-4 h-4 text-gray-600" />
+                        Upload Invoice PDF
+                        <input type="file" accept=".pdf,.jpg,.png" className="hidden" onChange={e => handleFileUpload(e, 'Invoice')} />
+                    </label>
+                    {/* E-Way Bill upload — print jobs only */}
+                    {isPrintJob && (
+                        <label className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer text-sm transition-colors">
+                            <Upload className="w-4 h-4 text-gray-600" />
+                            Upload E-Way Bill
+                            <input type="file" accept=".pdf,.jpg,.png" className="hidden" onChange={e => handleFileUpload(e, 'E-Way Bill')} />
+                        </label>
+                    )}
+                </div>
+
+                {/* Upload confirmation */}
+                {uploadedFiles.length > 0 && (
+                    <div className="mb-3 space-y-1">
+                        {uploadedFiles.map((f, i) => (
+                            <div key={i} className="flex items-center gap-2 text-xs bg-green-50 border border-green-200 rounded-md px-3 py-2">
+                                <CheckCircle className="w-3.5 h-3.5 text-green-600 shrink-0" />
+                                <span className="text-green-800 font-medium">{f.label}:</span>
+                                <span className="text-green-700 truncate">{f.name}</span>
+                                <span className="text-green-500">uploaded ✓</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                <button
+                    onClick={handleSaveInvoiceDetails}
+                    disabled={uploading}
+                    className="px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
+                >
+                    {uploading ? 'Saving...' : saved
+                        ? (isDesignOnly ? '✓ Saved' : '✓ Saved & Dispatch Notified')
+                        : (isDesignOnly ? 'Save Invoice' : 'Save & Notify Dispatch')}
+                </button>
+            </div>
+
+            {/* Packing Details — print jobs only (design-only has no physical packing) */}
+            {isPrintJob && job.packing_info && (
                 <div className="bg-green-50 border border-green-200 rounded-md p-4">
                     <h3 className="text-sm font-semibold text-green-900 flex items-center gap-2 mb-3">
                         <Package className="w-4 h-4" />
@@ -361,74 +431,6 @@ export default function JobDetailPage() {
                     )}
                 </div>
             )}
-
-            {/* Invoice & E-Way Bill Section */}
-            <div className={`border rounded-md p-4 ${hasInvoice ? 'bg-white border-green-200' : 'bg-amber-50 border-amber-200'}`}>
-                <h3 className={`text-sm font-semibold flex items-center gap-2 mb-3 ${hasInvoice ? 'text-green-900' : 'text-amber-900'}`}>
-                    <FileText className="w-4 h-4" />
-                    Invoice & E-Way Bill
-                    {hasInvoice && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-md">✓ Added</span>}
-                    {!hasInvoice && <span className="text-xs bg-amber-200 text-amber-800 px-2 py-0.5 rounded-md">Pending</span>}
-                </h3>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                    <div>
-                        <label className="text-xs text-gray-600 mb-1 block">Invoice Reference No.</label>
-                        <input
-                            type="text"
-                            value={invoiceRef}
-                            onChange={e => setInvoiceRef(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
-                            placeholder="e.g. INV-2026-001"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs text-gray-600 mb-1 block">E-Way Bill Number</label>
-                        <input
-                            type="text"
-                            value={ewayBillNo}
-                            onChange={e => setEwayBillNo(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
-                            placeholder="e.g. EWB123456789"
-                        />
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-3 mb-3">
-                    <label className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer text-sm transition-colors">
-                        <Upload className="w-4 h-4 text-gray-600" />
-                        Upload Invoice PDF
-                        <input type="file" accept=".pdf,.jpg,.png" className="hidden" onChange={e => handleFileUpload(e, 'Invoice')} />
-                    </label>
-                    <label className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-md cursor-pointer text-sm transition-colors">
-                        <Upload className="w-4 h-4 text-gray-600" />
-                        Upload E-Way Bill
-                        <input type="file" accept=".pdf,.jpg,.png" className="hidden" onChange={e => handleFileUpload(e, 'E-Way Bill')} />
-                    </label>
-                </div>
-
-                {/* Upload confirmation */}
-                {uploadedFiles.length > 0 && (
-                    <div className="mb-3 space-y-1">
-                        {uploadedFiles.map((f, i) => (
-                            <div key={i} className="flex items-center gap-2 text-xs bg-green-50 border border-green-200 rounded-md px-3 py-2">
-                                <CheckCircle className="w-3.5 h-3.5 text-green-600 shrink-0" />
-                                <span className="text-green-800 font-medium">{f.label}:</span>
-                                <span className="text-green-700 truncate">{f.name}</span>
-                                <span className="text-green-500">uploaded ✓</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                <button
-                    onClick={handleSaveInvoiceDetails}
-                    disabled={uploading}
-                    className="px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
-                >
-                    {uploading ? 'Saving...' : saved ? '✓ Saved & Dispatch Notified' : 'Save & Notify Dispatch'}
-                </button>
-            </div>
 
             {/* QC Report */}
             {qcRecords.length > 0 && (
