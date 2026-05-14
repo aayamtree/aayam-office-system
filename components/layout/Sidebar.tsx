@@ -238,10 +238,11 @@ const menuItems: MenuItem[] = [
     href: '/admin/label-studio',
     allowedRoles: ['admin', 'designer'],
     submenu: [
-      { name: 'Brands',       href: '/admin/label-studio/brands' },
-      { name: 'Products',     href: '/admin/label-studio/products' },
-      { name: 'Label Check',  href: '/admin/label-studio/check' },
-      { name: 'History',      href: '/admin/label-studio/history' },
+      { name: 'Extract Master', href: '/admin/label-studio/extract' },
+      { name: 'Brands',        href: '/admin/label-studio/brands' },
+      { name: 'Products',      href: '/admin/label-studio/products' },
+      { name: 'Label Check',   href: '/admin/label-studio/check' },
+      { name: 'History',       href: '/admin/label-studio/history' },
     ]
   },
   {
