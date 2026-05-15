@@ -791,9 +791,10 @@ td {
 
   th,
   td {
-    padding: 3px 5px !important;
+    padding: 6px 10px !important;
     word-break: break-all !important;
     overflow-wrap: anywhere !important;
+    line-height: 1.5 !important;
   }
 
   /* Keep rows from breaking across pages */
