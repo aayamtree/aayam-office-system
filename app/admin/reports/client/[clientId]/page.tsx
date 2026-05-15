@@ -560,6 +560,16 @@ export default function ClientStatementPage() {
                     .p-4 { padding: 6px !important; }
                     .p-5 { padding: 8px !important; }
 
+                    /* ── Table cell padding ────────────────────────────────
+                       .w-full th/td  →  specificity 0,1,1  which beats
+                       Tailwind's .px-4 / .py-3 (0,1,0) that zero out padding.
+                       This ensures every cell gets breathing room.
+                    ──────────────────────────────────────────────────────── */
+                    .w-full th, .w-full td {
+                        padding: 7px 10px !important;
+                        line-height: 1.6 !important;
+                    }
+
                     /* ── Ledger table column widths ──────────────────────────
                        table-layout: fixed (set in globals.css) means these
                        widths are respected strictly. Total = 100%.
