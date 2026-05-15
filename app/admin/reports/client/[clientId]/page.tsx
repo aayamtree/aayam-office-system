@@ -532,6 +532,18 @@ export default function ClientStatementPage() {
                 @media print {
                     body { background: white; }
                     .print\\:hidden { display: none !important; }
+
+                    /* Show the Ref column which is hidden on small screens */
+                    .hidden { display: table-cell !important; }
+
+                    /* Ensure the statement fills the full page width */
+                    .max-w-4xl {
+                        max-width: 100% !important;
+                        padding: 0 !important;
+                    }
+
+                    /* Keep table rows from breaking across pages */
+                    tr { page-break-inside: avoid; }
                 }
             `}</style>
         </div>

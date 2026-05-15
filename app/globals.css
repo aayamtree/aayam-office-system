@@ -749,3 +749,35 @@ td {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* =============================================
+   PRINT STYLES
+   Hide app chrome (sidebar, header, bottom nav)
+   so only the page content appears on paper.
+   ============================================= */
+@media print {
+  /* Hide layout chrome */
+  aside,
+  header,
+  nav.fixed {
+    display: none !important;
+  }
+
+  /* Remove sidebar margin and header padding from main */
+  main {
+    margin-left: 0 !important;
+    padding-top: 1rem !important;
+  }
+
+  /* Clean white background */
+  body,
+  html {
+    background: white !important;
+  }
+
+  /* Page size and margins */
+  @page {
+    size: A4 portrait;
+    margin: 1.5cm;
+  }
+}
