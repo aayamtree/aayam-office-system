@@ -531,19 +531,34 @@ export default function ClientStatementPage() {
             <style jsx global>{`
                 @media print {
                     body { background: white; }
+
+                    /* Hide all interactive UI chrome */
                     .print\\:hidden { display: none !important; }
 
-                    /* Show the Ref column which is hidden on small screens */
+                    /* Hide the sticky top bar inside this page component */
+                    .sticky { display: none !important; }
+
+                    /* Show the Ref column (hidden on mobile, should appear in print) */
                     .hidden { display: table-cell !important; }
 
-                    /* Ensure the statement fills the full page width */
+                    /* Content fills full A4 width — no centering constraints */
+                    .min-h-screen { min-height: unset !important; }
                     .max-w-4xl {
                         max-width: 100% !important;
+                        margin: 0 !important;
                         padding: 0 !important;
                     }
 
-                    /* Keep table rows from breaking across pages */
-                    tr { page-break-inside: avoid; }
+                    /* Remove outer page padding so content uses full margin area */
+                    .py-6 { padding-top: 0 !important; padding-bottom: 0 !important; }
+                    .px-4, .px-6, .px-8 { padding-left: 0 !important; padding-right: 0 !important; }
+
+                    /* Compact summary cards to one row */
+                    .grid-cols-3 { grid-template-columns: repeat(3, 1fr) !important; }
+
+                    /* Tighten card padding */
+                    .p-4 { padding: 6px !important; }
+                    .p-5 { padding: 8px !important; }
                 }
             `}</style>
         </div>

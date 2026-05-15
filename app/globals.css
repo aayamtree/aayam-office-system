@@ -766,7 +766,9 @@ td {
   /* Remove sidebar margin and header padding from main */
   main {
     margin-left: 0 !important;
-    padding-top: 1rem !important;
+    padding-top: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 
   /* Clean white background */
@@ -775,9 +777,31 @@ td {
     background: white !important;
   }
 
-  /* Page size and margins */
+  /* Fix overflow containers that clip table content on right edge */
+  .overflow-x-auto {
+    overflow: visible !important;
+  }
+
+  /* Make tables compact enough to fit A4 width */
+  table {
+    font-size: 10px !important;
+    width: 100% !important;
+  }
+
+  th,
+  td {
+    padding: 3px 5px !important;
+    word-break: break-word !important;
+  }
+
+  /* Keep rows from breaking across pages */
+  tr {
+    page-break-inside: avoid !important;
+  }
+
+  /* Page size — tighter margins give more content space */
   @page {
     size: A4 portrait;
-    margin: 1.5cm;
+    margin: 1cm;
   }
 }
