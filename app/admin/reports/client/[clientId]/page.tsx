@@ -101,6 +101,28 @@ export default function ClientStatementPage() {
     const ledger: LedgerRow[] = useMemo(() => {
         const rows: Omit<LedgerRow, 'balance'>[] = [];
 
+        // Opening balance — brought forward from previous FY
+        if (client?.opening_balance && Number(client.opening_balance) > 0) {
+            const d = client.opening_balance_date || dateFrom;
+            if (d >= dateFrom && d <= dateTo) {
+                const obType = client.opening_balance_type || 'debit';
+                rows.push({
+                    id: 'opening',
+                    date: d,
+                    type: obType === 'debit' ? 'invoice' : 'payment',
+                    paymentMode: null,
+                    description: 'Opening Balance',
+                    subLabel: obType === 'debit'
+                        ? 'Receivable brought forward — client owes from last year'
+                        : 'Credit brought forward — advance / overpayment from last year',
+                    isAdvance: obType === 'credit',
+                    ref: '',
+                    debit: obType === 'debit' ? Number(client.opening_balance) : 0,
+                    credit: obType === 'credit' ? Number(client.opening_balance) : 0,
+                });
+            }
+        }
+
         // Jobs → invoice rows (debit)
         jobs.forEach(job => {
             const d = (job.order_date || '').split('T')[0];

@@ -144,6 +144,10 @@ export default function ClientsPage() {
     // Marketing ownership fields (admin only)
     source: 'direct' as string,
     assigned_marketing_user_id: '' as string,
+    // Opening balance (brought forward from previous FY)
+    opening_balance: '' as string,
+    opening_balance_date: '' as string,
+    opening_balance_type: 'debit' as 'debit' | 'credit',
   });
 
   const filteredClients = clients.filter(client => {
@@ -164,7 +168,7 @@ export default function ClientsPage() {
   });
 
   const handleAddNew = () => {
-    setFormData({ name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', is_active: true, brand_name: '', source: 'direct', assigned_marketing_user_id: '' });
+    setFormData({ name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', is_active: true, brand_name: '', source: 'direct', assigned_marketing_user_id: '', opening_balance: '', opening_balance_date: '', opening_balance_type: 'debit' });
     setIsEditing(false);
     setSelectedClient(null);
     setEditingClientBrands([]);
@@ -186,6 +190,9 @@ export default function ClientsPage() {
       brand_name: client.brand_name || '',
       source: (client as any).source || 'direct',
       assigned_marketing_user_id: (client as any).assigned_marketing_user_id || '',
+      opening_balance: (client as any).opening_balance != null ? String((client as any).opening_balance) : '',
+      opening_balance_date: (client as any).opening_balance_date || '',
+      opening_balance_type: (client as any).opening_balance_type || 'debit',
     });
     setSelectedClient(client);
     setIsEditing(true);
@@ -228,6 +235,11 @@ export default function ClientsPage() {
           updatePayload.source = formData.source;
           updatePayload.assigned_marketing_user_id = formData.assigned_marketing_user_id || null;
         }
+        // Convert opening balance to numeric (or null if empty)
+        const obRaw = formData.opening_balance;
+        updatePayload.opening_balance = obRaw === '' || obRaw === null ? 0 : Number(obRaw);
+        updatePayload.opening_balance_date = formData.opening_balance_date || null;
+        updatePayload.opening_balance_type = formData.opening_balance_type || 'debit';
         await updateClient(selectedClient.id, updatePayload);
         logActivity({ userId: profile?.id || '', userName: profile?.full_name || 'Unknown', action: 'UPDATE', module: 'CRM', entityId: selectedClient.id, entityName: formData.name, description: `Updated Client: ${formData.name} (${formData.company || formData.phone})` });
       } else {
@@ -253,6 +265,9 @@ export default function ClientsPage() {
           created_by: profile?.id,
           source: formData.source || 'direct',
           assigned_marketing_user_id: formData.assigned_marketing_user_id || null,
+          opening_balance: formData.opening_balance === '' ? 0 : Number(formData.opening_balance),
+          opening_balance_date: formData.opening_balance_date || null,
+          opening_balance_type: formData.opening_balance_type || 'debit',
         } as any);
 
         // If brands were added inline for new client, seed them
@@ -710,6 +725,68 @@ export default function ClientsPage() {
               </div>
               <div><label className="block text-sm font-medium mb-1 text-gray-700">Address</label><textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" rows={2} /></div>
               <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1 text-gray-700">City</label><input type="text" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" /></div><div><label className="block text-sm font-medium mb-1 text-gray-700">Status</label><select value={formData.is_active ? 'active' : 'inactive'} onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'active' })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div>
+
+              {/* Opening Balance Section */}
+              <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-gray-700">Opening Balance</span>
+                  <span className="text-xs text-gray-400">(Brought forward from previous FY)</span>
+                </div>
+                {/* Debit / Credit toggle */}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, opening_balance_type: 'debit' })}
+                    className={`flex-1 py-2 rounded-md text-sm font-medium border transition-colors ${
+                      formData.opening_balance_type === 'debit'
+                        ? 'bg-red-50 border-red-300 text-red-700'
+                        : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    Receivable (client owes us)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, opening_balance_type: 'credit' })}
+                    className={`flex-1 py-2 rounded-md text-sm font-medium border transition-colors ${
+                      formData.opening_balance_type === 'credit'
+                        ? 'bg-green-50 border-green-300 text-green-700'
+                        : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    Credit (we owe client)
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Amount (₹)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      value={formData.opening_balance}
+                      onChange={(e) => setFormData({ ...formData, opening_balance: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">As of Date</label>
+                    <input
+                      type="date"
+                      value={formData.opening_balance_date}
+                      onChange={(e) => setFormData({ ...formData, opening_balance_date: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    />
+                  </div>
+                </div>
+                {formData.opening_balance && Number(formData.opening_balance) > 0 && (
+                  <p className="text-xs text-gray-500">
+                    {formData.opening_balance_type === 'debit'
+                      ? `₹${Number(formData.opening_balance).toLocaleString('en-IN')} receivable — client owes this from last year`
+                      : `₹${Number(formData.opening_balance).toLocaleString('en-IN')} credit — client paid in advance or overpaid last year`}
+                  </p>
+                )}
+              </div>
 
               <div className="flex gap-3 pt-4"><button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors text-gray-700 font-semibold">Cancel</button><button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors disabled:opacity-50 font-semibold shadow-sm">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{isEditing ? 'Update' : 'Add'}</button></div>
             </form>
