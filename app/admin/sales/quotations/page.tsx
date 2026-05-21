@@ -5,7 +5,7 @@ import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import {
-  Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
+  Search, Plus, Eye, Edit, Trash2, X, ArrowLeft, ArrowRight,
   Calendar, User, FileText, IndianRupee, CheckCircle, XCircle, Clock, Loader2, Download
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
@@ -102,7 +102,7 @@ export default function QuotationsPage() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      // Handle highlight param Ã¢ÂÂ auto-fill search to jump to specific quote
+      // Handle highlight param ÃÂ¢ÃÂÃÂ auto-fill search to jump to specific quote
       const highlightQuote = params.get('highlight');
       if (highlightQuote) {
         setSearchQuery(highlightQuote);
@@ -341,13 +341,13 @@ export default function QuotationsPage() {
         client_id: finalClientId // Ensure the quotation is now linked to the real client
       });
 
-      // 5. Route based on order type Ã¢ÂÂ navigate to the created job
+      // 5. Route based on order type ÃÂ¢ÃÂÃÂ navigate to the created job
       if (q.order_type === 'design_print') {
-        toast.success(`Order created! Job #${job?.job_number} Ã¢ÂÂ adding to design queue.`);
+        toast.success(`Order created! Job #${job?.job_number} — adding to design queue.`);
       } else if (q.order_type === 'print') {
-        toast.success(`Order created! Job #${job?.job_number} Ã¢ÂÂ awaiting client design files.`);
+        toast.success(`Order created! Job #${job?.job_number} — awaiting client design files.`);
       } else if (q.order_type === 'design') {
-        toast.success(`Order created! Job #${job?.job_number} Ã¢ÂÂ added to design queue.`);
+        toast.success(`Order created! Job #${job?.job_number} — added to design queue.`);
       } else {
         toast.success(`Order created successfully! Job #${job?.job_number}`);
       }
@@ -608,13 +608,13 @@ export default function QuotationsPage() {
                         {q.status === 'accepted' && (
                           (q as any).converted_to_job_id
                             ? (
-                              // Already converted Ã¢ÂÂ show a locked green chip
+                              // Already converted — show a locked green chip
                               <div className="flex-1 px-4 py-2.5 bg-green-50 border border-green-200 text-green-800 rounded-md font-medium flex items-center justify-center gap-2 cursor-default">
                                 <CheckCircle size={18} className="text-green-600" />
                                 <span>Order Already Created</span>
                               </div>
                             ) : (
-                              // Not yet converted Ã¢ÂÂ show active button
+                              // Not yet converted — show active button
                               <button
                                 onClick={() => handleConvertToOrder(q)}
                                 className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
@@ -682,18 +682,18 @@ export default function QuotationsPage() {
                           {q.status === 'accepted' && (
                             (q as any).converted_to_job_id
                               ? (
-                                // Already converted Ã¢ÂÂ show locked badge, NOT a clickable button
+                                // Already converted — show locked badge, NOT a clickable button
                                 <span className="px-3 py-1.5 bg-green-100 text-green-800 rounded-md text-sm font-medium flex items-center gap-1 cursor-default" title="Order already created from this quotation">
                                   <CheckCircle size={14} /> Order Created
                                 </span>
                               ) : (
-                                // Not yet converted Ã¢ÂÂ show active button
+                                // Not yet converted — show active button
                                 <button
                                   onClick={() => handleConvertToOrder(q)}
-                                  className="px-3 py-1.5 bg-gray-100 text-gray-900 rounded-md text-sm font-medium hover:bg-green-200 transition-colors"
+                                  className="px-3 py-1.5 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-700 transition-colors flex items-center gap-1.5"
                                   title="Convert this quotation to an order"
                                 >
-                                  Ã¢ÂÂ Order
+                                  <ArrowRight size={13} /> Order
                                 </button>
                               )
                           )}
