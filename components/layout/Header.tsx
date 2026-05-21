@@ -189,6 +189,8 @@ export default function Header({ onMenuClick, sidebarExpanded }: HeaderProps) {
   }, [showNotifications, fetchNotifications]);
 
   // Generate Breadcrumbs
+  const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
   const generateBreadcrumbs = () => {
     if (!pathname) return [{ label: 'Dashboard', href: '/admin/dashboard' }];
 
@@ -206,11 +208,15 @@ export default function Header({ onMenuClick, sidebarExpanded }: HeaderProps) {
       'purchase-bills': 'Purchase Bills',
     };
 
-    const breadcrumbs = pathSegments.map((segment, index) => {
-      const href = '/admin/' + pathSegments.slice(0, index + 1).join('/');
-      const label = segmentLabels[segment] || segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-      return { label, href };
-    });
+    const breadcrumbs = pathSegments
+      .filter(segment => !isUUID(segment)) // hide raw UUIDs — page content shows the name clearly
+      .map((segment) => {
+        // rebuild href using the original full path up to this segment's position
+        const originalIndex = pathSegments.indexOf(segment);
+        const href = '/admin/' + pathSegments.slice(0, originalIndex + 1).join('/');
+        const label = segmentLabels[segment] || segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        return { label, href };
+      });
 
     return [{ label: 'Dashboard', href: '/admin/dashboard' }, ...breadcrumbs];
   };

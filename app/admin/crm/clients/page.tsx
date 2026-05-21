@@ -518,7 +518,7 @@ export default function ClientsPage() {
                           })()}
                           {/* Added by */}
                           {(client as any).created_by && (
-                            <p className="text-[10px] text-gray-400">
+                            <p className="text-[10px] text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis max-w-[140px]">
                               Added by: {allProfiles.find(s => s.id === (client as any).created_by)?.full_name || 'Unknown'}
                             </p>
                           )}
