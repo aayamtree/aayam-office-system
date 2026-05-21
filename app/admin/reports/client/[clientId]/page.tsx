@@ -559,56 +559,6 @@ export default function ClientStatementPage() {
                     /* Tighten card padding */
                     .p-4 { padding: 6px !important; }
                     .p-5 { padding: 8px !important; }
-
-                    /* ── Table cell padding ────────────────────────────────
-                       .w-full th/td  →  specificity 0,1,1  which beats
-                       Tailwind's .px-4 / .py-3 (0,1,0) that zero out padding.
-                       This ensures every cell gets breathing room.
-                    ──────────────────────────────────────────────────────── */
-                    .w-full th, .w-full td {
-                        padding: 7px 10px !important;
-                        line-height: 1.6 !important;
-                    }
-
-                    /* ── Ledger table column widths ──────────────────────────
-                       table-layout: fixed (set in globals.css) means these
-                       widths are respected strictly. Total = 100%.
-                       Date: 12%  |  Description: 40%  |  Ref: 14%
-                       Invoiced: 11%  |  Received: 11%  |  Balance: 12%
-                    ─────────────────────────────────────────────────────── */
-                    thead th:nth-child(1), tbody td:nth-child(1), tfoot td:nth-child(1) {
-                        width: 12% !important;
-                        white-space: nowrap !important;
-                    }
-                    thead th:nth-child(2), tbody td:nth-child(2) {
-                        width: 40% !important;
-                        word-break: break-all !important;
-                        overflow-wrap: anywhere !important;
-                        white-space: normal !important;
-                    }
-                    thead th:nth-child(3), tbody td:nth-child(3) {
-                        width: 14% !important;
-                        word-break: break-all !important;
-                        overflow-wrap: anywhere !important;
-                    }
-                    thead th:nth-child(4), tbody td:nth-child(4) { width: 11% !important; }
-                    thead th:nth-child(5), tbody td:nth-child(5) { width: 11% !important; }
-                    thead th:nth-child(6), tbody td:nth-child(6) { width: 12% !important; }
-
-                    /* Ensure description text inside the cell also wraps */
-                    tbody td:nth-child(2) span,
-                    tbody td:nth-child(2) p {
-                        word-break: break-all !important;
-                        overflow-wrap: anywhere !important;
-                        white-space: normal !important;
-                        max-width: 100% !important;
-                    }
-
-                    /* Don't let flex layout in description cell overflow */
-                    tbody td:nth-child(2) > div {
-                        flex-wrap: wrap !important;
-                        max-width: 100% !important;
-                    }
                 }
             `}</style>
         </div>

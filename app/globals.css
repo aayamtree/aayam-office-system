@@ -786,15 +786,12 @@ td {
   table {
     font-size: 10px !important;
     width: 100% !important;
-    table-layout: fixed !important;
   }
 
   th,
   td {
-    padding: 6px 10px !important;
-    word-break: break-all !important;
-    overflow-wrap: anywhere !important;
-    line-height: 1.5 !important;
+    padding: 3px 5px !important;
+    word-break: break-word !important;
   }
 
   /* Keep rows from breaking across pages */

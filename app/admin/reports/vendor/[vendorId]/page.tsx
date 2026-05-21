@@ -120,7 +120,10 @@ export default function VendorStatementPage() {
         }
 
         // Purchase bills → debit
+        // Skip Opening Balance bills — they are already represented by vendor.opening_balance above.
+        // Showing both would double-count the opening balance in the ledger.
         bills.forEach(bill => {
+            if (bill.product_type === 'Opening Balance') return;
             const d = (bill.bill_date || '').split('T')[0];
             if (d < dateFrom || d > dateTo) return;
             rows.push({
