@@ -409,7 +409,7 @@ export default function VendorPurchasesPage() {
                   </div>
                 </div>
 
-                {/* ── Row 4: Bill Date + Due Date + Payment Terms ── */}
+                {/* ── Row 4: Bill Date + Due Date ── */}
                 <div className="grid grid-cols-12 items-center gap-x-4 gap-y-3">
                   <label className="col-span-3 text-sm font-medium text-red-600">Bill Date *</label>
                   <div className="col-span-9 sm:col-span-3">
@@ -418,12 +418,19 @@ export default function VendorPurchasesPage() {
                       className="w-full px-3 py-2 border rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/20" />
                   </div>
                   <label className="col-span-3 sm:col-span-2 text-sm font-medium text-gray-700 text-right">Due Date</label>
-                  <div className="col-span-9 sm:col-span-4 flex gap-2">
+                  <div className="col-span-9 sm:col-span-4">
                     <input type="date" value={form.dueDate}
                       onChange={e => setForm(p => ({ ...p, dueDate: e.target.value }))}
-                      className="flex-1 px-3 py-2 border rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/20" />
+                      className="w-full px-3 py-2 border rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/20" />
+                  </div>
+                </div>
+
+                {/* ── Row 4b: Payment Terms ── */}
+                <div className="grid grid-cols-12 items-center gap-x-4 gap-y-3">
+                  <label className="col-span-3 text-sm font-medium text-gray-700">Payment Terms</label>
+                  <div className="col-span-9 sm:col-span-3">
                     <select value={form.paymentTerms} onChange={e => setForm(p => ({ ...p, paymentTerms: e.target.value }))}
-                      className="flex-1 px-3 py-2 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20">
+                      className="w-full px-3 py-2 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20">
                       {PAYMENT_TERMS.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
