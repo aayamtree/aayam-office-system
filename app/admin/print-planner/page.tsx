@@ -357,12 +357,18 @@ export default function PrintPlannerPage() {
                                     type="text"
                                     autoFocus
                                     value={customSheetSize}
-                                    onChange={e => {
-                                        setCustomSheetSize(e.target.value);
+                                    onChange={e => setCustomSheetSize(e.target.value)}
+                                    onBlur={e => {
                                         if (e.target.value.trim()) setSheetSize(e.target.value.trim());
                                     }}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter' && customSheetSize.trim()) {
+                                            setSheetSize(customSheetSize.trim());
+                                            e.currentTarget.blur();
+                                        }
+                                    }}
                                     placeholder='e.g. 24" × 36"'
-                                    className="w-32 px-2 py-1.5 text-sm border border-gray-400 rounded-md focus:ring-2 focus:ring-gray-400 outline-none font-medium"
+                                    className="w-36 px-2 py-1.5 text-sm border border-gray-400 rounded-md focus:ring-2 focus:ring-gray-400 outline-none font-medium"
                                 />
                             )}
                             {sheetSize !== 'Custom' && !COMMON_SHEET_SIZES.includes(sheetSize) && (
