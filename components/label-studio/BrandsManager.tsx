@@ -29,6 +29,13 @@ interface LabelBrand {
   mrp: number | null;
   notes: string | null;
   is_active: boolean;
+  client_id: string | null;
+}
+
+interface ClientOption {
+  id: string;
+  company: string | null;
+  name: string;
 }
 
 const EMPTY_FORM = {
@@ -37,12 +44,14 @@ const EMPTY_FORM = {
   phone: '', email: '', website: '',
   qr_data: '', barcode: '', regn_no: '', mfg_lic_no: '',
   mrp: '', notes: '',
+  client_id: '',
 };
 
 type FormState = typeof EMPTY_FORM;
 
 export default function BrandsManager() {
   const [brands, setBrands] = useState<LabelBrand[]>([]);
+  const [clients, setClients] = useState<ClientOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -65,7 +74,15 @@ export default function BrandsManager() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchBrands(); }, []);
+  const fetchClients = async () => {
+    const { data } = await supabase
+      .from('clients')
+      .select('id, company, name')
+      .order('company', { ascending: true });
+    if (data) setClients(data);
+  };
+
+  useEffect(() => { fetchBrands(); fetchClients(); }, []);
 
   const openAdd = () => {
     setEditId(null);
@@ -93,6 +110,7 @@ export default function BrandsManager() {
       mfg_lic_no: b.mfg_lic_no || '',
       mrp: b.mrp != null ? String(b.mrp) : '',
       notes: b.notes || '',
+      client_id: b.client_id || '',
     });
     setLogoPreview(b.logo_url || null);
     setLogoFile(null);
@@ -153,6 +171,7 @@ export default function BrandsManager() {
       mfg_lic_no: form.mfg_lic_no.trim() || null,
       mrp: form.mrp ? parseFloat(form.mrp) : null,
       notes: form.notes.trim() || null,
+      client_id: form.client_id || null,
     };
     if (logo_url) payload.logo_url = logo_url;
 
@@ -244,6 +263,7 @@ export default function BrandsManager() {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">Brand</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-600">Client</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">Contact</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">Regulatory</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">Status</th>
@@ -269,6 +289,15 @@ export default function BrandsManager() {
                         </p>
                       </div>
                     </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    {b.client_id ? (
+                      <span className="text-xs font-medium text-gray-700">
+                        {clients.find(c => c.id === b.client_id)?.company || clients.find(c => c.id === b.client_id)?.name || '—'}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-300">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     <div className="space-y-0.5 text-xs">
@@ -362,6 +391,22 @@ export default function BrandsManager() {
                   </div>
                   <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
                 </div>
+              </div>
+
+              {/* Client Link */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">Client (Order System)</label>
+                <select
+                  value={form.client_id}
+                  onChange={e => set('client_id', e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
+                >
+                  <option value="">— Not linked to a client —</option>
+                  {clients.map(c => (
+                    <option key={c.id} value={c.id}>{c.company || c.name}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400 mt-1">Links this brand to your client in the job/order system.</p>
               </div>
 
               {/* Brand Name */}

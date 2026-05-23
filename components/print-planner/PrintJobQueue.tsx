@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
-import { Package, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Package, Layers, ChevronLeft, ChevronRight, ScanLine, AlertTriangle, CheckCircle2, X } from 'lucide-react';
 
 interface PendingJob {
     id: string;
@@ -16,6 +16,14 @@ interface PendingJob {
     quantity?: number;
     urgency?: 'low' | 'normal' | 'high' | 'urgent';
     due_date?: string;
+}
+
+interface SheetLabel {
+    label_name: string;
+    ups_count: number;
+    matched_job_id: string | null;
+    matched_job_number: string | null;
+    match_confidence: 'high' | 'medium' | 'low' | 'none';
 }
 
 interface PrintJobQueueProps {
@@ -31,6 +39,13 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
     const [filter, setFilter] = useState('ALL');
     const [searchTerm, setSearchTerm] = useState('');
     const [jobTypes, setJobTypes] = useState<string[]>(['ALL']);
+
+    // Sheet scanner state
+    const [scanning, setScanning] = useState(false);
+    const [scanMatched, setScanMatched] = useState<SheetLabel[]>([]);
+    const [scanUnmatched, setScanUnmatched] = useState<SheetLabel[]>([]);
+    const [showScanResults, setShowScanResults] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         fetchPendingJobs();
@@ -64,6 +79,67 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
             toast.error('Failed to load print job queue: ' + (error.message || 'Unknown error'));
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleScanSheet = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setScanning(true);
+        setShowScanResults(false);
+        setScanMatched([]);
+        setScanUnmatched([]);
+
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('jobs', JSON.stringify(jobs.map(j => ({
+                id: j.id,
+                job_number: j.job_number,
+                project_name: j.project_name,
+                client_name: j.client_name,
+                product_category: j.product_category,
+                quantity: j.quantity,
+            }))));
+
+            const res = await fetch('/api/analyze-print-sheet', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Scan failed');
+
+            const matched: SheetLabel[] = data.matched || [];
+            const unmatched: SheetLabel[] = data.unmatched || [];
+
+            // Auto-add matched jobs that aren't already added
+            let addedCount = 0;
+            for (const label of matched) {
+                if (!label.matched_job_id) continue;
+                const job = jobs.find(j => j.id === label.matched_job_id);
+                if (job && !disabledJobIds.has(job.id)) {
+                    onAddJob(job);
+                    addedCount++;
+                }
+            }
+
+            setScanMatched(matched);
+            setScanUnmatched(unmatched);
+            setShowScanResults(true);
+
+            if (addedCount > 0) {
+                toast.success(`✅ Sheet scanned — ${addedCount} job${addedCount > 1 ? 's' : ''} auto-added`);
+            } else {
+                toast.error('No matching jobs found on this sheet');
+            }
+        } catch (err: any) {
+            toast.error('Sheet scan failed: ' + (err.message || 'Unknown error'));
+        } finally {
+            setScanning(false);
+            // Reset file input so same file can be re-uploaded
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
@@ -113,14 +189,36 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                 {/* Mobile title — one line */}
                 <p className="text-sm font-bold text-gray-900 mb-1.5 lg:hidden">Pending Print Jobs</p>
 
-                {/* Search */}
-                <input
-                    type="text"
-                    placeholder="Search jobs or clients..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all outline-none text-sm"
-                />
+                {/* Search + Scan row */}
+                <div className="flex gap-2">
+                    <input
+                        type="text"
+                        placeholder="Search jobs or clients..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all outline-none text-sm"
+                    />
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={scanning || jobs.length === 0}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-bold border transition-all shrink-0 ${
+                            scanning
+                                ? 'bg-amber-50 border-amber-300 text-amber-700 cursor-wait'
+                                : 'bg-gray-900 border-gray-900 text-white hover:bg-gray-700'
+                        }`}
+                        title="Upload your imposition sheet image — AI will auto-match jobs"
+                    >
+                        <ScanLine size={14} />
+                        {scanning ? 'Scanning...' : 'Scan Sheet'}
+                    </button>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleScanSheet}
+                    />
+                </div>
             </div>
 
             {/* Job Type Filters — single-line with arrow scroll buttons */}
@@ -165,6 +263,58 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                     </button>
                 </div>
             </div>
+
+            {/* Scan Results Panel */}
+            {showScanResults && (
+                <div className="mx-2 mt-2 rounded-md border border-gray-200 overflow-hidden text-xs">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-3 py-1.5 bg-gray-50 border-b border-gray-200">
+                        <span className="font-bold text-gray-700 uppercase tracking-wide text-[10px]">Sheet Scan Results</span>
+                        <button
+                            onClick={() => { setShowScanResults(false); setScanMatched([]); setScanUnmatched([]); }}
+                            className="text-gray-400 hover:text-gray-700 transition-colors"
+                        >
+                            <X size={13} />
+                        </button>
+                    </div>
+
+                    {/* Matched jobs — confirmed auto-added */}
+                    {scanMatched.length > 0 && (
+                        <div className="p-2 space-y-1 border-b border-gray-100">
+                            <p className="text-[10px] font-bold text-green-700 uppercase tracking-wide px-1 mb-1">✓ Auto-added ({scanMatched.length})</p>
+                            {scanMatched.map((label, i) => (
+                                <div key={i} className="flex items-center gap-2 px-2 py-1 bg-green-50 rounded border border-green-100">
+                                    <CheckCircle2 size={12} className="text-green-500 shrink-0" />
+                                    <span className="text-gray-800 font-medium truncate flex-1">{label.label_name}</span>
+                                    {label.matched_job_number && (
+                                        <span className="font-mono text-[10px] text-gray-500 shrink-0">{label.matched_job_number}</span>
+                                    )}
+                                    {label.ups_count > 1 && (
+                                        <span className="text-[10px] text-green-600 shrink-0">{label.ups_count}× UPS</span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Unmatched labels — flagged, no pending job found */}
+                    {scanUnmatched.length > 0 && (
+                        <div className="p-2 space-y-1">
+                            <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide px-1 mb-1">⚠ Not in queue ({scanUnmatched.length})</p>
+                            {scanUnmatched.map((label, i) => (
+                                <div key={i} className="flex items-center gap-2 px-2 py-1 bg-amber-50 rounded border border-amber-200">
+                                    <AlertTriangle size={12} className="text-amber-500 shrink-0" />
+                                    <span className="text-gray-800 font-medium truncate flex-1">{label.label_name}</span>
+                                    {label.ups_count > 1 && (
+                                        <span className="text-[10px] text-amber-600 shrink-0">{label.ups_count}× UPS</span>
+                                    )}
+                                    <span className="text-[10px] text-amber-600 shrink-0">Add to queue?</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Jobs List — compact rows, fit many at once */}
             <div className="flex-1 overflow-y-auto p-2 space-y-1">

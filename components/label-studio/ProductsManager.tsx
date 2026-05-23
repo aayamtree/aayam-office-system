@@ -6,6 +6,11 @@ import { useConfirm } from '@/components/ConfirmModal';
 import { toast } from '@/lib/toast';
 import { Plus, Trash2, Pencil, Loader2, X, Check, FlaskConical, ChevronDown, ChevronUp } from 'lucide-react';
 
+interface LabelBrandOption {
+  id: string;
+  name_en: string;
+}
+
 interface LabelProduct {
   id: string;
   created_at: string;
@@ -13,6 +18,7 @@ interface LabelProduct {
   name_hi: string | null;
   name_gu: string | null;
   category: string | null;
+  brand_id: string | null;
   tagline_en: string | null;
   active_ingredients: { name: string; percentage: string; unit: string }[] | null;
   composition_en: string | null;
@@ -41,6 +47,7 @@ const CATEGORIES = ['Insecticide', 'Fungicide', 'Herbicide', 'Acaricide', 'Insec
 const EMPTY_FORM = {
   name_en: '', name_hi: '', name_gu: '',
   category: '', tagline_en: '',
+  brand_id: '',
   composition_en: '', composition_hi: '', composition_gu: '',
   directions_en: '', directions_hi: '', directions_gu: '',
   precautions_en: '', precautions_hi: '', precautions_gu: '',
@@ -94,6 +101,7 @@ function LangFields({ label, fields }: { label: string; fields: { lang: string; 
 
 export default function ProductsManager() {
   const [products, setProducts] = useState<LabelProduct[]>([]);
+  const [labelBrands, setLabelBrands] = useState<LabelBrandOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -113,7 +121,16 @@ export default function ProductsManager() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchProducts(); }, []);
+  const fetchLabelBrands = async () => {
+    const { data } = await supabase
+      .from('label_brands')
+      .select('id, name_en')
+      .eq('is_active', true)
+      .order('name_en', { ascending: true });
+    if (data) setLabelBrands(data);
+  };
+
+  useEffect(() => { fetchProducts(); fetchLabelBrands(); }, []);
 
   const openAdd = () => {
     setEditId(null);
@@ -127,6 +144,7 @@ export default function ProductsManager() {
     setForm({
       name_en: p.name_en || '', name_hi: p.name_hi || '', name_gu: p.name_gu || '',
       category: p.category || '', tagline_en: p.tagline_en || '',
+      brand_id: p.brand_id || '',
       composition_en: p.composition_en || '', composition_hi: '', composition_gu: '',
       directions_en: p.directions_en || '', directions_hi: p.directions_hi || '', directions_gu: p.directions_gu || '',
       precautions_en: p.precautions_en || '', precautions_hi: p.precautions_hi || '', precautions_gu: p.precautions_gu || '',
@@ -153,6 +171,7 @@ export default function ProductsManager() {
       name_gu: form.name_gu.trim() || null,
       category: form.category.trim() || null,
       tagline_en: form.tagline_en.trim() || null,
+      brand_id: form.brand_id || null,
       active_ingredients: validIngredients.length ? validIngredients : null,
       composition_en: form.composition_en.trim() || null,
       directions_en: form.directions_en.trim() || null,
@@ -247,6 +266,7 @@ export default function ProductsManager() {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">Product</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-600">Brand</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">Category</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">Active Ingredients</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">Regulatory</th>
@@ -261,6 +281,15 @@ export default function ProductsManager() {
                     <p className="font-medium text-gray-900">{p.name_en}</p>
                     {(p.name_hi || p.name_gu) && (
                       <p className="text-xs text-muted-foreground">{[p.name_hi, p.name_gu].filter(Boolean).join(' · ')}</p>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {p.brand_id ? (
+                      <span className="text-xs font-medium text-gray-700">
+                        {labelBrands.find(b => b.id === p.brand_id)?.name_en || '—'}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-300">—</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
@@ -314,6 +343,22 @@ export default function ProductsManager() {
 
               {/* Identity */}
               <Section title="Product Identity" defaultOpen>
+                {/* Brand link — most important relationship */}
+                <div>
+                  <label className="text-xs text-gray-500 mb-0.5 block">Brand *</label>
+                  <select
+                    value={form.brand_id}
+                    onChange={e => set('brand_id', e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
+                  >
+                    <option value="">— Select brand —</option>
+                    {labelBrands.map(b => (
+                      <option key={b.id} value={b.id}>{b.name_en}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-400 mt-1">Which company manufactures this product? Add brands first if none appear.</p>
+                </div>
+
                 <div>
                   <label className="text-xs text-gray-500 mb-0.5 block">Product Name — English *</label>
                   <input value={form.name_en} onChange={e => set('name_en', e.target.value)} placeholder="e.g. Emamectin Benzoate 5% SG" className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400" />
