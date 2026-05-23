@@ -94,8 +94,8 @@ Bank transactions store `amount` as **positive** for both debits and credits. Th
 
 ### 2. Two "Nem's" vendors
 There are two active vendors both named "Nem's":
-- `Nem's Label` (UUID: `27538c0e-...`) — labels/stationery supplier
-- `Nem's Graphics` (UUID: `c4749254-...`) — graphics/print supplier
+- `Nem's Label` (UUID: `27538c0e-0679-4d48-94f1-9a0d18864e3b`) — labels/stationery supplier
+- `Nem's Graphics` (UUID: `c4749254-5958-48b4-9d0b-5eaff230c9a9`) — graphics/print supplier
 
 Any time you see "Nem's" in a transaction, confirm WHICH Nem's by looking at the bank description (e.g., "NEMS GRAPHICS" vs "NEMS LABEL").
 

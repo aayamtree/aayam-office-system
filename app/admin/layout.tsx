@@ -15,6 +15,7 @@ import ToastContainer from '@/components/ToastContainer';
 import EODNudge from '@/components/eod/EODNudge';
 import RouteGuard from '@/components/layout/RouteGuard';
 import { NotificationPopup } from '@/components/NotificationPopup';
+import DriveDisconnectBanner from '@/components/drive/DriveDisconnectBanner';
 
 export default function AdminLayout({
   children,
@@ -79,6 +80,11 @@ export default function AdminLayout({
 
           {/* Daily Briefing - Auto shows once per day on login */}
           {profile && <DailyBriefingTrigger />}
+
+          {/* Google Drive Disconnect Banner — shows for admins when Drive is not connected */}
+          <div className={`fixed top-16 left-0 right-0 z-20 transition-[left] duration-300 ease-in-out ${sidebarCollapsed ? 'lg:left-16' : 'lg:left-64'}`}>
+            <DriveDisconnectBanner />
+          </div>
 
           {/* Main Content — RouteGuard enforces RBAC per role before rendering */}
           <main className={`pt-20 lg:pt-24 px-4 md:px-6 lg:px-8 py-6 min-h-screen transition-[margin] duration-300 ease-in-out ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>

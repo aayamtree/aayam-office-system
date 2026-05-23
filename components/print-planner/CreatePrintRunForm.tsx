@@ -54,6 +54,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
     const [paperVendorId, setPaperVendorId] = useState('');
     const [paperQty, setPaperQty] = useState('');
     const [paperRate, setPaperRate] = useState('');
+    const [paperUnit, setPaperUnit] = useState<'sheets' | 'kg'>('sheets');
     const [paperGst, setPaperGst] = useState(18);
     const [paperPaymentStatus, setPaperPaymentStatus] = useState<'paid' | 'pending'>('pending');
     const [paperPaymentMode, setPaperPaymentMode] = useState<string>('cash');
@@ -130,7 +131,8 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
             // Paper supply fields
             if (sendingPaper) {
                 insertData.paper_vendor_id = paperVendorId || null;
-                insertData.paper_qty = paperQty ? parseInt(paperQty) : null;
+                insertData.paper_qty = paperQty ? parseFloat(paperQty) : null;
+                insertData.paper_unit = paperUnit;
                 insertData.paper_rate = paperRate ? parseFloat(paperRate) : null;
                 insertData.paper_gst_percent = paperGst;
                 insertData.paper_total = paperTotalWithGst || null;
@@ -156,8 +158,10 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
 
             // Financial records for paper supply
             if (sendingPaper && paperVendorId && paperTotalWithGst > 0) {
+                const unitLabel = paperUnit === 'kg' ? 'Kgs' : 'sheets';
+                const rateLabel = paperUnit === 'kg' ? '/Kg' : '/sheet';
                 const refText = `Paper for ${printRun.print_run_number} - ${selectedJobs.map(j => j.job_number).join(', ')}`;
-                const noteText = `Paper supply: ${paperQty} sheets × ₹${paperRate}/sheet + ${paperGst}% GST = ₹${paperTotalWithGst.toFixed(2)}`;
+                const noteText = `Paper supply: ${paperQty} ${unitLabel} × ₹${paperRate}${rateLabel} + ${paperGst}% GST = ₹${paperTotalWithGst.toFixed(2)}`;
 
                 if (paperPaymentStatus === 'paid') {
                     // Record as paid vendor payment
@@ -183,7 +187,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                             vendor_id: paperVendorId,
                             product_type: 'Paper',
                             description: refText,
-                            quantity: parseInt(paperQty) || 0,
+                            quantity: parseFloat(paperQty) || 0,
                             rate: parseFloat(paperRate) || 0,
                             subtotal: paperAmount,
                             gst_rate: paperGst,
@@ -239,6 +243,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
         setPaperVendorId('');
         setPaperQty('');
         setPaperRate('');
+        setPaperUnit('sheets');
         setPaperGst(18);
         setPaperPaymentStatus('pending');
         setPaperPaymentMode('cash');
@@ -423,18 +428,41 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                             {/* Qty, Rate, Amount */}
                             <div className="grid grid-cols-3 gap-3">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">Paper Qty (sheets)</label>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <label className="text-xs font-bold text-gray-600">
+                                            {paperUnit === 'kg' ? 'Paper Qty (KG)' : 'Paper Qty (Sheets)'}
+                                        </label>
+                                        <div className="flex rounded overflow-hidden border border-gray-200 text-xs font-bold">
+                                            <button
+                                                type="button"
+                                                onClick={() => { setPaperUnit('sheets'); setPaperQty(''); setPaperRate(''); }}
+                                                className={`px-2 py-0.5 transition-colors ${paperUnit === 'sheets' ? 'bg-gray-800 text-white' : 'bg-white text-gray-500 hover:bg-gray-100'}`}
+                                            >
+                                                Sheets
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => { setPaperUnit('kg'); setPaperQty(''); setPaperRate(''); }}
+                                                className={`px-2 py-0.5 transition-colors ${paperUnit === 'kg' ? 'bg-gray-800 text-white' : 'bg-white text-gray-500 hover:bg-gray-100'}`}
+                                            >
+                                                KG
+                                            </button>
+                                        </div>
+                                    </div>
                                     <input
                                         type="number"
                                         min="0"
+                                        step={paperUnit === 'kg' ? '0.001' : '1'}
                                         value={paperQty}
                                         onChange={(e) => setPaperQty(e.target.value)}
-                                        placeholder="0"
+                                        placeholder={paperUnit === 'kg' ? '0.000' : '0'}
                                         className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 outline-none text-sm"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">Rate (₹/sheet)</label>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">
+                                        {paperUnit === 'kg' ? 'Rate (₹/KG)' : 'Rate (₹/sheet)'}
+                                    </label>
                                     <input
                                         type="number"
                                         min="0"
