@@ -425,30 +425,33 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                                 )}
                             </div>
 
+                            {/* Unit toggle — full width, clearly visible */}
+                            <div className="flex items-center gap-3">
+                                <span className="text-xs font-bold text-gray-600">Paper supplied in:</span>
+                                <div className="flex rounded-md overflow-hidden border border-gray-300 text-xs font-bold">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setPaperUnit('sheets'); setPaperQty(''); setPaperRate(''); }}
+                                        className={`px-3 py-1.5 transition-colors ${paperUnit === 'sheets' ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-100'}`}
+                                    >
+                                        Sheets
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setPaperUnit('kg'); setPaperQty(''); setPaperRate(''); }}
+                                        className={`px-3 py-1.5 transition-colors ${paperUnit === 'kg' ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-100'}`}
+                                    >
+                                        KG
+                                    </button>
+                                </div>
+                            </div>
+
                             {/* Qty, Rate, Amount */}
                             <div className="grid grid-cols-3 gap-3">
                                 <div>
-                                    <div className="flex items-center justify-between mb-1.5">
-                                        <label className="text-xs font-bold text-gray-600">
-                                            {paperUnit === 'kg' ? 'Paper Qty (KG)' : 'Paper Qty (Sheets)'}
-                                        </label>
-                                        <div className="flex rounded overflow-hidden border border-gray-200 text-xs font-bold">
-                                            <button
-                                                type="button"
-                                                onClick={() => { setPaperUnit('sheets'); setPaperQty(''); setPaperRate(''); }}
-                                                className={`px-2 py-0.5 transition-colors ${paperUnit === 'sheets' ? 'bg-gray-800 text-white' : 'bg-white text-gray-500 hover:bg-gray-100'}`}
-                                            >
-                                                Sheets
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => { setPaperUnit('kg'); setPaperQty(''); setPaperRate(''); }}
-                                                className={`px-2 py-0.5 transition-colors ${paperUnit === 'kg' ? 'bg-gray-800 text-white' : 'bg-white text-gray-500 hover:bg-gray-100'}`}
-                                            >
-                                                KG
-                                            </button>
-                                        </div>
-                                    </div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">
+                                        {paperUnit === 'kg' ? 'Paper Qty (KG)' : 'Paper Qty (Sheets)'}
+                                    </label>
                                     <input
                                         type="number"
                                         min="0"
