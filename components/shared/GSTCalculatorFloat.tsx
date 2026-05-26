@@ -10,8 +10,8 @@ export default function GSTCalculatorFloat() {
   const panelRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
-  // Don't show floater on the dashboard — it has the full embedded version there
-  if (pathname?.includes('/dashboard')) return null;
+  // All hooks must run unconditionally — hide via JSX, not early return
+  const isDashboard = pathname?.includes('/dashboard') ?? false;
 
   const toggle = () => setOpen(v => !v);
 
@@ -33,6 +33,9 @@ export default function GSTCalculatorFloat() {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
+
+  // Don't render on dashboard — it has the full embedded widget there
+  if (isDashboard) return null;
 
   return (
     <div ref={panelRef} className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
