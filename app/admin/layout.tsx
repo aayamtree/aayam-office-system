@@ -16,6 +16,7 @@ import EODNudge from '@/components/eod/EODNudge';
 import RouteGuard from '@/components/layout/RouteGuard';
 import { NotificationPopup } from '@/components/NotificationPopup';
 import DriveDisconnectBanner from '@/components/drive/DriveDisconnectBanner';
+import GSTCalculatorFloat from '@/components/shared/GSTCalculatorFloat';
 
 export default function AdminLayout({
   children,
@@ -106,6 +107,9 @@ export default function AdminLayout({
 
           {/* In-app notification popups (broadcast system) + push notification trigger */}
           <NotificationPopup />
+
+          {/* GST Calculator — floating button on all pages except dashboard */}
+          <GSTCalculatorFloat />
         </div>
       </ConfirmProvider>
     </SessionProvider>

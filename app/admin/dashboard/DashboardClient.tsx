@@ -26,6 +26,7 @@ import DailySummaryWidget from '@/components/dashboard/DailySummaryWidget';
 import RecentFilesWidget from '@/components/dashboard/RecentFilesWidget';
 import InvoicePendingWidget from '@/components/dashboard/InvoicePendingWidget';
 import RecentActivityWidget from '@/components/dashboard/RecentActivityWidget';
+import GSTCalculator from '@/components/shared/GSTCalculator';
 import { GlobalErrorBoundary } from '@/components/ErrorBoundary';
 
 import type { DashboardData } from '@/lib/dashboard-data';
@@ -44,6 +45,7 @@ const WIDGET_LABELS: Record<string, string> = {
     'sales-perf': '📈 Sales Performance',
     'calendar': '📅 Calendar',
     'quick-notes': '🗒️ Quick Notes',
+    'gst-calculator': '🧮 GST Calculator',
     'recent-activity': '⚡ Recent Activity',
 };
 const ALL_WIDGET_KEYS = Object.keys(WIDGET_LABELS);
@@ -506,10 +508,19 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                 )}
             </div>
 
-            {/* ── Calendar + Quick Notes ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* ── Calendar + Quick Notes + GST Calculator ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                 {isVisible('calendar') && <GlobalErrorBoundary><MiniCalendarWidget /></GlobalErrorBoundary>}
                 {isVisible('quick-notes') && <GlobalErrorBoundary><QuickNotesWidget /></GlobalErrorBoundary>}
+                {isVisible('gst-calculator') && (
+                    <GlobalErrorBoundary>
+                        <Card>
+                            <CardContent className="pt-5 pb-5">
+                                <GSTCalculator />
+                            </CardContent>
+                        </Card>
+                    </GlobalErrorBoundary>
+                )}
             </div>
 
             {/* ── Recent Activity (full width) ── */}
