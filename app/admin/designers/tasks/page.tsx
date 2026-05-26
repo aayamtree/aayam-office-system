@@ -176,7 +176,8 @@ export default function DesignerWorkspace() {
 
   useEffect(() => {
     const fetchChecklists = async () => {
-      const { data } = await supabase.from('job_checklists').select('*');
+      // PERF: Select only needed fields + limit — was unbounded select('*')
+      const { data } = await supabase.from('job_checklists').select('job_type, items').limit(100);
       if (data) {
         const map: Record<string, string[]> = {};
         data.forEach((d: any) => {

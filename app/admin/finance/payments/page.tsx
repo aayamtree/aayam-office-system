@@ -27,28 +27,32 @@ export default function PaymentsPageNew() {
         try {
             setLoading(true);
 
-            // 1. Fetch manual payments (existing RPC)
-            const { data: received, error: recError } = await supabase.rpc('get_all_payments_received');
-            const { data: paid, error: paidError } = await supabase.rpc('get_all_vendor_payments');
+            // PERF: All 3 fetches run in parallel — was sequential (3× slower)
+            const [receivedRes, paidRes, bankTxnsRes] = await Promise.all([
+                supabase.rpc('get_all_payments_received'),
+                supabase.rpc('get_all_vendor_payments'),
+                supabase
+                    .from('bank_transactions')
+                    .select(`
+                        id, transaction_date, transaction_type, amount, description,
+                        reference_number, categorization_type, expense_category_id,
+                        income_category_id, expense_type, payment_method,
+                        categorization_notes, is_verified, verified_at,
+                        expense_category:expense_categories(id, name),
+                        income_category:income_categories(id, name),
+                        bank_account:bank_accounts(id, name, bank_name)
+                    `)
+                    .eq('is_verified', true)
+                    .order('transaction_date', { ascending: false })
+                    .limit(1000),
+            ]);
+
+            const { data: received, error: recError } = receivedRes;
+            const { data: paid, error: paidError } = paidRes;
+            const { data: bankTxns, error: bankError } = bankTxnsRes;
 
             if (recError) throw recError;
             if (paidError) throw paidError;
-
-            // 2. Fetch categorized bank transactions (verified = true)
-            const { data: bankTxns, error: bankError } = await supabase
-                .from('bank_transactions')
-                .select(`
-                    id, transaction_date, transaction_type, amount, description,
-                    reference_number, categorization_type, expense_category_id,
-                    income_category_id, expense_type, payment_method,
-                    categorization_notes, is_verified, verified_at,
-                    expense_category:expense_categories(id, name),
-                    income_category:income_categories(id, name),
-                    bank_account:bank_accounts(id, name, bank_name)
-                `)
-                .eq('is_verified', true)
-                .order('transaction_date', { ascending: false });
-
             if (bankError) throw bankError;
 
             // Build unified payment list

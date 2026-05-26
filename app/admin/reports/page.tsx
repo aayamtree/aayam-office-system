@@ -20,7 +20,8 @@ function usePaymentsReceivedDirect() {
     const { data, error } = await supabase
       .from('payments_received')
       .select('id, payment_number, payment_date, amount, payment_mode, client:clients(name, company)')
-      .order('payment_date', { ascending: false });
+      .order('payment_date', { ascending: false })
+      .limit(500); // PERF: cap at 500 — was unbounded (full table scan)
     if (error) throw error;
     return data || [];
   }, { revalidateOnFocus: false });

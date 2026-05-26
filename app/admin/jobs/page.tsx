@@ -41,7 +41,9 @@ import UnifiedJobForm from '@/components/jobs/UnifiedJobForm';
 
 // ✅ ALL DROPDOWNS NOW DATABASE-DRIVEN - NO HARDCODED VALUES!
 
-const formatCurrency = (amount: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount || 0);
+// PERF: Create formatter once — reused on every call instead of creating a new instance each time
+const _currencyFormatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
+const formatCurrency = (amount: number) => _currencyFormatter.format(amount || 0);
 const getPaymentBadge = (status: string) => status === 'paid' ? 'bg-gray-100 text-gray-900' : status === 'partial' ? 'bg-gray-100 text-gray-700' : 'bg-destructive/10 text-destructive';
 const isOverdue = (deadline: string | undefined, stage: string) => deadline && stage !== 'delivered' && new Date(deadline) < new Date();
 
@@ -147,7 +149,9 @@ function JobCard({ job, getPriorityBadge, onViewDetail, onEdit, onRepeatOrder, o
 
 export default function JobsPage() {
   const searchParams = useSearchParams();
-  const { jobs, loading: jobsLoading, createJob, updateJob, deleteJob, updateJobStage, refetch: refetchJobs } = useJobs();
+  // PERF: Limit to 500 most recent jobs — prevents full table scan on large datasets.
+  // Jobs page uses client-side filter/search on this set, which covers all practical needs.
+  const { jobs, loading: jobsLoading, createJob, updateJob, deleteJob, updateJobStage, refetch: refetchJobs } = useJobs({ limit: 500 });
   const { clients, createClient } = useClients();
   const { vendors, createVendor } = useVendors();
   const { designers } = useDesigners();
