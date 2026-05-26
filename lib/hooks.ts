@@ -155,7 +155,7 @@ export function useClients() {
   const { data, loading, error, refetch } = useSupabaseQuery<Client>('clients', {
     filter,
     orderBy: { column: 'created_at', ascending: false },
-    limit: 200
+    limit: 100 // Reduced from 200 for better performance
   });
 
   const createClient = async (client: Omit<Client, 'id' | 'created_at' | 'updated_at' | 'outstanding_balance'>) => {
@@ -221,7 +221,7 @@ export function useClients() {
 export function useVendors() {
   const { data, loading, error, refetch } = useSupabaseQuery<Vendor>('vendors', {
     orderBy: { column: 'created_at', ascending: false },
-    limit: 200
+    limit: 100 // Reduced from 200 for better performance
   });
 
   const createVendor = async (vendor: Omit<Vendor, 'id' | 'created_at' | 'updated_at'> & { outstanding_balance?: number }) => {
@@ -360,17 +360,21 @@ export function useSalesOrders() {
 // =============================================
 // JOBS HOOK
 // =============================================
+// Optimized select constants for jobs
+export const JOB_SELECTS = {
+  LIST: 'id, job_number, project_name, client_id, priority, current_stage, client_deadline, total_amount, amount_received, payment_status, client:clients(id, name, company)',
+  CARD: 'id, job_number, project_name, client_id, designer_id, current_stage, total_amount, amount_received, payment_status, files, client:clients(id, company, name)',
+  FULL: '*, client:clients(id, name, company, source), vendor:vendors(id, name)'
+};
+
 export function useJobs(options?: UseSupabaseQueryOptions) {
   const { user, profile } = useAuth();
-  // Lightweight default: only fetch client/vendor names for list views
-  // Pages needing full relations can pass select: '*, client:clients(*), ...' in options
-  // NOTE: sales_person join removed from default — requires FK fk_jobs_sales_person_id in DB.
-  // Run ADD_JOBS_SALESPERSON_FK.sql to restore it. Pages needing salesperson data pass their own select.
-  const defaultSelect = '*, client:clients(id, name, company, source), vendor:vendors(id, name)';
+  // Lightweight default: only fetch essential columns for list views
+  const defaultSelect = options?.select || JOB_SELECTS.LIST;
   const { data, loading, error, refetch } = useSupabaseQuery<Job>('jobs', {
-    select: options?.select || defaultSelect,
+    select: defaultSelect,
     orderBy: { column: 'created_at', ascending: false },
-    // PERF: No default limit — callers use pagination via page/pageSize or explicit limit
+    limit: options?.limit || 50, // Default pagination to 50 items
     ...options
   });
 
@@ -687,10 +691,10 @@ export function useLeads() {
     : undefined;  // Admin sees all
 
   const { data, loading, error, refetch } = useSupabaseQuery<Lead>('leads', {
-    select: '*',
+    select: 'id, lead_number, name, email, phone, source, status, product_interest, assigned_to, created_at, updated_at, next_followup_date, is_converted',
     filter,
     orderBy: { column: 'created_at', ascending: false },
-    limit: 200  // Default pagination
+    limit: 100  // Reduced from 200 for better performance
   });
 
   const createLead = async (lead: Omit<Lead, 'id' | 'created_at' | 'updated_at' | 'lead_number' | 'assigned_user' | 'follow_ups'> & { created_at?: string }) => {

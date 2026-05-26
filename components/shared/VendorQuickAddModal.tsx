@@ -43,7 +43,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
         const loadCategories = async () => {
             const { data } = await supabase
                 .from('vendor_categories')
-                .select('*')
+                .select('id, name, is_active')
                 .eq('is_active', true)
                 .order('name');
             if (data) {
@@ -303,7 +303,7 @@ export default function VendorQuickAddModal({ isOpen, onClose, onSuccess }: Vend
                     // Reload categories after adding
                     const { data } = await supabase
                         .from('vendor_categories')
-                        .select('*')
+                        .select('id, name, is_active')
                         .eq('is_active', true)
                         .order('name');
                     if (data) setVendorCategories(data);

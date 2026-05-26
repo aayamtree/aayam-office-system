@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from '@/lib/toast';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -60,9 +60,9 @@ interface JobCardProps {
   onDelete: (id: string) => void;
 }
 
-function JobCard({ job, getPriorityBadge, onViewDetail, onEdit, onRepeatOrder, onApproveDesignerProject, onOpenSendToPrinter, onStageChange, onAddPayment, onDelete }: JobCardProps) {
-  const overdue = isOverdue(job.client_deadline, job.current_stage);
-  const headerBg = overdue ? 'bg-red-600' : job.priority === 'urgent' ? 'bg-gray-900' : job.priority === 'high' ? 'bg-gray-800' : 'bg-gray-700';
+const JobCard = React.memo(function JobCard({ job, getPriorityBadge, onViewDetail, onEdit, onRepeatOrder, onApproveDesignerProject, onOpenSendToPrinter, onStageChange, onAddPayment, onDelete }: JobCardProps) {
+  const overdue = useMemo(() => isOverdue(job.client_deadline, job.current_stage), [job.client_deadline, job.current_stage]);
+  const headerBg = useMemo(() => overdue ? 'bg-red-600' : job.priority === 'urgent' ? 'bg-gray-900' : job.priority === 'high' ? 'bg-gray-800' : 'bg-gray-700', [overdue, job.priority]);
   return (
     <div
       className="bg-white rounded-md overflow-hidden border border-gray-200 hover:shadow-sm transition-all cursor-pointer"
@@ -145,7 +145,7 @@ function JobCard({ job, getPriorityBadge, onViewDetail, onEdit, onRepeatOrder, o
       </div>
     </div>
   );
-}
+});
 
 export default function JobsPage() {
   const searchParams = useSearchParams();
@@ -355,7 +355,7 @@ export default function JobsPage() {
     setExpandedStages(prev => prev.includes(stageId) ? prev.filter(s => s !== stageId) : [...prev, stageId]);
   };
 
-  const getPriorityBadge = (priority: string) => priorities.find(p => p.id === priority)?.color || 'bg-gray-100 text-gray-600';
+  const getPriorityBadge = useCallback((priority: string) => priorities.find(p => p.id === priority)?.color || 'bg-gray-100 text-gray-600', [priorities]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -459,7 +459,7 @@ export default function JobsPage() {
     });
   };
 
-  const handleEdit = (job: Job) => {
+  const handleEdit = useCallback((job: Job) => {
     setFormData({
       project_name: job.project_name,
       client_id: job.client_id || '',
@@ -481,22 +481,22 @@ export default function JobsPage() {
     });
     setEditingJob(job);
     setShowModal(true);
-  };
+  }, []);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     const { confirmed } = await confirm({ title: 'Delete Job', message: 'Are you sure you want to delete this job?', variant: 'danger', confirmLabel: 'Delete' });
     if (!confirmed) return;
     await deleteJob(id);
-  };
+  }, [confirm, deleteJob]);
 
-  const handleStageChange = async (jobId: string, newStage: string) => {
+  const handleStageChange = useCallback(async (jobId: string, newStage: string) => {
     await updateJobStage(jobId, newStage as JobStatus);
-  };
+  }, [updateJobStage]);
 
-  const handleApproveDesignerProject = async (job: Job) => {
+  const handleApproveDesignerProject = useCallback(async (job: Job) => {
     setApprovingJob(job);
     setShowApproveDialog(true);
-  };
+  }, []);
 
   const confirmApproval = async () => {
     if (!approvingJob) return;
@@ -559,9 +559,9 @@ export default function JobsPage() {
     }
   };
 
-  const handleViewDetail = (job: Job) => {
+  const handleViewDetail = useCallback((job: Job) => {
     handleEdit(job);
-  };
+  }, [handleEdit]);
 
   const handleAddNew = () => {
     resetForm();
@@ -570,11 +570,11 @@ export default function JobsPage() {
   };
 
   // Send to Printer — quick assign vendor + machine without creating a print run
-  const handleOpenSendToPrinter = (job: Job) => {
+  const handleOpenSendToPrinter = useCallback((job: Job) => {
     setSelectedJob(job);
     setSendToPrinterData({ vendor_id: job.vendor_id || '', machine_id: '', notes: '' });
     setShowSendToPrinterModal(true);
-  };
+  }, []);
 
   const handleSendToPrinter = async () => {
     if (!selectedJob || !sendToPrinterData.vendor_id) return;
@@ -598,7 +598,7 @@ export default function JobsPage() {
   };
 
   // Repeat Order — copies job data into a new job
-  const handleRepeatOrder = (job: Job) => {
+  const handleRepeatOrder = useCallback((job: Job) => {
     setFormData({
       project_name: `${job.project_name} (Repeat)`,
       client_id: job.client_id || '',
@@ -620,7 +620,7 @@ export default function JobsPage() {
     });
     setEditingJob(null); // This is a NEW job, not editing
     setShowModal(true);
-  };
+  }, []);
 
   if (loading && !forceShow) {
     return (

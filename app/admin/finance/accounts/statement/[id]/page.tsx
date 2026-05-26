@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Download, Printer, Calendar, FileSpreadsheet } from 'lucide-react';
 import Link from 'next/link';
-import * as XLSX from 'xlsx';
+import { loadXLSX } from '@/lib/lazy-loaders';
 
 export default function AccountStatementPage() {
     const params = useParams();
@@ -90,7 +90,7 @@ export default function AccountStatementPage() {
         window.print();
     };
 
-    const handleExportExcel = () => {
+    const handleExportExcel = async () => {
         // Prepare data for Excel export
         const exportData = transactions.map((txn) => {
             const isDebit = accountType === 'bank'
@@ -117,6 +117,9 @@ export default function AccountStatementPage() {
             'Balance': account.current_balance || 0
         });
 
+        // Lazy load XLSX library only when needed
+        const XLSX = await loadXLSX();
+        
         // Create workbook
         const ws = XLSX.utils.json_to_sheet(exportData);
         const wb = XLSX.utils.book_new();

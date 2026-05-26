@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
 import { ArrowLeft, Download, Printer, Calendar, FileSpreadsheet, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import * as XLSX from 'xlsx';
+import { loadXLSX } from '@/lib/lazy-loaders';
 
 export default function CashBookPage() {
     const router = useRouter();
@@ -81,7 +81,10 @@ export default function CashBookPage() {
         window.print();
     };
 
-    const handleExportExcel = () => {
+    const handleExportExcel = async () => {
+        // Lazy load XLSX library only when needed
+        const XLSX = await loadXLSX();
+        
         const exportData = transactions.map((txn) => ({
             'Date': new Date(txn.transaction_date).toLocaleDateString('en-IN'),
             'Account': txn.cash_accounts?.name || '-',

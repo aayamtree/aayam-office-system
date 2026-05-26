@@ -76,10 +76,10 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
     const fetchData = async () => {
         try {
             const [clientsRes, vendorsRes, categoriesRes, designersRes] = await Promise.all([
-                supabase.from('clients').select('*').eq('is_active', true).order('name'),
-                supabase.from('vendors').select('*').eq('is_active', true).order('name'),
-                supabase.from('product_categories').select('*').eq('is_active', true).order('name'),
-                supabase.from('profiles').select('*').eq('role', 'designer').eq('is_active', true).order('full_name')
+                supabase.from('clients').select('id, name, company, email, phone, is_active').eq('is_active', true).order('name'),
+                supabase.from('vendors').select('id, name, company, email, phone, is_active').eq('is_active', true).order('name'),
+                supabase.from('product_categories').select('id, name, is_active').eq('is_active', true).order('name'),
+                supabase.from('profiles').select('id, full_name, email, role, can_design, is_active, hourly_rate').eq('role', 'designer').eq('is_active', true).order('full_name')
             ]);
 
             if (clientsRes.data) setClients(clientsRes.data);

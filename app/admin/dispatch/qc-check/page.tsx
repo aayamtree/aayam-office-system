@@ -91,13 +91,13 @@ export default function QCCheckPage() {
       const productCategory = job.product_category || '';
       const { data: designChecklists } = await supabase
         .from('job_checklists')
-        .select('*')
+        .select('id, category, job_type, items, is_active')
         .eq('category', 'design');
 
       // Fetch post-print checklists (category = 'dispatch') matching job type
       const { data: dispatchChecklists } = await supabase
         .from('job_checklists')
-        .select('*')
+        .select('id, category, job_type, items, is_active')
         .eq('category', 'dispatch');
 
       // Find matching checklist for this job's product category (pre-print)
@@ -210,7 +210,7 @@ export default function QCCheckPage() {
     try {
       const { data } = await supabase
         .from('qc_records')
-        .select('*')
+        .select('id, job_id, qc_type, status, performed_by, performed_at, notes, checkpoints')
         .eq('job_id', job.id)
         .order('performed_at', { ascending: false });
       setQcHistory(data || []);
