@@ -59,16 +59,12 @@ export default function TelegramFloatButton() {
   const [sending, setSending] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Only show for admin and finance
-  if (!profile || !['admin', 'finance'].includes(profile.role)) {
-    return null;
-  }
-
   // Load contacts
   useEffect(() => {
     if (isOpen) {
       loadContacts();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   // Filter contacts based on search
@@ -96,6 +92,11 @@ export default function TelegramFloatButton() {
       setMessage(template.template);
     }
   }, [selectedTemplate]);
+
+  // Only show for admin and finance
+  if (!profile || !['admin', 'finance'].includes(profile.role)) {
+    return null;
+  }
 
   const loadContacts = async () => {
     try {
