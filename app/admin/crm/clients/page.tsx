@@ -6,7 +6,8 @@ import Link from 'next/link';
 import {
   Search, Plus, Phone, Mail, MapPin, Hash,
   Edit, Trash2, Eye, X, ArrowLeft, Building2, Loader2,
-  Briefcase, IndianRupee, ExternalLink, UserCheck, FileBarChart
+  Briefcase, IndianRupee, ExternalLink, UserCheck, FileBarChart,
+  Send, Link2, CheckCircle2, Copy
 } from 'lucide-react';
 import { useClients, useJobs } from '@/lib/hooks';
 import { Client } from '@/types/database';
@@ -18,6 +19,84 @@ import { useConfirm } from '@/components/ConfirmModal';
 import WhatsAppButton from '@/components/shared/WhatsAppButton';
 import { logActivity } from '@/lib/logActivity';
 import { supabase } from '@/lib/supabase';
+
+// Sub-component: Telegram Linking for a client
+function TelegramClientSection({ client, onUpdated }: { client: any; onUpdated: (chatId: string, username: string) => void }) {
+  const [manualChatId, setManualChatId] = useState('');
+  const [saving, setSaving] = useState(false);
+  const inviteLink = `https://t.me/aayam_notify_bot?start=client_${client.id}`;
+
+  const handleManualSave = async () => {
+    if (!manualChatId.trim()) return;
+    setSaving(true);
+    const { error } = await supabase.from('clients').update({
+      telegram_chat_id: manualChatId.trim(),
+      telegram_linked_at: new Date().toISOString(),
+    }).eq('id', client.id);
+    setSaving(false);
+    if (error) { toast.error('Failed to save'); return; }
+    toast.success('Telegram linked!');
+    onUpdated(manualChatId.trim(), '');
+    setManualChatId('');
+  };
+
+  const handleUnlink = async () => {
+    const { error } = await supabase.from('clients').update({
+      telegram_chat_id: null, telegram_username: null, telegram_linked_at: null,
+    }).eq('id', client.id);
+    if (error) { toast.error('Failed to unlink'); return; }
+    toast.success('Telegram unlinked');
+    onUpdated('', '');
+  };
+
+  return (
+    <div className="p-3 bg-green-50 border border-green-200 rounded-md space-y-2">
+      <div className="flex items-center gap-2">
+        <Send className="w-4 h-4 text-green-600" />
+        <span className="text-sm font-semibold text-green-800">Telegram</span>
+        {client.telegram_chat_id ? (
+          <span className="ml-auto flex items-center gap-1 text-xs text-green-700 font-medium bg-green-100 px-2 py-0.5 rounded-full">
+            <CheckCircle2 className="w-3 h-3" /> Linked{client.telegram_username ? ` @${client.telegram_username}` : ''}
+          </span>
+        ) : (
+          <span className="ml-auto text-xs text-amber-600 font-medium bg-amber-50 px-2 py-0.5 rounded-full">Not linked</span>
+        )}
+      </div>
+
+      {client.telegram_chat_id ? (
+        <button onClick={handleUnlink} className="text-xs text-red-500 hover:underline">Unlink Telegram</button>
+      ) : (
+        <>
+          {/* Option 1: Share invite link */}
+          <div>
+            <p className="text-xs text-green-700 font-medium mb-1 flex items-center gap-1"><Link2 className="w-3 h-3" /> Share this link with client:</p>
+            <div className="flex items-center gap-1">
+              <input readOnly value={inviteLink} className="flex-1 text-xs bg-white border border-green-200 rounded px-2 py-1 text-gray-600 truncate" />
+              <button onClick={() => { navigator.clipboard.writeText(inviteLink); toast.success('Link copied!'); }}
+                className="p-1.5 bg-green-600 text-white rounded hover:bg-green-700">
+                <Copy className="w-3 h-3" />
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-0.5">Client opens link → messages the bot → auto-linked ✅</p>
+          </div>
+
+          {/* Option 2: Manual entry */}
+          <div>
+            <p className="text-xs text-green-700 font-medium mb-1">Or enter Chat ID manually:</p>
+            <div className="flex items-center gap-1">
+              <input value={manualChatId} onChange={e => setManualChatId(e.target.value)}
+                placeholder="e.g. 123456789" className="flex-1 text-xs border border-gray-300 rounded px-2 py-1" />
+              <button onClick={handleManualSave} disabled={saving || !manualChatId.trim()}
+                className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 disabled:opacity-50">
+                {saving ? '...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 // Sub-component: Client Jobs & Financial Summary
 function ClientJobsSection({ clientId }: { clientId: string }) {
@@ -846,6 +925,11 @@ export default function ClientsPage() {
                 {selectedClient.address && <div className="flex items-center gap-3"><MapPin className="w-4 h-4 text-gray-400" /><span className="text-gray-700">{selectedClient.address}, {selectedClient.city}</span></div>}
                 {selectedClient.gstin && <div className="flex items-center gap-3"><Building2 className="w-4 h-4 text-gray-400" /><span className="text-gray-700">GSTIN: {selectedClient.gstin}</span></div>}
               </div>
+
+              {/* Telegram Section */}
+              <TelegramClientSection client={selectedClient} onUpdated={(chatId, username) => {
+                setSelectedClient({ ...selectedClient, telegram_chat_id: chatId, telegram_username: username });
+              }} />
 
               {/* Client Jobs */}
               <ClientJobsSection clientId={selectedClient.id} />
