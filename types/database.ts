@@ -115,6 +115,16 @@ export interface Client extends BaseEntity {
   source?: 'direct' | 'marketing' | string;  // How this client was acquired
   brand_name?: string;  // Searchable brand names (hashtag format: #tiger #cobra)
   referred_by?: string;  // UUID of the client who referred this client
+  
+  // Telegram
+  telegram_chat_id?: string;
+  telegram_username?: string;
+  telegram_linked_at?: string;
+
+  // Opening balance
+  opening_balance?: number;
+  opening_balance_date?: string;
+  opening_balance_type?: 'debit' | 'credit';
 
   // Joined data
   referrer?: Client;  // The client who referred this one
