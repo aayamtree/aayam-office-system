@@ -82,15 +82,15 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                 supabase.from('profiles').select('id, full_name, email, role, can_design, is_active, hourly_rate').eq('role', 'designer').eq('is_active', true).order('full_name')
             ]);
 
-            if (clientsRes.data) setClients(clientsRes.data);
-            if (vendorsRes.data) setVendors(vendorsRes.data);
-            if (categoriesRes.data) setProductCategories(categoriesRes.data);
+            if (clientsRes.data) setClients(clientsRes.data as any);
+            if (vendorsRes.data) setVendors(vendorsRes.data as any);
+            if (categoriesRes.data) setProductCategories(categoriesRes.data as any);
             if (designersRes.data) {
                 // Filter out placeholder accounts (Designer 5, Designer 6 etc.) — same rule as useDesigners hook
                 setDesigners(designersRes.data.filter((p: any) => {
                     const n = (p.full_name || '').trim();
                     return n !== '' && !/^Designer\s*\d+$/i.test(n);
-                }));
+                }) as any);
             }
         } catch (err) {
             console.error('Error fetching data:', err);

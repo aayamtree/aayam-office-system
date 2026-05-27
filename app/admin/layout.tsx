@@ -17,6 +17,7 @@ import RouteGuard from '@/components/layout/RouteGuard';
 import { NotificationPopup } from '@/components/NotificationPopup';
 import DriveDisconnectBanner from '@/components/drive/DriveDisconnectBanner';
 import GSTCalculatorFloat from '@/components/shared/GSTCalculatorFloat';
+import TelegramFloatButton from '@/components/TelegramFloatButton';
 
 export default function AdminLayout({
   children,
@@ -110,6 +111,9 @@ export default function AdminLayout({
 
           {/* GST Calculator — floating button on all pages except dashboard */}
           <GSTCalculatorFloat />
+
+          {/* Telegram Float Button — quick send messages to clients/vendors */}
+          <TelegramFloatButton />
         </div>
       </ConfirmProvider>
     </SessionProvider>

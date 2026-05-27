@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { Bell, Menu, ChevronRight, Plus, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import NotificationBell from '@/components/NotificationBell';
 
 // Shadcn Components
 import { Button } from '@/components/ui/Button';
@@ -324,44 +325,8 @@ export default function Header({ onMenuClick, sidebarExpanded }: HeaderProps) {
             )}
           </Button>
 
-          {/* Notifications */}
-          <DropdownMenu open={showNotifications} onOpenChange={setShowNotifications}>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" strokeWidth={1} />
-                {hasUrgent && (
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full"></span>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <div className="max-h-80 overflow-y-auto">
-                {notifications.length === 0 ? (
-                  <div className="p-4 text-center text-sm text-muted-foreground">
-                    ✅ All caught up — no new notifications!
-                  </div>
-                ) : (
-                  notifications.map((notif) => (
-                    <DropdownMenuItem key={notif.id} className="flex items-start gap-3 p-3 cursor-pointer" onClick={() => {
-                      if (notif.href) window.location.href = notif.href;
-                    }}>
-                      <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${notif.type === 'danger' ? 'bg-destructive' :
-                        notif.type === 'success' ? 'bg-green-500' :
-                          notif.type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
-                        }`}></span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{notif.title}</p>
-                        <p className="text-xs text-muted-foreground truncate">{notif.desc}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{notif.time}</p>
-                      </div>
-                    </DropdownMenuItem>
-                  ))
-                )}
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Personal Notifications (Telegram + In-App) */}
+          <NotificationBell />
         </div>
       </div>
     </header>
