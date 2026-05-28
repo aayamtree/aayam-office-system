@@ -135,13 +135,22 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
       .order('full_name');
     if (members) setTeam(members.filter((m) => m.id !== profile?.id));
 
-    // General channel
-    const { data: ch } = await supabase
+    // General channel — create if missing
+    let { data: ch } = await supabase
       .from('chat_channels')
       .select('id')
       .eq('type', 'group')
       .ilike('name', 'general')
       .maybeSingle();
+
+    if (!ch) {
+      const { data: newCh } = await supabase
+        .from('chat_channels')
+        .insert({ name: 'General', type: 'group', created_by: profile?.id })
+        .select('id')
+        .single();
+      ch = newCh;
+    }
 
     if (!ch) return;
     const cid = ch.id;
@@ -240,7 +249,9 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
     if (!error) {
       try { await relayText(content); } catch {}
     } else {
+      console.error('Send error:', error);
       setInput(content);
+      alert('Could not send message: ' + error.message);
     }
 
     setSending(false);
@@ -382,18 +393,18 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
 
         {/* ── @mention dropdown ── */}
         {showMentions && mentionMatches.length > 0 && (
-          <div style={{ background: '#17212b', borderTop: '1px solid rgba(255,255,255,0.07)', maxHeight: 140, overflowY: 'auto' }}>
+          <div style={{ background: '#17212b', borderTop: '1px solid rgba(255,255,255,0.07)', maxHeight: 160, overflowY: 'auto' }}>
             {mentionMatches.map((m) => (
               <button
                 key={m.id}
-                onClick={() => insertMention(m)}
+                onMouseDown={(e) => { e.preventDefault(); insertMention(m); }}
                 style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
                 onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
               >
                 <Avatar name={m.full_name} size={28} />
                 <div>
-                  <div style={{ color: '#fff', fontSize: 14, fontWeight: 500 }}>{m.full_name}</div>
+                  <div style={{ color: '#fff', fontSize: 14, fontWeight: 500 }}>{m.full_name || 'Unknown'}</div>
                   <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, textTransform: 'capitalize' }}>{m.role}</div>
                 </div>
               </button>
