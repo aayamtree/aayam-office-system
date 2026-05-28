@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
-import { X, Send, Hash, MessageCircle, Users, ChevronLeft } from 'lucide-react';
+import { X, Send, Hash, MessageCircle, Users, ChevronLeft, Paperclip } from 'lucide-react';
 
 interface Channel {
   id: string;
@@ -61,6 +61,8 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
   const [showDMPicker, setShowDMPicker] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -206,9 +208,115 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
 
     if (error) {
       setInput(content); // restore on error
+      setSending(false);
+      inputRef.current?.focus();
+      return;
     }
+
+    // Relay to Telegram if this is the General channel
+    if (activeChannel.type === 'group' && activeChannel.name?.toLowerCase() === 'general') {
+      try {
+        const BOT_TOKEN = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN || '8352518034:AAHsiUcPAu3XEAF72bupxjpO1wCk0F9oHns';
+        const senderName = profile.full_name || 'Team Member';
+        const roleLabel = (profile.role || '').charAt(0).toUpperCase() + (profile.role || '').slice(1);
+        const telegramMsg = `💬 <b>${senderName}</b> <i>(${roleLabel})</i>:\n${content}`;
+
+        // Get all OTHER staff with Telegram linked
+        const { data: targets } = await supabase
+          .from('profiles')
+          .select('telegram_chat_id')
+          .eq('is_active', true)
+          .not('telegram_chat_id', 'is', null)
+          .neq('id', profile.id);
+
+        if (targets && targets.length > 0) {
+          await Promise.all(
+            targets.map(t =>
+              fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: t.telegram_chat_id, text: telegramMsg, parse_mode: 'HTML' }),
+              })
+            )
+          );
+        }
+      } catch {
+        // Telegram relay failure doesn't block the chat
+      }
+    }
+
     setSending(false);
     inputRef.current?.focus();
+  };
+
+  const uploadFile = async (file: File) => {
+    if (!activeChannel || !profile?.id) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop() || 'bin';
+      const path = `${activeChannel.id}/${Date.now()}_${file.name}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('chat-files')
+        .upload(path, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage.from('chat-files').getPublicUrl(path);
+
+      const isImage = file.type.startsWith('image/');
+      const content = isImage ? `[img]${publicUrl}` : `[file:${file.name}]${publicUrl}`;
+
+      const { error } = await supabase.from('chat_messages').insert({
+        channel_id: activeChannel.id,
+        sender_id: profile.id,
+        content,
+      });
+
+      if (!error && activeChannel.type === 'group' && activeChannel.name?.toLowerCase() === 'general') {
+        const BOT_TOKEN = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN || '8352518034:AAHsiUcPAu3XEAF72bupxjpO1wCk0F9oHns';
+        const senderName = profile.full_name || 'Team Member';
+        const roleLabel = (profile.role || '').charAt(0).toUpperCase() + (profile.role || '').slice(1);
+
+        const { data: targets } = await supabase
+          .from('profiles')
+          .select('telegram_chat_id')
+          .eq('is_active', true)
+          .not('telegram_chat_id', 'is', null)
+          .neq('id', profile.id);
+
+        if (targets && targets.length > 0) {
+          await Promise.all(
+            targets.map(t =>
+              isImage
+                ? fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      chat_id: t.telegram_chat_id,
+                      photo: publicUrl,
+                      caption: `📷 <b>${senderName}</b> <i>(${roleLabel})</i>`,
+                      parse_mode: 'HTML',
+                    }),
+                  })
+                : fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      chat_id: t.telegram_chat_id,
+                      text: `📎 <b>${senderName}</b> <i>(${roleLabel})</i> shared: <a href="${publicUrl}">${file.name}</a>`,
+                      parse_mode: 'HTML',
+                    }),
+                  })
+            )
+          );
+        }
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -434,12 +542,33 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
                       {showName && (
                         <p className="text-xs text-gray-500 mb-1 px-1">{msg.sender?.full_name}</p>
                       )}
-                      <div className={`px-3 py-2 rounded-2xl text-sm whitespace-pre-wrap break-words
+                      <div className={`px-3 py-2 rounded-2xl text-sm break-words
                         ${isMe
                           ? 'bg-gray-900 text-white rounded-br-sm'
                           : 'bg-white text-gray-900 shadow-sm border border-gray-100 rounded-bl-sm'
                         }`}>
-                        {msg.content}
+                        {msg.content.startsWith('[img]') ? (
+                          <img
+                            src={msg.content.replace('[img]', '')}
+                            alt="attachment"
+                            className="max-w-full rounded-lg max-h-48 object-cover cursor-pointer"
+                            onClick={() => window.open(msg.content.replace('[img]', ''), '_blank')}
+                          />
+                        ) : msg.content.startsWith('[file:') ? (
+                          (() => {
+                            const match = msg.content.match(/\[file:(.+?)\](.+)/);
+                            if (!match) return <span className="whitespace-pre-wrap">{msg.content}</span>;
+                            const [, fname, url] = match;
+                            return (
+                              <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 underline opacity-80 hover:opacity-100">
+                                <Paperclip className="w-3 h-3 flex-shrink-0" />
+                                {fname}
+                              </a>
+                            );
+                          })()
+                        ) : (
+                          <span className="whitespace-pre-wrap">{msg.content}</span>
+                        )}
                       </div>
                       <p className="text-[10px] text-gray-400 mt-0.5 px-1">{timeLabel(msg.created_at)}</p>
                     </div>
@@ -451,6 +580,25 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
 
             {/* Input */}
             <div className="px-3 py-3 bg-white border-t border-gray-200 flex gap-2 items-end">
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip"
+                onChange={e => { const file = e.target.files?.[0]; if (file) uploadFile(file); e.target.value = ''; }}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="w-10 h-10 border border-gray-200 rounded-xl flex items-center justify-center hover:bg-gray-50 transition-colors disabled:opacity-40 flex-shrink-0"
+                title="Attach file"
+              >
+                {uploading
+                  ? <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                  : <Paperclip className="w-4 h-4 text-gray-500" />
+                }
+              </button>
               <textarea
                 ref={inputRef}
                 value={input}
