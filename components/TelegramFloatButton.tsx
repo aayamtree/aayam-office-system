@@ -77,9 +77,6 @@ export default function TelegramFloatButton() {
     if (template) setMessage(template.template);
   }, [selectedTemplate]);
 
-  // Show for all logged-in users
-  if (!profile) return null;
-
   const loadContacts = async () => {
     try {
       const { data } = await supabase
@@ -98,6 +95,9 @@ export default function TelegramFloatButton() {
       toast.error('Failed to load team members');
     }
   };
+
+  // Show for all logged-in users
+  if (!profile) return null;
 
   const handleSend = async () => {
     if (!message.trim()) {
