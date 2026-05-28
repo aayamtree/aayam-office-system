@@ -257,7 +257,7 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
       // Optimistic: add immediately so it shows without needing realtime
       const newMsg: Message = {
         ...inserted,
-        sender: { full_name: profile.full_name || 'Me', role: profile.role || '' },
+        sender: { full_name: profile?.full_name || 'Me', role: profile?.role || '' },
       };
       setMessages((prev) =>
         prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg]
