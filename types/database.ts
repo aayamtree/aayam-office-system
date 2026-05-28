@@ -31,6 +31,9 @@ export interface Profile extends BaseEntity {
   avatar_url?: string;  // Google Drive photo link
   is_active: boolean;
   commission_rate?: number;
+  telegram_chat_id?: string | null;
+  telegram_username?: string | null;
+  telegram_linked_at?: string | null;
 }
 
 // Company Settings
