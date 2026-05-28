@@ -152,7 +152,7 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
       .eq('channel_id', cid)
       .order('created_at', { ascending: true })
       .limit(100);
-    if (msgs) setMessages(msgs as Message[]);
+    if (msgs) setMessages(msgs as unknown as Message[]);
 
     // Realtime
     realtimeRef.current = supabase
@@ -166,7 +166,7 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
             .select('id, sender_id, content, created_at, sender:profiles!chat_messages_sender_id_fkey(full_name, role)')
             .eq('id', payload.new.id)
             .maybeSingle();
-          if (msg) setMessages((prev) => [...prev, msg as Message]);
+          if (msg) setMessages((prev) => [...prev, msg as unknown as Message]);
         }
       )
       .subscribe();
