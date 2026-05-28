@@ -177,7 +177,11 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
             .select('id, sender_id, content, created_at, sender:profiles!chat_messages_sender_id_fkey(full_name, role)')
             .eq('id', payload.new.id)
             .maybeSingle();
-          if (msg) setMessages((prev) => [...prev, msg as unknown as Message]);
+          if (msg) setMessages((prev) =>
+            prev.some((m) => m.id === (msg as unknown as Message).id)
+              ? prev
+              : [...prev, msg as unknown as Message]
+          );
         }
       )
       .subscribe();
@@ -240,18 +244,26 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
     const content = input.trim();
     setInput('');
 
-    const { error } = await supabase.from('chat_messages').insert({
-      channel_id: channelId,
-      sender_id: profile.id,
-      content,
-    });
+    const { data: inserted, error } = await supabase
+      .from('chat_messages')
+      .insert({ channel_id: channelId, sender_id: profile.id, content })
+      .select('id, sender_id, content, created_at')
+      .single();
 
-    if (!error) {
+    if (!error && inserted) {
+      // Optimistic: add immediately so it shows without needing realtime
+      const newMsg: Message = {
+        ...inserted,
+        sender: { full_name: profile.full_name || 'Me', role: profile.role || '' },
+      };
+      setMessages((prev) =>
+        prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg]
+      );
       try { await relayText(content); } catch {}
-    } else {
+    } else if (error) {
       console.error('Send error:', error);
       setInput(content);
-      alert('Could not send message: ' + error.message);
+      alert('Could not send: ' + error.message);
     }
 
     setSending(false);
