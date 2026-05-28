@@ -32,17 +32,19 @@ function timeLabel(ts: string) {
 }
 
 // Generates a consistent colour per person initial
-function avatarColor(name: string) {
+function avatarColor(name: string | null | undefined) {
   const palette = ['#5b8dee', '#4caf7d', '#9c6fe4', '#f5a623', '#e45c5c', '#26a5a5'];
-  return palette[name.charCodeAt(0) % palette.length];
+  const safe = name || '?';
+  return palette[safe.charCodeAt(0) % palette.length];
 }
 
-function Avatar({ name, size = 32 }: { name: string; size?: number }) {
+function Avatar({ name, size = 32 }: { name: string | null | undefined; size?: number }) {
+  const safe = name || '?';
   return (
     <div
-      style={{ width: size, height: size, background: avatarColor(name), borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#fff', fontWeight: 700, fontSize: size * 0.38 }}
+      style={{ width: size, height: size, background: avatarColor(safe), borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#fff', fontWeight: 700, fontSize: size * 0.38 }}
     >
-      {name.charAt(0).toUpperCase()}
+      {safe.charAt(0).toUpperCase()}
     </div>
   );
 }
@@ -116,7 +118,7 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
     const m = input.match(/@(\w*)$/);
     if (m) {
       const q = m[1].toLowerCase();
-      setMentionMatches(team.filter(t => t.full_name.toLowerCase().includes(q)));
+      setMentionMatches(team.filter(t => (t.full_name || '').toLowerCase().includes(q)));
       setShowMentions(true);
     } else {
       setShowMentions(false);
@@ -275,7 +277,7 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
 
   // ── insert @mention ────────────────────────────────────────────────────
   const insertMention = (member: TeamMember) => {
-    const firstName = member.full_name.split(' ')[0];
+    const firstName = (member.full_name || 'User').split(' ')[0];
     setInput((prev) => prev.replace(/@\w*$/, `@${firstName} `));
     setShowMentions(false);
     inputRef.current?.focus();
@@ -340,7 +342,7 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
             const isMe = msg.sender_id === profile?.id;
             const prev = messages[i - 1];
             const showSender = !isMe && msg.sender_id !== prev?.sender_id;
-            const senderName = msg.sender?.full_name || '?';
+            const senderName = msg.sender?.full_name || msg.sender_id?.slice(0, 6) || '?';
 
             return (
               <div key={msg.id} style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 8, marginTop: showSender && !isMe ? 10 : 2 }}>
