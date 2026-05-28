@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, User, Mail, Phone, Upload } from 'lucide-react';
+import { ArrowLeft, Save, User, Mail, Phone, CheckCircle2, ExternalLink, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/lib/toast';
 
 export default function ProfileSettingsPage() {
     const { profile, refreshProfile } = useAuth();
@@ -19,7 +20,28 @@ export default function ProfileSettingsPage() {
     });
 
     const [saving, setSaving] = useState(false);
+    const [unlinkingTelegram, setUnlinkingTelegram] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+    const telegramLinked = !!(profile as any)?.telegram_chat_id;
+    const telegramUsername = (profile as any)?.telegram_username;
+    const telegramLink = profile?.id ? `https://t.me/aayam_notify_bot?start=staff_${profile.id}` : null;
+
+    const handleUnlinkTelegram = async () => {
+        if (!confirm('Unlink your Telegram account?')) return;
+        setUnlinkingTelegram(true);
+        const { error } = await supabase
+            .from('profiles')
+            .update({ telegram_chat_id: null, telegram_username: null, telegram_linked_at: null })
+            .eq('id', profile?.id);
+        if (error) {
+            toast.error('Failed to unlink: ' + error.message);
+        } else {
+            await refreshProfile();
+            toast.success('Telegram unlinked!');
+        }
+        setUnlinkingTelegram(false);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -155,6 +177,45 @@ export default function ProfileSettingsPage() {
                             className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm"
                             placeholder="+91 98765 43210"
                         />
+                    </div>
+
+                    {/* Telegram */}
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Telegram Notifications
+                        </label>
+                        {telegramLinked ? (
+                            <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-md">
+                                <div className="flex items-center gap-2 text-green-700">
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    <span className="text-sm font-medium">Linked{telegramUsername ? ` (@${telegramUsername})` : ''}</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleUnlinkTelegram}
+                                    disabled={unlinkingTelegram}
+                                    className="text-xs text-red-600 hover:text-red-700 underline disabled:opacity-50"
+                                >
+                                    {unlinkingTelegram ? 'Unlinking...' : 'Unlink'}
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="p-3 bg-blue-50 border border-blue-200 rounded-md space-y-2">
+                                <p className="text-sm text-blue-700">Tap the button below on your phone to link your Telegram and receive notifications.</p>
+                                {telegramLink && (
+                                    <a
+                                        href={telegramLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors"
+                                    >
+                                        <ExternalLink className="w-4 h-4" />
+                                        Link Telegram
+                                    </a>
+                                )}
+                                <p className="text-xs text-blue-500">After tapping, press Start in Telegram. Then come back and refresh this page.</p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Role (Read-only) */}
