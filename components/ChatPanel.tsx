@@ -188,12 +188,15 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
   };
 
   // ── Telegram relay ─────────────────────────────────────────────────────
-  const relayText = async (text: string) => {
-    const targets = team.filter((t) => t.telegram_chat_id);
+  // If specificTargets provided → only relay to them. Otherwise → relay to all.
+  const relayText = async (text: string, specificTargets?: TeamMember[]) => {
+    const targets = specificTargets ?? team.filter((t) => t.telegram_chat_id);
     if (!targets.length) return;
     const senderName = profile?.full_name || 'Team Member';
     const roleLabel = (profile?.role || '').charAt(0).toUpperCase() + (profile?.role || '').slice(1);
-    const msg = `💬 <b>${senderName}</b> <i>(${roleLabel})</i>:\n${text}`;
+    // Add 👤 tag if it's a targeted mention
+    const prefix = specificTargets ? `📣 <b>${senderName}</b> mentioned you:\n` : `💬 <b>${senderName}</b> <i>(${roleLabel})</i>:\n`;
+    const msg = `${prefix}${text}`;
     await Promise.all(
       targets.map((t) =>
         fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -259,7 +262,22 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
       setMessages((prev) =>
         prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg]
       );
-      try { await relayText(content); } catch {}
+
+      // Relay: if message has @mentions, only send to those people on Telegram
+      // Otherwise broadcast to everyone
+      try {
+        const mentionedNames = [...content.matchAll(/@(\w+)/g)].map((m) => m[1].toLowerCase());
+        if (mentionedNames.length > 0) {
+          const mentionedMembers = team.filter(
+            (t) => t.telegram_chat_id &&
+              mentionedNames.some((n) => (t.full_name || '').toLowerCase().startsWith(n))
+          );
+          // If we matched specific people, relay only to them; otherwise fall back to all
+          await relayText(content, mentionedMembers.length > 0 ? mentionedMembers : undefined);
+        } else {
+          await relayText(content);
+        }
+      } catch {}
     } else if (error) {
       console.error('Send error:', error);
       setInput(content);
