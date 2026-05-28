@@ -126,6 +126,16 @@ export interface Client extends BaseEntity {
   opening_balance_date?: string;
   opening_balance_type?: 'debit' | 'credit';
 
+  // Telegram
+  telegram_chat_id?: string;
+  telegram_username?: string;
+  telegram_linked_at?: string;
+
+  // Opening balance
+  opening_balance?: number;
+  opening_balance_date?: string;
+  opening_balance_type?: 'debit' | 'credit';
+
   // Joined data
   referrer?: Client;  // The client who referred this one
 }
