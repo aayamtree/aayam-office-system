@@ -266,7 +266,7 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
       // Relay: if message has @mentions, only send to those people on Telegram
       // Otherwise broadcast to everyone
       try {
-        const mentionedNames = [...content.matchAll(/@(\w+)/g)].map((m) => m[1].toLowerCase());
+        const mentionedNames = Array.from(content.matchAll(/@(\w+)/g)).map((m) => m[1].toLowerCase());
         if (mentionedNames.length > 0) {
           const mentionedMembers = team.filter(
             (t) => t.telegram_chat_id &&
