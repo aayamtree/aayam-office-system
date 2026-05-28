@@ -329,7 +329,7 @@ export default function TelegramFloatButton() {
                       <p className="font-bold text-sm text-gray-900">{selectedContact.full_name}</p>
                       <p className="text-xs capitalize text-gray-500">{selectedContact.role}</p>
                       {!selectedContact.telegram_chat_id && (
-                        <p className="text-xs text-orange-600 mt-1">⚠️ This person hasn't linked Telegram yet</p>
+                        <p className="text-xs text-orange-600 mt-1">⚠️ This person hasn&apos;t linked Telegram yet</p>
                       )}
                     </div>
                   )}
