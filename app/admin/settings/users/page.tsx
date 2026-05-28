@@ -202,7 +202,7 @@ export default function UserManagementPage() {
           Use this for admins like Eklavya or Satish who also do design work.
         </p>
         <p>
-          <strong>Telegram Linking</strong> — Click "Get Link" to copy the Telegram linking URL. Send it to the staff member via WhatsApp.
+          <strong>Telegram Linking</strong> — Click &quot;Get Link&quot; to copy the Telegram linking URL. Send it to the staff member via WhatsApp.
           When they tap it and press Start in Telegram, their account will be linked automatically.
         </p>
       </div>

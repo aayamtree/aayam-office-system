@@ -64,10 +64,9 @@ export async function sendDualNotification(data: NotificationData) {
 
     // 2. Send to Telegram (if user has Telegram linked)
     const { data: telegramData } = await supabase
-      .from('user_telegram')
-      .select('telegram_chat_id, is_active')
-      .eq('user_id', data.userId)
-      .eq('is_active', true)
+      .from('profiles')
+      .select('telegram_chat_id')
+      .eq('id', data.userId)
       .single();
 
     if (telegramData?.telegram_chat_id) {
