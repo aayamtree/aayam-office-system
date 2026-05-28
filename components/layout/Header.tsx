@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { Bell, Menu, ChevronRight, Plus, RefreshCw } from 'lucide-react';
+import { Bell, Menu, ChevronRight, Plus, RefreshCw, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import NotificationBell from '@/components/NotificationBell';
+import ChatPanel from '@/components/ChatPanel';
 
 // Shadcn Components
 import { Button } from '@/components/ui/Button';
@@ -52,6 +53,7 @@ export default function Header({ onMenuClick, sidebarExpanded }: HeaderProps) {
   const router = useRouter();
   const { isAdmin, profile } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [hasUrgent, setHasUrgent] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -325,10 +327,23 @@ export default function Header({ onMenuClick, sidebarExpanded }: HeaderProps) {
             )}
           </Button>
 
+          {/* Chat */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowChat(true)}
+            className="relative text-muted-foreground hover:text-foreground"
+            title="Team Chat"
+          >
+            <MessageCircle className="h-4.5 w-4.5" strokeWidth={1.5} />
+          </Button>
+
           {/* Personal Notifications (Telegram + In-App) */}
           <NotificationBell />
         </div>
       </div>
     </header>
+
+    <ChatPanel open={showChat} onClose={() => setShowChat(false)} />
   );
 }
