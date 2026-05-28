@@ -1,625 +1,477 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { X, Send, Paperclip } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
-import { X, Send, Hash, MessageCircle, Users, ChevronLeft, Paperclip } from 'lucide-react';
-
-interface Channel {
-  id: string;
-  name: string;
-  type: 'group' | 'direct';
-  description?: string;
-  other_user?: { id: string; full_name: string; role: string };
-  unread?: number;
-}
 
 interface Message {
   id: string;
-  channel_id: string;
   sender_id: string;
   content: string;
   created_at: string;
   sender?: { full_name: string; role: string };
 }
 
-interface Profile {
+interface TeamMember {
   id: string;
   full_name: string;
   role: string;
+  telegram_chat_id?: string;
 }
 
-function timeLabel(dateStr: string) {
-  const d = new Date(dateStr);
-  const now = new Date();
-  const diff = now.getTime() - d.getTime();
+const BOT_TOKEN = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN || '8352518034:AAHsiUcPAu3XEAF72bupxjpO1wCk0F9oHns';
+
+function timeLabel(ts: string) {
+  const d = new Date(ts);
+  const diff = Date.now() - d.getTime();
   if (diff < 60000) return 'just now';
   if (diff < 3600000) return `${Math.floor(diff / 60000)}m`;
   if (diff < 86400000) return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 }
 
-function Avatar({ name, size = 8 }: { name: string; size?: number }) {
-  const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500', 'bg-teal-500'];
-  const color = colors[name.charCodeAt(0) % colors.length];
+// Generates a consistent colour per person initial
+function avatarColor(name: string) {
+  const palette = ['#5b8dee', '#4caf7d', '#9c6fe4', '#f5a623', '#e45c5c', '#26a5a5'];
+  return palette[name.charCodeAt(0) % palette.length];
+}
+
+function Avatar({ name, size = 32 }: { name: string; size?: number }) {
   return (
-    <div className={`w-${size} h-${size} ${color} rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0`}>
+    <div
+      style={{ width: size, height: size, background: avatarColor(name), borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#fff', fontWeight: 700, fontSize: size * 0.38 }}
+    >
       {name.charAt(0).toUpperCase()}
     </div>
   );
 }
 
+// Render message content: images inline, files as link, text with @mention highlight
+function MessageContent({ content }: { content: string }) {
+  if (content.startsWith('[img]')) {
+    const url = content.slice(5);
+    return (
+      <img
+        src={url}
+        alt="attachment"
+        style={{ maxWidth: '100%', borderRadius: 8, maxHeight: 200, objectFit: 'cover', cursor: 'pointer', display: 'block' }}
+        onClick={() => window.open(url, '_blank')}
+      />
+    );
+  }
+  if (content.startsWith('[file:')) {
+    const match = content.match(/\[file:(.+?)\](.+)/);
+    if (!match) return <span style={{ whiteSpace: 'pre-wrap' }}>{content}</span>;
+    const [, fname, url] = match;
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: 0.9 }}>
+        <Paperclip size={13} style={{ flexShrink: 0 }} />
+        <span style={{ textDecoration: 'underline' }}>{fname}</span>
+      </a>
+    );
+  }
+  // Highlight @mentions
+  const parts = content.split(/(@\S+)/g);
+  return (
+    <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+      {parts.map((part, i) =>
+        part.startsWith('@') ? (
+          <span key={i} style={{ color: '#5b8dee', fontWeight: 600 }}>{part}</span>
+        ) : part
+      )}
+    </span>
+  );
+}
+
 export default function ChatPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { profile } = useAuth();
-  const [channels, setChannels] = useState<Channel[]>([]);
-  const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [view, setView] = useState<'channels' | 'chat'>('channels');
-  const [showDMPicker, setShowDMPicker] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [channelId, setChannelId] = useState<string | null>(null);
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [mentionMatches, setMentionMatches] = useState<TeamMember[]>([]);
+  const [showMentions, setShowMentions] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
+  const realtimeRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  // Load all staff profiles for DM
+  // ── init ──────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!open) return;
-    supabase.from('profiles').select('id, full_name, role').eq('is_active', true).then(({ data }) => {
-      if (data) setProfiles(data.filter(p => p.id !== profile?.id && p.full_name));
-    });
+    if (!open || !profile?.id) return;
+    loadEverything();
+    return () => { realtimeRef.current?.unsubscribe(); };
   }, [open, profile?.id]);
 
-  // Load channels
-  const loadChannels = useCallback(async () => {
-    if (!profile?.id) return;
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
-    // Group channels
-    const { data: groupChannels } = await supabase
-      .from('chat_channels')
-      .select('*')
-      .eq('type', 'group')
-      .order('name');
-
-    // Direct message channels this user is part of
-    const { data: myDMChannelIds } = await supabase
-      .from('chat_channel_members')
-      .select('channel_id')
-      .eq('user_id', profile.id);
-
-    let dmChannels: Channel[] = [];
-    if (myDMChannelIds?.length) {
-      const channelIds = myDMChannelIds.map(r => r.channel_id);
-      const { data: dmChans } = await supabase
-        .from('chat_channels')
-        .select('*')
-        .eq('type', 'direct')
-        .in('id', channelIds);
-
-      if (dmChans?.length) {
-        // For each DM channel, find the other participant
-        for (const chan of dmChans) {
-          const { data: members } = await supabase
-            .from('chat_channel_members')
-            .select('user_id')
-            .eq('channel_id', chan.id)
-            .neq('user_id', profile.id);
-
-          if (members?.[0]) {
-            const { data: otherProfile } = await supabase
-              .from('profiles')
-              .select('id, full_name, role')
-              .eq('id', members[0].user_id)
-              .single();
-
-            if (otherProfile) {
-              dmChannels.push({
-                ...chan,
-                other_user: otherProfile,
-              });
-            }
-          }
-        }
-      }
+  // ── @mention detection ─────────────────────────────────────────────────
+  useEffect(() => {
+    const m = input.match(/@(\w*)$/);
+    if (m) {
+      const q = m[1].toLowerCase();
+      setMentionMatches(team.filter(t => t.full_name.toLowerCase().includes(q)));
+      setShowMentions(true);
+    } else {
+      setShowMentions(false);
     }
+  }, [input, team]);
 
-    const all: Channel[] = [
-      ...(groupChannels || []),
-      ...dmChannels,
-    ];
-    setChannels(all);
-  }, [profile?.id]);
+  // ── load channel + team ────────────────────────────────────────────────
+  const loadEverything = async () => {
+    // Team members
+    const { data: members } = await supabase
+      .from('profiles')
+      .select('id, full_name, role, telegram_chat_id')
+      .eq('is_active', true)
+      .order('full_name');
+    if (members) setTeam(members.filter((m) => m.id !== profile?.id));
 
-  useEffect(() => {
-    if (open) loadChannels();
-  }, [open, loadChannels]);
+    // General channel
+    const { data: ch } = await supabase
+      .from('chat_channels')
+      .select('id')
+      .eq('type', 'group')
+      .ilike('name', 'general')
+      .maybeSingle();
 
-  // Load messages for active channel
-  useEffect(() => {
-    if (!activeChannel) return;
+    if (!ch) return;
+    const cid = ch.id;
+    setChannelId(cid);
 
-    const fetchMessages = async () => {
-      const { data } = await supabase
-        .from('chat_messages')
-        .select('*, sender:profiles!sender_id(full_name, role)')
-        .eq('channel_id', activeChannel.id)
-        .order('created_at', { ascending: true })
-        .limit(100);
+    // Messages
+    const { data: msgs } = await supabase
+      .from('chat_messages')
+      .select('id, sender_id, content, created_at, sender:profiles!chat_messages_sender_id_fkey(full_name, role)')
+      .eq('channel_id', cid)
+      .order('created_at', { ascending: true })
+      .limit(100);
+    if (msgs) setMessages(msgs as Message[]);
 
-      if (data) setMessages(data as Message[]);
-      setTimeout(scrollToBottom, 50);
-    };
-
-    fetchMessages();
-
-    // Real-time subscription
-    const channel = supabase
-      .channel(`chat:${activeChannel.id}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'chat_messages',
-        filter: `channel_id=eq.${activeChannel.id}`,
-      }, async (payload) => {
-        const newMsg = payload.new as Message;
-        // Fetch sender info
-        const { data: sender } = await supabase
-          .from('profiles')
-          .select('full_name, role')
-          .eq('id', newMsg.sender_id)
-          .single();
-
-        setMessages(prev => [...prev, { ...newMsg, sender: sender || undefined }]);
-        setTimeout(scrollToBottom, 50);
-      })
+    // Realtime
+    realtimeRef.current = supabase
+      .channel(`team-chat-${cid}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `channel_id=eq.${cid}` },
+        async (payload) => {
+          const { data: msg } = await supabase
+            .from('chat_messages')
+            .select('id, sender_id, content, created_at, sender:profiles!chat_messages_sender_id_fkey(full_name, role)')
+            .eq('id', payload.new.id)
+            .maybeSingle();
+          if (msg) setMessages((prev) => [...prev, msg as Message]);
+        }
+      )
       .subscribe();
+  };
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [activeChannel]);
+  // ── Telegram relay ─────────────────────────────────────────────────────
+  const relayText = async (text: string) => {
+    const targets = team.filter((t) => t.telegram_chat_id);
+    if (!targets.length) return;
+    const senderName = profile?.full_name || 'Team Member';
+    const roleLabel = (profile?.role || '').charAt(0).toUpperCase() + (profile?.role || '').slice(1);
+    const msg = `💬 <b>${senderName}</b> <i>(${roleLabel})</i>:\n${text}`;
+    await Promise.all(
+      targets.map((t) =>
+        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: t.telegram_chat_id, text: msg, parse_mode: 'HTML' }),
+        })
+      )
+    );
+  };
 
-  // Mark as read when channel opened
-  useEffect(() => {
-    if (!activeChannel || !profile?.id) return;
-    supabase
-      .from('chat_channel_members')
-      .upsert({ channel_id: activeChannel.id, user_id: profile.id, last_read_at: new Date().toISOString() })
-      .then(() => {});
-  }, [activeChannel, profile?.id]);
+  const relayFile = async (file: File, publicUrl: string) => {
+    const targets = team.filter((t) => t.telegram_chat_id);
+    if (!targets.length) return;
+    const senderName = profile?.full_name || 'Team Member';
+    const roleLabel = (profile?.role || '').charAt(0).toUpperCase() + (profile?.role || '').slice(1);
+    const isImage = file.type.startsWith('image/');
+    await Promise.all(
+      targets.map((t) =>
+        isImage
+          ? fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: t.telegram_chat_id,
+                photo: publicUrl,
+                caption: `📷 <b>${senderName}</b> <i>(${roleLabel})</i>`,
+                parse_mode: 'HTML',
+              }),
+            })
+          : fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: t.telegram_chat_id,
+                text: `📎 <b>${senderName}</b>: <a href="${publicUrl}">${file.name}</a>`,
+                parse_mode: 'HTML',
+              }),
+            })
+      )
+    );
+  };
 
+  // ── send text ──────────────────────────────────────────────────────────
   const sendMessage = async () => {
-    if (!input.trim() || !activeChannel || !profile?.id || sending) return;
+    if (!input.trim() || !channelId || !profile?.id || sending) return;
     setSending(true);
     const content = input.trim();
     setInput('');
 
     const { error } = await supabase.from('chat_messages').insert({
-      channel_id: activeChannel.id,
+      channel_id: channelId,
       sender_id: profile.id,
       content,
     });
 
-    if (error) {
-      setInput(content); // restore on error
-      setSending(false);
-      inputRef.current?.focus();
-      return;
-    }
-
-    // Relay to Telegram if this is the General channel
-    if (activeChannel.type === 'group' && activeChannel.name?.toLowerCase() === 'general') {
-      try {
-        const BOT_TOKEN = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN || '8352518034:AAHsiUcPAu3XEAF72bupxjpO1wCk0F9oHns';
-        const senderName = profile.full_name || 'Team Member';
-        const roleLabel = (profile.role || '').charAt(0).toUpperCase() + (profile.role || '').slice(1);
-        const telegramMsg = `💬 <b>${senderName}</b> <i>(${roleLabel})</i>:\n${content}`;
-
-        // Get all OTHER staff with Telegram linked
-        const { data: targets } = await supabase
-          .from('profiles')
-          .select('telegram_chat_id')
-          .eq('is_active', true)
-          .not('telegram_chat_id', 'is', null)
-          .neq('id', profile.id);
-
-        if (targets && targets.length > 0) {
-          await Promise.all(
-            targets.map(t =>
-              fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: t.telegram_chat_id, text: telegramMsg, parse_mode: 'HTML' }),
-              })
-            )
-          );
-        }
-      } catch {
-        // Telegram relay failure doesn't block the chat
-      }
+    if (!error) {
+      try { await relayText(content); } catch {}
+    } else {
+      setInput(content);
     }
 
     setSending(false);
     inputRef.current?.focus();
   };
 
+  // ── upload file ────────────────────────────────────────────────────────
   const uploadFile = async (file: File) => {
-    if (!activeChannel || !profile?.id) return;
+    if (!channelId || !profile?.id) return;
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop() || 'bin';
-      const path = `${activeChannel.id}/${Date.now()}_${file.name}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('chat-files')
-        .upload(path, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
+      const path = `${channelId}/${Date.now()}_${file.name}`;
+      const { error: upErr } = await supabase.storage.from('chat-files').upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
 
       const { data: { publicUrl } } = supabase.storage.from('chat-files').getPublicUrl(path);
-
       const isImage = file.type.startsWith('image/');
       const content = isImage ? `[img]${publicUrl}` : `[file:${file.name}]${publicUrl}`;
 
       const { error } = await supabase.from('chat_messages').insert({
-        channel_id: activeChannel.id,
+        channel_id: channelId,
         sender_id: profile.id,
         content,
       });
-
-      if (!error && activeChannel.type === 'group' && activeChannel.name?.toLowerCase() === 'general') {
-        const BOT_TOKEN = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN || '8352518034:AAHsiUcPAu3XEAF72bupxjpO1wCk0F9oHns';
-        const senderName = profile.full_name || 'Team Member';
-        const roleLabel = (profile.role || '').charAt(0).toUpperCase() + (profile.role || '').slice(1);
-
-        const { data: targets } = await supabase
-          .from('profiles')
-          .select('telegram_chat_id')
-          .eq('is_active', true)
-          .not('telegram_chat_id', 'is', null)
-          .neq('id', profile.id);
-
-        if (targets && targets.length > 0) {
-          await Promise.all(
-            targets.map(t =>
-              isImage
-                ? fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      chat_id: t.telegram_chat_id,
-                      photo: publicUrl,
-                      caption: `📷 <b>${senderName}</b> <i>(${roleLabel})</i>`,
-                      parse_mode: 'HTML',
-                    }),
-                  })
-                : fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      chat_id: t.telegram_chat_id,
-                      text: `📎 <b>${senderName}</b> <i>(${roleLabel})</i> shared: <a href="${publicUrl}">${file.name}</a>`,
-                      parse_mode: 'HTML',
-                    }),
-                  })
-            )
-          );
-        }
+      if (!error) {
+        try { await relayFile(file, publicUrl); } catch {}
       }
-    } catch (err) {
-      console.error('Upload error:', err);
+    } catch (e) {
+      console.error('Upload error:', e);
     } finally {
       setUploading(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
+  // ── insert @mention ────────────────────────────────────────────────────
+  const insertMention = (member: TeamMember) => {
+    const firstName = member.full_name.split(' ')[0];
+    setInput((prev) => prev.replace(/@\w*$/, `@${firstName} `));
+    setShowMentions(false);
+    inputRef.current?.focus();
   };
 
-  const openChannel = (ch: Channel) => {
-    setActiveChannel(ch);
-    setMessages([]);
-    setView('chat');
-    setShowDMPicker(false);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (showMentions && (e.key === 'Escape')) { setShowMentions(false); return; }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   };
-
-  const startDM = async (targetUser: Profile) => {
-    if (!profile?.id) return;
-
-    // Check if DM channel already exists between these two users
-    const { data: myChannels } = await supabase
-      .from('chat_channel_members')
-      .select('channel_id')
-      .eq('user_id', profile.id);
-
-    if (myChannels?.length) {
-      const { data: theirChannels } = await supabase
-        .from('chat_channel_members')
-        .select('channel_id')
-        .eq('user_id', targetUser.id)
-        .in('channel_id', myChannels.map(r => r.channel_id));
-
-      if (theirChannels?.length) {
-        // DM channel exists — find it
-        const { data: existingChan } = await supabase
-          .from('chat_channels')
-          .select('*')
-          .eq('type', 'direct')
-          .in('id', theirChannels.map(r => r.channel_id))
-          .single();
-
-        if (existingChan) {
-          openChannel({ ...existingChan, other_user: targetUser });
-          return;
-        }
-      }
-    }
-
-    // Create new DM channel
-    const { data: newChan } = await supabase
-      .from('chat_channels')
-      .insert({ name: `dm-${profile.id}-${targetUser.id}`, type: 'direct' })
-      .select()
-      .single();
-
-    if (newChan) {
-      await supabase.from('chat_channel_members').insert([
-        { channel_id: newChan.id, user_id: profile.id },
-        { channel_id: newChan.id, user_id: targetUser.id },
-      ]);
-
-      openChannel({ ...newChan, other_user: targetUser });
-      await loadChannels();
-    }
-  };
-
-  const channelDisplayName = (ch: Channel) => {
-    if (ch.type === 'direct') return ch.other_user?.full_name || 'Direct Message';
-    return ch.name.charAt(0).toUpperCase() + ch.name.slice(1);
-  };
-
-  const groupChannels = channels.filter(c => c.type === 'group');
-  const dmChannels = channels.filter(c => c.type === 'direct');
 
   if (!open) return null;
 
+  // ── UI ─────────────────────────────────────────────────────────────────
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm" onClick={onClose} />
+      <div
+        onClick={onClose}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 40 }}
+      />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 bottom-0 z-50 w-full sm:w-96 bg-white shadow-2xl flex flex-col">
+      <div style={{
+        position: 'fixed', bottom: 16, right: 16,
+        width: 'min(420px, 95vw)',
+        height: 'min(620px, 85vh)',
+        background: '#0e1621',
+        borderRadius: 16,
+        boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
+        zIndex: 50,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        fontFamily: 'inherit',
+      }}>
 
-        {/* ── CHANNEL LIST ── */}
-        {view === 'channels' && (
-          <>
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-gray-900 text-white">
-              <div className="flex items-center gap-2">
-                <MessageCircle className="w-5 h-5" />
-                <span className="font-bold text-base">Team Chat</span>
-              </div>
-              <button onClick={onClose} className="p-1.5 hover:bg-white/10 rounded-md transition-colors">
-                <X className="w-5 h-5" />
-              </button>
+        {/* ── Header ── */}
+        <div style={{ background: '#17212b', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
+          <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#5b8dee', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 16, flexShrink: 0 }}>
+            A
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ color: '#fff', fontWeight: 700, fontSize: 15, lineHeight: 1.2 }}>Aayam Team</div>
+            <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12 }}>{team.length + 1} members · General</div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, borderRadius: 8, color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center' }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* ── Messages ── */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 12px 4px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {messages.length === 0 && (
+            <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 13, marginTop: 40 }}>
+              No messages yet. Say hi! 👋
             </div>
+          )}
+          {messages.map((msg, i) => {
+            const isMe = msg.sender_id === profile?.id;
+            const prev = messages[i - 1];
+            const showSender = !isMe && msg.sender_id !== prev?.sender_id;
+            const senderName = msg.sender?.full_name || '?';
 
-            <div className="flex-1 overflow-y-auto">
-              {/* Group Channels */}
-              <div className="px-3 pt-4 pb-1">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider px-2 mb-1">Channels</p>
-                {groupChannels.map(ch => (
-                  <button
-                    key={ch.id}
-                    onClick={() => openChannel(ch)}
-                    className="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-gray-100 transition-colors text-left"
-                  >
-                    <div className="w-9 h-9 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Hash className="w-4 h-4 text-gray-600" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900 text-sm">{channelDisplayName(ch)}</p>
-                      {ch.description && <p className="text-xs text-gray-500">{ch.description}</p>}
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              {/* Direct Messages */}
-              <div className="px-3 pt-4 pb-2">
-                <div className="flex items-center justify-between px-2 mb-1">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Direct Messages</p>
-                  <button
-                    onClick={() => setShowDMPicker(!showDMPicker)}
-                    className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    + New
-                  </button>
-                </div>
-
-                {showDMPicker && (
-                  <div className="mb-2 bg-blue-50 border border-blue-200 rounded-lg p-2">
-                    <p className="text-xs text-blue-700 font-medium mb-2 px-1">Start a chat with:</p>
-                    {profiles.map(p => (
-                      <button
-                        key={p.id}
-                        onClick={() => startDM(p)}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-blue-100 transition-colors text-left"
-                      >
-                        <Avatar name={p.full_name} size={7} />
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{p.full_name}</p>
-                          <p className="text-xs text-gray-500 capitalize">{p.role}</p>
-                        </div>
-                      </button>
-                    ))}
+            return (
+              <div key={msg.id} style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 8, marginTop: showSender && !isMe ? 10 : 2 }}>
+                {/* Avatar (others only) */}
+                {!isMe && (
+                  <div style={{ width: 32, flexShrink: 0 }}>
+                    {showSender ? <Avatar name={senderName} size={32} /> : null}
                   </div>
                 )}
 
-                {dmChannels.map(ch => (
-                  <button
-                    key={ch.id}
-                    onClick={() => openChannel(ch)}
-                    className="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-gray-100 transition-colors text-left"
-                  >
-                    <Avatar name={ch.other_user?.full_name || '?'} size={9} />
-                    <div>
-                      <p className="font-semibold text-gray-900 text-sm">{channelDisplayName(ch)}</p>
-                      <p className="text-xs text-gray-500 capitalize">{ch.other_user?.role}</p>
+                <div style={{ maxWidth: '75%', display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+                  {showSender && !isMe && (
+                    <div style={{ color: avatarColor(senderName), fontSize: 12, fontWeight: 600, marginBottom: 3, paddingLeft: 4 }}>
+                      {senderName}
                     </div>
-                  </button>
-                ))}
-
-                {dmChannels.length === 0 && !showDMPicker && (
-                  <p className="text-xs text-gray-400 px-2 py-1">No DMs yet. Click + New to start one.</p>
-                )}
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* ── CHAT VIEW ── */}
-        {view === 'chat' && activeChannel && (
-          <>
-            {/* Header */}
-            <div className="flex items-center gap-3 px-3 py-3 bg-gray-900 text-white flex-shrink-0">
-              <button onClick={() => setView('channels')} className="p-1.5 hover:bg-white/10 rounded-md transition-colors">
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              {activeChannel.type === 'group' ? (
-                <div className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center">
-                  <Hash className="w-4 h-4" />
-                </div>
-              ) : (
-                <Avatar name={activeChannel.other_user?.full_name || '?'} size={9} />
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm truncate">{channelDisplayName(activeChannel)}</p>
-                {activeChannel.type === 'group' && (
-                  <p className="text-xs text-white/60">Group channel</p>
-                )}
-                {activeChannel.type === 'direct' && (
-                  <p className="text-xs text-white/60 capitalize">{activeChannel.other_user?.role}</p>
-                )}
-              </div>
-              <button onClick={onClose} className="p-1.5 hover:bg-white/10 rounded-md transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-gray-50">
-              {messages.length === 0 && (
-                <div className="text-center text-gray-400 text-sm mt-8">
-                  <MessageCircle className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                  <p>No messages yet. Say hello! 👋</p>
-                </div>
-              )}
-              {messages.map((msg, i) => {
-                const isMe = msg.sender_id === profile?.id;
-                const showAvatar = !isMe && (i === 0 || messages[i - 1]?.sender_id !== msg.sender_id);
-                const showName = showAvatar;
-
-                return (
-                  <div key={msg.id} className={`flex gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                    {!isMe && (
-                      <div className="w-8 flex-shrink-0 flex items-end">
-                        {showAvatar && <Avatar name={msg.sender?.full_name || '?'} size={8} />}
-                      </div>
-                    )}
-                    <div className={`max-w-[75%] ${isMe ? 'items-end' : 'items-start'} flex flex-col`}>
-                      {showName && (
-                        <p className="text-xs text-gray-500 mb-1 px-1">{msg.sender?.full_name}</p>
-                      )}
-                      <div className={`px-3 py-2 rounded-2xl text-sm break-words
-                        ${isMe
-                          ? 'bg-gray-900 text-white rounded-br-sm'
-                          : 'bg-white text-gray-900 shadow-sm border border-gray-100 rounded-bl-sm'
-                        }`}>
-                        {msg.content.startsWith('[img]') ? (
-                          <img
-                            src={msg.content.replace('[img]', '')}
-                            alt="attachment"
-                            className="max-w-full rounded-lg max-h-48 object-cover cursor-pointer"
-                            onClick={() => window.open(msg.content.replace('[img]', ''), '_blank')}
-                          />
-                        ) : msg.content.startsWith('[file:') ? (
-                          (() => {
-                            const match = msg.content.match(/\[file:(.+?)\](.+)/);
-                            if (!match) return <span className="whitespace-pre-wrap">{msg.content}</span>;
-                            const [, fname, url] = match;
-                            return (
-                              <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 underline opacity-80 hover:opacity-100">
-                                <Paperclip className="w-3 h-3 flex-shrink-0" />
-                                {fname}
-                              </a>
-                            );
-                          })()
-                        ) : (
-                          <span className="whitespace-pre-wrap">{msg.content}</span>
-                        )}
-                      </div>
-                      <p className="text-[10px] text-gray-400 mt-0.5 px-1">{timeLabel(msg.created_at)}</p>
-                    </div>
+                  )}
+                  <div style={{
+                    background: isMe ? '#2b5278' : '#182533',
+                    color: '#fff',
+                    padding: '8px 12px',
+                    borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                    fontSize: 14,
+                    lineHeight: 1.45,
+                    wordBreak: 'break-word',
+                  }}>
+                    <MessageContent content={msg.content} />
                   </div>
-                );
-              })}
-              <div ref={messagesEndRef} />
-            </div>
+                  <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 10, marginTop: 3, paddingLeft: 4, paddingRight: 4 }}>
+                    {timeLabel(msg.created_at)}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          <div ref={messagesEndRef} />
+        </div>
 
-            {/* Input */}
-            <div className="px-3 py-3 bg-white border-t border-gray-200 flex gap-2 items-end">
-              <input
-                ref={fileInputRef}
-                type="file"
-                className="hidden"
-                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip"
-                onChange={e => { const file = e.target.files?.[0]; if (file) uploadFile(file); e.target.value = ''; }}
-              />
+        {/* ── @mention dropdown ── */}
+        {showMentions && mentionMatches.length > 0 && (
+          <div style={{ background: '#17212b', borderTop: '1px solid rgba(255,255,255,0.07)', maxHeight: 140, overflowY: 'auto' }}>
+            {mentionMatches.map((m) => (
               <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="w-10 h-10 border border-gray-200 rounded-xl flex items-center justify-center hover:bg-gray-50 transition-colors disabled:opacity-40 flex-shrink-0"
-                title="Attach file"
+                key={m.id}
+                onClick={() => insertMention(m)}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
               >
-                {uploading
-                  ? <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                  : <Paperclip className="w-4 h-4 text-gray-500" />
-                }
+                <Avatar name={m.full_name} size={28} />
+                <div>
+                  <div style={{ color: '#fff', fontSize: 14, fontWeight: 500 }}>{m.full_name}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, textTransform: 'capitalize' }}>{m.role}</div>
+                </div>
               </button>
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={`Message ${activeChannel.type === 'group' ? '#' + activeChannel.name : channelDisplayName(activeChannel)}...`}
-                rows={1}
-                className="flex-1 resize-none px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 text-sm max-h-32 overflow-y-auto"
-                style={{ minHeight: '42px' }}
-              />
-              <button
-                onClick={sendMessage}
-                disabled={!input.trim() || sending}
-                className="w-10 h-10 bg-gray-900 text-white rounded-xl flex items-center justify-center hover:bg-gray-700 transition-colors disabled:opacity-40 flex-shrink-0"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
-          </>
+            ))}
+          </div>
         )}
+
+        {/* ── Input bar ── */}
+        <div style={{ background: '#17212b', borderTop: '1px solid rgba(255,255,255,0.07)', padding: '10px 12px', display: 'flex', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            style={{ display: 'none' }}
+            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFile(f); e.target.value = ''; }}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            style={{ background: 'none', border: 'none', cursor: uploading ? 'default' : 'pointer', padding: 6, borderRadius: '50%', color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', flexShrink: 0, opacity: uploading ? 0.5 : 1 }}
+            title="Attach file"
+          >
+            {uploading
+              ? <div style={{ width: 18, height: 18, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+              : <Paperclip size={20} />
+            }
+          </button>
+
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Message… type @ to mention someone"
+            rows={1}
+            style={{
+              flex: 1,
+              background: '#0e1621',
+              border: 'none',
+              outline: 'none',
+              color: '#fff',
+              fontSize: 14,
+              padding: '9px 12px',
+              borderRadius: 20,
+              resize: 'none',
+              minHeight: 38,
+              maxHeight: 110,
+              overflowY: 'auto',
+              lineHeight: 1.4,
+              fontFamily: 'inherit',
+            }}
+            onInput={(e) => {
+              const t = e.currentTarget;
+              t.style.height = 'auto';
+              t.style.height = Math.min(t.scrollHeight, 110) + 'px';
+            }}
+          />
+
+          <button
+            onClick={sendMessage}
+            disabled={!input.trim() || sending}
+            style={{
+              background: input.trim() ? '#5b8dee' : '#2b3d52',
+              border: 'none',
+              cursor: input.trim() ? 'pointer' : 'default',
+              width: 38, height: 38,
+              borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff',
+              flexShrink: 0,
+              transition: 'background 0.15s',
+            }}
+          >
+            <Send size={16} />
+          </button>
+        </div>
       </div>
+
+      {/* spin keyframe */}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </>
   );
 }
