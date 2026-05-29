@@ -146,6 +146,21 @@ export default function OrdersPage() {
     }
   }, []);
 
+  // Auto-open view modal if ?view=JOB_ID is in the URL (shared link from chat)
+  useEffect(() => {
+    if (typeof window === 'undefined' || jobsLoading || allJobs.length === 0) return;
+    const params = new URLSearchParams(window.location.search);
+    const viewId = params.get('view');
+    if (!viewId) return;
+    const job = allJobs.find((j) => j.id === viewId);
+    if (job) {
+      // Clean URL so sharing again doesn't loop
+      window.history.replaceState({}, '', '/admin/sales/orders');
+      setSelectedJob(job);
+      setShowViewModal(true);
+    }
+  }, [jobsLoading, allJobs]);
+
   const calculateTotals = (qty: number, rate: number, taxRate: number) => {
     const sub = qty * rate;
     const gst = Math.round(sub * (taxRate / 100));
