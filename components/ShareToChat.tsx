@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Share2, X, Send, MessageCircle, Check } from 'lucide-react';
+import { Share2, X, Send, MessageCircle, Check, Lock, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 
@@ -42,6 +42,7 @@ export function ShareToChat({
   const [note, setNote] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
 
   // Load team list when modal opens
   useEffect(() => {
@@ -106,6 +107,7 @@ export function ShareToChat({
         setSent(false);
         setNote('');
         setTarget('general');
+        setConfirmed(false);
       }, 1600);
     } catch (err) {
       console.error('Share failed:', err);
@@ -156,6 +158,18 @@ export function ShareToChat({
               </button>
             </div>
 
+            {/* Security banner — always visible */}
+            <div className="mx-5 mb-1 flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5">
+              <Lock size={13} className="text-amber-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-xs font-bold text-amber-800">Internal Only — Aayam Team</p>
+                <p className="text-xs text-amber-700 leading-snug mt-0.5">
+                  This shares inside the Aayam chat only. Do <strong>not</strong> share client
+                  details, invoices, or amounts outside this app.
+                </p>
+              </div>
+            </div>
+
             <div className="px-5 pb-5 space-y-4">
               {/* Job preview card */}
               <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
@@ -204,15 +218,30 @@ export function ShareToChat({
                 />
               </div>
 
+              {/* Confirmation checkbox */}
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={confirmed}
+                  onChange={(e) => setConfirmed(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded accent-blue-600 cursor-pointer flex-shrink-0"
+                />
+                <span className="text-xs text-gray-600 leading-snug">
+                  I confirm this is <strong>internal Aayam information only</strong> and I am
+                  sharing it with the team for a work purpose.
+                </span>
+              </label>
+
               {/* Send button */}
               <button
                 onClick={handleShare}
-                disabled={sending || sent}
+                disabled={sending || sent || !confirmed}
                 className="w-full flex items-center justify-center gap-2 rounded-xl py-3 font-semibold text-sm transition-all"
                 style={{
-                  background: sent ? '#16a34a' : '#2563eb',
+                  background: sent ? '#16a34a' : confirmed ? '#2563eb' : '#94a3b8',
                   color: '#fff',
                   opacity: sending ? 0.75 : 1,
+                  cursor: confirmed ? 'pointer' : 'not-allowed',
                 }}
               >
                 {sent ? (
