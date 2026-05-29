@@ -60,6 +60,8 @@ export function ServiceWorkerRegistration() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.access_token) return;
 
+        if (!profile) return;
+
         await fetch('/api/push/subscribe', {
           method: 'POST',
           headers: {
