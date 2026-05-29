@@ -4,11 +4,6 @@ import { createClient } from '@supabase/supabase-js';
 const BOT_TOKEN = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN;
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 async function sendMessage(chatId: number | string, text: string) {
   await fetch(`${TELEGRAM_API}/sendMessage`, {
     method: 'POST',
@@ -19,6 +14,12 @@ async function sendMessage(chatId: number | string, text: string) {
 
 export async function POST(req: NextRequest) {
   try {
+    // Create client inside handler so env vars are available at runtime, not build time
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     const body = await req.json();
     const message = body?.message;
     if (!message) return NextResponse.json({ ok: true });
