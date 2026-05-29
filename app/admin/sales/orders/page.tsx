@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/lib/supabase';
 import { useConfirm } from '@/components/ConfirmModal';
 import UnifiedJobForm from '@/components/jobs/UnifiedJobForm';
+import { ShareToChat } from '@/components/ShareToChat';
 
 export default function OrdersPage() {
   const { user, profile } = useAuth();
@@ -699,7 +700,7 @@ export default function OrdersPage() {
                   <h2 className="text-section text-gray-900">{selectedJob.project_name}</h2>
                   <span className="bg-gray-100 text-gray-600 text-xs font-mono px-2 py-0.5 rounded-md">{selectedJob.job_number}</span>
                 </div>
-                <p className="text-sm text-gray-500 mt-1">Ordered on {formatDate(selectedJob.order_date)}</p>
+                <p className="text-sm text-gray-500 mt-1">Ordered on {selectedJob.order_date ? formatDate(selectedJob.order_date) : '—'}</p>
               </div>
               <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-md">
                 <X className="w-5 h-5" />
@@ -769,11 +770,11 @@ export default function OrdersPage() {
               <div className="p-4 bg-muted/50 rounded-md border border-gray-200">
                 <div className="flex justify-between mb-2 text-sm">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">{formatCurrency(selectedJob.subtotal)}</span>
+                  <span className="font-medium">{formatCurrency(selectedJob.subtotal || 0)}</span>
                 </div>
                 <div className="flex justify-between mb-2 text-sm">
-                  <span className="text-gray-600">GST ({selectedJob.gst_rate}%)</span>
-                  <span className="font-medium">{formatCurrency(selectedJob.gst_amount)}</span>
+                  <span className="text-gray-600">GST ({selectedJob.gst_rate ?? 0}%)</span>
+                  <span className="font-medium">{formatCurrency(selectedJob.gst_amount || 0)}</span>
                 </div>
                 <div className="flex justify-between pt-2 border-t border-gray-200 mt-2">
                   <span className="font-bold text-gray-900">Total</span>
@@ -785,6 +786,13 @@ export default function OrdersPage() {
                 <button onClick={() => { setShowViewModal(false); handleEdit(selectedJob); }} className="flex-1 py-3 border border-border text-gray-900 font-semibold rounded-md hover:bg-muted transition-colors">
                   Edit Order
                 </button>
+                <ShareToChat
+                  jobId={selectedJob.id}
+                  jobNumber={selectedJob.job_number}
+                  projectName={selectedJob.project_name}
+                  clientName={selectedJob.client?.company || selectedJob.client?.name}
+                  className="flex-1 py-3 justify-center border border-blue-200 rounded-md font-semibold text-sm"
+                />
                 <button
                   onClick={() => {
                     setShowViewModal(false);
