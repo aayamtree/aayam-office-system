@@ -4,12 +4,17 @@ import { useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 
-/** Convert base64url VAPID key → Uint8Array for pushManager.subscribe() */
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+/** Convert base64url VAPID key → ArrayBuffer for pushManager.subscribe() */
+function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const rawData = window.atob(base64);
-  return new Uint8Array(Array.from(rawData).map((c) => c.charCodeAt(0)));
+  const buffer = new ArrayBuffer(rawData.length);
+  const view = new Uint8Array(buffer);
+  for (let i = 0; i < rawData.length; i++) {
+    view[i] = rawData.charCodeAt(i);
+  }
+  return buffer;
 }
 
 export function ServiceWorkerRegistration() {
@@ -48,7 +53,7 @@ export function ServiceWorkerRegistration() {
         const existing = await reg.pushManager.getSubscription();
         const sub = existing || (await reg.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidKey),
+          applicationServerKey: urlBase64ToArrayBuffer(vapidKey),
         }));
 
         // Save to DB (upserts by endpoint)
