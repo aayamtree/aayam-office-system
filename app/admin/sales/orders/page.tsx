@@ -68,6 +68,8 @@ export default function OrdersPage() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // Track if view modal was opened via a shared link — so closing goes back
+  const [openedViaLink, setOpenedViaLink] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -157,6 +159,7 @@ export default function OrdersPage() {
       // Clean URL so sharing again doesn't loop
       window.history.replaceState({}, '', '/admin/sales/orders');
       setSelectedJob(job);
+      setOpenedViaLink(true);
       setShowViewModal(true);
     }
   }, [jobsLoading, allJobs]);
@@ -572,7 +575,7 @@ export default function OrdersPage() {
                       {/* Action Buttons */}
                       <div className="flex gap-2">
                         <button
-                          onClick={() => { setSelectedJob(job); setShowViewModal(true); }}
+                          onClick={() => { setSelectedJob(job); setOpenedViaLink(false); setShowViewModal(true); }}
                           className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
                         >
                           <Eye className="w-4 h-4 md:w-4.5 md:h-4.5" />
@@ -668,7 +671,7 @@ export default function OrdersPage() {
                       </td>
                       <td className="px-6 py-4 align-middle text-right">
                         <div className="flex items-center justify-end gap-2 text-gray-500">
-                          <button onClick={() => { setSelectedJob(job); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-md hover:text-gray-900 transition-colors">
+                          <button onClick={() => { setSelectedJob(job); setOpenedViaLink(false); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-md hover:text-gray-900 transition-colors">
                             <Eye className="w-4 h-4 md:w-4.5 md:h-4.5" />
                           </button>
                           {profile?.role !== 'marketing' && (
@@ -717,8 +720,16 @@ export default function OrdersPage() {
                 </div>
                 <p className="text-sm text-gray-500 mt-1">Ordered on {selectedJob.order_date ? formatDate(selectedJob.order_date) : '—'}</p>
               </div>
-              <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-md">
-                <X className="w-5 h-5" />
+              <button
+                onClick={() => {
+                  setShowViewModal(false);
+                  setOpenedViaLink(false);
+                  if (openedViaLink) router.back();
+                }}
+                className="p-2 hover:bg-gray-100 rounded-md"
+                title={openedViaLink ? 'Close and go back' : 'Close'}
+              >
+                {openedViaLink ? <ArrowLeft className="w-5 h-5" /> : <X className="w-5 h-5" />}
               </button>
             </div>
 
