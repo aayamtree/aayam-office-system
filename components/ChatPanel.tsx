@@ -10,6 +10,7 @@ interface Message {
   sender_id: string;
   content: string;
   created_at: string;
+  mentioned_user_ids?: string[];
   sender?: { full_name: string; role: string };
 }
 
@@ -247,9 +248,17 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
     const content = input.trim();
     setInput('');
 
+    // Resolve @mentions → user IDs for DB (RLS enforcement)
+    const mentionedNames = Array.from(content.matchAll(/@(\w+)/g)).map((m) => m[1].toLowerCase());
+    const mentionedUserIds = mentionedNames.length > 0
+      ? team
+          .filter((t) => mentionedNames.some((n) => (t.full_name || '').toLowerCase().startsWith(n)))
+          .map((t) => t.id)
+      : [];
+
     const { data: inserted, error } = await supabase
       .from('chat_messages')
-      .insert({ channel_id: channelId, sender_id: profile.id, content })
+      .insert({ channel_id: channelId, sender_id: profile.id, content, mentioned_user_ids: mentionedUserIds })
       .select('id, sender_id, content, created_at')
       .single();
 
@@ -266,7 +275,6 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
       // Relay: if message has @mentions, only send to those people on Telegram
       // Otherwise broadcast to everyone
       try {
-        const mentionedNames = Array.from(content.matchAll(/@(\w+)/g)).map((m) => m[1].toLowerCase());
         if (mentionedNames.length > 0) {
           const mentionedMembers = team.filter(
             (t) => t.telegram_chat_id &&
@@ -375,8 +383,10 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
         {/* ── Messages ── */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '12px 12px 4px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {messages.length === 0 && (
-            <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 13, marginTop: 40 }}>
-              No messages yet. Say hi! 👋
+            <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 13, marginTop: 40, padding: '0 20px' }}>
+              {profile?.role === 'admin'
+                ? 'No messages yet. Say hi! 👋'
+                : 'No messages for you yet.\nYou\'ll see messages when someone tags you with @YourName.'}
             </div>
           )}
           {messages.map((msg, i) => {
