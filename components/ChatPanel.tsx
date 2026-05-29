@@ -74,15 +74,41 @@ function MessageContent({ content }: { content: string }) {
       </a>
     );
   }
-  // Highlight @mentions
-  const parts = content.split(/(@\S+)/g);
+  // Split on @mentions and URLs — make both interactive
+  const parts = content.split(/(https?:\/\/\S+|@\S+)/g);
   return (
     <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-      {parts.map((part, i) =>
-        part.startsWith('@') ? (
-          <span key={i} style={{ color: '#5b8dee', fontWeight: 600 }}>{part}</span>
-        ) : part
-      )}
+      {parts.map((part, i) => {
+        if (part.startsWith('@')) {
+          return <span key={i} style={{ color: '#5b8dee', fontWeight: 600 }}>{part}</span>;
+        }
+        if (part.startsWith('http://') || part.startsWith('https://')) {
+          // Strip trailing punctuation that might have been captured
+          const cleanUrl = part.replace(/[.,!?)]+$/, '');
+          const tail = part.slice(cleanUrl.length);
+          const isInternal = cleanUrl.includes(window.location.hostname);
+          return (
+            <span key={i}>
+              <a
+                href={cleanUrl}
+                target={isInternal ? '_self' : '_blank'}
+                rel="noopener noreferrer"
+                style={{
+                  color: '#93c5fd',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: 2,
+                  cursor: 'pointer',
+                  fontWeight: 500,
+                }}
+              >
+                {cleanUrl}
+              </a>
+              {tail}
+            </span>
+          );
+        }
+        return part;
+      })}
     </span>
   );
 }
