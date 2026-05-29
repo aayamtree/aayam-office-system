@@ -5,6 +5,7 @@ import { Palette, Printer, AlertCircle, Clock, CheckCircle2, TrendingUp, Package
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import type { Job, ProductionSummary } from '@/types/database';
+import { ShareToChat } from '@/components/ShareToChat';
 
 export default function ProductionQueuePage() {
 
@@ -309,6 +310,7 @@ export default function ProductionQueuePage() {
                                         <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Stage</th>
                                         <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Priority</th>
                                         <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Deadline</th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase">Share</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
@@ -369,6 +371,14 @@ export default function ProductionQueuePage() {
                                                     ) : (
                                                         <span className="text-gray-400">No deadline</span>
                                                     )}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <ShareToChat
+                                                        jobId={job.id}
+                                                        jobNumber={job.job_number}
+                                                        projectName={job.project_name}
+                                                        clientName={(job.client as any)?.company || (job.client as any)?.name}
+                                                    />
                                                 </td>
                                             </tr>
                                         );

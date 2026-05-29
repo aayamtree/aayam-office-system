@@ -18,6 +18,7 @@ import { NotificationPopup } from '@/components/NotificationPopup';
 import DriveDisconnectBanner from '@/components/drive/DriveDisconnectBanner';
 import GSTCalculatorFloat from '@/components/shared/GSTCalculatorFloat';
 import ChatPanel from '@/components/ChatPanel';
+import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import { MessageCircle } from 'lucide-react';
 
 export default function AdminLayout({
@@ -110,6 +111,9 @@ export default function AdminLayout({
 
           {/* In-app notification popups (broadcast system) + push notification trigger */}
           <NotificationPopup />
+
+          {/* PWA Service Worker + Push Notification subscription */}
+          <ServiceWorkerRegistration />
 
           {/* GST Calculator — floating button on all pages except dashboard */}
           <GSTCalculatorFloat />
