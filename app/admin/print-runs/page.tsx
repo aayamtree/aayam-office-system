@@ -250,8 +250,15 @@ export default function PrintRunsPage() {
                 console.warn('Could not save remote QC record:', err);
             }
         } else {
-            // Warehouse path — go directly to dispatch step (no QC needed at print run level)
+            // Warehouse path — update print run status and move all linked jobs to quality_check stage
             await updateStatus(deliveryModal.id, 'printing_done', data);
+            const jobIds = deliveryModal.jobs?.map(j => j.job_id).filter(Boolean) || [];
+            if (jobIds.length > 0) {
+                await supabase
+                    .from('jobs')
+                    .update({ current_stage: 'quality_check', updated_at: new Date().toISOString() })
+                    .in('id', jobIds);
+            }
         }
         setDeliveryModal(null);
         setDeliveryAddress('');
