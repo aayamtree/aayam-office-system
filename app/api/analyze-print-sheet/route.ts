@@ -3,6 +3,8 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import Anthropic from '@anthropic-ai/sdk';
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 interface PendingJobInput {
     id: string;
     job_number: string;
@@ -12,6 +14,15 @@ interface PendingJobInput {
     quantity?: number;
 }
 
+// What Claude returns — compact keys to save output tokens
+interface CompactLabel {
+    n: string;              // label name (what Claude reads from image — NEW info)
+    u: number;              // ups_count (NEW info)
+    id: string | null;      // matched job id (short — we sent this, just echoed back)
+    c: 'h' | 'm' | 'l' | 'n'; // confidence: high/medium/low/none
+}
+
+// What we return to frontend — full shape (reconstructed from pendingJobs)
 interface SheetLabel {
     label_name: string;
     ups_count: number;
@@ -20,34 +31,31 @@ interface SheetLabel {
     match_confidence: 'high' | 'medium' | 'low' | 'none';
 }
 
-// ✅ PROMPT CACHING: Static system instructions moved outside handler
-// This gets cached after the first call — saves ~90% on these tokens every subsequent call
-const SYSTEM_PROMPT = `You are analyzing a print production imposition sheet — a layout image showing multiple product labels/packaging designs arranged together for offset printing.
+// ─── Confidence code expander ─────────────────────────────────────────────────
 
-Your task:
-1. Identify ALL distinct label/product designs visible in this sheet image
-2. For each label, read the product name and brand/variant text visible on it
-3. Count how many times each label appears on the sheet (this is the UPS count)
-4. Match each label against the PENDING JOBS LIST provided
+const CONF_MAP = { h: 'high', m: 'medium', l: 'low', n: 'none' } as const;
 
-Matching rules:
-- Match by product name similarity (e.g. "SURAKSA 600ml" matches job with project_name "Suraksa - Metallic Box - 600ml")
-- Partial matches are OK — use confidence: "high" if clear match, "medium" if likely, "low" if unsure, "none" if no match
-- If a label has no matching job, set matched_job_id and matched_job_number to null, confidence to "none"
-- A single job can only match once
+// ─── Cached system prompt ─────────────────────────────────────────────────────
+// OPTIMISATION 1: Prompt cached — 90% cheaper after first call
+// OPTIMISATION 2: Compact output schema — saves ~60% output tokens
+// OPTIMISATION 3: Removed verbose matching rule explanations
 
-Return ONLY this JSON (no markdown, no explanation):
-{
-  "found_on_sheet": [
-    {
-      "label_name": "exact text you read from the label",
-      "ups_count": 1,
-      "matched_job_id": "the ID from the job list or null",
-      "matched_job_number": "e.g. AAY-2105001 or null",
-      "match_confidence": "high"
-    }
-  ]
-}`;
+const SYSTEM_PROMPT = `You analyze print production imposition sheets — layout images with multiple product labels arranged for offset printing.
+
+Tasks:
+1. Identify ALL distinct label designs visible in the sheet
+2. Read the product name/brand text on each label
+3. Count how many times each label appears (UPS count)
+4. Match each label to the PENDING JOBS LIST in the user message
+
+Match by product name similarity. Confidence: h=clear match, m=likely, l=unsure, n=no match. One job matches once only.
+
+Return ONLY compact JSON (no markdown):
+{ "s": [ { "n": "label name", "u": 4, "id": "job-id-or-null", "c": "h" } ] }
+
+Keys: n=label_name, u=ups_count, id=matched_job_id (null if none), c=confidence code`;
+
+// ─── Main handler ─────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
     const cookieStore = await cookies();
@@ -64,36 +72,39 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 });
     }
 
-    const formData = await request.formData();
-    const file = formData.get('image') as File | null;
-    const jobsRaw = formData.get('jobs') as string | null;
+    const formData  = await request.formData();
+    const file      = formData.get('image') as File | null;
+    const jobsRaw   = formData.get('jobs')  as string | null;
 
-    if (!file) return NextResponse.json({ error: 'No image uploaded' }, { status: 400 });
+    if (!file)    return NextResponse.json({ error: 'No image uploaded' },    { status: 400 });
     if (!jobsRaw) return NextResponse.json({ error: 'No jobs list provided' }, { status: 400 });
 
     const pendingJobs: PendingJobInput[] = JSON.parse(jobsRaw);
 
     const fileBuffer = await file.arrayBuffer();
     const fileBase64 = Buffer.from(fileBuffer).toString('base64');
-    const mediaType = (file.type || 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/webp';
+    const mediaType  = (file.type || 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/webp';
 
-    // Build a compact job list for the prompt (this part is dynamic — NOT cached)
-    const jobList = pendingJobs.map(j =>
-        `ID:${j.id} | Job:${j.job_number} | Product:"${j.project_name}" | Client:"${j.client_name}"`
-    ).join('\n');
+    // Compact job list — only ID + product name needed for matching
+    // OPTIMISATION 4: removed client_name and job_number from prompt (not needed for matching)
+    const jobList = pendingJobs
+        .map(j => `${j.id}|"${j.project_name}"`)
+        .join('\n');
 
     try {
         const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
         const response = await client.messages.create({
-            model: 'claude-opus-4-5',
-            max_tokens: 4096,
-            // ✅ CACHING ACTIVATED: system is now an array with cache_control
+            // OPTIMISATION 5: Sonnet instead of Opus — 3x cheaper, sufficient for image+text matching
+            model: 'claude-sonnet-4-5',
+            // OPTIMISATION 6: 4096 → 1024 — compact output needs far less room
+            // Max ~20 labels × ~25 tokens each = 500 tokens worst case
+            max_tokens: 1024,
             system: [
                 {
                     type: 'text',
                     text: SYSTEM_PROMPT,
-                    cache_control: { type: 'ephemeral' }, // ← THE ONLY NEW LINE
+                    cache_control: { type: 'ephemeral' }, // cached after first call
                 }
             ],
             messages: [{
@@ -104,31 +115,43 @@ export async function POST(request: NextRequest) {
                         source: { type: 'base64', media_type: mediaType, data: fileBase64 }
                     },
                     {
-                        // Dynamic part: jobs list changes per call, NOT cached
                         type: 'text',
-                        text: `PENDING JOBS LIST:\n${jobList}\n\nPlease analyze the sheet and match labels against these jobs.`
+                        text: `PENDING JOBS (id|"product_name"):\n${jobList}`,
                     }
                 ]
             }]
         });
 
-        // ✅ Log cache stats (visible in Vercel function logs)
+        // Log token usage — watch savings vs old version
         const usage = response.usage as any;
-        console.log('[analyze-print-sheet] Cache stats:', {
-            input_tokens: usage?.input_tokens,
+        console.log('[analyze-print-sheet] Tokens:', {
+            input:       usage?.input_tokens,
             cache_write: usage?.cache_creation_input_tokens || 0,
-            cache_read: usage?.cache_read_input_tokens || 0,
-            output_tokens: usage?.output_tokens,
+            cache_read:  usage?.cache_read_input_tokens     || 0,
+            output:      usage?.output_tokens,
         });
 
         let raw = (response.content[0] as { type: string; text: string }).text.trim();
         raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '');
-        const result: { found_on_sheet: SheetLabel[] } = JSON.parse(raw);
 
-        const matched = result.found_on_sheet.filter(l => l.matched_job_id && l.match_confidence !== 'none');
-        const unmatched = result.found_on_sheet.filter(l => !l.matched_job_id || l.match_confidence === 'none');
+        const compact: { s: CompactLabel[] } = JSON.parse(raw);
 
-        return NextResponse.json({ matched, unmatched, all: result.found_on_sheet });
+        // Build a quick lookup: job id → job_number (from data we already have)
+        const jobMap = Object.fromEntries(pendingJobs.map(j => [j.id, j.job_number]));
+
+        // Reconstruct full SheetLabel shape — frontend gets same structure as before
+        const allLabels: SheetLabel[] = compact.s.map(l => ({
+            label_name:        l.n,
+            ups_count:         l.u,
+            matched_job_id:    l.id,
+            matched_job_number: l.id ? (jobMap[l.id] ?? null) : null, // mapped in code, not from Claude
+            match_confidence:  CONF_MAP[l.c],
+        }));
+
+        const matched   = allLabels.filter(l => l.matched_job_id && l.match_confidence !== 'none');
+        const unmatched = allLabels.filter(l => !l.matched_job_id || l.match_confidence === 'none');
+
+        return NextResponse.json({ matched, unmatched, all: allLabels });
 
     } catch (err: any) {
         console.error('[analyze-print-sheet] error:', err);
