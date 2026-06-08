@@ -37,42 +37,12 @@ interface ExtractedProduct {
   poison_category?: string;
 }
 
-// ─── Main handler ─────────────────────────────────────────────────────────────
+// ✅ PROMPT CACHING: Both static prompts moved outside handler
+// These are large, stable, and called repeatedly — perfect for caching
 
-export async function POST(request: NextRequest) {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll(), setAll: (c) => c.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } }
-  );
+const SYSTEM_PROMPT = `You are a label reading expert specialising in pesticide and agro-chemical packaging. Extract information precisely from packaging images and return only valid JSON. Never include markdown code fences or explanation — only the raw JSON object.`;
 
-  // Auth check
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured. Please add it to .env.local.' }, { status: 500 });
-  }
-
-  const formData = await request.formData();
-  const file = formData.get('file') as File | null;
-  const extract_type = formData.get('extract_type') as 'brand' | 'product' | null;
-
-  if (!file) return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
-  if (!extract_type) return NextResponse.json({ error: 'extract_type is required (brand or product)' }, { status: 400 });
-
-  const fileBuffer = await file.arrayBuffer();
-  const fileBase64 = Buffer.from(fileBuffer).toString('base64');
-  const mediaType = (file.type as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif' | 'application/pdf') || 'image/jpeg';
-
-  const contentPart = mediaType === 'application/pdf'
-    ? { type: 'document' as const, source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: fileBase64 } }
-    : { type: 'image' as const, source: { type: 'base64' as const, media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif', data: fileBase64 } };
-
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-  const brandPrompt = `You are an expert at reading pesticide / agro-chemical packaging labels.
+const BRAND_PROMPT = `You are an expert at reading pesticide / agro-chemical packaging labels.
 Read ALL text visible in this packaging image and extract the brand/company information.
 
 Return ONLY a JSON object (no markdown, no explanation):
@@ -99,7 +69,7 @@ Rules:
 - mrp must be a number (no ₹ symbol), or null if not found.
 - Extract the MANUFACTURER/BRAND company details, not the retailer.`;
 
-  const productPrompt = `You are an expert at reading pesticide / agro-chemical packaging labels.
+const PRODUCT_PROMPT = `You are an expert at reading pesticide / agro-chemical packaging labels.
 Read ALL text visible in this packaging image and extract the product information.
 
 Return ONLY a JSON object (no markdown, no explanation):
@@ -125,22 +95,77 @@ Rules:
 - active_ingredients must be an array of objects.
 - Extract complete text for directions, precautions, first_aid — do not truncate.`;
 
+// ─── Main handler ─────────────────────────────────────────────────────────────
+
+export async function POST(request: NextRequest) {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { getAll: () => cookieStore.getAll(), setAll: (c) => c.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } }
+  );
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured. Please add it to .env.local.' }, { status: 500 });
+  }
+
+  const formData = await request.formData();
+  const file = formData.get('file') as File | null;
+  const extract_type = formData.get('extract_type') as 'brand' | 'product' | null;
+
+  if (!file) return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+  if (!extract_type) return NextResponse.json({ error: 'extract_type is required (brand or product)' }, { status: 400 });
+
+  const fileBuffer = await file.arrayBuffer();
+  const fileBase64 = Buffer.from(fileBuffer).toString('base64');
+  const mediaType = (file.type as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif' | 'application/pdf') || 'image/jpeg';
+
+  const contentPart = mediaType === 'application/pdf'
+    ? { type: 'document' as const, source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: fileBase64 } }
+    : { type: 'image' as const, source: { type: 'base64' as const, media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif', data: fileBase64 } };
+
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
   try {
     const response = await client.messages.create({
       model: 'claude-opus-4-5',
       max_tokens: 4096,
-      system: 'You are a label reading expert. Extract information precisely from packaging images and return only valid JSON.',
+      // ✅ CACHING ACTIVATED: system prompt cached, user prompt (brand or product) also cached
+      system: [
+        {
+          type: 'text',
+          text: SYSTEM_PROMPT,
+          cache_control: { type: 'ephemeral' }, // ← THE ONLY NEW LINE
+        }
+      ],
       messages: [{
         role: 'user',
         content: [
-          contentPart,
-          { type: 'text', text: extract_type === 'brand' ? brandPrompt : productPrompt },
+          contentPart, // image — dynamic (changes per call)
+          {
+            type: 'text',
+            // ✅ Cache the extraction prompt itself too (it's large and static)
+            text: extract_type === 'brand' ? BRAND_PROMPT : PRODUCT_PROMPT,
+            cache_control: { type: 'ephemeral' }, // ← cache the large extraction prompt
+          },
         ],
       }],
     });
 
+    // ✅ Log cache stats (visible in Vercel function logs)
+    const usage = response.usage as any;
+    console.log('[label-extract] Cache stats:', {
+      extract_type,
+      input_tokens: usage?.input_tokens,
+      cache_write: usage?.cache_creation_input_tokens || 0,
+      cache_read: usage?.cache_read_input_tokens || 0,
+      output_tokens: usage?.output_tokens,
+    });
+
     let rawJson = (response.content[0] as { type: string; text: string }).text.trim();
-    // Strip markdown code fences if Claude wrapped the JSON in ```json ... ```
     rawJson = rawJson.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '');
     const extracted = JSON.parse(rawJson);
 
