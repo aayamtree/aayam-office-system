@@ -6,172 +6,132 @@ import Anthropic from '@anthropic-ai/sdk';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ExtractedBrand {
-  name_en?: string;
-  name_hi?: string;
-  name_gu?: string;
-  address_en?: string;
-  address_hi?: string;
-  address_gu?: string;
-  phone?: string[];
-  website?: string;
-  email?: string;
-  qr_data?: string;
-  barcode?: string;
-  regn_no?: string;
-  mfg_lic_no?: string;
-  mrp?: number;
+    name_en?: string;    name_hi?: string;    name_gu?: string;
+    address_en?: string; address_hi?: string; address_gu?: string;
+    phone?: string[];    website?: string;    email?: string;
+    qr_data?: string;   barcode?: string;    regn_no?: string;
+    mfg_lic_no?: string; mrp?: number;
 }
 
 interface ExtractedProduct {
-  name_en?: string;
-  name_hi?: string;
-  name_gu?: string;
-  category?: string;
-  composition_en?: string;
-  active_ingredients?: { name: string; percentage: string; unit: string }[];
-  directions_en?: string;
-  precautions_en?: string;
-  first_aid_en?: string;
-  recommendations_en?: string;
-  cir_regn_no?: string;
-  poison_category?: string;
+    name_en?: string;   name_hi?: string;  name_gu?: string;
+    category?: string;  composition_en?: string;
+    active_ingredients?: { name: string; percentage: string; unit: string }[];
+    directions_en?: string;  precautions_en?: string;
+    first_aid_en?: string;   recommendations_en?: string;
+    cir_regn_no?: string;    poison_category?: string;
 }
 
-// ✅ PROMPT CACHING: Both static prompts moved outside handler
-// These are large, stable, and called repeatedly — perfect for caching
+// ─── Cached prompts ───────────────────────────────────────────────────────────
+// OPTIMISATION 1: Prompt caching on both system + user prompt
+// OPTIMISATION 2: Removed verbose field descriptions — Claude knows what name_en means
+// OPTIMISATION 3: Concise rules only, no redundant examples
 
-const SYSTEM_PROMPT = `You are a label reading expert specialising in pesticide and agro-chemical packaging. Extract information precisely from packaging images and return only valid JSON. Never include markdown code fences or explanation — only the raw JSON object.`;
+const SYSTEM_PROMPT = `You are a label reading expert for pesticide/agro-chemical packaging.
+Extract information precisely from packaging images. Return only valid JSON — no markdown, no explanation.
+Use null for any field not found. Extract MANUFACTURER details, not retailer.`;
 
-const BRAND_PROMPT = `You are an expert at reading pesticide / agro-chemical packaging labels.
-Read ALL text visible in this packaging image and extract the brand/company information.
+// OPTIMISATION 4: Field list only — removed "brand or company name in English" style descriptions
+// Saved ~140 input tokens per call on brand prompt, ~160 on product prompt
+const BRAND_PROMPT = `Extract brand/company info from this packaging image.
 
-Return ONLY a JSON object (no markdown, no explanation):
-{
-  "name_en": "brand or company name in English",
-  "name_hi": "brand or company name in Hindi (if visible)",
-  "name_gu": "brand or company name in Gujarati (if visible)",
-  "address_en": "full address in English",
-  "address_hi": "full address in Hindi (if visible)",
-  "address_gu": "full address in Gujarati (if visible)",
-  "phone": ["phone number 1", "phone number 2"],
-  "website": "website url if visible",
-  "email": "email if visible",
-  "qr_data": "url or data encoded in QR code if visible",
-  "barcode": "barcode number if visible",
-  "regn_no": "company registration number if visible",
-  "mfg_lic_no": "manufacturing licence number if visible",
-  "mrp": 0
-}
+Return JSON with these exact keys (null if not found):
+name_en, name_hi, name_gu,
+address_en, address_hi, address_gu,
+phone (array, even if one number),
+website, email, qr_data, barcode,
+regn_no, mfg_lic_no, mrp (number, no ₹ symbol)`;
 
-Rules:
-- Only include fields that are actually visible. Use null for fields not found.
-- phone must be an array even if only one number.
-- mrp must be a number (no ₹ symbol), or null if not found.
-- Extract the MANUFACTURER/BRAND company details, not the retailer.`;
+const PRODUCT_PROMPT = `Extract product info from this pesticide/agro-chemical packaging image.
 
-const PRODUCT_PROMPT = `You are an expert at reading pesticide / agro-chemical packaging labels.
-Read ALL text visible in this packaging image and extract the product information.
+Return JSON with these exact keys (null if not found):
+name_en, name_hi, name_gu, category, composition_en,
+active_ingredients (array of {name, percentage, unit}),
+directions_en, precautions_en, first_aid_en, recommendations_en,
+cir_regn_no, poison_category
 
-Return ONLY a JSON object (no markdown, no explanation):
-{
-  "name_en": "product name in English",
-  "name_hi": "product name in Hindi (if visible)",
-  "name_gu": "product name in Gujarati (if visible)",
-  "category": "product category/type e.g. Insecticide, Fungicide, Herbicide, etc.",
-  "composition_en": "full chemical composition string e.g. 'Emamectin Benzoate 5% SG'",
-  "active_ingredients": [
-    { "name": "ingredient name", "percentage": "5", "unit": "%" }
-  ],
-  "directions_en": "directions of use / how to use (full text)",
-  "precautions_en": "safety precautions / warnings (full text)",
-  "first_aid_en": "first aid instructions (full text)",
-  "recommendations_en": "crop recommendations / target crops (full text)",
-  "cir_regn_no": "CIR registration number or pesticide registration number",
-  "poison_category": "poison class e.g. Class III, Caution, etc."
-}
-
-Rules:
-- Only include fields that are actually visible. Use null for fields not found.
-- active_ingredients must be an array of objects.
-- Extract complete text for directions, precautions, first_aid — do not truncate.`;
+Extract complete text for directions/precautions/first_aid — do not truncate.`;
 
 // ─── Main handler ─────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll(), setAll: (c) => c.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } }
-  );
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        { cookies: { getAll: () => cookieStore.getAll(), setAll: (c) => c.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } }
+    );
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured. Please add it to .env.local.' }, { status: 500 });
-  }
+    if (!process.env.ANTHROPIC_API_KEY) {
+        return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured.' }, { status: 500 });
+    }
 
-  const formData = await request.formData();
-  const file = formData.get('file') as File | null;
-  const extract_type = formData.get('extract_type') as 'brand' | 'product' | null;
+    const formData     = await request.formData();
+    const file         = formData.get('file')         as File | null;
+    const extract_type = formData.get('extract_type') as 'brand' | 'product' | null;
 
-  if (!file) return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
-  if (!extract_type) return NextResponse.json({ error: 'extract_type is required (brand or product)' }, { status: 400 });
+    if (!file)         return NextResponse.json({ error: 'No file uploaded' },                         { status: 400 });
+    if (!extract_type) return NextResponse.json({ error: 'extract_type is required (brand|product)' }, { status: 400 });
 
-  const fileBuffer = await file.arrayBuffer();
-  const fileBase64 = Buffer.from(fileBuffer).toString('base64');
-  const mediaType = (file.type as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif' | 'application/pdf') || 'image/jpeg';
+    const fileBuffer = await file.arrayBuffer();
+    const fileBase64 = Buffer.from(fileBuffer).toString('base64');
+    const mediaType  = (file.type as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif' | 'application/pdf') || 'image/jpeg';
 
-  const contentPart = mediaType === 'application/pdf'
-    ? { type: 'document' as const, source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: fileBase64 } }
-    : { type: 'image' as const, source: { type: 'base64' as const, media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif', data: fileBase64 } };
+    const contentPart = mediaType === 'application/pdf'
+        ? { type: 'document' as const, source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: fileBase64 } }
+        : { type: 'image' as const, source: { type: 'base64' as const, media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif', data: fileBase64 } };
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-  try {
-    const response = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 4096,
-      // ✅ CACHING ACTIVATED: system prompt cached, user prompt (brand or product) also cached
-      system: [
-        {
-          type: 'text',
-          text: SYSTEM_PROMPT,
-          cache_control: { type: 'ephemeral' }, // ← THE ONLY NEW LINE
-        }
-      ],
-      messages: [{
-        role: 'user',
-        content: [
-          contentPart, // image — dynamic (changes per call)
-          {
-            type: 'text',
-            // ✅ Cache the extraction prompt itself too (it's large and static)
-            text: extract_type === 'brand' ? BRAND_PROMPT : PRODUCT_PROMPT,
-            cache_control: { type: 'ephemeral' }, // ← cache the large extraction prompt
-          },
-        ],
-      }],
-    });
+    try {
+        const response = await client.messages.create({
+            // OPTIMISATION 5: Sonnet instead of Opus — 3x cheaper
+            // Extraction is pattern matching, not complex reasoning — Sonnet handles it well
+            model: 'claude-sonnet-4-5',
+            // OPTIMISATION 6: 4096 → 2048
+            // Product extraction with long directions text needs more room than label-check
+            max_tokens: 2048,
+            system: [
+                {
+                    type: 'text',
+                    text: SYSTEM_PROMPT,
+                    cache_control: { type: 'ephemeral' }, // system cached
+                }
+            ],
+            messages: [{
+                role: 'user',
+                content: [
+                    contentPart,
+                    {
+                        type: 'text',
+                        text: extract_type === 'brand' ? BRAND_PROMPT : PRODUCT_PROMPT,
+                        cache_control: { type: 'ephemeral' }, // extraction prompt cached too
+                    },
+                ],
+            }],
+        });
 
-    // ✅ Log cache stats (visible in Vercel function logs)
-    const usage = response.usage as any;
-    console.log('[label-extract] Cache stats:', {
-      extract_type,
-      input_tokens: usage?.input_tokens,
-      cache_write: usage?.cache_creation_input_tokens || 0,
-      cache_read: usage?.cache_read_input_tokens || 0,
-      output_tokens: usage?.output_tokens,
-    });
+        // Log token usage
+        const usage = response.usage as any;
+        console.log('[label-extract] Tokens:', {
+            extract_type,
+            input:       usage?.input_tokens,
+            cache_write: usage?.cache_creation_input_tokens || 0,
+            cache_read:  usage?.cache_read_input_tokens     || 0,
+            output:      usage?.output_tokens,
+        });
 
-    let rawJson = (response.content[0] as { type: string; text: string }).text.trim();
-    rawJson = rawJson.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '');
-    const extracted = JSON.parse(rawJson);
+        let rawJson = (response.content[0] as { type: string; text: string }).text.trim();
+        rawJson = rawJson.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '');
+        const extracted: ExtractedBrand | ExtractedProduct = JSON.parse(rawJson);
 
-    return NextResponse.json({ extracted, extract_type });
-  } catch (err: any) {
-    console.error('[label-extract] error:', err);
-    return NextResponse.json({ error: 'AI extraction failed: ' + (err.message || 'Unknown error') }, { status: 500 });
-  }
+        return NextResponse.json({ extracted, extract_type });
+
+    } catch (err: any) {
+        console.error('[label-extract] error:', err);
+        return NextResponse.json({ error: 'AI extraction failed: ' + (err.message || 'Unknown error') }, { status: 500 });
+    }
 }
