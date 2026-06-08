@@ -13,12 +13,41 @@ interface PendingJobInput {
 }
 
 interface SheetLabel {
-    label_name: string;       // what AI read from the image
-    ups_count: number;        // how many times it appears on the sheet
+    label_name: string;
+    ups_count: number;
     matched_job_id: string | null;
     matched_job_number: string | null;
     match_confidence: 'high' | 'medium' | 'low' | 'none';
 }
+
+// ✅ PROMPT CACHING: Static system instructions moved outside handler
+// This gets cached after the first call — saves ~90% on these tokens every subsequent call
+const SYSTEM_PROMPT = `You are analyzing a print production imposition sheet — a layout image showing multiple product labels/packaging designs arranged together for offset printing.
+
+Your task:
+1. Identify ALL distinct label/product designs visible in this sheet image
+2. For each label, read the product name and brand/variant text visible on it
+3. Count how many times each label appears on the sheet (this is the UPS count)
+4. Match each label against the PENDING JOBS LIST provided
+
+Matching rules:
+- Match by product name similarity (e.g. "SURAKSA 600ml" matches job with project_name "Suraksa - Metallic Box - 600ml")
+- Partial matches are OK — use confidence: "high" if clear match, "medium" if likely, "low" if unsure, "none" if no match
+- If a label has no matching job, set matched_job_id and matched_job_number to null, confidence to "none"
+- A single job can only match once
+
+Return ONLY this JSON (no markdown, no explanation):
+{
+  "found_on_sheet": [
+    {
+      "label_name": "exact text you read from the label",
+      "ups_count": 1,
+      "matched_job_id": "the ID from the job list or null",
+      "matched_job_number": "e.g. AAY-2105001 or null",
+      "match_confidence": "high"
+    }
+  ]
+}`;
 
 export async function POST(request: NextRequest) {
     const cookieStore = await cookies();
@@ -48,40 +77,10 @@ export async function POST(request: NextRequest) {
     const fileBase64 = Buffer.from(fileBuffer).toString('base64');
     const mediaType = (file.type || 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/webp';
 
-    // Build a compact job list for the prompt
+    // Build a compact job list for the prompt (this part is dynamic — NOT cached)
     const jobList = pendingJobs.map(j =>
         `ID:${j.id} | Job:${j.job_number} | Product:"${j.project_name}" | Client:"${j.client_name}"`
     ).join('\n');
-
-    const prompt = `You are analyzing a print production imposition sheet — a layout image showing multiple product labels/packaging designs arranged together for offset printing.
-
-Your task:
-1. Identify ALL distinct label/product designs visible in this sheet image
-2. For each label, read the product name and brand/variant text visible on it
-3. Count how many times each label appears on the sheet (this is the UPS count)
-4. Match each label against the PENDING JOBS LIST below
-
-PENDING JOBS LIST:
-${jobList}
-
-Matching rules:
-- Match by product name similarity (e.g. "SURAKSA 600ml" matches job with project_name "Suraksa - Metallic Box - 600ml")
-- Partial matches are OK — use confidence: "high" if clear match, "medium" if likely, "low" if unsure, "none" if no match
-- If a label has no matching job, set matched_job_id and matched_job_number to null, confidence to "none"
-- A single job can only match once
-
-Return ONLY this JSON (no markdown, no explanation):
-{
-  "found_on_sheet": [
-    {
-      "label_name": "exact text you read from the label",
-      "ups_count": 1,
-      "matched_job_id": "the ID from the job list or null",
-      "matched_job_number": "e.g. AAY-2105001 or null",
-      "match_confidence": "high"
-    }
-  ]
-}`;
 
     try {
         const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -89,6 +88,14 @@ Return ONLY this JSON (no markdown, no explanation):
         const response = await client.messages.create({
             model: 'claude-opus-4-5',
             max_tokens: 4096,
+            // ✅ CACHING ACTIVATED: system is now an array with cache_control
+            system: [
+                {
+                    type: 'text',
+                    text: SYSTEM_PROMPT,
+                    cache_control: { type: 'ephemeral' }, // ← THE ONLY NEW LINE
+                }
+            ],
             messages: [{
                 role: 'user',
                 content: [
@@ -96,16 +103,28 @@ Return ONLY this JSON (no markdown, no explanation):
                         type: 'image',
                         source: { type: 'base64', media_type: mediaType, data: fileBase64 }
                     },
-                    { type: 'text', text: prompt }
+                    {
+                        // Dynamic part: jobs list changes per call, NOT cached
+                        type: 'text',
+                        text: `PENDING JOBS LIST:\n${jobList}\n\nPlease analyze the sheet and match labels against these jobs.`
+                    }
                 ]
             }]
+        });
+
+        // ✅ Log cache stats (visible in Vercel function logs)
+        const usage = response.usage as any;
+        console.log('[analyze-print-sheet] Cache stats:', {
+            input_tokens: usage?.input_tokens,
+            cache_write: usage?.cache_creation_input_tokens || 0,
+            cache_read: usage?.cache_read_input_tokens || 0,
+            output_tokens: usage?.output_tokens,
         });
 
         let raw = (response.content[0] as { type: string; text: string }).text.trim();
         raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '');
         const result: { found_on_sheet: SheetLabel[] } = JSON.parse(raw);
 
-        // Split into matched vs unmatched
         const matched = result.found_on_sheet.filter(l => l.matched_job_id && l.match_confidence !== 'none');
         const unmatched = result.found_on_sheet.filter(l => !l.matched_job_id || l.match_confidence === 'none');
 
