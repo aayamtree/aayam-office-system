@@ -1,17 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import {
   ArrowLeft, Plus, Minus, Trash2, ShoppingCart,
-  Printer, CreditCard, Banknote, Smartphone, X, Search, User,
-  Settings, Edit, Check, FolderPlus, Loader2, Download
+  Printer, CreditCard, Banknote, Smartphone, X, Search, Settings,
+  Edit, Loader2, Download, Package, Clock, ChevronDown
 } from 'lucide-react';
 import { ReceiptData, printReceipt, downloadReceipt } from '@/components/receipt/ReceiptPDF';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
-import { usePOSSales, usePOSProducts } from '@/lib/hooks';
-import { POSCategory, POSProduct } from '@/types/database';
+import { usePOSSales, usePOSProducts, usePaperStock, useClients } from '@/lib/hooks';
+import { useAuth } from '@/lib/auth-context';
+import { POSProduct } from '@/types/database';
 import { Input } from '@/components/ui/input';
 import { useConfirm } from '@/components/ConfirmModal';
 
@@ -31,16 +32,19 @@ const categoryColors = [
   'bg-pink-100 text-pink-700',
   'bg-cyan-100 text-cyan-700',
   'bg-red-100 text-red-700',
-  'bg-gray-900 text-white',
   'bg-orange-100 text-orange-700',
   'bg-teal-100 text-teal-700',
   'bg-lime-100 text-lime-700',
   'bg-rose-100 text-rose-700',
+  'bg-purple-100 text-purple-700',
 ];
 
 export default function RetailPOSPage() {
+  const { profile } = useAuth();
   const { settings: companySettings } = useCompanySettings();
   const { createPOSSale } = usePOSSales();
+  const { stock: paperStock } = usePaperStock();
+  const { clients } = useClients();
   const {
     categories, products, loading: productsLoading,
     createCategory, updateCategory, deleteCategory,
@@ -57,6 +61,14 @@ export default function RetailPOSPage() {
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'upi'>('cash');
   const [amountReceived, setAmountReceived] = useState('');
   const [discount, setDiscount] = useState(0);
+
+  // Paper & Credit fields
+  const [selectedPaperStockId, setSelectedPaperStockId] = useState('');
+  const [sheetsUsed, setSheetsUsed] = useState('');
+  const [paymentType, setPaymentType] = useState<'paid' | 'advance' | 'credit'>('paid');
+  const [selectedClientId, setSelectedClientId] = useState('');
+  const [creditDays, setCreditDays] = useState('30');
+  const [notes, setNotes] = useState('');
 
   // Settings Modal State
   const [activeTab, setActiveTab] = useState<'products' | 'categories'>('products');
@@ -80,13 +92,7 @@ export default function RetailPOSPage() {
           : item
       ));
     } else {
-      setCart([...cart, {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        qty: 1,
-        total: product.price
-      }]);
+      setCart([...cart, { id: product.id, name: product.name, price: product.price, qty: 1, total: product.price }]);
     }
   };
 
@@ -100,14 +106,39 @@ export default function RetailPOSPage() {
     }));
   };
 
-  const removeFromCart = (id: string) => {
-    setCart(cart.filter(item => item.id !== id));
-  };
+  const removeFromCart = (id: string) => setCart(cart.filter(item => item.id !== id));
 
   const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
   const discountAmount = (subtotal * discount) / 100;
   const grandTotal = subtotal - discountAmount;
-  const changeAmount = parseFloat(amountReceived || '0') - grandTotal;
+
+  // Payment calculation
+  const receivedAmt = parseFloat(amountReceived || '0');
+  const changeAmount = paymentMethod === 'cash' ? receivedAmt - grandTotal : 0;
+
+  // Credit logic
+  const selectedPaper = paperStock.find(p => p.id === selectedPaperStockId);
+  const selectedClient = clients?.find(c => c.id === selectedClientId);
+
+  const getDueDate = () => {
+    if (paymentType !== 'credit') return undefined;
+    const d = new Date();
+    d.setDate(d.getDate() + parseInt(creditDays || '30'));
+    return d.toISOString().split('T')[0];
+  };
+
+  const getPaymentStatus = (): 'paid' | 'pending' | 'partial' => {
+    if (paymentType === 'credit') return 'pending';
+    if (paymentType === 'advance') return 'partial';
+    return 'paid';
+  };
+
+  const getBalanceDue = () => {
+    if (paymentType === 'paid') return 0;
+    if (paymentType === 'credit') return grandTotal;
+    if (paymentType === 'advance') return Math.max(0, grandTotal - (parseFloat(amountReceived || '0')));
+    return 0;
+  };
 
   // CRUD Handlers
   const handleSaveCategory = async (e: React.FormEvent) => {
@@ -121,10 +152,8 @@ export default function RetailPOSPage() {
   };
 
   const handleDeleteCategoryReq = async (id: string) => {
-    const { confirmed } = await confirm({ title: 'Delete Category', message: 'Delete this category? Products in this category might be affected.', variant: 'danger', confirmLabel: 'Delete' });
-    if (confirmed) {
-      await deleteCategory(id);
-    }
+    const { confirmed } = await confirm({ title: 'Delete Category', message: 'Delete this category? Products in it may be affected.', variant: 'danger', confirmLabel: 'Delete' });
+    if (confirmed) await deleteCategory(id);
   };
 
   const handleSaveProduct = async (e: React.FormEvent) => {
@@ -138,16 +167,9 @@ export default function RetailPOSPage() {
     setIsEditingProduct(false);
   };
 
-  const handleEditProductClick = (p: POSProduct) => {
-    setProductForm({ id: p.id, name: p.name, price: p.price, category_id: p.category_id });
-    setIsEditingProduct(true);
-  };
-
   const handleDeleteProductReq = async (id: string) => {
-    const { confirmed } = await confirm({ title: 'Delete Product', message: 'Are you sure you want to delete this product?', variant: 'danger', confirmLabel: 'Delete' });
-    if (confirmed) {
-      await deleteProduct(id);
-    }
+    const { confirmed } = await confirm({ title: 'Delete Product', message: 'Delete this product?', variant: 'danger', confirmLabel: 'Delete' });
+    if (confirmed) await deleteProduct(id);
   };
 
   const clearCart = () => {
@@ -156,6 +178,12 @@ export default function RetailPOSPage() {
     setCustomerPhone('');
     setDiscount(0);
     setAmountReceived('');
+    setSelectedPaperStockId('');
+    setSheetsUsed('');
+    setPaymentType('paid');
+    setSelectedClientId('');
+    setCreditDays('30');
+    setNotes('');
     setShowPaymentModal(false);
   };
 
@@ -164,77 +192,79 @@ export default function RetailPOSPage() {
   const saveSale = async () => {
     setIsProcessing(true);
     try {
+      const paidAmount = paymentType === 'credit' ? 0 : paymentType === 'advance' ? parseFloat(amountReceived || '0') : (parseFloat(amountReceived || '0') || grandTotal);
       const saleData = {
-        customer_name: customerName,
-        customer_phone: customerPhone,
+        customer_name: customerName || undefined,
+        customer_phone: customerPhone || undefined,
+        client_id: selectedClientId || undefined,
         subtotal,
         discount_percent: discount,
         discount_amount: discountAmount,
         total_amount: grandTotal,
         payment_mode: paymentMethod,
-        amount_received: parseFloat(amountReceived) || grandTotal,
+        amount_received: paidAmount,
         change_amount: changeAmount > 0 ? changeAmount : 0,
+        payment_status: getPaymentStatus(),
+        due_date: getDueDate(),
+        balance_due: getBalanceDue(),
+        credit_terms: paymentType === 'credit' ? `${creditDays} days` : undefined,
+        paper_stock_id: selectedPaperStockId || undefined,
+        sheets_used: sheetsUsed ? parseInt(sheetsUsed) : 0,
+        notes: notes || undefined,
+        sold_by: profile?.full_name || profile?.email?.split('@')[0] || 'CMYK',
       };
 
       const saleItems = cart.map(item => ({
-        product_id: item.id, // Might need to ensure item.id handles non-database items gracefully if any
-        product_name: item.name, // Fallback if name changes
+        product_id: item.id,
+        product_name: item.name,
         quantity: item.qty,
         price: item.price,
-        total: item.total
+        total: item.total,
       }));
 
-      const result = await createPOSSale(saleData, saleItems);
+      const result = await createPOSSale(saleData as any, saleItems);
       if (result.error) {
-        toast.error(String('Failed to save sale: ' + result.error));
+        toast.error('Failed to save sale: ' + result.error);
         return null;
       }
       return result.data?.sale_number;
     } catch (e) {
-      toast.error('An unexpected error occurred during sale processing.');
+      toast.error('Unexpected error during sale processing.');
       return null;
     }
   };
 
+  const buildReceiptData = (saleNumber: string): ReceiptData => {
+    const now = new Date();
+    return {
+      companyName: companySettings.companyName,
+      companyAddress: `${companySettings.companyAddress}, ${companySettings.companyCity} ${companySettings.companyPincode}`,
+      companyPhone: companySettings.companyPhone,
+      receiptNumber: saleNumber,
+      date: now.toLocaleDateString('en-IN'),
+      time: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+      customerName: customerName || selectedClient?.company || selectedClient?.name || undefined,
+      customerPhone: customerPhone || undefined,
+      items: cart.map(item => ({ name: item.name, qty: item.qty, price: item.price, total: item.total })),
+      subtotal,
+      discountPercent: discount,
+      discountAmount,
+      grandTotal,
+      paymentMode: paymentMethod,
+      amountReceived: parseFloat(amountReceived || '0') || grandTotal,
+      change: changeAmount > 0 ? changeAmount : 0,
+      cashier: profile?.full_name || profile?.email?.split('@')[0] || 'CMYK',
+    };
+  };
+
   const handlePrint = async () => {
     const saleNumber = await saveSale();
-    if (!saleNumber) {
-      setIsProcessing(false);
-      return;
-    }
-
+    if (!saleNumber) { setIsProcessing(false); return; }
     try {
-      const now = new Date();
-      const receiptData: ReceiptData = {
-        companyName: companySettings.companyName,
-        companyAddress: companySettings.companyAddress + ", " + companySettings.companyCity + " " + companySettings.companyPincode,
-        companyPhone: companySettings.companyPhone,
-        receiptNumber: saleNumber,
-        date: now.toLocaleDateString('en-IN'),
-        time: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-        customerName: customerName || undefined,
-        customerPhone: customerPhone || undefined,
-        items: cart.map(item => ({
-          name: item.name,
-          qty: item.qty,
-          price: item.price,
-          total: item.total,
-        })),
-        subtotal,
-        discountPercent: discount,
-        discountAmount,
-        grandTotal,
-        paymentMode: paymentMethod,
-        amountReceived: parseFloat(amountReceived) || grandTotal,
-        change: changeAmount > 0 ? changeAmount : 0,
-        cashier: 'SATISH',
-      };
-
-      await printReceipt(receiptData);
+      await printReceipt(buildReceiptData(saleNumber));
       clearCart();
-    } catch (error) {
-      console.error('Error printing receipt:', error);
-      toast.error('Error printing receipt. Please try again.');
+    } catch {
+      toast.error('Error printing receipt.');
     } finally {
       setIsProcessing(false);
     }
@@ -242,45 +272,24 @@ export default function RetailPOSPage() {
 
   const handleDownloadReceipt = async () => {
     const saleNumber = await saveSale();
-    if (!saleNumber) {
-      setIsProcessing(false);
-      return;
-    }
-
+    if (!saleNumber) { setIsProcessing(false); return; }
     try {
-      const now = new Date();
-      const receiptData: ReceiptData = {
-        companyName: companySettings.companyName,
-        companyAddress: companySettings.companyAddress + ", " + companySettings.companyCity + " " + companySettings.companyPincode,
-        companyPhone: companySettings.companyPhone,
-        receiptNumber: saleNumber,
-        date: now.toLocaleDateString('en-IN'),
-        time: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-        customerName: customerName || undefined,
-        customerPhone: customerPhone || undefined,
-        items: cart.map(item => ({
-          name: item.name,
-          qty: item.qty,
-          price: item.price,
-          total: item.total,
-        })),
-        subtotal,
-        discountPercent: discount,
-        discountAmount,
-        grandTotal,
-        paymentMode: paymentMethod,
-        amountReceived: parseFloat(amountReceived) || grandTotal,
-        change: changeAmount > 0 ? changeAmount : 0,
-        cashier: 'SATISH',
-      };
-
-      await downloadReceipt(receiptData);
+      await downloadReceipt(buildReceiptData(saleNumber));
       clearCart();
-    } catch (error: any) {
-      toast.error('Error downloading receipt: ' + (error.message || 'Please try again.'));
+    } catch {
+      toast.error('Error downloading receipt.');
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleCompleteWithoutReceipt = async () => {
+    const saleNumber = await saveSale();
+    if (saleNumber) {
+      toast.success(`Sale ${saleNumber} recorded`);
+      clearCart();
+    }
+    setIsProcessing(false);
   };
 
   const formatCurrency = (amount: number) => `₹${amount.toLocaleString('en-IN')}`;
@@ -300,7 +309,7 @@ export default function RetailPOSPage() {
         </div>
         <button onClick={() => setShowSettingsModal(true)}
           className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">
-          <Settings className="w-4 h-4 md:w-4.5 md:h-4.5" />
+          <Settings className="w-4 h-4" />
           <span className="hidden sm:inline">Manage Items</span>
         </button>
       </div>
@@ -309,15 +318,11 @@ export default function RetailPOSPage() {
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* Products Section */}
         <div className="flex-1 flex flex-col p-4 overflow-hidden">
-          {/* Search */}
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input type="text" placeholder="Search products..." value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10" />
+              onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
           </div>
-
-          {/* Categories */}
           <div className="flex flex-wrap gap-2 mb-4">
             <button onClick={() => setSelectedCategory('all')}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${selectedCategory === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
@@ -330,8 +335,6 @@ export default function RetailPOSPage() {
               </button>
             ))}
           </div>
-
-          {/* Products Grid */}
           <div className="flex-1 overflow-y-auto">
             {productsLoading ? (
               <div className="flex items-center justify-center h-full text-gray-500">
@@ -339,14 +342,14 @@ export default function RetailPOSPage() {
               </div>
             ) : filteredProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                <p>No products found in this category.</p>
+                <p>No products found.</p>
                 <button onClick={() => setShowSettingsModal(true)} className="mt-2 text-primary font-medium">Add Products</button>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                 {filteredProducts.map(product => (
                   <button key={product.id} onClick={() => addToCart(product)}
-                    className="p-3 bg-white border rounded-md  hover:border-primary/30 transition-all text-left flex flex-col justify-between h-full">
+                    className="p-3 bg-white border rounded-md hover:border-primary/30 transition-all text-left flex flex-col justify-between h-full">
                     <div>
                       <p className="font-medium text-gray-900 text-sm line-clamp-2">{product.name}</p>
                       <p className="text-xs text-gray-500 mt-1">{product.category?.name}</p>
@@ -379,6 +382,28 @@ export default function RetailPOSPage() {
                 onChange={(e) => setCustomerPhone(e.target.value)}
                 className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
             </div>
+
+            {/* Paper Selection */}
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <select value={selectedPaperStockId} onChange={e => setSelectedPaperStockId(e.target.value)}
+                className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white">
+                <option value="">No Paper</option>
+                {paperStock.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}{p.size ? ` (${p.size})` : ''} — {p.quantity} left
+                  </option>
+                ))}
+              </select>
+              <input type="number" placeholder="Sheets used" value={sheetsUsed} min="0"
+                onChange={e => setSheetsUsed(e.target.value)}
+                disabled={!selectedPaperStockId}
+                className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50" />
+            </div>
+            {selectedPaper && sheetsUsed && parseInt(sheetsUsed) > selectedPaper.quantity && (
+              <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                <Package className="w-3 h-3" /> Only {selectedPaper.quantity} sheets in stock!
+              </p>
+            )}
           </div>
 
           {/* Cart Items */}
@@ -419,7 +444,7 @@ export default function RetailPOSPage() {
                     className="w-16 px-2 py-1 border rounded text-right text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" /><span>%</span>
                 </div>
               </div>
-              {discount > 0 && <div className="flex justify-between text-sm text-gray-900"><span>Discount Amount</span><span>-{formatCurrency(discountAmount)}</span></div>}
+              {discount > 0 && <div className="flex justify-between text-sm text-gray-500"><span>Discount Amount</span><span>-{formatCurrency(discountAmount)}</span></div>}
               <div className="flex justify-between text-section pt-2 border-t"><span>Grand Total</span><span className="text-primary">{formatCurrency(grandTotal)}</span></div>
             </div>
             <button onClick={() => setShowPaymentModal(true)} disabled={cart.length === 0}
@@ -433,47 +458,121 @@ export default function RetailPOSPage() {
       {/* Payment Modal */}
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-md w-full max-w-md animate-scale-in">
+          <div className="bg-white rounded-md w-full max-w-md animate-scale-in max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b flex items-center justify-between">
               <h2 className="text-page-title">Payment</h2>
               <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
-              <div className="text-center bg-gray-900 rounded-md p-4">
-                <p className="text-sm text-gray-600">Total Amount</p>
-                <p className="text-page-title text-primary">{formatCurrency(grandTotal)}</p>
+              <div className="text-center bg-gray-50 rounded-md p-4 border">
+                <p className="text-sm text-gray-500">Grand Total</p>
+                <p className="text-2xl font-bold text-primary">{formatCurrency(grandTotal)}</p>
               </div>
+
+              {/* Payment Type */}
               <div>
-                <p className="text-sm font-medium mb-2">Payment Method</p>
+                <p className="text-sm font-medium mb-2">Payment Type</p>
                 <div className="grid grid-cols-3 gap-2">
-                  {[{ id: 'cash', label: 'Cash', icon: Banknote }, { id: 'card', label: 'Card', icon: CreditCard }, { id: 'upi', label: 'UPI', icon: Smartphone }].map(method => (
-                    <button key={method.id} onClick={() => setPaymentMethod(method.id as any)}
-                      className={`p-3 rounded-md border-2 flex flex-col items-center gap-1 transition-all ${paymentMethod === method.id ? 'border-primary bg-primary' : 'border-gray-200 hover:border-gray-300'}`}>
-                      <method.icon className="w-5 h-5" /><span className="text-sm">{method.label}</span>
+                  {[
+                    { id: 'paid', label: 'Full Payment' },
+                    { id: 'advance', label: 'Advance' },
+                    { id: 'credit', label: 'Credit' },
+                  ].map(pt => (
+                    <button key={pt.id} onClick={() => { setPaymentType(pt.id as any); setAmountReceived(''); }}
+                      className={`p-2.5 rounded-md border-2 text-sm font-medium transition-all ${paymentType === pt.id ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 hover:border-gray-300'}`}>
+                      {pt.label}
                     </button>
                   ))}
                 </div>
               </div>
-              {paymentMethod === 'cash' && (
+
+              {/* Credit Client Selector */}
+              {(paymentType === 'credit' || paymentType === 'advance') && (
                 <div>
-                  <label className="text-sm font-medium">Amount Received</label>
-                  <input type="number" value={amountReceived} onChange={(e) => setAmountReceived(e.target.value)}
-                    className="w-full mt-1 px-4 py-2.5 border rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-400" placeholder="Enter amount" />
-                  {changeAmount >= 0 && amountReceived && <p className="mt-2 text-gray-900 font-medium">Change: {formatCurrency(changeAmount)}</p>}
+                  <p className="text-sm font-medium mb-2">Client <span className="text-destructive">*</span></p>
+                  <select value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)}
+                    className="w-full px-3 py-2.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white text-sm">
+                    <option value="">Select registered client...</option>
+                    {(clients || []).map(c => (
+                      <option key={c.id} value={c.id}>{c.company || c.name}</option>
+                    ))}
+                  </select>
                 </div>
               )}
+
+              {/* Credit Days */}
+              {paymentType === 'credit' && (
+                <div>
+                  <p className="text-sm font-medium mb-2">Credit Days</p>
+                  <div className="flex gap-2">
+                    {['15', '30', '45', '60', '90'].map(d => (
+                      <button key={d} onClick={() => setCreditDays(d)}
+                        className={`flex-1 py-2 rounded-md border text-sm font-medium transition-all ${creditDays === d ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 hover:bg-gray-50'}`}>
+                        {d}d
+                      </button>
+                    ))}
+                  </div>
+                  {creditDays && (
+                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> Due: {getDueDate()}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Payment Method (for paid / advance) */}
+              {paymentType !== 'credit' && (
+                <div>
+                  <p className="text-sm font-medium mb-2">Payment Method</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[{ id: 'cash', label: 'Cash', icon: Banknote }, { id: 'card', label: 'Card', icon: CreditCard }, { id: 'upi', label: 'UPI', icon: Smartphone }].map(method => (
+                      <button key={method.id} onClick={() => { setPaymentMethod(method.id as any); setAmountReceived(''); }}
+                        className={`p-3 rounded-md border-2 flex flex-col items-center gap-1 transition-all ${paymentMethod === method.id ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}>
+                        <method.icon className="w-5 h-5" /><span className="text-sm">{method.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Amount received (cash / advance) */}
+              {paymentType !== 'credit' && paymentMethod === 'cash' && (
+                <div>
+                  <label className="text-sm font-medium">{paymentType === 'advance' ? 'Advance Amount' : 'Amount Received'}</label>
+                  <input type="number" value={amountReceived} onChange={(e) => setAmountReceived(e.target.value)}
+                    className="w-full mt-1 px-4 py-2.5 border rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-400" placeholder="Enter amount" />
+                  {paymentType === 'paid' && changeAmount >= 0 && amountReceived && (
+                    <p className="mt-2 text-gray-900 font-medium">Change: {formatCurrency(changeAmount)}</p>
+                  )}
+                  {paymentType === 'advance' && amountReceived && (
+                    <p className="mt-2 text-amber-600 font-medium">Balance due: {formatCurrency(getBalanceDue())}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Notes */}
+              <div>
+                <label className="text-sm font-medium">Notes (optional)</label>
+                <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Any remarks..."
+                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
+              </div>
+
               <div className="flex gap-3">
                 <button onClick={handleDownloadReceipt} disabled={isProcessing}
                   className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-md font-semibold flex items-center justify-center gap-2 hover:bg-gray-200 disabled:opacity-50 transition-colors">
                   {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
-                  Download Receipt
+                  Download
                 </button>
                 <button onClick={handlePrint} disabled={isProcessing}
-                  className="flex-1 py-3 bg-gray-900 text-white rounded-md font-semibold flex items-center justify-center gap-2 hover:bg-green-700 disabled:opacity-50 transition-colors">
+                  className="flex-1 py-3 bg-gray-900 text-white rounded-md font-semibold flex items-center justify-center gap-2 hover:bg-gray-800 disabled:opacity-50 transition-colors">
                   {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Printer className="w-5 h-5" />}
-                  Print & Complete
+                  Print
                 </button>
               </div>
+              <button onClick={handleCompleteWithoutReceipt} disabled={isProcessing}
+                className="w-full py-2.5 border border-gray-200 text-gray-600 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 transition-colors">
+                Complete without receipt
+              </button>
             </div>
           </div>
         </div>
@@ -493,15 +592,13 @@ export default function RetailPOSPage() {
               </div>
               <button onClick={() => setShowSettingsModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
             </div>
-
             <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
               {activeTab === 'products' ? (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
-                  {/* Product List */}
-                  <div className="lg:col-span-2 space-y-4">
-                    <div className="bg-white rounded-md border border-gray-100 overflow-hidden">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div className="lg:col-span-2">
+                    <div className="bg-white rounded-md border overflow-hidden">
                       <table className="w-full">
-                        <thead className="bg-gray-50 border-b border-gray-100">
+                        <thead className="bg-gray-50 border-b">
                           <tr>
                             <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Product</th>
                             <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Category</th>
@@ -509,36 +606,34 @@ export default function RetailPOSPage() {
                             <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y">
                           {products?.map(p => (
                             <tr key={p.id} className="hover:bg-gray-50">
                               <td className="px-4 py-3 font-medium text-gray-900">{p.name}</td>
                               <td className="px-4 py-3 text-sm text-gray-500">{p.category?.name}</td>
-                              <td className="px-4 py-3 text-right font-medium text-gray-900">{formatCurrency(p.price)}</td>
+                              <td className="px-4 py-3 text-right font-medium">{formatCurrency(p.price)}</td>
                               <td className="px-4 py-3 text-right">
                                 <div className="flex justify-end gap-2">
-                                  <button onClick={() => handleEditProductClick(p)} className="p-1.5 text-foreground hover:bg-muted rounded"><Edit className="w-4 h-4" /></button>
+                                  <button onClick={() => { setProductForm({ id: p.id, name: p.name, price: p.price, category_id: p.category_id }); setIsEditingProduct(true); }} className="p-1.5 hover:bg-gray-100 rounded"><Edit className="w-4 h-4" /></button>
                                   <button onClick={() => handleDeleteProductReq(p.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded"><Trash2 className="w-4 h-4" /></button>
                                 </div>
                               </td>
                             </tr>
                           ))}
-                          {products?.length === 0 && <tr><td colSpan={4} className="text-center py-4 text-gray-500">No products found</td></tr>}
+                          {!products?.length && <tr><td colSpan={4} className="text-center py-4 text-gray-500">No products yet</td></tr>}
                         </tbody>
                       </table>
                     </div>
                   </div>
-
-                  {/* Add/Edit Product Form */}
-                  <div className="bg-white rounded-md border border-gray-100 p-5 h-fit">
-                    <h3 className="font-bold text-gray-900 mb-4">{isEditingProduct ? 'Edit Product' : 'Add New Product'}</h3>
+                  <div className="bg-white rounded-md border p-5 h-fit">
+                    <h3 className="font-bold text-gray-900 mb-4">{isEditingProduct ? 'Edit Product' : 'Add Product'}</h3>
                     <form onSubmit={handleSaveProduct} className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                         <input type="text" required value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
                         <input type="number" required min="0" value={productForm.price} onChange={e => setProductForm({ ...productForm, price: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
                       </div>
                       <div>
@@ -549,29 +644,26 @@ export default function RetailPOSPage() {
                         </select>
                       </div>
                       <div className="flex gap-2 pt-2">
-                        {isEditingProduct && <button type="button" onClick={() => { setIsEditingProduct(false); setProductForm({ id: '', name: '', price: 0, category_id: '' }) }} className="flex-1 py-2 border rounded-md hover:bg-gray-50">Cancel</button>}
-                        <button type="submit" className="flex-1 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold">{isEditingProduct ? 'Update' : 'Add Product'}</button>
+                        {isEditingProduct && <button type="button" onClick={() => { setIsEditingProduct(false); setProductForm({ id: '', name: '', price: 0, category_id: '' }); }} className="flex-1 py-2 border rounded-md hover:bg-gray-50">Cancel</button>}
+                        <button type="submit" className="flex-1 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-semibold">{isEditingProduct ? 'Update' : 'Add'}</button>
                       </div>
                     </form>
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
-                  {/* Categories List */}
-                  <div className="lg:col-span-2 space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div className="lg:col-span-2">
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       {categories?.map(c => (
                         <div key={c.id} className={`p-4 rounded-md border flex items-center justify-between ${c.color}`}>
                           <span className="font-semibold">{c.name}</span>
-                          <button onClick={() => handleDeleteCategoryReq(c.id)} className="p-1.5 bg-white/50 rounded-md hover:bg-white text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                          <button onClick={() => handleDeleteCategoryReq(c.id)} className="p-1.5 bg-white/50 rounded-md hover:bg-white text-red-600"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       ))}
                     </div>
                   </div>
-
-                  {/* Add Category Form */}
-                  <div className="bg-white rounded-md border border-gray-100 p-5 h-fit">
-                    <h3 className="font-bold text-gray-900 mb-4">Add New Category</h3>
+                  <div className="bg-white rounded-md border p-5 h-fit">
+                    <h3 className="font-bold text-gray-900 mb-4">Add Category</h3>
                     <form onSubmit={handleSaveCategory} className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
@@ -586,7 +678,7 @@ export default function RetailPOSPage() {
                           ))}
                         </div>
                       </div>
-                      <button type="submit" className="w-full py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 mt-2 shadow-sm font-semibold">Add Category</button>
+                      <button type="submit" className="w-full py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-semibold">Add Category</button>
                     </form>
                   </div>
                 </div>
@@ -595,7 +687,6 @@ export default function RetailPOSPage() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Printer, ShoppingCart, Package, Clock, CheckCircle, AlertTriangle, Calculator } from 'lucide-react';
+import { Printer, ShoppingCart, Package, Clock, CheckCircle, AlertTriangle, Calculator, BarChart2, Receipt } from 'lucide-react';
 import { useJobs, usePaperStock, usePOSSales } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import DriveConnectionStatus from '@/components/drive/DriveConnectionStatus';
@@ -73,7 +73,7 @@ export default function CMYKPrintPage() {
       </div>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Link href="/admin/cmyk-print/retail-pos">
           <Card className="hover:shadow-sm transition-shadow h-full">
             <CardHeader className="pb-3">
@@ -133,6 +133,44 @@ export default function CMYKPrintPage() {
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">Estimate Costs →</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/cmyk-print/expenses">
+          <Card className="hover:shadow-sm transition-shadow h-full">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center">
+                  <Receipt className="h-4 w-4 text-foreground" />
+                </div>
+                <div>
+                  <CardTitle className="text-sm font-medium">Expenses</CardTitle>
+                  <p className="text-xs text-muted-foreground">Daily costs</p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">Record Expenses →</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/cmyk-print/overview">
+          <Card className="hover:shadow-sm transition-shadow h-full">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center">
+                  <BarChart2 className="h-4 w-4 text-foreground" />
+                </div>
+                <div>
+                  <CardTitle className="text-sm font-medium">Monthly Overview</CardTitle>
+                  <p className="text-xs text-muted-foreground">Profit & loss</p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">View Report →</p>
             </CardContent>
           </Card>
         </Link>

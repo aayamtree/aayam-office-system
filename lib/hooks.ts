@@ -1686,6 +1686,77 @@ export function usePOSProducts() {
 }
 
 // =============================================
+// CMYK EXPENSES HOOK
+// =============================================
+export function useCMYKExpenses() {
+  const { data, loading, error, refetch } = useSupabaseQuery<import('@/types/database').CMYKExpense>('cmyk_expenses', {
+    orderBy: { column: 'expense_date', ascending: false }
+  });
+
+  const createExpense = async (expense: Omit<import('@/types/database').CMYKExpense, 'id' | 'created_at' | 'updated_at'>) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const { data, error } = await supabase.from('cmyk_expenses').insert([expense]).select().single();
+    if (!error) refetch();
+    return { data, error: error?.message };
+  };
+
+  const updateExpense = async (id: string, updates: Partial<import('@/types/database').CMYKExpense>) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const { data, error } = await supabase.from('cmyk_expenses').update(updates).eq('id', id).select().single();
+    if (!error) refetch();
+    return { data, error: error?.message };
+  };
+
+  const deleteExpense = async (id: string) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const { error } = await supabase.from('cmyk_expenses').delete().eq('id', id);
+    if (!error) refetch();
+    return { error: error?.message };
+  };
+
+  return { expenses: data, loading, error, refetch, createExpense, updateExpense, deleteExpense };
+}
+
+// =============================================
+// CMYK MONTHLY OVERVIEW HOOK
+// =============================================
+export function useCMYKMonthlyOverview(year: number, month: number) {
+  const [data, setData] = useState<{
+    total_revenue: number;
+    pending_revenue: number;
+    total_expenses: number;
+    paper_cost: number;
+    total_transactions: number;
+    sheets_used: number;
+  } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetch = async () => {
+    if (!isSupabaseConfigured()) return;
+    setLoading(true);
+    try {
+      const startDate = new Date(year, month - 1, 1).toISOString().split('T')[0];
+      const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+      const { data: result, error: err } = await supabase.rpc('get_cmyk_monthly_overview', {
+        p_start_date: startDate,
+        p_end_date: endDate
+      });
+      if (err) throw err;
+      setData(result);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetch(); }, [year, month]);
+
+  return { overview: data, loading, error, refetch: fetch };
+}
+
+// =============================================
 // NOES HOOK (Google Keep Style)
 // =============================================
 export function useNotes() {

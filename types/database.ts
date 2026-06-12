@@ -685,6 +685,7 @@ export interface POSSale extends BaseEntity {
   sale_number: string;
   customer_name?: string;
   customer_phone?: string;
+  client_id?: string;
   subtotal: number;
   discount_percent: number;
   discount_amount: number;
@@ -692,6 +693,13 @@ export interface POSSale extends BaseEntity {
   payment_mode: PaymentMode;
   amount_received: number;
   change_amount: number;
+  payment_status?: 'paid' | 'pending' | 'partial';
+  due_date?: string;
+  balance_due?: number;
+  credit_terms?: string;
+  paper_stock_id?: string;
+  sheets_used?: number;
+  notes?: string;
   sold_by?: string;
   items?: POSSaleItem[];
 }
@@ -754,6 +762,26 @@ export interface PaperStock extends BaseEntity {
   cost_per_unit: number;
   supplier?: string;
   last_restocked?: string;
+  category?: string;
+  size_width?: number;
+  size_height?: number;
+  is_active?: boolean;
+}
+
+// CMYK Expense
+export interface CMYKExpense {
+  id: string;
+  expense_date: string;
+  category: string;
+  amount: number;
+  description?: string;
+  job_id?: string;
+  pos_sale_id?: string;
+  approved_by?: string;
+  receipt_url?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 
