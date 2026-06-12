@@ -1,0 +1,29 @@
+# ================================================================
+#   AAYAM OFFICE — Settings file for Accountant PC
+#
+#   INSTRUCTIONS:
+#   1. Copy this file to:  C:\AayamOffice\aayam-office-2\
+#   2. Rename it from "env-for-accountant-pc.txt" to ".env.local"
+#      (remove the .txt — just .env.local)
+#   3. Done. Do not change any values.
+# ================================================================
+
+NEXT_PUBLIC_SUPABASE_URL=https://wrvbodgsykesbaphpbzs.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndydmJvZGdzeWtlc2JhcGhwYnpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxNzU3NzAsImV4cCI6MjA4Mjc1MTc3MH0.s-8GfXY2Hr2jknLHxTS4VzG86HgwpqVd8yh9eaPLJUo
+
+NEXTAUTH_SECRET=QmkINvyo7eBFEAf8tv9vCXsMSq5HxY6KU4xX8nVTBtc=
+NEXTAUTH_URL=http://Accountant:3000
+NEXT_PUBLIC_APP_URL=http://Accountant:3000
+
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=BNlRAqTy4Zhg1HRgLKb-iXW91gp15cVQ2yDR6O9unu5TWnGt1u9r_6w-O_Rzj9QgjXKw3cBILN2pIS-XE-fSRBg
+VAPID_PRIVATE_KEY=kJmL5kxgtZ6JQtw1RqK3S3RKgZmeNLix4NKk6y530I8
+
+TELEGRAM_BOT_TOKEN=8352518034:AAHsiUcPAu3XEAF72bupxjpO1wCk0F9oHns
+NEXT_PUBLIC_TELEGRAM_BOT_TOKEN=8352518034:AAHsiUcPAu3XEAF72bupxjpO1wCk0F9oHns
+NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=aayam_notify_bot
+
+ANTHROPIC_API_KEY=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
+
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=718809917688-mtsfiso5jbf8clt7g830h62ri0c7us9r.apps.googleusercontent.com
+NEXT_PUBLIC_GOOGLE_DRIVE_API_KEY=AIzaSyCa4zp3qNUKdlmwrozbQ-FH7BCmYtDDwvs
+GOOGLE_CLIENT_SECRET=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

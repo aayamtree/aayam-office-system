@@ -1757,6 +1757,91 @@ export function useCMYKMonthlyOverview(year: number, month: number) {
 }
 
 // =============================================
+// CMYK JOB LOGS HOOK
+// =============================================
+export function useCMYKJobLogs(limit?: number) {
+  const { data, loading, error, refetch } = useSupabaseQuery<import('@/types/database').CMYKJobLog>('cmyk_job_logs', {
+    orderBy: { column: 'created_at', ascending: false },
+    ...(limit ? { filter: [] } : {})
+  });
+
+  const completeJob = async (
+    jobId: string,
+    paperStockId: string,
+    sheetsUsed: number,
+    operatorId: string,
+    operatorName: string,
+    notes?: string
+  ) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const { data, error } = await supabase.rpc('complete_cmyk_print_job', {
+      p_job_id: jobId,
+      p_paper_stock_id: paperStockId,
+      p_sheets_used: sheetsUsed,
+      p_operator_id: operatorId,
+      p_operator_name: operatorName,
+      p_notes: notes || null
+    });
+    if (!error) refetch();
+    return { data, error: error?.message };
+  };
+
+  const logs = limit ? (data || []).slice(0, limit) : data;
+  return { logs: logs || [], loading, error, refetch, completeJob };
+}
+
+// =============================================
+// CMYK PAPER PURCHASES HOOK
+// =============================================
+export function useCMYKPaperPurchases() {
+  const { data, loading, error, refetch } = useSupabaseQuery<import('@/types/database').CMYKPaperPurchase>('cmyk_paper_purchases', {
+    orderBy: { column: 'purchase_date', ascending: false }
+  });
+
+  const recordPurchase = async (purchase: {
+    purchase_date: string;
+    vendor_id?: string;
+    vendor_name?: string;
+    paper_stock_id: string;
+    quantity: number;
+    rate: number;
+    gst_percent?: number;
+    invoice_number?: string;
+    notes?: string;
+    created_by?: string;
+  }) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const { data, error } = await supabase.rpc('record_paper_purchase', {
+      p_purchase_date: purchase.purchase_date,
+      p_vendor_id: purchase.vendor_id || null,
+      p_vendor_name: purchase.vendor_name || null,
+      p_paper_stock_id: purchase.paper_stock_id,
+      p_quantity: purchase.quantity,
+      p_rate: purchase.rate,
+      p_gst_percent: purchase.gst_percent || 0,
+      p_invoice_number: purchase.invoice_number || null,
+      p_notes: purchase.notes || null,
+      p_created_by: purchase.created_by || null
+    });
+    if (!error) refetch();
+    return { data, error: error?.message };
+  };
+
+  const updatePayment = async (id: string, amountPaid: number, grandTotal: number) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const newStatus = amountPaid >= grandTotal ? 'paid' : amountPaid > 0 ? 'partial' : 'pending';
+    const { data, error } = await supabase
+      .from('cmyk_paper_purchases')
+      .update({ amount_paid: amountPaid, payment_status: newStatus, updated_at: new Date().toISOString() })
+      .eq('id', id).select().single();
+    if (!error) refetch();
+    return { data, error: error?.message };
+  };
+
+  return { purchases: data || [], loading, error, refetch, recordPurchase, updatePayment };
+}
+
+// =============================================
 // NOES HOOK (Google Keep Style)
 // =============================================
 export function useNotes() {

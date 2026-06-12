@@ -26,6 +26,7 @@ import DailySummaryWidget from '@/components/dashboard/DailySummaryWidget';
 import RecentFilesWidget from '@/components/dashboard/RecentFilesWidget';
 import InvoicePendingWidget from '@/components/dashboard/InvoicePendingWidget';
 import RecentActivityWidget from '@/components/dashboard/RecentActivityWidget';
+import CMYKDashboardWidget from '@/components/dashboard/CMYKDashboardWidget';
 import GSTCalculator from '@/components/shared/GSTCalculator';
 import { GlobalErrorBoundary } from '@/components/ErrorBoundary';
 
@@ -469,6 +470,9 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
 
                 {isVisible('overdue') && <GlobalErrorBoundary><OverdueAlertsWidget /></GlobalErrorBoundary>}
             </div>
+
+            {/* ── CMYK Print Station Summary ── */}
+            <CMYKDashboardWidget />
 
             {/* ── Daily Summary + Team Workload + Sales Performance ── */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -786,6 +786,51 @@ export interface CMYKExpense {
 
 
 
+// CMYK Job Log
+export interface CMYKJobLog {
+  id: string;
+  job_id?: string;
+  job_number?: string;
+  client_name?: string;
+  project_name?: string;
+  paper_stock_id?: string;
+  paper_name?: string;
+  sheets_used: number;
+  paper_cost: number;
+  operator_id?: string;
+  operator_name?: string;
+  started_at: string;
+  completed_at?: string;
+  status: 'in_progress' | 'completed' | 'cancelled';
+  notes?: string;
+  created_at: string;
+}
+
+// CMYK Paper Purchase
+export interface CMYKPaperPurchase {
+  id: string;
+  purchase_date: string;
+  vendor_id?: string;
+  vendor_name?: string;
+  paper_stock_id?: string;
+  paper_name?: string;
+  quantity: number;
+  unit: string;
+  rate: number;
+  total_amount: number;
+  gst_percent: number;
+  gst_amount: number;
+  grand_total: number;
+  payment_status: 'paid' | 'pending' | 'partial';
+  amount_paid: number;
+  purchase_bill_id?: string;
+  invoice_number?: string;
+  notes?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Counter
 export interface Counter {
   id: string;

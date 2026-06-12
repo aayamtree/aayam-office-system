@@ -1,0 +1,169 @@
+================================================================
+   AAYAM OFFICE — SETUP GUIDE FOR ACCOUNTANT PC
+   (Read this file and follow steps one by one)
+================================================================
+
+
+WHAT THIS DOES
+--------------
+This PC will become the Aayam Office server.
+All other office PCs just open a browser — nothing to install on them.
+Staff will open: http://Accountant:3000
+
+
+================================================================
+STEP 1 — INSTALL NODE.JS (only if not already installed)
+================================================================
+
+1. Open browser on this PC
+2. Go to:  https://nodejs.org
+3. Click the big green "LTS" download button
+4. Run the downloaded file — click Next, Next, Next, Finish
+5. Restart the PC after install
+
+To check it worked:
+- Press Windows key + R
+- Type: cmd
+- Press Enter
+- Type: node -v
+- You should see something like: v20.11.0
+  (If you see a version number, Node.js is ready)
+
+
+================================================================
+STEP 2 — COPY THE APP FOLDER
+================================================================
+
+1. Copy the folder "aayam-office-2" to this PC
+2. Place it at:  C:\AayamOffice\aayam-office-2\
+
+Final path should look like:
+C:\AayamOffice\aayam-office-2\local\START-WINDOWS.bat
+
+
+================================================================
+STEP 3 — CREATE THE SETTINGS FILE
+================================================================
+
+1. Go to folder:  C:\AayamOffice\aayam-office-2\
+2. Right-click empty space → New → Text Document
+3. Name it exactly:  .env.local
+   (Note: starts with a dot, no .txt at the end)
+   Windows may warn you — click Yes
+
+4. Right-click the file → Open with → Notepad
+5. Paste the following lines (fill in your Supabase details):
+
+------------------------------------------------
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+NEXTAUTH_SECRET=aayam-office-secret-2025
+NEXTAUTH_URL=http://Accountant:3000
+------------------------------------------------
+
+6. Save the file (Ctrl+S)
+
+NOTE: Get the Supabase URL and keys from your current .env.local
+      file on the Mac (the one the app is already using).
+
+
+================================================================
+STEP 4 — INSTALL APP PACKAGES (one time only)
+================================================================
+
+1. Press Windows key + R
+2. Type: cmd
+3. Press Enter
+4. In the black window, type these commands one by one:
+
+   cd C:\AayamOffice\aayam-office-2
+   npm install
+
+5. Wait for it to finish (2-3 minutes, shows progress)
+
+
+================================================================
+STEP 5 — BUILD AND START THE APP
+================================================================
+
+1. Go to folder:  C:\AayamOffice\aayam-office-2\local\
+2. Double-click:  START-WINDOWS.bat
+3. A black window will open and start building the app
+4. WAIT — first time takes 3-4 minutes. Do not close the window.
+5. When you see this line:
+
+      Staff open:  http://aayam.local:3000
+
+   The server is ready. ✓
+
+6. Windows Firewall popup may appear — click "Allow Access"
+
+
+================================================================
+STEP 6 — TEST IT
+================================================================
+
+On THIS PC:
+- Open Chrome or Edge
+- Go to:  http://localhost:3000
+- Aayam Office login page should appear ✓
+
+On ANY OTHER PC in the office:
+- Open Chrome or Edge
+- Go to:  http://Accountant:3000
+- Aayam Office login page should appear ✓
+
+
+================================================================
+DAILY USE
+================================================================
+
+Every morning:
+- Go to:  C:\AayamOffice\aayam-office-2\local\
+- Double-click:  START-WINDOWS.bat
+- Keep the black window open all day
+
+Every evening:
+- You can close the window, or leave it running overnight
+  (overnight = app auto-updates itself at 2:00 AM)
+
+Other staff:
+- Just open browser → http://Accountant:3000
+- Nothing to install on their PCs
+
+
+================================================================
+IF SOMETHING GOES WRONG
+================================================================
+
+Problem: "http://Accountant:3000 not opening on other PCs"
+Fix: Make sure START-WINDOWS.bat is running on this PC
+     Check Windows Firewall — allow Node.js through firewall
+
+Problem: "App shows error / blank page"
+Fix: Check .env.local has correct Supabase keys
+     Close the black window and double-click START-WINDOWS.bat again
+
+Problem: "npm install failed"
+Fix: Check internet connection on this PC
+     Try again: open cmd → cd C:\AayamOffice\aayam-office-2 → npm install
+
+Problem: Nothing works
+Fix: App still works on Vercel as backup — no data is lost
+     Contact Satish for help
+
+
+================================================================
+BACKUP OPTION (if local server is off)
+================================================================
+
+If this PC is off or something goes wrong, staff can always use:
+https://aayam-office-system.vercel.app
+
+Everything is safe. Local server and Vercel both work independently.
+
+
+================================================================
+   Setup complete. This PC is now the Aayam Office server.
+================================================================
