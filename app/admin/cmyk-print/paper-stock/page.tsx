@@ -5,44 +5,60 @@ import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import {
   Search, Plus, ArrowLeft, Edit, Trash2, X,
-  Package, AlertTriangle, TrendingDown, TrendingUp, Loader2
+  Package, AlertTriangle, TrendingDown, TrendingUp, Loader2, ChevronDown
 } from 'lucide-react';
 import { usePaperStock } from '@/lib/hooks';
 import { PaperStock } from '@/types/database';
 import { useConfirm } from '@/components/ConfirmModal';
 
-const categories = ['All', 'Paper', 'Photo Paper', 'Toner', 'Lamination', 'Binding', 'Card Stock', 'Envelope', 'Other'];
+// Paper categories for CMYK printing
+const PAPER_CATEGORIES = [
+  'Sticker', 'Opaque', 'Texture', 'Standard', 'Photo Paper',
+  'Matt', 'Glossy', 'Lamination Film', 'Card Stock', 'Craft Paper', 'Other'
+];
+
+// Common paper sizes used in printing
+const SIZE_PRESETS = [
+  { label: '13×19"', value: '13×19' },
+  { label: '12×18"', value: '12×18' },
+  { label: '12×36"', value: '12×36' },
+  { label: '19×25"', value: '19×25' },
+  { label: 'A4', value: 'A4 (8.27×11.69)' },
+  { label: 'A3', value: 'A3 (11.69×16.54)' },
+  { label: 'A2', value: 'A2 (16.54×23.39)' },
+  { label: 'Custom', value: 'custom' },
+];
+
+// Category filter tabs (All + paper categories)
+const FILTER_CATEGORIES = ['All', ...PAPER_CATEGORIES];
+
+const emptyForm = {
+  name: '',
+  category: '',
+  size: '',
+  customSize: '',
+  gsm: '' as string | number,
+  quantity: 0,
+  reorder_level: 100,
+  unit: 'sheets',
+  cost_per_unit: '' as string | number,
+  supplier: '',
+};
 
 export default function PaperStockPage() {
   const { stock, loading, createStockItem, updateStockItem, deleteStockItem } = usePaperStock();
+  const confirm = useConfirm();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [showRestockModal, setShowRestockModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<PaperStock | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [restockQty, setRestockQty] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const confirm = useConfirm();
-
-  const [formData, setFormData] = useState({
-    name: '',
-    // Just mapping "category" for UI purposes, but we don't strictly have a category field in DB yet
-    // Assuming we store it in local state or repurpose a field? 
-    // The type `PaperStock` doesn't strictly have `category`. Let's assume we use it as part of name or add it later.
-    // For now, I'll keep it simple and maybe omit strict category if not in DB schema.
-    // Looking at schema: name, size, gsm, quantity, unit, reorder_level, cost_per_unit, supplier.
-    // We can infer category from name or just skip it.
-    size: '',
-    gsm: 0,
-    quantity: 0,
-    reorder_level: 0,
-    unit: 'pcs',
-    cost_per_unit: 0,
-    supplier: '',
-  });
+  const [formData, setFormData] = useState({ ...emptyForm });
 
   const getStatus = (item: PaperStock) => {
     if (item.quantity === 0) return 'out_of_stock';
@@ -52,48 +68,41 @@ export default function PaperStockPage() {
 
   const filteredStock = stock.filter(item => {
     const status = getStatus(item);
-    const matchesSearch = (item.name || '').toLowerCase().includes(searchQuery.toLowerCase());
-    // Simplified category filter (contains string)
-    const matchesCategory = categoryFilter === 'All' || item.name.toLowerCase().includes(categoryFilter.toLowerCase());
+    const matchesSearch = (item.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.category || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = categoryFilter === 'All' || item.category === categoryFilter;
     const matchesStatus = statusFilter === 'all' || status === statusFilter;
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      'in_stock': 'bg-gray-100 text-gray-900 border-green-200',
-      'low_stock': 'bg-amber-100 text-amber-700 border-gray-200',
-      'out_of_stock': 'bg-red-100 text-red-700 border-red-200',
-    };
-    return colors[status] || 'bg-gray-100 text-gray-700';
-  };
+  const getStatusBadgeClass = (status: string) => ({
+    'in_stock': 'bg-green-50 text-green-700 border-green-200',
+    'low_stock': 'bg-amber-50 text-amber-700 border-amber-200',
+    'out_of_stock': 'bg-red-50 text-red-700 border-red-200',
+  }[status] || 'bg-gray-100 text-gray-700');
 
-  const getStatusLabel = (status: string) => {
-    const labels: Record<string, string> = {
-      'in_stock': 'In Stock',
-      'low_stock': 'Low Stock',
-      'out_of_stock': 'Out of Stock',
-    };
-    return labels[status] || status;
-  };
+  const getStatusLabel = (status: string) => ({
+    'in_stock': 'In Stock', 'low_stock': 'Low Stock', 'out_of_stock': 'Out of Stock'
+  }[status] || status);
 
   const handleAddNew = () => {
-    setFormData({
-      name: '', size: '', gsm: 0, quantity: 0, reorder_level: 10, unit: 'pcs', cost_per_unit: 0, supplier: ''
-    });
+    setFormData({ ...emptyForm });
     setIsEditing(false);
+    setSelectedItem(null);
     setShowModal(true);
   };
 
   const handleEdit = (item: PaperStock) => {
     setFormData({
       name: item.name,
+      category: item.category || '',
       size: item.size || '',
-      gsm: item.gsm || 0,
+      customSize: '',
+      gsm: item.gsm || '',
       quantity: item.quantity,
       reorder_level: item.reorder_level,
-      unit: item.unit,
-      cost_per_unit: item.cost_per_unit,
+      unit: item.unit || 'sheets',
+      cost_per_unit: item.cost_per_unit || '',
       supplier: item.supplier || '',
     });
     setSelectedItem(item);
@@ -101,58 +110,71 @@ export default function PaperStockPage() {
     setShowModal(true);
   };
 
-  const handleRestock = (item: PaperStock) => {
-    setSelectedItem(item);
-    setRestockQty('');
-    setShowRestockModal(true);
-  };
-
   const handleDelete = async (id: string) => {
-    const { confirmed } = await confirm({ title: 'Delete Item', message: 'Are you sure you want to delete this stock item?', variant: 'danger', confirmLabel: 'Delete' });
+    const { confirmed } = await confirm({
+      title: 'Delete Paper', message: 'Delete this paper stock item?', variant: 'danger', confirmLabel: 'Delete'
+    });
     if (confirmed) {
       await deleteStockItem(id);
+      toast.success('Item deleted');
     }
+  };
+
+  const getFinalSize = () => {
+    if (formData.size === 'custom') return formData.customSize;
+    return formData.size;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.name.trim()) { toast.error('Item name is required'); return; }
+    if (!formData.cost_per_unit || parseFloat(String(formData.cost_per_unit)) <= 0) {
+      toast.error('Enter a valid cost per sheet'); return;
+    }
+
     setSubmitting(true);
     try {
-      const payload = { ...formData };
+      const payload: Omit<PaperStock, 'id' | 'created_at' | 'updated_at'> = {
+        name: formData.name.trim(),
+        category: formData.category || undefined,
+        size: getFinalSize() || undefined,
+        gsm: formData.gsm ? parseInt(String(formData.gsm)) : undefined,
+        quantity: formData.quantity || 0,
+        reorder_level: formData.reorder_level || 100,
+        unit: 'sheets', // always sheets for paper
+        cost_per_unit: parseFloat(String(formData.cost_per_unit)),
+        supplier: formData.supplier || undefined,
+      };
 
       if (isEditing && selectedItem) {
         await updateStockItem(selectedItem.id, payload);
+        toast.success('Paper updated');
       } else {
         await createStockItem(payload);
+        toast.success('Paper added to stock');
       }
       setShowModal(false);
-    } catch (error) {
-      console.error(error);
-      toast.error('Failed to save item');
+    } catch {
+      toast.error('Failed to save');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleRestockSubmit = async () => {
-    if (selectedItem && restockQty) {
-      setSubmitting(true);
-      try {
-        const addedQty = parseInt(restockQty);
-        const newQuantity = selectedItem.quantity + addedQty;
-
-        await updateStockItem(selectedItem.id, {
-          quantity: newQuantity,
-          last_restocked: new Date().toISOString()
-        });
-
-        setShowRestockModal(false);
-      } catch (error) {
-        console.error(error);
-        toast.error('Failed to restock');
-      } finally {
-        setSubmitting(false);
-      }
+    if (!selectedItem || !restockQty || parseInt(restockQty) <= 0) {
+      toast.error('Enter a valid quantity'); return;
+    }
+    setSubmitting(true);
+    try {
+      const newQty = selectedItem.quantity + parseInt(restockQty);
+      await updateStockItem(selectedItem.id, { quantity: newQty, last_restocked: new Date().toISOString() });
+      toast.success(`Restocked — new total: ${newQty} sheets`);
+      setShowRestockModal(false);
+    } catch {
+      toast.error('Failed to restock');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -161,89 +183,65 @@ export default function PaperStockPage() {
   const totalValue = stock.reduce((sum, item) => sum + (item.quantity * item.cost_per_unit), 0);
 
   return (
-    <div className="space-y-2 md:space-y-4 lg:space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center gap-3">
           <Link href="/admin/cmyk-print" className="p-2 hover:bg-gray-100 rounded-md lg:hidden">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-xl lg:text-page-title text-gray-900">Paper Stock</h1>
-            <p className="text-sm text-gray-500">{stock.length} items in inventory</p>
+            <h1 className="text-xl font-semibold text-gray-900">Paper Stock</h1>
+            <p className="text-sm text-gray-500">{stock.length} paper type{stock.length !== 1 ? 's' : ''} in inventory</p>
           </div>
         </div>
-        <button
-          onClick={handleAddNew}
-          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-md hover:bg-gray-800 shadow-sm font-semibold transition-colors"
-        >
-          <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
-          <span>Add Item</span>
+        <button onClick={handleAddNew}
+          className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-md hover:bg-gray-800 font-semibold transition-colors shadow-sm">
+          <Plus className="w-4 h-4" /> Add Paper Type
         </button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white border border-green-200 rounded-md p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <Package className="w-4 h-4 text-gray-900" />
-            <span className="text-xs text-gray-900 font-medium">In Stock</span>
-          </div>
-          <p className="text-page-title text-gray-900">
-            {loading ? '...' : stock.length - lowStockCount - outOfStockCount}
-          </p>
+          <div className="flex items-center gap-2 mb-1"><Package className="w-4 h-4 text-gray-600" /><span className="text-xs font-medium text-gray-600">In Stock</span></div>
+          <p className="text-2xl font-bold text-gray-900">{loading ? '…' : stock.length - lowStockCount - outOfStockCount}</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-md p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <TrendingDown className="w-4 h-4 text-destructive" />
-            <span className="text-xs text-destructive font-medium">Low Stock</span>
-          </div>
-          <p className="text-page-title text-amber-700">{loading ? '...' : lowStockCount}</p>
+          <div className="flex items-center gap-2 mb-1"><TrendingDown className="w-4 h-4 text-destructive" /><span className="text-xs font-medium text-destructive">Low Stock</span></div>
+          <p className="text-2xl font-bold text-amber-700">{loading ? '…' : lowStockCount}</p>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-md p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <AlertTriangle className="w-4 h-4 text-red-600" />
-            <span className="text-xs text-red-600 font-medium">Out of Stock</span>
-          </div>
-          <p className="text-page-title text-red-700">{loading ? '...' : outOfStockCount}</p>
+          <div className="flex items-center gap-2 mb-1"><AlertTriangle className="w-4 h-4 text-red-600" /><span className="text-xs font-medium text-red-600">Out of Stock</span></div>
+          <p className="text-2xl font-bold text-red-700">{loading ? '…' : outOfStockCount}</p>
         </div>
-        <div className="bg-gray-900 border border-border-200 rounded-md p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <TrendingUp className="w-4 h-4 text-primary" />
-            <span className="text-xs text-primary font-medium">Stock Value</span>
-          </div>
-          <p className="text-page-title text-primary">
-            {loading ? '...' : `₹${totalValue.toLocaleString()}`}
-          </p>
+        <div className="bg-gray-900 rounded-md p-3">
+          <div className="flex items-center gap-2 mb-1"><TrendingUp className="w-4 h-4 text-white/60" /><span className="text-xs font-medium text-white/60">Stock Value</span></div>
+          <p className="text-2xl font-bold text-white">{loading ? '…' : `₹${totalValue.toLocaleString('en-IN')}`}</p>
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Category filter tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {FILTER_CATEGORIES.map(cat => (
+          <button key={cat} onClick={() => setCategoryFilter(cat)}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0
+              ${categoryFilter === cat ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Search + status filter */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 md:w-4.5 md:h-4.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search items..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
-          />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input type="text" placeholder="Search paper name or category..." value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
         </div>
-        <select
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
-        >
-          {categories.map(cat => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
-        </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
-        >
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
+          className="px-4 py-2.5 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400">
           <option value="all">All Status</option>
           <option value="in_stock">In Stock</option>
           <option value="low_stock">Low Stock</option>
@@ -252,178 +250,172 @@ export default function PaperStockPage() {
       </div>
 
       {/* Stock List */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {loading ? (
-          <div className="text-center py-12 text-gray-500">Loading stock data...</div>
+          <div className="text-center py-12 text-gray-500">Loading...</div>
         ) : filteredStock.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">No items found.</div>
-        ) : filteredStock.map((item) => {
+          <div className="text-center py-12 text-gray-400">
+            <Package className="w-10 h-10 mx-auto mb-2 opacity-30" />
+            <p className="text-sm">No paper types found.</p>
+            <button onClick={handleAddNew} className="mt-2 text-sm text-gray-700 underline">Add your first paper type</button>
+          </div>
+        ) : filteredStock.map(item => {
           const status = getStatus(item);
           return (
-            <div key={item.id} className={`bg-white rounded-md p-4 border ${status === 'out_of_stock' ? 'border-red-200' :
-              status === 'low_stock' ? 'border-gray-200' : 'border-gray-100'
-              }`}>
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 md:gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+            <div key={item.id} className={`bg-white rounded-md p-4 border ${status === 'out_of_stock' ? 'border-red-200' : status === 'low_stock' ? 'border-amber-200' : 'border-gray-100'}`}>
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
                     <h3 className="font-semibold text-gray-900">{item.name}</h3>
-                    <span className={`px-2 py-0.5 text-xs rounded-md border ${getStatusColor(status)}`}>
+                    {item.category && (
+                      <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-md">{item.category}</span>
+                    )}
+                    <span className={`px-2 py-0.5 text-xs rounded-md border ${getStatusBadgeClass(status)}`}>
                       {getStatusLabel(status)}
                     </span>
                   </div>
-                  {item.size && <p className="text-sm text-gray-500">{item.size} {item.gsm ? `| ${item.gsm} GSM` : ''}</p>}
-                  <div className="flex items-center gap-2 md:gap-4 mt-2 text-sm">
+                  <div className="flex flex-wrap gap-3 text-sm text-gray-500">
+                    {item.size && <span>📐 {item.size}</span>}
+                    {item.gsm && <span>⚖️ {item.gsm} GSM</span>}
                     <span className={`font-medium ${item.quantity < item.reorder_level ? 'text-red-600' : 'text-gray-900'}`}>
-                      Stock: {item.quantity} {item.unit}
+                      📦 {item.quantity} sheets
                     </span>
-                    <span className="text-gray-400">Min: {item.reorder_level} {item.unit}</span>
-                    <span className="text-gray-400">₹{item.cost_per_unit}/{item.unit}</span>
+                    <span>Min: {item.reorder_level} sheets</span>
+                    <span>₹{item.cost_per_unit}/sheet</span>
+                    {item.supplier && <span>🏭 {item.supplier}</span>}
                   </div>
                 </div>
-
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleRestock(item)}
-                    className="flex items-center gap-1 px-3 py-2 bg-gray-100 text-gray-900 rounded-md hover:bg-green-200 text-sm font-medium transition-colors"
-                  >
+                  <button onClick={() => { setSelectedItem(item); setRestockQty(''); setShowRestockModal(true); }}
+                    className="flex items-center gap-1 px-3 py-2 bg-gray-100 text-gray-900 rounded-md hover:bg-green-100 text-sm font-medium transition-colors">
                     <Plus className="w-4 h-4" /> Restock
                   </button>
-                  <button
-                    onClick={() => handleEdit(item)}
-                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
-                  >
+                  <button onClick={() => handleEdit(item)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors">
                     <Edit className="w-4 h-4" />
                   </button>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                  >
+                  <button onClick={() => handleDelete(item.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
             </div>
-          )
+          );
         })}
       </div>
 
-      {/* Add/Edit Modal */}
+      {/* Add / Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-md w-full max-w-md animate-scale-in">
-            <div className="flex items-center justify-between p-4 border-b border-gray-100">
-              <h2 className="text-section text-gray-900">
-                {isEditing ? 'Edit Item' : 'Add New Item'}
-              </h2>
+          <div className="bg-white rounded-md w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl">
+            <div className="flex items-center justify-between p-4 border-b border-gray-100 sticky top-0 bg-white">
+              <h2 className="font-semibold text-gray-900">{isEditing ? 'Edit Paper' : 'Add New Paper Type'}</h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-md">
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
+              {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Item Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Paper Name *</label>
+                <input type="text" required placeholder="e.g. Glossy Sticker Paper" value={formData.name}
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
               </div>
 
-              <div className="grid grid-cols-2 gap-2 md:gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Size / Attributes</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. A4"
-                    value={formData.size}
-                    onChange={(e) => setFormData({ ...formData, size: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">GSM</label>
-                  <input
-                    type="number"
-                    value={formData.gsm}
-                    onChange={(e) => setFormData({ ...formData, gsm: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 md:gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-                  <select
-                    value={formData.unit}
-                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
-                  >
-                    <option value="pcs">pcs</option>
-                    <option value="reams">reams</option>
-                    <option value="sheets">sheets</option>
-                    <option value="rolls">rolls</option>
-                    <option value="sets">sets</option>
-                    <option value="boxes">boxes</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Cost (₹/unit)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.cost_per_unit}
-                    onChange={(e) => setFormData({ ...formData, cost_per_unit: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 md:gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Current Stock</label>
-                  <input
-                    type="number"
-                    value={formData.quantity}
-                    onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Reorder Level</label>
-                  <input
-                    type="number"
-                    value={formData.reorder_level}
-                    onChange={(e) => setFormData({ ...formData, reorder_level: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
-                  />
-                </div>
-              </div>
-
+              {/* Category */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
-                <input
-                  type="text"
-                  value={formData.supplier}
-                  onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Paper Type / Category</label>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                  {PAPER_CATEGORIES.map(cat => (
+                    <button key={cat} type="button"
+                      onClick={() => setFormData({ ...formData, category: formData.category === cat ? '' : cat })}
+                      className={`px-2 py-1.5 rounded-md border text-xs font-medium transition-all text-center
+                        ${formData.category === cat ? 'bg-gray-900 text-white border-gray-900' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                      {cat}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200">
+              {/* Size presets */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Paper Size</label>
+                <div className="grid grid-cols-4 gap-2 mb-2">
+                  {SIZE_PRESETS.map(s => (
+                    <button key={s.value} type="button"
+                      onClick={() => setFormData({ ...formData, size: s.value, customSize: '' })}
+                      className={`px-2 py-1.5 rounded-md border text-xs font-medium transition-all text-center
+                        ${formData.size === s.value ? 'bg-gray-900 text-white border-gray-900' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+                {formData.size === 'custom' && (
+                  <input type="text" placeholder='e.g. 14×20" or 35×50cm' value={formData.customSize}
+                    onChange={e => setFormData({ ...formData, customSize: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm" />
+                )}
+              </div>
+
+              {/* GSM + Cost */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">GSM (paper weight)</label>
+                  <input type="number" placeholder="e.g. 320" value={formData.gsm}
+                    onChange={e => setFormData({ ...formData, gsm: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                  <p className="text-xs text-gray-400 mt-1">Common: 80, 130, 200, 250, 320</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cost per Sheet (₹) *</label>
+                  <input type="number" required min="0" step="0.01" placeholder="e.g. 15.00" value={formData.cost_per_unit}
+                    onChange={e => setFormData({ ...formData, cost_per_unit: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                </div>
+              </div>
+
+              {/* Unit — always sheets, just for display */}
+              <div className="bg-gray-50 border border-gray-200 rounded-md px-3 py-2 flex items-center gap-2">
+                <Package className="w-4 h-4 text-gray-400" />
+                <span className="text-sm text-gray-600">Unit is always <strong>sheets</strong> for paper stock</span>
+              </div>
+
+              {/* Quantity + Reorder */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Current Stock (sheets)</label>
+                  <input type="number" min="0" value={formData.quantity}
+                    onChange={e => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                  <p className="text-xs text-gray-400 mt-1">Set 0 if adding for first time</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Reorder Level (sheets)</label>
+                  <input type="number" min="0" value={formData.reorder_level}
+                    onChange={e => setFormData({ ...formData, reorder_level: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                  <p className="text-xs text-gray-400 mt-1">Alert when below this</p>
+                </div>
+              </div>
+
+              {/* Supplier */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Supplier Name</label>
+                <input type="text" placeholder="e.g. Rajkot Paper Mart" value={formData.supplier}
+                  onChange={e => setFormData({ ...formData, supplier: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowModal(false)}
+                  className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-md hover:bg-gray-50">
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm font-semibold"
-                >
+                <button type="submit" disabled={submitting}
+                  className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-semibold disabled:opacity-50 flex items-center justify-center gap-2">
                   {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {isEditing ? 'Update' : 'Add Item'}
+                  {isEditing ? 'Update' : 'Add Paper'}
                 </button>
               </div>
             </form>
@@ -434,49 +426,39 @@ export default function PaperStockPage() {
       {/* Restock Modal */}
       {showRestockModal && selectedItem && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-md w-full max-w-sm animate-scale-in">
+          <div className="bg-white rounded-md w-full max-w-sm shadow-xl">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
-              <h2 className="text-section text-gray-900">Restock Item</h2>
+              <h2 className="font-semibold text-gray-900">Restock Paper</h2>
               <button onClick={() => setShowRestockModal(false)} className="p-2 hover:bg-gray-100 rounded-md">
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
-
             <div className="p-4 space-y-4">
-              <div className="p-4 bg-gray-50 rounded-md">
+              <div className="bg-gray-50 rounded-md p-3">
                 <p className="font-medium text-gray-900">{selectedItem.name}</p>
-                <p className="text-sm text-gray-500">Current: {selectedItem.quantity} {selectedItem.unit}</p>
+                {selectedItem.size && <p className="text-xs text-gray-500">{selectedItem.size}{selectedItem.gsm ? ` · ${selectedItem.gsm} GSM` : ''}</p>}
+                <p className="text-sm text-gray-500 mt-1">Current stock: <span className="font-semibold text-gray-900">{selectedItem.quantity} sheets</span></p>
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Add Quantity</label>
-                <input
-                  type="number"
-                  value={restockQty}
-                  onChange={(e) => setRestockQty(e.target.value)}
-                  className="w-full px-4 py-3 text-page-title border border-gray-200 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="0"
-                  autoFocus
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Add How Many Sheets?</label>
+                <input type="number" min="1" value={restockQty} onChange={e => setRestockQty(e.target.value)}
+                  autoFocus placeholder="0"
+                  className="w-full px-4 py-3 text-2xl font-bold text-center border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
-
-              {restockQty && (
+              {restockQty && parseInt(restockQty) > 0 && (
                 <p className="text-center text-gray-900 font-medium">
-                  New Stock: {selectedItem.quantity + parseInt(restockQty || '0')} {selectedItem.unit}
+                  New total: <span className="text-green-700 font-bold">{selectedItem.quantity + parseInt(restockQty)} sheets</span>
                 </p>
               )}
-
               <div className="flex gap-3">
-                <button onClick={() => setShowRestockModal(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200">
+                <button onClick={() => setShowRestockModal(false)}
+                  className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-md hover:bg-gray-50">
                   Cancel
                 </button>
-                <button
-                  onClick={handleRestockSubmit}
-                  disabled={submitting || !restockQty}
-                  className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 disabled:opacity-50 flex items-center justify-center gap-2"
-                >
+                <button onClick={handleRestockSubmit} disabled={submitting || !restockQty || parseInt(restockQty) <= 0}
+                  className="flex-1 px-4 py-2.5 bg-green-700 text-white rounded-md hover:bg-green-800 font-semibold disabled:opacity-50 flex items-center justify-center gap-2">
                   {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Restock
+                  Add Sheets
                 </button>
               </div>
             </div>
