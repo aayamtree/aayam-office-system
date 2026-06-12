@@ -279,7 +279,7 @@ export default function PaperPurchasesPage() {
                   <>
                     {stock.length === 0 ? (
                       <div className="px-3 py-3 border border-dashed border-border rounded-md text-xs text-muted-foreground text-center">
-                        No paper types yet. Click <strong>"New paper type"</strong> above to add one first.
+                        No paper types yet. Click <strong>&ldquo;New paper type&rdquo;</strong> above to add one first.
                       </div>
                     ) : (
                       <select value={form.paper_stock_id} onChange={e => setForm({ ...form, paper_stock_id: e.target.value })}
