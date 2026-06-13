@@ -21,9 +21,9 @@ export default function CMYKPrintPage() {
   const { logs, completeJob } = useCMYKJobLogs();
   const { vendors } = useVendors();
 
-  // Match ALL vendors with CMYK in the name (handles "CMYK", "AAYAM CMYK", etc.)
-  const cmykVendorIds = vendors
-    .filter(v => v.name?.toLowerCase().includes('cmyk'))
+  // Match vendors flagged as CMYK station (is_cmyk_station = true)
+  const cmykVendorIds = (vendors as any[])
+    .filter(v => v.is_cmyk_station === true)
     .map(v => v.id);
 
   const loading = jobsLoading || stockLoading || salesLoading;

@@ -1077,7 +1077,7 @@ export default function JobsPage() {
             <div className="p-4 space-y-4">
               {/* CMYK Quick Pick */}
               {(() => {
-                const cmykVendor = vendors.find(v => v.name?.includes('AAYAM CMYK'));
+                const cmykVendor = (vendors as any[]).find(v => v.is_cmyk_station === true);
                 if (!cmykVendor) return null;
                 return (
                   <button
