@@ -14,7 +14,6 @@ import { toast } from '@/lib/toast';
 export default function CMYKPrintPage() {
   const { profile } = useAuth();
   const { jobs, loading: jobsLoading, refetch: refetchJobs } = useJobs({
-    filter: [{ column: 'current_stage', value: ['new', 'designing', 'printing', 'finishing', 'ready', 'dispatched', 'delivered'], op: 'in' }],
     orderBy: { column: 'created_at', ascending: false }
   });
   const { stock, loading: stockLoading, refetch: refetchStock } = usePaperStock();
@@ -22,9 +21,10 @@ export default function CMYKPrintPage() {
   const { logs, completeJob } = useCMYKJobLogs();
   const { vendors } = useVendors();
 
-  // Find the CMYK in-house vendor
-  const cmykVendor = vendors.find(v => v.name?.includes('AAYAM CMYK'));
-  const cmykVendorId = cmykVendor?.id;
+  // Match ALL vendors with CMYK in the name (handles "CMYK", "AAYAM CMYK", etc.)
+  const cmykVendorIds = vendors
+    .filter(v => v.name?.toLowerCase().includes('cmyk'))
+    .map(v => v.id);
 
   const loading = jobsLoading || stockLoading || salesLoading;
 
@@ -36,11 +36,13 @@ export default function CMYKPrintPage() {
   const [printNotes, setPrintNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Only show jobs explicitly assigned to CMYK station
+  // CMYK queue: any job assigned to CMYK vendor that hasn't been dispatched/delivered yet
+  const DONE_STAGES = ['finishing', 'quality_check', 'ready', 'dispatched', 'delivered', 'cancelled'];
   const pendingJobs = jobs.filter(j =>
-    ['new', 'designing', 'printing'].includes(j.current_stage) &&
-    cmykVendorId &&
-    j.vendor_id === cmykVendorId
+    !DONE_STAGES.includes(j.current_stage) &&
+    cmykVendorIds.length > 0 &&
+    j.vendor_id &&
+    cmykVendorIds.includes(j.vendor_id)
   ).slice(0, 10);
   const completedTodayJobs = logs.filter(l => {
     const d = new Date(l.completed_at || l.created_at);
