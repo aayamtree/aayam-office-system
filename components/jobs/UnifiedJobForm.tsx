@@ -72,7 +72,9 @@ export default function UnifiedJobForm({
     const [teamMembers, setTeamMembers] = useState<{ id: string; full_name: string }[]>([]);
     useEffect(() => {
         supabase.from('profiles').select('id, full_name').eq('is_active', true)
-            .then(({ data }) => { if (data) setTeamMembers(data); });
+            .then(({ data }) => {
+                if (data) setTeamMembers(data.filter(m => (m.full_name || '').trim() !== ''));
+            });
     }, []);
 
     const [formData, setFormData] = useState({
@@ -86,7 +88,7 @@ export default function UnifiedJobForm({
         notes: '',
         drive_link: '',
         // Admin: pricing
-        quantity: 1,
+        quantity: 0,
         quote_per_piece: 0,
         design_charge: 0,
         gst_rate: 18,
@@ -118,7 +120,7 @@ export default function UnifiedJobForm({
             description: editingJob.description || '',
             notes: (editingJob as any).notes || '',
             drive_link: (editingJob as any).drive_link || '',
-            quantity: editingJob.quantity || 1,
+            quantity: editingJob.quantity ?? 0,
             quote_per_piece: editingJob.quote_per_piece || 0,
             design_charge: (editingJob as any).design_charge || 0,
             gst_rate: editingJob.gst_rate || 18,
@@ -453,8 +455,8 @@ export default function UnifiedJobForm({
                                             <input
                                                 type="number" min="1"
                                                 className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
-                                                value={formData.quantity}
-                                                onChange={e => set('quantity', parseInt(e.target.value) || 1)}
+                                                value={formData.quantity || ''}
+                                                onChange={e => set('quantity', e.target.value === '' ? 0 : (parseInt(e.target.value) || 0))}
                                             />
                                         </div>
                                         <div>
@@ -462,7 +464,7 @@ export default function UnifiedJobForm({
                                             <input
                                                 type="number" min="0" step="0.01"
                                                 className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
-                                                value={formData.quote_per_piece}
+                                                value={formData.quote_per_piece || ''}
                                                 onChange={e => set('quote_per_piece', parseFloat(e.target.value) || 0)}
                                             />
                                         </div>
@@ -474,7 +476,7 @@ export default function UnifiedJobForm({
                                         <input
                                             type="number" min="0" step="0.01"
                                             className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
-                                            value={formData.design_charge}
+                                            value={formData.design_charge || ''}
                                             onChange={e => set('design_charge', parseFloat(e.target.value) || 0)}
                                         />
                                     </div>
@@ -494,7 +496,7 @@ export default function UnifiedJobForm({
                                     <input
                                         type="number" min="0" step="0.01"
                                         className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
-                                        value={formData.discount_amount}
+                                        value={formData.discount_amount || ''}
                                         onChange={e => set('discount_amount', parseFloat(e.target.value) || 0)}
                                     />
                                 </div>
@@ -632,7 +634,7 @@ export default function UnifiedJobForm({
                                             <input
                                                 type="number" min="0" step="0.01"
                                                 className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
-                                                value={advance.amount}
+                                                value={advance.amount || ''}
                                                 onChange={e => setAdvance(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
                                             />
                                         </div>

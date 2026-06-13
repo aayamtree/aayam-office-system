@@ -459,27 +459,15 @@ export default function JobsPage() {
     });
   };
 
-  const handleEdit = useCallback((job: Job) => {
-    setFormData({
-      project_name: job.project_name,
-      client_id: job.client_id || '',
-      job_type: job.job_type || 'Design + Print',
-      product_category: job.product_category || 'Other',
-      quantity: job.quantity,
-      vendor_id: job.vendor_id || '',
-      designer_id: job.designer_id || '',
-      client_deadline: job.client_deadline || '',
-      priority: job.priority || 'normal',
-      quote_per_piece: job.quote_per_piece || 0,
-      design_charge: job.design_charge || 0,
-      gst_rate: job.gst_rate || 18,
-      current_stage: job.current_stage || 'new',
-      advance_required: job.advance_required !== false,
-      advance_amount: job.advance_amount || 0,
-      advance_payment_mode: (job as any).advance_payment_mode || 'cash',
-      advance_receipt_url: ''
-    });
-    setEditingJob(job);
+  const handleEdit = useCallback(async (job: Job) => {
+    // Fetch the FULL job record — the list view only loads lightweight fields
+    // (no quantity, quote_per_piece, vendor_id, designer_id, gst_rate, etc.)
+    const { data: fullJob } = await supabase
+      .from('jobs')
+      .select('*, client:clients(id, name, company), vendor:vendors(id, name)')
+      .eq('id', job.id)
+      .single();
+    setEditingJob((fullJob as any) || job);
     setShowModal(true);
   }, []);
 
@@ -1038,7 +1026,7 @@ export default function JobsPage() {
                     <input
                       type="number"
                       autoFocus
-                      value={paymentAmount}
+                      value={paymentAmount || ''}
                       onChange={e => setPaymentAmount(parseFloat(e.target.value) || 0)}
                       className="flex-1 px-4 py-3 text-section border rounded-md focus:ring-2 focus:ring-green-500"
                     />
