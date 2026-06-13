@@ -1075,9 +1075,32 @@ export default function JobsPage() {
               </div>
             </div>
             <div className="p-4 space-y-4">
+              {/* CMYK Quick Pick */}
+              {(() => {
+                const cmykVendor = vendors.find(v => v.name?.includes('AAYAM CMYK'));
+                if (!cmykVendor) return null;
+                return (
+                  <button
+                    onClick={() => setSendToPrinterData({ ...sendToPrinterData, vendor_id: cmykVendor.id })}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-md border-2 transition-all text-left ${sendToPrinterData.vendor_id === cmykVendor.id ? 'border-blue-600 bg-blue-50' : 'border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50/50'}`}
+                  >
+                    <div className="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center flex-shrink-0">
+                      <Printer className="w-4 h-4 text-blue-700" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-blue-900">⚡ Send to CMYK Station</p>
+                      <p className="text-xs text-blue-600">In-house digital print — appears in CMYK queue immediately</p>
+                    </div>
+                    {sendToPrinterData.vendor_id === cmykVendor.id && (
+                      <span className="ml-auto text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full font-medium">Selected</span>
+                    )}
+                  </button>
+                );
+              })()}
+
               {/* Vendor Selection */}
               <div>
-                <label className="block text-sm font-medium mb-1">Vendor / Printer *</label>
+                <label className="block text-sm font-medium mb-1">Or select other Vendor / Printer</label>
                 <select
                   value={sendToPrinterData.vendor_id}
                   onChange={(e) => setSendToPrinterData({ ...sendToPrinterData, vendor_id: e.target.value })}

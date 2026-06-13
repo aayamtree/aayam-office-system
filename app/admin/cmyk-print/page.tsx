@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Printer, ShoppingCart, Package, Clock, CheckCircle, AlertTriangle, Calculator, BarChart2, Receipt, X, Loader2, BookOpen, ShoppingBag } from 'lucide-react';
-import { useJobs, usePaperStock, usePOSSales, useCMYKJobLogs } from '@/lib/hooks';
+import { useJobs, usePaperStock, usePOSSales, useCMYKJobLogs, useVendors } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import DriveConnectionStatus from '@/components/drive/DriveConnectionStatus';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -20,6 +20,11 @@ export default function CMYKPrintPage() {
   const { stock, loading: stockLoading, refetch: refetchStock } = usePaperStock();
   const { sales, loading: salesLoading } = usePOSSales();
   const { logs, completeJob } = useCMYKJobLogs();
+  const { vendors } = useVendors();
+
+  // Find the CMYK in-house vendor
+  const cmykVendor = vendors.find(v => v.name?.includes('AAYAM CMYK'));
+  const cmykVendorId = cmykVendor?.id;
 
   const loading = jobsLoading || stockLoading || salesLoading;
 
@@ -31,7 +36,12 @@ export default function CMYKPrintPage() {
   const [printNotes, setPrintNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const pendingJobs = jobs.filter(j => ['new', 'designing', 'printing'].includes(j.current_stage) && !j.vendor_id).slice(0, 8);
+  // Only show jobs explicitly assigned to CMYK station
+  const pendingJobs = jobs.filter(j =>
+    ['new', 'designing', 'printing'].includes(j.current_stage) &&
+    cmykVendorId &&
+    j.vendor_id === cmykVendorId
+  ).slice(0, 10);
   const completedTodayJobs = logs.filter(l => {
     const d = new Date(l.completed_at || l.created_at);
     const today = new Date();
@@ -163,7 +173,10 @@ export default function CMYKPrintPage() {
           <CardContent>
             <div className="space-y-2">
               {pendingJobs.length === 0 ? (
-                <p className="text-center text-muted-foreground py-4 text-sm">No pending jobs.</p>
+                <div className="text-center py-6 text-muted-foreground">
+                  <p className="text-sm">No jobs assigned to CMYK station.</p>
+                  <p className="text-xs mt-1">Go to <span className="font-medium">Jobs → Send to Printer → CMYK Station</span> to assign jobs.</p>
+                </div>
               ) : pendingJobs.map((job) => (
                 <div key={job.id} className={`p-3 rounded-md border ${job.priority === 'urgent' ? 'border-destructive/30 bg-destructive/5' : ''}`}>
                   <div className="flex items-center justify-between mb-1">
@@ -326,7 +339,7 @@ export default function CMYKPrintPage() {
               {/* Sheets used */}
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1">Sheets Used *</label>
-                <input type="number" min="1" placeholder="e.g. 25" value={sheetsUsed}
+                <input type="number" min="1" placeholder="e.g. 25" value={sheetsUsed || ''}
                   onChange={e => setSheetsUsed(e.target.value)}
                   className="w-full px-3 py-2.5 border border-border rounded-md text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring" />
                 {insufficientStock && (
