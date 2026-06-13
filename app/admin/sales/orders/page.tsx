@@ -112,7 +112,7 @@ export default function OrdersPage() {
   const [teamMembers, setTeamMembers] = useState<{ id: string, full_name: string }[]>([]);
   useEffect(() => {
     supabase.from('profiles').select('id, full_name').eq('is_active', true).eq('role', 'admin')
-      .then(({ data }) => { if (data) setTeamMembers(data as any); });
+      .then(({ data }) => { if (data) setTeamMembers((data as any).filter((m: any) => (m.full_name || '').trim() !== '')); });
   }, []);
 
   // Close category dropdown on outside click
@@ -212,29 +212,36 @@ export default function OrdersPage() {
     setShowModal(true);
   };
 
-  const handleEdit = (job: Job) => {
+  const handleEdit = async (job: Job) => {
+    // Fetch the FULL job record — the list view only loads lightweight fields
+    const { data: fullJob } = await supabase
+      .from('jobs')
+      .select('*, client:clients(id, name, company), vendor:vendors(id, name)')
+      .eq('id', job.id)
+      .single();
+    const j: any = fullJob || job;
     setFormData({
-      clientId: job.client_id || '',
-      projectName: job.project_name,
-      productCategory: job.product_category || '',
-      description: job.description || '',
-      quantity: job.quantity,
-      ratePerPiece: job.quote_per_piece || (job.quantity > 0 ? job.subtotal / job.quantity : 0),
-      subtotal: job.subtotal,
-      gstRate: job.gst_rate,
-      gstAmount: job.gst_amount,
-      totalAmount: job.total_amount,
-      priority: job.priority,
-      currentStage: job.current_stage,
-      jobType: (job as any).job_type || 'Design + Print',
-      clientDeadline: job.client_deadline ? new Date(job.client_deadline).toISOString().split('T')[0] : '',
-      assignedTo: (job as any).sales_person_id || '',  // IMP-4: pre-fill assignedTo from DB
-      notes: job.notes || ''
+      clientId: j.client_id || '',
+      projectName: j.project_name,
+      productCategory: j.product_category || '',
+      description: j.description || '',
+      quantity: j.quantity ?? 0,
+      ratePerPiece: j.quote_per_piece || (j.quantity > 0 ? j.subtotal / j.quantity : 0),
+      subtotal: j.subtotal,
+      gstRate: j.gst_rate,
+      gstAmount: j.gst_amount,
+      totalAmount: j.total_amount,
+      priority: j.priority,
+      currentStage: j.current_stage,
+      jobType: j.job_type || 'Design + Print',
+      clientDeadline: j.client_deadline ? new Date(j.client_deadline).toISOString().split('T')[0] : '',
+      assignedTo: j.sales_person_id || '',
+      notes: j.notes || ''
     });
     setCategorySearch('');
-    setShowAdvance(job.amount_received > 0);
-    setAdvanceData({ amount: job.amount_received || 0, paymentMode: 'cash', referenceNumber: '', receivedBy: '', proofFile: null });
-    setSelectedJob(job);
+    setShowAdvance((j.amount_received || 0) > 0);
+    setAdvanceData({ amount: j.amount_received || 0, paymentMode: 'cash', referenceNumber: '', receivedBy: '', proofFile: null });
+    setSelectedJob(j);
     setIsEditing(true);
     setShowModal(true);
   };

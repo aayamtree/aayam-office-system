@@ -691,7 +691,7 @@ export function useLeads() {
     : undefined;  // Admin sees all
 
   const { data, loading, error, refetch } = useSupabaseQuery<Lead>('leads', {
-    select: 'id, lead_number, name, email, phone, source, status, product_interest, assigned_to, created_at, updated_at, next_followup_date, is_converted',
+    select: 'id, lead_number, name, company, email, phone, source, status, product_interest, expected_value, lead_type, billing_preference, lost_reason, requirement, next_follow_up, notes, assigned_to, created_at, updated_at, next_followup_date, is_converted',
     filter,
     orderBy: { column: 'created_at', ascending: false },
     limit: 100  // Reduced from 200 for better performance
