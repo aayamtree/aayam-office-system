@@ -69,7 +69,7 @@ function BrandReview({ data, onChange }: { data: Record<string, any>; onChange: 
           <input
             type="number"
             className="text-sm text-gray-900 bg-gray-50 border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-400"
-            value={data.mrp}
+            value={data.mrp || ''}
             onChange={e => set('mrp', parseFloat(e.target.value) || null)}
           />
         </div>

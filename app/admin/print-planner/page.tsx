@@ -386,7 +386,7 @@ export default function PrintPlannerPage() {
                                 type="number"
                                 min="1"
                                 step="100"
-                                value={pullingMultiple}
+                                value={pullingMultiple || ''}
                                 onChange={(e) => handlePullingChange(parseInt(e.target.value) || DEFAULT_PULLING)}
                                 className="w-20 px-2 py-1.5 text-center text-sm font-bold border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400 outline-none bg-white"
                             />
@@ -441,7 +441,7 @@ export default function PrintPlannerPage() {
                                             <input
                                                 type="number"
                                                 min="0"
-                                                value={job.quantity_needed}
+                                                value={job.quantity_needed || ''}
                                                 onChange={(e) => updateJobConfig(job.id, 'quantity_needed', parseInt(e.target.value) || 0)}
                                                 className="w-24 px-3 py-1.5 text-center text-sm border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none"
                                             />
@@ -450,7 +450,7 @@ export default function PrintPlannerPage() {
                                             <input
                                                 type="number"
                                                 min="1"
-                                                value={job.ups_in_sheet}
+                                                value={job.ups_in_sheet || ''}
                                                 onChange={(e) => updateJobConfig(job.id, 'ups_in_sheet', parseInt(e.target.value) || 1)}
                                                 className="w-20 px-3 py-1.5 text-center text-sm font-bold border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none bg-gray-50"
                                             />

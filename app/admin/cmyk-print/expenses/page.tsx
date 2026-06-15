@@ -236,7 +236,7 @@ export default function CMYKExpensesPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-1">Amount (₹) *</label>
-                  <input type="number" required min="1" step="0.01" placeholder="0.00" value={form.amount}
+                  <input type="number" required min="1" step="0.01" placeholder="0.00" value={form.amount || ''}
                     onChange={e => setForm({ ...form, amount: e.target.value })}
                     className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring" />
                 </div>

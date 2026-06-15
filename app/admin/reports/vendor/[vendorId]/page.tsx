@@ -484,7 +484,7 @@ export default function VendorStatementPage() {
                                 <input
                                     type="number"
                                     placeholder="0"
-                                    value={cashEntry.amount}
+                                    value={cashEntry.amount || ''}
                                     onChange={e => setCashEntry(p => ({ ...p, amount: e.target.value }))}
                                     className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-teal-300 outline-none"
                                 />

@@ -484,7 +484,7 @@ export default function BrandsManager() {
                   </div>
                   <div>
                     <label className="text-xs text-gray-500 mb-0.5 block">MRP (₹)</label>
-                    <input type="number" value={form.mrp} onChange={e => set('mrp', e.target.value)} placeholder="0.00" className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400" />
+                    <input type="number" value={form.mrp || ''} onChange={e => set('mrp', e.target.value)} placeholder="0.00" className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400" />
                   </div>
                 </div>
               </div>

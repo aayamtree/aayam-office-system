@@ -156,7 +156,7 @@ export default function OpeningBalancePage() {
         {isEditing ? (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Opening Cash Balance (₹)</label>
-            <input type="number" value={editData.cash}
+            <input type="number" value={editData.cash || ''}
               onChange={(e) => setEditData({ ...editData, cash: parseFloat(e.target.value) || 0 })}
               className="w-full px-4 py-3 border rounded-md text-section focus:ring-2 focus:ring-green-500" />
           </div>
@@ -187,7 +187,7 @@ export default function OpeningBalancePage() {
                 <p className="text-sm text-gray-500">A/c: {bank.accountNo}</p>
               </div>
               {isEditing ? (
-                <input type="number" value={editData.banks.find(b => b.id === bank.id)?.balance || 0}
+                <input type="number" value={editData.banks.find(b => b.id === bank.id)?.balance || 0 || ''}
                   onChange={(e) => handleBankBalanceChange(bank.id, parseFloat(e.target.value) || 0)}
                   className="w-40 px-3 py-2 border rounded-md text-right font-semibold focus:ring-2 focus:ring-gray-400" />
               ) : (

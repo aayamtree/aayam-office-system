@@ -116,7 +116,7 @@ export default function UnifiedJobForm({
             job_type: editingJob.job_type || 'Design + Print',
             product_category: editingJob.product_category || '',
             priority: editingJob.priority || 'normal',
-            client_deadline: editingJob.client_deadline || '',
+            client_deadline: editingJob.client_deadline ? new Date(editingJob.client_deadline).toISOString().split('T')[0] : '',
             description: editingJob.description || '',
             notes: (editingJob as any).notes || '',
             drive_link: (editingJob as any).drive_link || '',

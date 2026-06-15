@@ -222,7 +222,7 @@ export default function QuickExpensePage() {
                                     </label>
                                     <input
                                         type="number"
-                                        value={formData.amount}
+                                        value={formData.amount || ''}
                                         onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                                         placeholder="0.00"
                                         className="w-full px-3 py-2.5 border rounded-md focus:ring-2 focus:ring-gray-400 text-sm"

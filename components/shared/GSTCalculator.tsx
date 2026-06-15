@@ -270,7 +270,7 @@ export default function GSTCalculator({ compact = false }: GSTCalculatorProps) {
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium text-sm">₹</span>
         <input
           type="number"
-          value={amount}
+          value={amount || ''}
           onChange={e => setAmount(e.target.value)}
           placeholder="0.00"
           className="w-full pl-7 pr-4 py-3 rounded-xl border border-border bg-background text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"

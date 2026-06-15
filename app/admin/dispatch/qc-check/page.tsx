@@ -637,7 +637,7 @@ export default function QCCheckPage() {
                     <label className="text-xs text-gray-600 mb-1 block">Verified Qty</label>
                     <input
                       type="number"
-                      value={packingForm.verified_qty}
+                      value={packingForm.verified_qty || ''}
                       onChange={e => setPackingForm(p => ({ ...p, verified_qty: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
                       placeholder="e.g. 2500"
@@ -661,7 +661,7 @@ export default function QCCheckPage() {
                     <label className="text-xs text-gray-600 mb-1 block">No. of Packages</label>
                     <input
                       type="number"
-                      value={packingForm.package_count}
+                      value={packingForm.package_count || ''}
                       onChange={e => setPackingForm(p => ({ ...p, package_count: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
                       placeholder="e.g. 5"
@@ -671,7 +671,7 @@ export default function QCCheckPage() {
                     <label className="text-xs text-gray-600 mb-1 block">Approx Weight (kg)</label>
                     <input
                       type="number"
-                      value={packingForm.approx_weight_kg}
+                      value={packingForm.approx_weight_kg || ''}
                       onChange={e => setPackingForm(p => ({ ...p, approx_weight_kg: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
                       placeholder="e.g. 120"

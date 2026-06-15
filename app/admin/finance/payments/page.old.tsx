@@ -449,7 +449,7 @@ export default function PaymentsPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Amount (₹) *</label>
                   <input type="number" required min="1" step="any"
-                    value={formData.amount}
+                    value={formData.amount || ''}
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                     placeholder="0.00"
                     className="w-full px-3 py-2 border rounded-md" />

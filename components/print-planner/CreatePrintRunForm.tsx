@@ -348,7 +348,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                         <input
                             type="number"
                             min="1"
-                            value={editablePulling}
+                            value={editablePulling || ''}
                             onChange={(e) => setEditablePulling(parseInt(e.target.value) || 0)}
                             className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none"
                         />
@@ -373,7 +373,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                         <input
                             type="number"
                             step="0.01"
-                            value={printingCharge}
+                            value={printingCharge || ''}
                             onChange={(e) => setPrintingCharge(e.target.value)}
                             placeholder="₹ 0.00"
                             className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none"
@@ -456,7 +456,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                                         type="number"
                                         min="0"
                                         step={paperUnit === 'kg' ? '0.001' : '1'}
-                                        value={paperQty}
+                                        value={paperQty || ''}
                                         onChange={(e) => setPaperQty(e.target.value)}
                                         placeholder={paperUnit === 'kg' ? '0.000' : '0'}
                                         className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 outline-none text-sm"
@@ -470,7 +470,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                                         type="number"
                                         min="0"
                                         step="0.01"
-                                        value={paperRate}
+                                        value={paperRate || ''}
                                         onChange={(e) => setPaperRate(e.target.value)}
                                         placeholder="0.00"
                                         className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 outline-none text-sm"

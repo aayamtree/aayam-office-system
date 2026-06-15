@@ -220,7 +220,7 @@ export default function CommissionsPage() {
                             <label className="block text-xs font-bold text-gray-700 mb-1.5">Commission Percentage (%)</label>
                             <input
                                 type="number" step="0.5" min="0" max="100"
-                                value={pctInput}
+                                value={pctInput || ''}
                                 onChange={e => setPctInput(e.target.value)}
                                 className="w-full border border-gray-200 rounded-md px-3 py-2 text-lg font-bold focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
                             />

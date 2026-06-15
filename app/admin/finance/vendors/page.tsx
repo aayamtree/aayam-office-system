@@ -484,7 +484,7 @@ export default function VendorsPage() {
                       min="0"
                       step="0.01"
                       placeholder="0.00"
-                      value={formData.opening_balance}
+                      value={formData.opening_balance || ''}
                       onChange={(e) => setFormData({ ...formData, opening_balance: e.target.value })}
                       className="w-full px-3 py-2 border rounded-md"
                     />

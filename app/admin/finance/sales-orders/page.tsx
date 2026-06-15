@@ -279,7 +279,7 @@ export default function SalesOrdersPage() {
                             <div className="grid grid-cols-2 gap-2 md:gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Amount (Excl. Tax)</label>
-                                    <input required type="number" min="0" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} className="w-full px-3 py-2 border rounded-md" />
+                                    <input required type="number" min="0" value={formData.amount || ''} onChange={e => setFormData({ ...formData, amount: e.target.value })} className="w-full px-3 py-2 border rounded-md" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">GST Rate (%)</label>

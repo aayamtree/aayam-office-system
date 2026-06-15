@@ -376,8 +376,8 @@ export default function DesignersManager() {
                             </div>
 
                             <div className="grid grid-cols-2 gap-2 md:gap-4">
-                                <div><label className="text-xs font-bold text-gray-500 mb-1 block">Hourly Rate</label><input type="number" className="w-full border rounded-md p-2 text-sm" value={formData.hourly_rate} onChange={e => setFormData({ ...formData, hourly_rate: +e.target.value })} /></div>
-                                <div><label className="text-xs font-bold text-gray-500 mb-1 block">Monthly Salary</label><input type="number" className="w-full border rounded-md p-2 text-sm" value={formData.monthly_salary} onChange={e => setFormData({ ...formData, monthly_salary: +e.target.value })} /></div>
+                                <div><label className="text-xs font-bold text-gray-500 mb-1 block">Hourly Rate</label><input type="number" className="w-full border rounded-md p-2 text-sm" value={formData.hourly_rate || ''} onChange={e => setFormData({ ...formData, hourly_rate: +e.target.value })} /></div>
+                                <div><label className="text-xs font-bold text-gray-500 mb-1 block">Monthly Salary</label><input type="number" className="w-full border rounded-md p-2 text-sm" value={formData.monthly_salary || ''} onChange={e => setFormData({ ...formData, monthly_salary: +e.target.value })} /></div>
                             </div>
 
 

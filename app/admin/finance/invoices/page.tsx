@@ -826,7 +826,7 @@ export default function InvoicesPage() {
                               type="number"
                               placeholder="Qty"
                               min="1"
-                              value={item.quantity}
+                              value={item.quantity || ''}
                               onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
                               className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
                             />
@@ -837,7 +837,7 @@ export default function InvoicesPage() {
                               placeholder="Rate"
                               min="0"
                               step="0.01"
-                              value={item.rate}
+                              value={item.rate || ''}
                               onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
                               className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
                             />
@@ -932,7 +932,7 @@ export default function InvoicesPage() {
                       <label className="block text-sm font-semibold text-gray-700 mb-1.5">Paid Amount (₹)</label>
                       <input
                         type="number"
-                        value={formData.paidAmount}
+                        value={formData.paidAmount || ''}
                         onChange={(e) => setFormData({ ...formData, paidAmount: parseFloat(e.target.value) || 0 })}
                         className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
                       />

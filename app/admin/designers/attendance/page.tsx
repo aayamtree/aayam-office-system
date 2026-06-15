@@ -253,7 +253,7 @@ export default function DesignStudioAttendancePage() {
                             type="number"
                             min="0"
                             step="5"
-                            value={editState.minutes}
+                            value={editState.minutes || ''}
                             onChange={e => setEditState(s => ({ ...s, minutes: e.target.value }))}
                             className="w-24 px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
                             placeholder="e.g. 420"

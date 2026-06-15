@@ -406,7 +406,7 @@ function TransferModal({
                             )}
                             <input
                                 type="number"
-                                value={formData.amount}
+                                value={formData.amount || ''}
                                 onChange={e => setFormData(p => ({ ...p, amount: e.target.value }))}
                                 placeholder="0.00"
                                 min="0.01"
@@ -529,7 +529,7 @@ function AddBankAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Opening Balance</label>
-                        <input type="number" step="0.01" value={formData.openingBalance} onChange={e => setFormData({...formData, openingBalance: e.target.value})} placeholder="0.00" className="w-full px-4 py-2 border rounded-md text-sm" />
+                        <input type="number" step="0.01" value={formData.openingBalance || ''} onChange={e => setFormData({...formData, openingBalance: e.target.value})} placeholder="0.00" className="w-full px-4 py-2 border rounded-md text-sm" />
                         <p className="text-xs text-gray-500 mt-1">Current balance in this account</p>
                     </div>
                     <div className="flex gap-3 pt-4">
@@ -587,7 +587,7 @@ function AddCashAccountModal({ onClose, onSuccess }: { onClose: () => void; onSu
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Opening Balance</label>
-                        <input type="number" step="0.01" value={formData.openingBalance} onChange={e => setFormData({...formData, openingBalance: e.target.value})} placeholder="0.00" className="w-full px-4 py-2 border rounded-md text-sm" />
+                        <input type="number" step="0.01" value={formData.openingBalance || ''} onChange={e => setFormData({...formData, openingBalance: e.target.value})} placeholder="0.00" className="w-full px-4 py-2 border rounded-md text-sm" />
                         <p className="text-xs text-gray-500 mt-1">Current cash in this register</p>
                     </div>
                     <div className="flex gap-3 pt-4">

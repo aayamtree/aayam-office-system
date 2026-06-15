@@ -108,7 +108,7 @@ export default function CostCalculatorPage() {
                         <input
                             type="number"
                             min={1}
-                            value={quantity}
+                            value={quantity || ''}
                             onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
                             className="w-full px-3 py-2.5 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400"
                             placeholder="e.g. 1000"
@@ -121,7 +121,7 @@ export default function CostCalculatorPage() {
                         <input
                             type="number"
                             min={1}
-                            value={upsPerSheet}
+                            value={upsPerSheet || ''}
                             onChange={(e) => setUpsPerSheet(parseInt(e.target.value) || 1)}
                             className="w-full px-3 py-2.5 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400"
                             placeholder="e.g. 4"

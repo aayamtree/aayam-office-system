@@ -536,7 +536,7 @@ function AddJobsModal({
                                                                 <input
                                                                     type="number"
                                                                     min="0"
-                                                                    value={quantities.quantity}
+                                                                    value={quantities.quantity || ''}
                                                                     onChange={(e) => updateJobQuantity(job.id, 'quantity', parseInt(e.target.value) || 0)}
                                                                     className="w-full border-2 border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 ring-primary/20 focus:border-gray-400"
                                                                     placeholder="0"
@@ -550,7 +550,7 @@ function AddJobsModal({
                                                                 <input
                                                                     type="number"
                                                                     min="1"
-                                                                    value={quantities.ups}
+                                                                    value={quantities.ups || ''}
                                                                     onChange={(e) => updateJobQuantity(job.id, 'ups', parseInt(e.target.value) || 1)}
                                                                     className="w-full border-2 border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 ring-primary/20 focus:border-gray-400"
                                                                     placeholder="1"

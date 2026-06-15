@@ -448,7 +448,7 @@ export default function DispatchPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Packages Count</label>
                   <input type="number" min="1"
-                    value={dispatchForm.packages} onChange={e => setDispatchForm({ ...dispatchForm, packages: parseInt(e.target.value) || 1 })}
+                    value={dispatchForm.packages || ''} onChange={e => setDispatchForm({ ...dispatchForm, packages: parseInt(e.target.value) || 1 })}
                     className="w-full px-3 py-2 border rounded-md text-sm" />
                 </div>
               </div>

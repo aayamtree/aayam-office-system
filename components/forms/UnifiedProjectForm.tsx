@@ -424,7 +424,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                             </label>
                                             <input
                                                 type="number"
-                                                value={formData.quantity}
+                                                value={formData.quantity || ''}
                                                 onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
                                                 className="w-full border-2 border-gray-200 rounded-md px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
                                                 min="1"
@@ -468,7 +468,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                             <input
                                                 type="number"
                                                 step="0.01"
-                                                value={formData.base_price}
+                                                value={formData.base_price || ''}
                                                 onChange={(e) => setFormData({ ...formData, base_price: parseFloat(e.target.value) || 0 })}
                                                 className="w-full border-2 border-gray-200 rounded-md px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
                                             />
@@ -481,7 +481,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                             <input
                                                 type="number"
                                                 step="0.01"
-                                                value={formData.gst_rate}
+                                                value={formData.gst_rate || ''}
                                                 onChange={(e) => setFormData({ ...formData, gst_rate: parseFloat(e.target.value) || 0 })}
                                                 className="w-full border-2 border-gray-200 rounded-md px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
                                             />
@@ -494,7 +494,7 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                             <input
                                                 type="number"
                                                 readOnly
-                                                value={formData.total_amount.toFixed(2)}
+                                                value={formData.total_amount.toFixed(2) || ''}
                                                 className="w-full border-2 border-gray-300 rounded-md px-4 py-3 bg-gray-100 font-bold text-gray-700"
                                             />
                                         </div>

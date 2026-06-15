@@ -783,7 +783,7 @@ export default function BankingPage() {
                                                     <label className="block text-xs font-medium text-gray-600 mb-1">
                                                         {isCash(accountForm.account_type) ? 'Cash in Hand (₹)' : 'Opening Balance (₹)'}
                                                     </label>
-                                                    <input type="number" value={accountForm.opening_balance} onChange={e => setAccountForm(p => ({ ...p, opening_balance: parseFloat(e.target.value) || 0 }))} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#B8860B]" />
+                                                    <input type="number" value={accountForm.opening_balance || ''} onChange={e => setAccountForm(p => ({ ...p, opening_balance: parseFloat(e.target.value) || 0 }))} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#B8860B]" />
                                                 </div>
                                                 <div>
                                                     <label className="block text-xs font-medium text-gray-600 mb-1">Opening Balance Date</label>

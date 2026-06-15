@@ -200,7 +200,7 @@ export default function VendorQuickAdd({ onVendorCreated, onClose }: VendorQuick
                                 </label>
                                 <input
                                     type="number"
-                                    value={formData.payment_terms}
+                                    value={formData.payment_terms || ''}
                                     onChange={(e) => setFormData({ ...formData, payment_terms: parseInt(e.target.value) || 0 })}
                                     className="w-full border-2 border-gray-200 rounded-md px-4 py-3 focus:ring-4 ring-ring/20 focus:border-gray-400 transition-all"
                                     placeholder="30"

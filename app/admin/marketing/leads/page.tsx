@@ -680,7 +680,7 @@ export default function LeadsPage() {
                                         <option value="non_gst">Cash / Estimates</option>
                                         <option value="both">Both</option>
                                     </select>
-                                    <input type="number" placeholder="Expected Value (₹)" value={formData.value} onChange={e => setFormData({ ...formData, value: e.target.value })} className="border-b border-gray-200 py-2 focus:border-gray-400 focus:outline-none bg-transparent placeholder-gray-400" />
+                                    <input type="number" placeholder="Expected Value (₹)" value={formData.value || ''} onChange={e => setFormData({ ...formData, value: e.target.value })} className="border-b border-gray-200 py-2 focus:border-gray-400 focus:outline-none bg-transparent placeholder-gray-400" />
                                 </div>
                                 <textarea placeholder="Requirement details / Notes..." rows={3} value={formData.requirement} onChange={e => setFormData({ ...formData, requirement: e.target.value })} className="w-full p-3 bg-gray-50 rounded-lg border-0 focus:ring-2 focus:ring-gray-400/20 text-sm resize-none"></textarea>
                             </div>

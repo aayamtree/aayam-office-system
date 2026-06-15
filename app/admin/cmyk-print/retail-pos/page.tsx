@@ -394,7 +394,7 @@ export default function RetailPOSPage() {
                   </option>
                 ))}
               </select>
-              <input type="number" placeholder="Sheets used" value={sheetsUsed} min="0"
+              <input type="number" placeholder="Sheets used" value={sheetsUsed || ''} min="0"
                 onChange={e => setSheetsUsed(e.target.value)}
                 disabled={!selectedPaperStockId}
                 className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50" />
@@ -539,7 +539,7 @@ export default function RetailPOSPage() {
               {paymentType !== 'credit' && paymentMethod === 'cash' && (
                 <div>
                   <label className="text-sm font-medium">{paymentType === 'advance' ? 'Advance Amount' : 'Amount Received'}</label>
-                  <input type="number" value={amountReceived} onChange={(e) => setAmountReceived(e.target.value)}
+                  <input type="number" value={amountReceived || ''} onChange={(e) => setAmountReceived(e.target.value)}
                     className="w-full mt-1 px-4 py-2.5 border rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-400" placeholder="Enter amount" />
                   {paymentType === 'paid' && changeAmount >= 0 && amountReceived && (
                     <p className="mt-2 text-gray-900 font-medium">Change: {formatCurrency(changeAmount)}</p>
@@ -634,7 +634,7 @@ export default function RetailPOSPage() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
-                        <input type="number" required min="0" value={productForm.price} onChange={e => setProductForm({ ...productForm, price: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                        <input type="number" required min="0" value={productForm.price || ''} onChange={e => setProductForm({ ...productForm, price: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>

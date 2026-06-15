@@ -500,13 +500,13 @@ export default function DesignersPage() {
               <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Hourly Rate (₹)</label>
-                  <input type="number" min="0" value={formData.hourly_rate}
+                  <input type="number" min="0" value={formData.hourly_rate || ''}
                     onChange={(e) => setFormData({ ...formData, hourly_rate: parseFloat(e.target.value) || 0 })}
                     className="w-full px-3 py-2 border rounded-md" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Monthly Salary (₹)</label>
-                  <input type="number" min="0" value={formData.monthly_salary}
+                  <input type="number" min="0" value={formData.monthly_salary || ''}
                     onChange={(e) => setFormData({ ...formData, monthly_salary: parseFloat(e.target.value) || 0 })}
                     className="w-full px-3 py-2 border rounded-md" />
                 </div>
