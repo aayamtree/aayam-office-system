@@ -54,19 +54,55 @@ export default function QuotationsPage() {
   const { clients: allClients, refetch: refetchClients } = useClients();
   const { leads: allLeads, convertToClient } = useLeads();
 
+  // IDs of clients/leads already referenced by this marketing user's quotations,
+  // so they stay selectable even if created/owned by someone else.
+  const linkedClientIds = useMemo(() => {
+    const s = new Set<string>();
+    if (profile?.role === 'marketing' && profile?.id) {
+      allQuotations.forEach(q => {
+        const q_ = q as any;
+        if ((q_.created_by === profile.id || q_.lead?.assigned_to === profile.id) && q_.client_id) {
+          s.add(q_.client_id);
+        }
+      });
+    }
+    return s;
+  }, [allQuotations, profile]);
+
+  const linkedLeadIds = useMemo(() => {
+    const s = new Set<string>();
+    if (profile?.role === 'marketing' && profile?.id) {
+      allQuotations.forEach(q => {
+        const q_ = q as any;
+        if ((q_.created_by === profile.id || q_.lead?.assigned_to === profile.id) && q_.lead_id) {
+          s.add(q_.lead_id);
+        }
+      });
+    }
+    return s;
+  }, [allQuotations, profile]);
+
   const clients = useMemo(() => {
     if (profile?.role === 'marketing') {
-      return allClients.filter(c => c.created_by === profile.id);
+      return allClients.filter(c =>
+        c.created_by === profile.id ||
+        (c as any).assigned_to === profile.id ||
+        linkedClientIds.has(c.id)
+      );
     }
     return allClients;
-  }, [allClients, profile]);
+  }, [allClients, profile, linkedClientIds]);
 
   const leads = useMemo(() => {
     if (profile?.role === 'marketing') {
-      return allLeads.filter(l => l.assigned_to === profile.id || l.created_by === profile.id);
+      return allLeads.filter(l =>
+        l.assigned_to === profile.id ||
+        (l as any).created_by === profile.id ||
+        linkedLeadIds.has(l.id)
+      );
     }
     return allLeads;
-  }, [allLeads, profile]);
+  }, [allLeads, profile, linkedLeadIds]);
   const { createJob } = useJobs();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -740,49 +776,51 @@ export default function QuotationsPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Client / Lead *</label>
-                  <div className="flex gap-2">
-                    <select
-                      required
-                      value={formData.clientId ? `client_${formData.clientId}` : formData.leadId ? `lead_${formData.leadId}` : ''}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (!val) {
-                          setFormData({ ...formData, clientId: '', leadId: '' });
-                          return;
-                        }
-                        if (val.startsWith('client_')) {
-                          setFormData({ ...formData, clientId: val.replace('client_', ''), leadId: '' });
-                        } else if (val.startsWith('lead_')) {
-                          setFormData({ ...formData, leadId: val.replace('lead_', ''), clientId: '' });
-                        }
-                      }}
-                      className="flex-1 px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white"
-                    >
-                      <option value="">Select Client or Lead</option>
-                      <optgroup label="Leads (Potential)">
-                        {leads?.map(l => (
-                          <option key={`lead_${l.id}`} value={`lead_${l.id}`}>LEAD: {l.name} {l.company ? `(${l.company})` : ''}</option>
-                        ))}
-                      </optgroup>
-                      <optgroup label="Clients (Existing)">
-                        {clients?.map(c => (
-                          <option key={`client_${c.id}`} value={`client_${c.id}`}>{c.company} ({c.name})</option>
-                        ))}
-                      </optgroup>
-                    </select>
-                    <button
-                      type="button"
-                      title="Add New Client"
-                      onClick={() => setShowClientModal(true)}
-                      className="px-3 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-700 transition-colors flex items-center"
-                    >
-                      <Plus size={16} />
-                    </button>
-                  </div>
+              {/* Client / Lead — full width */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Client / Lead *</label>
+                <div className="flex gap-2">
+                  <select
+                    required
+                    value={formData.clientId ? `client_${formData.clientId}` : formData.leadId ? `lead_${formData.leadId}` : ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (!val) {
+                        setFormData({ ...formData, clientId: '', leadId: '' });
+                        return;
+                      }
+                      if (val.startsWith('client_')) {
+                        setFormData({ ...formData, clientId: val.replace('client_', ''), leadId: '' });
+                      } else if (val.startsWith('lead_')) {
+                        setFormData({ ...formData, leadId: val.replace('lead_', ''), clientId: '' });
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white"
+                  >
+                    <option value="">Select Client or Lead</option>
+                    <optgroup label="Leads (Potential)">
+                      {leads?.map(l => (
+                        <option key={`lead_${l.id}`} value={`lead_${l.id}`}>LEAD: {l.name} {l.company ? `(${l.company})` : ''}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Clients (Existing)">
+                      {clients?.map(c => (
+                        <option key={`client_${c.id}`} value={`client_${c.id}`}>{c.company} ({c.name})</option>
+                      ))}
+                    </optgroup>
+                  </select>
+                  <button
+                    type="button"
+                    title="Add New Client"
+                    onClick={() => setShowClientModal(true)}
+                    className="px-3 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-700 transition-colors flex items-center"
+                  >
+                    <Plus size={16} />
+                  </button>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Valid Until</label>
                   <input
@@ -836,9 +874,16 @@ export default function QuotationsPage() {
                   <label className="block text-sm font-semibold text-gray-700">Items</label>
                   <button type="button" onClick={addItem} className="text-sm font-medium text-primary hover:text-primary">+ Add Item</button>
                 </div>
+                {/* Column headers */}
+                <div className="hidden sm:grid grid-cols-12 gap-2 px-3 mb-1">
+                  <div className="col-span-5 text-xs font-semibold text-gray-500 uppercase">Description</div>
+                  <div className="col-span-2 text-xs font-semibold text-gray-500 uppercase">Qty</div>
+                  <div className="col-span-2 text-xs font-semibold text-gray-500 uppercase">Rate/pc</div>
+                  <div className="col-span-2 text-xs font-semibold text-gray-500 uppercase">Amount</div>
+                </div>
                 <div className="space-y-3">
                   {formData.items.map((item, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-2 items-start bg-gray-50 p-3 rounded-md border border-gray-200">
+                    <div key={index} className="grid grid-cols-12 gap-2 items-center bg-gray-50 p-3 rounded-md border border-gray-200">
                       <div className="col-span-12 sm:col-span-5">
                         <input
                           type="text"
@@ -853,7 +898,7 @@ export default function QuotationsPage() {
                           type="number"
                           placeholder="Qty"
                           min="1"
-                          value={item.quantity}
+                          value={item.quantity || ''}
                           onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
                           className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
                         />
@@ -861,10 +906,10 @@ export default function QuotationsPage() {
                       <div className="col-span-3 sm:col-span-2">
                         <input
                           type="number"
-                          placeholder="Rate"
+                          placeholder="Rate/pc"
                           min="0"
                           step="any"
-                          value={item.rate}
+                          value={item.rate || ''}
                           onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
                           className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
                         />

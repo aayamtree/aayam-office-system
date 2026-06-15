@@ -51,15 +51,32 @@ export default function OrdersPage() {
 
   const { clients: allClients } = useClients();
 
+  // Clients already on this marketing user's orders stay selectable
+  // even if created/owned by someone else.
+  const linkedClientIds = useMemo(() => {
+    const s = new Set<string>();
+    if (profile?.role === 'marketing' && profile?.id) {
+      allJobs.forEach(job => {
+        const ownedByMe = job.sales_person_id === profile.id || job.created_by === profile.id;
+        if (ownedByMe && job.client_id) s.add(job.client_id);
+      });
+    }
+    return s;
+  }, [allJobs, profile]);
+
   const clients = useMemo(() => {
     if (isMarketingView) {
       return allClients.filter(c => c.source === 'marketing');
     }
     if (profile?.role === 'marketing') {
-      return allClients.filter(c => c.created_by === profile.id);
+      return allClients.filter(c =>
+        c.created_by === profile.id ||
+        (c as any).assigned_to === profile.id ||
+        linkedClientIds.has(c.id)
+      );
     }
     return allClients;
-  }, [allClients, profile, isMarketingView]);
+  }, [allClients, profile, isMarketingView, linkedClientIds]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
