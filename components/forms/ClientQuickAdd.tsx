@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { X, User, Building2, Mail, Phone, MapPin } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import type { Client, ClientInput } from '@/types/database';
 
 interface ClientQuickAddProps {
@@ -42,25 +41,17 @@ export default function ClientQuickAdd({ onClientCreated, onClose }: ClientQuick
                 throw new Error('Name and phone are required');
             }
 
-            // Create client
-            const { data, error: insertError } = await supabase
-                .from('clients')
-                .insert([{
-                    ...formData,
-                    source: 'direct',
-                    outstanding_balance: 0 // Initialize balance
-                }])
-                .select()
-                .single();
-
-            if (insertError) throw insertError;
-
-            // Log activity
-            await supabase.from('activity_logs').insert([{
-                action: 'created',
-                module: 'clients',
-                details: { client_id: data.id, client_name: data.name }
-            }]);
+            // Create client on the server (service role) so it works even if the
+            // browser Supabase session has lapsed. Activity logging is handled
+            // automatically by the clients AFTER INSERT trigger.
+            const res = await fetch('/api/crm/clients', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...formData, source: 'direct' }),
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json?.error || 'Failed to create client');
+            const data = json.data;
 
             // Call callback if provided
             if (onClientCreated) {

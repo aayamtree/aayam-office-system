@@ -161,21 +161,25 @@ export function useClients() {
   const createClient = async (client: Omit<Client, 'id' | 'created_at' | 'updated_at' | 'outstanding_balance'>) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
-    const payload = {
-      ...client,
-      assigned_to: user?.id,  // Auto-assign to creator
-      created_by: user?.id,
-      outstanding_balance: 0  // Initialize at 0
-    } as any;
-
-    const { data, error } = await supabase
-      .from('clients')
-      .insert([payload])
-      .select()
-      .single();
-
-    if (!error) refetch();
-    return { data, error: error?.message };
+    // Insert on the server with the service role. The previous direct browser
+    // insert failed with an RLS "anon" violation whenever the browser Supabase
+    // session had lapsed (token expiry / daily reset / fallback profile),
+    // because every clients policy only grants the `authenticated` role.
+    try {
+      const res = await fetch('/api/crm/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...client, assigned_to: user?.id }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        return { error: json?.error || 'Failed to create client' };
+      }
+      refetch();
+      return { data: json.data, error: undefined };
+    } catch (err: any) {
+      return { error: err?.message || 'Failed to create client' };
+    }
   };
 
   const updateClient = async (id: string, updates: Partial<Client>) => {
