@@ -61,18 +61,10 @@ export default function GoogleDriveSettings() {
             return;
         }
 
-        // Step 1: Revoke old token at Google so we get a fresh refresh_token
-        try {
-            const statusRes = await fetch('/api/drive/connect');
-            const statusData = await statusRes.json();
-            if (statusData.connected) {
-                // Revoke old token at Google
-                await fetch('/api/drive/revoke', { method: 'POST' });
-            }
-        } catch (e) {
-            // Ignore revoke errors, proceed with connect
-            console.log('Revoke step skipped:', e);
-        }
+        // Note: we intentionally do NOT revoke/delete the existing connection here.
+        // The callback deactivates the old credential and inserts the new one, so the
+        // connection is preserved if the admin cancels the Google screen. We still ask
+        // for `consent` below, which guarantees Google returns a fresh refresh_token.
 
         const baseUrl = window.location.origin;
         const redirectUri = `${baseUrl}/api/drive/callback`;
@@ -85,7 +77,7 @@ export default function GoogleDriveSettings() {
             `&response_type=code` +
             `&scope=${encodeURIComponent(scope)}` +
             `&access_type=offline` +
-            `&prompt=${encodeURIComponent('select_account consent')}` +
+            `&prompt=consent` +
             `&state=${encodeURIComponent(state)}`;
 
         // Redirect to Google OAuth directly

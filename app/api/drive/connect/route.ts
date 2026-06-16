@@ -1,21 +1,23 @@
 // API Route: /api/drive/connect
-// Handles admin connecting Google Drive for organization-wide use
+// GET    -> connection status (self-healing: refreshes silently if possible)
+// POST   -> store credentials (legacy direct-token path; admin only)
+// DELETE -> disconnect
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import {
+    getServiceClient,
+    getActiveCredential,
+    refreshDriveToken,
+} from '@/lib/google-drive-server';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
         const { accessToken, refreshToken, expiresIn, scopes, userId } = body;
 
-        // Use service role key for server-side operations (bypasses RLS)
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        );
-
-        console.log('Checking user:', userId);
+        const supabase = getServiceClient();
 
         // Verify user exists and is admin
         const { data: profile, error: profileError } = await supabase
@@ -25,81 +27,78 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (profileError || !profile) {
-            console.error('Profile error:', profileError);
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
-
         if (profile.role !== 'admin') {
             return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
         }
 
-        console.log('User verified as admin, saving credentials...');
-
-        // Deactivate any existing credentials
+        // Deactivate any existing credentials, then store the new one.
         await supabase
             .from('google_drive_credentials')
             .update({ is_active: false })
             .eq('is_active', true);
 
-        // Store new credentials
-        const expiryDate = new Date(Date.now() + (expiresIn * 1000));
+        const expiryDate = new Date(Date.now() + expiresIn * 1000);
 
         const { data, error } = await supabase
             .from('google_drive_credentials')
             .insert({
                 access_token: accessToken,
-                refresh_token: refreshToken || null, // Allow null
+                refresh_token: refreshToken || null,
                 token_expiry: expiryDate.toISOString(),
                 scopes,
                 connected_by: userId,
-                is_active: true
+                is_active: true,
             })
             .select()
             .single();
 
         if (error) {
-            console.error('Error storing credentials:', error);
             return NextResponse.json({ error: 'Failed to store credentials: ' + error.message }, { status: 500 });
         }
 
-        console.log('Credentials saved successfully!');
         return NextResponse.json({ success: true, data });
-
     } catch (error: any) {
         console.error('Drive connect error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
 
-// Get current Drive connection status
+// Get current Drive connection status — defensively (never throws on row count),
+// and self-heals an expired access token when a refresh token is present so the
+// UI doesn't falsely show "expired / reconnect".
 export async function GET() {
     try {
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        );
+        const supabase = getServiceClient();
+        const credential = await getActiveCredential(supabase);
 
-        const { data: credentials, error } = await supabase
-            .from('google_drive_credentials')
-            .select('*')
-            .eq('is_active', true)
-            .single();
-
-        if (error || !credentials) {
+        if (!credential) {
             return NextResponse.json({ connected: false });
         }
 
-        // Check if token is expired
-        const isExpired = new Date(credentials.token_expiry) < new Date();
+        let isExpired = new Date(credential.token_expiry) < new Date();
+
+        if (isExpired && credential.refresh_token) {
+            const refreshed = await refreshDriveToken(supabase, credential);
+            if (refreshed.success) {
+                isExpired = false;
+            } else if (refreshed.needsReconnect) {
+                // Refresh token is dead — genuine reconnect needed.
+                return NextResponse.json({
+                    connected: false,
+                    needsReconnect: true,
+                });
+            }
+        }
 
         return NextResponse.json({
             connected: true,
             isExpired,
-            hasRefreshToken: !!credentials.refresh_token,
-            connectedAt: credentials.connected_at,
-            scopes: credentials.scopes
+            hasRefreshToken: !!credential.refresh_token,
+            connectedAt: credential.connected_at,
+            scopes: credential.scopes,
         });
-
     } catch (error) {
         return NextResponse.json({ connected: false });
     }
@@ -108,25 +107,18 @@ export async function GET() {
 // Disconnect Google Drive
 export async function DELETE() {
     try {
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        );
+        const supabase = getServiceClient();
 
-        // Deactivate all active credentials
         const { error } = await supabase
             .from('google_drive_credentials')
             .update({ is_active: false })
             .eq('is_active', true);
 
         if (error) {
-            console.error('Error disconnecting:', error);
             return NextResponse.json({ error: 'Failed to disconnect' }, { status: 500 });
         }
 
-        console.log('✅ Google Drive disconnected successfully');
         return NextResponse.json({ success: true });
-
     } catch (error: any) {
         console.error('Disconnect error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });

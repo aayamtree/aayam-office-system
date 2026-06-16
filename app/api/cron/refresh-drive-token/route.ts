@@ -1,13 +1,14 @@
 // API Route: /api/cron/refresh-drive-token
-// Background job to refresh Google Drive token before it expires
-// Runs every 50 minutes via Vercel Cron
+// Background job to refresh the Google Drive token before it expires.
+// Runs every 50 minutes via Vercel Cron. Refreshes in-process (no self-fetch).
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServiceClient, getActiveCredential, refreshDriveToken } from '@/lib/google-drive-server';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-    // Protect with CRON_SECRET so only Vercel cron (or authorized callers) can trigger
+    // Protect with CRON_SECRET so only Vercel cron (or authorized callers) can trigger.
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
@@ -15,34 +16,32 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        // Call the refresh endpoint
-        const refreshResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/drive/refresh`, {
-            method: 'POST'
-        });
+        const supabase = getServiceClient();
 
-        if (!refreshResponse.ok) {
-            const errorData = await refreshResponse.json();
-            console.error('❌ Cron: Token refresh failed:', errorData);
-            return NextResponse.json({
-                success: false,
-                error: errorData.error
-            }, { status: 500 });
+        const credential = await getActiveCredential(supabase);
+        if (!credential) {
+            // Nothing connected — not an error worth failing the cron over.
+            return NextResponse.json({ success: true, skipped: 'no active connection' });
         }
 
-        const data = await refreshResponse.json();
-        console.log('✅ Cron: Token refreshed successfully');
+        const result = await refreshDriveToken(supabase, credential);
 
+        if (!result.success) {
+            console.error('❌ Cron: Token refresh failed:', result.error);
+            return NextResponse.json(
+                { success: false, error: result.error, needsReconnect: !!result.needsReconnect },
+                { status: 500 }
+            );
+        }
+
+        console.log('✅ Cron: Token refreshed successfully');
         return NextResponse.json({
             success: true,
             refreshed_at: new Date().toISOString(),
-            expires_at: data.expires_at
+            expires_at: result.expiresAt,
         });
-
     } catch (error: unknown) {
         console.error('❌ Cron: Error:', error);
-        return NextResponse.json({
-            success: false,
-            error: (error as Error).message
-        }, { status: 500 });
+        return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
     }
 }
