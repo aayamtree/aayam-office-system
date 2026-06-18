@@ -27,6 +27,9 @@ function getFlowForJob(job: Job): JobStatus[] {
 
 /** Human-readable label for the next pipeline action on a card. */
 function getNextLabel(job: Job): string {
+  // Print Only: the design team's only task is to confirm the client's supplied
+  // file is print-ready. Confirming sends it straight to the Print Planner.
+  if (job.job_type === 'Print Only' && job.current_stage === 'new') return 'Confirm Print File';
   const flow = getFlowForJob(job);
   const idx = flow.indexOf(job.current_stage as JobStatus);
   if (idx === -1 || idx >= flow.length - 1) return '';
@@ -34,7 +37,7 @@ function getNextLabel(job: Job): string {
   const labels: Record<string, string> = {
     designing:    'Start Designing',
     approval:     'Client Approval',
-    printing:     'Start Printing',
+    printing:     'Send to Print Planner',
     finishing:    'Finishing',
     quality_check:'Quality Check',
     ready:        'Mark Ready',
@@ -48,7 +51,10 @@ function getNextLabel(job: Job): string {
 function getGroupForJob(job: Job): string {
   const stage = job.current_stage;
   if (job.job_type === 'Print Only') {
-    if (['new', 'printing', 'finishing', 'quality_check'].includes(stage)) return 'In Production';
+    // At 'new' the design team confirms the client's print file → Design Stage.
+    // Once confirmed it enters the Print Planner / production.
+    if (stage === 'new') return 'Design Stage';
+    if (['printing', 'finishing', 'quality_check'].includes(stage)) return 'In Production';
     if (['ready', 'dispatched'].includes(stage)) return 'Dispatch';
     return 'Done';
   }

@@ -336,10 +336,11 @@ export default function QuotationsPage() {
         : q.order_type === 'design' ? 'Design Only'
           : 'Design + Print') as 'Print Only' | 'Design Only' | 'Design + Print';
 
-      // Print Only jobs SKIP the design queue — they start at 'file_check' so the
-      // designer only confirms the client's supplied file is printable, then it
-      // moves straight to print. Design / Design+Print start at 'new'.
-      const initialStage: JobStatus = (q.order_type === 'print' ? 'file_check' : 'new') as JobStatus;
+      // All jobs start at 'new'. The Job Queue is type-aware: a Print Only job at
+      // 'new' shows "Confirm Print File" (design team verifies the client's file),
+      // and confirming sends it straight to the Print Planner — it never enters
+      // the design/approval flow. Design / Design+Print start designing as usual.
+      const initialStage: JobStatus = 'new';
 
       // Fall back to a single synthetic item if the quote somehow has no items.
       const quoteItems = (q.items && q.items.length > 0)
