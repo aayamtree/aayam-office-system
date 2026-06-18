@@ -42,14 +42,9 @@ export default function OrdersPage() {
         (job.client && job.client.created_by === profile.id)
       );
     }
-    // Admin/other roles on the Marketing Orders page: a filtered report of
-    // marketing-sourced orders (cosmetic lens, not a permission boundary).
-    if (isMarketingView) {
-      return allJobs.filter(job => job.client?.source === 'marketing');
-    }
-    // Admin/other roles on Sales Orders: everything.
+    // Admin/other roles: all orders, on every page (Sales and Marketing alike).
     return allJobs;
-  }, [allJobs, profile, isMarketingView]);
+  }, [allJobs, profile]);
 
   const { clients: allClients } = useClients();
 
@@ -75,12 +70,9 @@ export default function OrdersPage() {
         linkedClientIds.has(c.id)
       );
     }
-    // Admin/other roles on the Marketing Orders page: marketing-sourced clients (filtered report).
-    if (isMarketingView) {
-      return allClients.filter(c => c.source === 'marketing');
-    }
+    // Admin/other roles: all clients.
     return allClients;
-  }, [allClients, profile, isMarketingView, linkedClientIds]);
+  }, [allClients, profile, linkedClientIds]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -469,7 +461,6 @@ export default function OrdersPage() {
             </h1>
             <p className="text-sm text-gray-500 mt-1">
               {filteredJobs.length} orders found
-              {isMarketingView && ' · Showing only clients acquired through marketing'}
             </p>
           </div>
         </div>
