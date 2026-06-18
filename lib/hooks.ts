@@ -1394,69 +1394,68 @@ export function useQuotations() {
     limit: 100
   });
 
+  // Writes go through a server API route that uses the service role. This keeps
+  // saves working even when the browser's Supabase session has lapsed to "anon"
+  // (a direct browser write fails RLS with "new row violates row-level security
+  // policy" in that case). Reads still use the browser client above.
   const createQuotation = async (quotation: Omit<Quotation, 'id' | 'created_at' | 'updated_at' | 'quote_number' | 'client' | 'items'>) => {
-    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    try {
+      const res = await fetch('/api/quotations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(quotation),
+      });
+      const json = await res.json();
+      if (!res.ok) return { error: json.error || 'Failed to create quotation' };
 
-    const { data: numberData } = await supabase.rpc('get_next_number', { counter_id: 'quotation' });
-
-    const { data, error } = await supabase
-      .from('quotations')
-      .insert([{ ...quotation, quote_number: numberData || `QT-${Date.now()}` }])
-      .select()
-      .single();
-
-    if (!error && data) {
-      // Log activity (fire-and-forget)
-      logActivity(
-        'Created Quotation',
-        'Sales',
-        data.id,
-        `Created quotation ${data.quote_number} for ₹${quotation.total_amount?.toLocaleString() || 0}`,
-        undefined, user?.id
-      );
-      refetch();
+      const data = json.data;
+      if (data) {
+        // Log activity (fire-and-forget)
+        logActivity(
+          'Created Quotation',
+          'Sales',
+          data.id,
+          `Created quotation ${data.quote_number} for ₹${quotation.total_amount?.toLocaleString() || 0}`,
+          undefined, user?.id
+        );
+        refetch();
+      }
+      return { data, error: undefined };
+    } catch (e: any) {
+      return { error: e?.message || 'Network error while creating quotation' };
     }
-    return { data, error: error?.message };
   };
 
   const updateQuotation = async (id: string, updates: Partial<Quotation>) => {
-    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
-
-    const { data, error } = await supabase
-      .from('quotations')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (!error) refetch();
-    return { data, error: error?.message };
+    try {
+      const res = await fetch('/api/quotations', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, updates }),
+      });
+      const json = await res.json();
+      if (!res.ok) return { error: json.error || 'Failed to update quotation' };
+      refetch();
+      return { data: json.data, error: undefined };
+    } catch (e: any) {
+      return { error: e?.message || 'Network error while updating quotation' };
+    }
   };
 
   const saveQuotationItems = async (quotationId: string, items: any[]) => {
-    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
-
-    // Delete existing items
-    await supabase.from('quotation_items').delete().eq('quotation_id', quotationId);
-
-    if (items.length > 0) {
-      // Insert new items
-      const { error } = await supabase
-        .from('quotation_items')
-        .insert(items.map(item => ({
-          quotation_id: quotationId,
-          description: item.description,
-          quantity: item.quantity,
-          rate: item.rate,
-          amount: item.amount,
-          gst_rate: item.gst_rate
-        })));
-
-      if (error) return { error: error.message };
+    try {
+      const res = await fetch('/api/quotations/items', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quotationId, items }),
+      });
+      const json = await res.json();
+      if (!res.ok) return { error: json.error || 'Failed to save quotation items' };
+      refetch();
+      return { error: null };
+    } catch (e: any) {
+      return { error: e?.message || 'Network error while saving items' };
     }
-
-    refetch();
-    return { error: null };
   };
 
   const deleteQuotation = async (id: string) => {
