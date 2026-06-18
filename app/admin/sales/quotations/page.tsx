@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft, ArrowRight,
   Calendar, User, FileText, IndianRupee, CheckCircle, XCircle, Clock, Loader2, Download
@@ -22,7 +22,6 @@ import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
 export default function QuotationsPage() {
   const { user, profile } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
   const { quotations: allQuotations, loading: quotationsLoading, createQuotation, updateQuotation, saveQuotationItems, deleteQuotation } = useQuotations();
   const { updateClient } = useClients();
   const { linkQuotationToFollowUp } = useFollowUps();
@@ -30,22 +29,12 @@ export default function QuotationsPage() {
   const confirm = useConfirm();
   const { settings: companySettings } = useCompanySettings();
 
-  // Detect if we're in the marketing section
-  const isMarketingView = pathname?.includes('/marketing/');
-
-  // Marketing view (any role): show only quotations linked to leads (marketing-originated)
-  // Marketing role on sales page: see quotes they created OR quotes for leads assigned to them
-  // Admin on sales page: see all quotes
+  // Role-based visibility (same rule as the Clients page):
+  //  • Admin (and other non-marketing roles) see ALL quotations.
+  //  • Marketing users see ONLY quotations they created, or for a lead assigned
+  //    to them. This applies on every page, so a marketing person never sees
+  //    someone else's quotes, and a quote they save never "disappears".
   const quotations = useMemo(() => {
-    if (isMarketingView) {
-      // Marketing section: show marketing-sourced quotes (linked to a lead) AND
-      // any quote the current user created — so a quote you save here never
-      // "disappears" just because it's attached to a client instead of a lead.
-      return allQuotations.filter(q => {
-        const q_ = q as any;
-        return q_.lead_id != null || (profile?.id && q_.created_by === profile.id);
-      });
-    }
     if (profile?.role === 'marketing' && profile?.id) {
       return allQuotations.filter(q => {
         const q_ = q as any;
@@ -55,7 +44,7 @@ export default function QuotationsPage() {
       });
     }
     return allQuotations;
-  }, [allQuotations, profile, isMarketingView]);
+  }, [allQuotations, profile]);
   const { clients: allClients, refetch: refetchClients } = useClients();
   const { leads: allLeads, convertToClient } = useLeads();
 
