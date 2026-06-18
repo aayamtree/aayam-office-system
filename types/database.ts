@@ -621,6 +621,7 @@ export interface QuotationItem {
   rate: number;
   amount: number;
   gst_rate: number;
+  product_category?: string; // Per-item category (Box/Label/Pouch) — routes each item to its production channel
 }
 
 // Dispatch

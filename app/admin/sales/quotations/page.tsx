@@ -325,61 +325,85 @@ export default function QuotationsPage() {
         throw new Error('Cannot create an order without a valid Client. Please ensure the lead is converted properly.');
       }
 
-      // 2. Create Job Payload
-      // Use the current logged-in user as the creator/salesperson to ensure visibility
+      // 2. Build jobs from the quote — ONE JOB PER ITEM.
+      // A single quote can be a "mix job" (Box + Label + Pouch). Each item becomes
+      // its own production job so it routes to its own channel / designer / vendor.
+      // Item #1 is the order's "group lead" (parent_job_id = null); items #2..n link
+      // to it via parent_job_id, so dispatch & invoice can roll them up as ONE order.
       const ownerId = user?.id || profile?.id || q.created_by;
 
-      const jobPayload = {
-        project_name: q.items?.[0]?.description || `Order from ${q.quote_number}`,
-        client_id: finalClientId,
-        sales_person_id: ownerId,
-        created_by: ownerId,
-        // No vendor or designer initially
-        job_type: (q.order_type === 'print' ? 'Print Only' : q.order_type === 'design' ? 'Design Only' : 'Design + Print') as 'Print Only' | 'Design Only' | 'Design + Print',
-        product_category: q.product_category,
-        quantity: q.items?.[0]?.quantity || 1,
+      const jobTypeLabel = (q.order_type === 'print' ? 'Print Only'
+        : q.order_type === 'design' ? 'Design Only'
+          : 'Design + Print') as 'Print Only' | 'Design Only' | 'Design + Print';
 
-        quote_per_piece: q.items?.[0]?.rate || 0,
-        subtotal: q.subtotal,
-        gst_rate: q.items?.[0]?.gst_rate ?? 18,  // ?? not || so 0% GST is preserved
-        gst_amount: q.gst_amount,
-        discount_amount: q.discount_amount,
-        total_amount: q.total_amount,
+      // Print Only jobs SKIP the design queue — they start at 'file_check' so the
+      // designer only confirms the client's supplied file is printable, then it
+      // moves straight to print. Design / Design+Print start at 'new'.
+      const initialStage: JobStatus = (q.order_type === 'print' ? 'file_check' : 'new') as JobStatus;
 
-        payment_status: 'pending' as const,
-        amount_received: 0,
+      // Fall back to a single synthetic item if the quote somehow has no items.
+      const quoteItems = (q.items && q.items.length > 0)
+        ? q.items
+        : [{ description: `Order from ${q.quote_number}`, quantity: 1, rate: q.subtotal, amount: q.subtotal, gst_rate: 18, product_category: q.product_category } as QuotationItem];
 
-        order_date: new Date().toISOString(),
-        client_deadline: q.valid_until || undefined,
+      let leadJobId: string | undefined;
+      let firstJobNumber: string | undefined;
 
-        current_stage: 'new' as JobStatus,
-        priority: 'normal' as const,
+      for (let i = 0; i < quoteItems.length; i++) {
+        const it = quoteItems[i];
+        const itemGst = it.gst_rate ?? formData.gstRate ?? 18;  // ?? so 0% GST is preserved
+        const itemSubtotal = it.amount ?? ((it.quantity || 1) * (it.rate || 0));
+        // GST is computed PER ITEM, independently. Each job is self-contained so it
+        // can dispatch / invoice on its own (a slow item ships separately later)
+        // without affecting the others. No cross-item remainder juggling.
+        const itemGstAmount = Math.round(itemSubtotal * (itemGst / 100));
 
-        files: [],
-        notes: `Converted from Quotation ${q.quote_number} (${orderTypeLabel}). ${q.notes || ''}`
-      };
+        const jobPayload: any = {
+          project_name: it.description || `${q.quote_number} – item ${i + 1}`,
+          client_id: finalClientId,
+          sales_person_id: ownerId,
+          created_by: ownerId,
+          // No vendor or designer initially
+          job_type: jobTypeLabel,
+          // Per-item category drives this item's production channel.
+          product_category: it.product_category || q.product_category || 'Other',
+          quantity: it.quantity || 1,
+          quote_per_piece: it.rate || 0,
+          subtotal: itemSubtotal,
+          gst_rate: itemGst,
+          gst_amount: itemGstAmount,
+          discount_amount: 0,
+          total_amount: itemSubtotal + itemGstAmount,
+          payment_status: 'pending' as const,
+          amount_received: 0,
+          order_date: new Date().toISOString(),
+          client_deadline: q.valid_until || undefined,
+          current_stage: initialStage,
+          priority: 'normal' as const,
+          files: [],
+          notes: `Converted from Quotation ${q.quote_number} (${orderTypeLabel})${quoteItems.length > 1 ? ` — item ${i + 1} of ${quoteItems.length}` : ''}. ${q.notes || ''}`,
+          // Link siblings to the order's lead job so they group as one order.
+          ...(i > 0 && leadJobId ? { parent_job_id: leadJobId } : {}),
+        };
 
-      // 3. Create Job
-      const { data: job, error: jobError } = await createJob(jobPayload);
+        const { data: job, error: jobError } = await createJob(jobPayload);
+        if (jobError) throw new Error(jobError);
+        if (i === 0) { leadJobId = job?.id; firstJobNumber = job?.job_number; }
+      }
 
-      if (jobError) throw new Error(jobError);
-
-      // 4. Update Quotation Status
+      // 4. Update Quotation Status — link to the order's lead job
       await updateQuotation(q.id, {
         status: 'accepted',
-        converted_to_job_id: job?.id,
+        converted_to_job_id: leadJobId,
         client_id: finalClientId // Ensure the quotation is now linked to the real client
       });
 
       // 5. Route based on order type ÃÂ¢ÃÂÃÂ navigate to the created job
-      if (q.order_type === 'design_print') {
-        toast.success(`Order created! Job #${job?.job_number} — adding to design queue.`);
-      } else if (q.order_type === 'print') {
-        toast.success(`Order created! Job #${job?.job_number} — awaiting client design files.`);
-      } else if (q.order_type === 'design') {
-        toast.success(`Order created! Job #${job?.job_number} — added to design queue.`);
+      const itemsLabel = quoteItems.length > 1 ? ` (${quoteItems.length} items)` : '';
+      if (q.order_type === 'print') {
+        toast.success(`Order created! #${firstJobNumber}${itemsLabel} — awaiting client print files (verify printable).`);
       } else {
-        toast.success(`Order created successfully! Job #${job?.job_number}`);
+        toast.success(`Order created! #${firstJobNumber}${itemsLabel} — added to design queue.`);
       }
       // Navigate to orders page to show the new job
       setTimeout(() => router.push('/admin/sales/orders'), 1200);
@@ -886,6 +910,18 @@ export default function QuotationsPage() {
                           onChange={(e) => updateItem(index, 'description', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
                         />
+                        {/* Per-item category — routes THIS item to its own production channel (mix jobs) */}
+                        <select
+                          value={item.product_category || ''}
+                          onChange={(e) => updateItem(index, 'product_category', e.target.value)}
+                          className={`w-full mt-2 px-3 py-2 border rounded-md text-sm bg-white ${item.product_category ? 'border-gray-200 text-gray-800' : 'border-amber-300 text-amber-700'}`}
+                          title="Product category for this item (Box / Label / Pouch). Each item routes to its own production channel."
+                        >
+                          <option value="">⚠ Select category…</option>
+                          {dbCategories.map((c: any) => (
+                            <option key={c.id || c.name} value={c.name}>{c.name}</option>
+                          ))}
+                        </select>
                       </div>
                       <div className="col-span-3 sm:col-span-2">
                         <input

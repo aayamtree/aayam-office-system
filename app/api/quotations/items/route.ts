@@ -3,7 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
-const ITEM_FIELDS = ['description', 'quantity', 'rate', 'amount', 'gst_rate'] as const;
+const ITEM_FIELDS = ['description', 'quantity', 'rate', 'amount', 'gst_rate', 'product_category'] as const;
 
 async function authAndAdmin() {
   const cookieStore = await cookies();
