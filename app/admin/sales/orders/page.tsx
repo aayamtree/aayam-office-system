@@ -34,18 +34,20 @@ export default function OrdersPage() {
   const isMarketingView = pathname?.includes('/marketing/');
 
   const jobs = useMemo(() => {
-    if (isMarketingView) {
-      // Marketing page: filter by client source regardless of viewer's role
-      return allJobs.filter(job => job.client?.source === 'marketing');
-    }
-    if (profile?.role === 'marketing') {
-      // Sales page viewed by a marketing user: their own orders only
+    // ROLE FIRST: a marketing user only ever sees their own orders, on any page.
+    if (profile?.role === 'marketing' && profile?.id) {
       return allJobs.filter(job =>
         job.sales_person_id === profile.id ||
         job.created_by === profile.id ||
         (job.client && job.client.created_by === profile.id)
       );
     }
+    // Admin/other roles on the Marketing Orders page: a filtered report of
+    // marketing-sourced orders (cosmetic lens, not a permission boundary).
+    if (isMarketingView) {
+      return allJobs.filter(job => job.client?.source === 'marketing');
+    }
+    // Admin/other roles on Sales Orders: everything.
     return allJobs;
   }, [allJobs, profile, isMarketingView]);
 
@@ -65,15 +67,17 @@ export default function OrdersPage() {
   }, [allJobs, profile]);
 
   const clients = useMemo(() => {
-    if (isMarketingView) {
-      return allClients.filter(c => c.source === 'marketing');
-    }
+    // ROLE FIRST: a marketing user only ever sees their own clients, on any page.
     if (profile?.role === 'marketing') {
       return allClients.filter(c =>
         c.created_by === profile.id ||
         (c as any).assigned_to === profile.id ||
         linkedClientIds.has(c.id)
       );
+    }
+    // Admin/other roles on the Marketing Orders page: marketing-sourced clients (filtered report).
+    if (isMarketingView) {
+      return allClients.filter(c => c.source === 'marketing');
     }
     return allClients;
   }, [allClients, profile, isMarketingView, linkedClientIds]);
