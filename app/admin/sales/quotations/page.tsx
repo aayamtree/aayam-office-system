@@ -38,8 +38,13 @@ export default function QuotationsPage() {
   // Admin on sales page: see all quotes
   const quotations = useMemo(() => {
     if (isMarketingView) {
-      // Marketing section: only show quotations that have a lead_id (marketing-sourced)
-      return allQuotations.filter(q => q.lead_id != null);
+      // Marketing section: show marketing-sourced quotes (linked to a lead) AND
+      // any quote the current user created — so a quote you save here never
+      // "disappears" just because it's attached to a client instead of a lead.
+      return allQuotations.filter(q => {
+        const q_ = q as any;
+        return q_.lead_id != null || (profile?.id && q_.created_by === profile.id);
+      });
     }
     if (profile?.role === 'marketing' && profile?.id) {
       return allQuotations.filter(q => {
