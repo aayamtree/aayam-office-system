@@ -16,7 +16,7 @@ import { useConfirm } from '@/components/ConfirmModal';
 // Each job type has its own pipeline — Design Only jobs never go to print,
 // Print Only jobs skip design/approval entirely.
 const FLOW_DESIGN_ONLY: JobStatus[] = ['new', 'designing', 'approval', 'delivered'];
-const FLOW_PRINT_ONLY: JobStatus[]  = ['new', 'printing', 'finishing', 'quality_check', 'ready', 'dispatched', 'delivered'];
+const FLOW_PRINT_ONLY: JobStatus[]  = ['new', 'file_check', 'printing', 'finishing', 'quality_check', 'ready', 'dispatched', 'delivered'];
 const FLOW_DESIGN_PRINT: JobStatus[] = ['new', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready', 'dispatched', 'delivered'];
 
 function getFlowForJob(job: Job): JobStatus[] {
@@ -27,15 +27,13 @@ function getFlowForJob(job: Job): JobStatus[] {
 
 /** Human-readable label for the next pipeline action on a card. */
 function getNextLabel(job: Job): string {
-  // Print Only: the design team's only task is to confirm the client's supplied
-  // file is print-ready. Confirming sends it straight to the Print Planner.
-  if (job.job_type === 'Print Only' && job.current_stage === 'new') return 'Confirm Print File';
   const flow = getFlowForJob(job);
   const idx = flow.indexOf(job.current_stage as JobStatus);
   if (idx === -1 || idx >= flow.length - 1) return '';
   const next = flow[idx + 1];
   const labels: Record<string, string> = {
     designing:    'Start Designing',
+    file_check:   'Verify Print File',   // Print Only: design team checks the client's file
     approval:     'Client Approval',
     printing:     'Send to Print Planner',
     finishing:    'Finishing',
@@ -51,9 +49,9 @@ function getNextLabel(job: Job): string {
 function getGroupForJob(job: Job): string {
   const stage = job.current_stage;
   if (job.job_type === 'Print Only') {
-    // At 'new' the design team confirms the client's print file → Design Stage.
-    // Once confirmed it enters the Print Planner / production.
-    if (stage === 'new') return 'Design Stage';
+    // 'new' + 'file_check' sit with the design team (verify the client's file) →
+    // Design Stage. Once sent to print it enters the Print Planner / production.
+    if (['new', 'file_check'].includes(stage)) return 'Design Stage';
     if (['printing', 'finishing', 'quality_check'].includes(stage)) return 'In Production';
     if (['ready', 'dispatched'].includes(stage)) return 'Dispatch';
     return 'Done';
@@ -92,6 +90,20 @@ const stageConfig: Record<string, {
     icon: <Clock className="w-3 h-3" />,
     group: 'Design Stage',
     nextLabel: 'Start Designing',
+  },
+  file_check: {
+    label: 'File Check',
+    borderColor: 'border-l-purple-400',
+    tintBg: 'bg-purple-50/60',
+    badgeBg: 'bg-purple-100',
+    badgeText: 'text-purple-700',
+    actionBg: 'bg-purple-600',
+    actionText: 'text-white',
+    actionHover: 'hover:bg-purple-700',
+    groupHeaderColor: 'text-purple-700',
+    icon: <ClipboardCheck className="w-3 h-3" />,
+    group: 'Design Stage',
+    nextLabel: 'Send to Print Planner',
   },
   designing: {
     label: 'Designing',
@@ -278,7 +290,7 @@ const filterOptions = [
 
 export default function JobQueuePage() {
   const { jobs, loading, updateJobStage } = useJobs({
-    filter: [{ column: 'current_stage', value: ['new', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready', 'dispatched'], op: 'in' }],
+    filter: [{ column: 'current_stage', value: ['new', 'file_check', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready', 'dispatched'], op: 'in' }],
     limit: 100,
   });
   const [searchQuery, setSearchQuery] = useState('');
@@ -298,7 +310,7 @@ export default function JobQueuePage() {
       (job.project_name || '').toLowerCase().includes(q);
 
     let matchesFilter = true;
-    if (statusFilter === '_design') matchesFilter = ['new', 'designing', 'approval'].includes(job.current_stage);
+    if (statusFilter === '_design') matchesFilter = ['new', 'file_check', 'designing', 'approval'].includes(job.current_stage);
     else if (statusFilter === '_production') matchesFilter = ['printing', 'finishing', 'quality_check', 'ready'].includes(job.current_stage);
     else if (statusFilter === '_urgent') matchesFilter = ['high', 'urgent'].includes(job.priority);
     else if (statusFilter !== 'all') matchesFilter = job.current_stage === statusFilter;
@@ -308,7 +320,7 @@ export default function JobQueuePage() {
 
   // ─── Stats ────────────────────────────────────────────────────────────────
   const total = jobs.length;
-  const designCount = jobs.filter(j => ['new', 'designing', 'approval'].includes(j.current_stage)).length;
+  const designCount = jobs.filter(j => ['new', 'file_check', 'designing', 'approval'].includes(j.current_stage)).length;
   const productionCount = jobs.filter(j => ['printing', 'finishing', 'quality_check', 'ready'].includes(j.current_stage)).length;
   const dispatchedCount = jobs.filter(j => j.current_stage === 'dispatched').length;
   const urgentCount = jobs.filter(j => ['high', 'urgent'].includes(j.priority)).length;

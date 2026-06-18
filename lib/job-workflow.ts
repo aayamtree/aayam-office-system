@@ -17,10 +17,9 @@ export const JOB_WORKFLOWS: Record<WorkflowJobType, string[]> = {
         'delivered',
     ],
     print_only: [
-        'new',
-        'file_check',     // Designer verifies client-supplied file
-        'pre_print_qc',   // Final check before press
-        'printing',
+        'new',            // Order created — awaiting client's print file
+        'file_check',     // Designer verifies the client-supplied print file is print-ready
+        'printing',       // File confirmed → Print Planner / production
         'quality_check',  // QC & Dispatch — physical print quality check
         'ready',
         'dispatched',

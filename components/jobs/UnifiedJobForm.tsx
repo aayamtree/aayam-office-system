@@ -6,6 +6,7 @@ import { useClients, useVendors, useDesigners, useProductCategories, useJobs } f
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
 import { Job } from '@/types/database';
+import { getStagesForJobType } from '@/lib/job-workflow';
 import {
     Briefcase, X, Loader2, CheckCircle, Calendar, Folder, Plus,
     IndianRupee, User, Tag, Layers, ChevronDown, ChevronUp
@@ -574,20 +575,19 @@ export default function UnifiedJobForm({
                                 {/* Current Stage */}
                                 <div>
                                     <label className="block text-xs font-medium text-gray-600 mb-1">Current Stage</label>
+                                    {/* Stages are filtered by job type. Print Only never shows
+                                        Designing/Approval — after New comes File Check (verify the
+                                        client's print file), then it moves to print production. */}
                                     <select
                                         className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
                                         value={formData.current_stage}
                                         onChange={e => set('current_stage', e.target.value)}
                                     >
-                                        <option value="new">New</option>
-                                        <option value="file_check">File Check</option>
-                                        <option value="designing">Designing</option>
-                                        <option value="approval">Client Approval</option>
-                                        <option value="pre_print_qc">Pre Print QC</option>
-                                        <option value="printing">Printing</option>
-                                        <option value="quality_check">QC & Dispatch</option>
-                                        <option value="ready">Ready</option>
-                                        <option value="dispatched">Dispatched</option>
+                                        {getStagesForJobType([], formData.job_type).map(s => (
+                                            <option key={s.id} value={s.id}>
+                                                {s.id === 'file_check' ? 'Print File Check (verify)' : s.name}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
 
