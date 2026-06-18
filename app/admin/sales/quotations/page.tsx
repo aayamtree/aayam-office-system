@@ -97,7 +97,7 @@ export default function QuotationsPage() {
     }
     return allLeads;
   }, [allLeads, profile, linkedLeadIds]);
-  const { createJob } = useJobs();
+  const { createJob, nextJobNumber } = useJobs();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -347,11 +347,17 @@ export default function QuotationsPage() {
         ? q.items
         : [{ description: `Order from ${q.quote_number}`, quantity: 1, rate: q.subtotal, amount: q.subtotal, gst_rate: 18, product_category: q.product_category } as QuotationItem];
 
+      // One MASTER number for the whole order. A single-item order keeps the bare
+      // number (AAY-1806001). A mix order suffixes each item: AAY-1806001-1,
+      // AAY-1806001-2, … so every item shows its master at a glance.
+      const masterNumber = await nextJobNumber();
+      const isMixOrder = quoteItems.length > 1;
+
       let leadJobId: string | undefined;
-      let firstJobNumber: string | undefined;
 
       for (let i = 0; i < quoteItems.length; i++) {
         const it = quoteItems[i];
+        const itemJobNumber = isMixOrder ? `${masterNumber}-${i + 1}` : masterNumber;
         const itemGst = it.gst_rate ?? formData.gstRate ?? 18;  // ?? so 0% GST is preserved
         const itemSubtotal = it.amount ?? ((it.quantity || 1) * (it.rate || 0));
         // GST is computed PER ITEM, independently. Each job is self-contained so it
@@ -360,6 +366,7 @@ export default function QuotationsPage() {
         const itemGstAmount = Math.round(itemSubtotal * (itemGst / 100));
 
         const jobPayload: any = {
+          job_number: itemJobNumber,
           project_name: it.description || `${q.quote_number} – item ${i + 1}`,
           client_id: finalClientId,
           sales_person_id: ownerId,
@@ -389,7 +396,7 @@ export default function QuotationsPage() {
 
         const { data: job, error: jobError } = await createJob(jobPayload);
         if (jobError) throw new Error(jobError);
-        if (i === 0) { leadJobId = job?.id; firstJobNumber = job?.job_number; }
+        if (i === 0) { leadJobId = job?.id; }
       }
 
       // 4. Update Quotation Status — link to the order's lead job
@@ -400,11 +407,11 @@ export default function QuotationsPage() {
       });
 
       // 5. Route based on order type ÃÂ¢ÃÂÃÂ navigate to the created job
-      const itemsLabel = quoteItems.length > 1 ? ` (${quoteItems.length} items)` : '';
+      const itemsLabel = isMixOrder ? ` (${quoteItems.length} items: ${masterNumber}-1…${masterNumber}-${quoteItems.length})` : '';
       if (q.order_type === 'print') {
-        toast.success(`Order created! #${firstJobNumber}${itemsLabel} — awaiting client print files (verify printable).`);
+        toast.success(`Order ${masterNumber} created!${itemsLabel} — awaiting client print files (verify printable).`);
       } else {
-        toast.success(`Order created! #${firstJobNumber}${itemsLabel} — added to design queue.`);
+        toast.success(`Order ${masterNumber} created!${itemsLabel} — added to design queue.`);
       }
       // Navigate to orders page to show the new job
       setTimeout(() => router.push('/admin/sales/orders'), 1200);

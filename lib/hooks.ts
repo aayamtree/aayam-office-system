@@ -382,22 +382,28 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
     ...options
   });
 
-  const createJob = async (job: Omit<Job, 'id' | 'created_at' | 'updated_at' | 'job_number' | 'client' | 'vendor' | 'designer'>) => {
-    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
-
-    // Get next job number
-    // Fallback: AAY-DDMMXXX (DD=day, MM=month, XXX=daily sequence)
+  // Pull the next master job number from the counter (consumes one value).
+  // Fallback: AAY-DDMMXXX (DD=day, MM=month, XXX=daily sequence)
+  const nextJobNumber = async (): Promise<string> => {
     const now = new Date();
     const dd = String(now.getDate()).padStart(2, '0');
     const mm = String(now.getMonth() + 1).padStart(2, '0');
     let jobNumber = `AAY-${dd}${mm}001`;
-
     try {
       const { data: numberData } = await supabase.rpc('get_next_number', { counter_id: 'job' });
       if (numberData) jobNumber = numberData;
     } catch (e) {
       console.warn('RPC get_next_number failed, using fallback');
     }
+    return jobNumber;
+  };
+
+  const createJob = async (job: Omit<Job, 'id' | 'created_at' | 'updated_at' | 'job_number' | 'client' | 'vendor' | 'designer'> & { job_number?: string }) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+
+    // Honor a caller-provided job number (e.g. "AAY-1806001-2" for a mix-order
+    // item); otherwise pull a fresh master number from the counter.
+    const jobNumber = job.job_number || await nextJobNumber();
 
     const newJob = { ...job, job_number: jobNumber };
 
@@ -537,6 +543,7 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
     error,
     refetch,
     createJob,
+    nextJobNumber,
     updateJob,
     updateJobStage,
     deleteJob
