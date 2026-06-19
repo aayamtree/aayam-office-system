@@ -205,24 +205,36 @@ export default function DesignerWorkspace() {
     }
   }, [router]);
 
-  // Handle ?task=<id> → auto-select the task when navigating from Queue
+  // Handle ?task=<id> → auto-select the task when navigating from Queue.
+  // If the job isn't a design task (e.g. Print Only, or a stage this page doesn't
+  // list), redirect to the universal job detail page instead of a blank panel.
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const taskId = params.get('task');
-    if (!taskId || !tasks.length) return;
-    // task.realId is the raw Supabase UUID — match against what Queue passes in the URL
+    const taskId = new URLSearchParams(window.location.search).get('task');
+    if (!taskId || jobsLoading) return;
+
     const match = tasks.find((t: any) => t.realId === taskId);
     if (match) {
       setSelectedTaskId(match.id);
-      // Switch to list view so the task detail panel is visible
       if (!activeView || activeView === 'board') {
         setActiveView(isAdmin ? 'team_tasks' : 'my_tasks');
       }
-      // Clean the URL so back-navigation works cleanly
       const cleanUrl = window.location.pathname + (activeView && activeView !== 'board' ? `?view=${activeView}` : '');
       window.history.replaceState({}, '', cleanUrl);
+      return;
     }
-  }, [tasks, activeView, isAdmin]);
+
+    // No design-task match. Only redirect once we're sure it will never match —
+    // i.e. the job is not design-eligible (Print Only / non-design stage / missing).
+    // If it IS design-eligible, the list just hasn't finished mapping yet; wait.
+    const DESIGN_STAGES = ['new', 'awaiting_admin', 'file_check', 'designing', 'approval', 'pre_print_qc', 'printing', 'finishing', 'completed', 'delivered'];
+    const raw = (jobs || []).find((j: any) => j.id === taskId);
+    const willBeDesignTask = raw
+      && DESIGN_STAGES.includes(raw.current_stage || '')
+      && !['Print Only', 'print_only'].includes(raw.job_type || '');
+    if (!willBeDesignTask) {
+      router.replace(`/admin/jobs/${taskId}`);
+    }
+  }, [tasks, jobs, jobsLoading, activeView, isAdmin, router]);
 
   // NOTE: Daily Briefing is handled globally by DailyBriefingTrigger in layout.tsx — no duplicate here needed
 
