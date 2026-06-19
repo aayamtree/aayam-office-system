@@ -13,9 +13,16 @@ const stageConfig: Record<string, { borderColor: string; tintBg: string; badgeBg
     awaiting_admin: { borderColor: 'border-l-amber-400', tintBg: 'bg-amber-50/50', badgeBg: 'bg-amber-100', badgeText: 'text-amber-700', label: 'Awaiting' },
     designing: { borderColor: 'border-l-violet-400', tintBg: 'bg-violet-50/60', badgeBg: 'bg-violet-100', badgeText: 'text-violet-700', label: 'Designing' },
     approval: { borderColor: 'border-l-blue-400', tintBg: 'bg-blue-50/60', badgeBg: 'bg-blue-100', badgeText: 'text-blue-700', label: 'Approval' },
-    printing: { borderColor: 'border-l-orange-400', tintBg: 'bg-orange-50/60', badgeBg: 'bg-orange-100', badgeText: 'text-orange-700', label: 'Printing' },
+    pre_print_qc: { borderColor: 'border-l-cyan-400', tintBg: 'bg-cyan-50/60', badgeBg: 'bg-cyan-100', badgeText: 'text-cyan-700', label: 'Pre-Print QC' },
+    print_file_ready: { borderColor: 'border-l-blue-400', tintBg: 'bg-blue-50/60', badgeBg: 'bg-blue-100', badgeText: 'text-blue-700', label: 'File Ready' },
+    file_sent_client: { borderColor: 'border-l-green-400', tintBg: 'bg-green-50/60', badgeBg: 'bg-green-100', badgeText: 'text-green-700', label: 'File Sent' },
+    file_received: { borderColor: 'border-l-stone-400', tintBg: 'bg-stone-50', badgeBg: 'bg-stone-100', badgeText: 'text-stone-600', label: 'File In' },
+    file_check: { borderColor: 'border-l-cyan-400', tintBg: 'bg-cyan-50/60', badgeBg: 'bg-cyan-100', badgeText: 'text-cyan-700', label: 'Printability QC' },
+    ready_to_print: { borderColor: 'border-l-indigo-400', tintBg: 'bg-indigo-50/60', badgeBg: 'bg-indigo-100', badgeText: 'text-indigo-700', label: 'Ready to Print' },
+    printing: { borderColor: 'border-l-orange-400', tintBg: 'bg-orange-50/60', badgeBg: 'bg-orange-100', badgeText: 'text-orange-700', label: 'In Print' },
+    material_received: { borderColor: 'border-l-teal-400', tintBg: 'bg-teal-50/60', badgeBg: 'bg-teal-100', badgeText: 'text-teal-700', label: 'Material In' },
     finishing: { borderColor: 'border-l-amber-400', tintBg: 'bg-amber-50/60', badgeBg: 'bg-amber-100', badgeText: 'text-amber-700', label: 'Finishing' },
-    quality_check: { borderColor: 'border-l-cyan-400', tintBg: 'bg-cyan-50/60', badgeBg: 'bg-cyan-100', badgeText: 'text-cyan-700', label: 'QC' },
+    quality_check: { borderColor: 'border-l-cyan-400', tintBg: 'bg-cyan-50/60', badgeBg: 'bg-cyan-100', badgeText: 'text-cyan-700', label: 'Material QC' },
     ready: { borderColor: 'border-l-green-400', tintBg: 'bg-green-50/60', badgeBg: 'bg-green-100', badgeText: 'text-green-700', label: 'Ready' },
 };
 
@@ -194,11 +201,17 @@ export default function UnifiedQueue() {
                                         const isOverdue = dl?.label.includes('overdue');
                                         const typeTag = jobTypeBadge[task.jobType] || { label: task.jobType, bg: 'bg-muted', text: 'text-muted-foreground' };
                                         const isEditable = task.isMyTask;
+                                        // Print Only jobs are excluded from the design-tasks page, so send them
+                                        // to the universal job detail page instead (otherwise the click dead-ends).
+                                        const isPrintOnly = ['Print Only', 'print_only'].includes(task.jobType || '');
+                                        const detailHref = isPrintOnly
+                                            ? `/admin/jobs/${task.id}`
+                                            : `/admin/designers/tasks?view=my_tasks&task=${task.id}`;
 
                                         return (
                                             <Link
                                                 key={task.id}
-                                                href={isEditable ? `/admin/designers/tasks?view=my_tasks&task=${task.id}` : '#'}
+                                                href={isEditable ? detailHref : '#'}
                                                 onClick={e => !isEditable && e.preventDefault()}
                                             >
                                                 <div className={`

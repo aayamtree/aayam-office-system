@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
+import { getStageName, getStageColor } from '@/lib/job-workflow';
 import {
   Search, Plus, Phone, Mail, MapPin, Hash,
   Edit, Trash2, Eye, X, ArrowLeft, Building2, Loader2,
@@ -123,15 +124,7 @@ function ClientJobsSection({ clientId }: { clientId: string }) {
 
   const formatCurrency = (n: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 
-  const getStageColor = (stage: string) => {
-    const colors: Record<string, string> = {
-      'new': 'bg-blue-100 text-blue-700', 'designing': 'bg-purple-100 text-purple-700',
-      'approval': 'bg-amber-100 text-amber-700', 'printing': 'bg-cyan-100 text-cyan-700',
-      'dispatched': 'bg-green-100 text-green-700', 'delivered': 'bg-gray-100 text-gray-700',
-      'cancelled': 'bg-red-100 text-red-700',
-    };
-    return colors[stage] || 'bg-gray-100 text-gray-600';
-  };
+  // Colors + labels from the single source of truth (lib/job-workflow.ts)
 
   return (
     <div className="space-y-3">
@@ -170,7 +163,7 @@ function ClientJobsSection({ clientId }: { clientId: string }) {
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className="text-xs font-semibold text-gray-700">{formatCurrency(job.total_amount)}</span>
                   <span className={`px-1.5 py-0.5 text-xs rounded-md font-medium ${getStageColor(job.current_stage)}`}>
-                    {job.current_stage}
+                    {getStageName(job.current_stage)}
                   </span>
                 </div>
               </div>

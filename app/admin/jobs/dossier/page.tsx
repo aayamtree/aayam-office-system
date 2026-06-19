@@ -8,6 +8,7 @@ import {
     RefreshCw, Calendar
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { getStageName, getStageColor, ALL_WORKFLOW_STAGES } from '@/lib/job-workflow';
 
 interface DossierJob {
     id: string;
@@ -35,21 +36,13 @@ interface DossierClient {
     name?: string;
 }
 
-const stageLabel: Record<string, string> = {
-    new: 'New', awaiting_admin: 'Pending', designing: 'Designing',
-    approval: 'Approval', printing: 'Printing', finishing: 'Finishing',
-    quality_check: 'QC', ready: 'Ready', packed: 'Packed',
-    dispatched: 'Dispatched', delivered: 'Delivered', completed: 'Done', cancelled: 'Cancelled',
-};
-
-const stageColor: Record<string, string> = {
-    new: 'bg-blue-100 text-blue-700', awaiting_admin: 'bg-orange-100 text-orange-700',
-    designing: 'bg-violet-100 text-violet-700', approval: 'bg-amber-100 text-amber-700',
-    printing: 'bg-gray-800 text-white', finishing: 'bg-cyan-100 text-cyan-700',
-    quality_check: 'bg-indigo-100 text-indigo-700', ready: 'bg-green-100 text-green-700',
-    packed: 'bg-teal-100 text-teal-700', dispatched: 'bg-gray-200 text-gray-700',
-    delivered: 'bg-emerald-100 text-emerald-700', completed: 'bg-emerald-100 text-emerald-700', cancelled: 'bg-red-100 text-red-700',
-};
+// Labels + colors come from the single source of truth (lib/job-workflow.ts)
+const stageLabel: Record<string, string> = Object.fromEntries(
+    [...ALL_WORKFLOW_STAGES, 'awaiting_admin'].map(s => [s, getStageName(s)])
+);
+const stageColor: Record<string, string> = Object.fromEntries(
+    [...ALL_WORKFLOW_STAGES, 'awaiting_admin'].map(s => [s, getStageColor(s)])
+);
 
 interface PurchaseBill {
     job_id: string;

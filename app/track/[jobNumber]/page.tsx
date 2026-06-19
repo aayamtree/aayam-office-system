@@ -1,4 +1,14 @@
 import { supabase } from '@/lib/supabase';
+import { getWorkflowForJobType, getStageName } from '@/lib/job-workflow';
+
+// Friendly, customer-facing icons per stage id
+const STAGE_ICONS: Record<string, string> = {
+    new: '📋', designing: '🎨', approval: '✅', pre_print_qc: '🔍',
+    print_file_ready: '📁', file_sent_client: '📨', file_received: '📥',
+    file_check: '🔍', ready_to_print: '🟢', printing: '🖨️',
+    material_received: '📦', quality_check: '🔎', ready: '📦',
+    dispatched: '🚚', delivered: '🏠',
+};
 
 export default async function TrackJobPage({ params }: { params: Promise<{ jobNumber: string }> }) {
     const { jobNumber } = await params;
@@ -6,7 +16,7 @@ export default async function TrackJobPage({ params }: { params: Promise<{ jobNu
     // Fetch minimal job info for public display
     const { data: job, error } = await supabase
         .from('jobs')
-        .select('job_number, project_name, current_stage, client_deadline, updated_at, order_date')
+        .select('job_number, project_name, current_stage, client_deadline, updated_at, order_date, job_type')
         .eq('job_number', jobNumber)
         .single();
 
@@ -29,18 +39,12 @@ export default async function TrackJobPage({ params }: { params: Promise<{ jobNu
         );
     }
 
-    // Define all stages for the progress bar
-    const stages = [
-        { id: 'new', name: 'Order Placed', icon: '📋' },
-        { id: 'designing', name: 'Designing', icon: '🎨' },
-        { id: 'approval', name: 'Awaiting Client Approval', icon: '✅' },
-        { id: 'printing', name: 'Printing', icon: '🖨️' },
-        { id: 'finishing', name: 'Finishing', icon: '✂️' },
-        { id: 'quality_check', name: 'Quality Check', icon: '🔍' },
-        { id: 'ready', name: 'Ready', icon: '📦' },
-        { id: 'dispatched', name: 'Dispatched', icon: '🚚' },
-        { id: 'delivered', name: 'Delivered', icon: '🏠' },
-    ];
+    // Build the progress bar from the unified pipeline, filtered by this job's type
+    const stages = getWorkflowForJobType(job.job_type).map(id => ({
+        id,
+        name: getStageName(id),
+        icon: STAGE_ICONS[id] || '•',
+    }));
 
     const currentIndex = stages.findIndex(s => s.id === job.current_stage);
 

@@ -763,7 +763,7 @@ export default function InvoicesPage() {
                     >
                       <option value="">Select Job (Optional)</option>
                       {jobs
-                        .filter(j => j.client_id === formData.clientId && (j.job_number.startsWith('AAY-')))
+                        .filter(j => j.client_id === formData.clientId && /^(DO|PO|DP|AAY)-/.test(j.job_number || ''))
                         .map(j => (
                           <option key={j.id} value={j.id}>{j.job_number} - {j.project_name}</option>
                         ))}

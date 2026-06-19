@@ -167,16 +167,24 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
         );
     };
 
+    // Mirrors the unified master pipeline (lib/job-workflow.ts) in order
     const pipelineStages = [
         { key: 'awaiting_admin', label: 'Pending', color: 'bg-orange-500' },
-        { key: 'new', label: 'New', color: 'bg-blue-500' },
+        { key: 'new', label: 'Brief', color: 'bg-blue-500' },
         { key: 'designing', label: 'Design', color: 'bg-violet-500' },
         { key: 'approval', label: 'Approval', color: 'bg-amber-500' },
+        { key: 'pre_print_qc', label: 'Pre-Print QC', color: 'bg-cyan-500' },
+        { key: 'print_file_ready', label: 'File Ready', color: 'bg-blue-600' },
+        { key: 'file_sent_client', label: 'File Sent', color: 'bg-green-500' },
+        { key: 'file_received', label: 'File In', color: 'bg-stone-500' },
+        { key: 'file_check', label: 'Printability', color: 'bg-cyan-600' },
+        { key: 'ready_to_print', label: 'To Print', color: 'bg-indigo-500' },
         { key: 'printing', label: 'Print', color: 'bg-foreground' },
-        { key: 'finishing', label: 'Finish', color: 'bg-cyan-600' },
+        { key: 'material_received', label: 'Material', color: 'bg-teal-500' },
+        { key: 'quality_check', label: 'Mat QC', color: 'bg-cyan-700' },
         { key: 'ready', label: 'Ready', color: 'bg-emerald-600' },
-        { key: 'packed', label: 'Packed', color: 'bg-teal-600' },
         { key: 'dispatched', label: 'Sent', color: 'bg-muted-foreground' },
+        { key: 'delivered', label: 'Done', color: 'bg-gray-400' },
     ];
 
     const totalPipelineJobs = Object.values(dashboardStats.pipeline).reduce((a, b) => a + b, 0);

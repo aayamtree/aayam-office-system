@@ -350,7 +350,7 @@ export default function QuotationsPage() {
       // One MASTER number for the whole order. A single-item order keeps the bare
       // number (AAY-1806001). A mix order suffixes each item: AAY-1806001-1,
       // AAY-1806001-2, … so every item shows its master at a glance.
-      const masterNumber = await nextJobNumber();
+      const masterNumber = await nextJobNumber(jobTypeLabel);
       const isMixOrder = quoteItems.length > 1;
 
       let leadJobId: string | undefined;

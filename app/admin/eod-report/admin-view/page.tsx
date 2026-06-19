@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useDailyReports } from '@/lib/hooks';
+import { getStageName } from '@/lib/job-workflow';
 import { supabase } from '@/lib/supabase';
 import DesignerProfileDrawer from '@/components/eod/DesignerProfileDrawer';
 import {
@@ -221,7 +222,7 @@ function TaskDetailCard({ tu }: { tu: any }) {
                 <div className="flex items-center gap-3 text-[10px] text-gray-400 mt-1">
                     <span>{tu.completion_percentage || 0}% done</span>
                     <span>{tu.time_spent || 0}h</span>
-                    {tu.job?.current_stage && <span className="capitalize">Stage: {tu.job.current_stage.replace(/_/g, ' ')}</span>}
+                    {tu.job?.current_stage && <span>Stage: {getStageName(tu.job.current_stage)}</span>}
                 </div>
 
                 {/* Quick checks */}

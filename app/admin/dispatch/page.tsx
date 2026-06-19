@@ -20,7 +20,7 @@ interface TransporterVendor {
 export default function DispatchPage() {
   const { profile } = useAuth();
   const { jobs, loading: jobsLoading, updateJobStage } = useJobs({
-    filter: [{ column: 'current_stage', value: ['pre_print_qc', 'quality_check', 'ready'], op: 'in' }],
+    filter: [{ column: 'current_stage', value: ['material_received', 'quality_check', 'ready'], op: 'in' }],
     orderBy: { column: 'client_deadline', ascending: true }
   });
   const { dispatches, loading: dispatchesLoading, createDispatch } = useDispatches();
@@ -44,7 +44,12 @@ export default function DispatchPage() {
     driver_phone: '',
     packages: 1,
     notes: '',
+    dispatch_mode: 'collect' as 'collect' | 'courier' | 'transport',
   });
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+
+  // Receipt is mandatory when goods leave via courier or transport
+  const receiptRequired = dispatchForm.dispatch_mode !== 'collect';
 
   const loading = jobsLoading || dispatchesLoading;
 
@@ -62,7 +67,7 @@ export default function DispatchPage() {
   }, []);
 
   // ─── Derived Data ─────────────────────────────────────────
-  const prePrintQC = jobs.filter(j => j.current_stage === 'pre_print_qc');
+  const materialReceived = jobs.filter(j => j.current_stage === 'material_received');
   const pendingQC = jobs.filter(j => j.current_stage === 'quality_check');
   const readyToDispatch = jobs.filter(j => j.current_stage === 'ready');
 
@@ -78,7 +83,7 @@ export default function DispatchPage() {
   }).length;
 
   const stats = [
-    { label: 'Pre Print QC', value: prePrintQC.length.toString(), sub: `${prePrintQC.length} awaiting file check`, icon: ShieldCheck, color: 'bg-cyan-500' },
+    { label: 'Material Received', value: materialReceived.length.toString(), sub: `${materialReceived.length} awaiting material QC`, icon: ShieldCheck, color: 'bg-teal-500' },
     { label: 'QC & Dispatch', value: pendingQC.length.toString(), sub: `${pendingQC.length} jobs awaiting QC`, icon: ClipboardCheck, color: 'bg-purple-500' },
     { label: 'Ready to Dispatch', value: readyToDispatch.length.toString(), sub: `${readyToDispatch.length} jobs ready`, icon: Package, color: 'bg-primary' },
     { label: 'Delayed', value: delayedCount.toString(), sub: 'Needs attention', icon: AlertTriangle, color: delayedCount > 0 ? 'bg-red-500' : 'bg-gray-300' },
@@ -110,16 +115,33 @@ export default function DispatchPage() {
     setDispatchForm({
       transporter_name: '', tracking_number: '', vehicle_number: '',
       driver_name: '', driver_phone: '', packages: job.quantity || 1, notes: '',
+      dispatch_mode: 'collect',
     });
+    setReceiptFile(null);
     setShowDispatchModal(true);
   };
 
   const handleDispatchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedJob) return;
+
+    // Courier / transport must have a receipt for traceability
+    if (receiptRequired && !receiptFile) {
+      toast.error('Please attach the courier / transport receipt before dispatching.');
+      return;
+    }
     setSubmitting(true);
 
     try {
+      // Upload receipt (courier / transport only)
+      let receiptUrl: string | null = null;
+      if (receiptFile) {
+        const path = `dispatch-receipts/${selectedJob.id}-${Date.now()}-${receiptFile.name}`;
+        const { error: upErr } = await supabase.storage.from('attachments').upload(path, receiptFile);
+        if (upErr) throw new Error('Receipt upload failed: ' + upErr.message);
+        receiptUrl = supabase.storage.from('attachments').getPublicUrl(path).data?.publicUrl || null;
+      }
+
       const result = await createDispatch({
         job_id: selectedJob.id,
         client_id: selectedJob.client_id,
@@ -130,9 +152,15 @@ export default function DispatchPage() {
 
       if (result.error) throw new Error(result.error);
 
+      const modeLabel = { collect: 'Client Collect', courier: 'Courier', transport: 'Transport' }[dispatchForm.dispatch_mode];
       await updateJobStage(selectedJob.id, 'dispatched',
-        `Dispatched via ${dispatchForm.transporter_name || 'Self'}. Tracking: ${dispatchForm.tracking_number || 'N/A'}`
+        `Dispatched via ${modeLabel}${dispatchForm.transporter_name ? ` (${dispatchForm.transporter_name})` : ''}. Tracking: ${dispatchForm.tracking_number || 'N/A'}`
       );
+
+      // Persist mode of dispatch + receipt on the job
+      await supabase.from('jobs')
+        .update({ dispatch_mode: dispatchForm.dispatch_mode, dispatch_receipt_url: receiptUrl })
+        .eq('id', selectedJob.id);
 
       // Save QC record for traceability
       try {
@@ -218,20 +246,20 @@ export default function DispatchPage() {
 
       {/* Pre Print QC + QC & Dispatch + Ready — card grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
-        {prePrintQC.length === 0 && pendingQC.length === 0 && readyToDispatch.length === 0 && (
+        {materialReceived.length === 0 && pendingQC.length === 0 && readyToDispatch.length === 0 && (
           <div className="col-span-full text-center py-10 text-gray-500">No jobs pending QC or dispatch</div>
         )}
 
-        {/* ── Pre Print QC ── */}
-        {prePrintQC.map((job) => {
+        {/* ── Printing Material Received → QC ── */}
+        {materialReceived.map((job) => {
           const isOverdue = job.client_deadline && new Date(job.client_deadline) < new Date();
           return (
-            <div key={job.id} className={`bg-card rounded-md border border-border border-l-4 border-l-cyan-400 hover:shadow-sm transition-shadow ${isOverdue ? 'ring-1 ring-red-200' : ''}`}>
-              <div className="bg-cyan-50/60 px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md">
+            <div key={job.id} className={`bg-card rounded-md border border-border border-l-4 border-l-teal-400 hover:shadow-sm transition-shadow ${isOverdue ? 'ring-1 ring-red-200' : ''}`}>
+              <div className="bg-teal-50/60 px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md">
                 <span className="text-[10px] font-mono text-muted-foreground">#{job.job_number}</span>
                 <div className="flex items-center gap-1">
                   {job.priority === 'urgent' && <span className="text-[9px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded font-bold uppercase">Urgent</span>}
-                  <span className="text-[9px] px-1.5 py-0.5 bg-cyan-100 text-cyan-700 rounded font-semibold uppercase">Pre Print QC</span>
+                  <span className="text-[9px] px-1.5 py-0.5 bg-teal-100 text-teal-700 rounded font-semibold uppercase">Material In</span>
                 </div>
               </div>
               <div className="px-3 pt-2 pb-3 space-y-2">
@@ -248,17 +276,10 @@ export default function DispatchPage() {
                 </div>
                 <p className="text-[10px] text-muted-foreground">Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</p>
                 <div className="flex gap-1.5">
-                  {['design_only', 'Design Only'].includes(job.job_type || '') ? (
-                    <button onClick={() => updateJobStage(job.id, 'delivered')}
-                      className="flex items-center gap-1 px-2.5 py-1.5 bg-green-600 text-white rounded text-xs font-medium hover:bg-green-700 transition-colors">
-                      <CheckCircle className="w-3 h-3" /> File OK → Deliver
-                    </button>
-                  ) : (
-                    <button onClick={() => updateJobStage(job.id, 'printing')}
-                      className="flex items-center gap-1 px-2.5 py-1.5 bg-cyan-600 text-white rounded text-xs font-medium hover:bg-cyan-700 transition-colors">
-                      <ShieldCheck className="w-3 h-3" /> File OK → Print
-                    </button>
-                  )}
+                  <button onClick={() => updateJobStage(job.id, 'quality_check')}
+                    className="flex items-center gap-1 px-2.5 py-1.5 bg-teal-600 text-white rounded text-xs font-medium hover:bg-teal-700 transition-colors">
+                    <ShieldCheck className="w-3 h-3" /> Material OK → QC
+                  </button>
                 </div>
               </div>
             </div>
@@ -410,6 +431,48 @@ export default function DispatchPage() {
             </div>
 
             <form onSubmit={handleDispatchSubmit} className="p-4 space-y-4">
+              {/* Mode of dispatch */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Mode of Dispatch</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { id: 'collect', label: 'Client Collect' },
+                    { id: 'courier', label: 'Courier' },
+                    { id: 'transport', label: 'Transport' },
+                  ] as const).map(m => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setDispatchForm({ ...dispatchForm, dispatch_mode: m.id })}
+                      className={`px-2 py-2 text-xs font-semibold rounded-md border transition-colors ${
+                        dispatchForm.dispatch_mode === m.id
+                          ? 'bg-gray-900 text-white border-gray-900'
+                          : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Receipt — required for courier / transport */}
+              {receiptRequired && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    {dispatchForm.dispatch_mode === 'courier' ? 'Courier' : 'Transport'} Receipt
+                    <span className="text-red-500"> *</span>
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={e => setReceiptFile(e.target.files?.[0] || null)}
+                    className="w-full text-sm border rounded-md px-3 py-2 file:mr-3 file:py-1 file:px-2 file:rounded file:border-0 file:bg-gray-100 file:text-gray-700"
+                  />
+                  <p className="text-[11px] text-gray-400 mt-1">Required for courier / transport dispatch. Image or PDF.</p>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium mb-1">Transporter</label>

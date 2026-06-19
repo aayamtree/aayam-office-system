@@ -4,7 +4,7 @@
 
 // Enums
 export type UserRole = 'admin' | 'manager' | 'sales' | 'designer' | 'dispatch' | 'marketing' | 'finance' | 'cmyk';
-export type JobStatus = 'new' | 'awaiting_admin' | 'file_check' | 'designing' | 'approval' | 'pre_print_qc' | 'printing' | 'finishing' | 'quality_check' | 'ready' | 'dispatched' | 'delivered' | 'cancelled';
+export type JobStatus = 'new' | 'awaiting_admin' | 'file_check' | 'designing' | 'approval' | 'pre_print_qc' | 'print_file_ready' | 'file_sent_client' | 'file_received' | 'ready_to_print' | 'printing' | 'material_received' | 'finishing' | 'quality_check' | 'ready' | 'dispatched' | 'delivered' | 'cancelled';
 export type PaymentStatus = 'pending' | 'partial' | 'paid' | 'overdue';
 export type PriorityLevel = 'low' | 'normal' | 'high' | 'urgent';
 export type TaskStatus = 'pending' | 'in_progress' | 'review' | 'rework' | 'completed';

@@ -12,6 +12,7 @@ import {
 } from '@/types/database';
 import { logActivity } from './logger';
 import { autoProgressJob } from './job-auto-progress';
+import { getProjectTypeCode } from './job-workflow';
 import { upsertAutoCalendarEvent } from './calendar-auto-events';
 
 // Generic hook for fetching data
@@ -383,14 +384,15 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
   });
 
   // Pull the next master job number from the counter (consumes one value).
-  // Fallback: AAY-DDMMXXX (DD=day, MM=month, XXX=daily sequence)
-  const nextJobNumber = async (): Promise<string> => {
+  // Format: <TYPE>-DDMMXXX  (TYPE = DO | PO | DP, XXX = shared daily sequence)
+  const nextJobNumber = async (jobType?: string): Promise<string> => {
+    const code = getProjectTypeCode(jobType);
     const now = new Date();
     const dd = String(now.getDate()).padStart(2, '0');
     const mm = String(now.getMonth() + 1).padStart(2, '0');
-    let jobNumber = `AAY-${dd}${mm}001`;
+    let jobNumber = `${code}-${dd}${mm}001`;
     try {
-      const { data: numberData } = await supabase.rpc('get_next_number', { counter_id: 'job' });
+      const { data: numberData } = await supabase.rpc('get_next_number', { counter_id: 'job', type_prefix: code });
       if (numberData) jobNumber = numberData;
     } catch (e) {
       console.warn('RPC get_next_number failed, using fallback');
@@ -403,7 +405,7 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
 
     // Honor a caller-provided job number (e.g. "AAY-1806001-2" for a mix-order
     // item); otherwise pull a fresh master number from the counter.
-    const jobNumber = job.job_number || await nextJobNumber();
+    const jobNumber = job.job_number || await nextJobNumber((job as any).job_type);
 
     const newJob = { ...job, job_number: jobNumber };
 

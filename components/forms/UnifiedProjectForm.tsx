@@ -440,22 +440,9 @@ export default function UnifiedProjectForm({ onJobCreated, onClose, existingJob 
                                                 onChange={(e) => setFormData({ ...formData, current_stage: e.target.value as any })}
                                                 className="w-full border-2 border-gray-200 rounded-md px-4 py-3 focus:ring-4 ring-primary/20 focus:border-gray-400 transition-all"
                                             >
-                                                {getStagesForJobType(
-                                                    [
-                                                        { id: 'new', name: 'New' },
-                                                        { id: 'file_check', name: 'File Check' },
-                                                        { id: 'designing', name: 'Designing' },
-                                                        { id: 'approval', name: 'Client Approval' },
-                                                        { id: 'pre_print_qc', name: 'Pre Print QC' },
-                                                        { id: 'printing', name: 'Printing' },
-                                                        { id: 'quality_check', name: 'QC & Dispatch' },
-                                                        { id: 'ready', name: 'Ready' },
-                                                        { id: 'dispatched', name: 'Dispatched' },
-                                                        { id: 'delivered', name: 'Delivered' },
-                                                        { id: 'cancelled', name: 'Cancelled' },
-                                                    ],
-                                                    formData.job_type
-                                                ).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                                {/* Stages + names come from the single source of truth (lib/job-workflow.ts) */}
+                                                {getStagesForJobType([], formData.job_type)
+                                                    .map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                             </select>
                                         </div>
                                     </div>

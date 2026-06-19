@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { getStageName } from '@/lib/job-workflow';
 import {
     X, Briefcase, Clock, CheckCircle, AlertTriangle,
     ChevronRight, Calendar, TrendingUp, FileText, Loader2,
@@ -26,8 +27,14 @@ const STAGE_COLORS: Record<string, string> = {
     design: 'bg-blue-100 text-blue-700',
     revision: 'bg-amber-100 text-amber-700',
     pre_print_qc: 'bg-purple-100 text-purple-700',
+    print_file_ready: 'bg-blue-100 text-blue-700',
+    file_sent_client: 'bg-green-100 text-green-700',
+    file_received: 'bg-gray-100 text-gray-700',
+    file_check: 'bg-cyan-100 text-cyan-700',
+    ready_to_print: 'bg-indigo-100 text-indigo-700',
     approval: 'bg-indigo-100 text-indigo-700',
     printing: 'bg-orange-100 text-orange-700',
+    material_received: 'bg-teal-100 text-teal-700',
     finishing: 'bg-cyan-100 text-cyan-700',
     quality_check: 'bg-yellow-100 text-yellow-700',
     ready: 'bg-green-100 text-green-700',
@@ -227,7 +234,7 @@ export default function DesignerProfileDrawer({ designer, onClose, getMyReports 
                                                     </p>
                                                 </div>
                                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${stageColor}`}>
-                                                    {job.current_stage?.replace(/_/g, ' ')}
+                                                    {getStageName(job.current_stage)}
                                                 </span>
                                             </div>
 

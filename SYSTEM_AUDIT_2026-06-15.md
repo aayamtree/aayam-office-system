@@ -1,5 +1,19 @@
 # Aayam Office System — Full Audit
 
+> ## ✅ UPDATE (15 Jun 2026, later same day) — most items now FIXED
+>
+> - **C1 (build-breaking syntax errors):** FIXED. The 3 `?? '' || ''` errors corrected; TypeScript now compiles with **0 errors**.
+> - **H1 (34 uncommitted fixes / deploy drift):** FIXED. Committed (`3c72b42`) and pushed; Vercel deploy triggered and building. Deploy pipeline is unblocked.
+> - **C2 (database wide open):** FIXED. Applied 4 migrations — RLS enabled on **all** tables, every anon/public "open" policy re-targeted to logged-in users only, anon can no longer execute **any** function (0/57), and `search_path` pinned on all functions. Logged-in staff retain full access (verified: every table still has an authenticated policy), so nothing breaks for them.
+> - **H2 (leaked GitHub token):** STILL TODO — needs your GitHub login. See steps at the bottom under "GitHub token".
+> - **Remaining lower-priority items** (4 SECURITY DEFINER views, 2 public storage buckets, auth leaked-password protection) are unchanged and noted below for a later pass.
+>
+> **Please smoke-test:** log in as an admin and as Pooja (marketing), open a few pages (quotations, jobs, finance, dispatch) and confirm everything loads and saves. If anything is blocked, tell me and I can adjust a policy or roll back instantly.
+
+---
+
+
+
 **Date:** 15 June 2026
 **Scope:** Database (80+ tables), data hooks, TypeScript build health, core business flow, git/deploy state.
 **Live project:** Supabase `wrvbodgsykesbaphpbzs` · Vercel `aayam-office-system` · GitHub `aayamtree/aayam-office-system`

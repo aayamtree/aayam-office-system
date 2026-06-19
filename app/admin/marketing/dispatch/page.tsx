@@ -2,6 +2,7 @@
 
 import { useJobs } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
+import { getStageName } from '@/lib/job-workflow';
 import { Truck, CheckCircle } from 'lucide-react';
 
 export default function MarketingDispatchPage() {
@@ -45,7 +46,7 @@ export default function MarketingDispatchPage() {
                 <td className="p-4">
                   <span className={`px-2 py-1 rounded-md text-xs font-bold capitalize 
                     ${job.current_stage === 'delivered' ? 'bg-gray-100 text-gray-900' : 'bg-muted text-foreground'}`}>
-                    {job.current_stage.replace('_', ' ')}
+                    {getStageName(job.current_stage)}
                   </span>
                 </td>
                 <td className="p-4 text-right font-mono">₹{(job.total_amount || 0).toLocaleString('en-IN')}</td>

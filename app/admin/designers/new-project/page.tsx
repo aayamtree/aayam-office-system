@@ -5,6 +5,7 @@ import { toast } from '@/lib/toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession, signIn } from 'next-auth/react';
 import { useClients, useDesigners, useProductCategories } from '@/lib/hooks';
+import { getProjectTypeCode } from '@/lib/job-workflow';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { extractFileIdFromLink, verifyDriveFile, formatBytes, getFileIcon, DriveFileInfo } from '@/lib/google-drive';
@@ -252,12 +253,13 @@ export default function NewProjectPage() {
             const isDesignerRole = profile?.role === 'designer';
 
             // Generate job number (same logic as useJobs.createJob)
+            const typeCode = getProjectTypeCode(formData.jobType);
             const now = new Date();
             const dd = String(now.getDate()).padStart(2, '0');
             const mm = String(now.getMonth() + 1).padStart(2, '0');
-            let jobNumber = `AAY-${dd}${mm}001`;
+            let jobNumber = `${typeCode}-${dd}${mm}001`;
             try {
-                const { data: numberData } = await supabase.rpc('get_next_number', { counter_id: 'job' });
+                const { data: numberData } = await supabase.rpc('get_next_number', { counter_id: 'job', type_prefix: typeCode });
                 if (numberData) jobNumber = numberData;
             } catch (e) {
                 console.warn('RPC get_next_number failed, using fallback');

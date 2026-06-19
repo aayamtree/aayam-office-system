@@ -13,7 +13,10 @@ function getSupabase() {
     return createClient(supabaseUrl, supabaseKey);
 }
 
-type JobStage = 'new' | 'designing' | 'approval' | 'printing' | 'finishing' | 'quality_check' | 'ready' | 'dispatched' | 'delivered' | 'cancelled';
+type JobStage =
+    | 'new' | 'designing' | 'approval' | 'pre_print_qc' | 'print_file_ready' | 'file_sent_client'
+    | 'file_received' | 'file_check' | 'ready_to_print' | 'printing' | 'material_received'
+    | 'quality_check' | 'ready' | 'dispatched' | 'delivered' | 'cancelled';
 
 interface AutoProgressResult {
     progressed: boolean;
@@ -47,7 +50,7 @@ export async function autoProgressJob(
     // Auto-progression rules
     const progressionMap: Record<string, { from: JobStage[]; to: JobStage }> = {
         'design_completed': { from: ['new', 'designing'], to: 'approval' },
-        'client_approved': { from: ['approval'], to: 'printing' },
+        'client_approved': { from: ['approval'], to: 'pre_print_qc' },
         'qc_passed': { from: ['quality_check'], to: 'ready' },
         'dispatch_created': { from: ['ready'], to: 'dispatched' },
         'payment_complete': { from: ['dispatched'], to: 'delivered' },

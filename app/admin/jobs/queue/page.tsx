@@ -11,48 +11,45 @@ import {
 import { useJobs } from '@/lib/hooks';
 import { Job, JobStatus } from '@/types/database';
 import { useConfirm } from '@/components/ConfirmModal';
+import { getWorkflowForJobType, getNextStage } from '@/lib/job-workflow';
 
 // ─── Type-driven Stage Flows ─────────────────────────────────────────────────
-// Each job type has its own pipeline — Design Only jobs never go to print,
-// Print Only jobs skip design/approval entirely.
-const FLOW_DESIGN_ONLY: JobStatus[] = ['new', 'designing', 'approval', 'delivered'];
-const FLOW_PRINT_ONLY: JobStatus[]  = ['new', 'file_check', 'printing', 'finishing', 'quality_check', 'ready', 'dispatched', 'delivered'];
-const FLOW_DESIGN_PRINT: JobStatus[] = ['new', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready', 'dispatched', 'delivered'];
-
+// Single source of truth: lib/job-workflow.ts. Each job type is a filtered view
+// of the one master pipeline.
 function getFlowForJob(job: Job): JobStatus[] {
-  if (job.job_type === 'Design Only') return FLOW_DESIGN_ONLY;
-  if (job.job_type === 'Print Only')  return FLOW_PRINT_ONLY;
-  return FLOW_DESIGN_PRINT; // "Design + Print" or unset
+  return getWorkflowForJobType(job.job_type) as JobStatus[];
 }
 
 /** Human-readable label for the next pipeline action on a card. */
 function getNextLabel(job: Job): string {
-  const flow = getFlowForJob(job);
-  const idx = flow.indexOf(job.current_stage as JobStatus);
-  if (idx === -1 || idx >= flow.length - 1) return '';
-  const next = flow[idx + 1];
+  const next = getNextStage(job.job_type, job.current_stage);
+  if (!next) return '';
   const labels: Record<string, string> = {
-    designing:    'Start Designing',
-    file_check:   'Verify Print File',   // Print Only: design team checks the client's file
-    approval:     'Client Approval',
-    printing:     'Send to Print Planner',
-    finishing:    'Finishing',
-    quality_check:'Quality Check',
-    ready:        'Mark Ready',
-    dispatched:   'Dispatch',
-    delivered:    'Mark Delivered',
+    designing:         'Start Designing',
+    approval:          'Send for Approval',
+    pre_print_qc:      'Pre-Print QC',
+    print_file_ready:  'Print File Ready',
+    file_sent_client:  'Send File to Client',
+    file_check:        'Verify Print File',
+    ready_to_print:    'Ready to Print',
+    printing:          'Send to Print',
+    material_received: 'Material Received',
+    quality_check:     'Material QC',
+    ready:             'Mark Ready',
+    dispatched:        'Dispatch',
+    delivered:         'Mark Delivered',
   };
-  return labels[next] || next.replace('_', ' ');
+  return labels[next] || next.replace(/_/g, ' ');
 }
 
 /** Group a job into the correct sidebar section based on its type + stage. */
 function getGroupForJob(job: Job): string {
   const stage = job.current_stage;
   if (job.job_type === 'Print Only') {
-    // 'new' + 'file_check' sit with the design team (verify the client's file) →
-    // Design Stage. Once sent to print it enters the Print Planner / production.
-    if (['new', 'file_check'].includes(stage)) return 'Design Stage';
-    if (['printing', 'finishing', 'quality_check'].includes(stage)) return 'In Production';
+    // 'file_received' + 'file_check' sit with the design team (verify the client's file)
+    // → Design Stage. Once ready it enters the Print Planner / production.
+    if (['new', 'file_received', 'file_check'].includes(stage)) return 'Design Stage';
+    if (['ready_to_print', 'printing', 'material_received', 'finishing', 'quality_check'].includes(stage)) return 'In Production';
     if (['ready', 'dispatched'].includes(stage)) return 'Dispatch';
     return 'Done';
   }
@@ -105,6 +102,20 @@ const stageConfig: Record<string, {
     group: 'Design Stage',
     nextLabel: 'Send to Print Planner',
   },
+  file_received: {
+    label: 'File Received',
+    borderColor: 'border-l-stone-400',
+    tintBg: 'bg-stone-50',
+    badgeBg: 'bg-stone-100',
+    badgeText: 'text-stone-600',
+    actionBg: 'bg-stone-700',
+    actionText: 'text-white',
+    actionHover: 'hover:bg-stone-800',
+    groupHeaderColor: 'text-stone-600',
+    icon: <Clock className="w-3 h-3" />,
+    group: 'Design Stage',
+    nextLabel: 'Verify Print File',
+  },
   designing: {
     label: 'Designing',
     borderColor: 'border-l-violet-400',
@@ -131,10 +142,66 @@ const stageConfig: Record<string, {
     groupHeaderColor: 'text-blue-700',
     icon: <ClipboardCheck className="w-3 h-3" />,
     group: 'Design Stage',
+    nextLabel: 'Pre-Print QC',
+  },
+  pre_print_qc: {
+    label: 'Pre-Print QC',
+    borderColor: 'border-l-cyan-400',
+    tintBg: 'bg-cyan-50/60',
+    badgeBg: 'bg-cyan-100',
+    badgeText: 'text-cyan-700',
+    actionBg: 'bg-cyan-600',
+    actionText: 'text-white',
+    actionHover: 'hover:bg-cyan-700',
+    groupHeaderColor: 'text-cyan-700',
+    icon: <ClipboardCheck className="w-3 h-3" />,
+    group: 'Design Stage',
+    nextLabel: 'Print File Ready',
+  },
+  print_file_ready: {
+    label: 'Print File Ready',
+    borderColor: 'border-l-blue-400',
+    tintBg: 'bg-blue-50/60',
+    badgeBg: 'bg-blue-100',
+    badgeText: 'text-blue-700',
+    actionBg: 'bg-blue-600',
+    actionText: 'text-white',
+    actionHover: 'hover:bg-blue-700',
+    groupHeaderColor: 'text-blue-700',
+    icon: <CheckCircle className="w-3 h-3" />,
+    group: 'Design Stage',
+    nextLabel: 'Ready to Print',
+  },
+  file_sent_client: {
+    label: 'File Sent to Client',
+    borderColor: 'border-l-green-400',
+    tintBg: 'bg-green-50/60',
+    badgeBg: 'bg-green-100',
+    badgeText: 'text-green-700',
+    actionBg: 'bg-green-600',
+    actionText: 'text-white',
+    actionHover: 'hover:bg-green-700',
+    groupHeaderColor: 'text-green-700',
+    icon: <CheckCircle className="w-3 h-3" />,
+    group: 'Done',
+    nextLabel: '',
+  },
+  ready_to_print: {
+    label: 'Ready to Print',
+    borderColor: 'border-l-indigo-400',
+    tintBg: 'bg-indigo-50/60',
+    badgeBg: 'bg-indigo-100',
+    badgeText: 'text-indigo-700',
+    actionBg: 'bg-indigo-600',
+    actionText: 'text-white',
+    actionHover: 'hover:bg-indigo-700',
+    groupHeaderColor: 'text-indigo-700',
+    icon: <Printer className="w-3 h-3" />,
+    group: 'In Production',
     nextLabel: 'Send to Print',
   },
   printing: {
-    label: 'Printing',
+    label: 'In Print',
     borderColor: 'border-l-orange-400',
     tintBg: 'bg-orange-50/60',
     badgeBg: 'bg-orange-100',
@@ -145,7 +212,21 @@ const stageConfig: Record<string, {
     groupHeaderColor: 'text-orange-700',
     icon: <Printer className="w-3 h-3" />,
     group: 'In Production',
-    nextLabel: 'Finishing',
+    nextLabel: 'Material Received',
+  },
+  material_received: {
+    label: 'Material Received',
+    borderColor: 'border-l-teal-400',
+    tintBg: 'bg-teal-50/60',
+    badgeBg: 'bg-teal-100',
+    badgeText: 'text-teal-700',
+    actionBg: 'bg-teal-600',
+    actionText: 'text-white',
+    actionHover: 'hover:bg-teal-700',
+    groupHeaderColor: 'text-teal-700',
+    icon: <Package className="w-3 h-3" />,
+    group: 'In Production',
+    nextLabel: 'Material QC',
   },
   finishing: {
     label: 'Finishing',
@@ -162,7 +243,7 @@ const stageConfig: Record<string, {
     nextLabel: 'Quality Check',
   },
   quality_check: {
-    label: 'QC',
+    label: 'Material QC',
     borderColor: 'border-l-cyan-400',
     tintBg: 'bg-cyan-50/60',
     badgeBg: 'bg-cyan-100',
@@ -278,14 +359,21 @@ const filterOptions = [
   { label: '🎨 Design', value: '_design' },
   { label: '🖨 Production', value: '_production' },
   { label: '⚠️ Urgent', value: '_urgent' },
-  { label: 'New', value: 'new' },
+  { label: 'Brief & Assets', value: 'new' },
   { label: 'Designing', value: 'designing' },
   { label: 'Approval', value: 'approval' },
-  { label: 'Printing', value: 'printing' },
-  { label: 'Finishing', value: 'finishing' },
-  { label: 'QC', value: 'quality_check' },
-  { label: 'Ready', value: 'ready' },
+  { label: 'Pre-Print QC', value: 'pre_print_qc' },
+  { label: 'Print File Ready', value: 'print_file_ready' },
+  { label: 'File Sent to Client', value: 'file_sent_client' },
+  { label: 'File Received', value: 'file_received' },
+  { label: 'Printability QC', value: 'file_check' },
+  { label: 'Ready to Print', value: 'ready_to_print' },
+  { label: 'In Print', value: 'printing' },
+  { label: 'Material Received', value: 'material_received' },
+  { label: 'Material QC', value: 'quality_check' },
+  { label: 'Ready for Dispatch', value: 'ready' },
   { label: 'Dispatched', value: 'dispatched' },
+  { label: 'Delivered', value: 'delivered' },
 ];
 
 export default function JobQueuePage() {

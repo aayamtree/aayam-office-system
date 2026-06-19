@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { getStageName, ALL_WORKFLOW_STAGES } from '@/lib/job-workflow';
 import {
   AlertTriangle, Clock, User, Building2,
   RefreshCw, Loader2, ArrowRight, ChevronDown, ChevronUp, X, Filter
@@ -23,18 +24,10 @@ interface OverdueJob {
   days_overdue: number;
 }
 
-const STAGE_LABELS: Record<string, string> = {
-  new: 'New',
-  awaiting_admin: 'Awaiting Admin',
-  designing: 'Designing',
-  file_check: 'File Check',
-  pre_print_qc: 'Pre-Print QC',
-  approval: 'Client Approval',
-  printing: 'Printing',
-  finishing: 'Finishing',
-  quality_check: 'QC',
-  ready: 'Ready',
-};
+// Stage labels from the single source of truth (lib/job-workflow.ts)
+const STAGE_LABELS: Record<string, string> = Object.fromEntries(
+  [...ALL_WORKFLOW_STAGES, 'awaiting_admin'].map(s => [s, getStageName(s)])
+);
 
 const PRIORITY_BADGE: Record<string, string> = {
   urgent: 'bg-red-100 text-red-700 border border-red-200',

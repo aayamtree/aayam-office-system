@@ -35,12 +35,13 @@ export default function SalesPage() {
   const pipelineStats = dashboardStats.pipeline || {};
   const totalInPipeline = Object.values(pipelineStats).reduce((a, b) => a + b, 0) || 1;
 
+  // Buckets group the unified pipeline (lib/job-workflow.ts) for a compact sales view
   const pipeline = [
-    { stage: 'Design', count: (pipelineStats.designing || 0) + (pipelineStats.approval || 0), color: 'bg-primary' },
-    { stage: 'Production', count: (pipelineStats.printing || 0) + (pipelineStats.finishing || 0), color: 'bg-chart-2' },
+    { stage: 'Design', count: (pipelineStats.new || 0) + (pipelineStats.designing || 0) + (pipelineStats.approval || 0) + (pipelineStats.pre_print_qc || 0) + (pipelineStats.print_file_ready || 0) + (pipelineStats.file_sent_client || 0), color: 'bg-primary' },
+    { stage: 'Production', count: (pipelineStats.file_received || 0) + (pipelineStats.file_check || 0) + (pipelineStats.ready_to_print || 0) + (pipelineStats.printing || 0) + (pipelineStats.material_received || 0) + (pipelineStats.finishing || 0), color: 'bg-chart-2' },
     { stage: 'QC', count: pipelineStats.quality_check || 0, color: 'bg-chart-3' },
     { stage: 'Ready', count: (pipelineStats.ready || 0) + (pipelineStats.packed || 0), color: 'bg-chart-4' },
-    { stage: 'Dispatched', count: (pipelineStats.dispatched || 0) + (pipelineStats.in_transit || 0), color: 'bg-muted-foreground' },
+    { stage: 'Dispatched', count: (pipelineStats.dispatched || 0) + (pipelineStats.delivered || 0) + (pipelineStats.in_transit || 0), color: 'bg-muted-foreground' },
   ].map(p => ({ ...p, width: `${Math.max(5, (p.count / totalInPipeline) * 100)}%` }));
 
   const followUpsDue = dashboardStats.alerts?.followUpsDue || 0;

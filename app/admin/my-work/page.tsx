@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import { getStageName } from '@/lib/job-workflow';
 import {
   CheckCircle2, Clock, AlertTriangle, Briefcase, ArrowRight,
   Loader2, Star, Users, Layers, Calendar, X,
@@ -73,15 +74,22 @@ function getFlowForType(jobType?: string | null) {
 }
 
 const stageColors: Record<string, { bg: string; text: string; border: string }> = {
-  new:           { bg: 'bg-stone-100',  text: 'text-stone-600',  border: 'border-stone-300' },
-  designing:     { bg: 'bg-violet-100', text: 'text-violet-700', border: 'border-violet-300' },
-  approval:      { bg: 'bg-blue-100',   text: 'text-blue-700',   border: 'border-blue-300' },
-  printing:      { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-300' },
-  finishing:     { bg: 'bg-amber-100',  text: 'text-amber-700',  border: 'border-amber-300' },
-  quality_check: { bg: 'bg-cyan-100',   text: 'text-cyan-700',   border: 'border-cyan-300' },
-  ready:         { bg: 'bg-green-100',  text: 'text-green-700',  border: 'border-green-300' },
-  dispatched:    { bg: 'bg-teal-100',   text: 'text-teal-700',   border: 'border-teal-300' },
-  delivered:     { bg: 'bg-gray-100',   text: 'text-gray-500',   border: 'border-gray-200' },
+  new:               { bg: 'bg-stone-100',  text: 'text-stone-600',  border: 'border-stone-300' },
+  designing:         { bg: 'bg-violet-100', text: 'text-violet-700', border: 'border-violet-300' },
+  approval:          { bg: 'bg-blue-100',   text: 'text-blue-700',   border: 'border-blue-300' },
+  pre_print_qc:      { bg: 'bg-cyan-100',   text: 'text-cyan-700',   border: 'border-cyan-300' },
+  print_file_ready:  { bg: 'bg-blue-100',   text: 'text-blue-700',   border: 'border-blue-300' },
+  file_sent_client:  { bg: 'bg-green-100',  text: 'text-green-700',  border: 'border-green-300' },
+  file_received:     { bg: 'bg-stone-100',  text: 'text-stone-600',  border: 'border-stone-300' },
+  file_check:        { bg: 'bg-cyan-100',   text: 'text-cyan-700',   border: 'border-cyan-300' },
+  ready_to_print:    { bg: 'bg-indigo-100', text: 'text-indigo-700', border: 'border-indigo-300' },
+  printing:          { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-300' },
+  material_received: { bg: 'bg-teal-100',   text: 'text-teal-700',   border: 'border-teal-300' },
+  finishing:         { bg: 'bg-amber-100',  text: 'text-amber-700',  border: 'border-amber-300' },
+  quality_check:     { bg: 'bg-cyan-100',   text: 'text-cyan-700',   border: 'border-cyan-300' },
+  ready:             { bg: 'bg-green-100',  text: 'text-green-700',  border: 'border-green-300' },
+  dispatched:        { bg: 'bg-teal-100',   text: 'text-teal-700',   border: 'border-teal-300' },
+  delivered:         { bg: 'bg-gray-100',   text: 'text-gray-500',   border: 'border-gray-200' },
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -183,7 +191,7 @@ function JobDetailModal({ jobId, onClose }: { jobId: string; onClose: () => void
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="text-xs font-bold text-gray-500 tracking-wide">{job.job_number}</span>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase border ${sc.bg} ${sc.text} ${sc.border}`}>
-                      {job.current_stage.replace('_', ' ')}
+                      {getStageName(job.current_stage)}
                     </span>
                     {job.job_type && (
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-white border border-gray-200 text-gray-500 font-medium">

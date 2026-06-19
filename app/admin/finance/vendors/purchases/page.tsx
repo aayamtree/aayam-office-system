@@ -403,7 +403,7 @@ export default function VendorPurchasesPage() {
                     <select value={form.jobId} onChange={e => setForm(p => ({ ...p, jobId: e.target.value }))}
                       className="w-full px-3 py-2 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20">
                       <option value="">General Stock</option>
-                      {(jobs || []).filter(j => j.job_number.startsWith('AAY-'))
+                      {(jobs || []).filter(j => /^(DO|PO|DP|AAY)-/.test(j.job_number || ''))
                         .map(j => <option key={j.id} value={j.id}>{j.job_number} – {j.project_name}</option>)}
                     </select>
                   </div>

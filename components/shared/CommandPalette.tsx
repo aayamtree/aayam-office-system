@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { getStageName } from '@/lib/job-workflow';
 
 interface SearchResult {
     id: string;
@@ -191,7 +192,7 @@ export default function CommandPalette() {
             if (jobsRes.data) jobsRes.data.forEach(j => dbResults.push({
                 id: j.id, type: 'job',
                 title: `${j.job_number} — ${j.project_name || 'Untitled'}`,
-                subtitle: j.current_stage?.replace('_', ' ') || 'new',
+                subtitle: getStageName(j.current_stage) || 'New',
                 href: `/admin/jobs?highlight=${j.id}`,
             }));
 

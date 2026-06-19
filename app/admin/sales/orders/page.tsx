@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
+import { getStageName } from '@/lib/job-workflow';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
@@ -539,7 +540,7 @@ export default function OrdersPage() {
                         {job.job_number}
                       </span>
                       <span className={`${headerTextColor}/90 text-xs px-3 py-1 bg-white/20 rounded-md font-medium capitalize`}>
-                        {job.current_stage.replace('_', ' ')}
+                        {getStageName(job.current_stage)}
                       </span>
                     </div>
 
@@ -685,7 +686,7 @@ export default function OrdersPage() {
                       </td>
                       <td className="px-6 py-4 align-top">
                         <span className={`px-3 py-1 text-xs font-semibold rounded-md ${getStatusColor(job.current_stage)}`}>
-                          {job.current_stage.replace('_', ' ')}
+                          {getStageName(job.current_stage)}
                         </span>
                       </td>
                       <td className="px-6 py-4 align-middle text-right">
@@ -789,7 +790,7 @@ export default function OrdersPage() {
               <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div className="p-3 border rounded-md">
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Status</p>
-                  <p className="font-medium text-gray-900 capitalize mt-1">{selectedJob.current_stage.replace('_', ' ')}</p>
+                  <p className="font-medium text-gray-900 mt-1">{getStageName(selectedJob.current_stage)}</p>
                 </div>
                 <div className="p-3 border rounded-md">
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Priority</p>
