@@ -366,8 +366,8 @@ export function useSalesOrders() {
 // =============================================
 // Optimized select constants for jobs
 export const JOB_SELECTS = {
-  LIST: 'id, job_number, project_name, client_id, priority, current_stage, client_deadline, total_amount, amount_received, payment_status, client:clients(id, name, company)',
-  CARD: 'id, job_number, project_name, client_id, designer_id, current_stage, total_amount, amount_received, payment_status, files, client:clients(id, company, name)',
+  LIST: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, total_amount, amount_received, payment_status, client:clients(id, name, company)',
+  CARD: 'id, job_number, project_name, client_id, designer_id, current_stage, job_type, product_category, parent_job_id, total_amount, amount_received, payment_status, files, client:clients(id, company, name)',
   FULL: '*, client:clients(id, name, company, source), vendor:vendors(id, name)'
 };
 
