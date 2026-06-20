@@ -23,7 +23,7 @@ import VendorQuickAddModal from '@/components/shared/VendorQuickAddModal';
 import ProductCategoryQuickAdd from '@/components/shared/ProductCategoryQuickAdd';
 import JobTypeQuickAdd from '@/components/shared/JobTypeQuickAdd';
 import { useConfirm } from '@/components/ConfirmModal';
-import { getNextStage, getAdvanceLabel, getStageName, getStageColor, getStagesForJobType, normalizeJobType, getProjectTypeCode, getProjectTypeBadgeClass, getProjectTypeLabel } from '@/lib/job-workflow';
+import { getNextStage, getAdvanceLabel, getStageName, getStageColor, getStagesForJobType, normalizeJobType } from '@/lib/job-workflow';
 
 import PriorityQuickAdd from '@/components/shared/PriorityQuickAdd';
 import JobStageQuickAdd from '@/components/shared/JobStageQuickAdd';
@@ -88,16 +88,13 @@ const JobCard = React.memo(function JobCard({ job, getPriorityBadge, onViewDetai
           </div>
         )}
         <h4 className="font-semibold text-gray-900 mb-0.5 line-clamp-2 leading-snug text-sm">{job.project_name}</h4>
-        <div className="flex items-center gap-1 mb-1.5 flex-wrap">
-          <span className={`inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-md tracking-wide ${getProjectTypeBadgeClass(job.job_type)}`} title={getProjectTypeLabel(job.job_type)}>
-            {getProjectTypeCode(job.job_type)}
-          </span>
-          {(job as any).product_category && (
+        {(job as any).product_category && (
+          <div className="flex items-center gap-1 mb-1.5 flex-wrap">
             <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-gray-900 text-white tracking-wide">
               {(job as any).product_category}
             </span>
-          )}
-        </div>
+          </div>
+        )}
         <div className="flex items-center gap-1.5 mb-2">
           <Building2 className="w-3.5 h-3.5 text-gray-400" />
           <p className="text-xs text-gray-500 truncate">{(job.client as any)?.company || job.client?.name || 'No client'}</p>
@@ -883,9 +880,6 @@ export default function JobsPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md tracking-wide flex-shrink-0 ${getProjectTypeBadgeClass(job.job_type)}`} title={getProjectTypeLabel(job.job_type)}>
-                              {getProjectTypeCode(job.job_type)}
-                            </span>
                             <p className="text-sm font-semibold text-gray-900 leading-snug truncate">{job.project_name}</p>
                           </div>
                           <div className="flex items-center gap-1.5 mt-0.5">
@@ -958,7 +952,6 @@ export default function JobsPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <span className="font-mono text-sm text-primary">{job.job_number}</span>
-                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md tracking-wide ${getProjectTypeBadgeClass(job.job_type)}`} title={getProjectTypeLabel(job.job_type)}>{getProjectTypeCode(job.job_type)}</span>
                             <span className={`text-xs px-2 py-0.5 rounded-md ${getPriorityBadge(job.priority)}`}>{job.priority}</span>
                             {job.files && job.files.length > 0 && (
                               <span className="flex items-center gap-0.5 text-gray-600" title={`${job.files.length} file(s)`}>

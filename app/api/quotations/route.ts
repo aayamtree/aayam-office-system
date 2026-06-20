@@ -59,14 +59,27 @@ export async function POST(request: NextRequest) {
   const payload = pickFields(body);
   if (!payload.created_by) payload.created_by = user.id;
 
-  // Generate the next quote number (QT-YY-NNN). Fall back to a timestamp id if
-  // the RPC is unavailable so a save never fails on numbering alone.
+  // Generate the next quote number (QT-YY-NNN) via the DB counter.
+  // If the RPC ever fails, derive a short sequential number from the existing
+  // rows so we never produce a giant timestamp like QT-1781878723798.
   let quoteNumber: string | null = null;
   try {
-    const { data: numberData } = await admin.rpc('get_next_number', { counter_id: 'quotation' });
-    quoteNumber = numberData ?? null;
-  } catch { /* fall through to fallback */ }
-  payload.quote_number = quoteNumber || `QT-${Date.now()}`;
+    const { data: numberData, error: rpcError } = await admin.rpc('get_next_number', { counter_id: 'quotation' });
+    if (rpcError) console.error('get_next_number(quotation) failed:', rpcError.message);
+    quoteNumber = (numberData as string) ?? null;
+  } catch (e: any) {
+    console.error('get_next_number(quotation) threw:', e?.message);
+  }
+  if (!quoteNumber) {
+    // Short fallback: QT-YY-NNN based on the current quotation count.
+    const yy = new Date().getFullYear().toString().slice(-2);
+    const { count } = await admin
+      .from('quotations')
+      .select('id', { count: 'exact', head: true });
+    const seq = String((count ?? 0) + 1).padStart(3, '0');
+    quoteNumber = `QT-${yy}-${seq}`;
+  }
+  payload.quote_number = quoteNumber;
 
   const { data, error } = await admin
     .from('quotations')

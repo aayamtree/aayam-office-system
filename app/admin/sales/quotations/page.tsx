@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useConfirm } from '@/components/ConfirmModal';
 import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
+import { supabase } from '@/lib/supabase';
 
 export default function QuotationsPage() {
   const { user, profile } = useAuth();
@@ -101,6 +102,67 @@ export default function QuotationsPage() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [ownerFilter, setOwnerFilter] = useState<string>('all');
+
+  // All profiles (id -> name/role) so we can show "Added by" + the marketing
+  // person who owns the client, exactly like the Clients page.
+  const [allProfiles, setAllProfiles] = useState<{ id: string; full_name: string; role: string }[]>([]);
+  useEffect(() => {
+    supabase
+      .from('profiles')
+      .select('id, full_name, role')
+      .order('full_name')
+      .then(({ data }) => setAllProfiles(data || []));
+  }, []);
+
+  const nameFor = (id?: string | null) =>
+    id ? (allProfiles.find(p => p.id === id)?.full_name || 'Unknown') : null;
+
+  // Resolve the "owner" of a quote for performance/commission.
+  // Priority: the client's assigned marketing person (the ownership that drives
+  // commission). Falls back to whoever created the quote when the client is
+  // Direct/unassigned. Returns the owner's profile id (or null).
+  const ownerIdFor = (q: any): string | null => {
+    const c = q.client || {};
+    if (c.source === 'marketing' && c.assigned_marketing_user_id) {
+      return c.assigned_marketing_user_id;
+    }
+    return q.created_by || c.created_by || null;
+  };
+
+  // Source badge + marketing person + "Added by", same visual language as the
+  // Clients page. `compact` trims spacing for the mobile card.
+  const renderSource = (q: any, compact = false) => {
+    const c = q.client || {};
+    const storedSource = q.lead && !q.client ? 'lead' : (c.source || 'direct');
+    const badgeClass =
+      storedSource === 'marketing' ? 'bg-gray-900 text-white' :
+      storedSource === 'referral' ? 'bg-emerald-100 text-emerald-800' :
+      storedSource === 'walk_in' ? 'bg-amber-100 text-amber-800' :
+      storedSource === 'online' ? 'bg-sky-100 text-sky-800' :
+      storedSource === 'lead' ? 'bg-indigo-100 text-indigo-800' :
+      'bg-gray-100 text-gray-700';
+    const badgeLabel =
+      storedSource === 'marketing' ? 'MARKETING' :
+      storedSource === 'referral' ? 'REFERRAL' :
+      storedSource === 'walk_in' ? 'WALK-IN' :
+      storedSource === 'online' ? 'ONLINE' :
+      storedSource === 'lead' ? 'LEAD' :
+      'DIRECT';
+    const marketingPerson = c.source === 'marketing' ? nameFor(c.assigned_marketing_user_id) : null;
+    const addedBy = nameFor(q.created_by || c.created_by);
+    return (
+      <div className={compact ? '' : 'space-y-1'}>
+        <span className={`inline-flex items-center px-2.5 py-1 text-[11px] font-bold rounded-md tracking-wide ${badgeClass}`}>{badgeLabel}</span>
+        {marketingPerson && (
+          <p className="text-[12px] text-gray-900 font-semibold flex items-center gap-1">👤 {marketingPerson}</p>
+        )}
+        {addedBy && (
+          <p className="text-[11px] text-gray-400">Added by: {addedBy}</p>
+        )}
+      </div>
+    );
+  };
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showClientModal, setShowClientModal] = useState(false);
@@ -511,8 +573,49 @@ export default function QuotationsPage() {
       q.lead?.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       q.lead?.name?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || q.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesOwner =
+      ownerFilter === 'all' ||
+      (ownerFilter === 'unassigned' ? !ownerIdFor(q) : ownerIdFor(q) === ownerFilter);
+    return matchesSearch && matchesStatus && matchesOwner;
   });
+
+  // Distinct owners actually present on the visible quotations, for the filter
+  // dropdown (admin / non-marketing only).
+  const ownerOptions = useMemo(() => {
+    const ids = new Set<string>();
+    quotations.forEach(q => {
+      const id = ownerIdFor(q);
+      if (id) ids.add(id);
+    });
+    return Array.from(ids)
+      .map(id => ({ id, name: nameFor(id) || 'Unknown' }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [quotations, allProfiles]);
+
+  // Marketing performance strip (admin only). Reflects the owner filter:
+  // pick a person → their numbers; leave on "All" → team totals. Based on
+  // converted business (the commission base), not raw draft activity.
+  const perf = useMemo(() => {
+    const scoped = quotations.filter(q => {
+      const id = ownerIdFor(q);
+      if (ownerFilter === 'all') return true;
+      if (ownerFilter === 'unassigned') return !id;
+      return id === ownerFilter;
+    });
+    const isConverted = (q: any) => !!q.converted_to_job_id || q.status === 'accepted';
+    const quotes = scoped.length;
+    const pipeline = scoped.reduce((s, q) => s + (q.total_amount || 0), 0);
+    const convertedQuotes = scoped.filter(isConverted);
+    const converted = convertedQuotes.length;
+    const revenue = convertedQuotes.reduce((s, q) => s + (q.total_amount || 0), 0);
+    const conversion = quotes > 0 ? Math.round((converted / quotes) * 100) : 0;
+    return { quotes, pipeline, converted, revenue, conversion };
+  }, [quotations, ownerFilter]);
+
+  const perfLabel =
+    ownerFilter === 'all' ? 'All marketing'
+    : ownerFilter === 'unassigned' ? 'Direct / Unassigned'
+    : (nameFor(ownerFilter) || 'Selected');
 
   return (
     <div className="space-y-2 md:space-y-4 lg:space-y-6">
@@ -577,7 +680,57 @@ export default function QuotationsPage() {
             <SelectItem value="expired">Expired</SelectItem>
           </SelectContent>
         </Select>
+        {profile?.role !== 'marketing' && (
+          <Select value={ownerFilter} onValueChange={setOwnerFilter}>
+            <SelectTrigger className="w-auto min-w-[160px] h-9 text-sm">
+              <SelectValue placeholder="All Marketing" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Marketing</SelectItem>
+              {ownerOptions.map(o => (
+                <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+              ))}
+              <SelectItem value="unassigned">Direct / Unassigned</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
       </div>
+
+      {/* Marketing performance strip — admin only. Reflects the owner filter. */}
+      {profile?.role === 'admin' && (
+        <div className="bg-white rounded-md border border-gray-200 p-3">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Performance · {perfLabel}
+            </p>
+            <Link href="/admin/team/performance" className="text-xs font-medium text-primary hover:underline">
+              Full team report →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <div className="text-center">
+              <p className="text-page-title text-gray-900">{perf.quotes}</p>
+              <p className="text-xs text-gray-500">Quotes</p>
+            </div>
+            <div className="text-center">
+              <p className="text-page-title text-gray-900">{formatCurrency(perf.pipeline)}</p>
+              <p className="text-xs text-gray-500">Pipeline value</p>
+            </div>
+            <div className="text-center">
+              <p className="text-page-title text-gray-900">{perf.converted}</p>
+              <p className="text-xs text-gray-500">Converted</p>
+            </div>
+            <div className="text-center">
+              <p className="text-page-title text-gray-900">{perf.conversion}%</p>
+              <p className="text-xs text-gray-500">Conversion</p>
+            </div>
+            <div className="text-center">
+              <p className="text-page-title text-green-700">{formatCurrency(perf.revenue)}</p>
+              <p className="text-xs text-gray-500">Order revenue</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* List */}
       <div className="space-y-4">
@@ -625,10 +778,15 @@ export default function QuotationsPage() {
 
                       {/* Contact Person */}
                       {(q.client?.company || q.lead?.company) && (
-                        <p className="text-gray-500 text-sm mb-4">
+                        <p className="text-gray-500 text-sm mb-2">
                           {q.client?.name || (q.lead ? 'LEAD' : 'No Contact')}
                         </p>
                       )}
+
+                      {/* Source / Marketing owner */}
+                      <div className="flex flex-wrap items-center gap-2 mb-4">
+                        {renderSource(q, true)}
+                      </div>
 
                       {/* Items Preview */}
                       <div className="bg-gray-50 p-3 rounded-md border border-gray-200 mb-4">
@@ -712,6 +870,7 @@ export default function QuotationsPage() {
                   <tr>
                     <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Quotation</th>
                     <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Client</th>
+                    <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Source / Marketing</th>
                     <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Items</th>
                     <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Amount</th>
                     <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Valid Until</th>
@@ -730,6 +889,7 @@ export default function QuotationsPage() {
                         <p className="font-medium text-gray-900">{q.client?.company || q.lead?.company || q.lead?.name || q.client?.name || 'Unknown'}</p>
                         {(q.client?.company || q.lead?.company) && <p className="text-sm text-gray-500">{q.client?.name || (q.lead ? 'LEAD' : '')}</p>}
                       </td>
+                      <td className="px-6 py-4">{renderSource(q)}</td>
                       <td className="px-6 py-4 text-gray-600 max-w-xs truncate">{q.items?.map(i => i.description).join(', ')}</td>
                       <td className="px-6 py-4 font-semibold text-gray-900">{formatCurrency(q.total_amount)}</td>
                       <td className="px-6 py-4 text-gray-600">{q.valid_until ? formatDate(q.valid_until) : '-'}</td>

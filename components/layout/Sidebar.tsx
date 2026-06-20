@@ -190,6 +190,7 @@ const menuItems: MenuItem[] = [
     allowedRoles: ['admin', 'finance'],
     submenu: [
       { name: 'Overview', href: '/admin/reports' },
+      { name: 'Team Performance', href: '/admin/team/performance', adminOnly: true },
       { name: 'Finance Reports', href: '/admin/reports/finance' },
       { name: 'Sales Reports', href: '/admin/reports/sales' },
       { name: 'Vendor Reports', href: '/admin/finance/reports/vendor-reports' },
