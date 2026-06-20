@@ -501,6 +501,13 @@ export default function ClientsPage() {
                        (client as any).source === 'online' ? '🌐 Online' : '📋 Direct'}
                     </span>
                   )}
+                  {/* Who owns / entered this client */}
+                  {profile?.role === 'admin' && (client as any).source === 'marketing' && (client as any).assigned_marketing_user_id && (
+                    <p className="text-[11px] text-gray-800 font-semibold">👤 {allProfiles.find(s => s.id === (client as any).assigned_marketing_user_id)?.full_name || 'Unknown'}</p>
+                  )}
+                  {profile?.role === 'admin' && (client as any).created_by && (
+                    <p className="text-[10px] text-gray-400">Added by: {allProfiles.find(s => s.id === (client as any).created_by)?.full_name || 'Unknown'}</p>
+                  )}
                 </div>
 
                 {/* ── Action Footer ── */}

@@ -13,11 +13,19 @@ import { useAuth } from '@/lib/auth-context';
 import { useLeads } from '@/lib/hooks';
 import { Lead } from '@/types/database';
 import { useConfirm } from '@/components/ConfirmModal';
+import { supabase } from '@/lib/supabase';
 
 export default function LeadsPage() {
   const { user, profile } = useAuth();
   const { leads, loading: leadsLoading, createLead, updateLead, convertToClient, deleteLead, refetch } = useLeads();
   const confirm = useConfirm();
+
+  // Marketing staff names so admins can see who owns each lead.
+  const [staffList, setStaffList] = useState<{ id: string; full_name: string; role: string }[]>([]);
+  useEffect(() => {
+    supabase.from('profiles').select('id, full_name, role').eq('role', 'marketing')
+      .then(({ data }) => setStaffList(data || []));
+  }, []);
 
   // State Management
   const [searchQuery, setSearchQuery] = useState('');
@@ -261,9 +269,14 @@ export default function LeadsPage() {
               <div className="pl-3">
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <span className="inline-block px-2 py-0.5 rounded-md bg-gray-100 text-xs font-mono font-bold text-gray-600 mb-1">
-                      {lead.lead_number}
-                    </span>
+                    <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                      <span className="inline-block px-2 py-0.5 rounded-md bg-gray-100 text-xs font-mono font-bold text-gray-600">
+                        {lead.lead_number}
+                      </span>
+                      {profile?.role === 'admin' && lead.assigned_to && (
+                        <span className="text-[11px] text-gray-800 font-semibold">👤 {staffList.find(s => s.id === lead.assigned_to)?.full_name || 'Unassigned'}</span>
+                      )}
+                    </div>
                     <h3 className="font-bold text-gray-900 text-lg leading-tight">{lead.name}</h3>
                     {lead.company && <p className="text-gray-500 text-sm font-medium">{lead.company}</p>}
                   </div>
