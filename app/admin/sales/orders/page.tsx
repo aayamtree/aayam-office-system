@@ -24,11 +24,26 @@ import { ShareToChat } from '@/components/ShareToChat';
 
 export default function OrdersPage() {
   const { user, profile } = useAuth();
-  const { jobs: allJobs, loading: jobsLoading, createJob, updateJob, deleteJob } = useJobs();
+  // Fetch the fields the order list actually needs: who owns/entered it
+  // (sales_person_id, created_by) and the client's source — so the source tag
+  // and owner name render correctly instead of defaulting to "Direct".
+  const { jobs: allJobs, loading: jobsLoading, createJob, updateJob, deleteJob } = useJobs({
+    select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, total_amount, amount_received, payment_status, sales_person_id, created_by, client:clients(id, name, company, source, created_by)'
+  });
   const { categories, createCategory } = useProductCategories();
   const router = useRouter();
   const pathname = usePathname();
   const confirm = useConfirm();
+
+  // All profiles (id -> name/role) so each order can show WHO entered it,
+  // matching the Quotations page. Owner drives commission too.
+  const [allProfiles, setAllProfiles] = useState<{ id: string; full_name: string; role: string }[]>([]);
+  useEffect(() => {
+    supabase.from('profiles').select('id, full_name, role').order('full_name')
+      .then(({ data }) => setAllProfiles(data || []));
+  }, []);
+  const nameFor = (id?: string | null) =>
+    id ? (allProfiles.find(p => p.id === id)?.full_name || 'Unknown') : null;
 
   // Marketing > Orders: show only orders where client came through marketing (source = 'marketing')
   // Sales > Orders: admins see all; marketing staff see only their own
@@ -387,22 +402,26 @@ export default function OrdersPage() {
     }
   };
 
-  // Source tag: shows which channel brought in this client
+  // Source tag: shows which channel brought in this client AND who entered it.
+  // Owner = the salesperson on the job, falling back to whoever created the
+  // job or the client. This is also the person the commission is owed to.
   const getSourceTag = (job: Job) => {
     const clientSource = job.client?.source;
+    const ownerId = job.sales_person_id || (job.client as any)?.created_by || (job as any).created_by;
+    const ownerName = nameFor(ownerId) || undefined;
     if (clientSource === 'marketing') {
-      return { label: '🎯 Marketing', shortName: (job as any).sales_person?.full_name, className: 'bg-violet-100 text-violet-700 border border-violet-200' };
+      return { label: '🎯 Marketing', shortName: ownerName, className: 'bg-violet-100 text-violet-700 border border-violet-200' };
     }
     if (clientSource === 'referral') {
-      return { label: '🤝 Referral', shortName: undefined, className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' };
+      return { label: '🤝 Referral', shortName: ownerName, className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' };
     }
     if (clientSource === 'walk_in') {
-      return { label: '🚶 Walk-in', shortName: undefined, className: 'bg-amber-50 text-amber-700 border border-amber-200' };
+      return { label: '🚶 Walk-in', shortName: ownerName, className: 'bg-amber-50 text-amber-700 border border-amber-200' };
     }
     if (clientSource === 'online') {
-      return { label: '🌐 Online', shortName: undefined, className: 'bg-sky-50 text-sky-700 border border-sky-200' };
+      return { label: '🌐 Online', shortName: ownerName, className: 'bg-sky-50 text-sky-700 border border-sky-200' };
     }
-    return { label: '📋 Direct', shortName: (job as any).sales_person?.full_name, className: 'bg-gray-100 text-gray-500 border border-gray-200' };
+    return { label: '📋 Direct', shortName: ownerName, className: 'bg-gray-100 text-gray-500 border border-gray-200' };
   };
 
   const formatCurrency = (amount: number) => {
@@ -554,8 +573,11 @@ export default function OrdersPage() {
                         {(() => {
                           const tag = getSourceTag(job);
                           return (
-                            <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-md ${tag.className}`}>
-                              {tag.label}
+                            <span className="inline-flex items-center gap-1">
+                              <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-md ${tag.className}`}>
+                                {tag.label}
+                              </span>
+                              {tag.shortName && <span className="text-xs text-gray-400">{tag.shortName}</span>}
                             </span>
                           );
                         })()}
