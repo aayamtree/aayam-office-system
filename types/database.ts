@@ -690,6 +690,12 @@ export interface POSSale extends BaseEntity {
   subtotal: number;
   discount_percent: number;
   discount_amount: number;
+  // GST (retail counter is always GST-billed)
+  gst_rate?: number;
+  gst_amount?: number;
+  cgst_amount?: number;
+  sgst_amount?: number;
+  gstin?: string;
   total_amount: number;
   payment_mode: PaymentMode;
   amount_received: number;
@@ -700,6 +706,11 @@ export interface POSSale extends BaseEntity {
   credit_terms?: string;
   paper_stock_id?: string;
   sheets_used?: number;
+  // Order fulfilment
+  order_type?: 'walkin' | 'pickup';
+  pickup_status?: 'pending' | 'ready' | 'collected';
+  pickup_date?: string;
+  artwork_link?: string;
   notes?: string;
   sold_by?: string;
   items?: POSSaleItem[];

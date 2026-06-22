@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Printer, ShoppingCart, Package, Clock, CheckCircle, AlertTriangle, Calculator, BarChart2, Receipt, X, Loader2, BookOpen, ShoppingBag } from 'lucide-react';
-import { useJobs, usePaperStock, usePOSSales, useCMYKJobLogs, useVendors } from '@/lib/hooks';
+import { Printer, ShoppingCart, Package, Clock, Calculator, Receipt, X, Loader2, BookOpen, ShoppingBag, PauseCircle, PlayCircle, TrendingUp } from 'lucide-react';
+import { useJobs, usePaperStock, usePOSSales, useCMYKJobLogs, useVendors, useCMYKExpenses } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import DriveConnectionStatus from '@/components/drive/DriveConnectionStatus';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -13,18 +13,18 @@ import { toast } from '@/lib/toast';
 
 export default function CMYKPrintPage() {
   const { profile } = useAuth();
-  const { jobs, loading: jobsLoading, refetch: refetchJobs } = useJobs({
+  const { jobs, loading: jobsLoading, refetch: refetchJobs, updateJob } = useJobs({
+    select: 'id, job_number, project_name, client_id, vendor_id, priority, current_stage, quantity, is_on_hold, hold_reason, pre_hold_stage, created_at, order_date, client:clients(id, name, company)',
     orderBy: { column: 'created_at', ascending: false }
   });
   const { stock, loading: stockLoading, refetch: refetchStock } = usePaperStock();
   const { sales, loading: salesLoading } = usePOSSales();
   const { logs, completeJob } = useCMYKJobLogs();
   const { vendors } = useVendors();
+  const { expenses } = useCMYKExpenses();
 
-  // Match vendors flagged as CMYK station (is_cmyk_station = true)
-  const cmykVendorIds = (vendors as any[])
-    .filter(v => v.is_cmyk_station === true)
-    .map(v => v.id);
+  // Vendors flagged as CMYK station
+  const cmykVendorIds = (vendors as any[]).filter(v => v.is_cmyk_station === true).map(v => v.id);
 
   const loading = jobsLoading || stockLoading || salesLoading;
 
@@ -36,21 +36,25 @@ export default function CMYKPrintPage() {
   const [printNotes, setPrintNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // CMYK queue: any job assigned to CMYK vendor that hasn't been dispatched/delivered yet
   const DONE_STAGES = ['finishing', 'quality_check', 'ready', 'dispatched', 'delivered', 'cancelled'];
-  const pendingJobs = jobs.filter(j =>
+  const activeCmykJobs = jobs.filter(j =>
     !DONE_STAGES.includes(j.current_stage) &&
-    cmykVendorIds.length > 0 &&
-    j.vendor_id &&
-    cmykVendorIds.includes(j.vendor_id)
-  ).slice(0, 10);
-  const completedTodayJobs = logs.filter(l => {
-    const d = new Date(l.completed_at || l.created_at);
-    const today = new Date();
-    return d.toDateString() === today.toDateString() && l.status === 'completed';
-  });
-  const lowStockItems = stock.filter(s => s.quantity <= s.reorder_level).slice(0, 5);
-  const todaysSalesTotal = sales.slice(0, 10).reduce((sum, s) => sum + s.total_amount, 0);
+    cmykVendorIds.length > 0 && j.vendor_id && cmykVendorIds.includes(j.vendor_id)
+  );
+  const pendingJobs = activeCmykJobs.filter(j => !(j as any).is_on_hold).slice(0, 12);
+  const onHoldJobs = activeCmykJobs.filter(j => (j as any).is_on_hold);
+
+  const isToday = (d?: string) => d ? new Date(d).toDateString() === new Date().toDateString() : false;
+
+  const completedTodayJobs = logs.filter(l => isToday(l.completed_at || l.created_at) && l.status === 'completed');
+  const lowStockItems = stock.filter(s => s.quantity <= s.reorder_level);
+
+  // Money — today
+  const todaysSales = sales.filter(s => isToday(s.created_at));
+  const todaysSalesTotal = todaysSales.reduce((sum, s) => sum + s.total_amount, 0);
+  const todaysPaperCost = logs.filter(l => isToday(l.completed_at || l.created_at)).reduce((sum, l) => sum + (l.paper_cost || 0), 0);
+  const todaysExpenses = (expenses || []).filter(e => isToday(e.expense_date)).reduce((sum, e) => sum + (e.amount || 0), 0);
+  const netToday = todaysSalesTotal - todaysPaperCost - todaysExpenses;
 
   const selectedPaper = stock.find(p => p.id === selectedPaperId);
   const estimatedCost = selectedPaper && sheetsUsed ? selectedPaper.cost_per_unit * parseInt(sheetsUsed || '0') : 0;
@@ -58,12 +62,36 @@ export default function CMYKPrintPage() {
 
   const formatCurrency = (amount: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 
+  // Turnaround so far — how long the job has been waiting
+  const ageLabel = (d?: string) => {
+    if (!d) return '';
+    const ms = Date.now() - new Date(d).getTime();
+    const h = Math.floor(ms / 3600000);
+    if (h < 1) return 'just now';
+    if (h < 24) return `${h}h`;
+    return `${Math.floor(h / 24)}d`;
+  };
+
   const openPrintModal = (job: any) => {
     setSelectedJob(job);
     setSelectedPaperId('');
     setSheetsUsed('');
     setPrintNotes('');
     setShowPrintModal(true);
+  };
+
+  const handleHold = async (job: any) => {
+    const res = await updateJob(job.id, { is_on_hold: true, pre_hold_stage: job.current_stage } as any);
+    if (res.error) { toast.error('Failed to hold job'); return; }
+    toast.success(`${job.job_number} put on hold`);
+    refetchJobs();
+  };
+
+  const handleResume = async (job: any) => {
+    const res = await updateJob(job.id, { is_on_hold: false } as any);
+    if (res.error) { toast.error('Failed to resume job'); return; }
+    toast.success(`${job.job_number} resumed`);
+    refetchJobs();
   };
 
   const handleMarkPrinted = async () => {
@@ -100,21 +128,12 @@ export default function CMYKPrintPage() {
     }
   };
 
-  const statCards = [
-    { label: 'Recent POS Sales', value: formatCurrency(todaysSalesTotal), change: 'Last 10 sales', icon: ShoppingCart },
-    { label: 'Pending Jobs', value: pendingJobs.length.toString(), change: 'In Queue', icon: Clock },
-    { label: 'Printed Today', value: completedTodayJobs.length.toString(), change: 'Jobs done', icon: CheckCircle },
-    { label: 'Stock Alerts', value: lowStockItems.length.toString(), change: 'Items low', icon: Package },
-  ];
-
   const quickLinks = [
-    { href: '/admin/cmyk-print/retail-pos', icon: ShoppingCart, title: 'Retail POS', sub: 'Quick billing', extra: <span className="text-xs text-muted-foreground">Open Counter →</span> },
-    { href: '/admin/cmyk-print/paper-stock', icon: Package, title: 'Paper Stock', sub: 'Inventory', extra: lowStockItems.length > 0 ? <Badge variant="destructive">{lowStockItems.length} Low</Badge> : <Badge variant="outline">All Stocked</Badge> },
-    { href: '/admin/cmyk-print/cost-calculator', icon: Calculator, title: 'Cost Calculator', sub: 'Paper costing', extra: <span className="text-xs text-muted-foreground">Estimate Costs →</span> },
-    { href: '/admin/cmyk-print/paper-purchases', icon: ShoppingBag, title: 'Paper Purchases', sub: 'Buy from suppliers', extra: <span className="text-xs text-muted-foreground">Record Purchase →</span> },
-    { href: '/admin/cmyk-print/expenses', icon: Receipt, title: 'Expenses', sub: 'Daily costs', extra: <span className="text-xs text-muted-foreground">Record Expenses →</span> },
-    { href: '/admin/cmyk-print/job-log', icon: BookOpen, title: 'Job Log', sub: 'Activity history', extra: <span className="text-xs text-muted-foreground">View Log →</span> },
-    { href: '/admin/cmyk-print/overview', icon: BarChart2, title: 'Monthly Overview', sub: 'Profit & loss', extra: <span className="text-xs text-muted-foreground">View Report →</span> },
+    { href: '/admin/cmyk-print/cost-calculator', icon: Calculator, title: 'Cost Calculator', extra: null },
+    { href: '/admin/cmyk-print/paper-stock', icon: Package, title: 'Paper Stock', extra: lowStockItems.length > 0 ? <Badge variant="destructive" className="text-[10px] px-1.5">{lowStockItems.length} low</Badge> : null },
+    { href: '/admin/cmyk-print/paper-purchases', icon: ShoppingBag, title: 'Purchases', extra: null },
+    { href: '/admin/cmyk-print/expenses', icon: Receipt, title: 'Expenses', extra: null },
+    { href: '/admin/cmyk-print/job-log', icon: BookOpen, title: 'Job Log', extra: null },
   ];
 
   return (
@@ -128,80 +147,127 @@ export default function CMYKPrintPage() {
         <div className="w-fit"><DriveConnectionStatus /></div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat) => (
-          <Card key={stat.label}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{loading ? '...' : stat.value}</div>
-              <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Snapshot line */}
+      <div className="text-sm text-muted-foreground bg-muted rounded-md px-3 py-2 flex flex-wrap gap-x-4 gap-y-1">
+        <span>Sales today <span className="font-semibold text-foreground">{loading ? '…' : formatCurrency(todaysSalesTotal)}</span></span>
+        <span><span className="font-semibold text-foreground">{pendingJobs.length}</span> in queue</span>
+        <span><span className="font-semibold text-foreground">{completedTodayJobs.length}</span> printed</span>
+        <span><span className={`font-semibold ${lowStockItems.length > 0 ? 'text-destructive' : 'text-foreground'}`}>{lowStockItems.length}</span> low on stock</span>
+        <span>net <span className={`font-semibold ${netToday >= 0 ? 'text-green-700' : 'text-destructive'}`}>{loading ? '…' : formatCurrency(netToday)}</span></span>
       </div>
 
-      {/* Quick Links */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-        {quickLinks.map(ql => (
-          <Link key={ql.href} href={ql.href}>
-            <Card className="hover:shadow-sm transition-shadow h-full">
-              <CardHeader className="pb-2">
-                <div className="w-8 h-8 bg-muted rounded-md flex items-center justify-center mb-2">
-                  <ql.icon className="h-4 w-4 text-foreground" />
-                </div>
-                <CardTitle className="text-xs font-medium">{ql.title}</CardTitle>
-                <p className="text-xs text-muted-foreground">{ql.sub}</p>
-              </CardHeader>
-              <CardContent className="pt-0">{ql.extra}</CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
+      {/* THREE PILLARS */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Production */}
+        <Card className="border-primary/30">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2"><Printer className="h-4 w-4" /> Production</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{loading ? '…' : pendingJobs.length}</div>
+            <p className="text-xs text-muted-foreground mb-3">jobs to print</p>
+            <Button size="sm" variant="outline" className="w-full" asChild>
+              <a href="#queue">Open print queue</a>
+            </Button>
+          </CardContent>
+        </Card>
 
-      {/* Pending Jobs + Completed Today */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Pending Jobs — with Start Print button */}
+        {/* Counter */}
         <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2"><ShoppingCart className="h-4 w-4" /> Counter</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{loading ? '…' : formatCurrency(todaysSalesTotal)}</div>
+            <p className="text-xs text-muted-foreground mb-3">{todaysSales.length} sale{todaysSales.length !== 1 ? 's' : ''} today</p>
+            <Button size="sm" className="w-full" asChild>
+              <Link href="/admin/cmyk-print/retail-pos">New bill</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Money */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2"><TrendingUp className="h-4 w-4" /> Money</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${netToday >= 0 ? 'text-green-700' : 'text-destructive'}`}>{loading ? '…' : formatCurrency(netToday)}</div>
+            <p className="text-xs text-muted-foreground mb-3">net today</p>
+            <Button size="sm" variant="outline" className="w-full" asChild>
+              <Link href="/admin/cmyk-print/overview">View P&amp;L</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* LIVE PRINT QUEUE */}
+      <Card id="queue">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-medium">Live Print Queue</CardTitle>
+            <span className="text-xs text-muted-foreground">tap a job to start printing</span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {pendingJobs.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <p className="text-sm">No jobs assigned to CMYK station.</p>
+                <p className="text-xs mt-1">Go to <span className="font-medium">Jobs → Send to Printer → CMYK Station</span> to assign jobs.</p>
+              </div>
+            ) : pendingJobs.map((job) => (
+              <div key={job.id} className={`p-3 rounded-md border ${job.priority === 'urgent' ? 'border-destructive/30 bg-destructive/5' : ''}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{job.job_number}</span>
+                    {job.priority === 'urgent' && <Badge variant="destructive" className="text-xs">Urgent</Badge>}
+                    <span className="text-xs text-muted-foreground flex items-center gap-0.5"><Clock className="w-3 h-3" />{ageLabel((job as any).order_date || job.created_at)}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Badge variant="outline" className="text-xs">{job.current_stage}</Badge>
+                    <Button size="sm" variant="ghost" className="h-7 text-xs px-2" onClick={() => handleHold(job)}>
+                      <PauseCircle className="w-3 h-3 mr-1" /> Hold
+                    </Button>
+                    <Button size="sm" className="h-7 text-xs px-2" onClick={() => openPrintModal(job)}>
+                      <Printer className="w-3 h-3 mr-1" /> Print
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">{job.client?.company || job.client?.name}</p>
+                <p className="text-xs text-muted-foreground">{job.project_name} • {job.quantity}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ON HOLD */}
+      {onHoldJobs.length > 0 && (
+        <Card className="border-amber-200 bg-amber-50/40">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium">Pending Print Jobs</CardTitle>
-              <span className="text-xs text-muted-foreground">Tap to start printing</span>
-            </div>
+            <CardTitle className="text-sm font-medium flex items-center gap-2"><PauseCircle className="h-4 w-4 text-amber-600" /> On Hold — {onHoldJobs.length}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {pendingJobs.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground">
-                  <p className="text-sm">No jobs assigned to CMYK station.</p>
-                  <p className="text-xs mt-1">Go to <span className="font-medium">Jobs → Send to Printer → CMYK Station</span> to assign jobs.</p>
-                </div>
-              ) : pendingJobs.map((job) => (
-                <div key={job.id} className={`p-3 rounded-md border ${job.priority === 'urgent' ? 'border-destructive/30 bg-destructive/5' : ''}`}>
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{job.job_number}</span>
-                      {job.priority === 'urgent' && <Badge variant="destructive" className="text-xs">Urgent</Badge>}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">{job.current_stage}</Badge>
-                      <Button size="sm" className="h-7 text-xs px-2" onClick={() => openPrintModal(job)}>
-                        <Printer className="w-3 h-3 mr-1" /> Print
-                      </Button>
-                    </div>
+              {onHoldJobs.map(job => (
+                <div key={job.id} className="flex items-center justify-between p-3 rounded-md border bg-background">
+                  <div>
+                    <p className="text-sm font-medium">{job.job_number}</p>
+                    <p className="text-xs text-muted-foreground">{job.client?.company || job.client?.name} • {job.project_name}</p>
                   </div>
-                  <p className="text-xs text-muted-foreground">{job.client?.company || job.client?.name}</p>
-                  <p className="text-xs text-muted-foreground">{job.project_name} • {job.quantity}</p>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleResume(job)}>
+                    <PlayCircle className="w-3 h-3 mr-1" /> Resume
+                  </Button>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
+      )}
 
-        {/* Completed Today */}
+      {/* Completed Today + Recent Sales */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -231,35 +297,47 @@ export default function CMYKPrintPage() {
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium">Recent POS Sales</CardTitle>
+              <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
+                <Link href="/admin/cmyk-print/retail-pos">View All</Link>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {sales.length === 0 ? <p className="text-center text-muted-foreground py-4 text-sm">No recent sales.</p> : sales.slice(0, 5).map((sale) => (
+                <div key={sale.id} className="flex items-center justify-between p-3 rounded-md border hover:bg-muted/50 transition-colors">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{sale.sale_number}</span>
+                      {(sale as any).order_type === 'pickup' && <Badge variant="outline" className="text-[10px] px-1.5">Pickup</Badge>}
+                      <span className="text-xs text-muted-foreground">{new Date(sale.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{sale.customer_name || 'Walk-in'}</p>
+                  </div>
+                  <p className="text-sm font-semibold">{formatCurrency(sale.total_amount)}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Recent Sales */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium">Recent POS Sales</CardTitle>
-            <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
-              <Link href="/admin/cmyk-print/retail-pos">View All</Link>
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {sales.length === 0 ? <p className="text-center text-muted-foreground py-4 text-sm">No recent sales.</p> : sales.slice(0, 5).map((sale) => (
-              <div key={sale.id} className="flex items-center justify-between p-3 rounded-md border hover:bg-muted/50 transition-colors">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{sale.sale_number}</span>
-                    <span className="text-xs text-muted-foreground">{new Date(sale.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{sale.customer_name || 'Walk-in'}</p>
-                </div>
-                <p className="text-sm font-semibold">{formatCurrency(sale.total_amount)}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* TOOLS STRIP */}
+      <div className="flex flex-wrap gap-2">
+        {quickLinks.map(ql => (
+          <Link key={ql.href} href={ql.href}
+            className="flex items-center gap-2 px-3 py-2 rounded-md border bg-background hover:bg-muted text-sm transition-colors">
+            <ql.icon className="h-4 w-4 text-muted-foreground" />
+            <span>{ql.title}</span>
+            {ql.extra}
+          </Link>
+        ))}
+      </div>
 
       {/* Stock Alert */}
       {lowStockItems.length > 0 && (
@@ -268,7 +346,7 @@ export default function CMYKPrintPage() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Package className="h-4 w-4" />
-                Low Stock Alert — {lowStockItems.length} item{lowStockItems.length > 1 ? 's' : ''} need restock
+                Low Stock — {lowStockItems.length} item{lowStockItems.length > 1 ? 's' : ''} need restock
               </CardTitle>
               <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
                 <Link href="/admin/cmyk-print/paper-stock">Manage Stock</Link>
@@ -277,7 +355,7 @@ export default function CMYKPrintPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {lowStockItems.map((item, idx) => (
+              {lowStockItems.slice(0, 6).map((item, idx) => (
                 <div key={idx} className="p-3 rounded-md bg-background border">
                   <p className="text-sm font-medium">{item.name}</p>
                   <p className="text-xs text-destructive">{item.quantity} {item.unit} left <span className="text-muted-foreground ml-1">(min: {item.reorder_level})</span></p>
@@ -305,13 +383,11 @@ export default function CMYKPrintPage() {
             </div>
 
             <div className="p-4 space-y-4">
-              {/* Qty reminder */}
               <div className="bg-muted rounded-md px-3 py-2 text-xs text-muted-foreground">
                 Order qty: <span className="font-semibold text-foreground">{selectedJob.quantity}</span>
                 {selectedJob.project_name && <> · {selectedJob.project_name}</>}
               </div>
 
-              {/* Paper selector */}
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1">Select Paper *</label>
                 {stock.length === 0 ? (
@@ -329,7 +405,6 @@ export default function CMYKPrintPage() {
                 )}
               </div>
 
-              {/* Paper info */}
               {selectedPaper && (
                 <div className="grid grid-cols-3 gap-2 bg-muted rounded-md p-3 text-xs">
                   <div><p className="text-muted-foreground">In Stock</p><p className="font-semibold">{selectedPaper.quantity} {selectedPaper.unit}</p></div>
@@ -338,7 +413,6 @@ export default function CMYKPrintPage() {
                 </div>
               )}
 
-              {/* Sheets used */}
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1">Sheets Used *</label>
                 <input type="number" min="1" placeholder="e.g. 25" value={sheetsUsed || ''}
@@ -349,7 +423,6 @@ export default function CMYKPrintPage() {
                 )}
               </div>
 
-              {/* Notes */}
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1">Notes (optional)</label>
                 <input type="text" placeholder="Any remarks..." value={printNotes}

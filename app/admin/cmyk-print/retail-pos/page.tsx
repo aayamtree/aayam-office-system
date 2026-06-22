@@ -62,6 +62,12 @@ export default function RetailPOSPage() {
   const [amountReceived, setAmountReceived] = useState('');
   const [discount, setDiscount] = useState(0);
 
+  // GST (retail counter is always GST-billed), order type & artwork
+  const [gstRate, setGstRate] = useState(18);
+  const [gstin, setGstin] = useState('');
+  const [orderType, setOrderType] = useState<'walkin' | 'pickup'>('walkin');
+  const [artworkLink, setArtworkLink] = useState('');
+
   // Paper & Credit fields
   const [selectedPaperStockId, setSelectedPaperStockId] = useState('');
   const [sheetsUsed, setSheetsUsed] = useState('');
@@ -110,7 +116,11 @@ export default function RetailPOSPage() {
 
   const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
   const discountAmount = (subtotal * discount) / 100;
-  const grandTotal = subtotal - discountAmount;
+  const taxableAmount = subtotal - discountAmount;
+  const gstAmount = (taxableAmount * gstRate) / 100;
+  const cgstAmount = gstAmount / 2;
+  const sgstAmount = gstAmount / 2;
+  const grandTotal = taxableAmount + gstAmount;
 
   // Payment calculation
   const receivedAmt = parseFloat(amountReceived || '0');
@@ -177,6 +187,9 @@ export default function RetailPOSPage() {
     setCustomerName('');
     setCustomerPhone('');
     setDiscount(0);
+    setGstin('');
+    setOrderType('walkin');
+    setArtworkLink('');
     setAmountReceived('');
     setSelectedPaperStockId('');
     setSheetsUsed('');
@@ -200,6 +213,14 @@ export default function RetailPOSPage() {
         subtotal,
         discount_percent: discount,
         discount_amount: discountAmount,
+        gst_rate: gstRate,
+        gst_amount: gstAmount,
+        cgst_amount: cgstAmount,
+        sgst_amount: sgstAmount,
+        gstin: gstin || undefined,
+        order_type: orderType,
+        pickup_status: orderType === 'pickup' ? 'pending' : undefined,
+        artwork_link: artworkLink || undefined,
         total_amount: grandTotal,
         payment_mode: paymentMethod,
         amount_received: paidAmount,
@@ -249,6 +270,10 @@ export default function RetailPOSPage() {
       subtotal,
       discountPercent: discount,
       discountAmount,
+      gstRate,
+      cgstAmount,
+      sgstAmount,
+      gstin: gstin || undefined,
       grandTotal,
       paymentMode: paymentMethod,
       amountReceived: parseFloat(amountReceived || '0') || grandTotal,
@@ -383,6 +408,29 @@ export default function RetailPOSPage() {
                 className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
             </div>
 
+            {/* GSTIN + Artwork link */}
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <input type="text" placeholder="GSTIN (optional)" value={gstin}
+                onChange={(e) => setGstin(e.target.value.toUpperCase())}
+                className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
+              <input type="text" placeholder="Artwork link / note" value={artworkLink}
+                onChange={(e) => setArtworkLink(e.target.value)}
+                className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
+            </div>
+
+            {/* Order type: walk-in vs later pickup */}
+            <div className="mt-2 grid grid-cols-2 gap-2 bg-gray-100 p-1 rounded-md">
+              {[
+                { id: 'walkin', label: 'Instant Walk-in' },
+                { id: 'pickup', label: 'Later Pickup' },
+              ].map(ot => (
+                <button key={ot.id} type="button" onClick={() => setOrderType(ot.id as 'walkin' | 'pickup')}
+                  className={`py-1.5 rounded-md text-sm font-medium transition-colors ${orderType === ot.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                  {ot.label}
+                </button>
+              ))}
+            </div>
+
             {/* Paper Selection */}
             <div className="mt-2 grid grid-cols-2 gap-2">
               <select value={selectedPaperStockId} onChange={e => setSelectedPaperStockId(e.target.value)}
@@ -445,6 +493,20 @@ export default function RetailPOSPage() {
                 </div>
               </div>
               {discount > 0 && <div className="flex justify-between text-sm text-gray-500"><span>Discount Amount</span><span>-{formatCurrency(discountAmount)}</span></div>}
+              <div className="flex justify-between items-center text-sm pt-2 border-t">
+                <span>Taxable Value</span><span>{formatCurrency(taxableAmount)}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="flex items-center gap-1">
+                  GST
+                  <input type="number" value={gstRate || ''} min="0" max="28"
+                    onChange={(e) => setGstRate(Math.min(28, parseFloat(e.target.value) || 0))}
+                    className="w-12 px-1.5 py-0.5 border rounded text-right text-xs focus:outline-none focus:ring-2 focus:ring-gray-400" />%
+                </span>
+                <span>{formatCurrency(gstAmount)}</span>
+              </div>
+              <div className="flex justify-between text-xs text-gray-500"><span>CGST ({(gstRate / 2)}%)</span><span>{formatCurrency(cgstAmount)}</span></div>
+              <div className="flex justify-between text-xs text-gray-500"><span>SGST ({(gstRate / 2)}%)</span><span>{formatCurrency(sgstAmount)}</span></div>
               <div className="flex justify-between text-section pt-2 border-t"><span>Grand Total</span><span className="text-primary">{formatCurrency(grandTotal)}</span></div>
             </div>
             <button onClick={() => setShowPaymentModal(true)} disabled={cart.length === 0}

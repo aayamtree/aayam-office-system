@@ -133,6 +133,10 @@ export interface ReceiptData {
   subtotal: number;
   discountPercent: number;
   discountAmount: number;
+  gstRate?: number;
+  cgstAmount?: number;
+  sgstAmount?: number;
+  gstin?: string;
   grandTotal: number;
   
   // Payment
@@ -177,7 +181,12 @@ export const ReceiptPDF = ({ data }: { data: ReceiptData }) => (
           {data.customerPhone && <Text>{data.customerPhone}</Text>}
         </View>
       )}
-      
+      {data.gstin && (
+        <View style={styles.infoRow}>
+          <Text>GSTIN: {data.gstin}</Text>
+        </View>
+      )}
+
       <View style={styles.divider} />
       
       {/* Items Table */}
@@ -212,6 +221,18 @@ export const ReceiptPDF = ({ data }: { data: ReceiptData }) => (
             <Text>Discount ({data.discountPercent}%):</Text>
             <Text>-Rs.{data.discountAmount.toFixed(2)}</Text>
           </View>
+        )}
+        {(data.cgstAmount ?? 0) > 0 && (
+          <>
+            <View style={styles.totalRow}>
+              <Text>CGST ({(data.gstRate ?? 0) / 2}%):</Text>
+              <Text>Rs.{(data.cgstAmount ?? 0).toFixed(2)}</Text>
+            </View>
+            <View style={styles.totalRow}>
+              <Text>SGST ({(data.gstRate ?? 0) / 2}%):</Text>
+              <Text>Rs.{(data.sgstAmount ?? 0).toFixed(2)}</Text>
+            </View>
+          </>
         )}
         <View style={styles.grandTotal}>
           <Text>TOTAL:</Text>
