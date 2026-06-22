@@ -547,6 +547,7 @@ export default function QuotationsPage() {
       clientAddress: q.client?.address,
       clientPhone: q.client?.phone,
       clientEmail: q.client?.email,
+      clientState: (q.client as any)?.state || (q.lead as any)?.state,
       items: q.items?.map(i => ({
         description: i.description,
         quantity: i.quantity,
@@ -556,6 +557,7 @@ export default function QuotationsPage() {
       subtotal: q.subtotal,
       taxAmount: q.gst_amount,
       totalAmount: q.total_amount,
+      gstRate: q.items?.[0]?.gst_rate ?? 18,
       terms: q.terms,
       notes: q.notes
     };

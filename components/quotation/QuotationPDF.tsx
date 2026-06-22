@@ -215,6 +215,7 @@ export interface QuotationData {
     clientCompany?: string;
     clientAddress?: string;
     clientPhone?: string;
+    clientState?: string;
 
     // Items
     items: QuotationItem[];
@@ -223,6 +224,7 @@ export interface QuotationData {
     subtotal: number;
     taxAmount: number;
     totalAmount: number;
+    gstRate?: number;
 
     // Terms
     terms?: string;
@@ -253,8 +255,10 @@ export const QuotationPDF = ({ data }: { data: QuotationData }) => (
             <View style={styles.infoSection}>
                 <View style={styles.infoBox}>
                     <Text style={styles.label}>Quotation For</Text>
-                    <Text style={styles.clientName}>{data.clientName}</Text>
-                    {data.clientCompany && <Text style={styles.value}>{data.clientCompany}</Text>}
+                    <Text style={styles.clientName}>{data.clientCompany || data.clientName}</Text>
+                    {data.clientCompany && data.clientName && data.clientCompany.trim().toLowerCase() !== data.clientName.trim().toLowerCase() && (
+                        <Text style={styles.value}>{data.clientName}</Text>
+                    )}
                     <Text style={styles.companyDetails}>
                         {data.clientAddress || ''}
                         {data.clientPhone ? `\nPhone: ${data.clientPhone}` : ''}
@@ -301,10 +305,43 @@ export const QuotationPDF = ({ data }: { data: QuotationData }) => (
                         <Text style={styles.totalLabel}>Subtotal</Text>
                         <Text style={styles.totalValue}>{formatCurrency(data.subtotal)}</Text>
                     </View>
-                    <View style={styles.totalRow}>
-                        <Text style={styles.totalLabel}>GST / Tax</Text>
-                        <Text style={styles.totalValue}>{formatCurrency(data.taxAmount)}</Text>
-                    </View>
+                    {(() => {
+                        const rate = data.gstRate ?? (data.subtotal > 0 ? Math.round((data.taxAmount / data.subtotal) * 100) : 0);
+                        // Intra-state (same state as seller) => CGST + SGST. Inter-state => IGST.
+                        const sellerState = (data.companyState || '').trim().toLowerCase();
+                        const buyerState = (data.clientState || '').trim().toLowerCase();
+                        const interState = sellerState && buyerState && sellerState !== buyerState;
+
+                        if (rate === 0) {
+                            return (
+                                <View style={styles.totalRow}>
+                                    <Text style={styles.totalLabel}>GST @ 0%</Text>
+                                    <Text style={styles.totalValue}>{formatCurrency(data.taxAmount)}</Text>
+                                </View>
+                            );
+                        }
+                        if (interState) {
+                            return (
+                                <View style={styles.totalRow}>
+                                    <Text style={styles.totalLabel}>IGST @ {rate}%</Text>
+                                    <Text style={styles.totalValue}>{formatCurrency(data.taxAmount)}</Text>
+                                </View>
+                            );
+                        }
+                        const half = rate / 2;
+                        return (
+                            <>
+                                <View style={styles.totalRow}>
+                                    <Text style={styles.totalLabel}>CGST @ {half}%</Text>
+                                    <Text style={styles.totalValue}>{formatCurrency(data.taxAmount / 2)}</Text>
+                                </View>
+                                <View style={styles.totalRow}>
+                                    <Text style={styles.totalLabel}>SGST @ {half}%</Text>
+                                    <Text style={styles.totalValue}>{formatCurrency(data.taxAmount / 2)}</Text>
+                                </View>
+                            </>
+                        );
+                    })()}
                     <View style={styles.grandTotalRow}>
                         <Text style={styles.grandTotalLabel}>Grand Total</Text>
                         <Text style={styles.grandTotalValue}>{formatCurrency(data.totalAmount)}</Text>
