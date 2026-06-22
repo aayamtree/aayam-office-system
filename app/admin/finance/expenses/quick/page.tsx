@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, Plus, Check, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Plus, Check, AlertCircle, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-const EXPENSE_CATEGORIES = [
+// Fallback list only used if the expense_categories table can't be loaded
+const FALLBACK_CATEGORIES = [
     'Office Supplies',
     'Utilities',
     'Travel',
@@ -26,6 +27,10 @@ export default function QuickExpensePage() {
     const [bankAccounts, setBankAccounts] = useState<any[]>([]);
     const [cashAccounts, setCashAccounts] = useState<any[]>([]);
     const [recentExpenses, setRecentExpenses] = useState<any[]>([]);
+    const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+    const [showAddCategory, setShowAddCategory] = useState(false);
+    const [newCategory, setNewCategory] = useState('');
+    const [addingCategory, setAddingCategory] = useState(false);
 
     const [formData, setFormData] = useState({
         category: '',
@@ -43,7 +48,51 @@ export default function QuickExpensePage() {
         loadRecentExpenses();
     }, []);
 
+    const loadExpenseCategories = async () => {
+        const { data, error } = await supabase
+            .from('expense_categories')
+            .select('id, name')
+            .eq('is_active', true)
+            .order('name');
+        if (error || !data || data.length === 0) {
+            setCategories(FALLBACK_CATEGORIES.map(n => ({ id: n, name: n })));
+        } else {
+            setCategories(data);
+        }
+    };
+
+    const handleAddCategory = async () => {
+        const name = newCategory.trim();
+        if (!name) return;
+        // Avoid duplicates (case-insensitive)
+        const existing = categories.find(c => c.name.toLowerCase() === name.toLowerCase());
+        if (existing) {
+            setFormData(prev => ({ ...prev, category: existing.name }));
+            setNewCategory('');
+            setShowAddCategory(false);
+            return;
+        }
+        setAddingCategory(true);
+        try {
+            const { data, error } = await supabase
+                .from('expense_categories')
+                .insert([{ name, is_active: true }])
+                .select('id, name')
+                .single();
+            if (error) throw error;
+            setCategories(prev => [...prev, { id: data.id, name: data.name }].sort((a, b) => a.name.localeCompare(b.name)));
+            setFormData(prev => ({ ...prev, category: data.name }));
+            setNewCategory('');
+            setShowAddCategory(false);
+        } catch (err: any) {
+            setError(err.message || 'Failed to add category');
+        } finally {
+            setAddingCategory(false);
+        }
+    };
+
     const loadData = async () => {
+        loadExpenseCategories();
         // Load vendors
         const { data: vendorData } = await supabase
             .from('vendors')
@@ -204,15 +253,50 @@ export default function QuickExpensePage() {
                                     </label>
                                     <select
                                         value={formData.category}
-                                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                        onChange={(e) => {
+                                            const v = e.target.value;
+                                            if (v === '__add__') { setShowAddCategory(true); return; }
+                                            setFormData({ ...formData, category: v });
+                                        }}
                                         className="w-full px-3 py-2.5 border rounded-md focus:ring-2 focus:ring-gray-400 text-sm"
                                         required
                                     >
                                         <option value="">Select category</option>
-                                        {EXPENSE_CATEGORIES.map((cat) => (
-                                            <option key={cat} value={cat}>{cat}</option>
+                                        {categories.map((cat) => (
+                                            <option key={cat.id} value={cat.name}>{cat.name}</option>
                                         ))}
+                                        <option value="__add__">+ Add new category…</option>
                                     </select>
+
+                                    {showAddCategory && (
+                                        <div className="mt-2 flex gap-2">
+                                            <input
+                                                type="text"
+                                                autoFocus
+                                                value={newCategory}
+                                                onChange={(e) => setNewCategory(e.target.value)}
+                                                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCategory(); } }}
+                                                placeholder="New category name"
+                                                className="flex-1 px-3 py-2 border rounded-md focus:ring-2 focus:ring-gray-400 text-sm"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={handleAddCategory}
+                                                disabled={addingCategory || !newCategory.trim()}
+                                                className="px-3 py-2 bg-gray-900 text-white text-sm rounded-md hover:bg-gray-700 disabled:opacity-40"
+                                            >
+                                                {addingCategory ? '...' : 'Add'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => { setShowAddCategory(false); setNewCategory(''); }}
+                                                className="px-2 py-2 border rounded-md text-gray-500 hover:bg-gray-50 text-sm"
+                                                aria-label="Cancel add category"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Amount */}
