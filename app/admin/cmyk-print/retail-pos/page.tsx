@@ -21,12 +21,15 @@ interface CartItem {
   name: string;
   price: number;     // unit rate
   qty: number;
-  discount?: number; // per-line discount (flat ₹ off this line)
+  discount?: number; // per-line discount value
+  discountType?: 'flat' | 'pct'; // ₹ off or % off this line
   kind?: 'product' | 'charge' | 'item';
 }
 
-// Per-line total after the line's own discount
-const lineTotal = (i: CartItem) => Math.max(0, i.qty * i.price - (i.discount || 0));
+// Per-line discount amount (₹ or %) and resulting line total
+const lineDiscountAmount = (i: CartItem) =>
+  i.discountType === 'pct' ? (i.qty * i.price) * (i.discount || 0) / 100 : (i.discount || 0);
+const lineTotal = (i: CartItem) => Math.max(0, i.qty * i.price - lineDiscountAmount(i));
 
 // Quick-add services for a print shop (besides catalog products)
 const CHARGE_PRESETS = ['Print', 'Die Cut', 'Handling', 'Delivery', 'Lamination', 'Design', 'Binding'];
@@ -107,23 +110,26 @@ export default function RetailPOSPage() {
     if (existing) {
       setCart(cart.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item));
     } else {
-      setCart([...cart, { id: product.id, name: product.name, price: product.price, qty: 1, discount: 0, kind: 'product' }]);
+      setCart([...cart, { id: product.id, name: product.name, price: product.price, qty: 1, discount: 0, discountType: 'flat', kind: 'product' }]);
     }
   };
 
   // Quick-add a named service line (Print, Die Cut, Delivery, …) — rate entered in the cart
   const addCharge = (name: string) => {
-    setCart(prev => [...prev, { id: newId('charge'), name, price: 0, qty: 1, discount: 0, kind: 'charge' }]);
+    setCart(prev => [...prev, { id: newId('charge'), name, price: 0, qty: 1, discount: 0, discountType: 'flat', kind: 'charge' }]);
   };
 
   // Add a blank, fully editable item/service line
   const addCustomItem = () => {
-    setCart(prev => [...prev, { id: newId('item'), name: '', price: 0, qty: 1, discount: 0, kind: 'item' }]);
+    setCart(prev => [...prev, { id: newId('item'), name: '', price: 0, qty: 1, discount: 0, discountType: 'flat', kind: 'item' }]);
   };
 
   // Generic per-line editor (name / qty / rate / per-line discount)
   const updateLine = (id: string, field: 'name' | 'qty' | 'price' | 'discount', value: string | number) => {
     setCart(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+  };
+  const toggleLineDiscountType = (id: string) => {
+    setCart(prev => prev.map(item => item.id === id ? { ...item, discountType: item.discountType === 'pct' ? 'flat' : 'pct' } : item));
   };
 
   const updateQty = (id: string, delta: number) => {
@@ -550,7 +556,11 @@ export default function RetailPOSPage() {
                   <input type="number" min="0" value={item.price || ''} placeholder="rate"
                     onChange={e => updateLine(item.id, 'price', parseFloat(e.target.value) || 0)}
                     className="w-16 px-1.5 py-1 border rounded text-right focus:outline-none focus:ring-2 focus:ring-gray-400" />
-                  <span className="text-gray-400">− ₹</span>
+                  <button type="button" onClick={() => toggleLineDiscountType(item.id)}
+                    title="Toggle ₹ / % discount"
+                    className="text-gray-400 hover:text-gray-700 w-6 text-center border rounded py-1">
+                    −{item.discountType === 'pct' ? '%' : '₹'}
+                  </button>
                   <input type="number" min="0" value={item.discount || ''} placeholder="disc"
                     onChange={e => updateLine(item.id, 'discount', parseFloat(e.target.value) || 0)}
                     className="w-14 px-1.5 py-1 border rounded text-right focus:outline-none focus:ring-2 focus:ring-gray-400" />
