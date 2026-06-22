@@ -303,6 +303,13 @@ export interface InvoiceData {
   clientPhone: string;
   clientGstin?: string;
 
+  // Delivery / shipping address (shown as "Ship To" when different from billing)
+  deliverySameAsBilling?: boolean;
+  deliveryAddress?: string;
+  deliveryCity?: string;
+  deliveryState?: string;
+  deliveryPincode?: string;
+
   // Items
   items: InvoiceItem[];
 
@@ -368,6 +375,15 @@ export const InvoicePDF = ({ data }: { data: InvoiceData }) => (
             Phone: {data.clientPhone}
             {data.clientGstin && `\nGSTIN: ${data.clientGstin}`}
           </Text>
+          {!data.deliverySameAsBilling && data.deliveryAddress ? (
+            <View style={{ marginTop: 8 }}>
+              <Text style={styles.label}>Ship To</Text>
+              <Text style={styles.companyDetails}>
+                {data.deliveryAddress}{'\n'}
+                {[data.deliveryCity, data.deliveryState, data.deliveryPincode].filter(Boolean).join(', ')}
+              </Text>
+            </View>
+          ) : null}
         </View>
         <View style={styles.infoBox}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>

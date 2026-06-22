@@ -10,6 +10,8 @@ const ALLOWED_FIELDS = [
     'city', 'state', 'pincode', 'client_type', 'credit_limit', 'notes',
     'is_active', 'brand_name', 'source', 'opening_balance',
     'opening_balance_date', 'opening_balance_type', 'source_lead_id',
+    'delivery_same_as_billing', 'delivery_address', 'delivery_city',
+    'delivery_state', 'delivery_pincode',
 ] as const;
 
 // Create a client. The insert runs with the service role on the server so it

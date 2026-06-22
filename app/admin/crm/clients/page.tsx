@@ -21,6 +21,16 @@ import WhatsAppButton from '@/components/shared/WhatsAppButton';
 import { logActivity } from '@/lib/logActivity';
 import { supabase } from '@/lib/supabase';
 
+// Indian states + UTs for billing/delivery address dropdowns
+const INDIAN_STATES = [
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat',
+  'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra',
+  'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim',
+  'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Delhi',
+  'Jammu and Kashmir', 'Ladakh', 'Puducherry', 'Chandigarh', 'Andaman and Nicobar Islands',
+  'Dadra and Nagar Haveli and Daman and Diu', 'Lakshadweep',
+];
+
 // Sub-component: Telegram Linking for a client
 function TelegramClientSection({ client, onUpdated }: { client: any; onUpdated: (chatId: string, username: string) => void }) {
   const [manualChatId, setManualChatId] = useState('');
@@ -211,7 +221,10 @@ export default function ClientsPage() {
   }, []);
 
   const [formData, setFormData] = useState({
-    name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat',
+    name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', pincode: '',
+    // Delivery / shipping address
+    delivery_same_as_billing: true,
+    delivery_address: '', delivery_city: '', delivery_state: 'Gujarat', delivery_pincode: '',
     is_active: true, brand_name: '',
     // Marketing ownership fields (admin only)
     source: 'direct' as string,
@@ -240,7 +253,7 @@ export default function ClientsPage() {
   });
 
   const handleAddNew = () => {
-    setFormData({ name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', is_active: true, brand_name: '', source: 'direct', assigned_marketing_user_id: '', opening_balance: '', opening_balance_date: '', opening_balance_type: 'debit' });
+    setFormData({ name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', pincode: '', delivery_same_as_billing: true, delivery_address: '', delivery_city: '', delivery_state: 'Gujarat', delivery_pincode: '', is_active: true, brand_name: '', source: 'direct', assigned_marketing_user_id: '', opening_balance: '', opening_balance_date: '', opening_balance_type: 'debit' });
     setIsEditing(false);
     setSelectedClient(null);
     setEditingClientBrands([]);
@@ -258,6 +271,12 @@ export default function ClientsPage() {
       address: client.address || '',
       city: client.city || '',
       state: client.state || 'Gujarat',
+      pincode: client.pincode || '',
+      delivery_same_as_billing: (client as any).delivery_same_as_billing ?? true,
+      delivery_address: (client as any).delivery_address || '',
+      delivery_city: (client as any).delivery_city || '',
+      delivery_state: (client as any).delivery_state || 'Gujarat',
+      delivery_pincode: (client as any).delivery_pincode || '',
       is_active: client.is_active,
       brand_name: client.brand_name || '',
       source: (client as any).source || 'direct',
@@ -304,8 +323,12 @@ export default function ClientsPage() {
     }
     setSaving(true);
     try {
+      // When delivery = billing, mirror billing values into the delivery fields
+      const deliveryFields = formData.delivery_same_as_billing
+        ? { delivery_same_as_billing: true, delivery_address: formData.address, delivery_city: formData.city, delivery_state: formData.state, delivery_pincode: formData.pincode }
+        : { delivery_same_as_billing: false, delivery_address: formData.delivery_address, delivery_city: formData.delivery_city, delivery_state: formData.delivery_state, delivery_pincode: formData.delivery_pincode };
       if (isEditing && selectedClient) {
-        const updatePayload: any = { ...formData };
+        const updatePayload: any = { ...formData, ...deliveryFields };
         // Admin can change source + marketing person
         if (profile?.role === 'admin') {
           updatePayload.source = formData.source;
@@ -339,6 +362,7 @@ export default function ClientsPage() {
         // Marketing-sourced clients should ONLY come through lead→client conversion.
         const newClient: any = await createClient({
           ...formData,
+          ...deliveryFields,
           client_type: 'regular',
           credit_limit: 0,
           created_by: profile?.id,
@@ -809,8 +833,52 @@ export default function ClientsPage() {
                 </div>
                 <p className="text-xs text-gray-400 mt-1">Type brand name and press Enter or click Add</p>
               </div>
-              <div><label className="block text-sm font-medium mb-1 text-gray-700">Address</label><textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" rows={2} /></div>
-              <div className="grid grid-cols-2 gap-2 md:gap-4"><div><label className="block text-sm font-medium mb-1 text-gray-700">City</label><input type="text" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" /></div><div><label className="block text-sm font-medium mb-1 text-gray-700">Status</label><select value={formData.is_active ? 'active' : 'inactive'} onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'active' })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div>
+              {/* Shared list of Indian states for billing + delivery */}
+              <datalist id="indian-states-crm">
+                {INDIAN_STATES.map(s => <option key={s} value={s} />)}
+              </datalist>
+
+              {/* ── Billing Address ── */}
+              <div>
+                <label className="block text-sm font-semibold mb-1 text-gray-700">Billing Address</label>
+                <textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" rows={2} placeholder="Street, area, landmark" />
+              </div>
+              <div className="grid grid-cols-3 gap-2 md:gap-3">
+                <div><label className="block text-sm font-medium mb-1 text-gray-700">City</label><input type="text" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" /></div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">State</label>
+                  <input list="indian-states-crm" type="text" value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" placeholder="Select state" />
+                </div>
+                <div><label className="block text-sm font-medium mb-1 text-gray-700">Pincode</label><input type="text" value={formData.pincode} onChange={(e) => setFormData({ ...formData, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" maxLength={6} /></div>
+              </div>
+              {formData.state.trim().toLowerCase() === 'gujarat' ? (
+                <p className="text-xs text-emerald-600">✓ Gujarat client → CGST + SGST will apply on tax invoices.</p>
+              ) : formData.state.trim() ? (
+                <p className="text-xs text-sky-600">↗ {formData.state} (other state) → IGST will apply on tax invoices.</p>
+              ) : null}
+
+              {/* ── Delivery / Shipping Address ── */}
+              <div className="border border-gray-200 rounded-md p-3 bg-gray-50 space-y-3">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer">
+                  <input type="checkbox" checked={formData.delivery_same_as_billing} onChange={(e) => setFormData({ ...formData, delivery_same_as_billing: e.target.checked })} className="rounded border-gray-300" />
+                  Delivery address same as billing
+                </label>
+                {!formData.delivery_same_as_billing && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium mb-1 text-gray-600">Delivery Address</label>
+                      <textarea value={formData.delivery_address} onChange={(e) => setFormData({ ...formData, delivery_address: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" rows={2} placeholder="Where goods are shipped (if different)" />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 md:gap-3">
+                      <div><label className="block text-xs font-medium mb-1 text-gray-600">City</label><input type="text" value={formData.delivery_city} onChange={(e) => setFormData({ ...formData, delivery_city: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" /></div>
+                      <div><label className="block text-xs font-medium mb-1 text-gray-600">State</label><input list="indian-states-crm" type="text" value={formData.delivery_state} onChange={(e) => setFormData({ ...formData, delivery_state: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" /></div>
+                      <div><label className="block text-xs font-medium mb-1 text-gray-600">Pincode</label><input type="text" value={formData.delivery_pincode} onChange={(e) => setFormData({ ...formData, delivery_pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" maxLength={6} /></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div><label className="block text-sm font-medium mb-1 text-gray-700">Status</label><select value={formData.is_active ? 'active' : 'inactive'} onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'active' })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
 
               {/* Opening Balance Section */}
               <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-3">
@@ -922,7 +990,10 @@ export default function ClientsPage() {
               <div className="space-y-2 p-3 bg-gray-50 rounded-md">
                 <div className="flex items-center gap-3"><Phone className="w-4 h-4 text-gray-400" /><span className="text-gray-700">{selectedClient.phone}</span><WhatsAppButton phone={selectedClient.phone} /></div>
                 {selectedClient.email && <div className="flex items-center gap-3"><Mail className="w-4 h-4 text-gray-400" /><span className="text-gray-700">{selectedClient.email}</span></div>}
-                {selectedClient.address && <div className="flex items-center gap-3"><MapPin className="w-4 h-4 text-gray-400" /><span className="text-gray-700">{selectedClient.address}, {selectedClient.city}</span></div>}
+                {selectedClient.address && <div className="flex items-start gap-3"><MapPin className="w-4 h-4 text-gray-400 mt-0.5" /><span className="text-gray-700">{[selectedClient.address, selectedClient.city, selectedClient.state, selectedClient.pincode].filter(Boolean).join(', ')}</span></div>}
+                {!(selectedClient as any).delivery_same_as_billing && (selectedClient as any).delivery_address && (
+                  <div className="flex items-start gap-3"><Send className="w-4 h-4 text-gray-400 mt-0.5" /><span className="text-gray-700"><span className="text-xs font-semibold text-gray-500">Ship to: </span>{[(selectedClient as any).delivery_address, (selectedClient as any).delivery_city, (selectedClient as any).delivery_state, (selectedClient as any).delivery_pincode].filter(Boolean).join(', ')}</span></div>
+                )}
                 {selectedClient.gstin && <div className="flex items-center gap-3"><Building2 className="w-4 h-4 text-gray-400" /><span className="text-gray-700">GSTIN: {selectedClient.gstin}</span></div>}
               </div>
 

@@ -216,6 +216,7 @@ export interface QuotationData {
     clientAddress?: string;
     clientPhone?: string;
     clientState?: string;
+    clientGstin?: string;
 
     // Items
     items: QuotationItem[];
@@ -261,7 +262,9 @@ export const QuotationPDF = ({ data }: { data: QuotationData }) => (
                     )}
                     <Text style={styles.companyDetails}>
                         {data.clientAddress || ''}
+                        {data.clientState ? `\n${data.clientState}` : ''}
                         {data.clientPhone ? `\nPhone: ${data.clientPhone}` : ''}
+                        {data.clientGstin ? `\nGSTIN: ${data.clientGstin}` : ''}
                     </Text>
                 </View>
                 <View style={styles.infoBox}>

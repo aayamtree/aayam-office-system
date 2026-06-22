@@ -108,6 +108,12 @@ export interface Client extends BaseEntity {
   city?: string;
   state?: string;
   pincode?: string;
+  // Delivery / shipping address (separate from billing/office address)
+  delivery_same_as_billing?: boolean;
+  delivery_address?: string;
+  delivery_city?: string;
+  delivery_state?: string;
+  delivery_pincode?: string;
   client_type: 'regular' | 'premium' | 'corporate';
   credit_limit: number;
   outstanding_balance: number;

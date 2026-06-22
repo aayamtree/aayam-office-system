@@ -619,7 +619,7 @@ export function usePurchaseServiceCategories() {
 // =============================================
 export function useInvoices() {
   const { data, loading, error, refetch } = useSupabaseQuery<Invoice>('invoices', {
-    select: '*, client:clients(id, name, company), job:jobs(id, job_number, project_name), items:invoice_items(*)',
+    select: '*, client:clients(id, name, company, phone, email, address, city, state, pincode, gstin, delivery_same_as_billing, delivery_address, delivery_city, delivery_state, delivery_pincode), job:jobs(id, job_number, project_name), items:invoice_items(*)',
     orderBy: { column: 'created_at', ascending: false },
     limit: 200  // Default pagination
   });

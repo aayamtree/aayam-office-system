@@ -548,6 +548,7 @@ export default function QuotationsPage() {
       clientPhone: q.client?.phone,
       clientEmail: q.client?.email,
       clientState: (q.client as any)?.state || (q.lead as any)?.state,
+      clientGstin: (q.client as any)?.gstin || '',
       items: q.items?.map(i => ({
         description: i.description,
         quantity: i.quantity,

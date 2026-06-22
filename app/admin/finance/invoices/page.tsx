@@ -87,6 +87,11 @@ export default function InvoicesPage() {
       clientPincode,
       clientPhone,
       clientGstin,
+      deliverySameAsBilling: (invoice.client as any)?.delivery_same_as_billing ?? true,
+      deliveryAddress: (invoice.client as any)?.delivery_address || '',
+      deliveryCity: (invoice.client as any)?.delivery_city || '',
+      deliveryState: (invoice.client as any)?.delivery_state || '',
+      deliveryPincode: (invoice.client as any)?.delivery_pincode || '',
       items: items.map(item => ({
         description: item.description,
         hsn: item.hsn_code || '4911',
@@ -734,7 +739,14 @@ export default function InvoicesPage() {
                       <select
                         required
                         value={formData.clientId}
-                        onChange={(e) => setFormData({ ...formData, clientId: e.target.value, jobId: '' })}
+                        onChange={(e) => {
+                          const cid = e.target.value;
+                          const c = clients.find(cl => cl.id === cid);
+                          // Auto: Gujarat (home state) => CGST+SGST (intra), any other state => IGST (inter). Still editable below.
+                          const st = (c?.state || '').trim().toLowerCase();
+                          const supplyType = st ? (st === 'gujarat' ? 'intra_state' : 'inter_state') : formData.supplyType;
+                          setFormData({ ...formData, clientId: cid, jobId: '', supplyType });
+                        }}
                         className="flex-1 px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white text-sm md:text-base"
                       >
                         <option value="">Select Client</option>
