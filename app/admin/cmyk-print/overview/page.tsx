@@ -34,16 +34,31 @@ export default function CMYKOverviewPage() {
 
   // Sales in period
   const periodSales = sales.filter(s => inPeriod(s.created_at));
-  const collectedRevenue = periodSales
-    .filter(s => s.payment_status !== 'pending')
-    .reduce((sum, s) => sum + (s.amount_received || s.total_amount || 0), 0);
+  const taxableOf = (s: typeof periodSales[number]) => (s.subtotal || 0) - (s.discount_amount || 0);
+
+  // Money actually in (incl. GST) — paid in full = bill total; advance = amount collected; credit = 0
+  const collectedRevenue = periodSales.reduce((sum, s) => {
+    if (s.payment_status === 'pending') return sum;
+    if (s.payment_status === 'partial') return sum + (s.amount_received || 0);
+    return sum + (s.total_amount || 0);
+  }, 0);
   const pendingRevenue = periodSales
     .filter(s => s.payment_status === 'pending' || s.payment_status === 'partial')
     .reduce((sum, s) => sum + (s.balance_due ?? 0), 0);
   const totalBilled = periodSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
   const gstCollected = periodSales.reduce((sum, s) => sum + ((s as any).gst_amount || 0), 0);
-  const taxableValue = periodSales.reduce((sum, s) => sum + ((s.subtotal || 0) - (s.discount_amount || 0)), 0);
+  const taxableValue = periodSales.reduce((sum, s) => sum + taxableOf(s), 0);
   const transactions = periodSales.length;
+
+  // Net sales for profit = ex-GST (GST is a pass-through to govt, not income)
+  const salesExGst = periodSales.reduce((sum, s) => {
+    if (s.payment_status === 'pending') return sum;
+    if (s.payment_status === 'partial') {
+      const ratio = (s.total_amount || 0) > 0 ? (s.amount_received || 0) / (s.total_amount || 1) : 0;
+      return sum + taxableOf(s) * ratio;
+    }
+    return sum + taxableOf(s);
+  }, 0);
 
   // Costs in period
   const periodLogs = logs.filter(l => inPeriod(l.completed_at || l.created_at));
@@ -53,8 +68,8 @@ export default function CMYKOverviewPage() {
   const operationalCost = periodExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
 
   const totalCosts = paperCost + operationalCost;
-  const netProfit = collectedRevenue - totalCosts;
-  const margin = collectedRevenue > 0 ? ((netProfit / collectedRevenue) * 100).toFixed(1) : '0';
+  const netProfit = salesExGst - totalCosts;
+  const margin = salesExGst > 0 ? ((netProfit / salesExGst) * 100).toFixed(1) : '0';
 
   const lowStock = stock.filter(s => s.quantity <= s.reorder_level);
   const years = Array.from({ length: 3 }, (_, i) => now.getFullYear() - i);
@@ -126,7 +141,7 @@ export default function CMYKOverviewPage() {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${netProfit >= 0 ? 'text-green-700' : 'text-destructive'}`}>{loading ? '…' : formatCurrency(netProfit)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Margin: {margin}%</p>
+            <p className="text-xs text-muted-foreground mt-1">Margin {margin}% · ex-GST</p>
           </CardContent>
         </Card>
 

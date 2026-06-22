@@ -52,9 +52,11 @@ export default function CMYKPrintPage() {
   // Money — today
   const todaysSales = sales.filter(s => isToday(s.created_at));
   const todaysSalesTotal = todaysSales.reduce((sum, s) => sum + s.total_amount, 0);
+  // Net profit basis = sales ex-GST (GST is pass-through, not income)
+  const todaysSalesExGst = todaysSales.reduce((sum, s) => sum + ((s.subtotal || 0) - (s.discount_amount || 0)), 0);
   const todaysPaperCost = logs.filter(l => isToday(l.completed_at || l.created_at)).reduce((sum, l) => sum + (l.paper_cost || 0), 0);
   const todaysExpenses = (expenses || []).filter(e => isToday(e.expense_date)).reduce((sum, e) => sum + (e.amount || 0), 0);
-  const netToday = todaysSalesTotal - todaysPaperCost - todaysExpenses;
+  const netToday = todaysSalesExGst - todaysPaperCost - todaysExpenses;
 
   const selectedPaper = stock.find(p => p.id === selectedPaperId);
   const estimatedCost = selectedPaper && sheetsUsed ? selectedPaper.cost_per_unit * parseInt(sheetsUsed || '0') : 0;
