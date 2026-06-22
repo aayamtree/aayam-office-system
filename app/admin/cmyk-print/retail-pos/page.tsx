@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import {
-  ArrowLeft, Plus, Minus, Trash2, ShoppingCart,
+  ArrowLeft, Plus, Trash2, ShoppingCart,
   Printer, CreditCard, Banknote, Smartphone, X, Search, Settings,
   Edit, Loader2, Download, Package, Clock, ChevronDown, Tag
 } from 'lucide-react';
@@ -19,14 +19,17 @@ import { useConfirm } from '@/components/ConfirmModal';
 interface CartItem {
   id: string;
   name: string;
-  price: number;
+  price: number;     // unit rate
   qty: number;
-  total: number;
-  kind?: 'product' | 'charge';
+  discount?: number; // per-line discount (flat ₹ off this line)
+  kind?: 'product' | 'charge' | 'item';
 }
 
-// Common extra charges for a print shop (besides catalog products)
-const CHARGE_PRESETS = ['Die Cut', 'Handling', 'Delivery', 'Lamination', 'Design', 'Binding'];
+// Per-line total after the line's own discount
+const lineTotal = (i: CartItem) => Math.max(0, i.qty * i.price - (i.discount || 0));
+
+// Quick-add services for a print shop (besides catalog products)
+const CHARGE_PRESETS = ['Print', 'Die Cut', 'Handling', 'Delivery', 'Lamination', 'Design', 'Binding'];
 
 const categoryColors = [
   'bg-muted text-foreground',
@@ -96,44 +99,40 @@ export default function RetailPOSPage() {
     return matchesCategory && matchesSearch;
   }) || [];
 
+  const newId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+  // Tap a catalog product → adds (or increments) a line, pre-filled with its price
   const addToCart = (product: POSProduct) => {
     const existing = cart.find(item => item.id === product.id);
     if (existing) {
-      setCart(cart.map(item =>
-        item.id === product.id
-          ? { ...item, qty: item.qty + 1, total: (item.qty + 1) * item.price }
-          : item
-      ));
+      setCart(cart.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item));
     } else {
-      setCart([...cart, { id: product.id, name: product.name, price: product.price, qty: 1, total: product.price, kind: 'product' }]);
+      setCart([...cart, { id: product.id, name: product.name, price: product.price, qty: 1, discount: 0, kind: 'product' }]);
     }
   };
 
-  // Custom charges (die cut, handling, delivery, etc.) — bill lines that aren't catalog products
+  // Quick-add a named service line (Print, Die Cut, Delivery, …) — rate entered in the cart
   const addCharge = (name: string) => {
-    const id = `charge-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    setCart(prev => [...prev, { id, name, price: 0, qty: 1, total: 0, kind: 'charge' }]);
+    setCart(prev => [...prev, { id: newId('charge'), name, price: 0, qty: 1, discount: 0, kind: 'charge' }]);
   };
-  const updateChargeAmount = (id: string, amount: number) => {
-    setCart(prev => prev.map(item => item.id === id ? { ...item, price: amount, total: amount } : item));
+
+  // Add a blank, fully editable item/service line
+  const addCustomItem = () => {
+    setCart(prev => [...prev, { id: newId('item'), name: '', price: 0, qty: 1, discount: 0, kind: 'item' }]);
   };
-  const updateChargeName = (id: string, name: string) => {
-    setCart(prev => prev.map(item => item.id === id ? { ...item, name } : item));
+
+  // Generic per-line editor (name / qty / rate / per-line discount)
+  const updateLine = (id: string, field: 'name' | 'qty' | 'price' | 'discount', value: string | number) => {
+    setCart(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
 
   const updateQty = (id: string, delta: number) => {
-    setCart(cart.map(item => {
-      if (item.id === id) {
-        const newQty = Math.max(1, item.qty + delta);
-        return { ...item, qty: newQty, total: newQty * item.price };
-      }
-      return item;
-    }));
+    setCart(cart.map(item => item.id === id ? { ...item, qty: Math.max(1, item.qty + delta) } : item));
   };
 
   const removeFromCart = (id: string) => setCart(cart.filter(item => item.id !== id));
 
-  const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
+  const subtotal = cart.reduce((sum, item) => sum + lineTotal(item), 0);
   const discountAmount = (subtotal * discount) / 100;
   const taxableAmount = subtotal - discountAmount;
   const gstAmount = (taxableAmount * gstRate) / 100;
@@ -263,11 +262,11 @@ export default function RetailPOSPage() {
       };
 
       const saleItems = cart.map(item => ({
-        product_id: item.kind === 'charge' ? null : item.id,
-        product_name: item.name,
+        product_id: item.kind === 'product' ? item.id : null,
+        product_name: item.name || 'Item',
         quantity: item.qty,
         price: item.price,
-        total: item.total,
+        total: lineTotal(item),
       }));
 
       const result = await createPOSSale(saleData as any, saleItems);
@@ -293,7 +292,7 @@ export default function RetailPOSPage() {
       time: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
       customerName: customerName || selectedClient?.company || selectedClient?.name || undefined,
       customerPhone: customerPhone || undefined,
-      items: cart.map(item => ({ name: item.name, qty: item.qty, price: item.price, total: item.total })),
+      items: cart.map(item => ({ name: item.name || 'Item', qty: item.qty, price: item.price, total: lineTotal(item) })),
       subtotal,
       discountPercent: discount,
       discountAmount,
@@ -388,18 +387,18 @@ export default function RetailPOSPage() {
             ))}
           </div>
 
-          {/* Quick charges — add extra charges to the bill (not catalog products) */}
+          {/* Quick add — print charge, services & extra items (no catalog product needed) */}
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className="text-xs font-medium text-gray-500 flex items-center gap-1"><Tag className="w-3.5 h-3.5" /> Add charge:</span>
+            <span className="text-xs font-medium text-gray-500 flex items-center gap-1"><Tag className="w-3.5 h-3.5" /> Quick add:</span>
             {CHARGE_PRESETS.map(name => (
               <button key={name} onClick={() => addCharge(name)}
                 className="px-2.5 py-1 rounded-md border border-dashed border-amber-300 text-amber-700 bg-amber-50 text-xs font-medium hover:bg-amber-100 transition-colors">
                 + {name}
               </button>
             ))}
-            <button onClick={() => addCharge('Custom charge')}
+            <button onClick={addCustomItem}
               className="px-2.5 py-1 rounded-md border border-dashed border-gray-300 text-gray-600 text-xs font-medium hover:bg-gray-50 transition-colors">
-              + Custom
+              + Item / service
             </button>
           </div>
 
@@ -520,47 +519,49 @@ export default function RetailPOSPage() {
             </div>
           </div>
 
-          {/* Cart Items */}
+          {/* Cart Items — every line is fully editable (qty × rate − discount) */}
           <div className="flex-1 p-4 space-y-2 min-h-[100px]">
-            {cart.length === 0 ? (
+            {cart.length === 0 && (
               <div className="text-center py-6 text-gray-400 text-sm">
-                Add products to start a bill
+                Tap a product, or use “Add item / service” to start a bill
               </div>
-            ) : (
-              cart.map(item => (
-                <div key={item.id} className="bg-white p-3 rounded-md border">
-                  <div className="flex justify-between mb-2">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      {item.kind === 'charge' && <Tag className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
-                      {item.kind === 'charge' ? (
-                        <input type="text" value={item.name} onChange={e => updateChargeName(item.id, e.target.value)}
-                          className="font-medium text-sm border-b border-dashed border-gray-300 focus:outline-none focus:border-gray-500 min-w-0 flex-1" />
-                      ) : (
-                        <span className="font-medium text-sm truncate">{item.name}</span>
-                      )}
-                    </div>
-                    <button onClick={() => removeFromCart(item.id)} className="text-red-500 shrink-0 ml-2"><Trash2 className="w-4 h-4" /></button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    {item.kind === 'charge' ? (
-                      <div className="flex items-center gap-1 text-sm">
-                        <span className="text-gray-400">₹</span>
-                        <input type="number" min="0" value={item.price || ''} placeholder="0"
-                          onChange={e => updateChargeAmount(item.id, parseFloat(e.target.value) || 0)}
-                          className="w-24 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => updateQty(item.id, -1)} className="w-7 h-7 bg-gray-100 rounded flex items-center justify-center hover:bg-gray-200"><Minus className="w-4 h-4" /></button>
-                        <span className="w-8 text-center font-medium">{item.qty}</span>
-                        <button onClick={() => updateQty(item.id, 1)} className="w-7 h-7 bg-gray-100 rounded flex items-center justify-center hover:bg-gray-200"><Plus className="w-4 h-4" /></button>
-                      </div>
-                    )}
-                    <span className="font-bold text-primary">{formatCurrency(item.total)}</span>
-                  </div>
-                </div>
-              ))
             )}
+            {cart.map(item => (
+              <div key={item.id} className="bg-white p-3 rounded-md border space-y-2">
+                {/* Name */}
+                <div className="flex items-center gap-1.5">
+                  {item.kind !== 'product' && <Tag className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
+                  {item.kind === 'product' ? (
+                    <span className="font-medium text-sm flex-1 truncate">{item.name}</span>
+                  ) : (
+                    <input type="text" value={item.name} placeholder="Item / service name"
+                      onChange={e => updateLine(item.id, 'name', e.target.value)}
+                      className="font-medium text-sm flex-1 min-w-0 border-b border-dashed border-gray-300 focus:outline-none focus:border-gray-500" />
+                  )}
+                  <button onClick={() => removeFromCart(item.id)} className="text-red-500 shrink-0"><Trash2 className="w-4 h-4" /></button>
+                </div>
+                {/* Qty × Rate − Discount = amount */}
+                <div className="flex items-center gap-1.5 text-xs flex-wrap">
+                  <span className="text-gray-400">Qty</span>
+                  <input type="number" min="1" value={item.qty}
+                    onChange={e => updateLine(item.id, 'qty', parseInt(e.target.value) || 1)}
+                    className="w-12 px-1.5 py-1 border rounded text-right focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                  <span className="text-gray-400">× ₹</span>
+                  <input type="number" min="0" value={item.price || ''} placeholder="rate"
+                    onChange={e => updateLine(item.id, 'price', parseFloat(e.target.value) || 0)}
+                    className="w-16 px-1.5 py-1 border rounded text-right focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                  <span className="text-gray-400">− ₹</span>
+                  <input type="number" min="0" value={item.discount || ''} placeholder="disc"
+                    onChange={e => updateLine(item.id, 'discount', parseFloat(e.target.value) || 0)}
+                    className="w-14 px-1.5 py-1 border rounded text-right focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                  <span className="ml-auto font-bold text-primary text-sm">{formatCurrency(lineTotal(item))}</span>
+                </div>
+              </div>
+            ))}
+            <button type="button" onClick={addCustomItem}
+              className="w-full mt-1 py-2 border border-dashed border-gray-300 rounded-md text-sm text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-1">
+              <Plus className="w-4 h-4" /> Add item / service
+            </button>
           </div>
 
           {/* Totals & Payment */}
