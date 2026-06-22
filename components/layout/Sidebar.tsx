@@ -149,6 +149,7 @@ const menuItems: MenuItem[] = [
       { name: 'Invoices', href: '/admin/finance/invoices' },
       { name: 'Payments', href: '/admin/finance/payments' },
       { name: '⚡ Quick Expense', href: '/admin/finance/expenses/quick' },
+      { name: 'Expense Categories', href: '/admin/finance/expense-categories', adminOnly: true },
       { name: 'Banking', href: '/admin/finance/banking' },
       { name: 'Bank Accounts', href: '/admin/finance/banks', adminOnly: true },
       { name: 'Daily Summary', href: '/admin/finance/daily', adminOnly: true },
