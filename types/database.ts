@@ -725,6 +725,8 @@ export interface POSSale extends BaseEntity {
   pickup_status?: 'pending' | 'ready' | 'collected';
   pickup_date?: string;
   artwork_link?: string;
+  // Multiple papers/sizes on one bill
+  papers?: { paper_stock_id?: string; paper_name?: string; size?: string; sheets: number; cost?: number }[];
   notes?: string;
   sold_by?: string;
   items?: POSSaleItem[];

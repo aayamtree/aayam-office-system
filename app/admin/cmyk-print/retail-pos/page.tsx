@@ -68,9 +68,12 @@ export default function RetailPOSPage() {
   const [orderType, setOrderType] = useState<'walkin' | 'pickup'>('walkin');
   const [artworkLink, setArtworkLink] = useState('');
 
-  // Paper & Credit fields
-  const [selectedPaperStockId, setSelectedPaperStockId] = useState('');
-  const [sheetsUsed, setSheetsUsed] = useState('');
+  // Paper rows (multiple papers/sizes per bill) & Credit fields
+  const [paperRows, setPaperRows] = useState<{ paperStockId: string; sheets: string }[]>([{ paperStockId: '', sheets: '' }]);
+  const updatePaperRow = (i: number, field: 'paperStockId' | 'sheets', val: string) =>
+    setPaperRows(rows => rows.map((r, idx) => idx === i ? { ...r, [field]: val } : r));
+  const addPaperRow = () => setPaperRows(rows => [...rows, { paperStockId: '', sheets: '' }]);
+  const removePaperRow = (i: number) => setPaperRows(rows => rows.length > 1 ? rows.filter((_, idx) => idx !== i) : rows);
   const [paymentType, setPaymentType] = useState<'paid' | 'advance' | 'credit'>('paid');
   const [selectedClientId, setSelectedClientId] = useState('');
   const [creditDays, setCreditDays] = useState('30');
@@ -126,8 +129,16 @@ export default function RetailPOSPage() {
   const receivedAmt = parseFloat(amountReceived || '0');
   const changeAmount = paymentMethod === 'cash' ? receivedAmt - grandTotal : 0;
 
+  // Paper rows → structured list (filters out blank rows)
+  const paperList = paperRows
+    .filter(r => r.paperStockId && r.sheets && parseInt(r.sheets) > 0)
+    .map(r => {
+      const p = paperStock.find(x => x.id === r.paperStockId);
+      const sheets = parseInt(r.sheets) || 0;
+      return { paper_stock_id: r.paperStockId, paper_name: p?.name, size: p?.size, sheets, cost: (p?.cost_per_unit || 0) * sheets };
+    });
+
   // Credit logic
-  const selectedPaper = paperStock.find(p => p.id === selectedPaperStockId);
   const selectedClient = clients?.find(c => c.id === selectedClientId);
 
   const getDueDate = () => {
@@ -191,8 +202,7 @@ export default function RetailPOSPage() {
     setOrderType('walkin');
     setArtworkLink('');
     setAmountReceived('');
-    setSelectedPaperStockId('');
-    setSheetsUsed('');
+    setPaperRows([{ paperStockId: '', sheets: '' }]);
     setPaymentType('paid');
     setSelectedClientId('');
     setCreditDays('30');
@@ -229,8 +239,9 @@ export default function RetailPOSPage() {
         due_date: getDueDate(),
         balance_due: getBalanceDue(),
         credit_terms: paymentType === 'credit' ? `${creditDays} days` : undefined,
-        paper_stock_id: selectedPaperStockId || undefined,
-        sheets_used: sheetsUsed ? parseInt(sheetsUsed) : 0,
+        paper_stock_id: paperList[0]?.paper_stock_id || undefined,
+        sheets_used: paperList.reduce((sum, p) => sum + p.sheets, 0),
+        papers: paperList.length > 0 ? paperList : undefined,
         notes: notes || undefined,
         sold_by: profile?.full_name || profile?.email?.split('@')[0] || 'CMYK',
       };
@@ -388,7 +399,7 @@ export default function RetailPOSPage() {
         </div>
 
         {/* Cart Section */}
-        <div className="w-full lg:w-96 border-t lg:border-t-0 lg:border-l bg-gray-50 flex flex-col">
+        <div className="w-full lg:w-[420px] shrink-0 border-t lg:border-t-0 lg:border-l bg-gray-50 flex flex-col lg:overflow-y-auto">
           <div className="p-4 border-b bg-white">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -431,35 +442,57 @@ export default function RetailPOSPage() {
               ))}
             </div>
 
-            {/* Paper Selection */}
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <select value={selectedPaperStockId} onChange={e => setSelectedPaperStockId(e.target.value)}
-                className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white">
-                <option value="">No Paper</option>
-                {paperStock.map(p => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}{p.size ? ` (${p.size})` : ''} — {p.quantity} left
-                  </option>
-                ))}
-              </select>
-              <input type="number" placeholder="Sheets used" value={sheetsUsed || ''} min="0"
-                onChange={e => setSheetsUsed(e.target.value)}
-                disabled={!selectedPaperStockId}
-                className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50" />
+            {/* Paper used — multiple papers / sizes per bill */}
+            <div className="mt-3">
+              <p className="text-xs font-medium text-gray-500 mb-1">Paper used (optional)</p>
+              <div className="space-y-2">
+                {paperRows.map((row, i) => {
+                  const p = paperStock.find(x => x.id === row.paperStockId);
+                  const over = !!(p && row.sheets && parseInt(row.sheets) > p.quantity);
+                  return (
+                    <div key={i}>
+                      <div className="flex gap-2">
+                        <select value={row.paperStockId} onChange={e => updatePaperRow(i, 'paperStockId', e.target.value)}
+                          className="flex-1 min-w-0 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white">
+                          <option value="">Select paper / size…</option>
+                          {paperStock.map(ps => (
+                            <option key={ps.id} value={ps.id}>
+                              {ps.name}{ps.size ? ` (${ps.size})` : ''} — {ps.quantity} left
+                            </option>
+                          ))}
+                        </select>
+                        <input type="number" placeholder="Sheets" value={row.sheets} min="0"
+                          onChange={e => updatePaperRow(i, 'sheets', e.target.value)}
+                          disabled={!row.paperStockId}
+                          className="w-20 px-2 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50" />
+                        {paperRows.length > 1 && (
+                          <button type="button" onClick={() => removePaperRow(i)}
+                            className="px-2 text-gray-400 hover:text-red-500 shrink-0" title="Remove">
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                      {over && (
+                        <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                          <Package className="w-3 h-3" /> Only {p?.quantity} sheets of {p?.name} in stock!
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <button type="button" onClick={addPaperRow}
+                className="mt-2 text-xs text-primary font-medium hover:underline flex items-center gap-1">
+                <Plus className="w-3 h-3" /> Add another paper
+              </button>
             </div>
-            {selectedPaper && sheetsUsed && parseInt(sheetsUsed) > selectedPaper.quantity && (
-              <p className="text-xs text-destructive mt-1 flex items-center gap-1">
-                <Package className="w-3 h-3" /> Only {selectedPaper.quantity} sheets in stock!
-              </p>
-            )}
           </div>
 
           {/* Cart Items */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          <div className="flex-1 p-4 space-y-2 min-h-[100px]">
             {cart.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <ShoppingCart className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                <p>Cart is empty</p>
+              <div className="text-center py-6 text-gray-400 text-sm">
+                Add products to start a bill
               </div>
             ) : (
               cart.map(item => (
@@ -482,7 +515,7 @@ export default function RetailPOSPage() {
           </div>
 
           {/* Totals & Payment */}
-          <div className="p-4 border-t bg-white">
+          <div className="p-4 border-t bg-white mt-auto">
             <div className="space-y-2 mb-4">
               <div className="flex justify-between text-sm"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
               <div className="flex justify-between items-center text-sm">

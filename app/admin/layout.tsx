@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
@@ -27,6 +27,9 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  // POS is a focused full-screen billing view — hide floating widgets that overlap the pay area
+  const hideFloats = pathname?.includes('/cmyk-print/retail-pos');
   const { profile, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // sidebarCollapsed is driven by Sidebar's internal click-toggle (persisted to localStorage).
@@ -115,11 +118,11 @@ export default function AdminLayout({
           {/* PWA Service Worker + Push Notification subscription */}
           <ServiceWorkerRegistration />
 
-          {/* GST Calculator — floating button on all pages except dashboard */}
-          <GSTCalculatorFloat />
+          {/* GST Calculator — floating button (hidden on POS where it overlaps the pay area) */}
+          {!hideFloats && <GSTCalculatorFloat />}
 
-          {/* Floating Chat Button */}
-          <button
+          {/* Floating Chat Button (hidden on POS) */}
+          {!hideFloats && <button
             onClick={() => setChatOpen(true)}
             style={{
               position: 'fixed',
@@ -149,7 +152,7 @@ export default function AdminLayout({
             title="Team Chat"
           >
             <MessageCircle size={22} color="#fff" strokeWidth={1.8} />
-          </button>
+          </button>}
 
           {/* Chat Panel */}
           <ChatPanel open={chatOpen} onClose={() => setChatOpen(false)} />
