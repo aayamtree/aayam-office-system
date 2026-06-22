@@ -50,6 +50,65 @@ export default function InvoicesPage() {
     jobId: '',
   });
 
+  // ── Shipping address selection (per invoice) ──
+  const [clientShipAddrs, setClientShipAddrs] = useState<any[]>([]);
+  const [selectedShipId, setSelectedShipId] = useState<string>(''); // '' = billing, id, or 'new'
+  const [showNewShip, setShowNewShip] = useState(false);
+  const [savingInvShip, setSavingInvShip] = useState(false);
+  const [newInvShip, setNewInvShip] = useState({ label: '', address: '', city: '', state: '', pincode: '' });
+  const blankShip = { label: '', address: '', city: '', state: '', pincode: '', addressId: '' };
+  const [shipping, setShipping] = useState({ ...blankShip });
+
+  const applyShipSelection = (id: string, listArg?: any[]) => {
+    const list = listArg || clientShipAddrs;
+    setSelectedShipId(id);
+    setShowNewShip(id === 'new');
+    if (id === 'new') return;
+    if (!id) { setShipping({ ...blankShip }); return; }
+    const a = list.find(x => x.id === id);
+    if (a) setShipping({ label: a.label || '', address: a.address || '', city: a.city || '', state: a.state || '', pincode: a.pincode || '', addressId: a.id });
+  };
+
+  const loadClientShipping = async (clientId: string, presetSnapshot?: any) => {
+    setClientShipAddrs([]); setSelectedShipId(''); setShowNewShip(false);
+    setNewInvShip({ label: '', address: '', city: '', state: '', pincode: '' });
+    if (!clientId) { setShipping({ ...blankShip }); return; }
+    try {
+      const res = await fetch(`/api/clients/${clientId}/shipping-addresses`);
+      const j = await res.json();
+      const list = j.data || [];
+      setClientShipAddrs(list);
+      // Editing an existing invoice with a saved snapshot → restore selection
+      if (presetSnapshot && presetSnapshot.address) {
+        const match = list.find((x: any) => x.id === presetSnapshot.addressId);
+        if (match) { applyShipSelection(match.id, list); }
+        else { setSelectedShipId('keep'); setShipping(presetSnapshot); }
+        return;
+      }
+      const def = list.find((a: any) => a.is_default) || list[0];
+      if (def) applyShipSelection(def.id, list);
+      else { setSelectedShipId(''); setShipping({ ...blankShip }); }
+    } catch { /* non-fatal */ }
+  };
+
+  const saveNewInvShip = async () => {
+    if (!newInvShip.address.trim()) { toast.error('Enter the shipping address'); return; }
+    if (!formData.clientId) { toast.error('Select a client first'); return; }
+    setSavingInvShip(true);
+    try {
+      const res = await fetch(`/api/clients/${formData.clientId}/shipping-addresses`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newInvShip),
+      });
+      const j = await res.json();
+      if (j.data) {
+        const list = [...clientShipAddrs, j.data];
+        setClientShipAddrs(list);
+        applyShipSelection(j.data.id, list);
+        setNewInvShip({ label: '', address: '', city: '', state: '', pincode: '' });
+      } else { toast.error(j.error || 'Failed to add address'); }
+    } catch { toast.error('Failed to add address'); } finally { setSavingInvShip(false); }
+  };
+
   // Convert Database Invoice to PDF Data format
   const convertToInvoiceData = (invoice: Invoice): InvoiceData => {
     // Safely handle potentially missing or undefined nested objects
@@ -87,11 +146,12 @@ export default function InvoicesPage() {
       clientPincode,
       clientPhone,
       clientGstin,
-      deliverySameAsBilling: (invoice.client as any)?.delivery_same_as_billing ?? true,
-      deliveryAddress: (invoice.client as any)?.delivery_address || '',
-      deliveryCity: (invoice.client as any)?.delivery_city || '',
-      deliveryState: (invoice.client as any)?.delivery_state || '',
-      deliveryPincode: (invoice.client as any)?.delivery_pincode || '',
+      deliverySameAsBilling: !((invoice as any).shipping_address && String((invoice as any).shipping_address).trim()),
+      deliveryLabel: (invoice as any).shipping_label || '',
+      deliveryAddress: (invoice as any).shipping_address || '',
+      deliveryCity: (invoice as any).shipping_city || '',
+      deliveryState: (invoice as any).shipping_state || '',
+      deliveryPincode: (invoice as any).shipping_pincode || '',
       items: items.map(item => ({
         description: item.description,
         hsn: item.hsn_code || '4911',
@@ -258,6 +318,8 @@ export default function InvoicesPage() {
       notes: '',
       jobId: '',
     });
+    setClientShipAddrs([]); setSelectedShipId(''); setShowNewShip(false);
+    setShipping({ ...blankShip });
     setIsEditing(false);
     setShowModal(true);
   };
@@ -275,13 +337,22 @@ export default function InvoicesPage() {
       items: items.length > 0 ? items : [{ description: '', quantity: 1, rate: 0, amount: 0, gst_rate: 18 } as InvoiceItem],
       subtotal: inv.subtotal,
       gstRate: gstRate,
-      supplyType: 'inter_state' as const,
+      supplyType: ((inv.cgst_amount || 0) > 0 ? 'intra_state' : 'inter_state') as 'inter_state' | 'intra_state',
       totalTax: inv.total_tax,
       totalAmount: inv.total_amount,
       paidAmount: inv.amount_paid,
       status: inv.payment_status,
       notes: inv.notes || '',
       jobId: inv.job_id || '',
+    });
+    // Restore the shipping snapshot saved on this invoice
+    loadClientShipping(inv.client_id || '', {
+      label: (inv as any).shipping_label || '',
+      address: (inv as any).shipping_address || '',
+      city: (inv as any).shipping_city || '',
+      state: (inv as any).shipping_state || '',
+      pincode: (inv as any).shipping_pincode || '',
+      addressId: (inv as any).shipping_address_id || '',
     });
     setSelectedInvoice(inv);
     setIsEditing(true);
@@ -310,6 +381,13 @@ export default function InvoicesPage() {
         balance_due: formData.totalAmount - formData.paidAmount,
         notes: formData.notes,
         job_id: formData.jobId || undefined,
+        // Frozen shipping snapshot for this invoice
+        shipping_address_id: shipping.addressId || null,
+        shipping_label: shipping.label || null,
+        shipping_address: shipping.address || null,
+        shipping_city: shipping.city || null,
+        shipping_state: shipping.state || null,
+        shipping_pincode: shipping.pincode || null,
         items: formData.items,
       };
 
@@ -746,6 +824,7 @@ export default function InvoicesPage() {
                           const st = (c?.state || '').trim().toLowerCase();
                           const supplyType = st ? (st === 'gujarat' ? 'intra_state' : 'inter_state') : formData.supplyType;
                           setFormData({ ...formData, clientId: cid, jobId: '', supplyType });
+                          loadClientShipping(cid);
                         }}
                         className="flex-1 px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white text-sm md:text-base"
                       >
@@ -780,6 +859,50 @@ export default function InvoicesPage() {
                           <option key={j.id} value={j.id}>{j.job_number} - {j.project_name}</option>
                         ))}
                     </select>
+                  </div>
+
+                  {/* Ship To — pick a saved shipping address or add a new one */}
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Ship To</label>
+                    <select
+                      value={selectedShipId}
+                      onChange={(e) => applyShipSelection(e.target.value)}
+                      disabled={!formData.clientId}
+                      className="w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white disabled:bg-gray-100 disabled:text-gray-400 text-sm md:text-base"
+                    >
+                      <option value="">Billing address (no separate shipping)</option>
+                      {selectedShipId === 'keep' && shipping.address && (
+                        <option value="keep">{shipping.label ? `${shipping.label} — ` : ''}{[shipping.address, shipping.city].filter(Boolean).join(', ')}</option>
+                      )}
+                      {clientShipAddrs.map(a => (
+                        <option key={a.id} value={a.id}>{a.label ? `${a.label} — ` : ''}{[a.address, a.city, a.state].filter(Boolean).join(', ')}</option>
+                      ))}
+                      <option value="new">+ Add new shipping address…</option>
+                    </select>
+
+                    {/* Selected address preview */}
+                    {selectedShipId && selectedShipId !== 'new' && shipping.address && (
+                      <div className="mt-2 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-md p-2.5">
+                        {shipping.label && <span className="font-semibold text-gray-800">{shipping.label}: </span>}
+                        {[shipping.address, shipping.city, shipping.state, shipping.pincode].filter(Boolean).join(', ')}
+                      </div>
+                    )}
+
+                    {/* Inline add-new shipping address */}
+                    {showNewShip && (
+                      <div className="mt-2 space-y-2 bg-gray-50 border border-gray-200 rounded-md p-3">
+                        <input type="text" value={newInvShip.label} onChange={(e) => setNewInvShip({ ...newInvShip, label: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" placeholder="Label (e.g. Warehouse, Factory)" />
+                        <textarea value={newInvShip.address} onChange={(e) => setNewInvShip({ ...newInvShip, address: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" rows={2} placeholder="Shipping address" />
+                        <div className="grid grid-cols-3 gap-2">
+                          <input type="text" value={newInvShip.city} onChange={(e) => setNewInvShip({ ...newInvShip, city: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" placeholder="City" />
+                          <input type="text" value={newInvShip.state} onChange={(e) => setNewInvShip({ ...newInvShip, state: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" placeholder="State" />
+                          <input type="text" value={newInvShip.pincode} onChange={(e) => setNewInvShip({ ...newInvShip, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" maxLength={6} placeholder="Pincode" />
+                        </div>
+                        <button type="button" onClick={saveNewInvShip} disabled={savingInvShip || !newInvShip.address.trim()} className="w-full px-3 py-2 bg-gray-900 text-white text-sm rounded-md hover:bg-gray-700 disabled:opacity-40 flex items-center justify-center gap-1.5">
+                          <Plus className="w-3.5 h-3.5" /> {savingInvShip ? 'Saving…' : 'Save & use this address'}
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="sm:col-span-1">

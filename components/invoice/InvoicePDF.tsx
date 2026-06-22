@@ -305,6 +305,7 @@ export interface InvoiceData {
 
   // Delivery / shipping address (shown as "Ship To" when different from billing)
   deliverySameAsBilling?: boolean;
+  deliveryLabel?: string;
   deliveryAddress?: string;
   deliveryCity?: string;
   deliveryState?: string;
@@ -377,7 +378,7 @@ export const InvoicePDF = ({ data }: { data: InvoiceData }) => (
           </Text>
           {!data.deliverySameAsBilling && data.deliveryAddress ? (
             <View style={{ marginTop: 8 }}>
-              <Text style={styles.label}>Ship To</Text>
+              <Text style={styles.label}>Ship To{data.deliveryLabel ? ` — ${data.deliveryLabel}` : ''}</Text>
               <Text style={styles.companyDetails}>
                 {data.deliveryAddress}{'\n'}
                 {[data.deliveryCity, data.deliveryState, data.deliveryPincode].filter(Boolean).join(', ')}

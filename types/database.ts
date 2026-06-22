@@ -364,6 +364,14 @@ export interface Invoice extends BaseEntity {
   notes?: string;
   terms?: string;
 
+  // Frozen shipping address snapshot for this invoice
+  shipping_address_id?: string | null;
+  shipping_label?: string | null;
+  shipping_address?: string | null;
+  shipping_city?: string | null;
+  shipping_state?: string | null;
+  shipping_pincode?: string | null;
+
   created_by?: string;
 
   // Joined data

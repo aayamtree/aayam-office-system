@@ -220,11 +220,13 @@ export default function ClientsPage() {
       });
   }, []);
 
+  // Shipping addresses (multiple per client) — managed separately from formData
+  const [shippingAddresses, setShippingAddresses] = useState<any[]>([]);
+  const [newShipAddr, setNewShipAddr] = useState({ label: '', address: '', city: '', state: 'Gujarat', pincode: '' });
+  const [savingShip, setSavingShip] = useState(false);
+
   const [formData, setFormData] = useState({
     name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', pincode: '',
-    // Delivery / shipping address
-    delivery_same_as_billing: true,
-    delivery_address: '', delivery_city: '', delivery_state: 'Gujarat', delivery_pincode: '',
     is_active: true, brand_name: '',
     // Marketing ownership fields (admin only)
     source: 'direct' as string,
@@ -253,10 +255,12 @@ export default function ClientsPage() {
   });
 
   const handleAddNew = () => {
-    setFormData({ name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', pincode: '', delivery_same_as_billing: true, delivery_address: '', delivery_city: '', delivery_state: 'Gujarat', delivery_pincode: '', is_active: true, brand_name: '', source: 'direct', assigned_marketing_user_id: '', opening_balance: '', opening_balance_date: '', opening_balance_type: 'debit' });
+    setFormData({ name: '', company: '', email: '', phone: '', gstin: '', address: '', city: '', state: 'Gujarat', pincode: '', is_active: true, brand_name: '', source: 'direct', assigned_marketing_user_id: '', opening_balance: '', opening_balance_date: '', opening_balance_type: 'debit' });
     setIsEditing(false);
     setSelectedClient(null);
     setEditingClientBrands([]);
+    setShippingAddresses([]);
+    setNewShipAddr({ label: '', address: '', city: '', state: 'Gujarat', pincode: '' });
     setNewBrandInput('');
     setShowModal(true);
   };
@@ -272,11 +276,6 @@ export default function ClientsPage() {
       city: client.city || '',
       state: client.state || 'Gujarat',
       pincode: client.pincode || '',
-      delivery_same_as_billing: (client as any).delivery_same_as_billing ?? true,
-      delivery_address: (client as any).delivery_address || '',
-      delivery_city: (client as any).delivery_city || '',
-      delivery_state: (client as any).delivery_state || 'Gujarat',
-      delivery_pincode: (client as any).delivery_pincode || '',
       is_active: client.is_active,
       brand_name: client.brand_name || '',
       source: (client as any).source || 'direct',
@@ -288,11 +287,17 @@ export default function ClientsPage() {
     setSelectedClient(client);
     setIsEditing(true);
     setNewBrandInput('');
+    setNewShipAddr({ label: '', address: '', city: '', state: 'Gujarat', pincode: '' });
     // Load brands for this client from the brands table
     fetch(`/api/clients/${client.id}/brands`)
       .then(r => r.ok ? r.json() : { data: [] })
       .then(j => setEditingClientBrands(j.data || []))
       .catch(() => setEditingClientBrands([]));
+    // Load saved shipping addresses
+    fetch(`/api/clients/${client.id}/shipping-addresses`)
+      .then(r => r.ok ? r.json() : { data: [] })
+      .then(j => setShippingAddresses(j.data || []))
+      .catch(() => setShippingAddresses([]));
     setShowModal(true);
   };
 
@@ -323,12 +328,8 @@ export default function ClientsPage() {
     }
     setSaving(true);
     try {
-      // When delivery = billing, mirror billing values into the delivery fields
-      const deliveryFields = formData.delivery_same_as_billing
-        ? { delivery_same_as_billing: true, delivery_address: formData.address, delivery_city: formData.city, delivery_state: formData.state, delivery_pincode: formData.pincode }
-        : { delivery_same_as_billing: false, delivery_address: formData.delivery_address, delivery_city: formData.delivery_city, delivery_state: formData.delivery_state, delivery_pincode: formData.delivery_pincode };
       if (isEditing && selectedClient) {
-        const updatePayload: any = { ...formData, ...deliveryFields };
+        const updatePayload: any = { ...formData };
         // Admin can change source + marketing person
         if (profile?.role === 'admin') {
           updatePayload.source = formData.source;
@@ -362,7 +363,6 @@ export default function ClientsPage() {
         // Marketing-sourced clients should ONLY come through lead→client conversion.
         const newClient: any = await createClient({
           ...formData,
-          ...deliveryFields,
           client_type: 'regular',
           credit_limit: 0,
           created_by: profile?.id,
@@ -385,6 +385,19 @@ export default function ClientsPage() {
             } catch { /* non-fatal */ }
           }
         }
+
+        // If shipping addresses were staged inline for new client, seed them
+        if (newClient?.id && shippingAddresses.length > 0) {
+          for (const s of shippingAddresses) {
+            try {
+              await fetch(`/api/clients/${newClient.id}/shipping-addresses`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(s),
+              });
+            } catch { /* non-fatal */ }
+          }
+        }
         logActivity({ userId: profile?.id || '', userName: profile?.full_name || 'Unknown', action: 'CREATE', module: 'CRM', entityName: formData.name, description: `Added Client: ${formData.name} — ${formData.phone}${formData.company ? ` (${formData.company})` : ''}` });
       }
       setShowModal(false);
@@ -398,6 +411,37 @@ export default function ClientsPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  // ── Shipping address handlers ──
+  const addShippingAddress = async () => {
+    const a = newShipAddr;
+    if (!a.address.trim()) { toast.error('Enter the shipping address'); return; }
+    if (isEditing && selectedClient) {
+      setSavingShip(true);
+      try {
+        const res = await fetch(`/api/clients/${selectedClient.id}/shipping-addresses`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(a),
+        });
+        const j = await res.json();
+        if (j.data) setShippingAddresses(prev => [...prev, j.data]);
+        else toast.error(j.error || 'Failed to add address');
+      } catch { toast.error('Failed to add address'); } finally { setSavingShip(false); }
+    } else {
+      setShippingAddresses(prev => [...prev, { ...a, id: `tmp_${Date.now()}` }]);
+    }
+    setNewShipAddr({ label: '', address: '', city: '', state: 'Gujarat', pincode: '' });
+  };
+
+  const removeShippingAddress = async (addr: any) => {
+    if (isEditing && selectedClient && !String(addr.id).startsWith('tmp_')) {
+      try {
+        await fetch(`/api/clients/${selectedClient.id}/shipping-addresses`, {
+          method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ addressId: addr.id }),
+        });
+      } catch { /* non-fatal */ }
+    }
+    setShippingAddresses(prev => prev.filter(x => x.id !== addr.id));
   };
 
   if (loading) return (
@@ -857,25 +901,43 @@ export default function ClientsPage() {
                 <p className="text-xs text-sky-600">↗ {formData.state} (other state) → IGST will apply on tax invoices.</p>
               ) : null}
 
-              {/* ── Delivery / Shipping Address ── */}
+              {/* ── Shipping Addresses (multiple) ── */}
               <div className="border border-gray-200 rounded-md p-3 bg-gray-50 space-y-3">
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer">
-                  <input type="checkbox" checked={formData.delivery_same_as_billing} onChange={(e) => setFormData({ ...formData, delivery_same_as_billing: e.target.checked })} className="rounded border-gray-300" />
-                  Delivery address same as billing
-                </label>
-                {!formData.delivery_same_as_billing && (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-medium mb-1 text-gray-600">Delivery Address</label>
-                      <textarea value={formData.delivery_address} onChange={(e) => setFormData({ ...formData, delivery_address: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" rows={2} placeholder="Where goods are shipped (if different)" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 md:gap-3">
-                      <div><label className="block text-xs font-medium mb-1 text-gray-600">City</label><input type="text" value={formData.delivery_city} onChange={(e) => setFormData({ ...formData, delivery_city: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" /></div>
-                      <div><label className="block text-xs font-medium mb-1 text-gray-600">State</label><input list="indian-states-crm" type="text" value={formData.delivery_state} onChange={(e) => setFormData({ ...formData, delivery_state: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" /></div>
-                      <div><label className="block text-xs font-medium mb-1 text-gray-600">Pincode</label><input type="text" value={formData.delivery_pincode} onChange={(e) => setFormData({ ...formData, delivery_pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" maxLength={6} /></div>
-                    </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-700">Shipping Addresses</span>
+                  <span className="text-xs text-gray-400">For delivery (if different from billing)</span>
+                </div>
+
+                {/* Saved addresses list */}
+                {shippingAddresses.length > 0 && (
+                  <div className="space-y-2">
+                    {shippingAddresses.map((s) => (
+                      <div key={s.id} className="flex items-start justify-between gap-2 bg-white border border-gray-200 rounded-md p-2.5">
+                        <div className="min-w-0">
+                          {s.label && <p className="text-xs font-semibold text-gray-800">{s.label}</p>}
+                          <p className="text-xs text-gray-600">{[s.address, s.city, s.state, s.pincode].filter(Boolean).join(', ')}</p>
+                        </div>
+                        <button type="button" onClick={() => removeShippingAddress(s)} className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0" aria-label="Remove address">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
+
+                {/* Add new address */}
+                <div className="space-y-2 border-t border-gray-200 pt-2.5">
+                  <input type="text" value={newShipAddr.label} onChange={(e) => setNewShipAddr({ ...newShipAddr, label: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" placeholder="Label (e.g. Warehouse, Factory)" />
+                  <textarea value={newShipAddr.address} onChange={(e) => setNewShipAddr({ ...newShipAddr, address: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" rows={2} placeholder="Shipping address" />
+                  <div className="grid grid-cols-3 gap-2">
+                    <input type="text" value={newShipAddr.city} onChange={(e) => setNewShipAddr({ ...newShipAddr, city: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" placeholder="City" />
+                    <input list="indian-states-crm" type="text" value={newShipAddr.state} onChange={(e) => setNewShipAddr({ ...newShipAddr, state: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" placeholder="State" />
+                    <input type="text" value={newShipAddr.pincode} onChange={(e) => setNewShipAddr({ ...newShipAddr, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })} className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" maxLength={6} placeholder="Pincode" />
+                  </div>
+                  <button type="button" onClick={addShippingAddress} disabled={savingShip || !newShipAddr.address.trim()} className="w-full px-3 py-2 bg-gray-900 text-white text-sm rounded-md hover:bg-gray-700 disabled:opacity-40 flex items-center justify-center gap-1.5">
+                    <Plus className="w-3.5 h-3.5" /> {savingShip ? 'Adding...' : 'Add shipping address'}
+                  </button>
+                </div>
               </div>
 
               <div><label className="block text-sm font-medium mb-1 text-gray-700">Status</label><select value={formData.is_active ? 'active' : 'inactive'} onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'active' })} className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
@@ -991,9 +1053,6 @@ export default function ClientsPage() {
                 <div className="flex items-center gap-3"><Phone className="w-4 h-4 text-gray-400" /><span className="text-gray-700">{selectedClient.phone}</span><WhatsAppButton phone={selectedClient.phone} /></div>
                 {selectedClient.email && <div className="flex items-center gap-3"><Mail className="w-4 h-4 text-gray-400" /><span className="text-gray-700">{selectedClient.email}</span></div>}
                 {selectedClient.address && <div className="flex items-start gap-3"><MapPin className="w-4 h-4 text-gray-400 mt-0.5" /><span className="text-gray-700">{[selectedClient.address, selectedClient.city, selectedClient.state, selectedClient.pincode].filter(Boolean).join(', ')}</span></div>}
-                {!(selectedClient as any).delivery_same_as_billing && (selectedClient as any).delivery_address && (
-                  <div className="flex items-start gap-3"><Send className="w-4 h-4 text-gray-400 mt-0.5" /><span className="text-gray-700"><span className="text-xs font-semibold text-gray-500">Ship to: </span>{[(selectedClient as any).delivery_address, (selectedClient as any).delivery_city, (selectedClient as any).delivery_state, (selectedClient as any).delivery_pincode].filter(Boolean).join(', ')}</span></div>
-                )}
                 {selectedClient.gstin && <div className="flex items-center gap-3"><Building2 className="w-4 h-4 text-gray-400" /><span className="text-gray-700">GSTIN: {selectedClient.gstin}</span></div>}
               </div>
 
