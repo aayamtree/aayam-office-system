@@ -11,8 +11,8 @@ import { usePaperStock } from '@/lib/hooks';
 import { PaperStock } from '@/types/database';
 import { useConfirm } from '@/components/ConfirmModal';
 
-// Paper categories for CMYK printing
-const PAPER_CATEGORIES = [
+// Default suggested categories — users can add their own freely
+const DEFAULT_CATEGORIES = [
   'Sticker', 'Opaque', 'Texture', 'Standard', 'Photo Paper',
   'Matt', 'Glossy', 'Lamination Film', 'Card Stock', 'Craft Paper', 'Other'
 ];
@@ -28,9 +28,6 @@ const SIZE_PRESETS = [
   { label: 'A2', value: 'A2 (16.54×23.39)' },
   { label: 'Custom', value: 'custom' },
 ];
-
-// Category filter tabs (All + paper categories)
-const FILTER_CATEGORIES = ['All', ...PAPER_CATEGORIES];
 
 const emptyForm = {
   name: '',
@@ -59,6 +56,28 @@ export default function PaperStockPage() {
   const [restockQty, setRestockQty] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({ ...emptyForm });
+
+  // Flexible categories: defaults + any user has already used + ones added this session
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const [showNewCategory, setShowNewCategory] = useState(false);
+  const [newCategory, setNewCategory] = useState('');
+
+  const allCategories = Array.from(new Set([
+    ...DEFAULT_CATEGORIES,
+    ...customCategories,
+    ...stock.map(s => s.category).filter((c): c is string => !!c && c.trim() !== ''),
+  ]));
+
+  const handleAddCategory = () => {
+    const name = newCategory.trim();
+    if (!name) return;
+    if (!allCategories.some(c => c.toLowerCase() === name.toLowerCase())) {
+      setCustomCategories(prev => [...prev, name]);
+    }
+    setFormData(prev => ({ ...prev, category: name }));
+    setNewCategory('');
+    setShowNewCategory(false);
+  };
 
   const getStatus = (item: PaperStock) => {
     if (item.quantity === 0) return 'out_of_stock';
@@ -89,6 +108,8 @@ export default function PaperStockPage() {
     setFormData({ ...emptyForm });
     setIsEditing(false);
     setSelectedItem(null);
+    setShowNewCategory(false);
+    setNewCategory('');
     setShowModal(true);
   };
 
@@ -107,6 +128,8 @@ export default function PaperStockPage() {
     });
     setSelectedItem(item);
     setIsEditing(true);
+    setShowNewCategory(false);
+    setNewCategory('');
     setShowModal(true);
   };
 
@@ -182,6 +205,14 @@ export default function PaperStockPage() {
   const outOfStockCount = stock.filter(i => i.quantity === 0).length;
   const totalValue = stock.reduce((sum, item) => sum + (item.quantity * item.cost_per_unit), 0);
 
+  // Group filtered stock by category for at-a-glance cards
+  const groupedStock = filteredStock.reduce((acc, item) => {
+    const key = item.category && item.category.trim() ? item.category : 'Uncategorized';
+    (acc[key] = acc[key] || []).push(item);
+    return acc;
+  }, {} as Record<string, PaperStock[]>);
+  const groupKeys = Object.keys(groupedStock).sort((a, b) => a.localeCompare(b));
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -223,7 +254,7 @@ export default function PaperStockPage() {
 
       {/* Category filter tabs */}
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {FILTER_CATEGORIES.map(cat => (
+        {['All', ...allCategories].map(cat => (
           <button key={cat} onClick={() => setCategoryFilter(cat)}
             className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0
               ${categoryFilter === cat ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
@@ -249,59 +280,73 @@ export default function PaperStockPage() {
         </select>
       </div>
 
-      {/* Stock List */}
-      <div className="space-y-2">
-        {loading ? (
-          <div className="text-center py-12 text-gray-500">Loading...</div>
-        ) : filteredStock.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
-            <Package className="w-10 h-10 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">No paper types found.</p>
-            <button onClick={handleAddNew} className="mt-2 text-sm text-gray-700 underline">Add your first paper type</button>
-          </div>
-        ) : filteredStock.map(item => {
-          const status = getStatus(item);
-          return (
-            <div key={item.id} className={`bg-white rounded-md p-4 border ${status === 'out_of_stock' ? 'border-red-200' : status === 'low_stock' ? 'border-amber-200' : 'border-gray-100'}`}>
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-gray-900">{item.name}</h3>
-                    {item.category && (
-                      <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-md">{item.category}</span>
-                    )}
-                    <span className={`px-2 py-0.5 text-xs rounded-md border ${getStatusBadgeClass(status)}`}>
-                      {getStatusLabel(status)}
-                    </span>
+      {/* Stock — grouped by category for at-a-glance visibility */}
+      {loading ? (
+        <div className="text-center py-12 text-gray-500">Loading...</div>
+      ) : filteredStock.length === 0 ? (
+        <div className="text-center py-12 text-gray-400">
+          <Package className="w-10 h-10 mx-auto mb-2 opacity-30" />
+          <p className="text-sm">No paper types found.</p>
+          <button onClick={handleAddNew} className="mt-2 text-sm text-gray-700 underline">Add your first paper type</button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {groupKeys.map(cat => {
+            const items = groupedStock[cat];
+            const catSheets = items.reduce((s, i) => s + i.quantity, 0);
+            const catLow = items.some(i => getStatus(i) !== 'in_stock');
+            return (
+              <div key={cat} className="bg-white rounded-md border border-gray-200 overflow-hidden">
+                {/* Category header */}
+                <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-gray-900 text-sm">{cat}</span>
+                    {catLow && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}
                   </div>
-                  <div className="flex flex-wrap gap-3 text-sm text-gray-500">
-                    {item.size && <span>📐 {item.size}</span>}
-                    {item.gsm && <span>⚖️ {item.gsm} GSM</span>}
-                    <span className={`font-medium ${item.quantity < item.reorder_level ? 'text-red-600' : 'text-gray-900'}`}>
-                      📦 {item.quantity} sheets
-                    </span>
-                    <span>Min: {item.reorder_level} sheets</span>
-                    <span>₹{item.cost_per_unit}/sheet</span>
-                    {item.supplier && <span>🏭 {item.supplier}</span>}
-                  </div>
+                  <span className="text-xs text-gray-500">{items.length} type{items.length !== 1 ? 's' : ''} · {catSheets.toLocaleString('en-IN')} sheets</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => { setSelectedItem(item); setRestockQty(''); setShowRestockModal(true); }}
-                    className="flex items-center gap-1 px-3 py-2 bg-gray-100 text-gray-900 rounded-md hover:bg-green-100 text-sm font-medium transition-colors">
-                    <Plus className="w-4 h-4" /> Restock
-                  </button>
-                  <button onClick={() => handleEdit(item)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors">
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => handleDelete(item.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                {/* Items */}
+                <div className="divide-y divide-gray-100">
+                  {items.map(item => {
+                    const status = getStatus(item);
+                    const qtyColor = status === 'out_of_stock' ? 'text-red-600' : status === 'low_stock' ? 'text-amber-600' : 'text-gray-900';
+                    return (
+                      <div key={item.id} className="flex items-center justify-between gap-2 px-4 py-2.5 hover:bg-gray-50 transition-colors">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {[item.size, item.gsm ? `${item.gsm} GSM` : null, `₹${item.cost_per_unit}/sheet`, item.supplier]
+                              .filter(Boolean).join(' · ')}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0 w-16">
+                          <p className={`text-lg font-bold leading-none ${qtyColor}`}>{item.quantity.toLocaleString('en-IN')}</p>
+                          <p className="text-[10px] text-gray-400 mt-0.5">min {item.reorder_level}</p>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button onClick={() => { setSelectedItem(item); setRestockQty(''); setShowRestockModal(true); }}
+                            title="Restock"
+                            className="p-1.5 bg-gray-100 text-gray-900 rounded-md hover:bg-green-100 transition-colors">
+                            <Plus className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleEdit(item)} title="Edit"
+                            className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-md transition-colors">
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleDelete(item.id)} title="Delete"
+                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Add / Edit Modal */}
       {showModal && (
@@ -323,19 +368,38 @@ export default function PaperStockPage() {
                   className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
               </div>
 
-              {/* Category */}
+              {/* Category — flexible, add your own */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Paper Type / Category</label>
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                  {PAPER_CATEGORIES.map(cat => (
+                <div className="flex flex-wrap gap-2">
+                  {allCategories.map(cat => (
                     <button key={cat} type="button"
                       onClick={() => setFormData({ ...formData, category: formData.category === cat ? '' : cat })}
-                      className={`px-2 py-1.5 rounded-md border text-xs font-medium transition-all text-center
+                      className={`px-3 py-1.5 rounded-md border text-xs font-medium transition-all
                         ${formData.category === cat ? 'bg-gray-900 text-white border-gray-900' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
                       {cat}
                     </button>
                   ))}
+                  {!showNewCategory && (
+                    <button type="button" onClick={() => setShowNewCategory(true)}
+                      className="px-3 py-1.5 rounded-md border border-dashed border-gray-300 text-xs font-medium text-primary hover:bg-gray-50 flex items-center gap-1">
+                      <Plus className="w-3 h-3" /> Add category
+                    </button>
+                  )}
                 </div>
+                {showNewCategory && (
+                  <div className="flex gap-2 mt-2">
+                    <input type="text" autoFocus placeholder="New category name (e.g. Vinyl)" value={newCategory}
+                      onChange={e => setNewCategory(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddCategory(); } }}
+                      className="flex-1 px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                    <button type="button" onClick={handleAddCategory}
+                      className="px-3 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800">Add</button>
+                    <button type="button" onClick={() => { setShowNewCategory(false); setNewCategory(''); }}
+                      className="px-3 py-2 border border-gray-200 text-gray-600 rounded-md text-sm hover:bg-gray-50">Cancel</button>
+                  </div>
+                )}
+                <p className="text-xs text-gray-400 mt-1">Type any name — it&apos;s saved and appears as a chip next time.</p>
               </div>
 
               {/* Size presets */}
