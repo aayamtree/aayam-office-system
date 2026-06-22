@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   ArrowLeft, Plus, Minus, Trash2, ShoppingCart,
   Printer, CreditCard, Banknote, Smartphone, X, Search, Settings,
-  Edit, Loader2, Download, Package, Clock, ChevronDown
+  Edit, Loader2, Download, Package, Clock, ChevronDown, Tag
 } from 'lucide-react';
 import { ReceiptData, printReceipt, downloadReceipt } from '@/components/receipt/ReceiptPDF';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
@@ -22,7 +22,11 @@ interface CartItem {
   price: number;
   qty: number;
   total: number;
+  kind?: 'product' | 'charge';
 }
+
+// Common extra charges for a print shop (besides catalog products)
+const CHARGE_PRESETS = ['Die Cut', 'Handling', 'Delivery', 'Lamination', 'Design', 'Binding'];
 
 const categoryColors = [
   'bg-muted text-foreground',
@@ -101,8 +105,20 @@ export default function RetailPOSPage() {
           : item
       ));
     } else {
-      setCart([...cart, { id: product.id, name: product.name, price: product.price, qty: 1, total: product.price }]);
+      setCart([...cart, { id: product.id, name: product.name, price: product.price, qty: 1, total: product.price, kind: 'product' }]);
     }
+  };
+
+  // Custom charges (die cut, handling, delivery, etc.) — bill lines that aren't catalog products
+  const addCharge = (name: string) => {
+    const id = `charge-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    setCart(prev => [...prev, { id, name, price: 0, qty: 1, total: 0, kind: 'charge' }]);
+  };
+  const updateChargeAmount = (id: string, amount: number) => {
+    setCart(prev => prev.map(item => item.id === id ? { ...item, price: amount, total: amount } : item));
+  };
+  const updateChargeName = (id: string, name: string) => {
+    setCart(prev => prev.map(item => item.id === id ? { ...item, name } : item));
   };
 
   const updateQty = (id: string, delta: number) => {
@@ -247,7 +263,7 @@ export default function RetailPOSPage() {
       };
 
       const saleItems = cart.map(item => ({
-        product_id: item.id,
+        product_id: item.kind === 'charge' ? null : item.id,
         product_name: item.name,
         quantity: item.qty,
         price: item.price,
@@ -371,6 +387,22 @@ export default function RetailPOSPage() {
               </button>
             ))}
           </div>
+
+          {/* Quick charges — add extra charges to the bill (not catalog products) */}
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <span className="text-xs font-medium text-gray-500 flex items-center gap-1"><Tag className="w-3.5 h-3.5" /> Add charge:</span>
+            {CHARGE_PRESETS.map(name => (
+              <button key={name} onClick={() => addCharge(name)}
+                className="px-2.5 py-1 rounded-md border border-dashed border-amber-300 text-amber-700 bg-amber-50 text-xs font-medium hover:bg-amber-100 transition-colors">
+                + {name}
+              </button>
+            ))}
+            <button onClick={() => addCharge('Custom charge')}
+              className="px-2.5 py-1 rounded-md border border-dashed border-gray-300 text-gray-600 text-xs font-medium hover:bg-gray-50 transition-colors">
+              + Custom
+            </button>
+          </div>
+
           <div className="flex-1 overflow-y-auto">
             {productsLoading ? (
               <div className="flex items-center justify-center h-full text-gray-500">
@@ -498,15 +530,32 @@ export default function RetailPOSPage() {
               cart.map(item => (
                 <div key={item.id} className="bg-white p-3 rounded-md border">
                   <div className="flex justify-between mb-2">
-                    <span className="font-medium text-sm">{item.name}</span>
-                    <button onClick={() => removeFromCart(item.id)} className="text-red-500"><Trash2 className="w-4 h-4" /></button>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {item.kind === 'charge' && <Tag className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
+                      {item.kind === 'charge' ? (
+                        <input type="text" value={item.name} onChange={e => updateChargeName(item.id, e.target.value)}
+                          className="font-medium text-sm border-b border-dashed border-gray-300 focus:outline-none focus:border-gray-500 min-w-0 flex-1" />
+                      ) : (
+                        <span className="font-medium text-sm truncate">{item.name}</span>
+                      )}
+                    </div>
+                    <button onClick={() => removeFromCart(item.id)} className="text-red-500 shrink-0 ml-2"><Trash2 className="w-4 h-4" /></button>
                   </div>
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => updateQty(item.id, -1)} className="w-7 h-7 bg-gray-100 rounded flex items-center justify-center hover:bg-gray-200"><Minus className="w-4 h-4" /></button>
-                      <span className="w-8 text-center font-medium">{item.qty}</span>
-                      <button onClick={() => updateQty(item.id, 1)} className="w-7 h-7 bg-gray-100 rounded flex items-center justify-center hover:bg-gray-200"><Plus className="w-4 h-4" /></button>
-                    </div>
+                    {item.kind === 'charge' ? (
+                      <div className="flex items-center gap-1 text-sm">
+                        <span className="text-gray-400">₹</span>
+                        <input type="number" min="0" value={item.price || ''} placeholder="0"
+                          onChange={e => updateChargeAmount(item.id, parseFloat(e.target.value) || 0)}
+                          className="w-24 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => updateQty(item.id, -1)} className="w-7 h-7 bg-gray-100 rounded flex items-center justify-center hover:bg-gray-200"><Minus className="w-4 h-4" /></button>
+                        <span className="w-8 text-center font-medium">{item.qty}</span>
+                        <button onClick={() => updateQty(item.id, 1)} className="w-7 h-7 bg-gray-100 rounded flex items-center justify-center hover:bg-gray-200"><Plus className="w-4 h-4" /></button>
+                      </div>
+                    )}
                     <span className="font-bold text-primary">{formatCurrency(item.total)}</span>
                   </div>
                 </div>
@@ -525,21 +574,18 @@ export default function RetailPOSPage() {
                     className="w-16 px-2 py-1 border rounded text-right text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" /><span>%</span>
                 </div>
               </div>
-              {discount > 0 && <div className="flex justify-between text-sm text-gray-500"><span>Discount Amount</span><span>-{formatCurrency(discountAmount)}</span></div>}
+              {discount > 0 && <div className="flex justify-between text-sm text-gray-500"><span>Taxable Value</span><span>{formatCurrency(taxableAmount)}</span></div>}
+              {/* GST clubbed into one line (CGST + SGST split shown small) */}
               <div className="flex justify-between items-center text-sm pt-2 border-t">
-                <span>Taxable Value</span><span>{formatCurrency(taxableAmount)}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
                 <span className="flex items-center gap-1">
                   GST
                   <input type="number" value={gstRate || ''} min="0" max="28"
                     onChange={(e) => setGstRate(Math.min(28, parseFloat(e.target.value) || 0))}
-                    className="w-12 px-1.5 py-0.5 border rounded text-right text-xs focus:outline-none focus:ring-2 focus:ring-gray-400" />%
+                    className="w-11 px-1.5 py-0.5 border rounded text-right text-xs focus:outline-none focus:ring-2 focus:ring-gray-400" />%
+                  <span className="text-xs text-gray-400">(CGST {gstRate / 2}% + SGST {gstRate / 2}%)</span>
                 </span>
                 <span>{formatCurrency(gstAmount)}</span>
               </div>
-              <div className="flex justify-between text-xs text-gray-500"><span>CGST ({(gstRate / 2)}%)</span><span>{formatCurrency(cgstAmount)}</span></div>
-              <div className="flex justify-between text-xs text-gray-500"><span>SGST ({(gstRate / 2)}%)</span><span>{formatCurrency(sgstAmount)}</span></div>
               <div className="flex justify-between text-section pt-2 border-t"><span>Grand Total</span><span className="text-primary">{formatCurrency(grandTotal)}</span></div>
             </div>
             <button onClick={() => setShowPaymentModal(true)} disabled={cart.length === 0}

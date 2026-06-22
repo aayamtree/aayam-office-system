@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
@@ -16,10 +16,9 @@ import EODNudge from '@/components/eod/EODNudge';
 import RouteGuard from '@/components/layout/RouteGuard';
 import { NotificationPopup } from '@/components/NotificationPopup';
 import DriveDisconnectBanner from '@/components/drive/DriveDisconnectBanner';
-import GSTCalculatorFloat from '@/components/shared/GSTCalculatorFloat';
+import FloatingDock from '@/components/shared/FloatingDock';
 import ChatPanel from '@/components/ChatPanel';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
-import { MessageCircle } from 'lucide-react';
 
 export default function AdminLayout({
   children,
@@ -27,9 +26,6 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
-  // POS is a focused full-screen billing view — hide floating widgets that overlap the pay area
-  const hideFloats = pathname?.includes('/cmyk-print/retail-pos');
   const { profile, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // sidebarCollapsed is driven by Sidebar's internal click-toggle (persisted to localStorage).
@@ -118,41 +114,8 @@ export default function AdminLayout({
           {/* PWA Service Worker + Push Notification subscription */}
           <ServiceWorkerRegistration />
 
-          {/* GST Calculator — floating button (hidden on POS where it overlaps the pay area) */}
-          {!hideFloats && <GSTCalculatorFloat />}
-
-          {/* Floating Chat Button (hidden on POS) */}
-          {!hideFloats && <button
-            onClick={() => setChatOpen(true)}
-            style={{
-              position: 'fixed',
-              bottom: '80px',
-              right: '20px',
-              width: '52px',
-              height: '52px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #2b5278, #1a3a5c)',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 16px rgba(43,82,120,0.5)',
-              zIndex: 50,
-              transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.08)';
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 20px rgba(43,82,120,0.7)';
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 16px rgba(43,82,120,0.5)';
-            }}
-            title="Team Chat"
-          >
-            <MessageCircle size={22} color="#fff" strokeWidth={1.8} />
-          </button>}
+          {/* Floating dock — GST calculator + team chat, draggable up/down on the right edge */}
+          <FloatingDock onOpenChat={() => setChatOpen(true)} />
 
           {/* Chat Panel */}
           <ChatPanel open={chatOpen} onClose={() => setChatOpen(false)} />
