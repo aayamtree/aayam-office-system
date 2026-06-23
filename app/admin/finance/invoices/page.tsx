@@ -11,7 +11,7 @@ import { InvoiceData, downloadInvoicePDF, printInvoicePDF } from '@/components/i
 import { buildReceiptData, downloadReceiptPDF, printReceiptPDF } from '@/components/finance/ReceiptPDF';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import { shareOnWhatsApp, getInvoiceMessage, getPaymentReminderMessage } from '@/lib/whatsapp';
-import { useInvoices, useClients, useJobs, useBankAccounts, useCashAccounts } from '@/lib/hooks';
+import { useInvoices, useClients, useJobs, useBankAccounts, useCashAccounts, useQuotations } from '@/lib/hooks';
 import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
 import { Invoice, Client, InvoiceItem } from '@/types/database';
 import { formatDate } from '@/lib/utils';
@@ -24,7 +24,58 @@ export default function InvoicesPage() {
   const { clients, refetch: refetchClients } = useClients();
   const { bankAccounts } = useBankAccounts();
   const { cashAccounts } = useCashAccounts();
+  const { quotations } = useQuotations();
   const [showClientModal, setShowClientModal] = useState(false);
+
+  // ── Create from Quote (pick which quoted items the client actually ordered) ──
+  const [showQuotePicker, setShowQuotePicker] = useState(false);
+  const [pickedQuote, setPickedQuote] = useState<any>(null);
+  const [quoteItemSel, setQuoteItemSel] = useState<{ checked: boolean; quantity: number }[]>([]);
+
+  const openQuotePicker = () => { setPickedQuote(null); setQuoteItemSel([]); setShowQuotePicker(true); };
+  const selectQuote = (q: any) => {
+    setPickedQuote(q);
+    setQuoteItemSel((q.items || []).map((it: any) => ({ checked: true, quantity: Number(it.quantity) || 1 })));
+  };
+
+  const createInvoiceFromQuote = () => {
+    if (!pickedQuote) return;
+    const srcItems = pickedQuote.items || [];
+    const chosen = srcItems
+      .map((it: any, idx: number) => ({ it, sel: quoteItemSel[idx] }))
+      .filter((x: any) => x.sel?.checked)
+      .map((x: any) => {
+        const qty = Number(x.sel.quantity) || 0;
+        const rate = Number(x.it.rate) || 0;
+        const gst_rate = Number(x.it.gst_rate) || 18;
+        return { description: x.it.description || '', item_notes: '', hsn_code: '4911', quantity: qty, rate, amount: qty * rate, gst_rate };
+      });
+    if (chosen.length === 0) { toast.error('Tick at least one item to invoice'); return; }
+
+    const subtotal = chosen.reduce((s: number, i: any) => s + i.amount, 0);
+    const totalTax = chosen.reduce((s: number, i: any) => s + Math.round(i.amount * (i.gst_rate / 100)), 0);
+    const isGujarat = (pickedQuote.client?.state || '').toLowerCase() === 'gujarat';
+
+    setFormData({
+      clientId: pickedQuote.client_id || '',
+      invoiceNumber: '',
+      invoiceDate: new Date().toISOString().split('T')[0],
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      items: chosen as any,
+      subtotal,
+      gstRate: chosen[0]?.gst_rate || 18,
+      supplyType: (isGujarat ? 'intra_state' : 'inter_state') as 'inter_state' | 'intra_state',
+      totalTax,
+      totalAmount: subtotal + totalTax,
+      paidAmount: 0,
+      status: 'pending',
+      notes: `From Quote ${pickedQuote.quote_number || ''}`.trim(),
+      jobId: '',
+    });
+    setIsEditing(false);
+    setShowQuotePicker(false);
+    setShowModal(true);
+  };
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
@@ -752,14 +803,22 @@ export default function InvoicesPage() {
             <p className="text-xs md:text-sm text-gray-500">{filteredInvoices.length} invoices • Outstanding: {formatCurrency(totalOutstanding)}</p>
           </div>
         </div>
-        <button
-          onClick={handleAddNew}
-          className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold"
-        >
-          <Plus className="w-4 h-4 md:hidden" />
-          <Plus className="w-4 h-4 md:w-4.5 md:h-4.5 hidden md:block" />
-          <span>New Invoice</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={openQuotePicker}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-md hover:bg-gray-50 shadow-sm font-semibold"
+          >
+            <Plus className="w-4 h-4" />
+            <span>From Quote</span>
+          </button>
+          <button
+            onClick={handleAddNew}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold"
+          >
+            <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
+            <span>New Invoice</span>
+          </button>
+        </div>
       </div>
 
       {/* Ready for Invoicing Alert (Data Flow: Jobs -> Finance) */}
@@ -1502,6 +1561,61 @@ export default function InvoicesPage() {
           </div>
         )
       }
+      {/* Create from Quote picker */}
+      {showQuotePicker && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4 backdrop-blur-sm" onClick={() => setShowQuotePicker(false)}>
+          <div className="bg-white rounded-md w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+              <div>
+                <h2 className="text-page-title text-gray-900">{pickedQuote ? 'Choose items to invoice' : 'Create Invoice from Quote'}</h2>
+                <p className="text-sm text-gray-500">{pickedQuote ? `${pickedQuote.quote_number} • ${pickedQuote.client?.company || pickedQuote.client?.name || ''}` : 'Pick a quotation, then tick the items the client actually ordered'}</p>
+              </div>
+              <button onClick={() => setShowQuotePicker(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
+            </div>
+
+            {!pickedQuote ? (
+              <div className="p-4 space-y-2">
+                {(quotations || []).length === 0 ? (
+                  <p className="text-sm text-gray-400 p-4 text-center">No quotations found.</p>
+                ) : (quotations || []).map((q: any) => (
+                  <button key={q.id} onClick={() => selectQuote(q)} className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-md hover:bg-gray-50 text-left">
+                    <div>
+                      <p className="font-semibold text-gray-900">{q.quote_number}</p>
+                      <p className="text-xs text-gray-500">{q.client?.company || q.client?.name || '—'} • {(q.items || []).length} item(s)</p>
+                    </div>
+                    <span className="font-semibold text-gray-900">{formatCurrency(q.total_amount || 0)}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="p-4 space-y-3">
+                {(pickedQuote.items || []).map((it: any, idx: number) => (
+                  <div key={it.id || idx} className="flex items-center gap-3 p-3 border border-gray-200 rounded-md">
+                    <input type="checkbox" checked={quoteItemSel[idx]?.checked ?? false}
+                      onChange={(e) => setQuoteItemSel(prev => prev.map((s, i) => i === idx ? { ...s, checked: e.target.checked } : s))}
+                      className="w-4 h-4" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">{it.description}</p>
+                      <p className="text-xs text-gray-500">Rate {formatCurrency(it.rate || 0)} • GST {it.gst_rate || 18}%</p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-gray-400">Qty</span>
+                      <input type="number" value={quoteItemSel[idx]?.quantity ?? ''}
+                        onChange={(e) => setQuoteItemSel(prev => prev.map((s, i) => i === idx ? { ...s, quantity: parseFloat(e.target.value) || 0 } : s))}
+                        className="w-20 px-2 py-1.5 border border-gray-200 rounded-md text-sm" />
+                    </div>
+                  </div>
+                ))}
+                <div className="flex gap-3 pt-2 border-t border-gray-100">
+                  <button onClick={() => setPickedQuote(null)} className="px-4 py-2.5 border border-gray-200 text-gray-700 font-semibold rounded-md hover:bg-gray-50">Back</button>
+                  <button onClick={createInvoiceFromQuote} className="flex-1 px-4 py-2.5 bg-gray-900 text-white font-semibold rounded-md hover:bg-gray-800">Create Invoice from selected</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Record Payment Modal (posts to ledger) */}
       {showPayModal && payInvoice && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4 backdrop-blur-sm" onClick={() => setShowPayModal(false)}>
