@@ -1153,33 +1153,47 @@ export default function InvoicesPage() {
       {/* View Modal */}
       {
         showViewModal && selectedInvoice && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-md w-full max-w-lg max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                <div>
+          <div className="fixed inset-0 bg-black/50 flex justify-end z-50 backdrop-blur-sm" onClick={() => setShowViewModal(false)}>
+            <div className="bg-white w-full max-w-2xl h-full overflow-y-auto shadow-xl flex flex-col" onClick={(e) => e.stopPropagation()}>
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-100 sticky top-0 bg-white z-10">
+                <div className="flex items-center gap-3">
                   <h2 className="text-page-title text-gray-900">{selectedInvoice.invoice_number}</h2>
-                  <div className="flex items-center gap-2 mt-1">
-                    <p className="text-sm text-gray-500">{new Date(selectedInvoice.invoice_date).toLocaleDateString()}</p>
-                    {selectedInvoice.payment_status === 'overdue' && (
-                      <span className="text-xs font-bold text-white bg-red-500 px-2 py-0.5 rounded-md">OVERDUE</span>
-                    )}
-                  </div>
+                  <span className={`px-2.5 py-1 text-xs rounded-md border whitespace-nowrap ${getStatusColor(getEffectiveStatus(selectedInvoice))}`}>
+                    {getStatusLabel(selectedInvoice)}
+                  </span>
                 </div>
                 <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-gray-100 rounded-md">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
+              {/* Action Toolbar (Zoho-style) */}
+              <div className="flex items-center gap-1 px-4 py-2 border-b border-gray-100 overflow-x-auto">
+                <button onClick={() => { setShowViewModal(false); handleEdit(selectedInvoice); }} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded-md whitespace-nowrap"><Edit className="w-4 h-4" /> Edit</button>
+                {getEffectiveStatus(selectedInvoice) !== 'paid' && (
+                  <button onClick={() => { setShowViewModal(false); handleEdit(selectedInvoice); }} className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 rounded-md whitespace-nowrap"><CheckCircle className="w-4 h-4" /> Record Payment</button>
+                )}
+                <button onClick={() => handleDownloadPDF(selectedInvoice)} disabled={pdfLoading} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded-md whitespace-nowrap disabled:opacity-50"><Download className="w-4 h-4" /> PDF</button>
+                <button onClick={() => handlePrintPDF(selectedInvoice)} disabled={pdfLoading} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded-md whitespace-nowrap disabled:opacity-50"><Printer className="w-4 h-4" /> Print</button>
+                <button onClick={() => handleWhatsAppShare(selectedInvoice)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded-md whitespace-nowrap"><MessageCircle className="w-4 h-4" /> Share</button>
+              </div>
+
               <div className="p-4 space-y-6">
                 {/* Client Info */}
-                <div className="flex items-center gap-2 md:gap-4 p-4 bg-gray-50 rounded-md border border-gray-100">
-                  <div className="w-12 h-12 bg-gray-900 rounded-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-primary" />
+                <div className="p-4 bg-gray-50 rounded-md border border-gray-100">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center shrink-0">
+                      <User className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Bill To</p>
+                      <h3 className="font-bold text-gray-900 leading-tight">{selectedInvoice.client?.company || selectedInvoice.client?.name}</h3>
+                      {selectedInvoice.client?.company && <p className="text-sm text-gray-600">{selectedInvoice.client?.name}</p>}
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900">{selectedInvoice.client?.company || selectedInvoice.client?.name}</h3>
-                    {selectedInvoice.client?.company && <p className="text-sm text-gray-600">{selectedInvoice.client?.name}</p>}
-                  </div>
+                  {selectedInvoice.client?.address && <p className="text-sm text-gray-500">{selectedInvoice.client?.address}{selectedInvoice.client?.city ? `, ${selectedInvoice.client.city}` : ''}{selectedInvoice.client?.state ? `, ${selectedInvoice.client.state}` : ''}</p>}
+                  {selectedInvoice.client?.gstin && <p className="text-xs text-gray-500 mt-1">GSTIN: {selectedInvoice.client?.gstin}</p>}
                 </div>
 
                 {/* Items */}
@@ -1199,31 +1213,55 @@ export default function InvoicesPage() {
                 </div>
 
                 {/* Amount Details */}
-                <div className="bg-gray-900/50 rounded-md p-5 border border-border-100 space-y-3">
+                <div className="bg-gray-50 rounded-md p-5 border border-gray-100 space-y-3">
                   <div className="flex justify-between text-gray-600">
                     <span>Subtotal</span>
                     <span>{formatCurrency(selectedInvoice.subtotal)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>GST</span>
-                    <span>{formatCurrency(selectedInvoice.total_tax)}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-gray-900 pt-3 border-t border-border-100">
+                  {(selectedInvoice.igst_amount || 0) > 0 ? (
+                    <div className="flex justify-between text-gray-600">
+                      <span>IGST</span>
+                      <span>{formatCurrency(selectedInvoice.igst_amount || 0)}</span>
+                    </div>
+                  ) : ((selectedInvoice.cgst_amount || 0) > 0 || (selectedInvoice.sgst_amount || 0) > 0) ? (
+                    <>
+                      <div className="flex justify-between text-gray-600">
+                        <span>CGST</span>
+                        <span>{formatCurrency(selectedInvoice.cgst_amount || 0)}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>SGST</span>
+                        <span>{formatCurrency(selectedInvoice.sgst_amount || 0)}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex justify-between text-gray-600">
+                      <span>GST</span>
+                      <span>{formatCurrency(selectedInvoice.total_tax)}</span>
+                    </div>
+                  )}
+                  {(selectedInvoice.discount_amount || 0) > 0 && (
+                    <div className="flex justify-between text-gray-600">
+                      <span>Discount</span>
+                      <span>- {formatCurrency(selectedInvoice.discount_amount || 0)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-bold text-gray-900 pt-3 border-t border-gray-200">
                     <span>Total Amount</span>
                     <span className="text-lg">{formatCurrency(selectedInvoice.total_amount)}</span>
                   </div>
                   {selectedInvoice.amount_paid > 0 && (
-                    <>
-                      <div className="flex justify-between text-gray-900 font-medium">
-                        <span>Paid</span>
-                        <span>- {formatCurrency(selectedInvoice.amount_paid)}</span>
-                      </div>
-                      <div className="flex justify-between font-bold text-amber-700 pt-3 border-t border-border-100">
-                        <span>Balance Due</span>
-                        <span>{formatCurrency(selectedInvoice.total_amount - selectedInvoice.amount_paid)}</span>
-                      </div>
-                    </>
+                    <div className="flex justify-between text-gray-900 font-medium">
+                      <span>Paid</span>
+                      <span>- {formatCurrency(selectedInvoice.amount_paid)}</span>
+                    </div>
                   )}
+                  <div className="flex justify-between font-bold pt-3 border-t border-gray-200">
+                    <span className="text-gray-900">Balance Due</span>
+                    <span className={`text-lg ${getEffectiveStatus(selectedInvoice) === 'paid' ? 'text-green-700' : 'text-gray-900'}`}>
+                      {formatCurrency(Math.max(0, selectedInvoice.total_amount - selectedInvoice.amount_paid))}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Due Date & Status */}
@@ -1234,37 +1272,23 @@ export default function InvoicesPage() {
                   </div>
                   <div className="p-3 border rounded-md">
                     <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Status</p>
-                    <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-bold uppercase rounded-md ${getStatusColor(selectedInvoice.payment_status).replace('border', '')}`}>
-                      {selectedInvoice.payment_status}
+                    <span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-md border ${getStatusColor(getEffectiveStatus(selectedInvoice))}`}>
+                      {getStatusLabel(selectedInvoice)}
                     </span>
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="grid grid-cols-2 gap-3 pt-2">
-                  <button
-                    onClick={() => handlePrintPDF(selectedInvoice)}
-                    disabled={pdfLoading}
-                    className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 text-gray-700 font-semibold rounded-md hover:bg-gray-50 disabled:opacity-50 transition-colors"
-                  >
-                    {pdfLoading ? <Loader2 className="w-4 h-4 md:w-4.5 md:h-4.5 animate-spin" /> : <Printer className="w-4 h-4 md:w-4.5 md:h-4.5" />}
-                    Print
-                  </button>
-                  <button
-                    onClick={() => handleDownloadPDF(selectedInvoice)}
-                    disabled={pdfLoading}
-                    className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white font-semibold rounded-md hover:bg-gray-800 disabled:opacity-50 transition-colors"
-                  >
-                    {pdfLoading ? <Loader2 className="w-4 h-4 md:w-4.5 md:h-4.5 animate-spin" /> : <Download className="w-4 h-4 md:w-4.5 md:h-4.5" />}
-                    Download PDF
-                  </button>
-                  <button
-                    onClick={() => handleWhatsAppShare(selectedInvoice)}
-                    className="col-span-2 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition-colors"
-                  >
-                    <MessageCircle className="w-4 h-4 md:w-4.5 md:h-4.5" />
-                    Share on WhatsApp
-                  </button>
+                {/* Payments Received */}
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Payments Received</h4>
+                  {selectedInvoice.amount_paid > 0 ? (
+                    <div className="flex justify-between items-center text-sm p-3 bg-green-50 border border-green-100 rounded-md">
+                      <span className="text-gray-700">Amount received so far</span>
+                      <span className="font-semibold text-green-700">{formatCurrency(selectedInvoice.amount_paid)}</span>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-400 p-3 bg-gray-50 border border-gray-100 rounded-md">No payments recorded yet.</p>
+                  )}
                 </div>
 
                 {/* Payment Reminder Button - Only show if balance due */}
