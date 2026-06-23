@@ -120,8 +120,13 @@ export default function QuickExpensePage() {
             // vendor_id is optional — petty/internal expenses have no vendor
             const vendorId = formData.vendor_id || null;
 
-            // Call the RPC function (vendor_id can be null for petty expenses)
-            const { data, error: rpcError } = await supabase.rpc('record_vendor_payment', {
+            // Map the selected category name to its id (for ledger account routing)
+            const catMatch = categories.find((c) => c.name === formData.category);
+            const categoryId = catMatch && /^[0-9a-f-]{36}$/i.test(catMatch.id) ? catMatch.id : null;
+
+            // Call the ledger-posting RPC: records the payment AND posts the double entry
+            const { data, error: rpcError } = await supabase.rpc('fn_record_expense', {
+                p_category_id: categoryId,
                 p_vendor_id: vendorId,
                 p_amount: parseFloat(formData.amount),
                 p_payment_mode: formData.payment_mode,
