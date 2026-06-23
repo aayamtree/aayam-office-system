@@ -7,7 +7,7 @@ import {
   Plus, Search, FileText, Building2, Calendar, X, Eye, Edit, Trash2,
   Package, ArrowLeft, Loader2, Upload, ExternalLink, PlusCircle
 } from 'lucide-react';
-import { usePurchaseBills, useVendors, useJobs, usePurchaseServiceCategories } from '@/lib/hooks';
+import { usePurchaseBills, useVendors, useJobs, usePurchaseServiceCategories, useBankAccounts, useCashAccounts } from '@/lib/hooks';
 import { formatDate } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -45,10 +45,63 @@ function fmt(n: number) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function VendorPurchasesPage() {
-  const { purchaseBills: allPurchases, loading, createPurchaseBill, updatePurchaseBill, deletePurchaseBill } = usePurchaseBills();
+  const { purchaseBills: allPurchases, loading, createPurchaseBill, updatePurchaseBill, deletePurchaseBill, refetch: refetchBills } = usePurchaseBills();
   const { vendors } = useVendors();
   const { jobs } = useJobs();
   const { serviceCategories, createServiceCategory } = usePurchaseServiceCategories();
+  const { bankAccounts } = useBankAccounts();
+  const { cashAccounts } = useCashAccounts();
+
+  // ── Record Payment (posts to ledger via fn_record_bill_payment) ──
+  const [showPayModal, setShowPayModal] = useState(false);
+  const [payBill, setPayBill] = useState<any>(null);
+  const [paySubmitting, setPaySubmitting] = useState(false);
+  const [payForm, setPayForm] = useState({
+    amount: 0, mode: 'bank_transfer', date: new Date().toISOString().split('T')[0],
+    accountKind: 'bank' as 'bank' | 'cash', accountId: '', reference: '',
+  });
+
+  const openBillPayment = (bill: any) => {
+    const balance = Math.max(0, (bill.total_amount || 0) - (bill.amount_paid || 0));
+    const firstBank = (bankAccounts || []).find((b: any) => b.is_default) || (bankAccounts || [])[0];
+    const firstCash = (cashAccounts || [])[0];
+    setPayBill(bill);
+    setPayForm({
+      amount: balance, mode: 'bank_transfer', date: new Date().toISOString().split('T')[0],
+      accountKind: firstBank ? 'bank' : 'cash',
+      accountId: firstBank ? firstBank.id : (firstCash ? firstCash.id : ''), reference: '',
+    });
+    setShowPayModal(true);
+  };
+
+  const submitBillPayment = async () => {
+    if (!payBill) return;
+    if (!payForm.amount || payForm.amount <= 0) { toast.error('Enter a payment amount greater than zero'); return; }
+    if (!payForm.accountId) { toast.error('Select an account to pay from'); return; }
+    setPaySubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.rpc('fn_record_bill_payment', {
+        p_bill_id: payBill.id,
+        p_amount: payForm.amount,
+        p_mode: payForm.mode,
+        p_date: payForm.date,
+        p_bank_account_id: payForm.accountKind === 'bank' ? payForm.accountId : null,
+        p_cash_account_id: payForm.accountKind === 'cash' ? payForm.accountId : null,
+        p_reference: payForm.reference || null,
+        p_notes: null,
+        p_user_id: user?.id || null,
+      });
+      if (error) throw error;
+      toast.success('Payment recorded and posted to the ledger.');
+      setShowPayModal(false); setPayBill(null);
+      refetchBills?.();
+    } catch (err: any) {
+      toast.error('Could not record payment: ' + (err.message || 'unknown error'));
+    } finally {
+      setPaySubmitting(false);
+    }
+  };
 
   const purchases = (allPurchases || []).sort(
     (a, b) => new Date(b.bill_date).getTime() - new Date(a.bill_date).getTime()
@@ -683,9 +736,81 @@ export default function VendorPurchasesPage() {
                 <div className="flex justify-between px-4 py-2 bg-gray-50 font-semibold"><span>Balance Due</span><span className="text-red-600">{formatCurrency((selectedPurchase.total_amount || 0) - (selectedPurchase.amount_paid || 0))}</span></div>
               </div>
 
-              <Link href="/admin/finance/vendors/payments" className="block w-full text-center px-4 py-2.5 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 text-sm">
-                Record Payment
-              </Link>
+              {((selectedPurchase.total_amount || 0) - (selectedPurchase.amount_paid || 0)) > 0.5 ? (
+                <button onClick={() => openBillPayment(selectedPurchase)} className="block w-full text-center px-4 py-2.5 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 text-sm">
+                  Record Payment
+                </button>
+              ) : (
+                <p className="text-center text-sm text-green-700 font-medium py-2">Fully paid</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Record Payment Modal (posts to ledger) */}
+      {showPayModal && payBill && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4 backdrop-blur-sm" onClick={() => setShowPayModal(false)}>
+          <div className="bg-white rounded-md w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Record Payment</h2>
+                <p className="text-sm text-gray-500">{payBill.bill_number} • Balance {formatCurrency(Math.max(0, (payBill.total_amount || 0) - (payBill.amount_paid || 0)))}</p>
+              </div>
+              <button onClick={() => setShowPayModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Amount Paid</label>
+                <input type="number" value={payForm.amount || ''} onChange={(e) => setPayForm({ ...payForm, amount: parseFloat(e.target.value) || 0 })}
+                  className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Payment Date</label>
+                  <input type="date" value={payForm.date} onChange={(e) => setPayForm({ ...payForm, date: e.target.value })}
+                    className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Mode</label>
+                  <select value={payForm.mode} onChange={(e) => setPayForm({ ...payForm, mode: e.target.value })}
+                    className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400">
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="upi">UPI</option>
+                    <option value="cheque">Cheque</option>
+                    <option value="cash">Cash</option>
+                    <option value="card">Card</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Pay From</label>
+                <div className="flex gap-2 mt-1 mb-2">
+                  <button type="button" onClick={() => { const f = (bankAccounts || [])[0]; setPayForm({ ...payForm, accountKind: 'bank', accountId: f ? f.id : '' }); }}
+                    className={`flex-1 py-1.5 text-sm rounded-md border ${payForm.accountKind === 'bank' ? 'bg-gray-900 text-white border-gray-900' : 'border-gray-200 text-gray-600'}`}>Bank</button>
+                  <button type="button" onClick={() => { const f = (cashAccounts || [])[0]; setPayForm({ ...payForm, accountKind: 'cash', accountId: f ? f.id : '' }); }}
+                    className={`flex-1 py-1.5 text-sm rounded-md border ${payForm.accountKind === 'cash' ? 'bg-gray-900 text-white border-gray-900' : 'border-gray-200 text-gray-600'}`}>Cash</button>
+                </div>
+                <select value={payForm.accountId} onChange={(e) => setPayForm({ ...payForm, accountId: e.target.value })}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400">
+                  <option value="">Select account…</option>
+                  {((payForm.accountKind === 'bank' ? bankAccounts : cashAccounts) || []).map((a: any) => (
+                    <option key={a.id} value={a.id}>{a.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Reference (optional)</label>
+                <input type="text" value={payForm.reference} onChange={(e) => setPayForm({ ...payForm, reference: e.target.value })} placeholder="UTR / cheque no."
+                  className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
+              </div>
+              <div className="flex gap-3 pt-2 border-t border-gray-100">
+                <button onClick={() => setShowPayModal(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 font-semibold rounded-md hover:bg-gray-50">Cancel</button>
+                <button onClick={submitBillPayment} disabled={paySubmitting}
+                  className="flex-1 px-4 py-2.5 bg-gray-900 text-white font-semibold rounded-md hover:bg-gray-800 disabled:opacity-50">
+                  {paySubmitting ? 'Recording…' : 'Record Payment'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
