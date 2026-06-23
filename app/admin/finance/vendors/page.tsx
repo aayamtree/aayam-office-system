@@ -360,8 +360,8 @@ export default function VendorsPage() {
 
                 {/* ── Action Footer ── */}
                 <div className="flex items-center border-t border-gray-100">
-                  <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="flex-1 flex items-center justify-center gap-1 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors">
-                    <Package className="w-3.5 h-3.5" /> Bills
+                  <Link href={`/admin/finance/vendors/${vendor.id}`} className="flex-1 flex items-center justify-center gap-1 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                    <FileBarChart className="w-3.5 h-3.5" /> Statement
                   </Link>
                   <div className="w-px h-5 bg-gray-100" />
                   <button onClick={() => handleView(vendor)} className="flex-1 flex items-center justify-center gap-1 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors">
@@ -433,6 +433,9 @@ export default function VendorsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
+                        <Link href={`/admin/finance/vendors/${vendor.id}`} className="p-2 hover:bg-gray-100 rounded-md transition-colors" title="Statement / ledger" aria-label="Vendor statement">
+                          <FileBarChart className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-500" />
+                        </Link>
                         <Link href={`./vendors/purchases?vendorId=${vendor.id}`} className="p-2 hover:bg-gray-100 rounded-md transition-colors" title="View Bills" aria-label="View vendor purchases">
                           <Package className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-500" />
                         </Link>
