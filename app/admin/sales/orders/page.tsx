@@ -28,7 +28,7 @@ export default function OrdersPage() {
   // (sales_person_id, created_by) and the client's source — so the source tag
   // and owner name render correctly instead of defaulting to "Direct".
   const { jobs: allJobs, loading: jobsLoading, createJob, updateJob, deleteJob } = useJobs({
-    select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, total_amount, amount_received, payment_status, sales_person_id, created_by, client:clients(id, name, company, source, created_by)'
+    select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, quantity, quote_per_piece, subtotal, gst_rate, gst_amount, total_amount, amount_received, payment_status, sales_person_id, created_by, client:clients(id, name, company, source, created_by)'
   });
   const { categories, createCategory } = useProductCategories();
   const router = useRouter();
