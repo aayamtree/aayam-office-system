@@ -79,10 +79,10 @@ export default function RetailPOSPage() {
   const [artworkLink, setArtworkLink] = useState('');
 
   // Paper rows (multiple papers/sizes per bill) & Credit fields
-  const [paperRows, setPaperRows] = useState<{ paperStockId: string; sheets: string }[]>([{ paperStockId: '', sheets: '' }]);
-  const updatePaperRow = (i: number, field: 'paperStockId' | 'sheets', val: string) =>
+  const [paperRows, setPaperRows] = useState<{ paperStockId: string; sheets: string; rate: string }[]>([{ paperStockId: '', sheets: '', rate: '' }]);
+  const updatePaperRow = (i: number, field: 'paperStockId' | 'sheets' | 'rate', val: string) =>
     setPaperRows(rows => rows.map((r, idx) => idx === i ? { ...r, [field]: val } : r));
-  const addPaperRow = () => setPaperRows(rows => [...rows, { paperStockId: '', sheets: '' }]);
+  const addPaperRow = () => setPaperRows(rows => [...rows, { paperStockId: '', sheets: '', rate: '' }]);
   const removePaperRow = (i: number) => setPaperRows(rows => rows.length > 1 ? rows.filter((_, idx) => idx !== i) : rows);
   const [paymentType, setPaymentType] = useState<'paid' | 'advance' | 'credit'>('paid');
   const [selectedClientId, setSelectedClientId] = useState('');
@@ -138,7 +138,19 @@ export default function RetailPOSPage() {
 
   const removeFromCart = (id: string) => setCart(cart.filter(item => item.id !== id));
 
-  const subtotal = cart.reduce((sum, item) => sum + lineTotal(item), 0);
+  // Paper rows → billable + stock list. The ₹/sheet rate feeds the bill subtotal;
+  // cost (from stock) is kept for profit tracking only.
+  const paperList = paperRows
+    .filter(r => r.paperStockId && r.sheets && parseInt(r.sheets) > 0)
+    .map(r => {
+      const p = paperStock.find(x => x.id === r.paperStockId);
+      const sheets = parseInt(r.sheets) || 0;
+      const rate = parseFloat(r.rate) || 0;
+      return { paper_stock_id: r.paperStockId, paper_name: p?.name, size: p?.size, sheets, rate, amount: sheets * rate, cost: (p?.cost_per_unit || 0) * sheets };
+    });
+  const paperSubtotal = paperList.reduce((sum, p) => sum + p.amount, 0);
+
+  const subtotal = cart.reduce((sum, item) => sum + lineTotal(item), 0) + paperSubtotal;
   const discountAmount = (subtotal * discount) / 100;
   const taxableAmount = subtotal - discountAmount;
   const gstAmount = (taxableAmount * gstRate) / 100;
@@ -149,15 +161,6 @@ export default function RetailPOSPage() {
   // Payment calculation
   const receivedAmt = parseFloat(amountReceived || '0');
   const changeAmount = paymentMethod === 'cash' ? receivedAmt - grandTotal : 0;
-
-  // Paper rows → structured list (filters out blank rows)
-  const paperList = paperRows
-    .filter(r => r.paperStockId && r.sheets && parseInt(r.sheets) > 0)
-    .map(r => {
-      const p = paperStock.find(x => x.id === r.paperStockId);
-      const sheets = parseInt(r.sheets) || 0;
-      return { paper_stock_id: r.paperStockId, paper_name: p?.name, size: p?.size, sheets, cost: (p?.cost_per_unit || 0) * sheets };
-    });
 
   // Credit logic
   const selectedClient = clients?.find(c => c.id === selectedClientId);
@@ -223,7 +226,7 @@ export default function RetailPOSPage() {
     setOrderType('walkin');
     setArtworkLink('');
     setAmountReceived('');
-    setPaperRows([{ paperStockId: '', sheets: '' }]);
+    setPaperRows([{ paperStockId: '', sheets: '', rate: '' }]);
     setPaymentType('paid');
     setSelectedClientId('');
     setCreditDays('30');
@@ -267,13 +270,25 @@ export default function RetailPOSPage() {
         sold_by: profile?.full_name || profile?.email?.split('@')[0] || 'CMYK',
       };
 
-      const saleItems = cart.map(item => ({
-        product_id: item.kind === 'product' ? item.id : null,
-        product_name: item.name || 'Item',
-        quantity: item.qty,
-        price: item.price,
-        total: lineTotal(item),
-      }));
+      const paperItems = paperList
+        .filter(p => p.amount > 0)
+        .map(p => ({
+          product_id: null,
+          product_name: `Paper: ${p.paper_name || 'paper'}${p.size ? ` (${p.size})` : ''}`,
+          quantity: p.sheets,
+          price: p.rate,
+          total: p.amount,
+        }));
+      const saleItems = [
+        ...cart.map(item => ({
+          product_id: item.kind === 'product' ? item.id : null,
+          product_name: item.name || 'Item',
+          quantity: item.qty,
+          price: item.price,
+          total: lineTotal(item),
+        })),
+        ...paperItems,
+      ];
 
       const result = await createPOSSale(saleData as any, saleItems);
       if (result.error) {
@@ -298,7 +313,10 @@ export default function RetailPOSPage() {
       time: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
       customerName: customerName || selectedClient?.company || selectedClient?.name || undefined,
       customerPhone: customerPhone || undefined,
-      items: cart.map(item => ({ name: item.name || 'Item', qty: item.qty, price: item.price, total: lineTotal(item) })),
+      items: [
+        ...cart.map(item => ({ name: item.name || 'Item', qty: item.qty, price: item.price, total: lineTotal(item) })),
+        ...paperList.filter(p => p.amount > 0).map(p => ({ name: `Paper: ${p.paper_name || 'paper'}${p.size ? ` (${p.size})` : ''}`, qty: p.sheets, price: p.rate, total: p.amount })),
+      ],
       subtotal,
       discountPercent: discount,
       discountAmount,
@@ -479,13 +497,14 @@ export default function RetailPOSPage() {
               ))}
             </div>
 
-            {/* Paper used — multiple papers / sizes per bill */}
+            {/* Paper used — multiple papers/sizes; ₹/sheet bills the customer, stock tracks cost */}
             <div className="mt-3">
-              <p className="text-xs font-medium text-gray-500 mb-1">Paper used (optional)</p>
+              <p className="text-xs font-medium text-gray-500 mb-1">Paper (sheets × ₹/sheet → adds to bill)</p>
               <div className="space-y-2">
                 {paperRows.map((row, i) => {
                   const p = paperStock.find(x => x.id === row.paperStockId);
                   const over = !!(p && row.sheets && parseInt(row.sheets) > p.quantity);
+                  const lineAmt = (parseInt(row.sheets) || 0) * (parseFloat(row.rate) || 0);
                   return (
                     <div key={i}>
                       <div className="flex gap-2">
@@ -498,16 +517,24 @@ export default function RetailPOSPage() {
                             </option>
                           ))}
                         </select>
-                        <input type="number" placeholder="Sheets" value={row.sheets} min="0"
-                          onChange={e => updatePaperRow(i, 'sheets', e.target.value)}
-                          disabled={!row.paperStockId}
-                          className="w-20 px-2 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50" />
                         {paperRows.length > 1 && (
                           <button type="button" onClick={() => removePaperRow(i)}
                             className="px-2 text-gray-400 hover:text-red-500 shrink-0" title="Remove">
                             <X className="w-4 h-4" />
                           </button>
                         )}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs mt-1.5 flex-wrap">
+                        <input type="number" placeholder="Sheets" value={row.sheets} min="0"
+                          onChange={e => updatePaperRow(i, 'sheets', e.target.value)}
+                          disabled={!row.paperStockId}
+                          className="w-16 px-2 py-1 border rounded text-right focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50" />
+                        <span className="text-gray-400">× ₹</span>
+                        <input type="number" placeholder="/sheet" value={row.rate} min="0"
+                          onChange={e => updatePaperRow(i, 'rate', e.target.value)}
+                          disabled={!row.paperStockId}
+                          className="w-16 px-2 py-1 border rounded text-right focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50" />
+                        <span className="ml-auto font-semibold text-primary">{formatCurrency(lineAmt)}</span>
                       </div>
                       {over && (
                         <p className="text-xs text-destructive mt-1 flex items-center gap-1">
@@ -599,7 +626,7 @@ export default function RetailPOSPage() {
               </div>
               <div className="flex justify-between text-section pt-2 border-t"><span>Grand Total</span><span className="text-primary">{formatCurrency(grandTotal)}</span></div>
             </div>
-            <button onClick={() => setShowPaymentModal(true)} disabled={cart.length === 0}
+            <button onClick={() => setShowPaymentModal(true)} disabled={grandTotal <= 0}
               className="w-full py-3 bg-gray-900 text-white rounded-md font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors shadow-sm">
               Pay {formatCurrency(grandTotal)}
             </button>
