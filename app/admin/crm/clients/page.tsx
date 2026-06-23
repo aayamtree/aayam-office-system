@@ -580,6 +580,10 @@ export default function ClientsPage() {
 
                 {/* ── Action Footer ── */}
                 <div className="flex items-center border-t border-gray-100">
+                  <Link href={`/admin/crm/clients/${client.id}`} className="flex-1 flex items-center justify-center gap-1 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                    <FileBarChart className="w-3.5 h-3.5" /> Statement
+                  </Link>
+                  <div className="w-px h-5 bg-gray-100" />
                   <button onClick={() => handleView(client)} className="flex-1 flex items-center justify-center gap-1 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors">
                     <Eye className="w-3.5 h-3.5" /> View
                   </button>
@@ -704,6 +708,9 @@ export default function ClientsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
+                        <Link href={`/admin/crm/clients/${client.id}`} className="p-2 hover:bg-gray-100 rounded-md text-gray-500 transition-colors" aria-label="Customer statement & ledger" title="Statement / ledger">
+                          <FileBarChart className="w-4 h-4 md:w-4.5 md:h-4.5" />
+                        </Link>
                         <button onClick={() => handleView(client)} className="p-2 hover:bg-gray-100 rounded-md text-gray-500 transition-colors" aria-label="View client details">
                           <Eye className="w-4 h-4 md:w-4.5 md:h-4.5" />
                         </button>
