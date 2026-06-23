@@ -262,6 +262,18 @@ export default function VendorPurchasesPage() {
   const formatCurrency = (n: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n || 0);
   const statusBadge = (s: string) => ({ paid: 'bg-gray-100 text-gray-900', partial: 'bg-orange-100 text-orange-700', pending: 'bg-red-100 text-red-700' }[s] || 'bg-gray-100 text-gray-700');
 
+  // Zoho-style status label with day counts
+  const billToday = new Date().toISOString().split('T')[0];
+  const billDayDiff = (d?: string | null) => d ? Math.round((new Date(d + 'T00:00:00').getTime() - new Date(billToday + 'T00:00:00').getTime()) / 86400000) : 0;
+  const billStatusLabel = (b: any) => {
+    const bal = (b.total_amount || 0) - (b.amount_paid || 0);
+    if (b.payment_status === 'paid' || bal <= 0) return 'Paid';
+    if (b.due_date && b.due_date < billToday) { const n = Math.abs(billDayDiff(b.due_date)); return `Overdue by ${n} ${n === 1 ? 'day' : 'days'}`; }
+    if ((b.amount_paid || 0) > 0) return 'Partially Paid';
+    if (b.due_date) { const n = billDayDiff(b.due_date); if (n === 0) return 'Due Today'; if (n === 1) return 'Due Tomorrow'; if (n > 1) return `Due in ${n} days`; }
+    return 'Unpaid';
+  };
+
   const totalPurchases = purchases.reduce((s, p) => s + (p.total_amount || 0), 0);
   const totalPaid = purchases.reduce((s, p) => s + (p.amount_paid || 0), 0);
   const totalCOGS = purchases.filter(p => p.job_id).reduce((s, p) => s + (p.subtotal || 0), 0);
@@ -343,7 +355,7 @@ export default function VendorPurchasesPage() {
                 <div className="flex items-center gap-1.5">
                   {overdue && <span className="text-[9px] px-1.5 py-0.5 bg-red-50 text-red-600 border border-red-200 rounded font-bold">Overdue</span>}
                   <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-semibold ${statusBadge(p.payment_status)}`}>{p.product_type}</span>
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold capitalize ${statusBadge(p.payment_status)}`}>{p.payment_status}</span>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap ${statusBadge(p.payment_status)}`}>{billStatusLabel(p)}</span>
                 </div>
               </div>
               <div className="px-4 py-3">
@@ -688,7 +700,7 @@ export default function VendorPurchasesPage() {
                 <div><p className="text-xs text-gray-500">Service Type</p><p className="font-medium">{selectedPurchase.product_type}</p></div>
                 <div><p className="text-xs text-gray-500">Job</p><p className="font-medium">{selectedPurchase.job ? `${selectedPurchase.job.job_number} – ${selectedPurchase.job.project_name}` : 'General Stock'}</p></div>
                 <div><p className="text-xs text-gray-500">Payment Status</p>
-                  <span className={`px-2 py-0.5 rounded text-xs font-semibold capitalize ${statusBadge(selectedPurchase.payment_status)}`}>{selectedPurchase.payment_status}</span>
+                  <span className={`px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap ${statusBadge(selectedPurchase.payment_status)}`}>{billStatusLabel(selectedPurchase)}</span>
                 </div>
                 <div><p className="text-xs text-gray-500">Bill Date</p><p className="font-medium">{selectedPurchase.bill_date ? formatDate(selectedPurchase.bill_date) : '–'}</p></div>
                 <div><p className="text-xs text-gray-500">Due Date</p><p className="font-medium">{selectedPurchase.due_date ? formatDate(selectedPurchase.due_date) : '–'}</p></div>
