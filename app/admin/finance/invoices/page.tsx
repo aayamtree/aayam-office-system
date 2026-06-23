@@ -439,9 +439,39 @@ export default function InvoicesPage() {
   // BUG-03: Compute effective display status — show 'overdue' if past due date and not paid
   const today = new Date().toISOString().split('T')[0];
   const getEffectiveStatus = (inv: Invoice): string => {
-    if (inv.payment_status === 'paid') return 'paid';
-    if (inv.due_date && inv.due_date < today && inv.payment_status === 'pending') return 'overdue';
-    return inv.payment_status;
+    const balance = (inv.total_amount || 0) - (inv.amount_paid || 0);
+    // Fully settled
+    if (inv.payment_status === 'paid' || balance <= 0) return 'paid';
+    // Past due date with a balance still owing → overdue (even if partially paid)
+    if (inv.due_date && inv.due_date < today) return 'overdue';
+    // Some money received but not all → partial
+    if ((inv.amount_paid || 0) > 0) return 'partial';
+    return 'pending';
+  };
+
+  // Zoho-style status label with day counts (e.g. "Overdue by 5 days", "Due in 3 days")
+  const dayDiffFromToday = (dateStr?: string | null): number => {
+    if (!dateStr) return 0;
+    const due = new Date(dateStr + 'T00:00:00');
+    const now = new Date(today + 'T00:00:00');
+    return Math.round((due.getTime() - now.getTime()) / 86400000);
+  };
+  const getStatusLabel = (inv: Invoice): string => {
+    const eff = getEffectiveStatus(inv);
+    if (eff === 'paid') return 'Paid';
+    if (eff === 'overdue') {
+      const n = Math.abs(dayDiffFromToday(inv.due_date));
+      return `Overdue by ${n} ${n === 1 ? 'day' : 'days'}`;
+    }
+    if (eff === 'partial') return 'Partially Paid';
+    // pending (not yet due)
+    if (inv.due_date) {
+      const n = dayDiffFromToday(inv.due_date);
+      if (n === 0) return 'Due Today';
+      if (n === 1) return 'Due Tomorrow';
+      if (n > 1) return `Due in ${n} days`;
+    }
+    return 'Pending';
   };
 
   const filteredInvoices = invoices.filter(inv => {
@@ -603,7 +633,7 @@ export default function InvoicesPage() {
           { status: 'overdue', label: 'Overdue', bg: 'bg-red-100 border-red-200', text: 'text-red-700' },
         ].map((item) => (
           <div key={item.status} className={`rounded-md md:rounded-md p-2 md:p-3 text-center border ${item.bg}`}>
-            <p className={`text-lg md:text-page-title ${item.text}`}>{invoices.filter(i => i.payment_status === item.status).length}</p>
+            <p className={`text-lg md:text-page-title ${item.text}`}>{invoices.filter(i => getEffectiveStatus(i) === item.status).length}</p>
             <p className={`text-xs md:text-label ${item.text}`}>{item.label}</p>
           </div>
         ))}
@@ -681,13 +711,15 @@ export default function InvoicesPage() {
                       {/* Price & Status — BUG-03: use effective status */}
                       <div className="flex items-center justify-between mb-2">
                         <div>
-                          <span className="text-foreground font-bold text-xl">{formatCurrency(inv.total_amount)}</span>
-                          {inv.amount_paid > 0 && inv.amount_paid < inv.total_amount && (
-                            <p className="text-[10px] text-muted-foreground mt-0.5">Paid: {formatCurrency(inv.amount_paid)}</p>
-                          )}
+                          <span className="text-foreground font-bold text-xl">{formatCurrency(Math.max(0, (inv.total_amount || 0) - (inv.amount_paid || 0)))}</span>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {inv.amount_paid > 0 && inv.amount_paid < inv.total_amount
+                              ? `Total ${formatCurrency(inv.total_amount)} • Paid ${formatCurrency(inv.amount_paid)}`
+                              : `Total: ${formatCurrency(inv.total_amount)}`}
+                          </p>
                         </div>
-                        <span className={`px-2 py-0.5 text-[9px] font-semibold rounded border ${getStatusColor(getEffectiveStatus(inv))}`}>
-                          {getEffectiveStatus(inv)}
+                        <span className={`px-2 py-0.5 text-[9px] font-semibold rounded border whitespace-nowrap ${getStatusColor(getEffectiveStatus(inv))}`}>
+                          {getStatusLabel(inv)}
                         </span>
                       </div>
 
@@ -736,7 +768,8 @@ export default function InvoicesPage() {
                   <tr>
                     <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Invoice</th>
                     <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Client</th>
-                    <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Amount</th>
+                    <th className="text-right px-6 py-4 text-label text-gray-500 uppercase">Amount</th>
+                    <th className="text-right px-6 py-4 text-label text-gray-500 uppercase">Balance Due</th>
                     <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Due Date</th>
                     <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Status</th>
                     <th className="text-right px-6 py-4 text-label text-gray-500 uppercase">Actions</th>
@@ -753,17 +786,23 @@ export default function InvoicesPage() {
                         <p className="font-medium text-gray-900">{inv.client?.company || inv.client?.name || '—'}</p>
                         {inv.client?.company && <p className="text-sm text-gray-500">{inv.client?.name}</p>}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 text-right">
                         <p className="font-semibold text-gray-900">{formatCurrency(inv.total_amount)}</p>
                         {inv.amount_paid > 0 && inv.amount_paid < inv.total_amount && (
-                          <p className="text-xs text-destructive">Paid: {formatCurrency(inv.amount_paid)}</p>
+                          <p className="text-xs text-gray-400">Paid: {formatCurrency(inv.amount_paid)}</p>
                         )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        {/* Balance Due — Zoho's headline figure (total − amount paid) */}
+                        <p className={`font-semibold ${getEffectiveStatus(inv) === 'paid' ? 'text-gray-400' : 'text-gray-900'}`}>
+                          {formatCurrency(Math.max(0, (inv.total_amount || 0) - (inv.amount_paid || 0)))}
+                        </p>
                       </td>
                       <td className="px-6 py-4 text-gray-600">{inv.due_date ? formatDate(inv.due_date) : '-'}</td>
                       <td className="px-6 py-4">
-                        {/* BUG-03: Show computed effective status (overdue if past due date) */}
-                        <span className={`px-3 py-1 text-xs rounded-md border ${getStatusColor(getEffectiveStatus(inv))}`}>
-                          {getEffectiveStatus(inv)}
+                        {/* Zoho-style status with day count */}
+                        <span className={`px-3 py-1 text-xs rounded-md border whitespace-nowrap ${getStatusColor(getEffectiveStatus(inv))}`}>
+                          {getStatusLabel(inv)}
                         </span>
                       </td>
                       <td className="px-6 py-4">
