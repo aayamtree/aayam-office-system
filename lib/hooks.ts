@@ -671,7 +671,8 @@ export function useInvoices() {
           quantity: item.quantity,
           rate: item.rate,
           amount: item.amount,
-          gst_rate: item.gst_rate
+          gst_rate: item.gst_rate,
+          job_id: item.job_id || null
         })));
 
       if (error) return { error: error.message };

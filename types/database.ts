@@ -391,6 +391,8 @@ export interface InvoiceItem {
   rate: number;
   amount: number;
   gst_rate: number;
+  job_id?: string | null;     // optional link to the job this line bills
+  job_number?: string;        // transient, for display in the form picker
 }
 
 // Payment Received

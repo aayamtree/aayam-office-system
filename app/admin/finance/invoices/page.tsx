@@ -140,7 +140,22 @@ export default function InvoicesPage() {
     try {
       const res = await fetch(`/api/clients/${clientId}/shipping-addresses`);
       const j = await res.json();
-      const list = j.data || [];
+      const saved = j.data || [];
+      // Surface the client's own on-file delivery address as a selectable option
+      // (billing address is the default "" option and shown inline below).
+      const c = clients.find((x: any) => x.id === clientId) as any;
+      const synthetic: any[] = [];
+      if (c && c.delivery_same_as_billing === false && (c.delivery_address || '').trim()) {
+        synthetic.push({
+          id: '__delivery',
+          label: 'Delivery address (on file)',
+          address: c.delivery_address || '',
+          city: c.delivery_city || '',
+          state: c.delivery_state || '',
+          pincode: c.delivery_pincode || '',
+        });
+      }
+      const list = [...synthetic, ...saved];
       setClientShipAddrs(list);
       // Editing an existing invoice with a saved snapshot → restore selection
       if (presetSnapshot && presetSnapshot.address) {
@@ -149,7 +164,8 @@ export default function InvoicesPage() {
         else { setSelectedShipId('keep'); setShipping(presetSnapshot); }
         return;
       }
-      const def = list.find((a: any) => a.is_default) || list[0];
+      // Default to billing ("") unless the client has a saved default shipping address.
+      const def = saved.find((a: any) => a.is_default);
       if (def) applyShipSelection(def.id, list);
       else { setSelectedShipId(''); setShipping({ ...blankShip }); }
     } catch { /* non-fatal */ }
@@ -342,10 +358,38 @@ export default function InvoicesPage() {
     });
   };
 
+  // Link a line item to a job: autofill description, qty and rate from the job.
+  const applyJobToItem = (index: number, jobId: string) => {
+    setFormData(prev => {
+      const newItems = [...prev.items];
+      if (!jobId) {
+        newItems[index] = { ...newItems[index], job_id: null, job_number: '' } as InvoiceItem;
+      } else {
+        const job = jobs.find((j: any) => j.id === jobId) as any;
+        if (job) {
+          const qty = Number(job.quantity) || newItems[index].quantity || 1;
+          const rate = Number(job.quote_per_piece) || 0;
+          newItems[index] = {
+            ...newItems[index],
+            job_id: job.id,
+            job_number: job.job_number,
+            description: job.project_name || newItems[index].description,
+            quantity: qty,
+            rate,
+            amount: qty * rate,
+          } as InvoiceItem;
+        }
+      }
+      const sub = newItems.reduce((sum, it) => sum + it.amount, 0);
+      const tax = Math.round(sub * (prev.gstRate / 100));
+      return { ...prev, items: newItems, subtotal: sub, totalTax: tax, totalAmount: sub + tax };
+    });
+  };
+
   const addItem = () => {
     setFormData(prev => ({
       ...prev,
-      items: [...prev.items, { description: '', item_notes: '', hsn_code: '', quantity: 1, rate: 0, amount: 0, gst_rate: prev.gstRate } as InvoiceItem]
+      items: [...prev.items, { description: '', item_notes: '', hsn_code: '', quantity: 1, rate: 0, amount: 0, gst_rate: prev.gstRate, job_id: null } as InvoiceItem]
     }));
   };
 
@@ -444,7 +488,9 @@ export default function InvoicesPage() {
         amount_paid: formData.paidAmount,
         balance_due: formData.totalAmount - formData.paidAmount,
         notes: formData.notes,
-        job_id: formData.jobId || undefined,
+        // Keep invoices.job_id pointing at the first job-linked line (backward compat
+        // with profitability/tracking). Full per-line linkage lives on invoice_items.job_id.
+        job_id: (formData.items.find(it => (it as any).job_id)?.job_id) || undefined,
         // Frozen shipping snapshot for this invoice
         shipping_address_id: shipping.addressId || null,
         shipping_label: shipping.label || null,
@@ -580,8 +626,21 @@ export default function InvoicesPage() {
 
   const { jobs } = useJobs();
 
-  // BUG-10: Jobs ready for invoicing — only show jobs WITHOUT an existing invoice
-  const invoicedJobIds = new Set(invoices.map(inv => inv.job_id).filter(Boolean));
+  // Currently selected client (for Ship To billing-address preview)
+  const selectedClient = clients.find((c: any) => c.id === formData.clientId) as any;
+
+  // Jobs belonging to the selected client, eligible to be billed as line items
+  const clientJobs = jobs.filter((j: any) =>
+    j.client_id === formData.clientId && /^(DO|PO|DP|AAY)-/.test(j.job_number || '')
+  );
+
+  // BUG-10: Jobs ready for invoicing — only show jobs WITHOUT an existing invoice.
+  // A job counts as invoiced if it's the invoice's job_id OR appears as a line item.
+  const invoicedJobIds = new Set<string>();
+  invoices.forEach(inv => {
+    if (inv.job_id) invoicedJobIds.add(inv.job_id);
+    (inv.items || []).forEach((it: any) => { if (it.job_id) invoicedJobIds.add(it.job_id); });
+  });
   const pendingInvoicingJobs = jobs.filter(j =>
     (['dispatched', 'delivered'].includes(j.current_stage)) &&
     j.payment_status !== 'paid' &&
@@ -596,7 +655,9 @@ export default function InvoicesPage() {
       rate: job.quote_per_piece || 0, // Fallback if 0
       amount: (job.quantity * (job.quote_per_piece || 0)),
       gst_rate: job.gst_rate || 18,
-      hsn_code: '4911'
+      hsn_code: '4911',
+      job_id: job.id,
+      job_number: job.job_number,
     }];
 
     // Calculate totals
@@ -947,23 +1008,6 @@ export default function InvoicesPage() {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Job ID</label>
-                    <select
-                      value={formData.jobId}
-                      onChange={(e) => setFormData({ ...formData, jobId: e.target.value })}
-                      disabled={!formData.clientId}
-                      className="w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white disabled:bg-gray-100 disabled:text-gray-400 text-sm md:text-base"
-                    >
-                      <option value="">Select Job (Optional)</option>
-                      {jobs
-                        .filter(j => j.client_id === formData.clientId && /^(DO|PO|DP|AAY)-/.test(j.job_number || ''))
-                        .map(j => (
-                          <option key={j.id} value={j.id}>{j.job_number} - {j.project_name}</option>
-                        ))}
-                    </select>
-                  </div>
-
                   {/* Ship To — pick a saved shipping address or add a new one */}
                   <div className="sm:col-span-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Ship To</label>
@@ -973,7 +1017,9 @@ export default function InvoicesPage() {
                       disabled={!formData.clientId}
                       className="w-full px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white disabled:bg-gray-100 disabled:text-gray-400 text-sm md:text-base"
                     >
-                      <option value="">Billing address (no separate shipping)</option>
+                      <option value="">
+                        Billing address{selectedClient && [selectedClient.address, selectedClient.city].filter(Boolean).length ? ` — ${[selectedClient.address, selectedClient.city].filter(Boolean).join(', ')}` : ' (same as billing)'}
+                      </option>
                       {selectedShipId === 'keep' && shipping.address && (
                         <option value="keep">{shipping.label ? `${shipping.label} — ` : ''}{[shipping.address, shipping.city].filter(Boolean).join(', ')}</option>
                       )}
@@ -988,6 +1034,14 @@ export default function InvoicesPage() {
                       <div className="mt-2 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-md p-2.5">
                         {shipping.label && <span className="font-semibold text-gray-800">{shipping.label}: </span>}
                         {[shipping.address, shipping.city, shipping.state, shipping.pincode].filter(Boolean).join(', ')}
+                      </div>
+                    )}
+
+                    {/* Billing address preview (shown when no separate shipping is chosen) */}
+                    {!selectedShipId && selectedClient && (selectedClient.address || selectedClient.city) && (
+                      <div className="mt-2 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-md p-2.5">
+                        <span className="font-semibold text-gray-800">Billing: </span>
+                        {[selectedClient.address, selectedClient.city, selectedClient.state, selectedClient.pincode].filter(Boolean).join(', ')}
                       </div>
                     )}
 
@@ -1039,6 +1093,21 @@ export default function InvoicesPage() {
                   <div className="space-y-3">
                     {formData.items.map((item, index) => (
                       <div key={index} className="bg-gray-50 p-3 rounded-md border border-gray-100 space-y-2">
+                        {/* Row 0: Optional — pull this line from a Job */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-400 font-medium whitespace-nowrap">From Job</span>
+                          <select
+                            value={item.job_id || ''}
+                            onChange={(e) => applyJobToItem(index, e.target.value)}
+                            disabled={!formData.clientId}
+                            className="flex-1 px-2 py-1.5 border border-gray-200 rounded-md text-xs bg-white disabled:bg-gray-100 disabled:text-gray-400"
+                          >
+                            <option value="">— none (manual line) —</option>
+                            {clientJobs.map((j: any) => (
+                              <option key={j.id} value={j.id}>{j.job_number} — {j.project_name}</option>
+                            ))}
+                          </select>
+                        </div>
                         {/* Row 1: Description + HSN + Qty + Rate + Amount */}
                         <div className="grid grid-cols-12 gap-2 items-center">
                           <div className="col-span-12 sm:col-span-4">
