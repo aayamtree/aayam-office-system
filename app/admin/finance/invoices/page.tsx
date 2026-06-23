@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
-  Calendar, User, Download, MessageCircle, Printer, Loader2, CheckCircle
+  Calendar, User, Download, MessageCircle, Printer, Loader2, CheckCircle, Send
 } from 'lucide-react';
 import { InvoiceData, downloadInvoicePDF, printInvoicePDF } from '@/components/invoice/InvoicePDF';
+import { buildReceiptData, downloadReceiptPDF, printReceiptPDF } from '@/components/finance/ReceiptPDF';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import { shareOnWhatsApp, getInvoiceMessage, getPaymentReminderMessage } from '@/lib/whatsapp';
 import { useInvoices, useClients, useJobs, useBankAccounts, useCashAccounts } from '@/lib/hooks';
@@ -24,6 +25,8 @@ export default function InvoicesPage() {
   const { bankAccounts } = useBankAccounts();
   const { cashAccounts } = useCashAccounts();
   const [showClientModal, setShowClientModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
   // ── Record Payment (Zoho-style, posts to ledger via fn_record_invoice_payment) ──
   const [showPayModal, setShowPayModal] = useState(false);
@@ -55,6 +58,55 @@ export default function InvoicesPage() {
     });
     setShowViewModal(false);
     setShowPayModal(true);
+  };
+
+  // ── Payments list for the open invoice (for receipts) ──
+  const [invoicePayments, setInvoicePayments] = useState<any[]>([]);
+  const loadInvoicePayments = async (invId: string) => {
+    const { data } = await supabase
+      .from('payments_received')
+      .select('id, payment_number, payment_date, amount, payment_mode, reference_number')
+      .eq('invoice_id', invId)
+      .order('payment_date', { ascending: false });
+    setInvoicePayments(data || []);
+  };
+
+  const receiptDataFor = (payment: any) =>
+    buildReceiptData(payment, selectedInvoice, selectedInvoice?.client);
+
+  // Load this invoice's payments whenever the detail drawer opens
+  useEffect(() => {
+    if (showViewModal && selectedInvoice) {
+      loadInvoicePayments(selectedInvoice.id);
+    } else {
+      setInvoicePayments([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showViewModal, selectedInvoice]);
+
+  const handleReceiptTelegram = async (payment: any) => {
+    if (!selectedInvoice) return;
+    try {
+      const res = await fetch('/api/telegram/send-receipt', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId: selectedInvoice.client_id,
+          receiptNumber: payment.payment_number,
+          amount: payment.amount,
+          date: payment.payment_date ? new Date(payment.payment_date).toLocaleDateString('en-IN') : '',
+          invoiceNumber: selectedInvoice.invoice_number,
+          mode: (payment.payment_mode || '').replace('_', ' '),
+          reference: payment.reference_number,
+          balance: Math.max(0, (selectedInvoice.total_amount || 0) - (selectedInvoice.amount_paid || 0)),
+        }),
+      });
+      const j = await res.json();
+      if (j.sent) toast.success('Receipt sent on Telegram.');
+      else if (j.reason === 'not_linked') toast.error('This client has not linked Telegram yet.');
+      else toast.error('Could not send: ' + (j.error || 'unknown error'));
+    } catch (err: any) {
+      toast.error('Could not send receipt: ' + (err.message || 'error'));
+    }
   };
 
   const submitPayment = async () => {
@@ -90,8 +142,6 @@ export default function InvoicesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
-  const [showViewModal, setShowViewModal] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -1411,16 +1461,29 @@ export default function InvoicesPage() {
                   </div>
                 </div>
 
-                {/* Payments Received */}
+                {/* Payments Received + per-payment receipts */}
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-3">Payments Received</h4>
-                  {selectedInvoice.amount_paid > 0 ? (
-                    <div className="flex justify-between items-center text-sm p-3 bg-green-50 border border-green-100 rounded-md">
-                      <span className="text-gray-700">Amount received so far</span>
-                      <span className="font-semibold text-green-700">{formatCurrency(selectedInvoice.amount_paid)}</span>
-                    </div>
-                  ) : (
+                  {invoicePayments.length === 0 ? (
                     <p className="text-sm text-gray-400 p-3 bg-gray-50 border border-gray-100 rounded-md">No payments recorded yet.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {invoicePayments.map((p) => (
+                        <div key={p.id} className="flex items-center justify-between gap-2 p-3 bg-green-50 border border-green-100 rounded-md">
+                          <div>
+                            <p className="text-sm font-semibold text-green-800">{formatCurrency(p.amount)}</p>
+                            <p className="text-[11px] text-gray-500">
+                              {p.payment_number} • {formatDate(p.payment_date)}{p.payment_mode ? ' • ' + String(p.payment_mode).replace('_', ' ') : ''}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => downloadReceiptPDF(receiptDataFor(p))} title="Download receipt" className="p-1.5 hover:bg-white rounded-md text-gray-600"><Download className="w-4 h-4" /></button>
+                            <button onClick={() => printReceiptPDF(receiptDataFor(p))} title="Print receipt" className="p-1.5 hover:bg-white rounded-md text-gray-600"><Printer className="w-4 h-4" /></button>
+                            <button onClick={() => handleReceiptTelegram(p)} title="Send receipt on Telegram" className="p-1.5 hover:bg-white rounded-md text-sky-600"><Send className="w-4 h-4" /></button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
 
