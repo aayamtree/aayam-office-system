@@ -10,7 +10,7 @@ import {
 import { InvoiceData, downloadInvoicePDF, printInvoicePDF } from '@/components/invoice/InvoicePDF';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import { shareOnWhatsApp, getInvoiceMessage, getPaymentReminderMessage } from '@/lib/whatsapp';
-import { useInvoices, useClients, useJobs } from '@/lib/hooks';
+import { useInvoices, useClients, useJobs, useBankAccounts, useCashAccounts } from '@/lib/hooks';
 import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
 import { Invoice, Client, InvoiceItem } from '@/types/database';
 import { formatDate } from '@/lib/utils';
@@ -21,7 +21,71 @@ export default function InvoicesPage() {
   const { settings: companySettings } = useCompanySettings();
   const { invoices, loading: invoicesLoading, createInvoice, updateInvoice, saveInvoiceItems, refetch: refetchInvoices } = useInvoices();
   const { clients, refetch: refetchClients } = useClients();
+  const { bankAccounts } = useBankAccounts();
+  const { cashAccounts } = useCashAccounts();
   const [showClientModal, setShowClientModal] = useState(false);
+
+  // ── Record Payment (Zoho-style, posts to ledger via fn_record_invoice_payment) ──
+  const [showPayModal, setShowPayModal] = useState(false);
+  const [payInvoice, setPayInvoice] = useState<Invoice | null>(null);
+  const [paySubmitting, setPaySubmitting] = useState(false);
+  const [payForm, setPayForm] = useState({
+    amount: 0,
+    mode: 'bank_transfer',
+    date: new Date().toISOString().split('T')[0],
+    accountKind: 'bank' as 'bank' | 'cash',
+    accountId: '',
+    reference: '',
+    notes: '',
+  });
+
+  const openPaymentModal = (inv: Invoice) => {
+    const balance = Math.max(0, (inv.total_amount || 0) - (inv.amount_paid || 0));
+    const firstBank = (bankAccounts || []).find((b: any) => b.is_default) || (bankAccounts || [])[0];
+    const firstCash = (cashAccounts || [])[0];
+    setPayInvoice(inv);
+    setPayForm({
+      amount: balance,
+      mode: 'bank_transfer',
+      date: new Date().toISOString().split('T')[0],
+      accountKind: firstBank ? 'bank' : 'cash',
+      accountId: firstBank ? firstBank.id : (firstCash ? firstCash.id : ''),
+      reference: '',
+      notes: '',
+    });
+    setShowViewModal(false);
+    setShowPayModal(true);
+  };
+
+  const submitPayment = async () => {
+    if (!payInvoice) return;
+    if (!payForm.amount || payForm.amount <= 0) { toast.error('Enter a payment amount greater than zero'); return; }
+    if (!payForm.accountId) { toast.error('Select a deposit account'); return; }
+    setPaySubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.rpc('fn_record_invoice_payment', {
+        p_invoice_id: payInvoice.id,
+        p_amount: payForm.amount,
+        p_mode: payForm.mode,
+        p_date: payForm.date,
+        p_bank_account_id: payForm.accountKind === 'bank' ? payForm.accountId : null,
+        p_cash_account_id: payForm.accountKind === 'cash' ? payForm.accountId : null,
+        p_reference: payForm.reference || null,
+        p_notes: payForm.notes || null,
+        p_user_id: user?.id || null,
+      });
+      if (error) throw error;
+      toast.success('Payment recorded and posted to the ledger.');
+      setShowPayModal(false);
+      setPayInvoice(null);
+      refetchInvoices();
+    } catch (err: any) {
+      toast.error('Could not record payment: ' + (err.message || 'unknown error'));
+    } finally {
+      setPaySubmitting(false);
+    }
+  };
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -1172,7 +1236,7 @@ export default function InvoicesPage() {
               <div className="flex items-center gap-1 px-4 py-2 border-b border-gray-100 overflow-x-auto">
                 <button onClick={() => { setShowViewModal(false); handleEdit(selectedInvoice); }} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded-md whitespace-nowrap"><Edit className="w-4 h-4" /> Edit</button>
                 {getEffectiveStatus(selectedInvoice) !== 'paid' && (
-                  <button onClick={() => { setShowViewModal(false); handleEdit(selectedInvoice); }} className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 rounded-md whitespace-nowrap"><CheckCircle className="w-4 h-4" /> Record Payment</button>
+                  <button onClick={() => openPaymentModal(selectedInvoice)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 rounded-md whitespace-nowrap"><CheckCircle className="w-4 h-4" /> Record Payment</button>
                 )}
                 <button onClick={() => handleDownloadPDF(selectedInvoice)} disabled={pdfLoading} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded-md whitespace-nowrap disabled:opacity-50"><Download className="w-4 h-4" /> PDF</button>
                 <button onClick={() => handlePrintPDF(selectedInvoice)} disabled={pdfLoading} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded-md whitespace-nowrap disabled:opacity-50"><Printer className="w-4 h-4" /> Print</button>
@@ -1306,6 +1370,74 @@ export default function InvoicesPage() {
           </div>
         )
       }
+      {/* Record Payment Modal (posts to ledger) */}
+      {showPayModal && payInvoice && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4 backdrop-blur-sm" onClick={() => setShowPayModal(false)}>
+          <div className="bg-white rounded-md w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+              <div>
+                <h2 className="text-page-title text-gray-900">Record Payment</h2>
+                <p className="text-sm text-gray-500">{payInvoice.invoice_number} • Balance {formatCurrency(Math.max(0, (payInvoice.total_amount || 0) - (payInvoice.amount_paid || 0)))}</p>
+              </div>
+              <button onClick={() => setShowPayModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Amount Received</label>
+                <input type="number" value={payForm.amount || ''} onChange={(e) => setPayForm({ ...payForm, amount: parseFloat(e.target.value) || 0 })}
+                  className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Payment Date</label>
+                  <input type="date" value={payForm.date} onChange={(e) => setPayForm({ ...payForm, date: e.target.value })}
+                    className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Mode</label>
+                  <select value={payForm.mode} onChange={(e) => setPayForm({ ...payForm, mode: e.target.value })}
+                    className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400">
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="upi">UPI</option>
+                    <option value="cheque">Cheque</option>
+                    <option value="cash">Cash</option>
+                    <option value="card">Card</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Deposit To</label>
+                <div className="flex gap-2 mt-1 mb-2">
+                  <button type="button" onClick={() => { const f = (bankAccounts || [])[0]; setPayForm({ ...payForm, accountKind: 'bank', accountId: f ? f.id : '' }); }}
+                    className={`flex-1 py-1.5 text-sm rounded-md border ${payForm.accountKind === 'bank' ? 'bg-gray-900 text-white border-gray-900' : 'border-gray-200 text-gray-600'}`}>Bank</button>
+                  <button type="button" onClick={() => { const f = (cashAccounts || [])[0]; setPayForm({ ...payForm, accountKind: 'cash', accountId: f ? f.id : '' }); }}
+                    className={`flex-1 py-1.5 text-sm rounded-md border ${payForm.accountKind === 'cash' ? 'bg-gray-900 text-white border-gray-900' : 'border-gray-200 text-gray-600'}`}>Cash</button>
+                </div>
+                <select value={payForm.accountId} onChange={(e) => setPayForm({ ...payForm, accountId: e.target.value })}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400">
+                  <option value="">Select account…</option>
+                  {(payForm.accountKind === 'bank' ? bankAccounts : cashAccounts || []).map((a: any) => (
+                    <option key={a.id} value={a.id}>{a.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Reference (optional)</label>
+                <input type="text" value={payForm.reference} onChange={(e) => setPayForm({ ...payForm, reference: e.target.value })} placeholder="UTR / cheque no."
+                  className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
+              </div>
+              <div className="flex gap-3 pt-2 border-t border-gray-100">
+                <button onClick={() => setShowPayModal(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 font-semibold rounded-md hover:bg-gray-50">Cancel</button>
+                <button onClick={submitPayment} disabled={paySubmitting}
+                  className="flex-1 px-4 py-2.5 bg-gray-900 text-white font-semibold rounded-md hover:bg-gray-800 disabled:opacity-50">
+                  {paySubmitting ? 'Recording…' : 'Record Payment'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Client Quick Add Modal */}
       <ClientQuickAddModal
         isOpen={showClientModal}
