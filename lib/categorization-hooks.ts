@@ -231,6 +231,19 @@ async function createJournalEntryForTransaction(
             categoryCoa = data;
         }
 
+        // Accrual routing: a receipt applied to invoices clears Accounts Receivable (not income),
+        // and a payment applied to bills clears Accounts Payable (not expense). This prevents
+        // double-counting income/expense, since invoices/bills already recognised it on accrual.
+        const hasInvoiceAlloc = categorization.categorization_type === 'income' && (categorization.invoice_allocations?.length || 0) > 0;
+        const hasBillAlloc = categorization.categorization_type === 'expense' && (categorization.bill_allocations?.length || 0) > 0;
+        if (hasInvoiceAlloc) {
+            const { data } = await supabase.from('chart_of_accounts').select('id, name').eq('code', '1200').maybeSingle();
+            if (data) categoryCoa = data;
+        } else if (hasBillAlloc) {
+            const { data } = await supabase.from('chart_of_accounts').select('id, name').eq('code', '2100').maybeSingle();
+            if (data) categoryCoa = data;
+        }
+
         if (!categoryCoa) return { error: null };
 
         const { data: entryNumData } = await supabase.rpc('generate_journal_entry_number');
