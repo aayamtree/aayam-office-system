@@ -1212,9 +1212,11 @@ export default function InvoicesPage() {
                             className="flex-1 px-2 py-1.5 border border-gray-200 rounded-md text-xs bg-white disabled:bg-gray-100 disabled:text-gray-400"
                           >
                             <option value="">— none (manual line) —</option>
-                            {clientJobs.map((j: any) => (
-                              <option key={j.id} value={j.id}>{j.job_number} — {j.project_name}</option>
-                            ))}
+                            {clientJobs
+                              .filter((j: any) => j.id === item.job_id || !formData.items.some((it, i) => i !== index && (it as any).job_id === j.id))
+                              .map((j: any) => (
+                                <option key={j.id} value={j.id}>{j.job_number} — {j.project_name}</option>
+                              ))}
                           </select>
                         </div>
                         {/* Row 1: Description + HSN + Qty + Rate + Amount */}
