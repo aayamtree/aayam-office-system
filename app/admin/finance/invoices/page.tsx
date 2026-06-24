@@ -742,6 +742,15 @@ export default function InvoicesPage() {
     if (inv.job_id) invoicedJobIds.add(inv.job_id);
     (inv.items || []).forEach((it: any) => { if (it.job_id) invoicedJobIds.add(it.job_id); });
   });
+  // Jobs already used on OTHER invoices (excludes the invoice currently being edited),
+  // so a job can't be invoiced twice across invoices.
+  const otherInvoiceJobIds = new Set<string>();
+  invoices.forEach(inv => {
+    if (isEditing && selectedInvoice && inv.id === selectedInvoice.id) return;
+    if (inv.job_id) otherInvoiceJobIds.add(inv.job_id);
+    (inv.items || []).forEach((it: any) => { if (it.job_id) otherInvoiceJobIds.add(it.job_id); });
+  });
+
   const pendingInvoicingJobs = jobs.filter(j =>
     (['dispatched', 'delivered'].includes(j.current_stage)) &&
     j.payment_status !== 'paid' &&
@@ -1213,7 +1222,10 @@ export default function InvoicesPage() {
                           >
                             <option value="">— none (manual line) —</option>
                             {clientJobs
-                              .filter((j: any) => j.id === item.job_id || !formData.items.some((it, i) => i !== index && (it as any).job_id === j.id))
+                              .filter((j: any) => j.id === item.job_id || (
+                                !formData.items.some((it, i) => i !== index && (it as any).job_id === j.id) &&
+                                !otherInvoiceJobIds.has(j.id)
+                              ))
                               .map((j: any) => (
                                 <option key={j.id} value={j.id}>{j.job_number} — {j.project_name}</option>
                               ))}
