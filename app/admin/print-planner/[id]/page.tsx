@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import { ArrowLeft, Plus, Trash2, CheckCircle, Printer, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { syncRunJobsToStage, revertJobsToReadyToPrint } from '@/lib/print-run-sync';
 import type { PrintRun, PrintRunJob, Job } from '@/types/database';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -80,6 +81,9 @@ export default function PrintRunDetailPage() {
 
             setPrintRun(prev => prev ? { ...prev, status: newStatus } : null);
 
+            // Keep the Jobs board in sync with the run's new status.
+            await syncRunJobsToStage(printRunId);
+
             await supabase.from('activity_logs').insert([{
                 action: 'updated',
                 module: 'print_runs',
@@ -102,6 +106,8 @@ export default function PrintRunDetailPage() {
                 .eq('job_id', jobId);
 
             if (error) throw error;
+            // Pulled out of the run → send back to Ready to Print (only if still in printing).
+            await revertJobsToReadyToPrint([jobId]);
             fetchPrintRunDetails();
         } catch (error) {
             console.error('Error removing job:', error);
@@ -447,6 +453,10 @@ function AddJobsModal({
                 .insert(jobsToAdd);
 
             if (error) throw error;
+
+            // If the run is already sent to the printer, freshly-added jobs should
+            // immediately reflect the run's stage on the Jobs board.
+            await syncRunJobsToStage(printRunId);
 
             await supabase.from('activity_logs').insert([{
                 action: 'updated',

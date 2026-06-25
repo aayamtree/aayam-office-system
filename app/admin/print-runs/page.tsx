@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { syncRunJobsToStage, revertJobsToReadyToPrint } from '@/lib/print-run-sync';
 import { useAuth } from '@/lib/auth-context';
 import { useConfirm } from '@/components/ConfirmModal';
 import { toast } from '@/lib/toast';
@@ -211,6 +212,8 @@ export default function PrintRunsPage() {
                 .update({ status: newStatus, updated_at: new Date().toISOString(), ...extraData })
                 .eq('id', runId);
             if (error) throw error;
+            // Keep the Jobs board in sync: push this run's status onto its jobs.
+            await syncRunJobsToStage(runId);
             await fetchRuns();
         } catch (err: any) {
             toast.error('Failed to update status: ' + (err.message || 'Unknown error'));
@@ -250,15 +253,9 @@ export default function PrintRunsPage() {
                 console.warn('Could not save remote QC record:', err);
             }
         } else {
-            // Warehouse path — update print run status and move all linked jobs to quality_check stage
+            // Warehouse path — set status; updateStatus() syncs linked jobs to
+            // quality_check (delivery_mode = warehouse is written in the same update).
             await updateStatus(deliveryModal.id, 'printing_done', data);
-            const jobIds = deliveryModal.jobs?.map(j => j.job_id).filter(Boolean) || [];
-            if (jobIds.length > 0) {
-                await supabase
-                    .from('jobs')
-                    .update({ current_stage: 'quality_check', updated_at: new Date().toISOString() })
-                    .in('id', jobIds);
-            }
         }
         setDeliveryModal(null);
         setDeliveryAddress('');
@@ -288,8 +285,15 @@ export default function PrintRunsPage() {
         const { confirmed } = await confirm({ title: 'Delete Print Run', message: 'Delete this print run? This cannot be undone.', variant: 'danger', confirmLabel: 'Delete' });
         if (!confirmed) return;
         try {
+            // Grab linked jobs before deleting so we can send them back to Ready to Print.
+            const { data: linked } = await supabase
+                .from('print_run_jobs')
+                .select('job_id')
+                .eq('print_run_id', runId);
+            const jobIds = (linked || []).map(r => r.job_id).filter(Boolean);
             await supabase.from('print_run_jobs').delete().eq('print_run_id', runId);
             await supabase.from('print_runs').delete().eq('id', runId);
+            await revertJobsToReadyToPrint(jobIds);
             setViewRun(null);
             await fetchRuns();
         } catch (err: any) {
