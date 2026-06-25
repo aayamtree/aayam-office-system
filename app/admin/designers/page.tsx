@@ -78,11 +78,13 @@ export default function DesignersPage() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('designers')
+        .from('profiles')
         .select('*')
+        .or('role.eq.designer,can_design.eq.true')
         .order('created_at', { ascending: false });
       if (error) console.error('Error:', error);
-      setDesigners(data || []);
+      // profiles stores the display name as full_name; map it to the `name` field this page uses
+      setDesigners((data || []).map((d: any) => ({ ...d, name: d.full_name ?? d.name ?? '' })));
     } catch (error) {
       console.error('Error fetching designers:', error);
     } finally {
@@ -157,8 +159,9 @@ export default function DesignersPage() {
     setSaving(true);
 
     try {
+      // Designers live in the central `profiles` table (role = designer).
       const designerData = {
-        name: formData.name,
+        full_name: formData.name,
         phone: formData.phone,
         email: formData.email || null,
         skills: formData.skills,
@@ -169,41 +172,22 @@ export default function DesignersPage() {
         is_active: formData.is_active,
         city: formData.city || null,
         state: formData.state || null,
-        document_url: formData.document_url || null
+        document_url: formData.document_url || null,
       };
 
-      let error;
-      if (editingDesigner) {
-        ({ error } = await supabase
-          .from('designers')
-          .update(designerData)
-          .eq('id', editingDesigner.id));
-      } else {
-        ({ error } = await supabase
-          .from('designers')
-          .insert([designerData]));
+      if (!editingDesigner) {
+        // A designer profile is linked to a login account (profiles.id → auth user),
+        // which is created in Settings → Users. We can't create that account from here.
+        toast.error('To add a new designer, create their user account in Settings → Users first. You can then edit their details here.');
+        setSaving(false);
+        router.push('/admin/settings/users');
+        return;
       }
 
-      // Fallback: If document_url column is missing, retry without it
-      if (error && (error.message?.includes('column') || error.code === '42703')) {
-        console.warn('Column document_url missing, retrying without it...');
-        const { document_url, ...safeData } = designerData;
-
-        if (editingDesigner) {
-          ({ error } = await supabase
-            .from('designers')
-            .update(safeData)
-            .eq('id', editingDesigner.id));
-        } else {
-          ({ error } = await supabase
-            .from('designers')
-            .insert([safeData]));
-        }
-
-        if (!error) {
-          toast.success('Designer saved successfully, but Identity Document could not be saved because the "document_url" column is missing in the database. Please contact admin to add this column.');
-        }
-      }
+      const { error } = await supabase
+        .from('profiles')
+        .update(designerData)
+        .eq('id', editingDesigner.id);
 
       if (error) throw error;
 
@@ -256,15 +240,16 @@ export default function DesignersPage() {
   };
 
   const handleDelete = async (id: string) => {
-    const { confirmed } = await confirm({ title: 'Delete Designer', message: 'Are you sure you want to delete this designer?', variant: 'danger', confirmLabel: 'Delete' });
+    const { confirmed } = await confirm({ title: 'Deactivate Designer', message: 'This deactivates the designer (their login account is kept). Continue?', variant: 'danger', confirmLabel: 'Deactivate' });
     if (!confirmed) return;
     try {
-      const { error } = await supabase.from('designers').delete().eq('id', id);
+      const { error } = await supabase.from('profiles').update({ is_active: false }).eq('id', id);
       if (error) throw error;
-      setDesigners(designers.filter(d => d.id !== id));
+      await fetchDesigners();
+      toast.success('Designer deactivated');
     } catch (error) {
       console.error('Error:', error);
-      toast.error('Error deleting designer');
+      toast.error('Error deactivating designer');
     }
   };
 

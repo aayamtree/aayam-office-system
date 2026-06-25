@@ -245,7 +245,7 @@ export default function NotificationBell() {
               <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
                 <button
                   onClick={() => {
-                    router.push('/admin/notifications');
+                    router.push('/admin/settings/notifications');
                     setShowDropdown(false);
                   }}
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium w-full text-center"
