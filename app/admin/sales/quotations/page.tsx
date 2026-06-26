@@ -11,7 +11,8 @@ import {
 import { useAuth } from '@/lib/auth-context';
 import { useQuotations, useClients, useJobs, useLeads, useFollowUps, useProductCategories } from '@/lib/hooks';
 import { Quotation, Client, QuotationItem, JobStatus } from '@/types/database';
-import { downloadQuotationPDF, previewQuotationPDF } from '@/components/quotation/QuotationPDF';
+import { downloadQuotationPDF, type QuotationData } from '@/components/quotation/QuotationPDF';
+import QuotationPreview from '@/components/quotation/QuotationPreview';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import { formatDate } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,7 @@ export default function QuotationsPage() {
   const { categories: dbCategories } = useProductCategories();
   const confirm = useConfirm();
   const { settings: companySettings } = useCompanySettings();
+  const [previewData, setPreviewData] = useState<QuotationData | null>(null);
 
   // Role-based visibility (same rule as the Clients page):
   //  • Admin (and other non-marketing roles) see ALL quotations.
@@ -228,9 +230,9 @@ export default function QuotationsPage() {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'draft': 'bg-gray-100 text-gray-700',
-      'sent': 'bg-muted text-foreground',
-      'viewed': 'bg-gray-900 text-white',
-      'accepted': 'bg-gray-100 text-gray-900',
+      'sent': 'bg-blue-50 text-blue-700',
+      'viewed': 'bg-indigo-50 text-indigo-700',
+      'accepted': 'bg-green-100 text-green-700',
       'rejected': 'bg-red-100 text-red-700',
       'expired': 'bg-amber-100 text-amber-700',
     };
@@ -239,7 +241,7 @@ export default function QuotationsPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'accepted': return <CheckCircle size={14} className="text-gray-900" />;
+      case 'accepted': return <CheckCircle size={14} className="text-green-600" />;
       case 'rejected': return <XCircle size={14} className="text-red-600" />;
       case 'expired': return <Clock size={14} className="text-destructive" />;
       default: return null;
@@ -566,8 +568,8 @@ export default function QuotationsPage() {
     await downloadQuotationPDF(buildPdfData(q) as any);
   };
 
-  const handlePreviewPDF = async (q: Quotation) => {
-    await previewQuotationPDF(buildPdfData(q) as any);
+  const handlePreviewPDF = (q: Quotation) => {
+    setPreviewData(buildPdfData(q) as any);
   };
 
 
@@ -892,8 +894,8 @@ export default function QuotationsPage() {
                       <td className="px-6 py-4">
                         <button
                           onClick={() => handlePreviewPDF(q)}
-                          className="font-semibold text-indigo-600 hover:text-indigo-800 hover:underline underline-offset-2 inline-flex items-center gap-1.5"
-                          title="Open quotation preview (PDF / print)"
+                          className="font-semibold text-indigo-600 hover:text-indigo-800 underline decoration-indigo-400 decoration-2 underline-offset-2 inline-flex items-center gap-1.5 cursor-pointer"
+                          title="Click to open the full quotation preview"
                         >
                           <FileText size={14} />
                           {q.quote_number}
@@ -961,6 +963,11 @@ export default function QuotationsPage() {
           </>
         )}
       </div>
+
+      {/* Quotation Preview Modal */}
+      {previewData && (
+        <QuotationPreview data={previewData} onClose={() => setPreviewData(null)} />
+      )}
 
       {/* Add/Edit Modal */}
       {showModal && (
