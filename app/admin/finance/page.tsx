@@ -3,7 +3,9 @@
 import { fetchFinanceOverview } from '@/lib/finance-overview-data';
 import FinanceClient from './FinanceClient';
 
-export const revalidate = 60; // Revalidate every 60 seconds
+// Always render fresh: finance figures must reflect a just-logged expense/payment
+// immediately, not a cached copy up to a minute old.
+export const revalidate = 0;
 
 export default async function FinancePage() {
   const data = await fetchFinanceOverview();

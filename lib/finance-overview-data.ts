@@ -147,11 +147,16 @@ export async function fetchFinanceOverview(): Promise<FinanceOverviewData> {
                 .neq('payment_status', 'paid')
                 .then(r => r), { data: [] } as any),
 
-            // 6-month invoice data for chart
+            // 6-month income data for chart — from verified bank inflows (ledger source of truth).
+            // The invoices/payments_received tables are unused in this deployment, so revenue
+            // is derived from categorised bank income instead.
             safe(() => supabase
-                .from('invoices')
-                .select('total_amount, amount_paid, created_at')
-                .gte('created_at', sixMonthsAgo)
+                .from('bank_transactions')
+                .select('amount, transaction_date')
+                .eq('is_verified', true)
+                .eq('categorization_type', 'income')
+                .eq('transaction_type', 'inflow')
+                .gte('transaction_date', sixMonthsAgo.split('T')[0])
                 .then(r => r), { data: [] } as any),
 
             // Bank-verified expenses this month (salary, rent, utilities etc.)
@@ -263,24 +268,30 @@ export async function fetchFinanceOverview(): Promise<FinanceOverviewData> {
             inv.payment_status !== 'paid' && inv.due_date && inv.due_date < today
         ).length;
 
-        // 6-month chart
+        // 6-month chart — built from verified bank income (cash basis: amount received = revenue)
         const sixMonthData = sixMonthSalesRes.data || [];
         const monthlyRevenue = [];
         for (let i = 5; i >= 0; i--) {
             const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
             const monthLabel = monthStart.toLocaleString('en', { month: 'short' });
-            const monthData = sixMonthData.filter((inv: any) => {
-                const d = new Date(inv.created_at);
-                return d >= monthStart && d < monthEnd;
-            });
+            const monthSum = sixMonthData
+                .filter((tx: any) => {
+                    const d = new Date(tx.transaction_date);
+                    return d >= monthStart && d < monthEnd;
+                })
+                .reduce((s: number, tx: any) => s + (tx.amount || 0), 0);
             monthlyRevenue.push({
                 month: monthLabel,
-                revenue: monthData.reduce((s: number, inv: any) => s + (inv.total_amount || 0), 0),
-                received: monthData.reduce((s: number, inv: any) => s + (inv.amount_paid || 0), 0),
+                revenue: monthSum,
+                received: monthSum,
                 active: i === 0,
             });
         }
+        // Derive this/last-month revenue from the same ledger-backed series so the KPI cards
+        // match the chart (the invoices table they previously used is empty).
+        const revenueThisMonthLedger = monthlyRevenue[5]?.revenue || 0;
+        const revenueLastMonthLedger = monthlyRevenue[4]?.revenue || 0;
 
         // Recent invoices
         const recentInvoices = (recentInvoicesRes.data || []).map((inv: any) => ({
@@ -299,12 +310,12 @@ export async function fetchFinanceOverview(): Promise<FinanceOverviewData> {
         const totalReceivedThisMonth = receivedThisMonth + bankIncomeThisMonth;
 
         return {
-            revenueThisMonth,
-            receivedThisMonth: totalReceivedThisMonth,
+            revenueThisMonth: revenueThisMonthLedger,
+            receivedThisMonth: totalReceivedThisMonth || revenueThisMonthLedger,
             expensesThisMonth: effectiveExpensesThisMonth,
             outstandingTotal,
-            revenueLastMonth,
-            receivedLastMonth,
+            revenueLastMonth: revenueLastMonthLedger,
+            receivedLastMonth: revenueLastMonthLedger,
             invoiceCounts,
             invoiceTotals,
             navStats: {

@@ -134,8 +134,8 @@ export default function FinanceClient({ data }: Props) {
             iconColor: 'text-orange-700',
             iconBg: 'bg-orange-50',
             borderColor: 'border-l-orange-500',
-            stat1: formatCompact(navStats.expenses.thisMonth),
-            stat2: `${navStats.expenses.count} entries this month`,
+            stat1: formatCompact(pnl.totalExpense),
+            stat2: `${pnl.expenseCountFY} entries this FY`,
             stat2Red: false,
             action: 'Log Expense',
             actionHref: '/admin/finance/expenses/quick',
@@ -249,9 +249,9 @@ export default function FinanceClient({ data }: Props) {
                         <span className="text-xs text-muted-foreground font-medium">Expenses</span>
                         <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-orange-500" />
                     </div>
-                    <div className="text-2xl font-bold tabular-nums">{formatCompact(expensesThisMonth)}</div>
+                    <div className="text-2xl font-bold tabular-nums">{formatCompact(pnl.totalExpense)}</div>
                     <span className="text-[10px] text-muted-foreground">
-                        This month · {formatCompact(pnl.totalExpense)} FY{pnl.fyLabel ? ` ${pnl.fyLabel}` : ''}
+                        FY{pnl.fyLabel ? ` ${pnl.fyLabel}` : ''} · {formatCompact(expensesThisMonth)} this month
                     </span>
                 </Link>
 
