@@ -11,7 +11,7 @@ import {
 import { useAuth } from '@/lib/auth-context';
 import { useQuotations, useClients, useJobs, useLeads, useFollowUps, useProductCategories } from '@/lib/hooks';
 import { Quotation, Client, QuotationItem, JobStatus } from '@/types/database';
-import { downloadQuotationPDF } from '@/components/quotation/QuotationPDF';
+import { downloadQuotationPDF, previewQuotationPDF } from '@/components/quotation/QuotationPDF';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import { formatDate } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -536,34 +536,38 @@ export default function QuotationsPage() {
     }
   };
 
-  const handleDownloadPDF = async (q: Quotation) => {
-    const pdfData = {
-      ...companySettings,
-      quoteNumber: q.quote_number,
-      date: formatDate(q.created_at),
-      validUntil: q.valid_until ? formatDate(q.valid_until) : '-',
-      clientName: q.client?.name || q.lead?.name || 'Unknown',
-      clientCompany: q.client?.company || q.lead?.company,
-      clientAddress: q.client?.address,
-      clientPhone: q.client?.phone,
-      clientEmail: q.client?.email,
-      clientState: (q.client as any)?.state || (q.lead as any)?.state,
-      clientGstin: (q.client as any)?.gstin || '',
-      items: q.items?.map(i => ({
-        description: i.description,
-        quantity: i.quantity,
-        rate: i.rate,
-        amount: i.amount
-      })) || [],
-      subtotal: q.subtotal,
-      taxAmount: q.gst_amount,
-      totalAmount: q.total_amount,
-      gstRate: q.items?.[0]?.gst_rate ?? 18,
-      terms: q.terms,
-      notes: q.notes
-    };
+  const buildPdfData = (q: Quotation) => ({
+    ...companySettings,
+    quoteNumber: q.quote_number,
+    date: formatDate(q.created_at),
+    validUntil: q.valid_until ? formatDate(q.valid_until) : '-',
+    clientName: q.client?.name || q.lead?.name || 'Unknown',
+    clientCompany: q.client?.company || q.lead?.company,
+    clientAddress: q.client?.address,
+    clientPhone: q.client?.phone,
+    clientEmail: q.client?.email,
+    clientState: (q.client as any)?.state || (q.lead as any)?.state,
+    clientGstin: (q.client as any)?.gstin || '',
+    items: q.items?.map(i => ({
+      description: i.description,
+      quantity: i.quantity,
+      rate: i.rate,
+      amount: i.amount
+    })) || [],
+    subtotal: q.subtotal,
+    taxAmount: q.gst_amount,
+    totalAmount: q.total_amount,
+    gstRate: q.items?.[0]?.gst_rate ?? 18,
+    terms: q.terms,
+    notes: q.notes
+  });
 
-    await downloadQuotationPDF(pdfData as any);
+  const handleDownloadPDF = async (q: Quotation) => {
+    await downloadQuotationPDF(buildPdfData(q) as any);
+  };
+
+  const handlePreviewPDF = async (q: Quotation) => {
+    await previewQuotationPDF(buildPdfData(q) as any);
   };
 
 
@@ -791,12 +795,14 @@ export default function QuotationsPage() {
                         {renderSource(q, true)}
                       </div>
 
-                      {/* Items Preview */}
-                      <div className="bg-gray-50 p-3 rounded-md border border-gray-200 mb-4">
-                        <p className="text-xs text-gray-600 line-clamp-2">
-                          {q.items?.map(i => `${i.description} (${i.quantity})`).join(', ') || 'No items'}
-                        </p>
-                      </div>
+                      {/* View full quotation (PDF / print preview) */}
+                      <button
+                        onClick={() => handlePreviewPDF(q)}
+                        className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 p-3 rounded-md mb-4 flex items-center justify-center gap-2 font-medium text-sm transition-colors"
+                      >
+                        <FileText size={16} />
+                        View Quotation
+                      </button>
 
                       {/* Price & Status Row */}
                       <div className="flex items-center justify-between mb-4">
@@ -874,7 +880,6 @@ export default function QuotationsPage() {
                     <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Quotation</th>
                     <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Client</th>
                     <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Source / Marketing</th>
-                    <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Items</th>
                     <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Amount</th>
                     <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Valid Until</th>
                     <th className="text-left px-6 py-4 text-label text-gray-500 uppercase">Status</th>
@@ -885,7 +890,14 @@ export default function QuotationsPage() {
                   {filteredQuotations.map((q) => (
                     <tr key={q.id} className={`hover:bg-gray-50 transition-colors ${q.status === 'accepted' || q.status === 'rejected' ? 'bg-gray-50/50 opacity-60' : ''}`}>
                       <td className="px-6 py-4">
-                        <span className="font-semibold text-gray-900">{q.quote_number}</span>
+                        <button
+                          onClick={() => handlePreviewPDF(q)}
+                          className="font-semibold text-indigo-600 hover:text-indigo-800 hover:underline underline-offset-2 inline-flex items-center gap-1.5"
+                          title="Open quotation preview (PDF / print)"
+                        >
+                          <FileText size={14} />
+                          {q.quote_number}
+                        </button>
                         <p className="text-xs text-gray-400 mt-1">{formatDate(q.created_at)}</p>
                       </td>
                       <td className="px-6 py-4">
@@ -893,7 +905,6 @@ export default function QuotationsPage() {
                         {(q.client?.company || q.lead?.company) && <p className="text-sm text-gray-500">{q.client?.name || (q.lead ? 'LEAD' : '')}</p>}
                       </td>
                       <td className="px-6 py-4">{renderSource(q)}</td>
-                      <td className="px-6 py-4 text-gray-600 max-w-xs truncate">{q.items?.map(i => i.description).join(', ')}</td>
                       <td className="px-6 py-4 font-semibold text-gray-900">{formatCurrency(q.total_amount)}</td>
                       <td className="px-6 py-4 text-gray-600">{q.valid_until ? formatDate(q.valid_until) : '-'}</td>
                       <td className="px-6 py-4">

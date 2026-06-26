@@ -393,6 +393,25 @@ export const downloadQuotationPDF = async (data: QuotationData) => {
     URL.revokeObjectURL(url);
 };
 
+// Open the full quotation as a PDF preview in a new browser tab (for preview / print).
+export const previewQuotationPDF = async (data: QuotationData) => {
+    const blob = await pdf(<QuotationPDF data={data} />).toBlob();
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, '_blank');
+    // Fallback if the popup was blocked: navigate the current tab.
+    if (!win) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    // Revoke later so the new tab has time to load the blob.
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+};
+
 // Default Company Data
 export const defaultCompanyData = {
     companyName: 'aayam communication',
