@@ -141,6 +141,9 @@ export default function QuickExpensePage() {
 
             setSuccess(true);
             loadRecentExpenses();
+            // Push the new expense onto any cached server views (Finance Overview, etc.)
+            // so the figures update immediately instead of staying stale.
+            router.refresh();
 
             // Reset form
             setFormData({
@@ -151,9 +154,7 @@ export default function QuickExpensePage() {
                 vendor_id: '',
                 reference_number: '',
                 payment_date: new Date().toISOString().split('T')[0],
-                account_id: formData.payment_mode === 'cash'
-                    ? (cashAccounts[0]?.id || '')
-                    : (bankAccounts[0]?.id || '')
+                account_id: cashAccounts[0]?.id || ''
             });
 
             // Clear success message after 3 seconds
@@ -166,17 +167,16 @@ export default function QuickExpensePage() {
         }
     };
 
-    const handlePaymentModeChange = (mode: string) => {
+    // Single "Pay From" dropdown: pick an account directly; payment mode is
+    // derived automatically (cash account -> cash, bank account -> bank_transfer).
+    const handleAccountChange = (id: string) => {
+        const isCash = cashAccounts.some((a) => a.id === id);
         setFormData(prev => ({
             ...prev,
-            payment_mode: mode,
-            account_id: mode === 'cash'
-                ? (cashAccounts[0]?.id || '')
-                : (bankAccounts[0]?.id || '')
+            account_id: id,
+            payment_mode: isCash ? 'cash' : 'bank_transfer'
         }));
     };
-
-    const accounts = formData.payment_mode === 'cash' ? cashAccounts : bankAccounts;
 
     return (
         <div className="space-y-2 md:space-y-6 pb-16 md:pb-20">
@@ -269,59 +269,40 @@ export default function QuickExpensePage() {
                                 />
                             </div>
 
-                            {/* Payment Mode & Account - Stack on mobile */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
-                                {/* Payment Mode */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Payment Mode <span className="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        value={formData.payment_mode}
-                                        onChange={(e) => handlePaymentModeChange(e.target.value)}
-                                        className="w-full px-3 py-2.5 border rounded-md focus:ring-2 focus:ring-gray-400 text-sm"
-                                        required
-                                    >
-                                        <option value="cash">Cash</option>
-                                        <option value="bank_transfer">Bank Transfer</option>
-                                        <option value="upi">UPI</option>
-                                        <option value="cheque">Cheque</option>
-                                    </select>
-                                </div>
-
-                                {/* Account Selection */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        {formData.payment_mode === 'cash' ? 'Cash Account' : 'Bank Account'} <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="relative">
-                                        <select
-                                            value={formData.account_id}
-                                            onChange={(e) => setFormData({ ...formData, account_id: e.target.value })}
-                                            className="w-full px-3 py-2.5 border rounded-md focus:ring-2 focus:ring-gray-400 text-sm opacity-0 absolute inset-0 z-10 cursor-pointer"
-                                            required
-                                        >
-                                            <option value="">Select account</option>
-                                            {accounts.map((acc) => (
+                            {/* Pay From — single dropdown listing every account (cash + bank) */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Pay From <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    value={formData.account_id}
+                                    onChange={(e) => handleAccountChange(e.target.value)}
+                                    className="w-full px-3 py-2.5 border rounded-md focus:ring-2 focus:ring-gray-400 text-sm"
+                                    required
+                                >
+                                    <option value="">Select account</option>
+                                    {cashAccounts.length > 0 && (
+                                        <optgroup label="Cash">
+                                            {cashAccounts.map((acc) => (
                                                 <option key={acc.id} value={acc.id}>
-                                                    {acc.name}
+                                                    {acc.name} (₹{(acc.current_balance || 0).toLocaleString('en-IN')})
                                                 </option>
                                             ))}
-                                        </select>
-                                        <div className="w-full px-3 py-2.5 border rounded-md bg-white text-sm flex items-center justify-between pointer-events-none">
-                                            <span>
-                                                {formData.account_id
-                                                    ? (() => {
-                                                        const acc = accounts.find(a => a.id === formData.account_id);
-                                                        return acc ? <>{acc.name} <span className="text-gray-500">(₹{(acc.current_balance || 0).toLocaleString('en-IN')})</span></> : 'Select account';
-                                                    })()
-                                                    : <span className="text-gray-400">Select account</span>
-                                                }
-                                            </span>
-                                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                                        </div>
-                                    </div>
-                                </div>
+                                        </optgroup>
+                                    )}
+                                    {bankAccounts.length > 0 && (
+                                        <optgroup label="Bank">
+                                            {bankAccounts.map((acc) => (
+                                                <option key={acc.id} value={acc.id}>
+                                                    {acc.name} (₹{(acc.current_balance || 0).toLocaleString('en-IN')})
+                                                </option>
+                                            ))}
+                                        </optgroup>
+                                    )}
+                                </select>
+                                <p className="text-xs text-gray-400 mt-1">
+                                    Pick the cash or bank account — the payment method is set automatically.
+                                </p>
                             </div>
 
                             {/* Vendor & Date - Stack on mobile */}
