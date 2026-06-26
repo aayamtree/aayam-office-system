@@ -26,6 +26,17 @@ export interface FinanceOverviewData {
     // 6-month revenue chart
     monthlyRevenue: { month: string; revenue: number; received: number; active: boolean }[];
 
+    // Ledger-based Profit & Loss (Zoho-style) for the current fiscal year
+    pnl: {
+        fyLabel: string;
+        monthly: { label: string; income: number; expense: number }[];
+        topExpenses: { name: string; amount: number }[];
+        totalIncome: number;
+        totalExpense: number;
+        expenseThisMonth: number;
+        expenseCountFY: number;
+    };
+
     // Recent invoices (last 8)
     recentInvoices: {
         id: string;
@@ -59,6 +70,15 @@ const EMPTY: FinanceOverviewData = {
         expenses: { thisMonth: 0, count: 0 },
     },
     monthlyRevenue: [],
+    pnl: {
+        fyLabel: '',
+        monthly: [],
+        topExpenses: [],
+        totalIncome: 0,
+        totalExpense: 0,
+        expenseThisMonth: 0,
+        expenseCountFY: 0,
+    },
     recentInvoices: [],
     overdueToday: 0,
 };
@@ -88,6 +108,7 @@ export async function fetchFinanceOverview(): Promise<FinanceOverviewData> {
             bankExpensesThisMonthRes,
             bankExpensesLastMonthRes,
             bankIncomeThisMonthRes,
+            pnlRes,
         ] = await Promise.all([
             // All invoices for stats
             safe(() => supabase
@@ -163,6 +184,9 @@ export async function fetchFinanceOverview(): Promise<FinanceOverviewData> {
                 .eq('transaction_type', 'inflow')
                 .gte('transaction_date', startOfMonth.split('T')[0])
                 .then(r => r), { data: [] } as any),
+
+            // Ledger-based P&L (fiscal year): income/expense by month + top categories
+            safe(() => supabase.rpc('fn_finance_overview_pnl').then(r => r), { data: null } as any),
         ]);
 
         const allInvoices = allInvoicesRes.data || [];
@@ -207,6 +231,28 @@ export async function fetchFinanceOverview(): Promise<FinanceOverviewData> {
 
         // Bank-verified income (for cash received tracking)
         const bankIncomeThisMonth = (bankIncomeThisMonthRes.data || []).reduce((s: number, e: any) => s + (e.amount || 0), 0);
+
+        // Ledger-based P&L (source of truth for recorded expenses via fn_record_expense)
+        const rawPnl = pnlRes?.data || {};
+        const num = (v: any) => Number(v) || 0;
+        const pnl = {
+            fyLabel: rawPnl.fyLabel || '',
+            monthly: (rawPnl.monthly || []).map((m: any) => ({
+                label: m.label,
+                income: num(m.income),
+                expense: num(m.expense),
+            })),
+            topExpenses: (rawPnl.topExpenses || []).map((t: any) => ({
+                name: t.name,
+                amount: num(t.amount),
+            })),
+            totalIncome: num(rawPnl.totalIncome),
+            totalExpense: num(rawPnl.totalExpense),
+            expenseThisMonth: num(rawPnl.expenseThisMonth),
+            expenseCountFY: num(rawPnl.expenseCountFY),
+        };
+        // Prefer ledger figure for this month's expenses; fall back to manual+bank if ledger empty
+        const effectiveExpensesThisMonth = pnl.expenseThisMonth || expensesThisMonth;
 
         // Purchase bills
         const pendingBills = purchaseBillsRes.data || [];
@@ -255,7 +301,7 @@ export async function fetchFinanceOverview(): Promise<FinanceOverviewData> {
         return {
             revenueThisMonth,
             receivedThisMonth: totalReceivedThisMonth,
-            expensesThisMonth,
+            expensesThisMonth: effectiveExpensesThisMonth,
             outstandingTotal,
             revenueLastMonth,
             receivedLastMonth,
@@ -268,9 +314,10 @@ export async function fetchFinanceOverview(): Promise<FinanceOverviewData> {
                 },
                 payments: { receivedThisMonth: totalReceivedThisMonth },
                 purchases: { pendingBills: pendingBills.length, billsAmount: pendingBillsAmount },
-                expenses: { thisMonth: expensesThisMonth, count: expensesThisMonthCount },
+                expenses: { thisMonth: effectiveExpensesThisMonth, count: expensesThisMonthCount },
             },
             monthlyRevenue,
+            pnl,
             recentInvoices,
             overdueToday,
         };

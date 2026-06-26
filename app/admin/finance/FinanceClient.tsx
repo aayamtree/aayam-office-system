@@ -59,9 +59,33 @@ export default function FinanceClient({ data }: Props) {
         revenueLastMonth, receivedLastMonth,
         invoiceCounts, invoiceTotals,
         navStats, monthlyRevenue, recentInvoices, overdueToday,
+        pnl,
     } = data;
 
     const maxMonthlyRevenue = Math.max(...monthlyRevenue.map(m => m.revenue), 1);
+
+    // ── Zoho-style fiscal-year P&L derived values ──
+    const maxIE = Math.max(...pnl.monthly.flatMap(m => [m.income, m.expense]), 1);
+    const netProfit = pnl.totalIncome - pnl.totalExpense;
+    const EXPENSE_COLORS = ['#10b981', '#f97316', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#64748b'];
+    // Collapse smaller categories into "Others" (keep top 5)
+    const sortedExpenses = [...pnl.topExpenses].sort((a, b) => b.amount - a.amount);
+    const topFive = sortedExpenses.slice(0, 5);
+    const othersAmount = sortedExpenses.slice(5).reduce((s, e) => s + e.amount, 0);
+    const donutData = [
+        ...topFive.map((e, i) => ({ name: e.name, amount: e.amount, color: EXPENSE_COLORS[i] })),
+        ...(othersAmount > 0 ? [{ name: 'Others', amount: othersAmount, color: EXPENSE_COLORS[7] }] : []),
+    ];
+    const donutTotal = donutData.reduce((s, e) => s + e.amount, 0) || 1;
+    // Build stroke-dasharray segments for the donut (circumference based)
+    const R = 42, C = 2 * Math.PI * R;
+    let acc = 0;
+    const donutSegments = donutData.map((d) => {
+        const frac = d.amount / donutTotal;
+        const seg = { color: d.color, dash: frac * C, offset: -acc * C };
+        acc += frac;
+        return seg;
+    });
 
     const navCards = [
         {
@@ -217,14 +241,19 @@ export default function FinanceClient({ data }: Props) {
                 </div>
 
                 {/* Expenses */}
-                <div className="bg-card border border-border rounded-lg p-3 md:p-4 space-y-1">
+                <Link
+                    href="/admin/finance/expenses/quick"
+                    className="bg-card border border-border rounded-lg p-3 md:p-4 space-y-1 hover:shadow-sm hover:border-orange-200 transition-all group"
+                >
                     <div className="flex items-center justify-between">
                         <span className="text-xs text-muted-foreground font-medium">Expenses</span>
-                        <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground" />
+                        <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-orange-500" />
                     </div>
                     <div className="text-2xl font-bold tabular-nums">{formatCompact(expensesThisMonth)}</div>
-                    <span className="text-[10px] text-muted-foreground">This month</span>
-                </div>
+                    <span className="text-[10px] text-muted-foreground">
+                        This month · {formatCompact(pnl.totalExpense)} FY{pnl.fyLabel ? ` ${pnl.fyLabel}` : ''}
+                    </span>
+                </Link>
 
                 {/* Outstanding */}
                 <div className="bg-red-50 border border-red-100 rounded-lg p-3 md:p-4 space-y-1">
@@ -236,6 +265,130 @@ export default function FinanceClient({ data }: Props) {
                     <span className="text-[10px] text-red-500">
                         {invoiceCounts.overdue > 0 ? `${invoiceCounts.overdue} overdue` : 'Total unpaid balance'}
                     </span>
+                </div>
+            </div>
+
+            {/* ── Income vs Expense (Fiscal Year) + Top Expenses — Zoho-style ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+                {/* Income vs Expense */}
+                <div className="bg-card border border-border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                        <div>
+                            <h3 className="text-sm font-semibold">Income &amp; Expense</h3>
+                            <p className="text-xs text-muted-foreground">This Fiscal Year{pnl.fyLabel ? ` · ${pnl.fyLabel}` : ''}</p>
+                        </div>
+                        <Link href="/admin/finance/reports" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5">
+                            Reports <ArrowUpRight className="h-3 w-3" />
+                        </Link>
+                    </div>
+
+                    {/* Totals */}
+                    <div className="flex items-center gap-5 mb-4">
+                        <div>
+                            <div className="flex items-center gap-1.5">
+                                <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block" />
+                                <span className="text-[11px] text-muted-foreground">Total Income</span>
+                            </div>
+                            <p className="text-lg font-bold tabular-nums text-emerald-600">{formatCompact(pnl.totalIncome)}</p>
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-1.5">
+                                <span className="w-2.5 h-2.5 rounded-sm bg-red-500 inline-block" />
+                                <span className="text-[11px] text-muted-foreground">Total Expense</span>
+                            </div>
+                            <p className="text-lg font-bold tabular-nums text-red-600">{formatCompact(pnl.totalExpense)}</p>
+                        </div>
+                        <div className="ml-auto text-right">
+                            <span className="text-[11px] text-muted-foreground">Net {netProfit >= 0 ? 'Profit' : 'Loss'}</span>
+                            <p className={`text-lg font-bold tabular-nums ${netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                {formatCompact(Math.abs(netProfit))}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Grouped monthly bars */}
+                    {pnl.monthly.length > 0 ? (
+                        <div className="flex items-end justify-between gap-2 h-40 border-b border-border pb-1">
+                            {pnl.monthly.map((m) => (
+                                <div key={m.label} className="flex-1 flex flex-col items-center justify-end h-full gap-1">
+                                    <div className="flex items-end justify-center gap-1 w-full h-full">
+                                        <div
+                                            className="w-1/2 max-w-[18px] bg-emerald-500 rounded-t-sm transition-all"
+                                            style={{ height: `${Math.max((m.income / maxIE) * 100, m.income > 0 ? 3 : 0)}%` }}
+                                            title={`Income: ${formatCurrency(m.income)}`}
+                                        />
+                                        <div
+                                            className="w-1/2 max-w-[18px] bg-red-500 rounded-t-sm transition-all"
+                                            style={{ height: `${Math.max((m.expense / maxIE) * 100, m.expense > 0 ? 3 : 0)}%` }}
+                                            title={`Expense: ${formatCurrency(m.expense)}`}
+                                        />
+                                    </div>
+                                    <span className="text-[10px] text-muted-foreground">{m.label}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="h-40 flex items-center justify-center text-xs text-muted-foreground">No posted entries yet</div>
+                    )}
+                </div>
+
+                {/* Top Expenses donut */}
+                <div className="bg-card border border-border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                        <div>
+                            <h3 className="text-sm font-semibold">Top Expenses</h3>
+                            <p className="text-xs text-muted-foreground">By category · This Fiscal Year</p>
+                        </div>
+                        <Link href="/admin/finance/expenses/quick" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5">
+                            Log Expense <ArrowUpRight className="h-3 w-3" />
+                        </Link>
+                    </div>
+
+                    {donutData.length > 0 ? (
+                        <div className="flex items-center gap-4">
+                            {/* Donut */}
+                            <div className="relative shrink-0">
+                                <svg viewBox="0 0 100 100" className="w-28 h-28 -rotate-90">
+                                    {donutSegments.map((s, i) => (
+                                        <circle
+                                            key={i}
+                                            cx="50" cy="50" r={R}
+                                            fill="none"
+                                            stroke={s.color}
+                                            strokeWidth="14"
+                                            strokeDasharray={`${s.dash} ${C - s.dash}`}
+                                            strokeDashoffset={s.offset}
+                                        />
+                                    ))}
+                                </svg>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span className="text-[9px] text-muted-foreground">Total</span>
+                                    <span className="text-xs font-bold tabular-nums">{formatCompact(pnl.totalExpense)}</span>
+                                </div>
+                            </div>
+
+                            {/* Legend */}
+                            <div className="flex-1 space-y-1.5 min-w-0">
+                                {donutData.map((d) => (
+                                    <div key={d.name} className="flex items-center justify-between gap-2 text-xs">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                            <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: d.color }} />
+                                            <span className="truncate text-foreground">{d.name}</span>
+                                        </div>
+                                        <span className="font-semibold tabular-nums text-muted-foreground shrink-0">
+                                            {formatCompact(d.amount)}
+                                            <span className="text-[10px] text-muted-foreground/70 ml-1">
+                                                {Math.round((d.amount / donutTotal) * 100)}%
+                                            </span>
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="h-28 flex items-center justify-center text-xs text-muted-foreground">No expenses recorded yet</div>
+                    )}
                 </div>
             </div>
 
