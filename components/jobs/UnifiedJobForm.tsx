@@ -92,6 +92,7 @@ export default function UnifiedJobForm({
         quantity: 0,
         quote_per_piece: 0,
         design_charge: 0,
+        design_billing: '' as '' | 'billable' | 'non_billable', // '' = auto-derive on save
         gst_rate: 18,
         discount_amount: 0,
         // Admin: assignment
@@ -124,6 +125,7 @@ export default function UnifiedJobForm({
             quantity: editingJob.quantity ?? 0,
             quote_per_piece: editingJob.quote_per_piece || 0,
             design_charge: (editingJob as any).design_charge || 0,
+            design_billing: (editingJob as any).design_billing || '',
             gst_rate: editingJob.gst_rate || 18,
             discount_amount: editingJob.discount_amount || 0,
             vendor_id: editingJob.vendor_id || '',
@@ -179,6 +181,15 @@ export default function UnifiedJobForm({
                 jobPayload.quantity = formData.quantity;
                 jobPayload.quote_per_piece = formData.quote_per_piece;
                 jobPayload.design_charge = formData.design_charge || 0;
+                // Finance tag. '' = let the DB trigger auto-derive (print-only/no charge => non_billable, charge>0 => billable).
+                // For Print Only there is no design, so force non_billable.
+                if (isPrint && !isDesign) {
+                    jobPayload.design_billing = 'non_billable';
+                } else if (formData.design_billing) {
+                    jobPayload.design_billing = formData.design_billing;
+                } else {
+                    jobPayload.design_billing = (formData.design_charge || 0) > 0 ? 'billable' : 'non_billable';
+                }
                 jobPayload.subtotal = subtotal;
                 jobPayload.gst_rate = formData.gst_rate;
                 jobPayload.gst_amount = gstAmount;
@@ -480,6 +491,20 @@ export default function UnifiedJobForm({
                                             value={formData.design_charge || ''}
                                             onChange={e => set('design_charge', parseFloat(e.target.value) || 0)}
                                         />
+                                    </div>
+                                )}
+                                {isDesign && (
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">Design Billing (finance tag)</label>
+                                        <select
+                                            className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
+                                            value={formData.design_billing}
+                                            onChange={e => set('design_billing', e.target.value as '' | 'billable' | 'non_billable')}
+                                        >
+                                            <option value="">Auto ({(formData.design_charge || 0) > 0 ? 'Billable' : 'Non-billable'})</option>
+                                            <option value="billable">Billable (design charged)</option>
+                                            <option value="non_billable">Non-billable (free design)</option>
+                                        </select>
                                     </div>
                                 )}
                                 <div>

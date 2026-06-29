@@ -6,6 +6,7 @@ import { useJobs, useDesigners } from '@/lib/hooks';
 import { Calendar, Clock, User, AlertCircle, Search, Palette, Users, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import { DesignerStatusBadge } from '@/components/shared/DesignerStatusPills';
+import DesignBillingBadge from '@/components/jobs/DesignBillingBadge';
 
 // ─── Stage color config matching app theme ────────────────────────────────────
 const stageConfig: Record<string, { borderColor: string; tintBg: string; badgeBg: string; badgeText: string; label: string }> = {
@@ -59,7 +60,7 @@ export default function UnifiedQueue() {
 
     const { jobs, loading } = useJobs({
         // Remove designer:profiles join — replaced by manual profileMap lookup
-        select: 'id, project_name, job_number, current_stage, priority, client_deadline, designer_id, job_type, product_category, designer_status, client:clients(id, name, company)',
+        select: 'id, project_name, job_number, current_stage, priority, client_deadline, designer_id, job_type, product_category, designer_status, design_billing, client:clients(id, name, company)',
         filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready'], op: 'in' }]
     });
     const [searchQuery, setSearchQuery] = useState('');
@@ -82,6 +83,7 @@ export default function UnifiedQueue() {
             deadline: job.client_deadline,
             jobNumber: job.job_number,
             jobType: (job as any).job_type || 'Design',
+            designBilling: (job as any).design_billing || null,
             isMyTask: isAdmin || job.designer_id === profile?.id,
         }));
 
@@ -247,6 +249,9 @@ export default function UnifiedQueue() {
                                                             <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-muted border border-border text-muted-foreground">
                                                                 <User size={9} /> {task.designer}
                                                             </span>
+                                                            {!isPrintOnly && (
+                                                                <DesignBillingBadge jobId={task.id} value={task.designBilling} readOnly />
+                                                            )}
                                                             {dl && (
                                                                 <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${dl.cls}`}>{dl.label}</span>
                                                             )}

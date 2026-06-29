@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import type { Job, ProductionSummary } from '@/types/database';
 import { ShareToChat } from '@/components/ShareToChat';
+import DesignBillingBadge from '@/components/jobs/DesignBillingBadge';
 
 export default function ProductionQueuePage() {
 
@@ -329,6 +330,11 @@ export default function ProductionQueuePage() {
                                                     >
                                                         {job.job_number}
                                                     </Link>
+                                                    {job.job_type !== 'Print Only' && (
+                                                        <div className="mt-1">
+                                                            <DesignBillingBadge jobId={job.id} value={job.design_billing} />
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="px-6 py-4 text-sm text-gray-900 font-medium">
                                                     {(job.client as any)?.company || (job.client as any)?.name || 'N/A'}
