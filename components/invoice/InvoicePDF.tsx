@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 30,
     paddingBottom: 20,
-    borderBottom: '2px solid #4F46E5',
+    borderBottom: '2px solid #000000',
   },
   companySection: {
     flex: 1,
@@ -27,23 +27,23 @@ const styles = StyleSheet.create({
   companyName: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#4F46E5',
+    color: '#000000',
     marginBottom: 5,
   },
   companyDetails: {
     fontSize: 9,
-    color: '#666666',
+    color: '#000000',
     lineHeight: 1.5,
   },
   invoiceTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: '#000000',
     textAlign: 'right',
   },
   invoiceNumber: {
     fontSize: 11,
-    color: '#4F46E5',
+    color: '#000000',
     textAlign: 'right',
     marginTop: 5,
   },
@@ -58,19 +58,19 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 8,
-    color: '#9CA3AF',
+    color: '#000000',
     textTransform: 'uppercase',
     marginBottom: 3,
   },
   value: {
     fontSize: 10,
-    color: '#1F2937',
+    color: '#000000',
     marginBottom: 8,
   },
   clientName: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: '#000000',
     marginBottom: 3,
   },
   // Table
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#000000',
     color: '#ffffff',
     padding: 10,
     fontWeight: 'bold',
@@ -117,17 +117,17 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 10,
-    color: '#6B7280',
+    color: '#000000',
   },
   totalValue: {
     fontSize: 10,
-    color: '#1F2937',
+    color: '#000000',
   },
   grandTotalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 10,
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#000000',
     marginTop: 5,
   },
   grandTotalLabel: {
@@ -149,12 +149,12 @@ const styles = StyleSheet.create({
   },
   amountWordsLabel: {
     fontSize: 8,
-    color: '#6B7280',
+    color: '#000000',
     marginBottom: 3,
   },
   amountWordsText: {
     fontSize: 10,
-    color: '#1F2937',
+    color: '#000000',
     fontStyle: 'italic',
   },
   // Bank Details
@@ -171,14 +171,14 @@ const styles = StyleSheet.create({
   bankTitle: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: '#000000',
     marginBottom: 8,
     borderBottom: '1px solid #E5E7EB',
     paddingBottom: 5,
   },
   bankDetail: {
     fontSize: 9,
-    color: '#4B5563',
+    color: '#000000',
     marginBottom: 3,
   },
   termsBox: {
@@ -188,12 +188,12 @@ const styles = StyleSheet.create({
   termsTitle: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: '#000000',
     marginBottom: 8,
   },
   termsText: {
     fontSize: 8,
-    color: '#6B7280',
+    color: '#000000',
     lineHeight: 1.5,
   },
   // Footer
@@ -215,11 +215,11 @@ const styles = StyleSheet.create({
     paddingTop: 5,
     borderTop: '1px solid #1F2937',
     fontSize: 9,
-    color: '#6B7280',
+    color: '#000000',
   },
   footerText: {
     fontSize: 8,
-    color: '#9CA3AF',
+    color: '#000000',
   },
   // Watermark for paid
   paidWatermark: {
@@ -457,7 +457,7 @@ export const InvoicePDF = ({ data }: { data: InvoiceData }) => (
           {data.discount > 0 && (
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Discount</Text>
-              <Text style={[styles.totalValue, { color: '#22C55E' }]}>- {formatCurrency(data.discount)}</Text>
+              <Text style={[styles.totalValue, { color: '#000000' }]}>- {formatCurrency(data.discount)}</Text>
             </View>
           )}
           <View style={styles.grandTotalRow}>
