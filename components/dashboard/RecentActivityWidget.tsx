@@ -12,8 +12,17 @@ const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+// DB stores UTC in a `timestamp without time zone` column, so the string
+// arrives with no timezone marker. Treat it as UTC by appending 'Z'.
+function parseUtc(dateStr: string): number {
+    const hasTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(dateStr);
+    const normalized = hasTz ? dateStr : dateStr.replace(' ', 'T') + 'Z';
+    return new Date(normalized).getTime();
+}
+
 function timeAgo(dateStr: string): string {
-    const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+    const diff = Math.floor((Date.now() - parseUtc(dateStr)) / 1000);
+    if (diff < 0) return 'just now';
     if (diff < 60) return `${diff}s ago`;
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
