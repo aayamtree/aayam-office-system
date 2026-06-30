@@ -183,6 +183,8 @@ const menuItems: MenuItem[] = [
       { name: 'Station Overview', href: '/admin/cmyk-print' },
       { name: 'Paper Stock', href: '/admin/cmyk-print/paper-stock' },
       { name: 'Retail POS', href: '/admin/cmyk-print/retail-pos' },
+      { name: 'Clients', href: '/admin/cmyk-print/clients' },
+      { name: 'Monthly Report', href: '/admin/cmyk-print/client-report' },
     ]
   },
   {
