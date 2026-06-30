@@ -236,6 +236,62 @@ export async function notifyDeadlineApproaching(userId: string, job: any, daysLe
 }
 
 /**
+ * Notify a designer that an Admin has sent them a Print-Only file to verify.
+ * Sends an in-app notification (relative link) AND a Telegram message with a
+ * clickable absolute link straight to the job, so the designer can jump in.
+ *
+ * @param userId        the designer's profile id
+ * @param job           job row: { id, job_number, project_name, priority, client }
+ * @param absoluteJobUrl fully-qualified URL, e.g. https://app.example.com/admin/jobs/<id>
+ */
+export async function notifyPrintReviewAssigned(
+  userId: string,
+  job: any,
+  absoluteJobUrl: string,
+  db: any = supabase
+) {
+  const clientName = job.client?.company || job.client?.name || 'client';
+  const relativeUrl = `/admin/jobs/${job.id}`;
+
+  // 1. In-app notification (plain text message + relative action url)
+  await db.from('notifications').insert([{
+    user_id: userId,
+    title: 'Print File to Verify',
+    message: `Job #${job.job_number}: ${job.project_name} for ${clientName}. Please check the client's print file and confirm it's print-ready.`,
+    type: 'job_assigned',
+    priority: job.priority === 'urgent' ? 'urgent' : 'normal',
+    entity_type: 'job',
+    entity_id: job.id,
+    action_url: relativeUrl,
+    icon: '🖨️',
+  }]);
+
+  // 2. Telegram message with a clickable link straight to the job
+  const { data: prof } = await db
+    .from('profiles')
+    .select('telegram_chat_id')
+    .eq('id', userId)
+    .single();
+
+  if (prof?.telegram_chat_id) {
+    const msg =
+      `🖨️ <b>Print File to Verify</b>\n\n` +
+      `Job #${job.job_number}: <b>${job.project_name}</b>\n` +
+      `Client: ${clientName}\n\n` +
+      `Please check the client's print file and confirm it's print-ready.\n\n` +
+      `<a href="${absoluteJobUrl}">▶️ Open job to verify</a>`;
+
+    await sendTelegramNotification({
+      chatId: prof.telegram_chat_id,
+      message: msg,
+      parseMode: 'HTML',
+    });
+  }
+
+  return { ok: true };
+}
+
+/**
  * System alert (admin only)
  */
 export async function sendSystemAlert(message: string, priority: 'normal' | 'high' | 'urgent' = 'high') {

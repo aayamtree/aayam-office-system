@@ -87,11 +87,28 @@ export default function JobDetailPage() {
     const [uploading, setUploading] = useState(false);
     const [saved, setSaved] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<{ label: string; name: string }[]>([]);
+    const [confirmingPrintReady, setConfirmingPrintReady] = useState(false);
 
     useEffect(() => {
         if (!jobId) return;
         fetchAll();
     }, [jobId]);
+
+    // Designer/admin confirms a Print-Only client file is print-ready → Production
+    const handleConfirmPrintReady = async () => {
+        setConfirmingPrintReady(true);
+        try {
+            const res = await fetch(`/api/jobs/${jobId}/confirm-print-ready`, { method: 'POST' });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.error || 'Failed to confirm');
+            toast.success('Confirmed print-ready — moved to Production');
+            await fetchAll();
+        } catch (e: any) {
+            toast.error(e?.message || 'Could not confirm print-ready');
+        } finally {
+            setConfirmingPrintReady(false);
+        }
+    };
 
     const fetchAll = async () => {
         setLoading(true);
@@ -294,6 +311,30 @@ export default function JobDetailPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Print-Only file verification — Confirm Print Ready */}
+            {jobTypeNorm === 'print_only'
+                && ['file_received', 'file_check'].includes(job.current_stage)
+                && (profile?.role === 'admin' || (job as any).designer_id === profile?.id) && (
+                <div className="border border-purple-200 bg-purple-50 rounded-md p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="flex-1">
+                        <p className="text-sm font-semibold text-purple-800 flex items-center gap-1.5">
+                            <ClipboardCheck className="w-4 h-4" /> Verify the client's print file
+                        </p>
+                        <p className="text-xs text-purple-700 mt-0.5">
+                            Check the file is correct and printable. Confirming marks it print-ready and moves the job to Production (Ready to Print).
+                        </p>
+                    </div>
+                    <button
+                        onClick={handleConfirmPrintReady}
+                        disabled={confirmingPrintReady}
+                        className="shrink-0 px-4 py-2 bg-purple-600 text-white rounded-md text-sm font-semibold hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-1.5"
+                    >
+                        {confirmingPrintReady ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                        {confirmingPrintReady ? 'Confirming…' : 'Confirm Print Ready'}
+                    </button>
+                </div>
+            )}
 
             {/* Financial Summary — Bold & Clear */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">

@@ -61,7 +61,7 @@ export default function UnifiedQueue() {
     const { jobs, loading } = useJobs({
         // Remove designer:profiles join — replaced by manual profileMap lookup
         select: 'id, project_name, job_number, current_stage, priority, client_deadline, designer_id, job_type, product_category, designer_status, design_billing, client:clients(id, name, company)',
-        filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready'], op: 'in' }]
+        filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'designing', 'approval', 'file_received', 'file_check', 'printing', 'finishing', 'quality_check', 'ready'], op: 'in' }]
     });
     const [searchQuery, setSearchQuery] = useState('');
     const [showAll, setShowAll] = useState(false);

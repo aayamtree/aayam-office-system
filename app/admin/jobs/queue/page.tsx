@@ -6,12 +6,13 @@ import {
   Search, ArrowLeft, Eye, X, Clock,
   Printer, CheckCircle, AlertTriangle, Play, ArrowRight,
   Loader2, Palette, ClipboardCheck, Package, Truck,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp, Send, UserCheck
 } from 'lucide-react';
-import { useJobs } from '@/lib/hooks';
+import { useJobs, useDesigners } from '@/lib/hooks';
 import { Job, JobStatus } from '@/types/database';
 import { useConfirm } from '@/components/ConfirmModal';
-import { getWorkflowForJobType, getNextStage } from '@/lib/job-workflow';
+import { toast } from '@/lib/toast';
+import { getWorkflowForJobType, getNextStage, normalizeJobType } from '@/lib/job-workflow';
 
 // ─── Type-driven Stage Flows ─────────────────────────────────────────────────
 // Single source of truth: lib/job-workflow.ts. Each job type is a filtered view
@@ -377,16 +378,47 @@ const filterOptions = [
 ];
 
 export default function JobQueuePage() {
-  const { jobs, loading, updateJobStage } = useJobs({
-    filter: [{ column: 'current_stage', value: ['new', 'file_check', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready', 'dispatched'], op: 'in' }],
+  const { jobs, loading, updateJobStage, refetch } = useJobs({
+    select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, total_amount, amount_received, payment_status, quantity, designer_id, print_ready, client:clients(id, name, company)',
+    filter: [{ column: 'current_stage', value: ['new', 'file_received', 'file_check', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready', 'dispatched'], op: 'in' }],
     limit: 100,
   });
+  const { designers } = useDesigners();
+  const designerMap: Record<string, string> = Object.fromEntries(
+    (designers || []).map((d: any) => [d.id, d.full_name || d.name])
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  // Send-to-designer (Print-Only file verification)
+  const [assignJob, setAssignJob] = useState<Job | null>(null);
+  const [assignDesignerId, setAssignDesignerId] = useState<string>('');
+  const [sending, setSending] = useState(false);
   const confirm = useConfirm();
+
+  const handleSendToDesigner = async () => {
+    if (!assignJob || !assignDesignerId) return;
+    setSending(true);
+    try {
+      const res = await fetch(`/api/jobs/${assignJob.id}/assign-print-review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ designer_id: assignDesignerId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Failed to send');
+      toast.success(`Sent to ${data?.designer?.full_name || 'designer'} for print-ready verification`);
+      setAssignJob(null);
+      setAssignDesignerId('');
+      refetch();
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not send file to designer');
+    } finally {
+      setSending(false);
+    }
+  };
 
   // ─── Filter ──────────────────────────────────────────────────────────────
   const filteredJobs = jobs.filter(job => {
@@ -643,7 +675,35 @@ export default function JobQueuePage() {
                               <Eye className="w-3 h-3" />
                               View
                             </button>
-                            {job.current_stage !== 'delivered' && job.current_stage !== 'cancelled' && (() => {
+                            {(() => {
+                              // ── Print-Only files awaiting designer verification ──
+                              const isPO = normalizeJobType(job.job_type) === 'print_only';
+                              const inReviewWindow = ['new', 'file_received', 'file_check'].includes(job.current_stage);
+                              if (isPO && inReviewWindow) {
+                                const assignedId = (job as any).designer_id as string | undefined;
+                                if (assignedId) {
+                                  // Already sent → show "Sent to X · Verifying" badge
+                                  const name = designerMap[assignedId] || 'designer';
+                                  return (
+                                    <span className="flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                                      <UserCheck className="w-3 h-3" />
+                                      Sent to {name} · Verifying
+                                    </span>
+                                  );
+                                }
+                                // Not yet sent → "Send to Designer"
+                                return (
+                                  <button
+                                    onClick={() => { setAssignJob(job); setAssignDesignerId(''); }}
+                                    className="flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-semibold transition-colors bg-purple-600 text-white hover:bg-purple-700"
+                                  >
+                                    <Send className="w-3 h-3" />
+                                    Send to Designer
+                                  </button>
+                                );
+                              }
+                              // ── Default: advance to next stage ──
+                              if (job.current_stage === 'delivered' || job.current_stage === 'cancelled') return null;
                               const nextLbl = getNextLabel(job);
                               if (!nextLbl) return null;
                               const flow = getFlowForJob(job);
@@ -906,6 +966,71 @@ export default function JobQueuePage() {
           </div>
         );
       })()}
+
+      {/* ═══════════════ SEND-TO-DESIGNER (Print-Only verify) ═══════════════ */}
+      {assignJob && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+          onClick={() => !sending && setAssignJob(null)}
+        >
+          <div
+            className="bg-card rounded-md w-full max-w-md animate-scale-in border border-border shadow-lg"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-purple-50/60 rounded-t-md border-l-4 border-l-purple-400">
+              <div className="flex items-center gap-2">
+                <Send className="w-4 h-4 text-purple-600" />
+                <h2 className="font-bold text-foreground text-base">Send to Designer</h2>
+              </div>
+              <button onClick={() => !sending && setAssignJob(null)} className="p-1.5 hover:bg-muted rounded text-muted-foreground">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-3">
+              <div className="text-sm">
+                <p className="text-xs text-muted-foreground">{assignJob.client?.company || assignJob.client?.name || 'Client'}</p>
+                <p className="font-semibold text-foreground">{assignJob.job_number} — {assignJob.project_name}</p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                The selected designer will see this print file on their dashboard to verify it's print-ready. They'll be notified in-app and on Telegram with a direct link.
+              </p>
+
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Choose designer</label>
+                <select
+                  value={assignDesignerId}
+                  onChange={e => setAssignDesignerId(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 border border-border rounded-md text-sm bg-card focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">— Select a designer —</option>
+                  {(designers || []).map((d: any) => (
+                    <option key={d.id} value={d.id}>{d.full_name || d.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  onClick={() => setAssignJob(null)}
+                  disabled={sending}
+                  className="flex-1 px-4 py-2 border border-border rounded-md text-sm font-medium hover:bg-muted disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSendToDesigner}
+                  disabled={sending || !assignDesignerId}
+                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md text-sm font-semibold hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  {sending ? 'Sending…' : 'Send File'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
