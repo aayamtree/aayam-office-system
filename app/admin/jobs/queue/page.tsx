@@ -993,7 +993,7 @@ export default function JobQueuePage() {
                 <p className="font-semibold text-foreground">{assignJob.job_number} — {assignJob.project_name}</p>
               </div>
               <p className="text-xs text-muted-foreground">
-                The selected designer will see this print file on their dashboard to verify it's print-ready. They'll be notified in-app and on Telegram with a direct link.
+                The selected designer will see this print file on their dashboard to verify it is print-ready. The designer is notified in-app and on Telegram with a direct link.
               </p>
 
               <div>

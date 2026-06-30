@@ -319,7 +319,7 @@ export default function JobDetailPage() {
                 <div className="border border-purple-200 bg-purple-50 rounded-md p-4 flex flex-col sm:flex-row sm:items-center gap-3">
                     <div className="flex-1">
                         <p className="text-sm font-semibold text-purple-800 flex items-center gap-1.5">
-                            <ClipboardCheck className="w-4 h-4" /> Verify the client's print file
+                            <ClipboardCheck className="w-4 h-4" /> Verify the print file from the client
                         </p>
                         <p className="text-xs text-purple-700 mt-0.5">
                             Check the file is correct and printable. Confirming marks it print-ready and moves the job to Production (Ready to Print).
