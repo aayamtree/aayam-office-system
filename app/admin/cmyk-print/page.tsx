@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Printer, ShoppingCart, Package, Clock, Calculator, Receipt, X, Loader2, BookOpen, ShoppingBag, PauseCircle, PlayCircle, TrendingUp } from 'lucide-react';
+import { Printer, ShoppingCart, Package, Clock, Calculator, Receipt, X, Loader2, BookOpen, ShoppingBag, PauseCircle, PlayCircle, TrendingUp, Users, FileText } from 'lucide-react';
 import { useJobs, usePaperStock, usePOSSales, useCMYKJobLogs, useVendors, useCMYKExpenses } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import DriveConnectionStatus from '@/components/drive/DriveConnectionStatus';
@@ -131,6 +131,8 @@ export default function CMYKPrintPage() {
   };
 
   const quickLinks = [
+    { href: '/admin/cmyk-print/clients', icon: Users, title: 'Clients', extra: null },
+    { href: '/admin/cmyk-print/client-report', icon: FileText, title: 'Monthly Report', extra: null },
     { href: '/admin/cmyk-print/cost-calculator', icon: Calculator, title: 'Cost Calculator', extra: null },
     { href: '/admin/cmyk-print/paper-stock', icon: Package, title: 'Paper Stock', extra: lowStockItems.length > 0 ? <Badge variant="destructive" className="text-[10px] px-1.5">{lowStockItems.length} low</Badge> : null },
     { href: '/admin/cmyk-print/paper-purchases', icon: ShoppingBag, title: 'Purchases', extra: null },

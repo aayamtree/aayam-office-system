@@ -699,11 +699,27 @@ export interface POSProduct {
 }
 
 // POS Sale
+// CMYK print business client — a separate entity from the main app `clients`.
+export interface CMYKClient extends BaseEntity {
+  company?: string;       // company / shop name (shown as primary)
+  name?: string;          // contact person
+  phone?: string;
+  email?: string;
+  gstin?: string;
+  address?: string;
+  billing_cycle: 'monthly' | 'immediate';
+  opening_balance: number;
+  notes?: string;
+  is_active: boolean;
+}
+
 export interface POSSale extends BaseEntity {
   sale_number: string;
   customer_name?: string;
   customer_phone?: string;
   client_id?: string;
+  cmyk_client_id?: string;       // Separate CMYK print client entity
+  cmyk_client?: CMYKClient;      // Joined data
   subtotal: number;
   discount_percent: number;
   discount_amount: number;

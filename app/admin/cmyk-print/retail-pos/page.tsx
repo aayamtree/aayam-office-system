@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { ReceiptData, printReceipt, downloadReceipt } from '@/components/receipt/ReceiptPDF';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
-import { usePOSSales, usePOSProducts, usePaperStock, useClients } from '@/lib/hooks';
+import { usePOSSales, usePOSProducts, usePaperStock, useClients, useCMYKClients } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { POSProduct } from '@/types/database';
 import { Input } from '@/components/ui/input';
@@ -55,6 +55,7 @@ export default function RetailPOSPage() {
   const { createPOSSale } = usePOSSales();
   const { stock: paperStock } = usePaperStock();
   const { clients } = useClients();
+  const { cmykClients } = useCMYKClients();
   const {
     categories, products, loading: productsLoading,
     createCategory, updateCategory, deleteCategory,
@@ -66,13 +67,15 @@ export default function RetailPOSPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [cmykClientId, setCmykClientId] = useState(''); // separate CMYK print client (for monthly billing)
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'upi'>('cash');
   const [amountReceived, setAmountReceived] = useState('');
   const [discount, setDiscount] = useState(0);
 
-  // GST (retail counter is always GST-billed), order type & artwork
+  // GST — optional per bill (toggle on/off before print/PDF), order type & artwork
+  const [gstEnabled, setGstEnabled] = useState(true);
   const [gstRate, setGstRate] = useState(18);
   const [gstin, setGstin] = useState('');
   const [orderType, setOrderType] = useState<'walkin' | 'pickup'>('walkin');
@@ -153,7 +156,9 @@ export default function RetailPOSPage() {
   const subtotal = cart.reduce((sum, item) => sum + lineTotal(item), 0) + paperSubtotal;
   const discountAmount = (subtotal * discount) / 100;
   const taxableAmount = subtotal - discountAmount;
-  const gstAmount = (taxableAmount * gstRate) / 100;
+  // Effective GST rate is 0 when the bill is marked GST-off.
+  const effectiveGstRate = gstEnabled ? gstRate : 0;
+  const gstAmount = (taxableAmount * effectiveGstRate) / 100;
   const cgstAmount = gstAmount / 2;
   const sgstAmount = gstAmount / 2;
   const grandTotal = taxableAmount + gstAmount;
@@ -221,7 +226,9 @@ export default function RetailPOSPage() {
     setCart([]);
     setCustomerName('');
     setCustomerPhone('');
+    setCmykClientId('');
     setDiscount(0);
+    setGstEnabled(true);
     setGstin('');
     setOrderType('walkin');
     setArtworkLink('');
@@ -244,14 +251,15 @@ export default function RetailPOSPage() {
         customer_name: customerName || undefined,
         customer_phone: customerPhone || undefined,
         client_id: selectedClientId || undefined,
+        cmyk_client_id: cmykClientId || undefined,
         subtotal,
         discount_percent: discount,
         discount_amount: discountAmount,
-        gst_rate: gstRate,
+        gst_rate: effectiveGstRate,
         gst_amount: gstAmount,
         cgst_amount: cgstAmount,
         sgst_amount: sgstAmount,
-        gstin: gstin || undefined,
+        gstin: gstEnabled ? (gstin || undefined) : undefined,
         order_type: orderType,
         pickup_status: orderType === 'pickup' ? 'pending' : undefined,
         artwork_link: artworkLink || undefined,
@@ -311,7 +319,7 @@ export default function RetailPOSPage() {
       receiptNumber: saleNumber,
       date: now.toLocaleDateString('en-IN'),
       time: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-      customerName: customerName || selectedClient?.company || selectedClient?.name || undefined,
+      customerName: customerName || cmykClients?.find(c => c.id === cmykClientId)?.company || cmykClients?.find(c => c.id === cmykClientId)?.name || selectedClient?.company || selectedClient?.name || undefined,
       customerPhone: customerPhone || undefined,
       items: [
         ...cart.map(item => ({ name: item.name || 'Item', qty: item.qty, price: item.price, total: lineTotal(item) })),
@@ -320,10 +328,10 @@ export default function RetailPOSPage() {
       subtotal,
       discountPercent: discount,
       discountAmount,
-      gstRate,
+      gstRate: effectiveGstRate,
       cgstAmount,
       sgstAmount,
-      gstin: gstin || undefined,
+      gstin: gstEnabled ? (gstin || undefined) : undefined,
       grandTotal,
       paymentMode: paymentMethod,
       amountReceived: parseFloat(amountReceived || '0') || grandTotal,
@@ -474,6 +482,23 @@ export default function RetailPOSPage() {
                 className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
             </div>
 
+            {/* CMYK print client — links this bill to a client for the monthly statement */}
+            <div className="mt-2">
+              <select value={cmykClientId}
+                onChange={(e) => {
+                  setCmykClientId(e.target.value);
+                  const c = cmykClients?.find(x => x.id === e.target.value);
+                  if (c?.gstin && !gstin) setGstin(c.gstin);
+                }}
+                className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white">
+                <option value="">Walk-in (no CMYK client)</option>
+                {(cmykClients || []).filter(c => c.is_active !== false).map(c => (
+                  <option key={c.id} value={c.id}>{c.company || c.name}</option>
+                ))}
+              </select>
+              <p className="text-[11px] text-gray-400 mt-1">Pick a CMYK client to add this bill to their monthly print report.</p>
+            </div>
+
             {/* GSTIN + Artwork link */}
             <div className="mt-2 grid grid-cols-2 gap-2">
               <input type="text" placeholder="GSTIN (optional)" value={gstin}
@@ -613,16 +638,28 @@ export default function RetailPOSPage() {
                 </div>
               </div>
               {discount > 0 && <div className="flex justify-between text-sm text-gray-500"><span>Taxable Value</span><span>{formatCurrency(taxableAmount)}</span></div>}
-              {/* GST clubbed into one line (CGST + SGST split shown small) */}
+              {/* GST — optional. Toggle off to bill without GST (no GST on receipt/PDF). */}
               <div className="flex justify-between items-center text-sm pt-2 border-t">
-                <span className="flex items-center gap-1">
-                  GST
-                  <input type="number" value={gstRate || ''} min="0" max="28"
-                    onChange={(e) => setGstRate(Math.min(28, parseFloat(e.target.value) || 0))}
-                    className="w-11 px-1.5 py-0.5 border rounded text-right text-xs focus:outline-none focus:ring-2 focus:ring-gray-400" />%
-                  <span className="text-xs text-gray-400">(CGST {gstRate / 2}% + SGST {gstRate / 2}%)</span>
+                <span className="flex items-center gap-2 flex-wrap">
+                  {/* On/Off switch */}
+                  <button type="button" onClick={() => setGstEnabled(v => !v)}
+                    title={gstEnabled ? 'GST is ON — tap to remove GST' : 'GST is OFF — tap to add GST'}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${gstEnabled ? 'bg-primary' : 'bg-gray-300'}`}>
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${gstEnabled ? 'translate-x-4' : 'translate-x-1'}`} />
+                  </button>
+                  <span className={gstEnabled ? '' : 'text-gray-400'}>GST</span>
+                  {gstEnabled ? (
+                    <>
+                      <input type="number" value={gstRate || ''} min="0" max="28"
+                        onChange={(e) => setGstRate(Math.min(28, parseFloat(e.target.value) || 0))}
+                        className="w-11 px-1.5 py-0.5 border rounded text-right text-xs focus:outline-none focus:ring-2 focus:ring-gray-400" />%
+                      <span className="text-xs text-gray-400">(CGST {gstRate / 2}% + SGST {gstRate / 2}%)</span>
+                    </>
+                  ) : (
+                    <span className="text-xs text-gray-400">(no GST on this bill)</span>
+                  )}
                 </span>
-                <span>{formatCurrency(gstAmount)}</span>
+                <span className={gstEnabled ? '' : 'text-gray-400'}>{formatCurrency(gstAmount)}</span>
               </div>
               <div className="flex justify-between text-section pt-2 border-t"><span>Grand Total</span><span className="text-primary">{formatCurrency(grandTotal)}</span></div>
             </div>

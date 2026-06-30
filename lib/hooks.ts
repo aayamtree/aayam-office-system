@@ -8,7 +8,8 @@ import {
   Client, Vendor, Designer, Job, Invoice, Lead,
   Quotation, Dispatch, BankAccount, DesignTask, DesignProject,
   PurchaseBill, VendorPayment, PaymentReceived, POSCategory, POSProduct,
-  PaperStock, POSSale, Note, Reminder, BankTransaction, SalesOrder, ActivityLog, JobChecklist, UserCalendarEvent, Commission, UserNote
+  PaperStock, POSSale, Note, Reminder, BankTransaction, SalesOrder, ActivityLog, JobChecklist, UserCalendarEvent, Commission, UserNote,
+  CMYKClient
 } from '@/types/database';
 import { logActivity } from './logger';
 import { autoProgressJob } from './job-auto-progress';
@@ -217,6 +218,56 @@ export function useClients() {
     createClient,
     updateClient,
     deleteClient
+  };
+}
+
+// =============================================
+// CMYK CLIENTS HOOK (separate entity for the print business)
+// =============================================
+export function useCMYKClients() {
+  const { data, loading, error, refetch } = useSupabaseQuery<CMYKClient>('cmyk_clients', {
+    orderBy: { column: 'created_at', ascending: false },
+    limit: 200
+  });
+
+  const createCMYKClient = async (client: Partial<CMYKClient>) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const { data: row, error } = await supabase
+      .from('cmyk_clients')
+      .insert([client])
+      .select()
+      .single();
+    if (!error) refetch();
+    return { data: row, error: error?.message };
+  };
+
+  const updateCMYKClient = async (id: string, updates: Partial<CMYKClient>) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const { data: row, error } = await supabase
+      .from('cmyk_clients')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (!error) refetch();
+    return { data: row, error: error?.message };
+  };
+
+  const deleteCMYKClient = async (id: string) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const { error } = await supabase.from('cmyk_clients').delete().eq('id', id);
+    if (!error) refetch();
+    return { error: error?.message };
+  };
+
+  return {
+    cmykClients: data,
+    loading,
+    error,
+    refetch,
+    createCMYKClient,
+    updateCMYKClient,
+    deleteCMYKClient
   };
 }
 
@@ -1550,7 +1601,7 @@ export function usePaperStock() {
 // =============================================
 export function usePOSSales() {
   const { data, loading, error, refetch } = useSupabaseQuery<POSSale>('pos_sales', {
-    select: '*, items:pos_sale_items(*)',
+    select: '*, items:pos_sale_items(*), cmyk_client:cmyk_clients(*)',
     orderBy: { column: 'created_at', ascending: false }
   });
 
