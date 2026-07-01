@@ -2,8 +2,11 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Search, ShoppingBag, Receipt } from 'lucide-react';
+import { ArrowLeft, Search, ShoppingBag, Receipt, Trash2, Loader2 } from 'lucide-react';
 import { usePOSSales } from '@/lib/hooks';
+import { useAuth } from '@/lib/auth-context';
+import { useConfirm } from '@/components/ConfirmModal';
+import { toast } from '@/lib/toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 
@@ -17,9 +20,36 @@ const currentMonth = () => {
 };
 
 export default function POSSalesListPage() {
-  const { sales, loading } = usePOSSales();
+  const { sales, loading, refetch } = usePOSSales();
+  const { profile } = useAuth();
+  const confirm = useConfirm();
+  const isAdmin = profile?.role === 'admin';
   const [month, setMonth] = useState<string>(currentMonth());
   const [query, setQuery] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (sale: any) => {
+    const { confirmed } = await confirm({
+      title: `Delete bill ${sale.sale_number}?`,
+      message: `This permanently removes the bill (${sale.customer_name || 'Walk-in'} — ₹${sale.total_amount}) and returns any paper sheets to stock. This cannot be undone.`,
+      variant: 'danger',
+      confirmLabel: 'Delete bill',
+    });
+    if (!confirmed) return;
+
+    setDeletingId(sale.id);
+    try {
+      const res = await fetch(`/api/cmyk-print/sales/${sale.id}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Delete failed');
+      toast.success(`Bill ${sale.sale_number} deleted`);
+      refetch();
+    } catch (e: any) {
+      toast.error(e.message || 'Could not delete bill');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -123,6 +153,7 @@ export default function POSSalesListPage() {
                     <th className="px-3 py-2 font-medium">Customer</th>
                     <th className="px-3 py-2 font-medium text-center">Items</th>
                     <th className="px-3 py-2 font-medium text-right">Amount</th>
+                    {isAdmin && <th className="px-3 py-2 font-medium text-right">Action</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -147,6 +178,21 @@ export default function POSSalesListPage() {
                         <td className="px-3 py-2.5">{s.customer_name || s.cmyk_client?.name || 'Walk-in'}</td>
                         <td className="px-3 py-2.5 text-center text-muted-foreground">{s.items?.length ?? '—'}</td>
                         <td className="px-3 py-2.5 text-right font-semibold">{fmt(s.total_amount)}</td>
+                        {isAdmin && (
+                          <td className="px-3 py-2.5 text-right">
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(s)}
+                              disabled={deletingId === s.id}
+                              title="Delete bill (admin only)"
+                              className="inline-flex items-center justify-center p-1.5 rounded-md text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                            >
+                              {deletingId === s.id
+                                ? <Loader2 size={15} className="animate-spin" />
+                                : <Trash2 size={15} />}
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     );
                   })}
