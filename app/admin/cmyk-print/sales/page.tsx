@@ -13,29 +13,31 @@ import { Badge } from '@/components/ui/Badge';
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n || 0);
 
-// YYYY-MM for the current month (local time)
-const currentMonth = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-};
-
 export default function POSSalesListPage() {
   const { sales, loading, refetch } = usePOSSales();
   const { profile } = useAuth();
   const confirm = useConfirm();
   const isAdmin = profile?.role === 'admin';
-  const [month, setMonth] = useState<string>(currentMonth());
+  // Default to All time so the list always shows every bill; month is an optional filter.
+  const [month, setMonth] = useState<string>('');
   const [query, setQuery] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (sale: any) => {
-    const { confirmed } = await confirm({
+    const { confirmed, inputValue } = await confirm({
       title: `Delete bill ${sale.sale_number}?`,
-      message: `This permanently removes the bill (${sale.customer_name || 'Walk-in'} — ₹${sale.total_amount}) and returns any paper sheets to stock. This cannot be undone.`,
+      message: `This permanently removes the bill (${sale.customer_name || 'Walk-in'} — ₹${sale.total_amount}) and returns any paper sheets to stock. This cannot be undone.\n\nType "Delete" below to confirm.`,
       variant: 'danger',
       confirmLabel: 'Delete bill',
+      showInput: true,
+      inputRequired: true,
+      inputPlaceholder: 'Type Delete to confirm',
     });
     if (!confirmed) return;
+    if ((inputValue || '').trim().toLowerCase() !== 'delete') {
+      toast.error('You must type "Delete" to confirm. Bill was not deleted.');
+      return;
+    }
 
     setDeletingId(sale.id);
     try {
