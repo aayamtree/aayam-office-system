@@ -9,6 +9,7 @@ import DriveConnectionStatus from '@/components/drive/DriveConnectionStatus';
 import { useJobs, useClients, useDesigners } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
 import { logActivity, logFileUpload } from '@/lib/activity-logger';
+import { uploadToDrive, getProjectFolder } from '@/lib/google-drive-upload';
 import {
   Plus, Search, Calendar, Clock, Edit, Trash2, Eye, X, ArrowLeft, ArrowRight, CheckCircle, XCircle,
   AlertCircle, User, Briefcase, MessageSquare, Paperclip, ExternalLink,
@@ -21,6 +22,33 @@ import PairDropBanner from '@/components/layout/PairDropBanner';
 import { DesignerStatusPills, DesignerStatusBadge } from '@/components/shared/DesignerStatusPills';
 
 // --- HELPERS ---
+/**
+ * Upload a file to the org Google Drive (bypasses Supabase storage entirely).
+ * Files land in: My Drive > Aayam Projects > {jobNumber} - {projectName}.
+ * Returns the Drive share link + fileId, or throws with a clear message.
+ */
+async function uploadFileToJobDrive(
+  file: File,
+  jobNumber: string,
+  projectName: string,
+  fileName?: string
+): Promise<{ url: string; fileId: string }> {
+  const tokenRes = await fetch('/api/drive/token');
+  if (!tokenRes.ok) {
+    const err = await tokenRes.json().catch(() => ({}));
+    throw new Error(err.error || 'Google Drive is not connected. Connect it in Settings → Drive.');
+  }
+  const { accessToken } = await tokenRes.json();
+  if (!accessToken) throw new Error('Could not get a Google Drive access token.');
+
+  const { folderId } = await getProjectFolder(accessToken, jobNumber || 'misc', projectName || 'Project');
+  const result = await uploadToDrive(accessToken, file, folderId || undefined, fileName || file.name);
+  if (!result.success || !result.webViewLink) {
+    throw new Error(result.error || 'Google Drive upload failed.');
+  }
+  return { url: result.webViewLink, fileId: result.fileId || '' };
+}
+
 const getDesignerStatus = (stage: string) => {
   const map: Record<string, string> = {
     'new': 'pending',
@@ -424,34 +452,26 @@ export default function DesignerWorkspace() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0 || !selectedTask) return;
     const file = e.target.files[0];
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
-    const filePath = `job-files/${selectedTask.realId}/${fileName}`;
 
     try {
-      const { data, error } = await supabase.storage
-        .from('files')
-        .upload(filePath, file);
+      toast.info('Uploading to Google Drive…');
 
-      if (error) throw error;
+      // Upload straight to the org Google Drive (Supabase storage bypassed).
+      const drive = await uploadFileToJobDrive(file, selectedTask.taskId, selectedTask.title);
 
-      // Get Public URL
-      const { data: { publicUrl } } = supabase.storage.from('files').getPublicUrl(filePath);
-
-      // Update Job
-      // We need to fetch existing files first to append, but for now we might just set it as "drive_link" or a new field?
-      // The current schema uses `files` JSONB array.
       const newFile = {
         name: file.name,
-        url: publicUrl,
+        url: drive.url,
+        fileId: drive.fileId,
+        storage: 'drive',
         type: file.type,
         size: file.size,
         uploaded_at: new Date().toISOString()
       };
 
-      // Save via service-role API route. The browser client silently fails
-      // (0 rows) when the Supabase session lapses, which is why uploads were
-      // vanishing on refetch — the DB write never persisted.
+      // Save the Drive link on the job via service-role API route. The browser
+      // client silently fails (0 rows) when the Supabase session lapses, which
+      // is why uploads were vanishing on refetch — the DB write never persisted.
       const res = await fetch(`/api/jobs/${selectedTask.realId}/files`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -460,15 +480,15 @@ export default function DesignerWorkspace() {
       const result = await res.json();
 
       if (!res.ok) {
-        // Storage upload succeeded but DB save failed — surface the real error
-        toast.error(`File saved to storage but could not update job record: ${result.error || res.statusText}`);
+        // Drive upload succeeded but DB save failed — surface the real error
+        toast.error(`File uploaded to Drive but could not update job record: ${result.error || res.statusText}`);
         return;
       }
 
       const updatedFiles = result.files || [...(selectedTask.files || []), newFile];
 
       // Log upload to activity feed
-      logFileUpload({ fileName: file.name, fileSize: file.size, fileType: file.type, fileUrl: publicUrl, uploadedTo: `Job ${selectedTask.taskId}`, resourceId: selectedTask.realId });
+      logFileUpload({ fileName: file.name, fileSize: file.size, fileType: file.type, fileUrl: drive.url, uploadedTo: `Job ${selectedTask.taskId}`, resourceId: selectedTask.realId });
 
       // Notify assigned designer if someone else uploaded
       const myDesignerRec = designers.find((d: any) => d.id === profile?.id);
@@ -505,30 +525,36 @@ export default function DesignerWorkspace() {
     }
     setPrintFileUploading(true);
     try {
-      const safeName = `print-file-${selectedTask.realId}-${Date.now()}.${ext}`;
-      const filePath = `print-files/${selectedTask.realId}/${safeName}`;
-      const { error: uploadError } = await supabase.storage.from('files').upload(filePath, file);
-      if (uploadError) throw uploadError;
+      const safeName = `print-file-${selectedTask.taskId}-${Date.now()}.${ext}`;
 
-      const { data: { publicUrl } } = supabase.storage.from('files').getPublicUrl(filePath);
+      // Upload the print file straight to the org Google Drive (Supabase bypassed).
+      const drive = await uploadFileToJobDrive(file, selectedTask.taskId, selectedTask.title, safeName);
+      const publicUrl = drive.url;
 
       const newEntry = {
         name: file.name,
-        url: publicUrl,
+        url: drive.url,
+        fileId: drive.fileId,
+        storage: 'drive',
         size: file.size,
         type: file.type,
         uploaded_at: new Date().toISOString(),
         uploaded_by: profile?.full_name || 'designer',
       };
 
-      // Fetch existing print_files array and append
-      if (updateJob) {
-        const { data: existing } = await supabase.from('jobs').select('print_files').eq('id', selectedTask.realId).single();
-        const existingArr = Array.isArray(existing?.print_files) ? existing.print_files : [];
-        const updatedArr = [...existingArr, newEntry];
-        await updateJob(selectedTask.realId, { print_files: updatedArr } as any);
-        setPrintFilesLocal(updatedArr);
+      // Save the Drive link on the job via service-role API route (reliable even
+      // if the browser Supabase session has lapsed).
+      const saveRes = await fetch(`/api/jobs/${selectedTask.realId}/files`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ field: 'print_files', file: newEntry }),
+      });
+      const saveResult = await saveRes.json();
+      if (!saveRes.ok) {
+        toast.error(`Print file uploaded to Drive but could not update job record: ${saveResult.error || saveRes.statusText}`);
+        return;
       }
+      setPrintFilesLocal(saveResult.files || []);
 
       // Rich activity log
       const { logActivity } = await import('@/lib/logger');

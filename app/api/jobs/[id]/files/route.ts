@@ -19,7 +19,15 @@ async function getSupabase(cookieStore: Awaited<ReturnType<typeof cookies>>) {
   return { user, supabase: service };
 }
 
-// POST /api/jobs/:id/files — append one file to the job's files array
+/** Only these JSONB array columns may be written through this route. */
+const ALLOWED_FIELDS = ['files', 'print_files'] as const;
+type FileField = (typeof ALLOWED_FIELDS)[number];
+
+function resolveField(raw: unknown): FileField {
+  return ALLOWED_FIELDS.includes(raw as FileField) ? (raw as FileField) : 'files';
+}
+
+// POST /api/jobs/:id/files — append one file to the job's files (or print_files) array
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -30,32 +38,33 @@ export async function POST(
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json();
+  const field = resolveField(body.field);
   const file = body.file;
   if (!file || !file.url) return NextResponse.json({ error: 'file (with url) is required' }, { status: 400 });
 
-  // Read current files, append, save (avoids clobbering concurrent uploads)
+  // Read current array, append, save (avoids clobbering concurrent uploads)
   const { data: job, error: readErr } = await supabase
     .from('jobs')
-    .select('files')
+    .select(field)
     .eq('id', id)
     .single();
   if (readErr) return NextResponse.json({ error: readErr.message }, { status: 500 });
 
-  const existing = Array.isArray(job?.files) ? job.files : [];
+  const existing = Array.isArray((job as any)?.[field]) ? (job as any)[field] : [];
   const updatedFiles = [...existing, file];
 
   const { data, error } = await supabase
     .from('jobs')
-    .update({ files: updatedFiles })
+    .update({ [field]: updatedFiles })
     .eq('id', id)
-    .select('files')
+    .select(field)
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ files: data?.files || updatedFiles });
+  return NextResponse.json({ files: (data as any)?.[field] || updatedFiles });
 }
 
-// DELETE /api/jobs/:id/files — remove one file (body: { index } or { url })
+// DELETE /api/jobs/:id/files — remove one file (body: { index } or { url }, optional field)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -66,15 +75,16 @@ export async function DELETE(
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json();
+  const field = resolveField(body.field);
 
   const { data: job, error: readErr } = await supabase
     .from('jobs')
-    .select('files')
+    .select(field)
     .eq('id', id)
     .single();
   if (readErr) return NextResponse.json({ error: readErr.message }, { status: 500 });
 
-  const existing: any[] = Array.isArray(job?.files) ? job.files : [];
+  const existing: any[] = Array.isArray((job as any)?.[field]) ? (job as any)[field] : [];
   let updatedFiles: any[];
   if (typeof body.index === 'number') {
     updatedFiles = existing.filter((_, i) => i !== body.index);
@@ -86,11 +96,11 @@ export async function DELETE(
 
   const { data, error } = await supabase
     .from('jobs')
-    .update({ files: updatedFiles })
+    .update({ [field]: updatedFiles })
     .eq('id', id)
-    .select('files')
+    .select(field)
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ files: data?.files || updatedFiles });
+  return NextResponse.json({ files: (data as any)?.[field] || updatedFiles });
 }
