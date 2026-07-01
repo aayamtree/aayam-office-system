@@ -183,6 +183,7 @@ const menuItems: MenuItem[] = [
       { name: 'Station Overview', href: '/admin/cmyk-print' },
       { name: 'Paper Stock', href: '/admin/cmyk-print/paper-stock' },
       { name: 'Retail POS', href: '/admin/cmyk-print/retail-pos' },
+      { name: 'POS Sales', href: '/admin/cmyk-print/sales' },
       { name: 'Clients', href: '/admin/cmyk-print/clients' },
       { name: 'Monthly Report', href: '/admin/cmyk-print/client-report' },
     ]
@@ -293,6 +294,39 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
     onClose();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
+
+  // Keep the sidebar in sync with the page you're on:
+  // auto-expand the section that owns the current route (longest-prefix match)
+  // so the active page's group is always open — no manual hunting.
+  useEffect(() => {
+    let best: { name: string; len: number } | null = null;
+    for (const item of menuItems) {
+      for (const sub of item.submenu || []) {
+        const base = sub.href.split('?')[0];
+        if (pathname === base || pathname.startsWith(base + '/')) {
+          if (!best || base.length > best.len) best = { name: item.name, len: base.length };
+        }
+      }
+      if (pathname === item.href || pathname.startsWith(item.href + '/')) {
+        if (!best || item.href.length > best.len) best = { name: item.name, len: item.href.length };
+      }
+    }
+    if (best && (best as { name: string }).name) {
+      const name = (best as { name: string }).name;
+      setExpandedItems(prev => (prev.includes(name) ? prev : [...prev, name]));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  // Scroll the active nav item into view so the current page is always on screen.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const el = document.querySelector('[data-active-nav="true"]');
+      el?.scrollIntoView({ block: 'nearest' });
+    }, 60);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, expandedItems]);
 
   // Sidebar collapsed state — click-only, persisted to localStorage.
   // NO hover logic. Hover-expand was removed permanently because any CSS layout
@@ -513,6 +547,7 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
                     href={item.href}
                     onClick={(e) => navigate(e, item.href)}
                     title={item.name}
+                    data-active-nav={active ? 'true' : undefined}
                     className={`flex items-center justify-center w-full h-10 rounded-md transition-colors
                       ${active
                         ? 'bg-primary text-primary-foreground'
@@ -549,6 +584,7 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
                     <Link
                       href={item.href}
                       onClick={(e) => navigate(e, item.href)}
+                      data-active-nav={active ? 'true' : undefined}
                       className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-sm font-medium
                         ${active
                           ? 'bg-primary text-primary-foreground'
@@ -576,6 +612,7 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
                             key={sub.href}
                             href={sub.href}
                             onClick={(e) => navigate(e, sub.href)}
+                            data-active-nav={isSubActive(sub.href) ? 'true' : undefined}
                             className={`flex items-center justify-between px-3 py-1.5 rounded-md text-sm transition-colors
                               ${isSubActive(sub.href)
                                 ? 'bg-primary text-primary-foreground font-medium'
