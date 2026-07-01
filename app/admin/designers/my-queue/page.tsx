@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useJobs, useDesigners } from '@/lib/hooks';
-import { Calendar, Clock, User, AlertCircle, Search, Palette, Users, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, Clock, User, AlertCircle, Search, Palette, Users, ChevronDown, ChevronUp, Paperclip } from 'lucide-react';
 import Link from 'next/link';
 import { DesignerStatusBadge } from '@/components/shared/DesignerStatusPills';
 import DesignBillingBadge from '@/components/jobs/DesignBillingBadge';
@@ -60,7 +60,7 @@ export default function UnifiedQueue() {
 
     const { jobs, loading } = useJobs({
         // Remove designer:profiles join — replaced by manual profileMap lookup
-        select: 'id, project_name, job_number, current_stage, priority, client_deadline, designer_id, job_type, product_category, designer_status, design_billing, design_billing_confirmed, client:clients(id, name, company)',
+        select: 'id, project_name, job_number, current_stage, priority, client_deadline, designer_id, job_type, product_category, designer_status, design_billing, design_billing_confirmed, files, client:clients(id, name, company)',
         filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'designing', 'approval', 'file_received', 'file_check', 'printing', 'finishing', 'quality_check', 'ready'], op: 'in' }]
     });
     const [searchQuery, setSearchQuery] = useState('');
@@ -85,6 +85,7 @@ export default function UnifiedQueue() {
             jobType: (job as any).job_type || 'Design',
             designBilling: (job as any).design_billing || null,
             designBillingConfirmed: (job as any).design_billing_confirmed ?? true,
+            fileCount: Array.isArray((job as any).files) ? (job as any).files.length : 0,
             isMyTask: isAdmin || job.designer_id === profile?.id,
         }));
 
@@ -252,6 +253,11 @@ export default function UnifiedQueue() {
                                                             </span>
                                                             {!isPrintOnly && (
                                                                 <DesignBillingBadge jobId={task.id} value={task.designBilling} confirmed={task.designBillingConfirmed} readOnly />
+                                                            )}
+                                                            {task.fileCount > 0 && (
+                                                                <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-muted border border-border text-muted-foreground" title={`${task.fileCount} file(s) attached`}>
+                                                                    <Paperclip size={9} /> {task.fileCount}
+                                                                </span>
                                                             )}
                                                             {dl && (
                                                                 <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${dl.cls}`}>{dl.label}</span>

@@ -20,6 +20,11 @@ import ProjectNotesLog from '@/components/ProjectNotesLog';
 import { useConfirm } from '@/components/ConfirmModal';
 import PairDropBanner from '@/components/layout/PairDropBanner';
 import { DesignerStatusPills, DesignerStatusBadge } from '@/components/shared/DesignerStatusPills';
+import DesignBillingBadge from '@/components/jobs/DesignBillingBadge';
+
+// Stages after the design is done — job has moved to print/production.
+// The design-billing tag is a designer effort signal, so we hide it here.
+const PRINT_STAGES = ['printing', 'finishing', 'quality_check', 'ready', 'delivered', 'completed'];
 
 // --- HELPERS ---
 /**
@@ -358,6 +363,8 @@ export default function DesignerWorkspace() {
             pre_hold_stage: job.pre_hold_stage || '',
             revision_count: job.revision_count || 0,
             designer_status: (job as any).designer_status || null,  // live/hold/review/end
+            designBilling: (job as any).design_billing || null,
+            designBillingConfirmed: (job as any).design_billing_confirmed ?? true,
             status: job.is_on_hold ? 'on_hold' : getDesignerStatus(job.current_stage)
           };
         })
@@ -1012,6 +1019,10 @@ export default function DesignerWorkspace() {
                         const c = catMap[task.productCategory?.toLowerCase()];
                         return c ? <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${c.bg} ${c.text}`}>{c.label}</span> : null;
                       })()}
+                      {/* Design billing tag — hidden once job moves to print */}
+                      {!PRINT_STAGES.includes(task.current_stage || '') && (
+                        <DesignBillingBadge jobId={task.realId} value={task.designBilling} confirmed={task.designBillingConfirmed} readOnly />
+                      )}
                       {/* Deadline / Overdue inline */}
                       <span className="ml-auto flex-shrink-0">
                         {task.rawDeadline && new Date(task.rawDeadline) < new Date() && task.current_stage !== 'delivered' ? (
@@ -1100,6 +1111,19 @@ export default function DesignerWorkspace() {
                         <div className="flex items-center gap-1.5 text-primary font-medium bg-muted px-2 py-0.5 rounded-md whitespace-nowrap">
                           <FileText size={12} /> Ref: {selectedTask.taskId}
                         </div>
+                        {/* Design billing tag — visible throughout the design process, hidden once sent to print */}
+                        {!PRINT_STAGES.includes(selectedTask.current_stage || '') && (
+                          <DesignBillingBadge
+                            jobId={selectedTask.realId}
+                            value={selectedTask.designBilling}
+                            confirmed={selectedTask.designBillingConfirmed}
+                            size="md"
+                            readOnly={!isAdmin}
+                            onChange={(next) => setTasks(prev => prev.map(t =>
+                              t.realId === selectedTask.realId ? { ...t, designBilling: next, designBillingConfirmed: true } : t
+                            ))}
+                          />
+                        )}
                       </div>
                     </div>
 
