@@ -307,7 +307,7 @@ export default function CMYKPrintPage() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium">Recent POS Sales</CardTitle>
               <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
-                <Link href="/admin/cmyk-print/retail-pos">View All</Link>
+                <Link href="/admin/cmyk-print/sales">View All</Link>
               </Button>
             </div>
           </CardHeader>
