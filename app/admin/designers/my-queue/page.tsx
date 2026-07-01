@@ -60,7 +60,7 @@ export default function UnifiedQueue() {
 
     const { jobs, loading } = useJobs({
         // Remove designer:profiles join — replaced by manual profileMap lookup
-        select: 'id, project_name, job_number, current_stage, priority, client_deadline, designer_id, job_type, product_category, designer_status, design_billing, design_billing_confirmed, files, client:clients(id, name, company)',
+        select: 'id, project_name, job_number, current_stage, priority, client_deadline, designer_id, job_type, product_category, designer_status, design_billing, design_billing_confirmed, files, drive_link, client:clients(id, name, company)',
         filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'designing', 'approval', 'file_received', 'file_check', 'printing', 'finishing', 'quality_check', 'ready'], op: 'in' }]
     });
     const [searchQuery, setSearchQuery] = useState('');
@@ -85,7 +85,8 @@ export default function UnifiedQueue() {
             jobType: (job as any).job_type || 'Design',
             designBilling: (job as any).design_billing || null,
             designBillingConfirmed: (job as any).design_billing_confirmed ?? true,
-            fileCount: Array.isArray((job as any).files) ? (job as any).files.length : 0,
+            fileCount: (Array.isArray((job as any).files) ? (job as any).files.length : 0)
+                + String((job as any).drive_link || '').split(/[\s\n]+/).filter((u: string) => u.startsWith('http')).length,
             isMyTask: isAdmin || job.designer_id === profile?.id,
         }));
 
