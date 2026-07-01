@@ -205,6 +205,7 @@ export interface Job extends BaseEntity {
   quote_per_piece: number;
   design_charge?: number;   // Flat design fee (used for design_only / design_print jobs)
   design_billing?: 'billable' | 'non_billable'; // Finance tag: is the design work charged to the client? (admin-only edit)
+  design_billing_confirmed?: boolean; // true = admin-confirmed; false = designer suggestion awaiting admin confirmation
   subtotal: number;
   gst_rate: number;
   gst_amount: number;

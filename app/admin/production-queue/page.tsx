@@ -332,7 +332,7 @@ export default function ProductionQueuePage() {
                                                     </Link>
                                                     {job.job_type !== 'Print Only' && (
                                                         <div className="mt-1">
-                                                            <DesignBillingBadge jobId={job.id} value={job.design_billing} />
+                                                            <DesignBillingBadge jobId={job.id} value={job.design_billing} confirmed={(job as any).design_billing_confirmed ?? true} />
                                                         </div>
                                                     )}
                                                 </td>

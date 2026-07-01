@@ -190,6 +190,8 @@ export default function UnifiedJobForm({
                 } else {
                     jobPayload.design_billing = (formData.design_charge || 0) > 0 ? 'billable' : 'non_billable';
                 }
+                // Admin saved the tag here → it is confirmed (clears any "pending" from a designer suggestion).
+                jobPayload.design_billing_confirmed = true;
                 jobPayload.subtotal = subtotal;
                 jobPayload.gst_rate = formData.gst_rate;
                 jobPayload.gst_amount = gstAmount;

@@ -10,6 +10,8 @@ export type DesignBilling = 'billable' | 'non_billable';
 interface Props {
   jobId: string;
   value?: DesignBilling | null;
+  /** false = a designer's suggestion awaiting admin confirmation. Defaults to true. */
+  confirmed?: boolean;
   /** show only the pill, never the toggle, even for admins */
   readOnly?: boolean;
   size?: 'sm' | 'md';
@@ -40,6 +42,7 @@ const META: Record<DesignBilling, { label: string; cls: string; Icon: typeof Ind
 export default function DesignBillingBadge({
   jobId,
   value,
+  confirmed = true,
   readOnly = false,
   size = 'sm',
   onChange,
@@ -47,6 +50,7 @@ export default function DesignBillingBadge({
   const { profile } = useAuth();
   const isAdmin = profile?.role === 'admin';
   const [current, setCurrent] = useState<DesignBilling>(value === 'billable' ? 'billable' : 'non_billable');
+  const [isConfirmed, setIsConfirmed] = useState<boolean>(confirmed);
   const [saving, setSaving] = useState(false);
 
   const meta = META[current];
@@ -55,9 +59,9 @@ export default function DesignBillingBadge({
 
   const canEdit = isAdmin && !readOnly;
 
-  const handleToggle = async () => {
+  // Persist a value (and mark confirmed). Admin action only.
+  const save = async (next: DesignBilling) => {
     if (!canEdit || saving) return;
-    const next: DesignBilling = current === 'billable' ? 'non_billable' : 'billable';
     setSaving(true);
     try {
       const res = await fetch(`/api/jobs/${jobId}/design-billing`, {
@@ -68,8 +72,9 @@ export default function DesignBillingBadge({
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed');
       setCurrent(next);
+      setIsConfirmed(true);
       onChange?.(next);
-      toast.success(`Marked ${META[next].label}`);
+      toast.success(next === current ? `Confirmed ${META[next].label}` : `Marked ${META[next].label}`);
     } catch (e: any) {
       toast.error(e.message || 'Could not update tag');
     } finally {
@@ -77,27 +82,42 @@ export default function DesignBillingBadge({
     }
   };
 
+  // Unconfirmed (designer suggestion): first admin click confirms as-is.
+  // Confirmed: admin click toggles the value.
+  const handleClick = () => save(isConfirmed ? (current === 'billable' ? 'non_billable' : 'billable') : current);
+
   const base = `inline-flex items-center gap-1 rounded-full border font-bold tracking-wide ${pad} ${meta.cls}`;
 
+  // Read-only view (designers, other roles)
   if (!canEdit) {
     return (
-      <span className={base} title={current === 'billable' ? 'Design is charged to the client' : 'Free design — keep it fast'}>
+      <span
+        className={`${base} ${!isConfirmed ? 'border-dashed opacity-80' : ''}`}
+        title={
+          !isConfirmed
+            ? 'Suggested — awaiting admin confirmation'
+            : current === 'billable' ? 'Design is charged to the client' : 'Free design — keep it fast'
+        }
+      >
         <meta.Icon size={iconSz} />
-        {meta.label}
+        {meta.label}{!isConfirmed ? ' ?' : ''}
       </span>
     );
   }
 
+  // Admin view
   return (
     <button
       type="button"
-      onClick={handleToggle}
+      onClick={handleClick}
       disabled={saving}
-      title="Admin: click to switch billable / non-billable"
-      className={`${base} cursor-pointer hover:brightness-95 transition disabled:opacity-60`}
+      title={isConfirmed
+        ? 'Admin: click to switch billable / non-billable'
+        : 'Designer suggestion — click to confirm (click again to switch)'}
+      className={`${base} cursor-pointer hover:brightness-95 transition disabled:opacity-60 ${!isConfirmed ? 'border-dashed ring-1 ring-offset-1 ring-current/40 animate-pulse' : ''}`}
     >
-      {saving ? <Loader2 size={iconSz} className="animate-spin" /> : <meta.Icon size={iconSz} />}
-      {meta.label}
+      {saving ? <Loader2 size={iconSz} className="animate-spin" /> : !isConfirmed ? <Check size={iconSz} /> : <meta.Icon size={iconSz} />}
+      {meta.label}{!isConfirmed ? ' · confirm' : ''}
     </button>
   );
 }

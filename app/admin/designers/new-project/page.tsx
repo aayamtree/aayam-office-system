@@ -28,7 +28,8 @@ import { Separator } from '@/components/ui/separator';
 import {
     ArrowLeft, Briefcase, CalendarIcon, CheckCircle, Cloud, FileText,
     Image as ImageIcon, File as FileIcon, Info, Loader2,
-    Upload, X, Play, Pause, RotateCcw, CheckSquare, ArrowRightLeft
+    Upload, X, Play, Pause, RotateCcw, CheckSquare, ArrowRightLeft,
+    IndianRupee, Gift
 } from 'lucide-react';
 import Link from 'next/link';
 import { DesignerStatusPills } from '@/components/shared/DesignerStatusPills';
@@ -43,6 +44,10 @@ export default function NewProjectPage() {
     const { categories: productCategories, createCategory } = useProductCategories();
     const [creating, setCreating] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<string>('');
+
+    // Billable / Non-billable confirmation popup (asked at the end of entry)
+    const [showBillingModal, setShowBillingModal] = useState(false);
+    const [billingChoice, setBillingChoice] = useState<'billable' | 'non_billable'>('billable');
 
     // Status update for existing job (when opened via ?job_id=xxx)
     const searchParams = useSearchParams();
@@ -244,8 +249,18 @@ export default function NewProjectPage() {
         return <FileIcon size={16} className="text-muted-foreground" />;
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    // Step 1: on Create, run native validation then ask billable/non-billable.
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        // Smart default: Print-only jobs have no design work → non-billable.
+        const isPrintOnly = formData.jobType === 'Printing';
+        setBillingChoice(isPrintOnly ? 'non_billable' : 'billable');
+        setShowBillingModal(true);
+    };
+
+    // Step 2: create the project with the chosen billing tag.
+    const doCreate = async (billing: 'billable' | 'non_billable') => {
+        setShowBillingModal(false);
         setCreating(true);
 
         try {
@@ -280,6 +295,11 @@ export default function NewProjectPage() {
                 description: formData.description || null,
                 parent_job_id: null,
                 project_origin: isDesignerRole ? 'designer' : 'admin',
+
+                // Finance tag chosen in the popup. Admin's choice is authoritative;
+                // a designer's is a suggestion that admin confirms during approval.
+                design_billing: billing,
+                design_billing_confirmed: !isDesignerRole,
 
                 // Designer-created projects start in awaiting_admin
                 current_stage: isDesignerRole ? 'awaiting_admin' : 'new',
@@ -968,6 +988,74 @@ export default function NewProjectPage() {
 
                 </form>
             </div>
+
+            {/* Billable / Non-billable confirmation popup */}
+            {showBillingModal && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+                    onClick={() => !creating && setShowBillingModal(false)}
+                >
+                    <div
+                        className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-5"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div>
+                            <h3 className="text-lg font-bold text-foreground">Is the design work billable?</h3>
+                            <p className="text-sm text-muted-foreground mt-1">
+                                Choose whether this project&apos;s design is charged to the client.
+                                {formData.jobType === 'Printing' && ' (Print-only jobs are usually non-billable.)'}
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                type="button"
+                                disabled={creating}
+                                onClick={() => { setBillingChoice('billable'); doCreate('billable'); }}
+                                className={`flex flex-col items-center gap-1.5 rounded-lg border-2 p-4 transition disabled:opacity-60
+                                    ${billingChoice === 'billable' ? 'border-green-500 bg-green-50 ring-2 ring-green-200' : 'border-gray-200 hover:border-green-300 hover:bg-green-50/50'}`}
+                            >
+                                <IndianRupee size={22} className="text-green-600" />
+                                <span className="text-sm font-bold text-green-700">BILLABLE</span>
+                                <span className="text-[11px] text-muted-foreground text-center">Design is charged — full effort, revisions OK</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                disabled={creating}
+                                onClick={() => { setBillingChoice('non_billable'); doCreate('non_billable'); }}
+                                className={`flex flex-col items-center gap-1.5 rounded-lg border-2 p-4 transition disabled:opacity-60
+                                    ${billingChoice === 'non_billable' ? 'border-amber-500 bg-amber-50 ring-2 ring-amber-200' : 'border-gray-200 hover:border-amber-300 hover:bg-amber-50/50'}`}
+                            >
+                                <Gift size={22} className="text-amber-600" />
+                                <span className="text-sm font-bold text-amber-700">NON-BILLABLE</span>
+                                <span className="text-[11px] text-muted-foreground text-center">Free design — keep it fast, minimal revisions</span>
+                            </button>
+                        </div>
+
+                        {isDesignerRole && (
+                            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                                This is a suggestion — the admin will confirm the billing when they approve pricing.
+                            </p>
+                        )}
+
+                        {creating && (
+                            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                                <Loader2 size={16} className="animate-spin" /> Creating project…
+                            </div>
+                        )}
+
+                        <button
+                            type="button"
+                            disabled={creating}
+                            onClick={() => setShowBillingModal(false)}
+                            className="w-full text-sm text-muted-foreground hover:text-foreground py-1"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -68,11 +68,12 @@ export async function PATCH(
   }
 
   // ── Update ──────────────────────────────────────────────────────────────
+  // An admin setting the tag is also confirming it.
   const { data, error } = await supabase
     .from('jobs')
-    .update({ design_billing })
+    .update({ design_billing, design_billing_confirmed: true })
     .eq('id', id)
-    .select('id, job_number, project_name, design_billing')
+    .select('id, job_number, project_name, design_billing, design_billing_confirmed')
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
