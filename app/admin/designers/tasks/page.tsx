@@ -344,8 +344,8 @@ export default function DesignerWorkspace() {
             rawDeadline: job.client_deadline,
             description: `Job Type: ${job.job_type || '-'}\nDetails: ${job.description || 'No description provided.'}`,
             feedback: [],
-            files: job.files || [],
-            driveLink: (job.files && job.files.length > 0 && typeof job.files[0] === 'object') ? job.files[0]?.url : (job.files?.[0] || ''),
+            files: Array.isArray(job.files) ? job.files : [],
+            driveLink: (job as any).drive_link || '',
             orderId: job.id,
             designerId: job.designer_id,
             designerName: designer?.full_name || designer?.name || 'Unassigned',
@@ -765,8 +765,8 @@ export default function DesignerWorkspace() {
                                 <div className="flex items-center gap-1.5">
                                   {/* Designer Status Badge */}
                                   <DesignerStatusBadge status={task.designer_status} />
-                                  {(task.files?.length > 0 || task.driveLink) && (
-                                    <span className="flex items-center gap-0.5 text-gray-500" title={`${task.files?.length || 1} file(s)`}><Paperclip size={10} /><span className="text-xs font-bold">{task.files?.length || 1}</span></span>
+                                  {task.files?.length > 0 && (
+                                    <span className="flex items-center gap-0.5 text-gray-500" title={`${task.files.length} file(s)`}><Paperclip size={10} /><span className="text-xs font-bold">{task.files.length}</span></span>
                                   )}
                                   {task.rawDeadline && (
                                     <span className={`text-xs font-bold ${isOverdueCard ? 'text-red-500' : 'text-gray-400'}`}>
@@ -1048,10 +1048,10 @@ export default function DesignerWorkspace() {
                     <div className="flex items-center justify-between">
                       <DesignerStatusBadge status={task.designer_status} />
                       <div className="flex items-center gap-1.5">
-                        {(task.files?.length > 0 || task.driveLink) && (
-                          <span className="flex items-center gap-0.5 text-gray-400" title={`${task.files?.length || 1} file(s) attached`}>
+                        {task.files?.length > 0 && (
+                          <span className="flex items-center gap-0.5 text-gray-400" title={`${task.files.length} file(s) attached`}>
                             <Paperclip size={11} />
-                            <span className="text-xs font-bold">{task.files?.length || 1}</span>
+                            <span className="text-xs font-bold">{task.files.length}</span>
                           </span>
                         )}
                         {task.priority !== 'normal' && (

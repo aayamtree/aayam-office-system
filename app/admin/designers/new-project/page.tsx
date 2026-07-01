@@ -337,7 +337,9 @@ export default function NewProjectPage() {
                     driveToken, jobNumber, formData.title
                 );
 
-                const uploadedLinks: string[] = [];
+                // Each uploaded file becomes an entry in jobs.files[] — the single
+                // source of truth that Project Assets, counts, and the job page read.
+                const uploadedFiles: { name: string; url: string; storage: string; type: string; size: number; uploaded_at: string }[] = [];
                 for (let i = 0; i < formData.files.length; i++) {
                     const file = formData.files[i];
                     setUploadProgress(`Uploading ${i + 1}/${formData.files.length}: ${file.name}`);
@@ -348,21 +350,25 @@ export default function NewProjectPage() {
                     );
 
                     if (result.success && result.webViewLink) {
-                        uploadedLinks.push(result.webViewLink);
+                        uploadedFiles.push({
+                            name: file.name,
+                            url: result.webViewLink,
+                            storage: 'drive',
+                            type: file.type,
+                            size: file.size,
+                            uploaded_at: new Date().toISOString(),
+                        });
                     }
                 }
 
-                if (uploadedLinks.length > 0) {
-                    // Save project folder link + individual file links
+                if (uploadedFiles.length > 0) {
+                    // Files go into files[]; drive_link holds ONLY the project folder link
+                    // (plus any link the user typed), never the individual file links.
                     const folderLink = projectFolderId ? `https://drive.google.com/drive/folders/${projectFolderId}` : '';
-                    const allLinks = [
-                        formData.driveLink,
-                        folderLink,
-                        ...uploadedLinks
-                    ].filter(Boolean).join('\n');
+                    const driveLinkValue = [formData.driveLink, folderLink].filter(Boolean).join('\n') || null;
                     await supabase
                         .from('jobs')
-                        .update({ drive_link: allLinks })
+                        .update({ files: uploadedFiles, drive_link: driveLinkValue })
                         .eq('id', newJob.id);
                 }
                 setUploadProgress('');

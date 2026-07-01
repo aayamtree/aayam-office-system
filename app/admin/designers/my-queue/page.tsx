@@ -85,8 +85,8 @@ export default function UnifiedQueue() {
             jobType: (job as any).job_type || 'Design',
             designBilling: (job as any).design_billing || null,
             designBillingConfirmed: (job as any).design_billing_confirmed ?? true,
-            fileCount: (Array.isArray((job as any).files) ? (job as any).files.length : 0)
-                + String((job as any).drive_link || '').split(/[\s\n]+/).filter((u: string) => u.startsWith('http')).length,
+            // Attachment count = real files in files[] only (matches what the job page shows).
+            fileCount: Array.isArray((job as any).files) ? (job as any).files.length : 0,
             isMyTask: isAdmin || job.designer_id === profile?.id,
         }));
 
