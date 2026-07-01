@@ -449,39 +449,44 @@ export default function DesignerWorkspace() {
         uploaded_at: new Date().toISOString()
       };
 
-      // Update local state temporarily
-      const updatedFiles = [...(selectedTask.files || []), newFile];
+      // Save via service-role API route. The browser client silently fails
+      // (0 rows) when the Supabase session lapses, which is why uploads were
+      // vanishing on refetch — the DB write never persisted.
+      const res = await fetch(`/api/jobs/${selectedTask.realId}/files`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file: newFile }),
+      });
+      const result = await res.json();
 
-      if (updateJob) {
-        const { error: updateError } = await updateJob(selectedTask.realId, { files: updatedFiles } as any);
-
-        if (updateError) {
-          // Storage upload succeeded but DB save failed — surface the real error
-          toast.error(`File saved to storage but could not update job record: ${updateError}`);
-          return;
-        }
-
-        // Log upload to activity feed
-        logFileUpload({ fileName: file.name, fileSize: file.size, fileType: file.type, fileUrl: publicUrl, uploadedTo: `Job ${selectedTask.taskId}`, resourceId: selectedTask.realId });
-
-        // Notify assigned designer if someone else uploaded
-        const myDesignerRec = designers.find((d: any) => d.id === profile?.id);
-        const isMyJob = myDesignerRec ? selectedTask.designerId === myDesignerRec.id : false;
-        if (!isMyJob && selectedTask.designerId && profile) {
-          const uploaderName = profile.full_name || 'Someone';
-          await supabase.from('broadcast_notifications').insert({
-            message: `${uploaderName} uploaded "${file.name}" to your assigned job ${selectedTask.taskId} (${selectedTask.title})`,
-            priority: 'normal',
-            target_audience: 'designer',
-            created_by: profile.id,
-          });
-        }
-
-        // Optimistically update tasks state so file appears immediately
-        setTasks(prev => prev.map(t => t.realId === selectedTask.realId ? { ...t, files: updatedFiles } : t));
-        refetchJobs();
-        toast.success('File uploaded successfully!');
+      if (!res.ok) {
+        // Storage upload succeeded but DB save failed — surface the real error
+        toast.error(`File saved to storage but could not update job record: ${result.error || res.statusText}`);
+        return;
       }
+
+      const updatedFiles = result.files || [...(selectedTask.files || []), newFile];
+
+      // Log upload to activity feed
+      logFileUpload({ fileName: file.name, fileSize: file.size, fileType: file.type, fileUrl: publicUrl, uploadedTo: `Job ${selectedTask.taskId}`, resourceId: selectedTask.realId });
+
+      // Notify assigned designer if someone else uploaded
+      const myDesignerRec = designers.find((d: any) => d.id === profile?.id);
+      const isMyJob = myDesignerRec ? selectedTask.designerId === myDesignerRec.id : false;
+      if (!isMyJob && selectedTask.designerId && profile) {
+        const uploaderName = profile.full_name || 'Someone';
+        await supabase.from('broadcast_notifications').insert({
+          message: `${uploaderName} uploaded "${file.name}" to your assigned job ${selectedTask.taskId} (${selectedTask.title})`,
+          priority: 'normal',
+          target_audience: 'designer',
+          created_by: profile.id,
+        });
+      }
+
+      // Optimistically update tasks state so file appears immediately
+      setTasks(prev => prev.map(t => t.realId === selectedTask.realId ? { ...t, files: updatedFiles } : t));
+      refetchJobs();
+      toast.success('File uploaded successfully!');
 
     } catch (e: any) {
       toast.error(String('Upload failed: ' + e.message));
@@ -1262,11 +1267,19 @@ export default function DesignerWorkspace() {
                                   {isAdmin && (
                                     <button
                                       onClick={async () => {
-                                        const updatedFiles = selectedTask.files.filter((_: any, idx: number) => idx !== i);
-                                        if (updateJob) {
-                                          await updateJob(selectedTask.realId, { files: updatedFiles } as any);
-                                          refetchJobs();
+                                        const res = await fetch(`/api/jobs/${selectedTask.realId}/files`, {
+                                          method: 'DELETE',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ index: i }),
+                                        });
+                                        const result = await res.json();
+                                        if (!res.ok) {
+                                          toast.error(`Could not remove file: ${result.error || res.statusText}`);
+                                          return;
                                         }
+                                        const updatedFiles = result.files || selectedTask.files.filter((_: any, idx: number) => idx !== i);
+                                        setTasks(prev => prev.map(t => t.realId === selectedTask.realId ? { ...t, files: updatedFiles } : t));
+                                        refetchJobs();
                                       }}
                                       className="p-1 hover:bg-red-100 rounded"
                                       title="Remove file"
