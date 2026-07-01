@@ -20,20 +20,20 @@ function buildPrintHTML(d: QuotationData): string {
     return `<!doctype html><html><head><meta charset="utf-8"><title>Quotation ${d.quoteNumber}</title>
     <style>
       *{box-sizing:border-box;font-family:Helvetica,Arial,sans-serif;}
-      body{margin:0;padding:32px;color:#1f2937;}
-      .head{display:flex;justify-content:space-between;border-bottom:2px solid #4F46E5;padding-bottom:16px;margin-bottom:20px;}
-      .cname{font-size:22px;font-weight:bold;color:#4F46E5;margin:0 0 4px;}
-      .muted{color:#666;font-size:12px;line-height:1.5;}
-      .title{font-size:28px;font-weight:bold;text-align:right;margin:0;}
-      .qno{color:#4F46E5;text-align:right;margin-top:4px;font-size:13px;}
+      body{margin:0;padding:32px;color:#000000;}
+      .head{display:flex;justify-content:space-between;border-bottom:2px solid #000000;padding-bottom:16px;margin-bottom:20px;}
+      .cname{font-size:22px;font-weight:bold;color:#000000;margin:0 0 4px;}
+      .muted{color:#000000;font-size:12px;line-height:1.5;}
+      .title{font-size:28px;font-weight:bold;text-align:right;margin:0;color:#000000;}
+      .qno{color:#000000;text-align:right;margin-top:4px;font-size:13px;}
       table{width:100%;border-collapse:collapse;margin-top:8px;}
-      th{background:#4F46E5;color:#fff;padding:8px 10px;text-align:left;font-size:12px;}
+      th{background:#000000;color:#fff;padding:8px 10px;text-align:left;font-size:12px;}
       th.r,td.r{text-align:right;}
       .totals{margin-top:16px;margin-left:auto;width:280px;}
       .totals div{display:flex;justify-content:space-between;padding:4px 0;}
-      .grand{border-top:2px solid #4F46E5;margin-top:6px;padding-top:8px;font-weight:bold;font-size:16px;color:#4F46E5;}
+      .grand{border-top:2px solid #000000;margin-top:6px;padding-top:8px;font-weight:bold;font-size:16px;color:#000000;}
       .sec{margin-top:24px;}
-      .sec h4{margin:0 0 4px;font-size:12px;text-transform:uppercase;color:#666;}
+      .sec h4{margin:0 0 4px;font-size:12px;text-transform:uppercase;color:#000000;}
     </style></head><body>
       <div class="head">
         <div>
@@ -46,8 +46,8 @@ function buildPrintHTML(d: QuotationData): string {
           <div class="muted" style="text-align:right;margin-top:6px;">Date: ${d.date}<br>Valid Until: ${d.validUntil}</div>
         </div>
       </div>
-      <div class="muted"><strong style="color:#1f2937;">Bill To:</strong><br>
-        <strong style="color:#1f2937;">${d.clientCompany || d.clientName}</strong><br>
+      <div class="muted"><strong style="color:#000000;">Bill To:</strong><br>
+        <strong style="color:#000000;">${d.clientCompany || d.clientName}</strong><br>
         ${d.clientCompany ? d.clientName + '<br>' : ''}${d.clientAddress ? d.clientAddress + '<br>' : ''}${d.clientState ? d.clientState + '<br>' : ''}${d.clientPhone ? 'Ph: ' + d.clientPhone + '<br>' : ''}${d.clientGstin ? 'GSTIN: ' + d.clientGstin : ''}
       </div>
       <table>
@@ -95,25 +95,25 @@ export default function QuotationPreview({ data, onClose }: { data: QuotationDat
 
                 {/* Document */}
                 <div className="p-6 md:p-8">
-                    <div className="flex justify-between border-b-2 border-indigo-600 pb-4 mb-5">
+                    <div className="flex justify-between border-b-2 border-black pb-4 mb-5">
                         <div>
-                            <p className="text-xl font-bold text-indigo-600">{data.companyName}</p>
-                            <p className="text-xs text-gray-500 leading-relaxed mt-1">
+                            <p className="text-xl font-bold text-black">{data.companyName}</p>
+                            <p className="text-xs text-black leading-relaxed mt-1">
                                 {data.companyAddress}<br />
                                 {[data.companyCity, data.companyState, data.companyPincode].filter(Boolean).join(', ')}<br />
                                 {data.companyPhone} · {data.companyEmail}
                             </p>
                         </div>
                         <div className="text-right">
-                            <p className="text-2xl font-bold text-gray-800">QUOTATION</p>
-                            <p className="text-indigo-600 text-sm mt-1">{data.quoteNumber}</p>
-                            <p className="text-xs text-gray-500 mt-2">Date: {data.date}<br />Valid Until: {data.validUntil}</p>
+                            <p className="text-2xl font-bold text-black">QUOTATION</p>
+                            <p className="text-black text-sm mt-1">{data.quoteNumber}</p>
+                            <p className="text-xs text-black mt-2">Date: {data.date}<br />Valid Until: {data.validUntil}</p>
                         </div>
                     </div>
 
-                    <div className="text-xs text-gray-600 mb-4">
-                        <span className="font-semibold text-gray-900">Bill To:</span>
-                        <p className="font-semibold text-gray-900 mt-1">{data.clientCompany || data.clientName}</p>
+                    <div className="text-xs text-black mb-4">
+                        <span className="font-semibold text-black">Bill To:</span>
+                        <p className="font-semibold text-black mt-1">{data.clientCompany || data.clientName}</p>
                         {data.clientCompany && <p>{data.clientName}</p>}
                         {data.clientAddress && <p>{data.clientAddress}</p>}
                         {data.clientState && <p>{data.clientState}</p>}
@@ -123,7 +123,7 @@ export default function QuotationPreview({ data, onClose }: { data: QuotationDat
 
                     <table className="w-full text-sm">
                         <thead>
-                            <tr className="bg-indigo-600 text-white text-xs">
+                            <tr className="bg-black text-white text-xs">
                                 <th className="px-3 py-2 text-left">#</th>
                                 <th className="px-3 py-2 text-left">Description</th>
                                 <th className="px-3 py-2 text-center">Qty</th>
@@ -133,35 +133,35 @@ export default function QuotationPreview({ data, onClose }: { data: QuotationDat
                         </thead>
                         <tbody>
                             {data.items?.map((it, i) => (
-                                <tr key={i} className="border-b border-gray-100">
-                                    <td className="px-3 py-2 text-gray-600">{i + 1}</td>
-                                    <td className="px-3 py-2 text-gray-900">{it.description}</td>
-                                    <td className="px-3 py-2 text-center text-gray-600">{it.quantity}</td>
-                                    <td className="px-3 py-2 text-right text-gray-600">{inr(it.rate)}</td>
-                                    <td className="px-3 py-2 text-right font-medium text-gray-900">{inr(it.amount)}</td>
+                                <tr key={i} className="border-b border-gray-200">
+                                    <td className="px-3 py-2 text-black">{i + 1}</td>
+                                    <td className="px-3 py-2 text-black">{it.description}</td>
+                                    <td className="px-3 py-2 text-center text-black">{it.quantity}</td>
+                                    <td className="px-3 py-2 text-right text-black">{inr(it.rate)}</td>
+                                    <td className="px-3 py-2 text-right font-medium text-black">{inr(it.amount)}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
 
-                    <div className="ml-auto w-64 text-sm mt-4 text-gray-600">
+                    <div className="ml-auto w-64 text-sm mt-4 text-black">
                         <div className="flex justify-between py-1"><span>Subtotal</span><span>{inr(data.subtotal)}</span></div>
                         <div className="flex justify-between py-1"><span>GST ({data.gstRate ?? 18}%)</span><span>{inr(data.taxAmount)}</span></div>
-                        <div className="flex justify-between pt-2 mt-1 border-t-2 border-indigo-600 font-bold text-base text-indigo-600">
+                        <div className="flex justify-between pt-2 mt-1 border-t-2 border-black font-bold text-base text-black">
                             <span>Total</span><span>{inr(data.totalAmount)}</span>
                         </div>
                     </div>
 
                     {data.terms && (
                         <div className="mt-6">
-                            <h4 className="text-xs font-semibold uppercase text-gray-500 mb-1">Terms &amp; Conditions</h4>
-                            <p className="text-xs text-gray-600 whitespace-pre-line">{data.terms}</p>
+                            <h4 className="text-xs font-semibold uppercase text-black mb-1">Terms &amp; Conditions</h4>
+                            <p className="text-xs text-black whitespace-pre-line">{data.terms}</p>
                         </div>
                     )}
                     {data.notes && (
                         <div className="mt-4">
-                            <h4 className="text-xs font-semibold uppercase text-gray-500 mb-1">Notes</h4>
-                            <p className="text-xs text-gray-600 whitespace-pre-line">{data.notes}</p>
+                            <h4 className="text-xs font-semibold uppercase text-black mb-1">Notes</h4>
+                            <p className="text-xs text-black whitespace-pre-line">{data.notes}</p>
                         </div>
                     )}
                 </div>
