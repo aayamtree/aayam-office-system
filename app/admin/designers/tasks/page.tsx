@@ -205,6 +205,7 @@ export default function DesignerWorkspace() {
   const [checklistConfig, setChecklistConfig] = useState<Record<string, string[]>>({});
   // Print File Upload State
   const [printFileUploading, setPrintFileUploading] = useState(false);
+  const [deletingFileIdx, setDeletingFileIdx] = useState<number | null>(null);
   const [printFilesLocal, setPrintFilesLocal] = useState<{ name: string; url: string; size: number; type: string; uploaded_at: string; uploaded_by: string }[]>([]);
 
   useEffect(() => {
@@ -1316,25 +1317,43 @@ export default function DesignerWorkspace() {
                                   )}
                                   {isAdmin && (
                                     <button
+                                      disabled={deletingFileIdx !== null}
                                       onClick={async () => {
-                                        const res = await fetch(`/api/jobs/${selectedTask.realId}/files`, {
-                                          method: 'DELETE',
-                                          headers: { 'Content-Type': 'application/json' },
-                                          body: JSON.stringify({ index: i }),
-                                        });
-                                        const result = await res.json();
-                                        if (!res.ok) {
-                                          toast.error(`Could not remove file: ${result.error || res.statusText}`);
-                                          return;
+                                        if (deletingFileIdx !== null) return;
+                                        setDeletingFileIdx(i);
+                                        // Optimistic: drop the file from the UI immediately
+                                        const prevFiles = selectedTask.files;
+                                        const optimistic = prevFiles.filter((_: any, idx: number) => idx !== i);
+                                        setTasks(prev => prev.map(t => t.realId === selectedTask.realId ? { ...t, files: optimistic } : t));
+                                        try {
+                                          const res = await fetch(`/api/jobs/${selectedTask.realId}/files`, {
+                                            method: 'DELETE',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ index: i }),
+                                          });
+                                          const result = await res.json();
+                                          if (!res.ok) {
+                                            setTasks(prev => prev.map(t => t.realId === selectedTask.realId ? { ...t, files: prevFiles } : t));
+                                            toast.error(`Could not remove file: ${result.error || res.statusText}`);
+                                            return;
+                                          }
+                                          const updatedFiles = result.files || optimistic;
+                                          setTasks(prev => prev.map(t => t.realId === selectedTask.realId ? { ...t, files: updatedFiles } : t));
+                                          toast.success('File removed');
+                                          refetchJobs();
+                                        } catch (err: any) {
+                                          setTasks(prev => prev.map(t => t.realId === selectedTask.realId ? { ...t, files: prevFiles } : t));
+                                          toast.error('Could not remove file');
+                                        } finally {
+                                          setDeletingFileIdx(null);
                                         }
-                                        const updatedFiles = result.files || selectedTask.files.filter((_: any, idx: number) => idx !== i);
-                                        setTasks(prev => prev.map(t => t.realId === selectedTask.realId ? { ...t, files: updatedFiles } : t));
-                                        refetchJobs();
                                       }}
-                                      className="p-1 hover:bg-red-100 rounded"
+                                      className="p-1 hover:bg-red-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                                       title="Remove file"
                                     >
-                                      <X size={12} className="text-red-500" />
+                                      {deletingFileIdx === i
+                                        ? <Loader2 size={12} className="text-red-500 animate-spin" />
+                                        : <X size={12} className="text-red-500" />}
                                     </button>
                                   )}
                                 </div>

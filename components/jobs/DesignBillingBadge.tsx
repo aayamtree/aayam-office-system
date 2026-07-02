@@ -100,7 +100,7 @@ export default function DesignBillingBadge({
         }
       >
         <meta.Icon size={iconSz} />
-        {meta.label}{!isConfirmed ? ' ?' : ''}
+        {meta.label}
       </span>
     );
   }
