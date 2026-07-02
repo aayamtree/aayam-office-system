@@ -285,6 +285,8 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
   const router = useRouter();
   const { profile, signOut } = useAuth();
   const [expandedItems, setExpandedItems] = useState<string[]>(['Design Studio', 'Marketing', 'Sales & Finance', 'CRM', 'Dispatch']);
+  // Name of the section (master group) that owns the current route — used to keep its header visible.
+  const [activeSection, setActiveSection] = useState<string>('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Close mobile sidebar on navigation — watching pathname is reliable and
@@ -313,20 +315,27 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
     }
     if (best && (best as { name: string }).name) {
       const name = (best as { name: string }).name;
+      setActiveSection(name);
       setExpandedItems(prev => (prev.includes(name) ? prev : [...prev, name]));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
-  // Scroll the active nav item into view so the current page is always on screen.
+  // Keep the current page's MASTER section header visible: pin the active
+  // section's header to the top of the sidebar so its title (and the items
+  // below it, including the active page) are always on screen — no hunting.
   useEffect(() => {
     const t = setTimeout(() => {
-      const el = document.querySelector('[data-active-nav="true"]');
-      el?.scrollIntoView({ block: 'nearest' });
+      const header = document.querySelector('[data-active-section="true"]');
+      if (header) {
+        header.scrollIntoView({ block: 'start' });
+      } else {
+        document.querySelector('[data-active-nav="true"]')?.scrollIntoView({ block: 'nearest' });
+      }
     }, 60);
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, expandedItems]);
+  }, [pathname, expandedItems, activeSection]);
 
   // Sidebar collapsed state — click-only, persisted to localStorage.
   // NO hover logic. Hover-expand was removed permanently because any CSS layout
@@ -565,6 +574,7 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
                   {hasSubmenu && item.name !== 'Design Studio' ? (
                     <button
                       onClick={() => toggleExpanded(item.name)}
+                      data-active-section={item.name === activeSection ? 'true' : undefined}
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors text-sm font-medium
                         ${active
                           ? 'bg-primary text-primary-foreground'
@@ -585,6 +595,7 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
                       href={item.href}
                       onClick={(e) => navigate(e, item.href)}
                       data-active-nav={active ? 'true' : undefined}
+                      data-active-section={item.name === activeSection ? 'true' : undefined}
                       className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-sm font-medium
                         ${active
                           ? 'bg-primary text-primary-foreground'
