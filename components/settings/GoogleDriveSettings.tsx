@@ -66,7 +66,12 @@ export default function GoogleDriveSettings() {
         // connection is preserved if the admin cancels the Google screen. We still ask
         // for `consent` below, which guarantees Google returns a fresh refresh_token.
 
-        const baseUrl = window.location.origin;
+        // Pin the OAuth redirect to the registered domain. Using window.location.origin
+        // broke Connect whenever the app was opened on a Vercel preview URL (that host
+        // isn't in Google's Authorized redirect URIs -> redirect_uri_mismatch).
+        const baseUrl = window.location.hostname === 'localhost'
+            ? window.location.origin
+            : 'https://aayam-office-system.vercel.app';
         const redirectUri = `${baseUrl}/api/drive/callback`;
         const scope = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar.events';
         const state = profile?.id || ''; // Pass user ID as state

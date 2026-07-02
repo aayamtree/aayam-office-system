@@ -8,7 +8,10 @@ export async function GET(request: NextRequest) {
     const state = searchParams.get('state');
     const error = searchParams.get('error');
 
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const host = request.headers.get('host') || '';
+    const baseUrl = host
+        ? (host.includes('localhost') ? `http://${host}` : `https://${host}`)
+        : (process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
     const redirectUrl = `${baseUrl}/admin/settings/drive`;
 
     // Handle errors from Google
