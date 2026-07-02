@@ -4,11 +4,24 @@
 
 import { NextResponse } from 'next/server';
 import { getServiceClient, getValidDriveAccessToken } from '@/lib/google-drive-server';
+import { isServiceAccountConfigured, getServiceAccountToken } from '@/lib/google-service-account';
 
 export const dynamic = 'force-dynamic';
 
+export const runtime = 'nodejs';
+
 export async function GET() {
     try {
+        // Preferred: service account (no interactive login, files land in the Shared Drive).
+        if (isServiceAccountConfigured()) {
+            const sa = await getServiceAccountToken();
+            if (sa.success) {
+                return NextResponse.json({ accessToken: sa.accessToken, mode: 'service_account' });
+            }
+            return NextResponse.json({ error: sa.error || 'Service account token failed' }, { status: 503 });
+        }
+
+        // Fallback: the older OAuth "connect Google Drive" flow.
         const supabase = getServiceClient();
         const result = await getValidDriveAccessToken(supabase);
 

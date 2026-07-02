@@ -5,6 +5,12 @@
 
 import { logFileUpload } from './activity-logger';
 
+// The company Shared Drive that files are stored in. Not a secret (it's an ID).
+// Override with NEXT_PUBLIC_GOOGLE_SHARED_DRIVE_ID if the drive ever changes.
+const SHARED_DRIVE_ID = process.env.NEXT_PUBLIC_GOOGLE_SHARED_DRIVE_ID || '0AFECdIXIxXjSUk9PVA';
+// Query/flags required so the Drive API operates on Shared Drives, not just My Drive.
+const ALL_DRIVES = 'supportsAllDrives=true&includeItemsFromAllDrives=true';
+
 export interface DriveUploadResult {
     success: boolean;
     fileId?: string;
@@ -67,7 +73,7 @@ export async function uploadToDrive(
         form.append('file', file);
 
         const response = await fetch(
-            'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,webContentLink',
+            `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&${ALL_DRIVES}&fields=id,name,webViewLink,webContentLink`,
             {
                 method: 'POST',
                 headers: {
@@ -135,7 +141,7 @@ export async function findOrCreateFolder(
         }
 
         const searchRes = await fetch(
-            `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name)`,
+            `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name)&${ALL_DRIVES}&corpora=drive&driveId=${SHARED_DRIVE_ID}`,
             { headers: { 'Authorization': `Bearer ${accessToken}` } }
         );
 
@@ -154,7 +160,7 @@ export async function findOrCreateFolder(
         };
 
         const createRes = await fetch(
-            'https://www.googleapis.com/drive/v3/files?fields=id',
+            `https://www.googleapis.com/drive/v3/files?fields=id&${ALL_DRIVES}`,
             {
                 method: 'POST',
                 headers: {
@@ -188,7 +194,7 @@ export async function getProjectFolder(
     projectName: string
 ): Promise<{ folderId: string | null; error?: string }> {
     // 1. Find or create "Aayam Projects" root folder
-    const root = await findOrCreateFolder(accessToken, 'Aayam Projects');
+    const root = await findOrCreateFolder(accessToken, 'Aayam Projects', SHARED_DRIVE_ID);
     if (!root.folderId) return root;
 
     // 2. Find or create project subfolder inside it
@@ -203,7 +209,7 @@ export async function getProjectFolder(
 async function makeFilePublic(accessToken: string, fileId: string): Promise<void> {
     try {
         await fetch(
-            `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,
+            `https://www.googleapis.com/drive/v3/files/${fileId}/permissions?${ALL_DRIVES}`,
             {
                 method: 'POST',
                 headers: {
@@ -244,7 +250,7 @@ export async function deleteFromDrive(
 ): Promise<{ success: boolean; error?: string }> {
     try {
         const response = await fetch(
-            `https://www.googleapis.com/drive/v3/files/${fileId}`,
+            `https://www.googleapis.com/drive/v3/files/${fileId}?${ALL_DRIVES}`,
             {
                 method: 'DELETE',
                 headers: {
