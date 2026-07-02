@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
+import { getServiceAccountToken } from '@/lib/google-service-account';
+import { deleteFromDrive } from '@/lib/google-drive-upload';
 
 /** Shared helper — service-role client for job file operations.
  *  Privileged writes must bypass the browser anon/authenticated client,
@@ -86,9 +88,12 @@ export async function DELETE(
 
   const existing: any[] = Array.isArray((job as any)?.[field]) ? (job as any)[field] : [];
   let updatedFiles: any[];
+  let removed: any = null;
   if (typeof body.index === 'number') {
+    removed = existing[body.index] ?? null;
     updatedFiles = existing.filter((_, i) => i !== body.index);
   } else if (body.url) {
+    removed = existing.find((f) => f?.url === body.url) ?? null;
     updatedFiles = existing.filter((f) => f?.url !== body.url);
   } else {
     return NextResponse.json({ error: 'index or url is required' }, { status: 400 });
@@ -102,5 +107,17 @@ export async function DELETE(
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Also remove the underlying file from the Shared Drive (best-effort: never
+  // block the app-side removal if Drive is briefly unavailable).
+  if (removed?.fileId) {
+    try {
+      const sa = await getServiceAccountToken();
+      if (sa.success && sa.accessToken) {
+        await deleteFromDrive(sa.accessToken, removed.fileId);
+      }
+    } catch { /* app record already removed; ignore Drive cleanup failure */ }
+  }
+
   return NextResponse.json({ files: (data as any)?.[field] || updatedFiles });
 }
