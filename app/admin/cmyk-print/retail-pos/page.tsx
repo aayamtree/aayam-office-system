@@ -5,12 +5,12 @@ import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import {
   ArrowLeft, Plus, Trash2, ShoppingCart,
-  Printer, CreditCard, Banknote, Smartphone, X, Search, Settings,
+  Printer, Banknote, Smartphone, X, Search, Settings,
   Edit, Loader2, Download, Package, Clock, ChevronDown, Tag
 } from 'lucide-react';
 import { ReceiptData, printReceipt, downloadReceipt } from '@/components/receipt/ReceiptPDF';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
-import { usePOSSales, usePOSProducts, usePaperStock, useClients, useCMYKClients } from '@/lib/hooks';
+import { usePOSSales, usePOSProducts, usePaperStock, useCMYKClients } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { POSProduct } from '@/types/database';
 import { Input } from '@/components/ui/input';
@@ -54,7 +54,6 @@ export default function RetailPOSPage() {
   const { settings: companySettings } = useCompanySettings();
   const { createPOSSale } = usePOSSales();
   const { stock: paperStock } = usePaperStock();
-  const { clients } = useClients();
   const { cmykClients } = useCMYKClients();
   const {
     categories, products, loading: productsLoading,
@@ -70,7 +69,7 @@ export default function RetailPOSPage() {
   const [cmykClientId, setCmykClientId] = useState(''); // separate CMYK print client (for monthly billing)
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'upi'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'upi'>('cash');
   const [amountReceived, setAmountReceived] = useState('');
   const [discount, setDiscount] = useState(0);
 
@@ -84,9 +83,6 @@ export default function RetailPOSPage() {
     setPaperRows(rows => rows.map((r, idx) => idx === i ? { ...r, [field]: val } : r));
   const addPaperRow = () => setPaperRows(rows => [...rows, { paperStockId: '', sheets: '', rate: '' }]);
   const removePaperRow = (i: number) => setPaperRows(rows => rows.length > 1 ? rows.filter((_, idx) => idx !== i) : rows);
-  const [paymentType, setPaymentType] = useState<'paid' | 'advance' | 'credit'>('paid');
-  const [selectedClientId, setSelectedClientId] = useState('');
-  const [creditDays, setCreditDays] = useState('30');
   const [notes, setNotes] = useState('');
 
   // Settings Modal State
@@ -158,29 +154,19 @@ export default function RetailPOSPage() {
 
   // Payment calculation
   const receivedAmt = parseFloat(amountReceived || '0');
-  const changeAmount = paymentMethod === 'cash' ? receivedAmt - grandTotal : 0;
+  const changeAmount = receivedAmt > grandTotal ? receivedAmt - grandTotal : 0;
 
-  // Credit logic
-  const selectedClient = clients?.find(c => c.id === selectedClientId);
-
-  const getDueDate = () => {
-    if (paymentType !== 'credit') return undefined;
-    const d = new Date();
-    d.setDate(d.getDate() + parseInt(creditDays || '30'));
-    return d.toISOString().split('T')[0];
-  };
-
+  // Payment status is derived purely from what was collected now (cash/UPI).
+  // Nothing collected → the bill is left as a PENDING PAYMENT.
   const getPaymentStatus = (): 'paid' | 'pending' | 'partial' => {
-    if (paymentType === 'credit') return 'pending';
-    if (paymentType === 'advance') return 'partial';
-    return 'paid';
+    if (receivedAmt <= 0) return 'pending';
+    if (receivedAmt >= grandTotal) return 'paid';
+    return 'partial';
   };
 
   const getBalanceDue = () => {
-    if (paymentType === 'paid') return 0;
-    if (paymentType === 'credit') return grandTotal;
-    if (paymentType === 'advance') return Math.max(0, grandTotal - (parseFloat(amountReceived || '0')));
-    return 0;
+    if (receivedAmt <= 0) return grandTotal;
+    return Math.max(0, grandTotal - receivedAmt);
   };
 
   // CRUD Handlers
@@ -224,10 +210,8 @@ export default function RetailPOSPage() {
     setOrderType('walkin');
     setArtworkLink('');
     setAmountReceived('');
+    setPaymentMethod('cash');
     setPaperRows([{ paperStockId: '', sheets: '', rate: '' }]);
-    setPaymentType('paid');
-    setSelectedClientId('');
-    setCreditDays('30');
     setNotes('');
     setShowPaymentModal(false);
   };
@@ -237,11 +221,11 @@ export default function RetailPOSPage() {
   const saveSale = async () => {
     setIsProcessing(true);
     try {
-      const paidAmount = paymentType === 'credit' ? 0 : paymentType === 'advance' ? parseFloat(amountReceived || '0') : (parseFloat(amountReceived || '0') || grandTotal);
+      // Only what was actually collected now is recorded as received (0 = pending payment).
+      const paidAmount = receivedAmt > 0 ? receivedAmt : 0;
       const saleData = {
         customer_name: customerName || undefined,
         customer_phone: customerPhone || undefined,
-        client_id: selectedClientId || undefined,
         cmyk_client_id: cmykClientId || undefined,
         subtotal,
         discount_percent: discount,
@@ -258,9 +242,7 @@ export default function RetailPOSPage() {
         amount_received: paidAmount,
         change_amount: changeAmount > 0 ? changeAmount : 0,
         payment_status: getPaymentStatus(),
-        due_date: getDueDate(),
         balance_due: getBalanceDue(),
-        credit_terms: paymentType === 'credit' ? `${creditDays} days` : undefined,
         paper_stock_id: paperList[0]?.paper_stock_id || undefined,
         sheets_used: paperList.reduce((sum, p) => sum + p.sheets, 0),
         papers: paperList.length > 0 ? paperList : undefined,
@@ -309,7 +291,7 @@ export default function RetailPOSPage() {
       receiptNumber: saleNumber,
       date: now.toLocaleDateString('en-IN'),
       time: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-      customerName: customerName || cmykClients?.find(c => c.id === cmykClientId)?.company || cmykClients?.find(c => c.id === cmykClientId)?.name || selectedClient?.company || selectedClient?.name || undefined,
+      customerName: customerName || cmykClients?.find(c => c.id === cmykClientId)?.company || cmykClients?.find(c => c.id === cmykClientId)?.name || undefined,
       customerPhone: customerPhone || undefined,
       items: [
         ...cart.map(item => ({ name: item.name || 'Item', qty: item.qty, price: item.price, total: lineTotal(item) })),
@@ -481,13 +463,10 @@ export default function RetailPOSPage() {
                     // Auto-fill the (still visible, still editable) name & phone boxes from the saved client
                     setCustomerName(c.company || c.name || '');
                     setCustomerPhone(c.phone || '');
-                    // Saved CMYK clients bill monthly → default this sale to Credit (goes on their statement)
-                    setPaymentType('credit');
                   } else {
-                    // Back to Walk-in — clear the auto-filled fields & collect payment now
+                    // Back to Walk-in — clear the auto-filled fields
                     setCustomerName('');
                     setCustomerPhone('');
-                    setPaymentType('paid');
                   }
                 }}
                 className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white">
@@ -659,86 +638,34 @@ export default function RetailPOSPage() {
                 <p className="text-2xl font-bold text-primary">{formatCurrency(grandTotal)}</p>
               </div>
 
-              {/* Payment Type */}
+              {/* Payment Method — cash or UPI */}
               <div>
-                <p className="text-sm font-medium mb-2">Payment Type</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { id: 'paid', label: 'Full Payment' },
-                    { id: 'advance', label: 'Advance' },
-                    { id: 'credit', label: 'Credit' },
-                  ].map(pt => (
-                    <button key={pt.id} onClick={() => { setPaymentType(pt.id as any); setAmountReceived(''); }}
-                      className={`p-2.5 rounded-md border-2 text-sm font-medium transition-all ${paymentType === pt.id ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 hover:border-gray-300'}`}>
-                      {pt.label}
+                <p className="text-sm font-medium mb-2">Payment Method</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[{ id: 'cash', label: 'Cash', icon: Banknote }, { id: 'upi', label: 'UPI', icon: Smartphone }].map(method => (
+                    <button key={method.id} onClick={() => setPaymentMethod(method.id as 'cash' | 'upi')}
+                      className={`p-3 rounded-md border-2 flex flex-col items-center gap-1 transition-all ${paymentMethod === method.id ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}>
+                      <method.icon className="w-5 h-5" /><span className="text-sm">{method.label}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Credit Client Selector */}
-              {(paymentType === 'credit' || paymentType === 'advance') && (
-                <div>
-                  <p className="text-sm font-medium mb-2">Client <span className="text-destructive">*</span></p>
-                  <select value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)}
-                    className="w-full px-3 py-2.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white text-sm">
-                    <option value="">Select registered client...</option>
-                    {(clients || []).map(c => (
-                      <option key={c.id} value={c.id}>{c.company || c.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Credit Days */}
-              {paymentType === 'credit' && (
-                <div>
-                  <p className="text-sm font-medium mb-2">Credit Days</p>
-                  <div className="flex gap-2">
-                    {['15', '30', '45', '60', '90'].map(d => (
-                      <button key={d} onClick={() => setCreditDays(d)}
-                        className={`flex-1 py-2 rounded-md border text-sm font-medium transition-all ${creditDays === d ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 hover:bg-gray-50'}`}>
-                        {d}d
-                      </button>
-                    ))}
-                  </div>
-                  {creditDays && (
-                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> Due: {getDueDate()}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Payment Method (for paid / advance) */}
-              {paymentType !== 'credit' && (
-                <div>
-                  <p className="text-sm font-medium mb-2">Payment Method</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[{ id: 'cash', label: 'Cash', icon: Banknote }, { id: 'card', label: 'Card', icon: CreditCard }, { id: 'upi', label: 'UPI', icon: Smartphone }].map(method => (
-                      <button key={method.id} onClick={() => { setPaymentMethod(method.id as any); setAmountReceived(''); }}
-                        className={`p-3 rounded-md border-2 flex flex-col items-center gap-1 transition-all ${paymentMethod === method.id ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}>
-                        <method.icon className="w-5 h-5" /><span className="text-sm">{method.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Amount received (cash / advance) */}
-              {paymentType !== 'credit' && paymentMethod === 'cash' && (
-                <div>
-                  <label className="text-sm font-medium">{paymentType === 'advance' ? 'Advance Amount' : 'Amount Received'}</label>
-                  <input type="number" value={amountReceived || ''} onChange={(e) => setAmountReceived(e.target.value)}
-                    className="w-full mt-1 px-4 py-2.5 border rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-400" placeholder="Enter amount" />
-                  {paymentType === 'paid' && changeAmount >= 0 && amountReceived && (
-                    <p className="mt-2 text-gray-900 font-medium">Change: {formatCurrency(changeAmount)}</p>
-                  )}
-                  {paymentType === 'advance' && amountReceived && (
-                    <p className="mt-2 text-amber-600 font-medium">Balance due: {formatCurrency(getBalanceDue())}</p>
-                  )}
-                </div>
-              )}
+              {/* Amount received — leave blank to save as a pending payment */}
+              <div>
+                <label className="text-sm font-medium">Amount Received</label>
+                <input type="number" value={amountReceived || ''} onChange={(e) => setAmountReceived(e.target.value)}
+                  className="w-full mt-1 px-4 py-2.5 border rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-400" placeholder="Leave blank if not paid yet" />
+                {receivedAmt <= 0 ? (
+                  <p className="mt-2 inline-flex items-center gap-1.5 text-amber-600 font-medium text-sm">
+                    <Clock className="w-4 h-4" /> This bill will be saved as PENDING PAYMENT
+                  </p>
+                ) : receivedAmt < grandTotal ? (
+                  <p className="mt-2 text-amber-600 font-medium text-sm">Partly paid · Balance due: {formatCurrency(getBalanceDue())}</p>
+                ) : (
+                  <p className="mt-2 text-green-700 font-medium text-sm">Paid in full{changeAmount > 0 ? ` · Change: ${formatCurrency(changeAmount)}` : ''}</p>
+                )}
+              </div>
 
               {/* Notes */}
               <div>
