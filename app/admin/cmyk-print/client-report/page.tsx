@@ -3,8 +3,8 @@
 import { useState, useMemo, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, FileText, Download, Printer, Loader2, Users } from 'lucide-react';
-import { useCMYKClients, usePOSSales } from '@/lib/hooks';
+import { ArrowLeft, FileText, Download, Printer, Loader2, Users, Banknote, Smartphone, Plus, Trash2 } from 'lucide-react';
+import { useCMYKClients, usePOSSales, useCMYKClientPayments } from '@/lib/hooks';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import { downloadStatement, printStatement, StatementData, StatementRow } from '@/components/receipt/StatementPDF';
 import { toast } from '@/lib/toast';
@@ -15,12 +15,18 @@ function ReportInner() {
   const params = useSearchParams();
   const { cmykClients, loading: clientsLoading } = useCMYKClients();
   const { sales, loading: salesLoading } = usePOSSales();
+  const { payments, createPayment, deletePayment } = useCMYKClientPayments();
   const { settings } = useCompanySettings();
 
   const now = new Date();
   const [clientId, setClientId] = useState('');
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth()); // 0-11
+
+  // Record-payment form
+  const [payMethod, setPayMethod] = useState<'cash' | 'upi'>('cash');
+  const [payAmount, setPayAmount] = useState('');
+  const [savingPay, setSavingPay] = useState(false);
 
   // Pre-select client from ?client= query param
   useEffect(() => {
@@ -66,8 +72,44 @@ function ReportInner() {
     }, { taxable: 0, gst: 0, billed: 0, paid: 0, outstanding: 0 });
   }, [monthSales]);
 
+  // Payments collected from this client during the selected month
+  const monthPayments = useMemo(() => {
+    if (!clientId) return [] as any[];
+    return (payments || []).filter((p: any) => {
+      if (p.cmyk_client_id !== clientId) return false;
+      const d = new Date(p.paid_on + 'T00:00:00');
+      return d.getFullYear() === year && d.getMonth() === month;
+    }).sort((a: any, b: any) => new Date(b.paid_on).getTime() - new Date(a.paid_on).getTime());
+  }, [payments, clientId, year, month]);
+
+  const collectedThisMonth = useMemo(
+    () => monthPayments.reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0),
+    [monthPayments]
+  );
+
+  // What the client still owes: opening balance + this month's unpaid bills − payments collected now.
+  const openingBalance = client?.opening_balance || 0;
+  const pending = openingBalance + totals.outstanding - collectedThisMonth;
+
   const periodLabel = `${MONTHS[month]} ${year}`;
   const [generating, setGenerating] = useState(false);
+
+  const handleRecordPayment = async () => {
+    const amt = parseFloat(payAmount);
+    if (!clientId) { toast.error('Select a client first'); return; }
+    if (!Number.isFinite(amt) || amt <= 0) { toast.error('Enter a valid amount'); return; }
+    setSavingPay(true);
+    const { error } = await createPayment({ cmyk_client_id: clientId, amount: amt, method: payMethod });
+    setSavingPay(false);
+    if (error) { toast.error(error); return; }
+    setPayAmount('');
+    toast.success(`Recorded ${fmt(amt)} (${payMethod.toUpperCase()})`);
+  };
+
+  const handleDeletePayment = async (id: string) => {
+    const { error } = await deletePayment(id);
+    if (error) toast.error(error);
+  };
 
   const buildStatement = (): StatementData => {
     const rows: StatementRow[] = monthSales.map((s: any) => ({
@@ -169,11 +211,71 @@ function ReportInner() {
           </div>
           <div className="bg-white border rounded-md p-3">
             <p className="text-xs text-gray-500">Received</p>
-            <p className="text-lg font-bold text-green-700">{fmt(totals.paid)}</p>
+            <p className="text-lg font-bold text-green-700">{fmt(totals.paid + collectedThisMonth)}</p>
+            {collectedThisMonth > 0 && <p className="text-[11px] text-gray-400">incl. {fmt(collectedThisMonth)} collected</p>}
           </div>
           <div className="bg-white border rounded-md p-3">
-            <p className="text-xs text-gray-500">Outstanding</p>
-            <p className="text-lg font-bold text-amber-600">{fmt(totals.outstanding + (client?.opening_balance || 0))}</p>
+            <p className="text-xs text-gray-500">{pending < 0 ? 'Advance' : 'Outstanding'}</p>
+            <p className={`text-lg font-bold ${pending < 0 ? 'text-green-700' : 'text-amber-600'}`}>{fmt(Math.abs(pending))}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Record a payment collected from this client */}
+      {clientId && (
+        <div className="bg-white border rounded-md p-4">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Payment method</label>
+              <div className="flex bg-gray-100 p-1 rounded-md">
+                {([
+                  { id: 'cash', label: 'Cash', icon: Banknote },
+                  { id: 'upi', label: 'UPI', icon: Smartphone },
+                ] as const).map(m => (
+                  <button key={m.id} type="button" onClick={() => setPayMethod(m.id)}
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-colors ${payMethod === m.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                    <m.icon className="w-4 h-4" /> {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-gray-500 mb-1">Amount received (₹)</label>
+              <input type="number" min="0" value={payAmount} placeholder="0"
+                onChange={e => setPayAmount(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleRecordPayment(); }}
+                className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
+            </div>
+            <button onClick={handleRecordPayment} disabled={savingPay}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 disabled:opacity-50">
+              {savingPay ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Record Payment
+            </button>
+          </div>
+
+          {/* Payments collected this month */}
+          {monthPayments.length > 0 && (
+            <div className="mt-3 border-t pt-3 space-y-1.5">
+              {monthPayments.map((p: any) => (
+                <div key={p.id} className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">
+                    {new Date(p.paid_on + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                    <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600 uppercase">{p.method}</span>
+                  </span>
+                  <span className="flex items-center gap-3">
+                    <span className="font-semibold text-green-700">{fmt(Number(p.amount))}</span>
+                    <button onClick={() => handleDeletePayment(p.id)} className="text-gray-300 hover:text-red-500" title="Remove">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Pending shown below */}
+          <div className="mt-3 border-t pt-3 flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-600">{pending < 0 ? 'Advance with you' : 'Pending amount'}</span>
+            <span className={`text-lg font-bold ${pending < 0 ? 'text-green-700' : 'text-amber-600'}`}>{fmt(Math.abs(pending))}</span>
           </div>
         </div>
       )}

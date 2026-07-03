@@ -714,6 +714,18 @@ export interface CMYKClient extends BaseEntity {
   is_active: boolean;
 }
 
+// A payment collected from a CMYK client against their outstanding statement.
+export interface CMYKClientPayment {
+  id: string;
+  cmyk_client_id: string;
+  amount: number;
+  method: 'cash' | 'upi';
+  paid_on: string;        // YYYY-MM-DD
+  notes?: string;
+  created_by?: string;
+  created_at: string;
+}
+
 export interface POSSale extends BaseEntity {
   sale_number: string;
   customer_name?: string;

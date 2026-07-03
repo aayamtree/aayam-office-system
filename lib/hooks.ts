@@ -9,7 +9,7 @@ import {
   Quotation, Dispatch, BankAccount, DesignTask, DesignProject,
   PurchaseBill, VendorPayment, PaymentReceived, POSCategory, POSProduct,
   PaperStock, POSSale, Note, Reminder, BankTransaction, SalesOrder, ActivityLog, JobChecklist, UserCalendarEvent, Commission, UserNote,
-  CMYKClient
+  CMYKClient, CMYKClientPayment
 } from '@/types/database';
 import { logActivity } from './logger';
 import { autoProgressJob } from './job-auto-progress';
@@ -269,6 +269,56 @@ export function useCMYKClients() {
     updateCMYKClient,
     deleteCMYKClient
   };
+}
+
+// Payments collected from CMYK clients against their outstanding statement.
+// Reads come straight from the table; the write goes through a service-role
+// API route so it still succeeds if the browser's Supabase JWT has lapsed.
+export function useCMYKClientPayments() {
+  const { data, loading, error, refetch } = useSupabaseQuery<CMYKClientPayment>('cmyk_client_payments', {
+    orderBy: { column: 'paid_on', ascending: false },
+    limit: 500
+  });
+
+  const createPayment = async (payment: {
+    cmyk_client_id: string;
+    amount: number;
+    method: 'cash' | 'upi';
+    paid_on?: string;
+    notes?: string;
+  }) => {
+    try {
+      const res = await fetch('/api/cmyk-client-payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payment),
+      });
+      const json = await res.json();
+      if (!res.ok) return { error: json.error || 'Could not record payment' };
+      refetch();
+      return { data: json.data, error: null };
+    } catch (e: any) {
+      return { error: e?.message || 'Network error while recording payment' };
+    }
+  };
+
+  const deletePayment = async (id: string) => {
+    try {
+      const res = await fetch('/api/cmyk-client-payments', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      const json = await res.json();
+      if (!res.ok) return { error: json.error || 'Could not delete payment' };
+      refetch();
+      return { error: null };
+    } catch (e: any) {
+      return { error: e?.message || 'Network error while deleting payment' };
+    }
+  };
+
+  return { payments: data, loading, error, refetch, createPayment, deletePayment };
 }
 
 // =============================================
