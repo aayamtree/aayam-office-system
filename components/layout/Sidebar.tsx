@@ -285,8 +285,6 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
   const router = useRouter();
   const { profile, signOut } = useAuth();
   const [expandedItems, setExpandedItems] = useState<string[]>(['Design Studio', 'Marketing', 'Sales & Finance', 'CRM', 'Dispatch']);
-  // Name of the section (master group) that owns the current route — used to keep its header visible.
-  const [activeSection, setActiveSection] = useState<string>('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Close mobile sidebar on navigation — watching pathname is reliable and
@@ -315,27 +313,20 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
     }
     if (best && (best as { name: string }).name) {
       const name = (best as { name: string }).name;
-      setActiveSection(name);
       setExpandedItems(prev => (prev.includes(name) ? prev : [...prev, name]));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
-  // Keep the current page's MASTER section header visible: pin the active
-  // section's header to the top of the sidebar so its title (and the items
-  // below it, including the active page) are always on screen — no hunting.
+  // Scroll the active nav item into view so the current page is always on screen.
   useEffect(() => {
     const t = setTimeout(() => {
-      const header = document.querySelector('[data-active-section="true"]');
-      if (header) {
-        header.scrollIntoView({ block: 'start' });
-      } else {
-        document.querySelector('[data-active-nav="true"]')?.scrollIntoView({ block: 'nearest' });
-      }
+      const el = document.querySelector('[data-active-nav="true"]');
+      el?.scrollIntoView({ block: 'nearest' });
     }, 60);
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, expandedItems, activeSection]);
+  }, [pathname, expandedItems]);
 
   // Sidebar collapsed state — click-only, persisted to localStorage.
   // NO hover logic. Hover-expand was removed permanently because any CSS layout
@@ -572,30 +563,43 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
               return (
                 <div key={item.name}>
                   {hasSubmenu && item.name !== 'Design Studio' ? (
-                    <button
-                      onClick={() => toggleExpanded(item.name)}
-                      data-active-section={item.name === activeSection ? 'true' : undefined}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors text-sm font-medium
+                    <div
+                      className={`w-full flex items-center justify-between rounded-md transition-colors text-sm font-medium
                         ${active
                           ? 'bg-primary text-primary-foreground'
                           : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                         }`}
                     >
-                      <div className="flex items-center gap-2">
+                      {/* Clicking the label navigates to the section page AND opens its submenu */}
+                      <Link
+                        href={item.href}
+                        onClick={(e) => {
+                          navigate(e, item.href);
+                          if (!isExpanded) toggleExpanded(item.name);
+                        }}
+                        data-active-nav={active ? 'true' : undefined}
+                        className="flex items-center gap-2 pl-3 py-2 flex-1 min-w-0"
+                      >
                         <Icon className="h-4 w-4" strokeWidth={1} />
                         <span className="whitespace-nowrap">{item.name}</span>
-                      </div>
-                      <ChevronDown
-                        className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                        strokeWidth={1}
-                      />
-                    </button>
+                      </Link>
+                      {/* Chevron only expands/collapses — does not navigate */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleExpanded(item.name); }}
+                        aria-label={`Toggle ${item.name}`}
+                        className="px-3 py-2 shrink-0"
+                      >
+                        <ChevronDown
+                          className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          strokeWidth={1}
+                        />
+                      </button>
+                    </div>
                   ) : (
                     <Link
                       href={item.href}
                       onClick={(e) => navigate(e, item.href)}
                       data-active-nav={active ? 'true' : undefined}
-                      data-active-section={item.name === activeSection ? 'true' : undefined}
                       className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors text-sm font-medium
                         ${active
                           ? 'bg-primary text-primary-foreground'
