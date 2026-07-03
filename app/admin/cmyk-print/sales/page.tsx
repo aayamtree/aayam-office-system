@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Search, ShoppingBag, Receipt, Trash2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Search, ShoppingBag, Receipt, Trash2, Loader2, Download } from 'lucide-react';
 import { usePOSSales } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { useConfirm } from '@/components/ConfirmModal';
 import { toast } from '@/lib/toast';
+import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
+import { ReceiptData, downloadReceipt } from '@/components/receipt/ReceiptPDF';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 
@@ -16,12 +18,57 @@ const fmt = (n: number) =>
 export default function POSSalesListPage() {
   const { sales, loading, refetch } = usePOSSales();
   const { profile } = useAuth();
+  const { settings } = useCompanySettings();
   const confirm = useConfirm();
   const isAdmin = profile?.role === 'admin';
   // Default to All time so the list always shows every bill; month is an optional filter.
   const [month, setMonth] = useState<string>('');
   const [query, setQuery] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  // Rebuild the ESTIMATE PDF for a past bill from its stored line items.
+  const buildEstimate = (s: any): ReceiptData => {
+    const d = new Date(s.created_at);
+    return {
+      companyName: settings.companyName,
+      companyAddress: `${settings.companyAddress}, ${settings.companyCity} ${settings.companyPincode}`.trim(),
+      companyPhone: settings.companyPhone,
+      receiptNumber: s.sale_number,
+      date: d.toLocaleDateString('en-IN'),
+      time: d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+      customerName: s.customer_name || s.cmyk_client?.company || s.cmyk_client?.name || undefined,
+      customerPhone: s.customer_phone || undefined,
+      items: (s.items || []).map((it: any) => ({
+        name: it.product_name || 'Item',
+        qty: it.quantity,
+        price: it.price,
+        total: it.total,
+      })),
+      subtotal: s.subtotal || 0,
+      discountPercent: s.discount_percent || 0,
+      discountAmount: s.discount_amount || 0,
+      gstRate: 0,
+      cgstAmount: 0,
+      sgstAmount: 0,
+      grandTotal: s.total_amount || 0,
+      paymentMode: s.payment_mode || 'cash',
+      amountReceived: s.amount_received || s.total_amount || 0,
+      change: s.change_amount || 0,
+      cashier: s.sold_by || 'CMYK',
+    };
+  };
+
+  const handleDownload = async (s: any) => {
+    setDownloadingId(s.id);
+    try {
+      await downloadReceipt(buildEstimate(s));
+    } catch {
+      toast.error('Could not generate the estimate PDF');
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const handleDelete = async (sale: any) => {
     const { confirmed, inputValue } = await confirm({
@@ -155,7 +202,7 @@ export default function POSSalesListPage() {
                     <th className="px-3 py-2 font-medium">Customer</th>
                     <th className="px-3 py-2 font-medium text-center">Items</th>
                     <th className="px-3 py-2 font-medium text-right">Amount</th>
-                    {isAdmin && <th className="px-3 py-2 font-medium text-right">Action</th>}
+                    <th className="px-3 py-2 font-medium text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -180,21 +227,34 @@ export default function POSSalesListPage() {
                         <td className="px-3 py-2.5">{s.customer_name || s.cmyk_client?.name || 'Walk-in'}</td>
                         <td className="px-3 py-2.5 text-center text-muted-foreground">{s.items?.length ?? '—'}</td>
                         <td className="px-3 py-2.5 text-right font-semibold">{fmt(s.total_amount)}</td>
-                        {isAdmin && (
-                          <td className="px-3 py-2.5 text-right">
+                        <td className="px-3 py-2.5 text-right">
+                          <div className="inline-flex items-center justify-end gap-1">
                             <button
                               type="button"
-                              onClick={() => handleDelete(s)}
-                              disabled={deletingId === s.id}
-                              title="Delete bill (admin only)"
-                              className="inline-flex items-center justify-center p-1.5 rounded-md text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                              onClick={() => handleDownload(s)}
+                              disabled={downloadingId === s.id}
+                              title="Download estimate PDF"
+                              className="inline-flex items-center justify-center p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
                             >
-                              {deletingId === s.id
+                              {downloadingId === s.id
                                 ? <Loader2 size={15} className="animate-spin" />
-                                : <Trash2 size={15} />}
+                                : <Download size={15} />}
                             </button>
-                          </td>
-                        )}
+                            {isAdmin && (
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(s)}
+                                disabled={deletingId === s.id}
+                                title="Delete bill (admin only)"
+                                className="inline-flex items-center justify-center p-1.5 rounded-md text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                              >
+                                {deletingId === s.id
+                                  ? <Loader2 size={15} className="animate-spin" />
+                                  : <Trash2 size={15} />}
+                              </button>
+                            )}
+                          </div>
+                        </td>
                       </tr>
                     );
                   })}
