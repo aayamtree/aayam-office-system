@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft, ArrowRight,
   Calendar, User, FileText, IndianRupee, CheckCircle, XCircle, Clock, Loader2, Download
@@ -32,6 +32,28 @@ export default function QuotationsPage() {
   const { settings: companySettings } = useCompanySettings();
   const [previewData, setPreviewData] = useState<QuotationData | null>(null);
 
+  // This same component powers two routes:
+  //  • Sales & Finance → Quotations (/admin/sales/quotations): company-wide, all quotes.
+  //  • Marketing → Quotations (/admin/marketing/quotations): the marketing team's quotes only.
+  const pathname = usePathname();
+  const isMarketingView = (pathname || '').startsWith('/admin/marketing');
+
+  // All profiles (id -> name/role): used for "Added by", the owner filter, and
+  // to decide which quotes belong to the marketing team.
+  const [allProfiles, setAllProfiles] = useState<{ id: string; full_name: string; role: string }[]>([]);
+  useEffect(() => {
+    supabase
+      .from('profiles')
+      .select('id, full_name, role')
+      .order('full_name')
+      .then(({ data }) => setAllProfiles(data || []));
+  }, []);
+  const roleById = useMemo(() => {
+    const m: Record<string, string> = {};
+    allProfiles.forEach(p => { m[p.id] = p.role; });
+    return m;
+  }, [allProfiles]);
+
   // Role-based visibility (same rule as the Clients page):
   //  • Admin (and other non-marketing roles) see ALL quotations.
   //  • Marketing users see ONLY quotations they created, or for a lead assigned
@@ -46,8 +68,20 @@ export default function QuotationsPage() {
         return createdByMe || assignedToMe;
       });
     }
+    // Marketing → Quotations page: only quotes owned by the marketing team
+    // (client sourced via marketing, or created by a marketing-role user).
+    if (isMarketingView) {
+      return allQuotations.filter(q => {
+        const q_ = q as any;
+        const c = q_.client || {};
+        if (c.source === 'marketing') return true;
+        const ownerId = q_.created_by || c.created_by;
+        return ownerId ? roleById[ownerId] === 'marketing' : false;
+      });
+    }
+    // Sales & Finance (and other non-marketing roles): all quotations, company-wide.
     return allQuotations;
-  }, [allQuotations, profile]);
+  }, [allQuotations, profile, isMarketingView, roleById]);
   const { clients: allClients, refetch: refetchClients } = useClients();
   const { leads: allLeads, convertToClient } = useLeads();
 
@@ -105,17 +139,6 @@ export default function QuotationsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [ownerFilter, setOwnerFilter] = useState<string>('all');
-
-  // All profiles (id -> name/role) so we can show "Added by" + the marketing
-  // person who owns the client, exactly like the Clients page.
-  const [allProfiles, setAllProfiles] = useState<{ id: string; full_name: string; role: string }[]>([]);
-  useEffect(() => {
-    supabase
-      .from('profiles')
-      .select('id, full_name, role')
-      .order('full_name')
-      .then(({ data }) => setAllProfiles(data || []));
-  }, []);
 
   const nameFor = (id?: string | null) =>
     id ? (allProfiles.find(p => p.id === id)?.full_name || 'Unknown') : null;
@@ -622,7 +645,7 @@ export default function QuotationsPage() {
   }, [quotations, ownerFilter]);
 
   const perfLabel =
-    ownerFilter === 'all' ? 'All marketing'
+    ownerFilter === 'all' ? (isMarketingView ? 'All marketing' : 'Company-wide')
     : ownerFilter === 'unassigned' ? 'Direct / Unassigned'
     : (nameFor(ownerFilter) || 'Selected');
 
