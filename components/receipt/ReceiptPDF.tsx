@@ -161,12 +161,12 @@ export const ReceiptPDF = ({ data }: { data: ReceiptData }) => (
         </Text>
       </View>
       
-      {/* Receipt Title */}
-      <Text style={styles.receiptTitle}>CASH RECEIPT</Text>
-      
-      {/* Receipt Info */}
+      {/* Document Title */}
+      <Text style={styles.receiptTitle}>ESTIMATE</Text>
+
+      {/* Estimate Info */}
       <View style={styles.infoRow}>
-        <Text>Receipt #: {data.receiptNumber}</Text>
+        <Text>Estimate #: {data.receiptNumber}</Text>
         <Text>{data.date}</Text>
       </View>
       <View style={styles.infoRow}>
@@ -181,12 +181,6 @@ export const ReceiptPDF = ({ data }: { data: ReceiptData }) => (
           {data.customerPhone && <Text>{data.customerPhone}</Text>}
         </View>
       )}
-      {data.gstin && (
-        <View style={styles.infoRow}>
-          <Text>GSTIN: {data.gstin}</Text>
-        </View>
-      )}
-
       <View style={styles.divider} />
       
       {/* Items Table */}
@@ -221,18 +215,6 @@ export const ReceiptPDF = ({ data }: { data: ReceiptData }) => (
             <Text>Discount ({data.discountPercent}%):</Text>
             <Text>-Rs.{data.discountAmount.toFixed(2)}</Text>
           </View>
-        )}
-        {(data.cgstAmount ?? 0) > 0 && (
-          <>
-            <View style={styles.totalRow}>
-              <Text>CGST ({(data.gstRate ?? 0) / 2}%):</Text>
-              <Text>Rs.{(data.cgstAmount ?? 0).toFixed(2)}</Text>
-            </View>
-            <View style={styles.totalRow}>
-              <Text>SGST ({(data.gstRate ?? 0) / 2}%):</Text>
-              <Text>Rs.{(data.sgstAmount ?? 0).toFixed(2)}</Text>
-            </View>
-          </>
         )}
         <View style={styles.grandTotal}>
           <Text>TOTAL:</Text>
@@ -278,7 +260,7 @@ export const downloadReceipt = async (data: ReceiptData) => {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `Receipt-${data.receiptNumber}.pdf`;
+  link.download = `Estimate-${data.receiptNumber}.pdf`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

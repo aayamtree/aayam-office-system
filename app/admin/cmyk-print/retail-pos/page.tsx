@@ -74,10 +74,7 @@ export default function RetailPOSPage() {
   const [amountReceived, setAmountReceived] = useState('');
   const [discount, setDiscount] = useState(0);
 
-  // GST — optional per bill (toggle on/off before print/PDF), order type & artwork
-  const [gstEnabled, setGstEnabled] = useState(true);
-  const [gstRate, setGstRate] = useState(18);
-  const [gstin, setGstin] = useState('');
+  // Order type & artwork (no GST — this CMYK counter issues estimates, not GST invoices)
   const [orderType, setOrderType] = useState<'walkin' | 'pickup'>('walkin');
   const [artworkLink, setArtworkLink] = useState('');
 
@@ -156,12 +153,8 @@ export default function RetailPOSPage() {
   const subtotal = cart.reduce((sum, item) => sum + lineTotal(item), 0) + paperSubtotal;
   const discountAmount = (subtotal * discount) / 100;
   const taxableAmount = subtotal - discountAmount;
-  // Effective GST rate is 0 when the bill is marked GST-off.
-  const effectiveGstRate = gstEnabled ? gstRate : 0;
-  const gstAmount = (taxableAmount * effectiveGstRate) / 100;
-  const cgstAmount = gstAmount / 2;
-  const sgstAmount = gstAmount / 2;
-  const grandTotal = taxableAmount + gstAmount;
+  // This CMYK counter does not raise GST bills — the estimate total is just subtotal − discount.
+  const grandTotal = taxableAmount;
 
   // Payment calculation
   const receivedAmt = parseFloat(amountReceived || '0');
@@ -228,8 +221,6 @@ export default function RetailPOSPage() {
     setCustomerPhone('');
     setCmykClientId('');
     setDiscount(0);
-    setGstEnabled(true);
-    setGstin('');
     setOrderType('walkin');
     setArtworkLink('');
     setAmountReceived('');
@@ -255,11 +246,10 @@ export default function RetailPOSPage() {
         subtotal,
         discount_percent: discount,
         discount_amount: discountAmount,
-        gst_rate: effectiveGstRate,
-        gst_amount: gstAmount,
-        cgst_amount: cgstAmount,
-        sgst_amount: sgstAmount,
-        gstin: gstEnabled ? (gstin || undefined) : undefined,
+        gst_rate: 0,
+        gst_amount: 0,
+        cgst_amount: 0,
+        sgst_amount: 0,
         order_type: orderType,
         pickup_status: orderType === 'pickup' ? 'pending' : undefined,
         artwork_link: artworkLink || undefined,
@@ -328,10 +318,9 @@ export default function RetailPOSPage() {
       subtotal,
       discountPercent: discount,
       discountAmount,
-      gstRate: effectiveGstRate,
-      cgstAmount,
-      sgstAmount,
-      gstin: gstEnabled ? (gstin || undefined) : undefined,
+      gstRate: 0,
+      cgstAmount: 0,
+      sgstAmount: 0,
       grandTotal,
       paymentMode: paymentMethod,
       amountReceived: parseFloat(amountReceived || '0') || grandTotal,
@@ -492,7 +481,6 @@ export default function RetailPOSPage() {
                     // Auto-fill the (still visible, still editable) name & phone boxes from the saved client
                     setCustomerName(c.company || c.name || '');
                     setCustomerPhone(c.phone || '');
-                    if (c.gstin && !gstin) setGstin(c.gstin);
                     // Saved CMYK clients bill monthly → default this sale to Credit (goes on their statement)
                     setPaymentType('credit');
                   } else {
@@ -511,11 +499,8 @@ export default function RetailPOSPage() {
               <p className="text-[11px] text-gray-400 mt-1">Pick a CMYK client to add this bill to their monthly print report.</p>
             </div>
 
-            {/* GSTIN + Artwork link */}
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <input type="text" placeholder="GSTIN (optional)" value={gstin}
-                onChange={(e) => setGstin(e.target.value.toUpperCase())}
-                className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
+            {/* Artwork link / note */}
+            <div className="mt-2">
               <input type="text" placeholder="Artwork link / note" value={artworkLink}
                 onChange={(e) => setArtworkLink(e.target.value)}
                 className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
@@ -650,29 +635,6 @@ export default function RetailPOSPage() {
                 </div>
               </div>
               {discount > 0 && <div className="flex justify-between text-sm text-gray-500"><span>Taxable Value</span><span>{formatCurrency(taxableAmount)}</span></div>}
-              {/* GST — optional. Toggle off to bill without GST (no GST on receipt/PDF). */}
-              <div className="flex justify-between items-center text-sm pt-2 border-t">
-                <span className="flex items-center gap-2 flex-wrap">
-                  {/* On/Off switch */}
-                  <button type="button" onClick={() => setGstEnabled(v => !v)}
-                    title={gstEnabled ? 'GST is ON — tap to remove GST' : 'GST is OFF — tap to add GST'}
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${gstEnabled ? 'bg-primary' : 'bg-gray-300'}`}>
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${gstEnabled ? 'translate-x-4' : 'translate-x-1'}`} />
-                  </button>
-                  <span className={gstEnabled ? '' : 'text-gray-400'}>GST</span>
-                  {gstEnabled ? (
-                    <>
-                      <input type="number" value={gstRate || ''} min="0" max="28"
-                        onChange={(e) => setGstRate(Math.min(28, parseFloat(e.target.value) || 0))}
-                        className="w-11 px-1.5 py-0.5 border rounded text-right text-xs focus:outline-none focus:ring-2 focus:ring-gray-400" />%
-                      <span className="text-xs text-gray-400">(CGST {gstRate / 2}% + SGST {gstRate / 2}%)</span>
-                    </>
-                  ) : (
-                    <span className="text-xs text-gray-400">(no GST on this bill)</span>
-                  )}
-                </span>
-                <span className={gstEnabled ? '' : 'text-gray-400'}>{formatCurrency(gstAmount)}</span>
-              </div>
               <div className="flex justify-between text-section pt-2 border-t"><span>Grand Total</span><span className="text-primary">{formatCurrency(grandTotal)}</span></div>
             </div>
             <button onClick={() => setShowPaymentModal(true)} disabled={grandTotal <= 0}
