@@ -488,7 +488,16 @@ export default function RetailPOSPage() {
                 onChange={(e) => {
                   setCmykClientId(e.target.value);
                   const c = cmykClients?.find(x => x.id === e.target.value);
-                  if (c?.gstin && !gstin) setGstin(c.gstin);
+                  if (c) {
+                    // Auto-fill the (still visible, still editable) name & phone boxes from the saved client
+                    setCustomerName(c.company || c.name || '');
+                    setCustomerPhone(c.phone || '');
+                    if (c.gstin && !gstin) setGstin(c.gstin);
+                  } else {
+                    // Back to Walk-in — clear the auto-filled fields
+                    setCustomerName('');
+                    setCustomerPhone('');
+                  }
                 }}
                 className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white">
                 <option value="">Walk-in (no CMYK client)</option>
