@@ -55,27 +55,28 @@ export default function EODNudge() {
             setShow(true);
         };
 
-        check();
+        // Delay initial check by 5 seconds so it doesn't compete with page load queries
+        const initial = setTimeout(check, 5000);
         // Re-check every 30 minutes in case they submitted during the session
         const interval = setInterval(check, 30 * 60 * 1000);
-        return () => clearInterval(interval);
+        return () => { clearTimeout(initial); clearInterval(interval); };
     }, [profile?.id, profile?.role]);
 
     if (!show || dismissed) return null;
 
     return (
-        <div className="fixed bottom-20 lg:bottom-4 right-4 z-50 max-w-sm w-full animate-in slide-in-from-bottom-4 duration-300">
+        <div className="fixed z-50 inset-x-4 bottom-20 sm:inset-x-auto sm:right-4 lg:bottom-4 sm:w-full sm:max-w-sm animate-in slide-in-from-bottom-4 duration-300">
             <div className="bg-gray-900 text-white rounded-md shadow-xl border border-gray-700 overflow-hidden">
                 {/* Top accent bar */}
                 <div className="h-1 bg-gradient-to-r from-yellow-400 to-orange-400" />
 
                 <div className="p-4">
                     <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
                             <div className="w-9 h-9 bg-yellow-400/20 rounded-md flex items-center justify-center flex-shrink-0">
                                 <ClipboardList className="w-5 h-5 text-yellow-400" />
                             </div>
-                            <div>
+                            <div className="min-w-0">
                                 <p className="font-bold text-sm">Time to submit your EOD! 🌅</p>
                                 <p className="text-xs text-gray-400 mt-0.5">
                                     {workLogCount > 0
@@ -86,9 +87,11 @@ export default function EODNudge() {
                         </div>
                         <button
                             onClick={() => setDismissed(true)}
-                            className="p-1 hover:bg-white/10 rounded-md flex-shrink-0 transition-colors"
+                            aria-label="Close reminder"
+                            title="Close"
+                            className="p-1.5 -mr-1.5 -mt-1.5 rounded-full bg-white/10 hover:bg-white/25 text-white flex-shrink-0 transition-colors"
                         >
-                            <X className="w-4 h-4 text-gray-400" />
+                            <X className="w-5 h-5" />
                         </button>
                     </div>
 
@@ -98,6 +101,13 @@ export default function EODNudge() {
                     >
                         <Zap className="w-4 h-4" />
                         Submit My EOD Report
+                    </button>
+
+                    <button
+                        onClick={() => setDismissed(true)}
+                        className="mt-2 w-full py-1.5 text-xs font-medium text-gray-400 hover:text-white transition-colors"
+                    >
+                        Maybe later
                     </button>
                 </div>
             </div>
