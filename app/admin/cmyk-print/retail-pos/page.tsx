@@ -493,10 +493,13 @@ export default function RetailPOSPage() {
                     setCustomerName(c.company || c.name || '');
                     setCustomerPhone(c.phone || '');
                     if (c.gstin && !gstin) setGstin(c.gstin);
+                    // Saved CMYK clients bill monthly → default this sale to Credit (goes on their statement)
+                    setPaymentType('credit');
                   } else {
-                    // Back to Walk-in — clear the auto-filled fields
+                    // Back to Walk-in — clear the auto-filled fields & collect payment now
                     setCustomerName('');
                     setCustomerPhone('');
+                    setPaymentType('paid');
                   }
                 }}
                 className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white">
