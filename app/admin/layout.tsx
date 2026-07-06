@@ -3,22 +3,29 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import dynamic from 'next/dynamic';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
-import DailyBriefingTrigger from '@/components/calendar/DailyBriefingTrigger';
-import CommandPalette from '@/components/shared/CommandPalette';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { ConfirmProvider } from '@/components/ConfirmModal';
 import { SessionProvider } from 'next-auth/react';
 import { GlobalErrorBoundary } from '@/components/ErrorBoundary';
 import ToastContainer from '@/components/ToastContainer';
-import EODNudge from '@/components/eod/EODNudge';
 import RouteGuard from '@/components/layout/RouteGuard';
-import { NotificationPopup } from '@/components/NotificationPopup';
-import DriveDisconnectBanner from '@/components/drive/DriveDisconnectBanner';
-import FloatingDock from '@/components/shared/FloatingDock';
-import ChatPanel from '@/components/ChatPanel';
-import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
+import { RealtimeProvider } from '@/lib/realtime-context';
+
+// Lazy-load non-critical layout components so they don't block the initial page render.
+// Each of these runs DB queries or realtime subscriptions — loading them after hydration
+// means the user sees the page content first, then these kick in.
+const CommandPalette = dynamic(() => import('@/components/shared/CommandPalette'), { ssr: false });
+const DailyBriefingTrigger = dynamic(() => import('@/components/calendar/DailyBriefingTrigger'), { ssr: false });
+const EODNudge = dynamic(() => import('@/components/eod/EODNudge'), { ssr: false });
+const NotificationPopup = dynamic(() => import('@/components/NotificationPopup').then(m => ({ default: m.NotificationPopup })), { ssr: false });
+const DriveDisconnectBanner = dynamic(() => import('@/components/drive/DriveDisconnectBanner'), { ssr: false });
+const FloatingDock = dynamic(() => import('@/components/shared/FloatingDock'), { ssr: false });
+const ChatPanel = dynamic(() => import('@/components/ChatPanel'), { ssr: false });
+const GlobalShareMenu = dynamic(() => import('@/components/shared/GlobalShareMenu'), { ssr: false });
+const ServiceWorkerRegistration = dynamic(() => import('@/components/ServiceWorkerRegistration').then(m => ({ default: m.ServiceWorkerRegistration })), { ssr: false });
 
 export default function AdminLayout({
   children,
@@ -60,6 +67,7 @@ export default function AdminLayout({
   return (
     <SessionProvider>
       <ConfirmProvider>
+       <RealtimeProvider>
         <div className="min-h-screen bg-background">
           {/* Mobile Overlay */}
           {sidebarOpen && (
@@ -120,7 +128,11 @@ export default function AdminLayout({
           {/* Chat Panel */}
           <ChatPanel open={chatOpen} onClose={() => setChatOpen(false)} />
 
+          {/* Right-click anywhere → Share on Telegram / Copy link */}
+          <GlobalShareMenu />
+
         </div>
+       </RealtimeProvider>
       </ConfirmProvider>
     </SessionProvider>
   );
