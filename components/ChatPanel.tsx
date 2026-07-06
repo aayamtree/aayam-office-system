@@ -21,7 +21,21 @@ interface TeamMember {
   telegram_chat_id?: string;
 }
 
-const BOT_TOKEN = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN || '8352518034:AAHsiUcPAu3XEAF72bupxjpO1wCk0F9oHns';
+// SECURITY FIX 2026-07-06: the bot token was hardcoded here and shipped to
+// every browser. All Telegram sends now go through /api/telegram/send
+// (server-side token, verified caller).
+async function telegramSend(payload: Record<string, unknown>) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) return;
+  await fetch('/api/telegram/send', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify(payload),
+  }).catch(() => { /* relay is best-effort */ });
+}
 
 function timeLabel(ts: string) {
   const d = new Date(ts);
@@ -217,53 +231,21 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
   // ── Telegram relay ─────────────────────────────────────────────────────
   // If specificTargets provided → only relay to them. Otherwise → relay to all.
   const relayText = async (text: string, specificTargets?: TeamMember[]) => {
-    const targets = specificTargets ?? team.filter((t) => t.telegram_chat_id);
-    if (!targets.length) return;
-    const senderName = profile?.full_name || 'Team Member';
-    const roleLabel = (profile?.role || '').charAt(0).toUpperCase() + (profile?.role || '').slice(1);
-    // Add 👤 tag if it's a targeted mention
-    const prefix = specificTargets ? `📣 <b>${senderName}</b> mentioned you:\n` : `💬 <b>${senderName}</b> <i>(${roleLabel})</i>:\n`;
-    const msg = `${prefix}${text}`;
-    await Promise.all(
-      targets.map((t) =>
-        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: t.telegram_chat_id, text: msg, parse_mode: 'HTML' }),
-        })
-      )
-    );
+    if (specificTargets) {
+      const ids = specificTargets.map((t) => t.id).filter(Boolean);
+      if (!ids.length) return;
+      await telegramSend({ mode: 'mention', targetProfileIds: ids, text });
+    } else {
+      await telegramSend({ mode: 'broadcast', text });
+    }
   };
 
   const relayFile = async (file: File, publicUrl: string) => {
-    const targets = team.filter((t) => t.telegram_chat_id);
-    if (!targets.length) return;
-    const senderName = profile?.full_name || 'Team Member';
-    const roleLabel = (profile?.role || '').charAt(0).toUpperCase() + (profile?.role || '').slice(1);
     const isImage = file.type.startsWith('image/');
-    await Promise.all(
-      targets.map((t) =>
-        isImage
-          ? fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                chat_id: t.telegram_chat_id,
-                photo: publicUrl,
-                caption: `📷 <b>${senderName}</b> <i>(${roleLabel})</i>`,
-                parse_mode: 'HTML',
-              }),
-            })
-          : fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                chat_id: t.telegram_chat_id,
-                text: `📎 <b>${senderName}</b>: <a href="${publicUrl}">${file.name}</a>`,
-                parse_mode: 'HTML',
-              }),
-            })
-      )
+    await telegramSend(
+      isImage
+        ? { mode: 'broadcast', photoUrl: publicUrl, text: '📷' }
+        : { mode: 'broadcast', fileUrl: publicUrl, fileName: file.name }
     );
   };
 

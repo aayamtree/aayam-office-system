@@ -31,7 +31,15 @@ export async function GET(req: Request) {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: webhookUrl, allowed_updates: ['message', 'callback_query'] }),
+        body: JSON.stringify({
+          url: webhookUrl,
+          allowed_updates: ['message', 'callback_query'],
+          // If TELEGRAM_WEBHOOK_SECRET is set, Telegram will echo it on every
+          // update and the webhook rejects anything without it.
+          ...(process.env.TELEGRAM_WEBHOOK_SECRET
+            ? { secret_token: process.env.TELEGRAM_WEBHOOK_SECRET }
+            : {}),
+        }),
       }
     );
     const setResult = await setRes.json();

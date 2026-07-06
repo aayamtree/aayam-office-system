@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const BOT_TOKEN = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN;
+// FIX 2026-07-06: accept both env names (was NEXT_PUBLIC_* only, while the
+// notification service used TELEGRAM_BOT_TOKEN — whichever wasn't set silently broke)
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN;
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
 async function sendMessage(chatId: number | string, text: string) {
@@ -14,6 +16,13 @@ async function sendMessage(chatId: number | string, text: string) {
 
 export async function POST(req: NextRequest) {
   try {
+    // Verify the update really comes from Telegram (secret set via /api/telegram/setup).
+    // Only enforced when TELEGRAM_WEBHOOK_SECRET is configured.
+    const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+    if (expectedSecret && req.headers.get('x-telegram-bot-api-secret-token') !== expectedSecret) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Create client inside handler so env vars are available at runtime, not build time
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

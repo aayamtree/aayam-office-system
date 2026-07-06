@@ -117,55 +117,31 @@ export default function TelegramFloatButton() {
 
     setSending(true);
     try {
-      const BOT_TOKEN = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN || '8352518034:AAHsiUcPAu3XEAF72bupxjpO1wCk0F9oHns';
-      const senderName = profile?.full_name || 'Team Member';
-      const senderRole = profile?.role || '';
-      const roleLabel = senderRole.charAt(0).toUpperCase() + senderRole.slice(1);
-      const formattedMsg = `💬 <b>${senderName}</b> <i>(${roleLabel})</i>:\n${message.trim()}`;
+      // SECURITY FIX 2026-07-06: sends now go through /api/telegram/send
+      // (server-side bot token) instead of calling Telegram from the browser.
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch('/api/telegram/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify(
+          broadcastMode
+            ? { mode: 'broadcast', text: message.trim() }
+            : { mode: 'direct', targetProfileIds: [selectedContact!.id], text: message.trim() }
+        ),
+      });
+      const result = await response.json();
+      if (!response.ok || result.error) throw new Error(result.error || 'Failed to send');
+      if (!result.sent) throw new Error('No recipients have Telegram linked yet');
 
-      if (broadcastMode) {
-        // Send to all staff with Telegram linked
-        const targets = contacts.filter(c => c.telegram_chat_id);
-        if (targets.length === 0) {
-          toast.error('No team members have Telegram linked yet');
-          setSending(false);
-          return;
-        }
-
-        await Promise.all(
-          targets.map(staff =>
-            fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                chat_id: staff.telegram_chat_id,
-                text: formattedMsg,
-                parse_mode: 'HTML'
-              })
-            })
-          )
-        );
-
-        setShowSuccess(true);
-        toast.success(`Broadcast sent to ${targets.length} team member${targets.length !== 1 ? 's' : ''}!`);
-      } else {
-        // Send to specific person
-        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: selectedContact!.telegram_chat_id,
-            text: formattedMsg,
-            parse_mode: 'HTML'
-          })
-        });
-
-        const result = await response.json();
-        if (!result.ok) throw new Error(result.description || 'Failed to send');
-
-        setShowSuccess(true);
-        toast.success(`Message sent to ${selectedContact!.full_name}!`);
-      }
+      setShowSuccess(true);
+      toast.success(
+        broadcastMode
+          ? `Broadcast sent to ${result.sent} team member${result.sent !== 1 ? 's' : ''}!`
+          : `Message sent to ${selectedContact!.full_name}!`
+      );
 
       setTimeout(() => {
         setMessage('');

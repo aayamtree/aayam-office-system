@@ -7,6 +7,7 @@ import { Bell, Menu, ChevronRight, Plus, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import NotificationBell from '@/components/NotificationBell';
+import SharePageButton from '@/components/shared/SharePageButton';
 
 // Shadcn Components
 import { Button } from '@/components/ui/Button';
@@ -327,6 +328,9 @@ export default function Header({ onMenuClick, sidebarExpanded }: HeaderProps) {
               <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full" />
             )}
           </Button>
+
+          {/* Share this page with a team member via Telegram */}
+          <SharePageButton />
 
           {/* Personal Notifications (Telegram + In-App) */}
           <NotificationBell />
