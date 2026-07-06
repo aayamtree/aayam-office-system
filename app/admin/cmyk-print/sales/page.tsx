@@ -73,22 +73,27 @@ export default function POSSalesListPage() {
   const handleDelete = async (sale: any) => {
     const { confirmed, inputValue } = await confirm({
       title: `Delete bill ${sale.sale_number}?`,
-      message: `This permanently removes the bill (${sale.customer_name || 'Walk-in'} — ₹${sale.total_amount}) and returns any paper sheets to stock. This cannot be undone.\n\nType "Delete" below to confirm.`,
+      message: `This permanently removes the bill (${sale.customer_name || 'Walk-in'} — ₹${sale.total_amount}) and returns any paper sheets to stock. This cannot be undone.\n\nEnter a reason for cancelling this bill (required — saved to the activity log):`,
       variant: 'danger',
       confirmLabel: 'Delete bill',
       showInput: true,
       inputRequired: true,
-      inputPlaceholder: 'Type Delete to confirm',
+      inputPlaceholder: 'Reason for cancellation, e.g. "customer changed order"',
     });
     if (!confirmed) return;
-    if ((inputValue || '').trim().toLowerCase() !== 'delete') {
-      toast.error('You must type "Delete" to confirm. Bill was not deleted.');
+    const reason = (inputValue || '').trim();
+    if (reason.length < 3) {
+      toast.error('Please enter a reason (at least 3 characters). Bill was not deleted.');
       return;
     }
 
     setDeletingId(sale.id);
     try {
-      const res = await fetch(`/api/cmyk-print/sales/${sale.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/cmyk-print/sales/${sale.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Delete failed');
       toast.success(`Bill ${sale.sale_number} deleted`);
