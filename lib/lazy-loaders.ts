@@ -14,9 +14,3 @@ export async function loadReactPDF() {
   const pdf = await import('@react-pdf/renderer');
   return pdf;
 }
-
-// Lazy load mermaid (3.2MB) - only when rendering diagrams
-export async function loadMermaid() {
-  const mermaid = await import('mermaid');
-  return mermaid.default;
-}

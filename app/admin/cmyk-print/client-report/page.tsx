@@ -6,7 +6,12 @@ import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, FileText, Download, Printer, Loader2, Users, Banknote, Smartphone, Plus, Trash2 } from 'lucide-react';
 import { useCMYKClients, usePOSSales, useCMYKClientPayments } from '@/lib/hooks';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
-import { downloadStatement, printStatement, StatementData, StatementRow } from '@/components/receipt/StatementPDF';
+import type { StatementData, StatementRow } from '@/components/receipt/StatementPDF';
+// Lazy PDF: @react-pdf/renderer (~500KB) loads only when generating a statement
+const downloadStatement = async (d: StatementData) =>
+  (await import('@/components/receipt/StatementPDF')).downloadStatement(d);
+const printStatement = async (d: StatementData) =>
+  (await import('@/components/receipt/StatementPDF')).printStatement(d);
 import { toast } from '@/lib/toast';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

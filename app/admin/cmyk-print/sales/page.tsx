@@ -8,7 +8,10 @@ import { useAuth } from '@/lib/auth-context';
 import { useConfirm } from '@/components/ConfirmModal';
 import { toast } from '@/lib/toast';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
-import { ReceiptData, downloadReceipt } from '@/components/receipt/ReceiptPDF';
+import type { ReceiptData } from '@/components/receipt/ReceiptPDF';
+// Lazy PDF: @react-pdf/renderer (~500KB) loads only when downloading a receipt
+const downloadReceipt = async (d: ReceiptData) =>
+  (await import('@/components/receipt/ReceiptPDF')).downloadReceipt(d);
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 

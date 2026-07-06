@@ -8,7 +8,12 @@ import {
   Printer, Banknote, Smartphone, X, Search, Settings,
   Edit, Loader2, Download, Package, Clock, ChevronDown, Tag
 } from 'lucide-react';
-import { ReceiptData, printReceipt, downloadReceipt } from '@/components/receipt/ReceiptPDF';
+import type { ReceiptData } from '@/components/receipt/ReceiptPDF';
+// Lazy PDF: @react-pdf/renderer (~500KB) loads only when printing/downloading a receipt
+const printReceipt = async (d: ReceiptData) =>
+  (await import('@/components/receipt/ReceiptPDF')).printReceipt(d);
+const downloadReceipt = async (d: ReceiptData) =>
+  (await import('@/components/receipt/ReceiptPDF')).downloadReceipt(d);
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import { usePOSSales, usePOSProducts, usePaperStock, useCMYKClients } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';

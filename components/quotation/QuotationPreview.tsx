@@ -1,7 +1,10 @@
 'use client';
 
 import { X, Printer, Download } from 'lucide-react';
-import { downloadQuotationPDF, type QuotationData } from './QuotationPDF';
+import type { QuotationData } from './QuotationPDF';
+// Lazy PDF: @react-pdf/renderer (~500KB) loads only when a PDF is actually generated
+const downloadQuotationPDF = async (d: QuotationData) =>
+    (await import('./QuotationPDF')).downloadQuotationPDF(d);
 
 const inr = (n: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(n || 0);

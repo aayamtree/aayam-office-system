@@ -20,7 +20,9 @@ export async function GET(request: Request) {
 
     try {
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+        // FIX 2026-07-06: run_system_maintenance is only granted to authenticated/service_role,
+        // so calling it with the anon key failed every night ("permission denied").
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
         if (!supabaseUrl || !supabaseKey) {
             return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 });

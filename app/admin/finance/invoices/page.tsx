@@ -7,8 +7,16 @@ import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
   Calendar, User, Download, MessageCircle, Printer, Loader2, CheckCircle, Send
 } from 'lucide-react';
-import { InvoiceData, downloadInvoicePDF, printInvoicePDF } from '@/components/invoice/InvoicePDF';
-import { buildReceiptData, downloadReceiptPDF, printReceiptPDF } from '@/components/finance/ReceiptPDF';
+import type { InvoiceData } from '@/components/invoice/InvoicePDF';
+// Lazy PDF: @react-pdf/renderer (~500KB) loads only when a PDF is actually generated
+const downloadInvoicePDF = async (d: InvoiceData) =>
+  (await import('@/components/invoice/InvoicePDF')).downloadInvoicePDF(d);
+const printInvoicePDF = async (d: InvoiceData) =>
+  (await import('@/components/invoice/InvoicePDF')).printInvoicePDF(d);
+const downloadReceiptPDF = async (d: any) =>
+  (await import('@/components/finance/ReceiptPDF')).downloadReceiptPDF(await d);
+const printReceiptPDF = async (d: any) =>
+  (await import('@/components/finance/ReceiptPDF')).printReceiptPDF(await d);
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import { shareOnWhatsApp, getInvoiceMessage, getPaymentReminderMessage } from '@/lib/whatsapp';
 import { useInvoices, useClients, useJobs, useBankAccounts, useCashAccounts, useQuotations } from '@/lib/hooks';
@@ -122,8 +130,13 @@ export default function InvoicesPage() {
     setInvoicePayments(data || []);
   };
 
-  const receiptDataFor = (payment: any) =>
-    buildReceiptData(payment, selectedInvoice, selectedInvoice?.client);
+  // Async because the receipt module (with the PDF library) is lazy-loaded;
+  // downloadReceiptPDF/printReceiptPDF wrappers `await` their argument, so
+  // passing this promise directly still works.
+  const receiptDataFor = async (payment: any) => {
+    const { buildReceiptData } = await import('@/components/finance/ReceiptPDF');
+    return buildReceiptData(payment, selectedInvoice, selectedInvoice?.client);
+  };
 
   // Load this invoice's payments whenever the detail drawer opens
   useEffect(() => {

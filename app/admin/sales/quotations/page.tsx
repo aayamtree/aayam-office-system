@@ -11,7 +11,10 @@ import {
 import { useAuth } from '@/lib/auth-context';
 import { useQuotations, useClients, useJobs, useLeads, useFollowUps, useProductCategories } from '@/lib/hooks';
 import { Quotation, Client, QuotationItem, JobStatus } from '@/types/database';
-import { downloadQuotationPDF, type QuotationData } from '@/components/quotation/QuotationPDF';
+import type { QuotationData } from '@/components/quotation/QuotationPDF';
+// Lazy PDF: @react-pdf/renderer (~500KB) loads only when a PDF is actually generated
+const downloadQuotationPDF = async (d: QuotationData) =>
+  (await import('@/components/quotation/QuotationPDF')).downloadQuotationPDF(d);
 import QuotationPreview from '@/components/quotation/QuotationPreview';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import { formatDate } from '@/lib/utils';
