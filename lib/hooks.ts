@@ -3250,8 +3250,11 @@ export function useActivityFeed(limit: number = 20) {
 
     fetchActivities();
 
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchActivities, 30000);
+    // Refresh every 30 seconds (skipped while tab is hidden to avoid wasted queries)
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      fetchActivities();
+    }, 30000);
     return () => clearInterval(interval);
   }, [limit]);
 

@@ -26,8 +26,11 @@ export default function ProductionQueuePage() {
 
     useEffect(() => {
         fetchData();
-        // Poll every 30 seconds for live updates
-        const interval = setInterval(fetchData, 30000);
+        // Poll every 30 seconds for live updates (paused while tab is hidden)
+        const interval = setInterval(() => {
+            if (typeof document !== 'undefined' && document.hidden) return;
+            fetchData();
+        }, 30000);
         return () => clearInterval(interval);
     }, []);
 

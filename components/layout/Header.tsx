@@ -76,6 +76,8 @@ export default function Header({ onMenuClick, sidebarExpanded }: HeaderProps) {
 
   const fetchNotifications = useCallback(async () => {
     if (!isSupabaseConfigured()) return;
+    // Skip polling while the tab is hidden — saves 5 queries + 1 API call per minute per tab
+    if (typeof document !== 'undefined' && document.hidden) return;
 
     const items: Notification[] = [];
 

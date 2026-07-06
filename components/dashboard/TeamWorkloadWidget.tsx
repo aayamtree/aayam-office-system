@@ -52,11 +52,8 @@ export default function TeamWorkloadWidget() {
                 .neq('current_stage', 'cancelled')
                 .gte('created_at', startISO);
 
-            // Also fetch design_tasks as secondary source
-            const { data: tasks } = await supabase
-                .from('design_tasks')
-                .select('assigned_to, status, created_at')
-                .gte('created_at', startISO);
+            // NOTE: design_tasks secondary fetch removed 2026-07-06 — table is empty/legacy
+            // (workload is fully derived from jobs). It was adding a pointless DB query per refresh.
 
             // Group by designer from jobs
             const grouped: Record<string, { done: number; total: number }> = {};
@@ -67,17 +64,6 @@ export default function TeamWorkloadWidget() {
                 if (!grouped[dId]) grouped[dId] = { done: 0, total: 0 };
                 grouped[dId].total++;
                 if (DONE_STAGES.includes(j.current_stage || '')) {
-                    grouped[dId].done++;
-                }
-            });
-
-            // Merge design_tasks data (add tasks not already counted via jobs)
-            tasks?.forEach(t => {
-                const dId = t.assigned_to;
-                if (!dId) return;
-                if (!grouped[dId]) grouped[dId] = { done: 0, total: 0 };
-                grouped[dId].total++;
-                if (t.status === 'completed') {
                     grouped[dId].done++;
                 }
             });

@@ -59,8 +59,11 @@ export default function DesignerAvailabilityDropdown({
 
   useEffect(() => {
     fetchDesigners();
-    // Auto-refresh every 60 seconds
-    const interval = setInterval(fetchDesigners, 60000);
+    // Auto-refresh every 60 seconds (paused while tab is hidden)
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      fetchDesigners();
+    }, 60000);
     return () => clearInterval(interval);
   }, []);
 
