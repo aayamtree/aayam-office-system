@@ -46,6 +46,8 @@ const _currencyFormatter = new Intl.NumberFormat('en-IN', { style: 'currency', c
 const formatCurrency = (amount: number) => _currencyFormatter.format(amount || 0);
 const getPaymentBadge = (status: string) => status === 'paid' ? 'bg-gray-100 text-gray-900' : status === 'partial' ? 'bg-gray-100 text-gray-700' : 'bg-destructive/10 text-destructive';
 const isOverdue = (deadline: string | undefined, stage: string) => deadline && stage !== 'delivered' && new Date(deadline) < new Date();
+// UI: strip leading emoji/symbols from advance-stage labels (keeps full wording, e.g. "Move to Brief & Assets")
+const stripEmoji = (label: string) => label.replace(/^[^A-Za-z0-9]+/, '');
 
 interface JobCardProps {
   job: Job;
@@ -119,7 +121,7 @@ const JobCard = React.memo(function JobCard({ job, getPriorityBadge, onViewDetai
           </div>
         </div>
         {/* Stage Actions */}
-        <div className="flex items-center justify-end gap-1 mt-2 pt-1.5 border-t border-gray-100">
+        <div className="flex flex-wrap items-center justify-end gap-1 mt-2 pt-1.5 border-t border-gray-100">
           <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onEdit(job); }} title="Edit"><Edit className="w-3.5 h-3.5" /></Button>
           <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onRepeatOrder(job); }} title="Repeat"><Copy className="w-3.5 h-3.5" /></Button>
           {job.current_stage === 'awaiting_admin' && (
@@ -136,8 +138,8 @@ const JobCard = React.memo(function JobCard({ job, getPriorityBadge, onViewDetai
               );
             }
             return (
-              <Button size="sm" onClick={(e) => { e.stopPropagation(); onStageChange(job.id, next); }} className="text-[10px] h-6 px-2 bg-gray-800 text-white hover:bg-gray-700" title={label}>
-                <ArrowRight className="w-3 h-3 mr-0.5" />{label.split(' ').slice(1).join(' ')}
+              <Button size="sm" onClick={(e) => { e.stopPropagation(); onStageChange(job.id, next); }} className="text-[10px] h-6 px-2 max-w-full bg-gray-800 text-white hover:bg-gray-700" title={label}>
+                <ArrowRight className="w-3 h-3 mr-0.5 flex-shrink-0" /><span className="truncate">{stripEmoji(label)}</span>
               </Button>
             );
           })()}
@@ -909,15 +911,15 @@ export default function JobsPage() {
                       </div>
 
                       {/* Actions row */}
-                      <div className="flex items-center justify-end gap-1 mt-2 pt-1.5 border-t border-gray-100" onClick={e => e.stopPropagation()}>
+                      <div className="flex flex-wrap items-center justify-end gap-1 mt-2 pt-1.5 border-t border-gray-100" onClick={e => e.stopPropagation()}>
                         <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleEdit(job)} title="Edit"><Edit className="w-3.5 h-3.5" /></Button>
                         <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleRepeatOrder(job)} title="Repeat"><Copy className="w-3.5 h-3.5" /></Button>
                         {next === 'printing' && (
                           <Button size="icon" variant="ghost" className="h-7 w-7 text-orange-600" onClick={() => handleOpenSendToPrinter(job)} title="Send to Printer"><Send className="w-3.5 h-3.5" /></Button>
                         )}
-                        {next && next !== 'printing' && (
-                          <Button size="sm" className="h-7 text-[10px] px-2 bg-gray-800 text-white hover:bg-gray-700" onClick={() => handleStageChange(job.id, next)} title={advLabel}>
-                            <ArrowRight className="w-3 h-3 mr-0.5" />{advLabel.split(' ').slice(1).join(' ')}
+                        {next && next !== 'printing' && !['awaiting_admin', 'delivered', 'cancelled'].includes(job.current_stage) && (
+                          <Button size="sm" className="h-7 text-[10px] px-2 max-w-full bg-gray-800 text-white hover:bg-gray-700" onClick={() => handleStageChange(job.id, next)} title={advLabel}>
+                            <ArrowRight className="w-3 h-3 mr-0.5 flex-shrink-0" /><span className="truncate">{stripEmoji(advLabel)}</span>
                           </Button>
                         )}
                         {job.current_stage === 'awaiting_admin' && (
